@@ -1,23 +1,80 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Shield, Layers, Scroll, Swords } from 'lucide-react';
+import { Shield, Layers, Scroll, Swords, Sparkles } from 'lucide-react';
 import { GEM_TYPES, BONUS_COLORS } from '../constants';
 import { GemIcon } from './GemIcon';
 import { Card } from './Card';
 import { FloatingText, CrownFlash } from './VisualFeedback';
+import { BUFF_STYLES } from '../styles/buffs';
 
-export const PlayerZone = ({ player, inventory, cards, reserved, royals = [], privileges, isActive, lastFeedback, onBuyReserved, onUsePrivilege, isPrivilegeMode, onGemClick, isStealMode, isDiscardMode, theme }) => {
+const BuffDisplay = ({ buff, theme, align = 'center' }) => {
+    if (!buff || buff.id === 'none') return null;
+
+    const levelStyle = BUFF_STYLES[buff.level] || 'border-slate-500 bg-slate-500/20 text-slate-300';
+    
+    // Determine alignment classes
+    let alignClasses = "left-1/2 -translate-x-1/2"; // Default Center
+    if (align === 'left') alignClasses = "left-0 origin-top-left";
+    if (align === 'right') alignClasses = "right-0 origin-top-right";
+
+    const discountColor = buff.state?.discountColor;
+    const description = discountColor 
+        ? buff.desc.replace('Random color', `Random color (${discountColor})`)
+        : buff.desc;
+
+    return (
+        <div className="relative group/buff mt-2">
+            <div className={`
+                flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider cursor-help transition-all hover:scale-105
+                ${levelStyle}
+            `}>
+                <Sparkles size={10} />
+                <span className="truncate max-w-[60px]">{buff.label}</span>
+            </div>
+            
+            {/* Tooltip */}
+            <div className={`
+                absolute bottom-full ${alignClasses} mb-2 w-48 p-3 rounded-lg border shadow-xl backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover/buff:opacity-100 transition-opacity duration-200
+                ${theme === 'dark' ? 'bg-slate-900/95 border-slate-700 text-slate-200' : 'bg-white/95 border-slate-200 text-slate-800'}
+            `}>
+                <div className="flex items-center justify-between mb-1">
+                    <span className={`text-xs font-bold ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`}>{buff.label}</span>
+                    <span className="text-[9px] opacity-60 uppercase">Lvl {buff.level}</span>
+                </div>
+                <p className="text-[10px] leading-snug opacity-90">{description}</p>
+                {buff.effects?.winCondition && (
+                    <div className="mt-2 pt-2 border-t border-white/10 flex flex-col gap-0.5">
+                        <span className="text-[9px] font-bold uppercase opacity-70">Victory Goals:</span>
+                        {buff.effects.winCondition.points && <div className="text-[10px] flex justify-between"><span>Points:</span> <span>{buff.effects.winCondition.points}</span></div>}
+                        {buff.effects.winCondition.crowns && <div className="text-[10px] flex justify-between"><span>Crowns:</span> <span>{buff.effects.winCondition.crowns}</span></div>}
+                        {buff.effects.winCondition.singleColor && <div className="text-[10px] flex justify-between"><span>Single Color:</span> <span>{buff.effects.winCondition.singleColor}</span></div>}
+                        {buff.effects.winCondition.disableSingleColor && <div className="text-[10px] text-rose-400">Single Color Victory Disabled</div>}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export const PlayerZone = ({ player, inventory, cards, reserved, royals = [], privileges, isActive, lastFeedback, onBuyReserved, onUsePrivilege, isPrivilegeMode, onGemClick, isStealMode, isDiscardMode, buff, theme }) => {
   
   const safeCards = Array.isArray(cards) ? cards : [];
   const safeRoyals = Array.isArray(royals) ? royals : [];
 
   // --- Visual Feedback Logic ---
   const [feedbacks, setFeedbacks] = useState([]);
+  const [isExtortionEffect, setIsExtortionEffect] = useState(false);
   const lastSeenFeedbackUid = useRef(null);
 
   useEffect(() => {
       if (lastFeedback && lastFeedback.uid !== lastSeenFeedbackUid.current) {
           lastSeenFeedbackUid.current = lastFeedback.uid;
           const myItems = lastFeedback.items.filter(item => item.player === player);
+          
+          if (myItems.some(i => i.type === 'extortion')) {
+              setIsExtortionEffect(true);
+              setTimeout(() => setIsExtortionEffect(false), 1000);
+          }
+
           myItems.forEach(item => {
               const id = Date.now() + Math.random();
               const label = item.type.charAt(0).toUpperCase() + item.type.slice(1);
@@ -47,6 +104,7 @@ export const PlayerZone = ({ player, inventory, cards, reserved, royals = [], pr
         ${isActive ? `ring-1 ${player === 'p1' ? 'ring-emerald-500/30' : 'ring-blue-500/30'}` : ''} 
         ${isStealMode ? 'ring-2 ring-rose-500 animate-pulse' : ''}
         ${isDiscardMode && isActive ? 'ring-2 ring-red-500 animate-pulse' : ''}
+        ${isExtortionEffect ? 'ring-4 ring-purple-500 bg-purple-500/10 animate-pulse' : ''}
     `}>
       
       {/* Module 1: Identity & Privileges */}
@@ -60,6 +118,7 @@ export const PlayerZone = ({ player, inventory, cards, reserved, royals = [], pr
              <h3 className={`font-bold text-xs whitespace-nowrap uppercase tracking-wider ${isActive ? (player === 'p1' ? 'text-emerald-400' : 'text-blue-400') : 'text-slate-500'}`}>
                  {player === 'p1' ? 'Player 1' : 'Player 2'}
              </h3>
+             <BuffDisplay buff={buff} theme={theme} align={player === 'p1' ? 'left' : 'right'} />
           </div>
           <div className="flex items-center gap-1 justify-center flex-wrap max-w-[80px]">
                 {Array.from({ length: Math.max(0, privileges) }).map((_, i) => (
@@ -111,7 +170,7 @@ export const PlayerZone = ({ player, inventory, cards, reserved, royals = [], pr
                                   stats.cards.map((card, idx) => (
                                       <div 
                                           key={idx}
-                                          className={`absolute w-14 h-20 rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm flex items-center justify-center transition-all duration-200 z-0`}
+                                          className={`absolute w-14 h-20 rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm flex items-center justify-center transition-all duration-200 z-10`}
                                           style={{ top: `${idx * -2}px`, left: `${idx * 1}px` }}
                                       >
                                           {card.points > 0 && <span className="absolute top-0.5 right-0.5 text-[6px] font-bold text-white leading-none drop-shadow-md">{card.points}</span>}
@@ -120,7 +179,12 @@ export const PlayerZone = ({ player, inventory, cards, reserved, royals = [], pr
                               ) : (
                                   <div className={`w-14 h-20 rounded border ${theme === 'dark' ? 'border-slate-800 bg-slate-900/20' : 'border-slate-300 bg-slate-200/20'}`}></div>
                               )}
-                              {stats.bonusCount > 0 && <div className={`absolute -bottom-2 -right-2 text-[9px] font-bold px-1 rounded-full border z-10 shadow-md ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-slate-800 border-slate-300'}`}>{stats.bonusCount}</div>}
+                              
+                              {(stats.bonusCount > 0) && (
+                                  <div className={`absolute -bottom-2 -right-2 text-[9px] font-bold px-1 rounded-full border z-20 shadow-md flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-slate-800 border-slate-300'}`}>
+                                      {stats.bonusCount}
+                                  </div>
+                              )}
                           </div>
                       </div>
                   );
@@ -143,6 +207,7 @@ export const PlayerZone = ({ player, inventory, cards, reserved, royals = [], pr
                           onClick={() => isActive && onBuyReserved(card) && onBuyReserved(card, true)}
                           isReservedView={true}
                           size="small"
+                          theme={theme}
                       />
                   </div>
               ))}
@@ -156,7 +221,7 @@ export const PlayerZone = ({ player, inventory, cards, reserved, royals = [], pr
                       key={i} 
                       className="transition-transform duration-200 ease-in-out shrink-0"
                   >
-                      <Card card={card} isRoyal={true} size="small" />
+                      <Card card={card} isRoyal={true} size="small" theme={theme} />
                   </div>
               ))}
           </div>

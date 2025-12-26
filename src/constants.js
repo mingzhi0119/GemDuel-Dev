@@ -42,3 +42,194 @@ export const ROYAL_CARDS = [
   { id: 'royal-scroll', points: 2, bonusColor: 'gold', ability: 'scroll', label: 'The Judge' },
   { id: 'royal-steal', points: 2, bonusColor: 'gold', ability: 'steal', label: 'The Thief' }
 ];
+
+export const BUFF_LEVELS = {
+  1: 'Minor Tweak',
+  2: 'Tactical Shift',
+  3: 'Game Changer'
+};
+
+export const BUFFS = {
+  // --- Level 1 ---
+  PRIVILEGE_FAVOR: { 
+    id: 'privilege_favor', 
+    level: 1, 
+    label: 'Privilege Favor', 
+    desc: 'Start with 1 extra Privilege Scroll and 1 Gold.',
+    effects: { onInit: { privilege: 1, gold: 1 } }
+  },
+  HEAD_START: { 
+    id: 'head_start', 
+    level: 1, 
+    label: 'Head Start', 
+    desc: 'Start with 1 random basic Gem. Win Condition: 18 Points.',
+    effects: { onInit: { randomGem: 1 } }
+  },
+  ROYAL_BLOOD: { 
+    id: 'royal_blood', 
+    level: 1, 
+    label: 'Royal Blood', 
+    desc: 'Start with 1 Crown.',
+    effects: { onInit: { crowns: 1 } }
+  },
+  INTELLIGENCE: {
+    id: 'intelligence',
+    level: 1,
+    label: 'Intelligence', 
+    desc: 'Action: Peek at top 3 cards of any deck.',
+    effects: { active: 'peek_deck' }
+  },
+  DEEP_POCKETS: {
+    id: 'deep_pockets',
+    level: 1,
+    label: 'Deep Pockets',
+    desc: 'Gem holding limit increased to 12.',
+    effects: { passive: { gemCap: 12 } }
+  },
+  BACKUP_SUPPLY: {
+    id: 'backup_supply',
+    level: 1,
+    label: 'Backup Supply',
+    desc: 'Start with 2 random basic Gems.',
+    effects: { onInit: { randomGem: 2 } }
+  },
+  PATIENT_INVESTOR: {
+    id: 'patient_investor',
+    level: 1,
+    label: 'Patient Investor',
+    desc: 'Gain 2 Gold on your first Reserve action.',
+    effects: { passive: { firstReserveBonus: 2 } }
+  },
+  INSIGHT: {
+    id: 'insight',
+    level: 1,
+    label: 'Insight',
+    desc: 'You can always see the top card of the Level 1 Deck.',
+    effects: { passive: { revealDeck1: true } }
+  },
+
+  // --- Level 2 ---
+  PEARL_TRADER: {
+    id: 'pearl_trader',
+    level: 2,
+    label: 'Pearl Trader',
+    desc: 'Gem holding limit increased to 11. Start with 1 Pearl.',
+    effects: { onInit: { pearl: 1 }, passive: { gemCap: 11 } }
+  },
+  GOLD_RESERVE: {
+    id: 'gold_reserve',
+    level: 2,
+    label: 'Gold Reserve',
+    desc: 'Start with 1 Gold and 1 random Reserved Card.',
+    effects: { onInit: { gold: 1, reserveCard: 1 } }
+  },
+  COLOR_PREFERENCE: {
+    id: 'color_preference',
+    level: 2,
+    label: 'Color Preference',
+    desc: 'Random color costs -1 for you (assigned at start).',
+    effects: { passive: { discountRandom: 1 } }
+  },
+  EXTORTION: {
+    id: 'extortion',
+    level: 2,
+    label: 'Extortion',
+    desc: 'Every 2nd time you Replenish the board, steal 1 basic gem from opponent.',
+    effects: { active: 'replenish_steal' }
+  },
+  FLEXIBLE_DISCOUNT: {
+    id: 'flexible_discount',
+    level: 2,
+    label: 'Flexible Discount',
+    desc: 'Reduce cost of Level 2 and 3 cards by 1.',
+    effects: { passive: { discountAny: 1 } }
+  },
+  BOUNTY_HUNTER: {
+    id: 'bounty_hunter',
+    level: 2,
+    label: 'Bounty Hunter',
+    desc: 'Gain 1 random gem when you buy a card with Crowns.',
+    effects: { passive: { crownBonusGem: true } }
+  },
+  RECYCLER: {
+    id: 'recycler',
+    level: 2,
+    label: 'Recycler',
+    desc: 'Get 1 gem back when buying Level 2 or 3 cards.',
+    effects: { passive: { recycler: true } }
+  },
+  AGGRESSIVE_EXPANSION: {
+    id: 'aggressive_expansion',
+    level: 2,
+    label: 'Aggressive Expansion',
+    desc: 'Gain 1 random gem when you Replenish the board.',
+    effects: { passive: { refillBonus: true } }
+  },
+
+  // --- Level 3 ---
+  GREED_KING: {
+    id: 'greed_king',
+    level: 3,
+    label: 'King of Greed',
+    desc: 'All cards give +1 Point. Win Condition: 25 Points.',
+    effects: { passive: { pointBonus: 1 }, winCondition: { points: 25 } }
+  },
+  ROYAL_ENVOY: {
+    id: 'royal_envoy',
+    level: 3,
+    label: 'Royal Envoy',
+    desc: 'Can pick remaining Royal Card at Turn 5. No Single Color Win.',
+    effects: { active: 'turn5_royal', winCondition: { disableSingleColor: true } }
+  },
+  DOUBLE_AGENT: {
+    id: 'double_agent',
+    level: 3,
+    label: 'Double Agent',
+    desc: 'Privileges take 2 gems. Gem Cap: 8.',
+    effects: { passive: { privilegeBuff: 2, gemCap: 8 } }
+  },
+  ALL_SEEING_EYE: {
+    id: 'all_seeing_eye',
+    level: 3,
+    label: 'All-Seeing Eye',
+    desc: 'Reveal extra Level 3 card. Pay L3 cards with Gold at half value. Win Condition: Single Color 13.',
+    effects: { passive: { extraL3: true, goldBuff: true }, winCondition: { singleColor: 13 } }
+  },
+  WONDER_ARCHITECT: {
+    id: 'wonder_architect',
+    level: 3,
+    label: 'Wonder Architect',
+    desc: 'Level 3 cards cost 3 less. Win Condition: 13 Crowns (No Single Color Win).',
+    effects: { passive: { l3Discount: 3 }, winCondition: { crowns: 13, disableSingleColor: true } }
+  },
+  MINIMALIST: {
+    id: 'minimalist',
+    level: 3,
+    label: 'Minimalist',
+    desc: 'First 5 cards purchased provide Double Bonuses. Max Gems: 6.',
+    effects: { passive: { doubleBonusFirst5: true, gemCap: 6 } }
+  },
+  PACIFIST: {
+    id: 'pacifist',
+    level: 3,
+    label: 'Pacifist',
+    desc: 'Immune to negative effects (Theft). Start with 1 extra Privilege.',
+    effects: { passive: { immuneNegative: true } }
+  },
+  DESPERATE_GAMBLE: {
+    id: 'desperate_gamble',
+    level: 3,
+    label: 'Desperate Gamble',
+    desc: 'Start with 2 Gold. Cannot "Take 3 Gems". Gain a special (non-stealable) Privilege every 2 turns.',
+    effects: { onInit: { gold: 2 }, passive: { noTake3: true, periodicPrivilege: 2 } }
+  },
+  
+  // Default
+  NONE: {
+    id: 'none',
+    level: 0,
+    label: 'Classic',
+    desc: 'No buffs.',
+    effects: {}
+  }
+};

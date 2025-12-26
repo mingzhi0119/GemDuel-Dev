@@ -13,6 +13,8 @@ import { ReplayControls } from './components/ReplayControls';
 import { RoyalCourt } from './components/RoyalCourt';
 import { Rulebook } from './components/Rulebook';
 import { TopBar } from './components/TopBar';
+import { DraftScreen } from './components/DraftScreen';
+import { DeckPeekModal } from './components/DeckPeekModal';
 
 import { useGameLogic } from './hooks/useGameLogic';
 import { useSettings } from './hooks/useSettings';
@@ -29,7 +31,8 @@ export default function GemDuelBoard() {
   const {
     board, bag, turn, selectedGems, errorMsg, winner, gameMode,
     bonusGemTarget, decks, market, inventories, privileges, playerTableau,
-    playerReserved, royalDeck, playerRoyals, lastFeedback
+    playerReserved, royalDeck, playerRoyals, lastFeedback, playerBuffs = {},
+    draftPool, buffLevel, activeModal
   } = state;
 
   const {
@@ -37,13 +40,73 @@ export default function GemDuelBoard() {
     handleReplenish, handleReserveCard, handleReserveDeck, initiateBuy,
     handleSelectRoyal, handleCancelReserve, activatePrivilegeMode,
     checkAndInitiateBuyReserved, handleDebugAddCrowns, handleDebugAddPoints,
-    handleForceRoyal, handleSelectBonusColor
+    handleForceRoyal, handleSelectBonusColor, startGame,
+    handleSelectBuff, handleCloseModal, handlePeekDeck
   } = handlers;
   
   const { getPlayerScore, isSelected, getCrownCount } = getters;
   
   const effectiveGameMode = isReviewing ? 'REVIEW' : (winner ? 'GAME_OVER' : gameMode);
 
+  // --- 1. Start Screen ---
+  if (historyControls.historyLength === 0) {
+      return (
+          <div className={`h-screen w-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500
+              ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}
+          `}>
+              <div className="flex flex-col items-center gap-2 animate-in slide-in-from-bottom-4 duration-700">
+                  <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-gradient-to-br from-amber-400 to-amber-600 bg-clip-text text-transparent drop-shadow-lg">
+                      SPLENDOR DUEL
+                  </h1>
+                  <span className="text-sm uppercase tracking-widest opacity-60">Reimagined</span>
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-6 mt-8">
+                  <button 
+                      onClick={() => startGame({ useBuffs: false })}
+                      className="group relative w-64 h-40 rounded-2xl border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden
+                          border-slate-300 hover:border-blue-500 bg-white/5 hover:bg-blue-500/10"
+                  >
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <span className="text-2xl font-bold">Classic</span>
+                      <span className="text-xs opacity-70 max-w-[80%] text-center">Standard rules. Pure strategy.</span>
+                  </button>
+
+                  <button 
+                      onClick={() => startGame({ useBuffs: true })}
+                      className="group relative w-64 h-40 rounded-2xl border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden
+                          border-slate-300 hover:border-purple-500 bg-white/5 hover:bg-purple-500/10"
+                  >
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex items-center gap-2">
+                          <span className="text-2xl font-bold">Roguelike</span>
+                          <span className="bg-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                      </div>
+                      <span className="text-xs opacity-70 max-w-[80%] text-center">Random starting buffs & distinct playstyles.</span>
+                  </button>
+              </div>
+              
+              <div className="absolute bottom-8 text-xs opacity-30">
+                  Select a mode to begin
+              </div>
+          </div>
+      );
+  }
+
+  // --- 2. Draft Phase ---
+  if (gameMode === 'DRAFT_PHASE') {
+      return (
+          <DraftScreen 
+              draftPool={draftPool}
+              buffLevel={buffLevel}
+              activePlayer={turn}
+              onSelectBuff={handleSelectBuff}
+              theme={theme}
+          />
+      );
+  }
+
+  // --- 3. Main Game Interface ---
   return (
     <div className={`h-screen w-screen font-sans flex flex-col overflow-hidden transition-colors duration-500
         ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}
@@ -57,6 +120,7 @@ export default function GemDuelBoard() {
         p2Crowns={getCrownCount('p2')}
         turnCount={historyControls.currentIndex + 1}
         activePlayer={turn}
+        playerBuffs={playerBuffs}
         theme={theme}
       />
 
@@ -102,13 +166,19 @@ export default function GemDuelBoard() {
 
       {showDebug && (
         <div className="fixed left-4 top-36 z-[90] flex flex-col gap-4 animate-in slide-in-from-left duration-300">
-          <DebugPanel player="p1" onAddCrowns={() => handleDebugAddCrowns('p1')} onAddPoints={() => handleDebugAddPoints('p1')} onForceRoyal={() => handleForceRoyal()} />
-          <DebugPanel player="p2" onAddCrowns={() => handleDebugAddCrowns('p2')} onAddPoints={() => handleDebugAddPoints('p2')} onForceRoyal={() => handleForceRoyal()} />
+          <DebugPanel player="p1" onAddCrowns={() => handleDebugAddCrowns('p1')} onAddPoints={() => handleDebugAddPoints('p1')} onForceRoyal={() => handleForceRoyal()} theme={theme} />
+          <DebugPanel player="p2" onAddCrowns={() => handleDebugAddCrowns('p2')} onAddPoints={() => handleDebugAddPoints('p2')} onForceRoyal={() => handleForceRoyal()} theme={theme} />
         </div>
       )}
 
       {/* Modals */}
       {showRulebook && <Rulebook onClose={() => setShowRulebook(false)} />}
+      <DeckPeekModal 
+          isOpen={activeModal?.type === 'PEEK'} 
+          data={activeModal?.data} 
+          onClose={handleCloseModal}
+          theme={theme}
+      />
       {gameMode === 'SELECT_CARD_COLOR' && (
         <div className="fixed inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
             <h2 className="text-2xl font-bold text-white mb-6">Select Card Color</h2>
@@ -164,6 +234,8 @@ export default function GemDuelBoard() {
                       handleConfirmTake={handleConfirmTake}
                       selectedGems={selectedGems}
                       handleCancelReserve={handleCancelReserve}
+                      activeBuff={playerBuffs[turn]}
+                      onPeekDeck={handlePeekDeck}
                       theme={theme}
                   />
               </div>
@@ -213,8 +285,9 @@ export default function GemDuelBoard() {
                   onUsePrivilege={activatePrivilegeMode}
                   isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
                   isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p1'}
-                  isDiscardMode={false} 
+                  isDiscardMode={effectiveGameMode === 'DISCARD_EXCESS_GEMS' && turn === 'p1'} 
                   onGemClick={turn === 'p1' ? handleSelfGemClick : handleOpponentGemClick}
+                  buff={playerBuffs?.p1}
                   theme={theme}
               />
           </div>
@@ -236,8 +309,9 @@ export default function GemDuelBoard() {
                   onUsePrivilege={activatePrivilegeMode}
                   isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
                   isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p2'}
-                  isDiscardMode={false} 
+                  isDiscardMode={effectiveGameMode === 'DISCARD_EXCESS_GEMS' && turn === 'p2'} 
                   onGemClick={turn === 'p2' ? handleSelfGemClick : handleOpponentGemClick}
+                  buff={playerBuffs?.p2}
                   theme={theme}
               />
           </div>

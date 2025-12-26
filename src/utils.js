@@ -53,27 +53,60 @@ export const generateDeck = (level) => {
 };
 
 // 🟢 计算买卡逻辑 (支持 bonusCount 双倍加成)
-export const calculateCost = (card, pid, inventories, playerTableau) => {
-  const inv = inventories[pid];
-  
-  // 计算玩家已有的宝石加成 (累加 bonusCount)
-  const bonuses = BONUS_COLORS.reduce((acc, color) => { 
-    acc[color] = playerTableau[pid]
+export const getPlayerBonuses = (pid, playerTableau) => {
+  const tableau = playerTableau[pid] || [];
+  return BONUS_COLORS.reduce((acc, color) => { 
+    acc[color] = tableau
       .filter(c => c.bonusColor === color)
       .reduce((sum, c) => sum + (c.bonusCount || 1), 0);
     return acc; 
   }, {});
+};
 
-  let totalGoldNeeded = 0;
+export const calculateCost = (card, pid, inventories, playerTableau, preCalculatedBonuses = null, playerBuffs = null) => {
+  const inv = inventories[pid] || {};
+  
+  // 计算玩家已有的宝石加成 (累加 bonusCount)
+  const bonuses = preCalculatedBonuses || getPlayerBonuses(pid, playerTableau);
+
+  // Buff 减费逻辑
+  const buffEffects = playerBuffs?.[pid]?.effects?.passive || {};
+  const buffDiscountColor = playerBuffs?.[pid]?.state?.discountColor;
+  
+  const isGoldBuffActive = buffEffects.goldBuff && card.level === 3;
+  const totalFlatDiscount = (buffEffects.discountAny || 0) + 
+                           (card.level === 3 && buffEffects.l3Discount ? buffEffects.l3Discount : 0);
+  
+  let rawCost = {};
+
   for (const [color, costAmt] of Object.entries(card.cost)) {
-    // 珍珠没有折扣
-    const discount = color === 'pearl' ? 0 : (bonuses[color] || 0);
-    const actualCost = Math.max(0, costAmt - discount);
-    const playerGemCount = inv[color] || 0;
+    let discount = (color !== 'pearl') ? (bonuses[color] || 0) : 0;
     
-    if (playerGemCount < actualCost) {
-      totalGoldNeeded += (actualCost - playerGemCount);
+    if (color === buffDiscountColor) discount += 1;
+    
+    rawCost[color] = Math.max(0, costAmt - discount);
+  }
+
+  // 应用平减折扣 (如 discountAny) 到原始需求中
+  let remainingFlatDiscount = totalFlatDiscount;
+  for (const color of Object.keys(rawCost)) {
+    if (remainingFlatDiscount > 0 && rawCost[color] > 0) {
+      const reduction = Math.min(rawCost[color], remainingFlatDiscount);
+      rawCost[color] -= reduction;
+      remainingFlatDiscount -= reduction;
     }
   }
+
+  // 计算最终需要的黄金数量
+  let totalGoldNeeded = Object.entries(rawCost).reduce((acc, [color, needed]) => {
+    const playerHas = inv[color] || 0;
+    return acc + Math.max(0, needed - playerHas);
+  }, 0);
+
+  // Apply All-Seeing Eye Gold Buff (Gold counts as double for Level 3)
+  if (isGoldBuffActive && totalGoldNeeded > 0) {
+      totalGoldNeeded = Math.ceil(totalGoldNeeded / 2.0);
+  }
+
   return totalGoldNeeded <= (inv.gold || 0);
 };

@@ -1,9 +1,21 @@
 import React from 'react';
 import { Crown, Trophy, History } from 'lucide-react';
 
-export const TopBar = ({ p1Score, p1Crowns, p2Score, p2Crowns, turnCount, activePlayer, theme }) => {
-    const isP1Winning = p1Score >= 15 || p1Crowns >= 7;
-    const isP2Winning = p2Score >= 15 || p2Crowns >= 7;
+export const TopBar = ({ p1Score, p1Crowns, p2Score, p2Crowns, turnCount, activePlayer, theme, playerBuffs = {} }) => {
+    
+    const getVictoryGoals = (pid) => {
+        const buff = playerBuffs[pid]?.effects?.winCondition || {};
+        return {
+            points: buff.points || 20,
+            crowns: buff.crowns || 10
+        };
+    };
+
+    const p1Goals = getVictoryGoals('p1');
+    const p2Goals = getVictoryGoals('p2');
+
+    const isP1Winning = p1Score >= (p1Goals.points * 0.75) || p1Crowns >= (p1Goals.crowns * 0.7);
+    const isP2Winning = p2Score >= (p2Goals.points * 0.75) || p2Crowns >= (p2Goals.crowns * 0.7);
 
     return (
         <div className={`fixed top-0 left-0 w-full h-20 backdrop-blur-md border-b z-[60] flex items-center justify-between px-8 transition-colors duration-500
@@ -13,15 +25,15 @@ export const TopBar = ({ p1Score, p1Crowns, p2Score, p2Crowns, turnCount, active
             <div className={`flex items-center gap-8 transition-all duration-500 ${activePlayer === 'p1' ? 'opacity-100 scale-105' : 'opacity-100'}`}>
                 <span className="text-lg font-black text-emerald-500 uppercase tracking-widest drop-shadow-md">Player 1</span>
                 <div className="flex items-center gap-6">
-                    <div className={`flex items-center gap-2 ${isP1Winning && p1Score >= 15 ? 'animate-pulse text-yellow-400' : (theme === 'dark' ? 'text-white' : 'text-slate-800')}`}>
+                    <div className={`flex items-center gap-2 ${isP1Winning ? 'animate-pulse text-yellow-400' : (theme === 'dark' ? 'text-white' : 'text-slate-800')}`}>
                         <Trophy size={24} />
                         <span className="text-4xl font-black drop-shadow-lg">{p1Score}</span>
-                        <span className="text-xs text-slate-500 font-bold mt-2">PTS</span>
+                        <span className="text-xs text-slate-500 font-bold mt-2">/ {p1Goals.points}</span>
                     </div>
-                    <div className={`flex items-center gap-2 ${isP1Winning && p1Crowns >= 7 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}>
+                    <div className={`flex items-center gap-2 ${p1Crowns >= (p1Goals.crowns - 3) ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}>
                         <Crown size={24} fill="currentColor" />
                         <span className="text-4xl font-black drop-shadow-lg">{p1Crowns}</span>
-                        <span className="text-xs text-slate-500 font-bold mt-2">/ 10</span>
+                        <span className="text-xs text-slate-500 font-bold mt-2">/ {p1Goals.crowns}</span>
                     </div>
                 </div>
             </div>
@@ -40,15 +52,15 @@ export const TopBar = ({ p1Score, p1Crowns, p2Score, p2Crowns, turnCount, active
             <div className={`flex items-center gap-8 transition-all duration-500 flex-row-reverse ${activePlayer === 'p2' ? 'opacity-100 scale-105' : 'opacity-100'}`}>
                 <span className="text-lg font-black text-blue-500 uppercase tracking-widest drop-shadow-md">Player 2</span>
                 <div className="flex items-center gap-6 flex-row-reverse">
-                    <div className={`flex items-center gap-2 ${isP2Winning && p2Score >= 15 ? 'animate-pulse text-yellow-400' : (theme === 'dark' ? 'text-white' : 'text-slate-800')}`}>
+                    <div className={`flex items-center gap-2 ${isP2Winning ? 'animate-pulse text-yellow-400' : (theme === 'dark' ? 'text-white' : 'text-slate-800')}`}>
                         <Trophy size={24} />
                         <span className="text-4xl font-black drop-shadow-lg">{p2Score}</span>
-                        <span className="text-xs text-slate-500 font-bold mt-2">PTS</span>
+                        <span className="text-xs text-slate-500 font-bold mt-2">/ {p2Goals.points}</span>
                     </div>
-                    <div className={`flex items-center gap-2 ${isP2Winning && p2Crowns >= 7 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}>
+                    <div className={`flex items-center gap-2 ${p2Crowns >= (p2Goals.crowns - 3) ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}>
                         <Crown size={24} fill="currentColor" />
                         <span className="text-4xl font-black drop-shadow-lg">{p2Crowns}</span>
-                        <span className="text-xs text-slate-500 font-bold mt-2">/ 10</span>
+                        <span className="text-xs text-slate-500 font-bold mt-2">/ {p2Goals.crowns}</span>
                     </div>
                 </div>
             </div>

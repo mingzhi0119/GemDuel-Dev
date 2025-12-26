@@ -3,7 +3,7 @@ import { Crown, Download, RotateCcw, Hand, Scroll, Plus } from 'lucide-react';
 import { GEM_TYPES, ABILITIES } from '../constants';
 import { GemIcon } from './GemIcon';
 
-export const Card = ({ card, canBuy, onClick, onReserve, isReservedView = false, isRoyal = false, className = '', size = 'default' }) => {
+export const Card = React.memo(({ card, canBuy, onClick, onReserve, context, isReservedView = false, isRoyal = false, className = '', size = 'default', theme = 'dark' }) => {
   // Empty State
   if (!card) return (
     <div className="w-24 h-32 bg-slate-800/50 rounded-lg border border-dashed border-slate-700 flex items-center justify-center text-slate-600 text-xs">
@@ -33,7 +33,8 @@ export const Card = ({ card, canBuy, onClick, onReserve, isReservedView = false,
   
   const handleCardClick = () => {
       if ((canBuy || isRoyal) && onClick) {
-          onClick();
+          const ctx = context ? JSON.parse(context) : undefined;
+          onClick(card, ctx);
       }
   };
 
@@ -78,8 +79,12 @@ export const Card = ({ card, canBuy, onClick, onReserve, isReservedView = false,
     <div 
         onClick={handleCardClick}
         className={`relative ${containerSize} rounded-lg border transition-all duration-200 bg-gradient-to-b ${bgGradient} overflow-hidden group ${className}
-        ${(canBuy && !isRoyal) ? 'border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)] cursor-pointer hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-0' : 
-          isRoyal ? 'border-yellow-700/50' : 'border-slate-600 opacity-90 cursor-default'}
+        ${(canBuy && !isRoyal) 
+            ? (theme === 'dark' ? 'border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]' : 'border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]') + ' cursor-pointer hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-0' 
+            : isRoyal 
+                ? 'border-yellow-700/50' 
+                : (theme === 'dark' ? 'border-slate-600' : 'border-slate-300') + ' opacity-90 cursor-default'
+        }
     `}>
       
       {/* 1. Top Left: Points & Ability */}
@@ -135,7 +140,11 @@ export const Card = ({ card, canBuy, onClick, onReserve, isReservedView = false,
       {!isReservedView && !isRoyal && onReserve && (
         <div className="absolute inset-x-0 top-2 flex items-start justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
              <button 
-                onClick={(e) => { e.stopPropagation(); onReserve(card); }}
+                onClick={(e) => { 
+                    e.stopPropagation(); 
+                    const ctx = context ? JSON.parse(context) : undefined;
+                    onReserve(card, ctx); 
+                }}
                 className={`bg-yellow-500 hover:bg-yellow-400 ${reserveButtonPadding} rounded-full text-white shadow-lg transition-transform hover:scale-110 active:scale-90`}
                 title="Reserve"
              >
@@ -145,4 +154,4 @@ export const Card = ({ card, canBuy, onClick, onReserve, isReservedView = false,
       )}
     </div>
   );
-};
+});

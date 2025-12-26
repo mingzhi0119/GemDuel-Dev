@@ -39,12 +39,16 @@ export const Rulebook = ({ onClose, theme }) => {
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-8">
-                    <h3 className={`text-2xl font-bold mb-6 pb-2 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-slate-800 border-slate-200'}`}>
-                        {content.title[lang]}
-                    </h3>
-                    <div className={`leading-relaxed whitespace-pre-wrap text-sm md:text-base ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
-                        {content.body[lang]}
-                    </div>
+                    {content && (
+                        <>
+                            <h3 className={`text-2xl font-bold mb-6 pb-2 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-slate-800 border-slate-200'}`}>
+                                {content.title?.[lang] || 'Untitled'}
+                            </h3>
+                            <div className={`leading-relaxed whitespace-pre-wrap text-sm md:text-base ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}>
+                                {content.body?.[lang] || 'No content available.'}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Footer / Pagination */}
