@@ -9,6 +9,16 @@
 // GEM TYPES & COLORS
 // ============================================================================
 
+declare global {
+    interface Window {
+        ipcRenderer: {
+            on: (channel: string, func: (...args: any[]) => void) => void;
+            send: (channel: string, ...args: any[]) => void;
+            removeAllListeners: (channel: string) => void;
+        };
+    }
+}
+
 /**
  * Coordinate on the game board
  */
