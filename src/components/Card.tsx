@@ -169,23 +169,25 @@ export const Card: React.FC<CardProps> = React.memo(
                 {card.cost && (
                     <div className="absolute bottom-1.5 left-1.5 pointer-events-none z-10">
                         <div className="flex flex-col gap-0.5">
-                            {Object.entries(card.cost).map(([color, amt]) => (
-                                // 🟢 修复：min-w-[18px] min-h-[18px] 强制保持圆形
-                                <div
-                                    key={color}
-                                    className={`
+                            {Object.entries(card.cost)
+                                .filter(([, amt]) => (amt as number) > 0)
+                                .map(([color, amt]) => (
+                                    // 🟢 修复：min-w-[18px] min-h-[18px] 强制保持圆形
+                                    <div
+                                        key={color}
+                                        className={`
                     relative flex items-center justify-center ${costContainerSize} rounded-full shrink-0
-                    bg-gradient-to-br ${GEM_TYPES[color.toUpperCase()].color} 
+                    bg-gradient-to-br ${GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES].color} 
                     shadow-[0_1px_2px_rgba(0,0,0,0.5)] border border-white/10
                 `}
-                                >
-                                    <span
-                                        className={`${costTextSize} font-black text-white z-10 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] leading-none`}
                                     >
-                                        {amt}
-                                    </span>
-                                </div>
-                            ))}
+                                        <span
+                                            className={`${costTextSize} font-black text-white z-10 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] leading-none`}
+                                        >
+                                            {amt}
+                                        </span>
+                                    </div>
+                                ))}
                         </div>
                     </div>
                 )}
