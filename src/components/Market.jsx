@@ -1,7 +1,7 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Layers } from 'lucide-react';
 import { Card } from './Card';
-import { calculateCost, getPlayerBonuses } from '../utils';
+import { calculateTransaction } from '../utils';
 
 export const Market = React.memo(({
     market,
@@ -16,11 +16,6 @@ export const Market = React.memo(({
     handleReserveCard,
     theme
 }) => {
-    // Optimization: Pre-calculate bonuses for the current player once per render
-    const currentBonuses = useMemo(() => {
-        return getPlayerBonuses(turn, playerTableau);
-    }, [turn, playerTableau]);
-
     // Optimization: Stable callback for buying cards
     const handleBuy = useCallback((card, context) => {
         if (card && context) {
@@ -74,8 +69,8 @@ export const Market = React.memo(({
 
                     {market[lvl].map((card, i) => (
                         <Card key={i} card={card}
-                            // Optimization: Pass pre-calculated bonuses
-                            canBuy={gameMode === 'IDLE' && card && calculateCost(card, turn, inventories, playerTableau, currentBonuses, playerBuffs)}
+                            // Optimization: Check affordability using unified logic
+                            canBuy={gameMode === 'IDLE' && card && calculateTransaction(card, inventories[turn], playerTableau[turn], playerBuffs[turn]).affordable}
                             context={JSON.stringify({ level: lvl, idx: i })}
                             onClick={handleBuy}
                             onReserve={handleReserve}

@@ -2,9 +2,21 @@
 
 **Gem Duel** is a competitive strategy game designed specifically for two players. In this digital adaptation, players act as masters of a jewelry guild, competing to satisfy monarchs and nobility by collecting gems, pearls, and gold to acquire prestigious cards.
 
-> **v3.0.0 "Fate & Fortune" Update** is now live!
+> **v3.1.0 "Architecture & Stability" Update** is now live!
 
-## 🚀 What's New in v3.0.0
+## 🔧 What's New in v3.1.0
+
+### 🏗️ Architectural Overhaul (Refactoring)
+To support future expansions and ensure rock-solid stability, the entire Game Logic Engine has been rewritten.
+*   **Modular Design:** The monolithic logic hook has been split into a dedicated Reducer and specialized Action Handlers (`boardActions`, `marketActions`, etc.).
+*   **Pure Logic Engine:** Game rules are now completely decoupled from UI code, improving performance and testability.
+
+### 🛡️ Bug Fixes & Stability
+*   **Fixed State Corruption:** Resolved a critical issue where the initial game state was mutable, causing bugs across game resets.
+*   **Unified Calculations:** All cost and affordability checks (UI and Logic) now use a single `calculateTransaction` source of truth, fixing discrepancies with specific buffs like "Color Preference".
+*   **Market Fixes:** Resolved rendering crashes related to missing prop propagation in the Market component.
+
+## 🚀 v3.0.0 "Fate & Fortune" Features
 
 ### 🔮 Roguelike Mode (Asymmetric Gameplay)
 Break away from the symmetry! Before the game begins, players participate in a **Draft Phase** to select powerful Buffs that alter their strategy for the entire match.

@@ -52,61 +52,63 @@ export const generateDeck = (level) => {
   return shuffleArray(deck);
 };
 
-// 🟢 计算买卡逻辑 (支持 bonusCount 双倍加成)
-export const getPlayerBonuses = (pid, playerTableau) => {
-  const tableau = playerTableau[pid] || [];
-  return BONUS_COLORS.reduce((acc, color) => { 
-    acc[color] = tableau
+// 🟢 Unified Transaction Calculator (Used by Hook and Reducer)
+export const calculateTransaction = (card, playerInv, playerTableau, playerBuffs = null) => {
+  const bonuses = BONUS_COLORS.reduce((acc, color) => { 
+    acc[color] = playerTableau
       .filter(c => c.bonusColor === color)
       .reduce((sum, c) => sum + (c.bonusCount || 1), 0);
     return acc; 
   }, {});
-};
 
-export const calculateCost = (card, pid, inventories, playerTableau, preCalculatedBonuses = null, playerBuffs = null) => {
-  const inv = inventories[pid] || {};
+  const buffEffects = playerBuffs?.effects?.passive || {};
   
-  // 计算玩家已有的宝石加成 (累加 bonusCount)
-  const bonuses = preCalculatedBonuses || getPlayerBonuses(pid, playerTableau);
+  // Flexible Discount: Only applies to Level 2 and 3 cards
+  const discountAny = (card.level === 2 || card.level === 3) ? (buffEffects.discountAny || 0) : 0;
+  const l3Discount = (card.level === 3 && buffEffects.l3Discount) ? buffEffects.l3Discount : 0;
+  const totalFlatDiscount = discountAny + l3Discount;
 
-  // Buff 减费逻辑
-  const buffEffects = playerBuffs?.[pid]?.effects?.passive || {};
-  const buffDiscountColor = playerBuffs?.[pid]?.state?.discountColor;
-  
-  const isGoldBuffActive = buffEffects.goldBuff && card.level === 3;
-  const totalFlatDiscount = (buffEffects.discountAny || 0) + 
-                           (card.level === 3 && buffEffects.l3Discount ? buffEffects.l3Discount : 0);
-  
   let rawCost = {};
+  
+  // 1. Apply Bonus Discounts
+  Object.entries(card.cost).forEach(([color, cost]) => {
+      let discount = 0;
+      if (color !== 'pearl') discount = bonuses[color] || 0;
+      // Note: Color Preference dummy card already adds to 'bonuses' in tableau, so no extra logic here.
+      
+      const needed = Math.max(0, cost - discount);
+      rawCost[color] = needed;
+  });
+  
+  // 2. Apply Flat Discounts (Buffs)
+  let remainingDiscount = totalFlatDiscount;
+   Object.keys(rawCost).forEach(color => {
+       if (remainingDiscount > 0 && rawCost[color] > 0) {
+           const reduction = Math.min(rawCost[color], remainingDiscount);
+           rawCost[color] -= reduction;
+           remainingDiscount -= reduction;
+       }
+   });
 
-  for (const [color, costAmt] of Object.entries(card.cost)) {
-    let discount = (color !== 'pearl') ? (bonuses[color] || 0) : 0;
-    
-    if (color === buffDiscountColor) discount += 1;
-    
-    rawCost[color] = Math.max(0, costAmt - discount);
+  let goldCost = 0;
+  let gemsPaid = {}; 
+  
+  // 3. Calculate Payment
+  Object.entries(rawCost).forEach(([color, needed]) => {
+      const available = playerInv[color] || 0;
+      const paid = Math.min(needed, available);
+      
+      gemsPaid[color] = paid;
+      goldCost += (needed - paid);
+  });
+  
+  // 4. All-Seeing Eye Gold Buff
+  const isGoldBuff = buffEffects.goldBuff && card.level === 3;
+  if (isGoldBuff) {
+      goldCost = Math.ceil(goldCost / 2.0);
   }
 
-  // 应用平减折扣 (如 discountAny) 到原始需求中
-  let remainingFlatDiscount = totalFlatDiscount;
-  for (const color of Object.keys(rawCost)) {
-    if (remainingFlatDiscount > 0 && rawCost[color] > 0) {
-      const reduction = Math.min(rawCost[color], remainingFlatDiscount);
-      rawCost[color] -= reduction;
-      remainingFlatDiscount -= reduction;
-    }
-  }
-
-  // 计算最终需要的黄金数量
-  let totalGoldNeeded = Object.entries(rawCost).reduce((acc, [color, needed]) => {
-    const playerHas = inv[color] || 0;
-    return acc + Math.max(0, needed - playerHas);
-  }, 0);
-
-  // Apply All-Seeing Eye Gold Buff (Gold counts as double for Level 3)
-  if (isGoldBuffActive && totalGoldNeeded > 0) {
-      totalGoldNeeded = Math.ceil(totalGoldNeeded / 2.0);
-  }
-
-  return totalGoldNeeded <= (inv.gold || 0);
+  const affordable = (playerInv.gold || 0) >= goldCost;
+  
+  return { affordable, goldCost, gemsPaid };
 };

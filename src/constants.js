@@ -63,7 +63,7 @@ export const BUFFS = {
     level: 1, 
     label: 'Head Start', 
     desc: 'Start with 1 random basic Gem. Win Condition: 18 Points.',
-    effects: { onInit: { randomGem: 1 } }
+    effects: { onInit: { randomGem: 1 }, winCondition: { points: 18 } }
   },
   ROYAL_BLOOD: { 
     id: 'royal_blood', 

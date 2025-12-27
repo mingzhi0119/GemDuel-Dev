@@ -209,6 +209,7 @@ export default function GemDuelBoard() {
                   turn={turn}
                   inventories={inventories}
                   playerTableau={playerTableau}
+                  playerBuffs={playerBuffs}
                   handleReserveDeck={handleReserveDeck}
                   initiateBuy={initiateBuy}
                   handleReserveCard={handleReserveCard}
