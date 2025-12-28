@@ -692,7 +692,7 @@ export default function GemDuelBoard() {
             >
                 {/* Player 1 Dashboard (Left) */}
                 <div
-                    className={`flex-1 border-r relative overflow-hidden ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}`}
+                    className={`flex-1 border-r relative ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}`}
                 >
                     <div
                         className={`w-full h-full transform ${settings.zoneScale} origin-center lg:scale-100`}
@@ -723,7 +723,7 @@ export default function GemDuelBoard() {
                 </div>
 
                 {/* Player 2 Dashboard (Right) */}
-                <div className="flex-1 relative overflow-hidden">
+                <div className="flex-1 relative">
                     <div
                         className={`w-full h-full transform ${settings.zoneScale} origin-center lg:scale-100`}
                     >

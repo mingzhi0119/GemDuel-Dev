@@ -24,9 +24,19 @@ const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff, theme, align = 'center'
     if (align === 'right') alignClasses = 'right-0 origin-top-right';
 
     const discountColor = buff.state?.discountColor;
-    const description = discountColor
+    let description = discountColor
         ? buff.desc.replace('Random color', `Random color (${discountColor})`)
         : buff.desc;
+
+    // Remove redundant Win Condition info from description if Victory Goals section exists
+    if (buff.effects?.winCondition) {
+        description = description
+            .replace(/Win Condition:.*?\./gi, '')
+            .replace(/Win Condition:.*?$/gi, '')
+            .replace(/\(No Single Color Win\)/gi, '')
+            .replace(/No Single Color Win\.?/gi, '')
+            .trim();
+    }
 
     return (
         <div className="relative group/buff mt-2">
@@ -43,7 +53,7 @@ const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff, theme, align = 'center'
             {/* Tooltip */}
             <div
                 className={`
-                absolute bottom-full ${alignClasses} mb-2 w-48 p-3 rounded-lg border shadow-xl backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover/buff:opacity-100 transition-opacity duration-200
+                absolute bottom-full ${alignClasses} mb-2 w-48 p-3 rounded-lg border shadow-xl backdrop-blur-md z-[100] pointer-events-none opacity-0 group-hover/buff:opacity-100 transition-opacity duration-200
                 ${theme === 'dark' ? 'bg-slate-900/95 border-slate-700 text-slate-200' : 'bg-white/95 border-slate-200 text-slate-800'}
             `}
             >

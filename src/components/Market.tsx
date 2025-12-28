@@ -65,13 +65,59 @@ export const Market: React.FC<MarketProps> = React.memo(
                     const revealL3 = lvl === 3 && pBuffs.extraL3;
                     const deck = decks[lvl];
                     const topCard = deck.length > 0 ? deck[deck.length - 1] : null;
-                    const isRevealed = (revealL1 || revealL3) && topCard;
+                    const isRevealed = revealL1 && topCard; // Only revealL1 shows card inside deck container
+
+                    // Logic for All-Seeing Eye extra cards
+                    const extraL3Cards =
+                        lvl === 3 && revealL3
+                            ? [
+                                  deck.length > 1 ? deck[deck.length - 2] : null,
+                                  deck.length > 2 ? deck[deck.length - 3] : null,
+                              ].filter(Boolean)
+                            : [];
 
                     return (
                         <div key={lvl} className="flex gap-3 justify-center items-center">
-                            <div
-                                onClick={() => handleReserveDeck(lvl)}
-                                className={`w-24 h-32 shrink-0 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md relative overflow-hidden group
+                            {/* Deck Container */}
+                            <div className="relative">
+                                {/* Extra Cards for All-Seeing Eye (Positioned absolutely to the left) */}
+                                {lvl === 3 && extraL3Cards.length > 0 && (
+                                    <div className="absolute right-full mr-4 flex gap-2 top-0">
+                                        {extraL3Cards.map((card, idx) => (
+                                            <div
+                                                key={`extra-${idx}`}
+                                                className="animate-in slide-in-from-right-4 fade-in duration-500"
+                                            >
+                                                <Card
+                                                    card={card}
+                                                    canBuy={
+                                                        gameMode === 'IDLE' &&
+                                                        card !== null &&
+                                                        calculateTransaction(
+                                                            card,
+                                                            inventories[turn],
+                                                            playerTableau[turn],
+                                                            playerBuffs[turn]
+                                                        ).affordable
+                                                    }
+                                                    // We use a special index to tell the handler these are from the deck
+                                                    context={JSON.stringify({
+                                                        level: 3,
+                                                        isExtra: true,
+                                                        extraIdx: idx + 1,
+                                                    })}
+                                                    onClick={handleBuy}
+                                                    onReserve={handleReserve}
+                                                    theme={theme}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div
+                                    onClick={() => handleReserveDeck(lvl)}
+                                    className={`w-24 h-32 shrink-0 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md relative overflow-hidden group
                             ${
                                 gameMode === 'IDLE' && decks[lvl].length > 0
                                     ? (theme === 'dark'
@@ -83,32 +129,32 @@ export const Market: React.FC<MarketProps> = React.memo(
                                           : 'border-slate-300 opacity-40') + ' cursor-default'
                             }
                         `}
-                            >
-                                <div
-                                    className={`absolute inset-0 ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-200'}`}
-                                />
+                                >
+                                    <div
+                                        className={`absolute inset-0 ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-200'}`}
+                                    />
 
-                                {isRevealed ? (
-                                    <div className="absolute inset-0 z-10 p-1 pointer-events-none">
-                                        {/* Use a scaled down version or custom renderer for the revealed card to ensure it fits and looks like "top of deck" */}
-                                        <Card
-                                            card={topCard}
-                                            canBuy={false}
-                                            theme={theme}
-                                            isDeckPreview={true}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="relative z-10 flex flex-col items-center">
-                                        <Layers size={18} className="text-slate-500 mb-1" />
-                                        <div className="text-slate-400 font-bold text-[10px]">
-                                            Lvl {lvl}
+                                    {isRevealed ? (
+                                        <div className="absolute inset-0 z-10 p-1 pointer-events-none">
+                                            <Card
+                                                card={topCard}
+                                                canBuy={false}
+                                                theme={theme}
+                                                isDeckPreview={true}
+                                            />
                                         </div>
-                                        <div className="text-slate-600 text-[9px] font-mono">
-                                            {decks[lvl].length}
+                                    ) : (
+                                        <div className="relative z-10 flex flex-col items-center">
+                                            <Layers size={18} className="text-slate-500 mb-1" />
+                                            <div className="text-slate-400 font-bold text-[10px]">
+                                                Lvl {lvl}
+                                            </div>
+                                            <div className="text-slate-600 text-[9px] font-mono">
+                                                {decks[lvl].length}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
 
                             {market[lvl].map((card, i) => (

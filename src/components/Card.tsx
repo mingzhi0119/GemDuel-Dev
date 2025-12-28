@@ -144,11 +144,13 @@ export const Card: React.FC<CardProps> = React.memo(
             >
                 {/* 1. Top Left: Points & Ability */}
                 <div className="absolute top-1 left-1.5 flex flex-row items-center gap-1 pointer-events-none z-10">
-                    <span
-                        className={`font-bold text-white leading-none drop-shadow-md ${card.points > 0 ? pointSize : 'text-sm opacity-0 hidden'}`}
-                    >
-                        {card.points > 0 ? card.points : '0'}
-                    </span>
+                    {card.points > 0 && (
+                        <span
+                            className={`font-bold text-white leading-none drop-shadow-md ${pointSize}`}
+                        >
+                            {card.points}
+                        </span>
+                    )}
                     {getAbilityContent()}
                 </div>
 
@@ -193,17 +195,21 @@ export const Card: React.FC<CardProps> = React.memo(
                 )}
 
                 {/* 4. Bottom Right: Crowns */}
-                <div className="absolute bottom-1.5 right-1.5 pointer-events-none flex flex-col items-center gap-0.5 z-10">
-                    {card.crowns &&
-                        card.crowns > 0 &&
-                        Array.from({ length: card.crowns }).map((_, i) => (
+                <div className="absolute bottom-1.5 right-1.5 pointer-events-none flex items-center gap-0.5 z-10">
+                    {card.crowns && card.crowns > 0 && (
+                        <>
                             <Crown
-                                key={i}
                                 size={crownIconSize}
                                 className="text-yellow-400 drop-shadow-md"
                                 fill="currentColor"
                             />
-                        ))}
+                            {card.crowns > 1 && (
+                                <span className="text-[10px] font-black text-white drop-shadow-md leading-none">
+                                    {card.crowns}
+                                </span>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 {/* 5. Royal Badge */}

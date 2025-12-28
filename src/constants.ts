@@ -297,7 +297,7 @@ export const BUFFS = {
         id: 'all_seeing_eye',
         level: 3,
         label: 'All-Seeing Eye',
-        desc: 'Reveal extra Level 3 card. Pay L3 cards with Gold at half value. Win Condition: Single Color 13.',
+        desc: 'Reveal 2 extra Level 3 cards. Pay L3 cards with Gold at half value. Win Condition: Single Color 13.',
         effects: { passive: { extraL3: true, goldBuff: true }, winCondition: { singleColor: 13 } },
     },
     WONDER_ARCHITECT: {

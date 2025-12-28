@@ -119,10 +119,23 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     if (source === 'market' && marketInfo) {
         const { level, idx } = marketInfo;
         const deck = state.decks[level];
-        if (deck.length > 0) {
-            state.market[level][idx] = deck.pop()!;
+        const isExtra = (marketInfo as any).isExtra;
+        const extraIdx = (marketInfo as any).extraIdx;
+
+        if (isExtra && level === 3) {
+            // Remove specific card from deck (extra cards are deck.length - 2 and deck.length - 3)
+            // extraIdx 1 -> length-2, extraIdx 2 -> length-3
+            const targetIdx = deck.length - (extraIdx + 1);
+            if (targetIdx >= 0) {
+                deck.splice(targetIdx, 1);
+            }
         } else {
-            state.market[level][idx] = null as any;
+            // Normal market behavior
+            if (deck.length > 0) {
+                state.market[level][idx] = deck.pop()!;
+            } else {
+                state.market[level][idx] = null as any;
+            }
         }
     } else if (source === 'reserved') {
         state.playerReserved[player] = state.playerReserved[player].filter((c) => c.id !== card.id);
@@ -225,8 +238,20 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
 
     state.playerReserved[player].push(card);
 
+    const { level, idx } = payload;
+    const isExtra = (payload as any).isExtra;
+    const extraIdx = (payload as any).extraIdx;
     const deck = state.decks[level];
-    state.market[level][idx] = deck.length > 0 ? deck.pop()! : (null as any);
+
+    if (isExtra && level === 3) {
+        // extraIdx 1 -> length-2, extraIdx 2 -> length-3
+        const targetIdx = deck.length - (extraIdx + 1);
+        if (targetIdx >= 0) {
+            deck.splice(targetIdx, 1);
+        }
+    } else {
+        state.market[level][idx] = deck.length > 0 ? deck.pop()! : (null as any);
+    }
 
     // Take gold gem if available
     if (goldCoords) {
