@@ -569,12 +569,17 @@ export default function GemDuelBoard() {
 
             {/* Modals */}
             {showRulebook && <Rulebook onClose={() => setShowRulebook(false)} theme={theme} />}
-            <DeckPeekModal
-                isOpen={activeModal?.type === 'PEEK'}
-                data={activeModal?.data}
-                onClose={handleCloseModal}
-                theme={theme}
-            />
+            
+            {/* Only show Peek Modal if it's My Turn (or local play) to prevent opponent from seeing it */}
+            {(!state.isOnline || (online.isHost ? turn === 'p1' : turn === 'p2')) && (
+                <DeckPeekModal
+                    isOpen={activeModal?.type === 'PEEK'}
+                    data={activeModal?.data}
+                    onClose={handleCloseModal}
+                    theme={theme}
+                />
+            )}
+            
             {gameMode === 'SELECT_CARD_COLOR' && (
                 <div className="fixed inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
                     <h2 className="text-2xl font-bold text-white mb-6">Select Card Color</h2>
@@ -623,6 +628,8 @@ export default function GemDuelBoard() {
                             initiateBuy={initiateBuy}
                             handleReserveCard={handleReserveCard}
                             theme={theme}
+                            isOnline={state.isOnline}
+                            localPlayer={online.isHost ? 'p1' : 'p2'}
                         />
                     </div>
 

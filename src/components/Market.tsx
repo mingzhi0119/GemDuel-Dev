@@ -16,6 +16,8 @@ interface MarketProps {
     initiateBuy: (card: CardType, source: string, context?: any) => void;
     handleReserveCard: (card: CardType, level: number, idx: number) => void;
     theme: 'light' | 'dark';
+    isOnline?: boolean;
+    localPlayer?: PlayerKey;
 }
 
 export const Market: React.FC<MarketProps> = React.memo(
@@ -31,6 +33,8 @@ export const Market: React.FC<MarketProps> = React.memo(
         initiateBuy,
         handleReserveCard,
         theme,
+        isOnline,
+        localPlayer,
     }) => {
         // Optimization: Stable callback for buying cards
         const handleBuy = useCallback(
@@ -60,9 +64,15 @@ export const Market: React.FC<MarketProps> = React.memo(
                     Market
                 </h2>
                 {[3, 2, 1].map((lvl) => {
-                    const pBuffs = playerBuffs?.[turn]?.effects?.passive || {};
-                    const revealL1 = lvl === 1 && pBuffs.revealDeck1;
-                    const revealL3 = lvl === 3 && pBuffs.extraL3;
+                    // Visibility Logic:
+                    // In Online Mode, only reveal if the LOCAL PLAYER has the buff.
+                    // In Hotseat Mode, reveal if the ACTIVE PLAYER has the buff.
+                    const visibilitySource = isOnline && localPlayer ? localPlayer : turn;
+                    const visibilityBuffs = playerBuffs?.[visibilitySource]?.effects?.passive || {};
+
+                    const revealL1 = lvl === 1 && visibilityBuffs.revealDeck1;
+                    const revealL3 = lvl === 3 && visibilityBuffs.extraL3;
+                    
                     const deck = decks[lvl];
                     const topCard = deck.length > 0 ? deck[deck.length - 1] : null;
                     const isRevealed = revealL1 && topCard; // Only revealL1 shows card inside deck container
