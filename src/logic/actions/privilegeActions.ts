@@ -62,8 +62,9 @@ export const handleUsePrivilege = (state: GameState, payload: UsePrivilegePayloa
 
         if (state.privilegeGemCount === 1) {
             // First gem taken, consume privilege
-            if ((buff?.state as any)?.specialPrivilege > 0) {
-                (buff!.state as any).specialPrivilege = 0;
+            // Prioritize consuming EXTRA (special) privileges first to prevent hoarding
+            if (state.extraPrivileges?.[state.turn] > 0) {
+                state.extraPrivileges[state.turn]--;
                 state.toastMessage = 'Used Special Privilege!';
             } else if (state.privileges[state.turn] > 0) {
                 state.privileges[state.turn]--;
@@ -87,8 +88,9 @@ export const handleUsePrivilege = (state: GameState, payload: UsePrivilegePayloa
         state.privilegeGemCount = 0;
     } else {
         // Normal privilege: consume it
-        if ((buff?.state as any)?.specialPrivilege > 0) {
-            (buff!.state as any).specialPrivilege = 0;
+        // Prioritize consuming EXTRA (special) privileges first to prevent hoarding
+        if (state.extraPrivileges?.[state.turn] > 0) {
+            state.extraPrivileges[state.turn]--;
             state.toastMessage = 'Used Special Privilege!';
         } else if (state.privileges[state.turn] > 0) {
             state.privileges[state.turn]--;

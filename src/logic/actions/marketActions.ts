@@ -51,10 +51,24 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         return state;
     }
 
-    // Return gems to bag
+    // Return gems to bag (handling extra allocation)
     Object.entries(gemsPaid).forEach(([color, paid]) => {
-        inv[color as GemColor] -= paid as number;
-        for (let k = 0; k < (paid as number); k++) {
+        const gemColor = color as GemColor;
+        inv[gemColor] -= paid as number;
+
+        let remainingToReturn = paid as number;
+
+        // Check if player has extra allocation for this color
+        // If so, consume it (vanish) instead of returning to bag
+        if (state.extraAllocation?.[player]?.[gemColor] > 0) {
+            const extraAvailable = state.extraAllocation[player][gemColor];
+            const amountConsumingExtra = Math.min(extraAvailable, remainingToReturn);
+
+            state.extraAllocation[player][gemColor] -= amountConsumingExtra;
+            remainingToReturn -= amountConsumingExtra;
+        }
+
+        for (let k = 0; k < remainingToReturn; k++) {
             state.bag.push({
                 type: GEM_TYPES[color.toUpperCase()],
                 uid: `returned-${color}-${Date.now()}-${k}`,
@@ -64,7 +78,16 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
     // Return gold to bag
     inv.gold -= goldCost;
-    for (let k = 0; k < goldCost; k++) {
+    let goldToReturn = goldCost;
+
+    if (state.extraAllocation?.[player]?.gold > 0) {
+        const extraGold = state.extraAllocation[player].gold;
+        const amountConsuming = Math.min(extraGold, goldToReturn);
+        state.extraAllocation[player].gold -= amountConsuming;
+        goldToReturn -= amountConsuming;
+    }
+
+    for (let k = 0; k < goldToReturn; k++) {
         state.bag.push({ type: GEM_TYPES.GOLD, uid: `returned-gold-${Date.now()}-${k}` } as any);
     }
 
@@ -86,6 +109,16 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
             const randColor = (randoms?.bountyHunterColor ||
                 basics[Math.floor(Math.random() * basics.length)]) as GemColor;
             inv[randColor]++;
+            
+            // Track as extra allocation
+            if (!state.extraAllocation) {
+                state.extraAllocation = {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                };
+            }
+            state.extraAllocation[player][randColor]++;
+            
             addFeedback(state, player, randColor, 1);
             state.toastMessage = 'Bounty Hunter: +1 Gem!';
         }
@@ -102,6 +135,16 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         if (paidColors.length > 0) {
             const refundColor = paidColors[0] as GemColor;
             inv[refundColor]++;
+            
+            // Track as extra allocation
+            if (!state.extraAllocation) {
+                state.extraAllocation = {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                };
+            }
+            state.extraAllocation[player][refundColor]++;
+            
             for (let i = state.bag.length - 1; i >= 0; i--) {
                 const bagItem = state.bag[i];
                 const bag = bagItem as any;

@@ -168,6 +168,16 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
         const randColor = (randoms?.expansionColor ||
             ['red', 'green', 'blue', 'white', 'black'][Math.floor(Math.random() * 5)]) as GemColor;
         state.inventories[state.turn][randColor]++;
+        
+        // Track as extra allocation (vanishes on use)
+        if (!state.extraAllocation) {
+            state.extraAllocation = {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            };
+        }
+        state.extraAllocation[state.turn][randColor]++;
+        
         addFeedback(state, state.turn, randColor, 1);
         state.toastMessage = 'Aggressive Expansion: +1 Gem!';
     }
