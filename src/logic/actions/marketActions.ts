@@ -91,17 +91,18 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         state.bag.push({ type: GEM_TYPES.GOLD, uid: `returned-gold-${Date.now()}-${k}` } as any);
     }
 
-    // Minimalism: Double Bonus for first 5 cards
+    // Nationalism / Minimalism: Double Bonus for first 5 cards
+    let finalCard = card;
     if (buff?.effects?.passive?.doubleBonusFirst5 && state.playerTableau[player].length < 5) {
-        (card as any).bonusCount = 2;
+        finalCard = { ...card, bonusCount: 2 };
         state.toastMessage = 'Minimalism: Card grants Double Bonus!';
     }
 
-    state.playerTableau[player].push(card);
+    state.playerTableau[player].push(finalCard);
 
     // Handle crowns
-    if ((card as any).crowns > 0) {
-        addFeedback(state, player, 'crown', (card as any).crowns);
+    if (finalCard.crowns && finalCard.crowns > 0) {
+        addFeedback(state, player, 'crown', finalCard.crowns);
 
         // Bounty Hunter: Gain gem for crown
         if (buff?.effects?.passive?.crownBonusGem) {
@@ -109,7 +110,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
             const randColor = (randoms?.bountyHunterColor ||
                 basics[Math.floor(Math.random() * basics.length)]) as GemColor;
             inv[randColor]++;
-            
+
             // Track as extra allocation
             if (!state.extraAllocation) {
                 state.extraAllocation = {
@@ -118,7 +119,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
                 };
             }
             state.extraAllocation[player][randColor]++;
-            
+
             addFeedback(state, player, randColor, 1);
             state.toastMessage = 'Bounty Hunter: +1 Gem!';
         }
@@ -135,7 +136,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         if (paidColors.length > 0) {
             const refundColor = paidColors[0] as GemColor;
             inv[refundColor]++;
-            
+
             // Track as extra allocation
             if (!state.extraAllocation) {
                 state.extraAllocation = {
@@ -144,7 +145,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
                 };
             }
             state.extraAllocation[player][refundColor]++;
-            
+
             for (let i = state.bag.length - 1; i >= 0; i--) {
                 const bagItem = state.bag[i];
                 const bag = bagItem as any;

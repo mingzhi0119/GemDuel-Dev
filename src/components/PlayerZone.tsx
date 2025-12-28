@@ -10,18 +10,16 @@ import { PlayerKey, GemInventory, Card as CardType, RoyalCard, Buff, GemColor } 
 interface BuffDisplayProps {
     buff?: Buff;
     theme: 'light' | 'dark';
-    align?: 'center' | 'left' | 'right';
+    playerKey: PlayerKey;
 }
 
-const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff, theme, align = 'center' }) => {
+const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff, theme, playerKey }) => {
     if (!buff || buff.id === 'none') return null;
 
     const levelStyle = BUFF_STYLES[buff.level] || 'border-slate-500 bg-slate-500/20 text-slate-300';
 
-    // Determine alignment classes
-    let alignClasses = 'left-1/2 -translate-x-1/2'; // Default Center
-    if (align === 'left') alignClasses = 'left-0 origin-top-left';
-    if (align === 'right') alignClasses = 'right-0 origin-top-right';
+    // Determine alignment classes to avoid screen edges
+    const alignClasses = playerKey === 'p1' ? 'left-0' : 'right-0';
 
     const discountColor = buff.state?.discountColor;
     let description = discountColor
@@ -53,7 +51,7 @@ const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff, theme, align = 'center'
             {/* Tooltip */}
             <div
                 className={`
-                absolute bottom-full ${alignClasses} mb-2 w-48 p-3 rounded-lg border shadow-xl backdrop-blur-md z-[100] pointer-events-none opacity-0 group-hover/buff:opacity-100 transition-opacity duration-200
+                absolute bottom-full ${alignClasses} mb-2 w-48 p-3 rounded-lg border shadow-xl backdrop-blur-md z-[500] opacity-0 group-hover/buff:opacity-100 transition-opacity duration-200
                 ${theme === 'dark' ? 'bg-slate-900/95 border-slate-700 text-slate-200' : 'bg-white/95 border-slate-200 text-slate-800'}
             `}
             >
@@ -226,11 +224,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                     >
                         {player === 'p1' ? 'Player 1' : 'Player 2'}
                     </h3>
-                    <BuffDisplay
-                        buff={buff}
-                        theme={theme}
-                        align={player === 'p1' ? 'left' : 'right'}
-                    />
+                    <BuffDisplay buff={buff} theme={theme} playerKey={player} />
                 </div>
                 <div className="flex items-center gap-1 justify-center flex-wrap max-w-[80px]">
                     {Array.from({ length: Math.max(0, privileges) }).map((_, i) => (
@@ -238,11 +232,11 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                             key={`std-${i}`}
                             disabled={!isActive || isPrivilegeMode}
                             onClick={onUsePrivilege}
-                            className={`text-amber-200 transition-all ${isActive && !isPrivilegeMode ? 'hover:scale-110 hover:text-amber-100 cursor-pointer animate-pulse' : 'opacity-80 cursor-default'}`}
+                            className={`transition-all ${isActive && !isPrivilegeMode ? 'hover:scale-110 hover:text-amber-100 cursor-pointer animate-pulse' : 'opacity-80 cursor-default'}`}
                         >
                             <Scroll
                                 size={16}
-                                fill={isActive ? '#fcd34d' : 'none'}
+                                fill="#fcd34d"
                                 className={theme === 'dark' ? 'text-amber-200' : 'text-amber-500'}
                             />
                         </button>
@@ -253,12 +247,12 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                             key={`extra-${i}`}
                             disabled={!isActive || isPrivilegeMode}
                             onClick={onUsePrivilege}
-                            className={`text-yellow-400 transition-all ${isActive && !isPrivilegeMode ? 'hover:scale-110 hover:text-yellow-200 cursor-pointer animate-pulse' : 'opacity-80 cursor-default'}`}
+                            className={`transition-all ${isActive && !isPrivilegeMode ? 'hover:scale-110 hover:text-yellow-200 cursor-pointer animate-pulse' : 'opacity-80 cursor-default'}`}
                             title="Special Privilege (Protected)"
                         >
                             <Scroll
                                 size={16}
-                                fill={isActive ? '#fbbf24' : 'none'}
+                                fill="#fbbf24"
                                 className="text-yellow-500 drop-shadow-md"
                             />
                         </button>
@@ -336,9 +330,11 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                                 }}
                                             >
                                                 {card.points > 0 && (
-                                                    <span className="absolute top-0.5 right-0.5 text-[6px] font-bold text-white leading-none drop-shadow-md">
-                                                        {card.points}
-                                                    </span>
+                                                    <div className="absolute top-0.5 right-0.5 px-0.5 rounded-sm bg-black/30 backdrop-blur-[1px] flex items-center justify-center">
+                                                        <span className="text-[10px] font-black text-white leading-none drop-shadow-md">
+                                                            {card.points}
+                                                        </span>
+                                                    </div>
                                                 )}
                                             </div>
                                         ))

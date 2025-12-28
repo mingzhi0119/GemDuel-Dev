@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Peer, DataConnection } from 'peerjs';
 import { GameAction } from '../types';
 
-export const useOnlineManager = (onActionReceived: (action: GameAction) => void) => {
+export const useOnlineManager = (
+    onActionReceived: (action: GameAction) => void,
+    enabled: boolean = false
+) => {
     const [peer, setPeer] = useState<Peer | null>(null);
     const [conn, setConn] = useState<DataConnection | null>(null);
     const [peerId, setPeerId] = useState<string>('');
@@ -35,8 +38,10 @@ export const useOnlineManager = (onActionReceived: (action: GameAction) => void)
         [onActionReceived]
     );
 
-    // Initialize Peer
+    // Initialize Peer only when enabled
     useEffect(() => {
+        if (!enabled) return;
+
         const newPeer = new Peer();
 
         newPeer.on('open', (id) => {

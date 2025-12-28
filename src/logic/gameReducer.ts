@@ -65,6 +65,9 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
         if (type === 'INIT') {
             return handleInit(state, payload);
         }
+        if (type === 'FLATTEN') {
+            return payload; // Directly use the provided state
+        }
         if (type === 'INIT_DRAFT') {
             return handleInitDraft(state, payload);
         }

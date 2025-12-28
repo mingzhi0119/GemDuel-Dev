@@ -86,25 +86,25 @@ describe('validators', () => {
                 expect(result.error).toMatch(/Too far apart/);
             });
 
-            it('should reject horizontal gap (length 2, span 2)', () => {
+            it('should allow horizontal gap (length 2, span 2) during selection but mark hasGap', () => {
                 const selection = [c(0, 0), c(0, 2)];
                 const result = validateGemSelection(selection);
-                expect(result.valid).toBe(false);
-                expect(result.error).toMatch(/gap/i);
+                expect(result.valid).toBe(true);
+                expect(result.hasGap).toBe(true);
             });
 
-            it('should reject vertical gap (length 2, span 2)', () => {
+            it('should allow vertical gap (length 2, span 2) during selection but mark hasGap', () => {
                 const selection = [c(0, 0), c(2, 0)];
                 const result = validateGemSelection(selection);
-                expect(result.valid).toBe(false);
-                expect(result.error).toMatch(/gap/i);
+                expect(result.valid).toBe(true);
+                expect(result.hasGap).toBe(true);
             });
 
-            it('should reject diagonal gap (length 2, span 2)', () => {
+            it('should allow diagonal gap (length 2, span 2) during selection but mark hasGap', () => {
                 const selection = [c(0, 0), c(2, 2)];
                 const result = validateGemSelection(selection);
-                expect(result.valid).toBe(false);
-                expect(result.error).toMatch(/gap/i);
+                expect(result.valid).toBe(true);
+                expect(result.hasGap).toBe(true);
             });
 
             it('should reject 3 gems with gap at edge', () => {

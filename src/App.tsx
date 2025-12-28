@@ -87,11 +87,14 @@ export default function GemDuelBoard() {
         privileges,
         playerTableau,
         playerReserved,
+        playerTurnCounts = { p1: 0, p2: 0 },
         royalDeck,
         playerRoyals,
         lastFeedback,
         playerBuffs,
         draftPool,
+        p2DraftPool,
+        p1SelectedBuff,
         buffLevel,
         activeModal,
         extraPrivileges,
@@ -417,6 +420,8 @@ export default function GemDuelBoard() {
         return (
             <DraftScreen
                 draftPool={draftPool}
+                p2DraftPool={p2DraftPool}
+                p1SelectedBuff={p1SelectedBuff}
                 buffLevel={buffLevel}
                 activePlayer={turn}
                 onSelectBuff={handleSelectBuff}
@@ -462,14 +467,14 @@ export default function GemDuelBoard() {
                 p1Crowns={getCrownCount('p1')}
                 p2Score={getPlayerScore('p2')}
                 p2Crowns={getCrownCount('p2')}
-                turnCount={historyControls.currentIndex + 1}
+                playerTurnCounts={playerTurnCounts}
                 activePlayer={turn}
                 playerBuffs={playerBuffs}
                 theme={theme}
             />
 
             {/* Floating Controls (Z-Index High) */}
-            <div className="fixed top-24 right-4 z-[100] flex flex-col gap-2">
+            <div className="fixed top-24 right-4 z-[200] flex flex-col gap-2">
                 <ResolutionSwitcher
                     settings={settings}
                     resolution={resolution}
@@ -570,7 +575,7 @@ export default function GemDuelBoard() {
 
             {/* Modals */}
             {showRulebook && <Rulebook onClose={() => setShowRulebook(false)} theme={theme} />}
-            
+
             {/* Only show Peek Modal if it's My Turn (or local play) to prevent opponent from seeing it */}
             {(!state.isOnline || (online.isHost ? turn === 'p1' : turn === 'p2')) && (
                 <DeckPeekModal
@@ -580,7 +585,7 @@ export default function GemDuelBoard() {
                     theme={theme}
                 />
             )}
-            
+
             {gameMode === 'SELECT_CARD_COLOR' && (
                 <div className="fixed inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
                     <h2 className="text-2xl font-bold text-white mb-6">Select Card Color</h2>

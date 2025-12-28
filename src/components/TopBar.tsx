@@ -7,7 +7,7 @@ interface TopBarProps {
     p1Crowns: number;
     p2Score: number;
     p2Crowns: number;
-    turnCount: number;
+    playerTurnCounts: Record<PlayerKey, number>;
     activePlayer: PlayerKey;
     theme: 'light' | 'dark';
     playerBuffs?: Record<PlayerKey, Buff>;
@@ -18,7 +18,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     p1Crowns,
     p2Score,
     p2Crowns,
-    turnCount,
+    playerTurnCounts = { p1: 0, p2: 0 },
     activePlayer,
     theme,
     playerBuffs = {} as Record<PlayerKey, Buff>,
@@ -79,14 +79,31 @@ export const TopBar: React.FC<TopBarProps> = ({
             {/* Center Info */}
             <div className="flex flex-col items-center justify-center">
                 <div
-                    className={`flex items-center gap-1 lg:gap-2 px-2 lg:px-4 py-0.5 lg:py-1 rounded-full border transition-colors duration-500
-                    ${theme === 'dark' ? 'text-slate-400 bg-slate-900/50 border-slate-800' : 'text-slate-600 bg-slate-200/50 border-slate-300'}
+                    className={`flex items-center gap-3 px-3 lg:px-6 py-1 lg:py-2 rounded-2xl border shadow-inner transition-all duration-500
+                    ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-200/50 border-slate-300'}
                 `}
                 >
-                    <History size={10} className="lg:w-3.5 lg:h-3.5" />
-                    <span className="text-[8px] lg:text-xs font-mono font-bold uppercase tracking-widest">
-                        #{turnCount}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <span
+                            className={`text-[10px] lg:text-sm font-black transition-colors ${activePlayer === 'p1' ? 'text-emerald-500' : 'text-slate-500'}`}
+                        >
+                            {playerTurnCounts.p1}
+                        </span>
+                        <span className="text-[8px] lg:text-[10px] font-bold uppercase tracking-tighter opacity-40">
+                            turn
+                        </span>
+                    </div>
+                    <div className="h-4 w-px bg-slate-500/30" />
+                    <div className="flex items-center gap-1.5">
+                        <span
+                            className={`text-[10px] lg:text-sm font-black transition-colors ${activePlayer === 'p2' ? 'text-blue-500' : 'text-slate-500'}`}
+                        >
+                            {playerTurnCounts.p2}
+                        </span>
+                        <span className="text-[8px] lg:text-[10px] font-bold uppercase tracking-tighter opacity-40">
+                            turn
+                        </span>
+                    </div>
                 </div>
             </div>
 

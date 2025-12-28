@@ -52,7 +52,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
 
             <div className="flex flex-col items-center min-w-[4rem]">
                 <span className="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">
-                    Turn
+                    Action
                 </span>
                 <span
                     className={`text-base font-mono font-bold tabular-nums ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}

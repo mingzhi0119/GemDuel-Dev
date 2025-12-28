@@ -38,7 +38,7 @@ describe('Game Initialization Direct', () => {
 
         expect(result).toBeDefined();
         expect(result.gameMode).toBe('DRAFT_PHASE');
-        expect(result.turn).toBe('p2');
+        expect(result.turn).toBe('p1');
         expect(result.draftPool.length).toBe(2);
         expect(result.buffLevel).toBe(1);
     });

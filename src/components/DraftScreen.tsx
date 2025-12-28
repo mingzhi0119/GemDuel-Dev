@@ -5,6 +5,8 @@ import { Buff, PlayerKey } from '../types';
 
 interface DraftScreenProps {
     draftPool: Buff[];
+    p2DraftPool?: Buff[];
+    p1SelectedBuff?: Buff | null;
     buffLevel: number;
     activePlayer: PlayerKey;
     onSelectBuff: (buffId: string) => void;
@@ -13,11 +15,15 @@ interface DraftScreenProps {
 
 export const DraftScreen: React.FC<DraftScreenProps> = ({
     draftPool,
+    p2DraftPool = [],
+    p1SelectedBuff = null,
     buffLevel,
     activePlayer,
     onSelectBuff,
     theme,
 }) => {
+    const currentPool = activePlayer === 'p1' ? draftPool : p2DraftPool;
+
     return (
         <div
             className={`h-screen w-screen flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-500
@@ -36,7 +42,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
             />
 
             {/* Header */}
-            <div className="z-10 text-center mb-12 animate-in slide-in-from-top-10 duration-700">
+            <div className="z-10 text-center mb-6 animate-in slide-in-from-top-10 duration-700">
                 <div className="flex items-center justify-center gap-3 mb-2">
                     <Sparkles className="text-amber-400" size={32} />
                     <h1 className="text-4xl font-black uppercase tracking-wider">
@@ -47,9 +53,29 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                 <p className={`text-lg font-medium opacity-60`}>Level {buffLevel} Buff Selection</p>
             </div>
 
+            {/* P1 Choice Context (Only for P2) */}
+            {activePlayer === 'p2' && p1SelectedBuff && (
+                <div className="z-10 mb-8 animate-in fade-in zoom-in duration-500">
+                    <div
+                        className={`px-6 py-4 rounded-2xl border-2 shadow-xl flex items-center gap-4 ${BUFF_STYLES[p1SelectedBuff.level]} bg-opacity-40 backdrop-blur-md`}
+                    >
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                                Player 1 Selected
+                            </span>
+                            <span className="text-xl font-black">{p1SelectedBuff.label}</span>
+                        </div>
+                        <div className="h-10 w-[2px] bg-white/20" />
+                        <p className="text-sm max-w-[200px] opacity-80 leading-tight italic">
+                            "{p1SelectedBuff.desc}"
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Active Player Indicator */}
             <div
-                className={`z-10 mb-8 flex items-center gap-3 px-6 py-3 rounded-full border shadow-lg animate-pulse
+                className={`z-10 mb-8 flex items-center gap-3 px-6 py-3 rounded-full border shadow-lg
                 ${
                     activePlayer === 'p1'
                         ? 'bg-emerald-600/20 border-emerald-500 text-emerald-500'
@@ -59,47 +85,47 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
             >
                 {activePlayer === 'p1' ? <Shield size={24} /> : <Swords size={24} />}
                 <span className="text-xl font-bold uppercase">
-                    {activePlayer === 'p1' ? 'Player 1 Selecting' : 'Player 2 Selecting'}
+                    {activePlayer === 'p1' ? 'Player 1: Pick 1 from 3' : 'Player 2: Pick 1 from 4'}
                 </span>
             </div>
 
             {/* Buff Cards */}
-            <div className="z-10 flex flex-col md:flex-row gap-6 max-w-6xl px-4">
-                {draftPool.map((buff, idx) => (
+            <div className="z-10 flex flex-wrap justify-center gap-6 max-w-7xl px-4">
+                {currentPool.map((buff, idx) => (
                     <button
                         key={buff.id}
                         onClick={() => onSelectBuff(buff.id)}
-                        className={`group relative flex flex-col w-72 h-96 p-6 rounded-2xl border-2 text-left transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-2xl
+                        className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-2xl
                             ${BUFF_STYLES[buff.level]}
                             ${theme === 'dark' ? 'hover:shadow-purple-900/50' : 'hover:shadow-purple-200/50'}
                         `}
-                        style={{ animationDelay: `${idx * 150}ms` }}
+                        style={{ animationDelay: `${idx * 100}ms` }}
                     >
                         {/* Card Header */}
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm">
-                                <Crown size={28} className="text-amber-300" />
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="p-2 rounded-xl bg-white/10 backdrop-blur-sm">
+                                <Crown size={22} className="text-amber-300" />
                             </div>
-                            <span className="text-xs font-bold uppercase tracking-widest opacity-60 border px-2 py-1 rounded-full">
+                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 border px-2 py-1 rounded-full">
                                 Lvl {buff.level}
                             </span>
                         </div>
 
                         {/* Title */}
-                        <h3 className="text-2xl font-black mb-4 leading-tight group-hover:text-white transition-colors">
+                        <h3 className="text-xl font-black mb-3 leading-tight group-hover:text-white transition-colors">
                             {buff.label}
                         </h3>
 
                         {/* Description */}
-                        <p className="text-sm font-medium leading-relaxed opacity-80 mb-6 flex-grow">
+                        <p className="text-xs font-medium leading-relaxed opacity-80 mb-4 flex-grow">
                             {buff.desc}
                         </p>
 
                         {/* Win Condition Changes (if any) */}
                         {buff.effects.winCondition && (
-                            <div className="mt-auto pt-4 border-t border-white/10 text-xs space-y-1 opacity-90">
+                            <div className="mt-auto pt-3 border-t border-white/10 text-[10px] space-y-1 opacity-90">
                                 <p className="font-bold uppercase opacity-60 mb-1">
-                                    Win Condition Shift:
+                                    Win Condition:
                                 </p>
                                 {buff.effects.winCondition.points && (
                                     <div className="flex justify-between">
@@ -117,28 +143,24 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                         </span>
                                     </div>
                                 )}
-                                {buff.effects.winCondition.disableSingleColor && (
-                                    <div className="text-rose-300 font-bold">
-                                        Cannot win by Single Color
-                                    </div>
-                                )}
                             </div>
                         )}
 
                         {/* Select Action */}
                         <div
-                            className={`absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-2 font-bold uppercase tracking-widest text-xs
+                            className={`absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-2 font-bold uppercase tracking-widest text-[10px]
                             ${theme === 'dark' ? 'text-white' : 'text-slate-900'}
                         `}
                         >
-                            Select <ArrowRight size={16} />
+                            Select <ArrowRight size={14} />
                         </div>
                     </button>
                 ))}
             </div>
 
-            <div className="absolute bottom-8 text-xs opacity-30 z-10">
-                P2 picks first to balance the first-move advantage.
+            <div className="absolute bottom-8 text-[10px] uppercase font-black tracking-tighter opacity-30 z-10 flex gap-12">
+                <span>P1 takes initiative but has fewer options</span>
+                <span>P2 acts in response with a larger pool</span>
             </div>
         </div>
     );

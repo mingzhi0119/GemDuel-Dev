@@ -25,33 +25,47 @@ export const finalizeTurn = (
     nextPlayer: PlayerKey,
     instantInv?: Record<GemColor | 'gold' | 'pearl', number>
 ): void => {
-    // ========== BUFF EFFECTS: Periodic Privilege ==========
-    const nextBuff = state.playerBuffs?.[nextPlayer];
-    if (nextBuff?.effects?.passive?.periodicPrivilege) {
-        if (!nextBuff.state) nextBuff.state = {};
-        if (typeof nextBuff.state.turnCount === 'undefined') nextBuff.state.turnCount = 0;
+    // ========== TRACK PLAYER TURN COUNTS ==========
+    // Increment the turn count for the player who just finished their major action
+    state.playerTurnCounts[state.turn]++;
 
-        nextBuff.state.turnCount++;
-        if (nextBuff.state.turnCount % nextBuff.effects.passive.periodicPrivilege === 0) {
+    // ========== BUFF EFFECTS: Royal Envoy ==========
+    const p1Buff = state.playerBuffs?.p1?.effects?.winCondition || {};
+    const p2Buff = state.playerBuffs?.p2?.effects?.winCondition || {};
+    const currentWinBuff = state.turn === 'p1' ? p1Buff : p2Buff;
+
+    // Trigger royal card selection on the 5th major action of the player
+    const currentBuffObj = state.playerBuffs?.[state.turn];
+    if (currentBuffObj?.id === 'royal_envoy' && state.playerTurnCounts[state.turn] === 5) {
+        if (state.royalDeck.length > 0) {
+            state.gameMode = GAME_PHASES.SELECT_ROYAL;
+            state.nextPlayerAfterRoyal = nextPlayer;
+            state.toastMessage = 'Royal Envoy: Pick a Royal Card!';
+            return;
+        }
+    }
+
+    // ========== BUFF EFFECTS: Desperate Gamble (Periodic Privilege) ==========
+    const nextBuffObj = state.playerBuffs?.[nextPlayer];
+    if (nextBuffObj?.id === 'desperate_gamble') {
+        // Grant privilege at the START of the turn (2, 4, 6...)
+        // Since they finished N turns, they are starting N+1 turn.
+        const nextTurnNumber = state.playerTurnCounts[nextPlayer] + 1;
+        if (nextTurnNumber % 2 === 0) {
             if (!state.extraPrivileges) state.extraPrivileges = { p1: 0, p2: 0 };
-            
+
             if (state.extraPrivileges[nextPlayer] < 1) {
                 state.extraPrivileges[nextPlayer] = 1;
-                state.toastMessage = 'High Roller: Gained Special Privilege!';
+                state.toastMessage = `Desperate Gamble: Gained Special Privilege for Turn ${nextTurnNumber}!`;
             }
         }
     }
 
     // ========== WIN CONDITION CHECKS ==========
-    // Get buff-specific win conditions
-    const p1Buff = state.playerBuffs?.p1?.effects?.winCondition || {};
-    const p2Buff = state.playerBuffs?.p2?.effects?.winCondition || {};
-    const currentBuff = state.turn === 'p1' ? p1Buff : p2Buff;
-
-    const POINTS_GOAL = currentBuff.points || 20;
-    const CROWNS_GOAL = currentBuff.crowns || 10;
-    const SINGLE_COLOR_GOAL = currentBuff.singleColor || 10;
-    const DISABLE_SINGLE_COLOR = currentBuff.disableSingleColor || false;
+    const POINTS_GOAL = currentWinBuff.points || 20;
+    const CROWNS_GOAL = currentWinBuff.crowns || 10;
+    const SINGLE_COLOR_GOAL = currentWinBuff.singleColor || 10;
+    const DISABLE_SINGLE_COLOR = currentWinBuff.disableSingleColor || false;
 
     // Helper: Calculate player's total points
     const getPoints = (pid: PlayerKey): number => {

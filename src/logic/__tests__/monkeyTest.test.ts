@@ -2,14 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { produce } from 'immer';
 import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
-import { generateGemPool, generateDeck } from '../../utils';
-import { GameState, PlayerKey, GemColor } from '../../types';
-import { BONUS_COLORS } from '../../constants';
+import { generateGemPool, generateDeck, shuffleArray } from '../../utils';
+import { GameState, PlayerKey, GemColor, Buff } from '../../types';
+import { BONUS_COLORS, BUFFS } from '../../constants';
+import { applyBuffInitEffects } from '../actions/buffActions';
 
 describe('Monkey Test - Random Stress Test', () => {
     // Helper: Create a fully initialized game state for testing
     const createFullInitialState = (): GameState => {
-        return produce(INITIAL_STATE_SKELETON, (draft) => {
+        const isRogue = Math.random() > 0.5;
+
+        // Deep clone the skeleton to ensure it's fully mutable
+        const skeleton = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
+
+        const state = produce(skeleton, (draft) => {
             const pool = generateGemPool();
             // Fill board
             for (let r = 0; r < 5; r++) {
@@ -21,12 +27,37 @@ describe('Monkey Test - Random Stress Test', () => {
 
             // Fill decks and market
             for (const lvl of [1, 2, 3] as const) {
-                const deck = generateDeck(lvl);
+                const deck = generateDeck(lvl, isRogue);
                 draft.decks[lvl] = deck;
                 const marketSize = lvl === 1 ? 5 : lvl === 2 ? 4 : 3;
                 draft.market[lvl] = draft.decks[lvl].splice(0, marketSize);
             }
+
+            // Assign random buffs
+            const level = (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
+            const levelBuffs = Object.values(BUFFS).filter((b) => b.level === level);
+            const p1Buff = shuffleArray(levelBuffs)[0] as Buff;
+            const p2Buff = shuffleArray(levelBuffs)[1 % levelBuffs.length] as Buff;
+
+            draft.playerBuffs.p1 = { ...p1Buff };
+            draft.playerBuffs.p2 = { ...p2Buff };
         });
+
+        const basics = ['red', 'green', 'blue', 'white', 'black'];
+        const randoms = {
+            p1: {
+                randomGems: [basics[0], basics[1]],
+                reserveCardLevel: 1,
+                preferenceColor: basics[2],
+            },
+            p2: {
+                randomGems: [basics[3], basics[4]],
+                reserveCardLevel: 2,
+                preferenceColor: basics[0],
+            },
+        };
+
+        return applyBuffInitEffects(state, randoms);
     };
 
     // Helper: Check state invariants
@@ -67,7 +98,8 @@ describe('Monkey Test - Random Stress Test', () => {
         }
     };
 
-    it('should survive 100 random interactions without entering an illegal state', () => {
+    it('should survive 5000 random interactions with Roguelike buffs without entering an illegal state', () => {
+        // Always test with buffs enabled for maximum complexity
         let state = createFullInitialState();
         const actionTrace: any[] = [];
         const actionTypes = [
@@ -82,7 +114,7 @@ describe('Monkey Test - Random Stress Test', () => {
             'CLOSE_MODAL',
         ];
 
-        for (let i = 0; i < 1000; i++) {
+        for (let i = 0; i < 5000; i++) {
             const type = actionTypes[Math.floor(Math.random() * actionTypes.length)];
             let payload: any = undefined;
 

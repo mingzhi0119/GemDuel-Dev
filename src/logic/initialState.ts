@@ -29,6 +29,7 @@ export const INITIAL_STATE_SKELETON: GameState = {
     privileges: { p1: 0, p2: 1 },
     playerTableau: { p1: [], p2: [] },
     playerReserved: { p1: [], p2: [] },
+    playerTurnCounts: { p1: 0, p2: 0 },
     royalDeck: ROYAL_CARDS || [],
     playerRoyals: { p1: [], p2: [] },
     royalMilestones: { p1: { 3: false, 6: false }, p2: { 3: false, 6: false } },

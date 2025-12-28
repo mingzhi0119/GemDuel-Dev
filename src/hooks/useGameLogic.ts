@@ -22,6 +22,7 @@ export const useGameLogic = () => {
         canUndo,
         canRedo,
         importHistory,
+        clearAndInit,
     } = useActionHistory();
 
     // 2. Derive GameState from History
@@ -36,6 +37,23 @@ export const useGameLogic = () => {
         return state || INITIAL_STATE_SKELETON;
     }, [currentIndex, history]);
 
+    // Flatten history after setup/draft is complete
+    useEffect(() => {
+        if (
+            gameState.gameMode === 'IDLE' &&
+            history.length > 1 &&
+            history.some((a) => a.type === 'SELECT_BUFF' || a.type === 'INIT_DRAFT')
+        ) {
+            // Flatten: Take the fully initialized state and make it the new Action 1
+            // Use deep clone to ensure we have a clean, mutable snapshot for the new history
+            const flattenedAction = {
+                type: 'FLATTEN',
+                payload: JSON.parse(JSON.stringify(gameState)),
+            };
+            clearAndInit(flattenedAction);
+        }
+    }, [gameState.gameMode, history.length, clearAndInit, gameState]);
+
     // 3. Online Manager
     const handleRemoteAction = useCallback(
         (action: GameAction) => {
@@ -44,7 +62,7 @@ export const useGameLogic = () => {
         [recordLocalAction]
     );
 
-    const online = useOnlineManager(handleRemoteAction);
+    const online = useOnlineManager(handleRemoteAction, gameState.isOnline);
 
     // Wrapper for recording actions (local + broadcast)
     const recordAction = useCallback(
@@ -89,6 +107,7 @@ export const useGameLogic = () => {
                 isPvE: false,
             }
         ) => {
+            const isRogue = options.useBuffs;
             const fullPool = generateGemPool();
             const initialBoardFlat = fullPool.slice(0, 25);
             const initialBag: any[] = [];
@@ -100,17 +119,38 @@ export const useGameLogic = () => {
                 }
                 newBoard.push(row);
             }
-            const d1 = generateDeck(1);
-            const d2 = generateDeck(2);
-            const d3 = generateDeck(3);
+            const d1 = generateDeck(1, isRogue);
+            const d2 = generateDeck(2, isRogue);
+            const d3 = generateDeck(3, isRogue);
             const market = { 3: d3.splice(0, 3), 2: d2.splice(0, 4), 1: d1.splice(0, 5) };
             const decks = { 1: d1, 2: d2, 3: d3 };
+
+            const basics = ['red', 'green', 'blue', 'white', 'black'];
+            const initRandoms = {
+                p1: {
+                    randomGems: Array.from(
+                        { length: 5 },
+                        () => basics[Math.floor(Math.random() * 5)]
+                    ),
+                    reserveCardLevel: Math.floor(Math.random() * 3) + 1,
+                    preferenceColor: basics[Math.floor(Math.random() * 5)],
+                },
+                p2: {
+                    randomGems: Array.from(
+                        { length: 5 },
+                        () => basics[Math.floor(Math.random() * 5)]
+                    ),
+                    reserveCardLevel: Math.floor(Math.random() * 3) + 1,
+                    preferenceColor: basics[Math.floor(Math.random() * 5)],
+                },
+            };
 
             const setupData = {
                 board: newBoard,
                 bag: initialBag,
                 market,
                 decks,
+                initRandoms,
                 isPvE: !!options.isPvE,
                 isOnline: !!options.isOnline,
                 isHost: options.isHost ?? true,
@@ -376,6 +416,11 @@ export const useGameLogic = () => {
         recordAction({ type: 'CANCEL_PRIVILEGE' });
     };
 
+    const handleUndo = () => {
+        if (gameState?.isOnline) return;
+        if (canUndo) undo();
+    };
+
     const activatePrivilegeMode = () => {
         if (!isMyTurn) return;
         if (!gameState || gameState.winner) return;
@@ -432,28 +477,7 @@ export const useGameLogic = () => {
         const basics = ['red', 'green', 'blue', 'white', 'black'];
         const randomColor = basics[Math.floor(Math.random() * basics.length)];
 
-        let initRandoms = {};
-        if (gameState && gameState.turn === 'p1') {
-            initRandoms = {
-                p1: {
-                    randomGems: Array.from(
-                        { length: 5 },
-                        () => basics[Math.floor(Math.random() * basics.length)]
-                    ),
-                    reserveCardLevel: Math.floor(Math.random() * 3) + 1,
-                    preferenceColor: basics[Math.floor(Math.random() * basics.length)],
-                },
-                p2: {
-                    randomGems: Array.from(
-                        { length: 5 },
-                        () => basics[Math.floor(Math.random() * basics.length)]
-                    ),
-                    reserveCardLevel: Math.floor(Math.random() * 3) + 1,
-                    preferenceColor: basics[Math.floor(Math.random() * basics.length)],
-                },
-            };
-        }
-        recordAction({ type: 'SELECT_BUFF', payload: { buffId, randomColor, initRandoms } });
+        recordAction({ type: 'SELECT_BUFF', payload: { buffId, randomColor } });
     };
 
     const handleCloseModal = () => {
@@ -516,7 +540,7 @@ export const useGameLogic = () => {
             canAfford,
         },
         historyControls: {
-            undo,
+            undo: handleUndo,
             redo,
             canUndo,
             canRedo,

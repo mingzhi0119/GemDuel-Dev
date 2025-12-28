@@ -72,8 +72,10 @@ export const validateGemSelection = (gems: GemCoord[]): ValidationResult => {
     }
 
     // Check for gaps in 2-gem selection
+    // MODIFIED: Return valid: true but hasGap: true to allow intermediate "1-3" selection.
+    // The UI/Logic will block confirmation if hasGap is true.
     if (sorted.length === 2 && span > 1) {
-        return { valid: false, hasGap: true, error: 'Gap detected.' };
+        return { valid: true, hasGap: true, error: 'Gap detected.' };
     }
 
     // Verify ALL gems are on the line

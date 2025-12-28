@@ -242,6 +242,7 @@ export interface GameState {
     playerTableau: Record<PlayerKey, Card[]>; // Cards player owns
     playerReserved: Record<PlayerKey, Card[]>; // Cards in hand/reserved
     playerRoyals: Record<PlayerKey, RoyalCard[]>; // Royal cards owned
+    playerTurnCounts: Record<PlayerKey, number>; // Track major actions per player
 
     // ========== GEM INVENTORY ==========
     inventories: Record<PlayerKey, GemInventory>;
@@ -260,6 +261,8 @@ export interface GameState {
     extraPrivileges: Record<PlayerKey, number>; // Special non-stealable privileges (max 1)
     playerBuffs: Record<PlayerKey, Buff>;
     draftPool: Buff[];
+    p2DraftPool?: Buff[]; // Buffs for P2's turn
+    p1SelectedBuff?: Buff | null; // Track P1 choice for P2's turn
     draftOrder: PlayerKey[];
     buffLevel: number;
     pendingSetup: {

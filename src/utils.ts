@@ -1,6 +1,6 @@
 import { GEM_TYPES, INITIAL_COUNTS, BONUS_COLORS } from './constants';
 // 🟢 确保引入了真实数据
-import { REAL_CARDS } from './data/realCards';
+import { CLASSIC_CARDS, ROGUE_CARDS } from './data/realCards';
 import { Card, GemInventory, Buff, BoardCell, GemColor } from './types';
 
 // 洗牌算法
@@ -39,11 +39,10 @@ export const getDirection = (r1: number, c1: number, r2: number, c2: number) => 
     return { dr: r2 - r1, dc: c2 - c1 };
 };
 
-// 🟢 生成卡组：使用 REAL_CARDS
-export const generateDeck = (level: number): Card[] => {
-    // 严格过滤：只取对应 Level 的卡
-    // 注意：我们在 realCards.js 里已经硬编码了 level: 1, 2, 3，这里过滤绝对安全
-    const levelCards = REAL_CARDS.filter((c) => c.level === level);
+// 🟢 生成卡组
+export const generateDeck = (level: number, isRogue: boolean = false): Card[] => {
+    const cardPool = isRogue ? ROGUE_CARDS : CLASSIC_CARDS;
+    const levelCards = cardPool.filter((c) => c.level === level);
 
     const deck = levelCards.map((card) => ({
         ...(card as Card),

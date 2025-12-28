@@ -10,6 +10,17 @@ export const computeAiAction = (state: GameState): GameAction | null => {
     const aiPlayer = state.turn;
     const opponent = aiPlayer === 'p1' ? 'p2' : 'p1';
 
+    // Priority 0: Handle Setup/Draft Phase
+    if (state.gameMode === 'DRAFT_PHASE') {
+        const pool = state.p2DraftPool || state.draftPool || [];
+        if (pool.length > 0) {
+            // AI just picks the first one for now (or random)
+            const chosen = pool[Math.floor(Math.random() * pool.length)];
+            return { type: 'SELECT_BUFF', payload: { buffId: chosen.id } };
+        }
+        return null;
+    }
+
     // Priority 1: Handle mandatory sub-phases first
     if (state.gameMode === 'SELECT_ROYAL') {
         // Just pick the one with most points for now
