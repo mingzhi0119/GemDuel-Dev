@@ -38,18 +38,27 @@ export const applyBuffInitEffects = (
                 (state.playerBuffs[pid].state as any).refillCount = 0;
             }
 
-            // Special case: Pacifist buff gains extra privilege
+            // Ensure extra state structures exist (for safety / compatibility)
+            if (!state.extraAllocation) {
+                state.extraAllocation = {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                };
+            }
+            if (!state.extraPrivileges) state.extraPrivileges = { p1: 0, p2: 0 };
+
+            // Special case: Pacifist buff gains extra privilege (treated as Special now)
             if (buff.id === 'pacifist') {
-                state.privileges[pid] = Math.min(3, state.privileges[pid] + 1);
+                state.extraPrivileges[pid] = Math.min(1, state.extraPrivileges[pid] + 1);
             }
 
             // Apply onInit effects
             if (buff.effects.onInit) {
                 const fx = buff.effects.onInit;
 
-                // Extra privileges
+                // Extra privileges (Special)
                 if (fx.privilege) {
-                    state.privileges[pid] += fx.privilege;
+                    state.extraPrivileges[pid] = Math.min(1, state.extraPrivileges[pid] + fx.privilege);
                 }
 
                 // Random basic gems
@@ -60,6 +69,7 @@ export const applyBuffInitEffects = (
                     if (randColors) {
                         randColors.slice(0, count).forEach((randColor: GemColor) => {
                             state.inventories[pid][randColor]++;
+                            state.extraAllocation[pid][randColor]++;
                         });
                     }
                 }
@@ -73,11 +83,13 @@ export const applyBuffInitEffects = (
                 // Pearls
                 if (fx.pearl) {
                     state.inventories[pid].pearl += fx.pearl;
+                    state.extraAllocation[pid].pearl += fx.pearl;
                 }
 
                 // Gold
                 if (fx.gold) {
                     state.inventories[pid].gold += fx.gold;
+                    state.extraAllocation[pid].gold += fx.gold;
                 }
 
                 // Reserve card

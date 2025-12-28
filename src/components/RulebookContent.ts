@@ -217,6 +217,11 @@ Privilege Scrolls
 Used to take 1 Gem from the board (optional free action).
 If you need to take a Scroll and the supply is empty, you take one from your opponent!
 If you and your opponent both have 0 Scrolls, taking a gem or refilling the board might give one to your opponent.
+
+Extra Resources (Roguelike Only)
+
+Extra Gems: Some buffs provide "Extra" gems. These do NOT return to the bag when spent—they vanish from the game. The system automatically spends these first.
+Special Privileges: Some buffs grant golden "Special" scrolls. These are Protected and cannot be stolen by the opponent. The system uses these first.
         `,
             zh: `
 代币限制
@@ -226,7 +231,13 @@ If you and your opponent both have 0 Scrolls, taking a gem or refilling the boar
 特权卷轴
 
 用于从版图拿取 1 个宝石（可选的免费行动）。
-如果你需要拿取卷轴而供应堆已空，如果你和对手都没有卷轴，拿取特定宝石或补给版图可能会给对手一个卷轴。
+如果你需要拿取卷轴而供应堆已空，则从对手处拿取。
+如果你和对手都没有卷轴，拿取特定宝石或补给版图可能会给对手一个卷轴。
+
+额外资源（仅限肉鸽模式）
+
+额外宝石 (Extra Gems)：某些增益提供“额外”宝石。这些宝石在花费后不会回到布袋中，而是直接从游戏中消失。系统会自动优先消耗此类宝石。
+特殊特权 (Special Privileges)：某些增益提供金色的“特殊”卷轴。这些卷轴是受保护的，无法被对手抢夺。系统会优先消耗特殊卷轴。
 `,
         },
     },
@@ -244,9 +255,10 @@ Buff Levels
 
 Level 1 (Minor Tweak): Small boosts to start the game.
 Level 2 (Tactical Shift): Changes resource management or card costs.
-Level 3 (Game Changer): Powerful effects with major trade-offs (e.g., increased victory requirements).
+Level 3 (Game Changer): Powerful effects with major trade-offs.
 
-See the next page for a full list of Buffs.
+Resource Note:
+Buffs that grant initial gems or mid-game bonuses use the **Extra Resource** system (they vanish when spent).
         `,
             zh: `
 肉鸽模式：独特的初始增益
@@ -259,9 +271,10 @@ Buff 等级
 
 1 级 (微调)：游戏开始时的小幅提升。
 2 级 (战术转变)：改变资源管理或卡牌成本。
-3 级 (规则改变)：强大的效果，但伴随着重大的权衡（例如：提高获胜要求）。
+3 级 (规则改变)：强大的效果，但伴随着重大的权衡。
 
-请参阅下一页查看 Buff 的完整列表。
+资源提示：
+所有提供初始宝石或局中奖励宝石的增益均采用**额外资源**系统（花费后即消失）。
 `,
         },
     },
@@ -271,70 +284,70 @@ Buff 等级
             en: `
 Level 1: Minor Tweaks
 
-Privilege Favor: Start with 1 extra Privilege Scroll and 1 Gold.
-Head Start: Start with 1 random basic Gem. Win Condition: 18 Points.
+Privilege Favor: Start with 1 Special Privilege (Protected) and 1 Extra Gold.
+Head Start: Start with 1 random Extra Gem. Win Condition: 18 Points.
 Royal Blood: Start with 1 Crown.
 Intelligence: Action: Peek at top 3 cards of any deck.
 Deep Pockets: Gem holding limit increased to 12.
-Backup Supply: Start with 2 random basic Gems.
-Patient Investor: Gain 2 Gold on your first Reserve action.
+Backup Supply: Start with 2 random Extra Gems.
+Patient Investor: Gain 2 Extra Gold on your first Reserve action.
 Insight: You can always see the top card of the Level 1 Deck.
 
 Level 2: Tactical Shifts
 
-Pearl Trader: Gem limit increased to 11. Start with 1 Pearl.
-Gold Reserve: Start with 1 Gold and 1 random Reserved Card.
+Pearl Trader: Gem limit increased to 11. Start with 1 Extra Pearl.
+Gold Reserve: Start with 1 Extra Gold and 1 random Reserved Card.
 Color Preference: Random color costs -1 for you (assigned at start).
-Extortion: Every 2nd time you Replenish the board, steal 1 basic gem from opponent. (Cooldown: 2 Refills).
+Extortion: Every 2nd time you Replenish the board, steal 1 basic gem from opponent.
 Flexible Discount: Reduce cost of Level 2 and 3 cards by 1.
-Bounty Hunter: Gain 1 random gem when you buy a card with Crowns.
-Recycler: Get 1 gem back when buying Level 2 or 3 cards.
-Aggressive Expansion: Gain 1 random gem when you Replenish the board.
+Bounty Hunter: Gain 1 random Extra Gem when you buy a card with Crowns.
+Recycler: Get 1 Extra Gem back when buying Level 2 or 3 cards.
+Aggressive Expansion: Gain 1 random Extra Gem when you Replenish the board.
 
 Level 3: Game Changers
 
 King of Greed: All cards give +1 Point. Win Condition: 25 Points.
 Royal Envoy: Can pick remaining Royal Card at Turn 5. No Single Color Win.
 Double Agent: Privileges take 2 gems. Gem Cap: 8.
-All-Seeing Eye: Reveal extra Level 3 card. Pay L3 cards with Gold at half value. Win Condition: Single Color 13.
+All-Seeing Eye: Reveal 2 extra L3 cards. Pay L3 cards with Gold at half value. Win Condition: Single Color 13.
 Wonder Architect: Level 3 cards cost 3 less. Win Condition: 13 Crowns (No Single Color Win).
 Minimalist: First 5 cards purchased provide Double Bonuses. Max Gems: 6.
-Pacifist: Immune to negative effects (Theft). Start with 1 extra Privilege.
-Desperate Gamble: Start with 2 Gold. Cannot "Take 3 Gems". Gain a special (non-stealable) Privilege every 2 turns.
+Pacifist: Immune to negative effects (Theft). Start with 1 Special Privilege (Protected).
+Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special Privilege (Protected) every 2 turns.
         `,
             zh: `
 1 级：微调 (Minor Tweaks)
 
-特权眷顾 (Privilege Favor)：开始时额外获得 1 个特权卷轴和 1 个黄金。
-先行一步 (Head Start)：开始时获得 1 个随机基础宝石。获胜条件：18 分。
+特权眷顾 (Privilege Favor)：开始时获得 1 个特殊特权（受保护）和 1 个额外黄金。
+先行一步 (Head Start)：开始时获得 1 个随机额外宝石。获胜条件：18 分。
 皇室血统 (Royal Blood)：开始时拥有 1 个皇冠。
 情报员 (Intelligence)：行动：查看任何卡组顶部的 3 张牌。
 深口袋 (Deep Pockets)：宝石持有上限增加至 12 个。
-后备补给 (Backup Supply)：开始时获得 2 个随机基础宝石。
-耐心投资者 (Patient Investor)：在你的第一次保留行动中获得 2 个黄金。
+后备补给 (Backup Supply)：开始时获得 2 个随机额外宝石。
+耐心投资者 (Patient Investor)：在你的第一次保留行动中获得 2 个额外黄金。
 洞察力 (Insight)：你始终可以看到 1 级卡组顶部的牌。
 
 2 级：流派 (Tactical Shifts)
 
-珍珠贸易商 (Pearl Trader)：宝石上限增加至 11。开始时获得 1 个珍珠。
-黄金储备 (Gold Reserve)：开始时获得 1 个黄金和 1 张随机保留卡。
+珍珠贸易商 (Pearl Trader)：宝石上限增加至 11。开始时获得 1 个额外珍珠。
+黄金储备 (Gold Reserve)：开始时获得 1 个额外黄金和 1 张随机保留卡。
 色彩偏好 (Color Preference)：随机一种颜色对你而言成本 -1。
-巧取豪夺 (Extortion)：你每执行 2 次 补给版图，就从对手那里偷取 1 个基础宝石。
+巧取豪夺 (Extortion)：你每执行 2 次补给版图，就从对手那里偷取 1 个基础宝石。
 灵活折扣 (Flexible Discount)：购买 2 级和 3 级卡牌时，成本减少 1。
-赏金猎人 (Bounty Hunter)：当你购买带有皇冠的卡牌时，获得 1 个随机宝石。
-回收者 (Recycler)：购买 2 级或 3 级卡牌时，退回 1 个宝石。
-激进扩张 (Aggressive Expansion)：当你补给版图时，获得 1 个随机宝石。
+赏金猎人 (Bounty Hunter)：当你购买带有皇冠的卡牌时，获得 1 个额外随机宝石。
+回收者 (Recycler)：购买 2 级或 3 级卡牌时，退回 1 个额外宝石。
+激进扩张 (Aggressive Expansion)：当你补给版图时，获得 1 个额外随机宝石。
 
 3 级：规则改变 (Game Changers)
 
 贪婪之王 (King of Greed)：所有卡牌额外提供 +1 分。获胜条件：25 分。
 皇家特使 (Royal Envoy)：可以在第 5 回合直接拿取剩余的皇室卡。取消单色获胜。
 双重间谍 (Double Agent)：特权可以拿取 2 个宝石。宝石上限：8。
-全知之眼 (All-Seeing Eye)：额外展示一张 3 级卡。用黄金支付 3 级卡时价值翻倍。获胜条件：单色 13 分。
+全知之眼 (All-Seeing Eye)：展示 2 张额外 L3 卡。用黄金支付 3 级卡时价值翻倍。获胜条件：单色 13 分。
 奇迹建筑师 (Wonder Architect)：3 级卡成本减少 3。获胜条件：13 个皇冠（取消单色获胜）。
 极简主义 (Minimalist)：购买的前 5 张卡提供双倍奖励。宝石上限：6。
-和平主义者 (Pacifist)：免疫负面效果（偷取）。开始时额外获得 1 个特权。
-孤注一掷 (Desperate Gamble)：开始时获得 2 个黄金。无法执行“拿取 3 个宝石”。每 2 回合获得一个特殊的特权。
+和平主义者 (Pacifist)：免疫负面效果（偷取）。开始时获得 1 个特殊特权（受保护）。
+孤注一掷 (Desperate Gamble)：开始时获得 2 个额外黄金。无法执行“拿取 3 个宝石”。每 2 回合获得一个特殊的保护特权。
 `,
         },
     },

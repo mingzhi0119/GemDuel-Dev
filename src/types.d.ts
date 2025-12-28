@@ -256,11 +256,9 @@ export interface GameState {
     // ========== SCORING ==========
     extraPoints: Record<PlayerKey, number>; // Bonus points (e.g., from crowns)
     extraCrowns: Record<PlayerKey, number>; // Crown count for achievements
-
-    // ========== BUFFS (Modifiers) ==========
+    extraAllocation: Record<PlayerKey, GemInventory>; // Track extra gems that don't return to bag
+    extraPrivileges: Record<PlayerKey, number>; // Special non-stealable privileges (max 1)
     playerBuffs: Record<PlayerKey, Buff>;
-
-    // ========== DRAFT PHASE STATE ==========
     draftPool: Buff[];
     draftOrder: PlayerKey[];
     buffLevel: number;

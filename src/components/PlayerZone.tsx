@@ -106,6 +106,7 @@ interface PlayerZoneProps {
     reserved: CardType[];
     royals?: RoyalCard[];
     privileges: number;
+    extraPrivileges?: number;
     isActive: boolean;
     lastFeedback: any;
     onBuyReserved: (card: CardType, execute?: boolean) => boolean;
@@ -127,6 +128,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     reserved,
     royals = [],
     privileges,
+    extraPrivileges = 0,
     isActive,
     lastFeedback,
     onBuyReserved,
@@ -233,7 +235,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                 <div className="flex items-center gap-1 justify-center flex-wrap max-w-[80px]">
                     {Array.from({ length: Math.max(0, privileges) }).map((_, i) => (
                         <button
-                            key={i}
+                            key={`std-${i}`}
                             disabled={!isActive || isPrivilegeMode}
                             onClick={onUsePrivilege}
                             className={`text-amber-200 transition-all ${isActive && !isPrivilegeMode ? 'hover:scale-110 hover:text-amber-100 cursor-pointer animate-pulse' : 'opacity-80 cursor-default'}`}
@@ -245,7 +247,23 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                             />
                         </button>
                     ))}
-                    {privileges === 0 && (
+                    {/* Extra Privileges (Gold) */}
+                    {Array.from({ length: Math.max(0, extraPrivileges) }).map((_, i) => (
+                        <button
+                            key={`extra-${i}`}
+                            disabled={!isActive || isPrivilegeMode}
+                            onClick={onUsePrivilege}
+                            className={`text-yellow-400 transition-all ${isActive && !isPrivilegeMode ? 'hover:scale-110 hover:text-yellow-200 cursor-pointer animate-pulse' : 'opacity-80 cursor-default'}`}
+                            title="Special Privilege (Protected)"
+                        >
+                            <Scroll
+                                size={16}
+                                fill={isActive ? '#fbbf24' : 'none'}
+                                className="text-yellow-500 drop-shadow-md"
+                            />
+                        </button>
+                    ))}
+                    {privileges === 0 && extraPrivileges === 0 && (
                         <Scroll
                             size={16}
                             className={theme === 'dark' ? 'text-slate-800' : 'text-slate-300'}

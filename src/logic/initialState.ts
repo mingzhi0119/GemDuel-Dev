@@ -34,6 +34,11 @@ export const INITIAL_STATE_SKELETON: GameState = {
     royalMilestones: { p1: { 3: false, 6: false }, p2: { 3: false, 6: false } },
     extraPoints: { p1: 0, p2: 0 },
     extraCrowns: { p1: 0, p2: 0 },
+    extraAllocation: {
+        p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+        p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+    },
+    extraPrivileges: { p1: 0, p2: 0 },
     playerBuffs: { p1: BUFFS.NONE, p2: BUFFS.NONE },
     draftPool: [],
     draftOrder: [],

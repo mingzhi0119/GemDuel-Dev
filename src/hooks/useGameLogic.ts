@@ -381,7 +381,11 @@ export const useGameLogic = () => {
         if (!gameState || gameState.winner) return;
         if (gameState.gameMode !== 'IDLE') return;
 
-        if (gameState.privileges[gameState.turn] > 0) {
+        const hasPrivilege =
+            gameState.privileges[gameState.turn] > 0 ||
+            (gameState.extraPrivileges && gameState.extraPrivileges[gameState.turn] > 0);
+
+        if (hasPrivilege) {
             const hasNonGold = gameState.board.some((row) =>
                 row.some((g) => g.type.id !== 'empty' && g.type.id !== 'gold')
             );

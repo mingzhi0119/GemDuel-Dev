@@ -94,6 +94,7 @@ export default function GemDuelBoard() {
         draftPool,
         buffLevel,
         activeModal,
+        extraPrivileges,
     } = state;
 
     const {
@@ -711,6 +712,7 @@ export default function GemDuelBoard() {
                             reserved={playerReserved.p1}
                             royals={playerRoyals.p1}
                             privileges={privileges.p1}
+                            extraPrivileges={extraPrivileges?.p1}
                             score={getPlayerScore('p1')}
                             crowns={getCrownCount('p1')}
                             lastFeedback={lastFeedback}
@@ -741,6 +743,7 @@ export default function GemDuelBoard() {
                             reserved={playerReserved.p2}
                             royals={playerRoyals.p2}
                             privileges={privileges.p2}
+                            extraPrivileges={extraPrivileges?.p2}
                             score={getPlayerScore('p2')}
                             crowns={getCrownCount('p2')}
                             lastFeedback={lastFeedback}

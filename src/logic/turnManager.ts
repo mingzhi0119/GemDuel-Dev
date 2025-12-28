@@ -30,13 +30,13 @@ export const finalizeTurn = (
     if (nextBuff?.effects?.passive?.periodicPrivilege) {
         if (!nextBuff.state) nextBuff.state = {};
         if (typeof nextBuff.state.turnCount === 'undefined') nextBuff.state.turnCount = 0;
-        if (typeof nextBuff.state.specialPrivilege === 'undefined')
-            nextBuff.state.specialPrivilege = 0;
 
         nextBuff.state.turnCount++;
         if (nextBuff.state.turnCount % nextBuff.effects.passive.periodicPrivilege === 0) {
-            if (nextBuff.state.specialPrivilege === 0) {
-                nextBuff.state.specialPrivilege = 1;
+            if (!state.extraPrivileges) state.extraPrivileges = { p1: 0, p2: 0 };
+            
+            if (state.extraPrivileges[nextPlayer] < 1) {
+                state.extraPrivileges[nextPlayer] = 1;
                 state.toastMessage = 'High Roller: Gained Special Privilege!';
             }
         }
