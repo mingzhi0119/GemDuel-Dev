@@ -19,176 +19,159 @@ export interface SelectBuffPayload {
 }
 
 /**
- * Helper: Apply buff initialization effects (onInit)
+ * Internal Helper: Apply initialization logic for a single player directly to the draft
  */
-export const applyBuffInitEffects = (
-    state: GameState,
-    initRandoms: Record<PlayerKey, any> = {} as Record<PlayerKey, any>
-): GameState => {
-    // Deep clone the state to ensure every nested property is mutable
-    // This is necessary because in some environments (like Vitest),
-    // the source skeleton state is deeply frozen.
-    const newState = JSON.parse(JSON.stringify(state)) as GameState;
+const applyPlayerInitLogic = (draft: GameState, pid: PlayerKey, randoms: any) => {
+    const buff = draft.playerBuffs[pid];
+    if (!buff || buff.id === 'none' || !buff.effects) return;
 
-    // Ensure core tracking structures exist
-    if (!newState.playerBuffs) {
-        newState.playerBuffs = { p1: BUFFS.NONE, p2: BUFFS.NONE };
+    // Ensure buff object itself is mutable and has state container
+    if (!buff.state) {
+        draft.playerBuffs[pid] = { ...buff, state: {} };
     }
 
-    if (!newState.extraAllocation) {
-        newState.extraAllocation = {
+    // Now it's safe to access state
+    if (!draft.playerBuffs[pid].state) {
+        draft.playerBuffs[pid].state = {};
+    }
+
+    // Initial reward application (onInit)
+    if (buff.effects.onInit) {
+        const fx = buff.effects.onInit;
+
+        if (fx.privilege) {
+            draft.extraPrivileges[pid] = (draft.extraPrivileges[pid] || 0) + fx.privilege;
+        }
+
+        if (fx.randomGem) {
+            const count = typeof fx.randomGem === 'number' ? fx.randomGem : 1;
+            const randColors = randoms.randomGems;
+            if (randColors) {
+                randColors.slice(0, count).forEach((randColor: GemColor) => {
+                    draft.inventories[pid][randColor]++;
+                    draft.extraAllocation[pid][randColor]++;
+                });
+            }
+        }
+
+        if (fx.crowns) {
+            draft.extraCrowns[pid] = (draft.extraCrowns[pid] || 0) + fx.crowns;
+        }
+
+        if (fx.pearl) {
+            draft.inventories[pid].pearl += fx.pearl;
+            draft.extraAllocation[pid].pearl += fx.pearl;
+        }
+
+        if (fx.gold) {
+            draft.inventories[pid].gold += fx.gold;
+            draft.extraAllocation[pid].gold += fx.gold;
+        }
+
+        if (fx.reserveCard) {
+            const lvl = randoms.reserveCardLevel as 1 | 2 | 3;
+            if (lvl && draft.decks[lvl].length > 0) {
+                const card = draft.decks[lvl].pop()!;
+                draft.playerReserved[pid].push(card);
+            }
+        }
+    }
+
+    // Skill-specific logic
+    if (buff.id === 'extortion') {
+        (draft.playerBuffs[pid].state as any).refillCount = 0;
+    }
+    if (buff.id === 'pacifist') {
+        draft.extraPrivileges[pid] = (draft.extraPrivileges[pid] || 0) + 1;
+    }
+    if (buff.id === 'color_preference') {
+        const discountColor = randoms.preferenceColor;
+        if (discountColor) {
+            const dummyId = `buff-color-pref-${pid}`;
+            // Use 'as any' for partial check to avoid TS strictness on drafts
+            if (!draft.playerTableau[pid].some((c) => (c as any).id.startsWith(dummyId))) {
+                const dummyCard = {
+                    id: `${dummyId}-${Date.now()}`,
+                    points: 0,
+                    crowns: 0,
+                    bonusColor: discountColor as GemColor,
+                    bonusCount: 1,
+                    level: 0 as any,
+                    cost: {},
+                    isBuff: true,
+                };
+                draft.playerTableau[pid].push(dummyCard as any);
+            }
+        }
+    }
+};
+
+/**
+ * Internal Helper: Initialize tracking structures if missing
+ */
+const ensureStructures = (draft: GameState) => {
+    if (!draft.playerBuffs) {
+        draft.playerBuffs = { p1: BUFFS.NONE, p2: BUFFS.NONE };
+    } else {
+        // Force mutable container to break inheritance from read-only constants
+        draft.playerBuffs = { ...draft.playerBuffs };
+    }
+
+    if (!draft.extraAllocation) {
+        draft.extraAllocation = {
             p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
             p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
         };
     }
-
-    if (!newState.extraPrivileges) newState.extraPrivileges = { p1: 0, p2: 0 };
-    if (!newState.extraCrowns) newState.extraCrowns = { p1: 0, p2: 0 };
-    if (!newState.extraPoints) newState.extraPoints = { p1: 0, p2: 0 };
-    if (!newState.playerTurnCounts) newState.playerTurnCounts = { p1: 0, p2: 0 };
-
-    // Apply per-player buff init effects
-    (['p1', 'p2'] as const).forEach((pid) => {
-        // CRITICAL: Ensure we use the latest buff assigned during handleSelectBuff
-        const buff = newState.playerBuffs[pid];
-        const randoms = initRandoms[pid] || {};
-
-        if (buff && buff.id !== 'none' && buff.effects) {
-            if (!newState.playerBuffs[pid].state) newState.playerBuffs[pid].state = {};
-
-            // Initial reward application (onInit)
-            if (buff.effects.onInit) {
-                const fx = buff.effects.onInit;
-
-                // Extra privileges (Special/Protected)
-                if (fx.privilege) {
-                    newState.extraPrivileges[pid] =
-                        (newState.extraPrivileges[pid] || 0) + fx.privilege;
-                }
-
-                // Random basic gems
-                if (fx.randomGem) {
-                    const count = typeof fx.randomGem === 'number' ? fx.randomGem : 1;
-                    const randColors = randoms.randomGems;
-                    if (randColors) {
-                        randColors.slice(0, count).forEach((randColor: GemColor) => {
-                            newState.inventories[pid][randColor]++;
-                            newState.extraAllocation[pid][randColor]++;
-                        });
-                    }
-                }
-
-                // Crowns
-                if (fx.crowns) {
-                    newState.extraCrowns[pid] = (newState.extraCrowns[pid] || 0) + fx.crowns;
-                }
-
-                // Pearls
-                if (fx.pearl) {
-                    newState.inventories[pid].pearl += fx.pearl;
-                    newState.extraAllocation[pid].pearl += fx.pearl;
-                }
-
-                // Gold
-                if (fx.gold) {
-                    newState.inventories[pid].gold += fx.gold;
-                    newState.extraAllocation[pid].gold += fx.gold;
-                }
-
-                // Reserve card
-                if (fx.reserveCard) {
-                    const lvl = randoms.reserveCardLevel as 1 | 2 | 3;
-                    if (lvl && newState.decks[lvl].length > 0) {
-                        const card = newState.decks[lvl].pop()!;
-                        newState.playerReserved[pid].push(card);
-                    }
-                }
-            }
-
-            // Special Case Handlers (By ID)
-            if (buff.id === 'extortion') {
-                (newState.playerBuffs[pid].state as any).refillCount = 0;
-            }
-            if (buff.id === 'pacifist') {
-                newState.extraPrivileges[pid] = (newState.extraPrivileges[pid] || 0) + 1;
-            }
-            if (buff.id === 'color_preference') {
-                const discountColor = randoms.preferenceColor;
-                if (discountColor) {
-                    const dummyId = `buff-color-pref-${pid}`;
-                    if (
-                        !newState.playerTableau[pid].some((c) => (c as any).id.startsWith(dummyId))
-                    ) {
-                        const dummyCard = {
-                            id: `${dummyId}-${Date.now()}`,
-                            points: 0,
-                            crowns: 0,
-                            bonusColor: discountColor as GemColor,
-                            bonusCount: 1,
-                            level: 0 as any,
-                            cost: {},
-                            isBuff: true,
-                        };
-                        newState.playerTableau[pid].push(dummyCard as any);
-                    }
-                }
-            }
-        }
-    });
-
-    // Check for gem cap overflow
-    const p1Cap = newState.playerBuffs?.p1?.effects?.passive?.gemCap || 10;
-    const p1Total = Object.values(newState.inventories.p1).reduce((a, b) => a + b, 0);
-
-    if (p1Total > p1Cap) {
-        newState.turn = 'p1';
-        newState.gameMode = GAME_PHASES.DISCARD_EXCESS_GEMS;
-        newState.nextPlayerAfterRoyal = 'p1';
-    } else {
-        const p2Cap = newState.playerBuffs?.p2?.effects?.passive?.gemCap || 10;
-        const p2Total = Object.values(newState.inventories.p2).reduce((a, b) => a + b, 0);
-        if (p2Total > p2Cap) {
-            newState.turn = 'p2';
-            newState.gameMode = GAME_PHASES.DISCARD_EXCESS_GEMS;
-            newState.nextPlayerAfterRoyal = 'p1';
-        }
-    }
-
-    return newState;
+    if (!draft.extraPrivileges) draft.extraPrivileges = { p1: 0, p2: 0 };
+    if (!draft.extraCrowns) draft.extraCrowns = { p1: 0, p2: 0 };
+    if (!draft.extraPoints) draft.extraPoints = { p1: 0, p2: 0 };
+    if (!draft.playerTurnCounts) draft.playerTurnCounts = { p1: 0, p2: 0 };
 };
 
 /**
- * Initialize game with selected buffs and game setup
+ * Public Helper: Apply buff initialization effects (for tests and handleInit)
+ */
+export const applyBuffInitEffects = (
+    draft: GameState,
+    initRandoms: Record<PlayerKey, any> = {} as Record<PlayerKey, any>
+): GameState => {
+    ensureStructures(draft);
+    applyPlayerInitLogic(draft, 'p1', initRandoms.p1 || {});
+    applyPlayerInitLogic(draft, 'p2', initRandoms.p2 || {});
+    return draft;
+};
+
+/**
+ * Initialize game with selected buffs and game setup (Direct State Creation)
  */
 export const handleInit = (state: GameState | null, payload: BuffInitPayload & any): GameState => {
-    // Create fresh skeleton to prevent mutating constant
+    // Create fresh skeleton
     const skeleton = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
-
-    // Combine skeleton with payload, ensuring payload properties overwrite defaults.
     const initializedState = { ...skeleton, ...payload };
 
-    // Ensure playerBuffs are initialized if not provided in payload.
-    if (!initializedState.playerBuffs) {
-        initializedState.playerBuffs = { p1: BUFFS.NONE, p2: BUFFS.NONE };
-    }
+    ensureStructures(initializedState);
 
-    return applyBuffInitEffects(initializedState, payload.initRandoms);
+    const initRandoms = payload.initRandoms || {};
+    applyPlayerInitLogic(initializedState, 'p1', initRandoms.p1 || {});
+    applyPlayerInitLogic(initializedState, 'p2', initRandoms.p2 || {});
+
+    return initializedState;
 };
 
 /**
- * Initialize draft phase with buff selection
+ * Initialize draft phase
  */
 export const handleInitDraft = (state: GameState | null, payload: any): GameState => {
     const { draftPool, buffLevel, isPvE, ...gameSetup } = payload;
-    // Create fresh skeleton
     const newState = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
 
-    newState.draftPool = draftPool; // This is P1's pool
+    newState.draftPool = draftPool;
     newState.buffLevel = buffLevel;
     newState.isPvE = !!isPvE;
     newState.pendingSetup = gameSetup;
     newState.playerTurnCounts = { p1: 0, p2: 0 };
-    newState.draftOrder = ['p1', 'p2']; // P1 first, then P2
+    newState.draftOrder = ['p1', 'p2'];
     newState.gameMode = GAME_PHASES.DRAFT_PHASE;
     newState.turn = 'p1';
 
@@ -198,22 +181,18 @@ export const handleInitDraft = (state: GameState | null, payload: any): GameStat
 /**
  * Handle player selecting a buff during draft
  */
-export const handleSelectBuff = (
-    state: GameState,
-    payload: SelectBuffPayload | string
-): GameState => {
+export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | string): void => {
     const buffId = typeof payload === 'object' ? payload.buffId : payload;
     const randomColor = typeof payload === 'object' ? payload.randomColor : null;
     const initRandoms = typeof payload === 'object' ? payload.initRandoms : {};
     const player = state.turn;
 
-    // Use correct pool based on player
+    // 1. Determine Pool
     const currentPool = player === 'p1' ? state.draftPool : state.p2DraftPool || [];
 
-    // Find and assign selected buff
+    // 2. Assign Buff
     const selectedBuff = currentPool.find((b) => b.id === buffId);
     if (selectedBuff) {
-        // Create a proper copy with fresh state
         const buffWithState = { ...selectedBuff, state: {} } as Buff;
         state.playerBuffs[player] = buffWithState;
 
@@ -221,46 +200,28 @@ export const handleSelectBuff = (
             state.p1SelectedBuff = buffWithState;
         }
 
-        // Special: Color Preference buff
+        // Color Preference Special Logic (Early Bind)
         if (selectedBuff.id === 'color_preference' && randomColor) {
             (state.playerBuffs[player].state as any).discountColor = randomColor;
-
-            // Add dummy card for visual representation
-            const dummyCard = {
-                id: `buff-color-pref-${player}-${Date.now()}`,
-                points: 0,
-                crowns: 0,
-                bonusColor: randomColor as GemColor,
-                bonusCount: 1,
-                level: 0 as any,
-                cost: {},
-                image: null,
-                isBuff: true,
-            } as any;
-
-            if (!state.playerTableau[player]) state.playerTableau[player] = [];
-            state.playerTableau[player].push(dummyCard);
+            // Dummy card will be added in init logic to be safe, or we can do it here.
+            // Let's rely on the init logic to prevent duplicates.
         }
     }
 
-    // Draft phase progression
+    // 3. Progression
     const currentIdx = state.draftOrder.indexOf(player);
     if (currentIdx !== -1) {
         const nextPlayer = state.draftOrder[currentIdx + 1];
 
         if (nextPlayer) {
-            // Next player's turn to select buff
             state.turn = nextPlayer;
-
-            // Generate a fresh 4-buff pool for P2
             if (nextPlayer === 'p2') {
                 const levelBuffs = Object.values(BUFFS).filter((b) => b.level === state.buffLevel);
-                // Shuffle all buffs of this level and pick 4 (independent of P1's pool)
                 const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
                 state.p2DraftPool = shuffled.slice(0, 4);
             }
         } else {
-            // Draft complete, initialize game
+            // 4. Draft Complete - INLINE INITIALIZATION
             const setup = state.pendingSetup as any;
             if (setup) {
                 state.board = setup.board;
@@ -269,26 +230,33 @@ export const handleSelectBuff = (
                 state.decks = setup.decks;
             }
             const finalInitRandoms = (setup?.initRandoms || initRandoms) as Record<PlayerKey, any>;
+
             state.pendingSetup = null;
             state.draftOrder = [];
             state.gameMode = GAME_PHASES.IDLE;
             state.turn = 'p1';
 
-            // Apply all effects now that the draft is over
-            const finalState = applyBuffInitEffects(state, finalInitRandoms);
+            // 5. Explicitly Run Init Logic for Both Players
+            ensureStructures(state);
+            applyPlayerInitLogic(state, 'p1', finalInitRandoms.p1 || {});
+            applyPlayerInitLogic(state, 'p2', finalInitRandoms.p2 || {});
 
-            // Explicitly sync all derived state back to draft to avoid lost properties
-            state.inventories = finalState.inventories;
-            state.playerBuffs = finalState.playerBuffs;
-            state.playerTableau = finalState.playerTableau;
-            state.playerReserved = finalState.playerReserved;
-            state.extraAllocation = finalState.extraAllocation;
-            state.extraPrivileges = finalState.extraPrivileges;
-            state.extraCrowns = finalState.extraCrowns;
-            state.extraPoints = finalState.extraPoints;
-            state.playerTurnCounts = finalState.playerTurnCounts;
-            state.gameMode = finalState.gameMode;
-            state.turn = finalState.turn;
+            // Check Gem Caps
+            const p1Cap = state.playerBuffs?.p1?.effects?.passive?.gemCap || 10;
+            const p1Total = Object.values(state.inventories.p1).reduce((a, b) => a + b, 0);
+            if (p1Total > p1Cap) {
+                state.turn = 'p1';
+                state.gameMode = GAME_PHASES.DISCARD_EXCESS_GEMS;
+                state.nextPlayerAfterRoyal = 'p1';
+            } else {
+                const p2Cap = state.playerBuffs?.p2?.effects?.passive?.gemCap || 10;
+                const p2Total = Object.values(state.inventories.p2).reduce((a, b) => a + b, 0);
+                if (p2Total > p2Cap) {
+                    state.turn = 'p2';
+                    state.gameMode = GAME_PHASES.DISCARD_EXCESS_GEMS;
+                    state.nextPlayerAfterRoyal = 'p1';
+                }
+            }
         }
     }
 };

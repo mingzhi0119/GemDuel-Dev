@@ -50,6 +50,7 @@ export default function GemDuelBoard() {
     const [onlineSetup, setOnlineSetup] = useState(false);
     const [roomInput, setRoomInput] = useState('');
     const [copySuccess, setCopySetup] = useState(false);
+    const [isPeekingBoard, setIsPeekingBoard] = useState(false);
 
     const { resolution, setResolution, settings, RESOLUTION_SETTINGS, theme, setTheme } =
         useSettings();
@@ -587,17 +588,40 @@ export default function GemDuelBoard() {
             )}
 
             {gameMode === 'SELECT_CARD_COLOR' && (
-                <div className="fixed inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center animate-in fade-in">
-                    <h2 className="text-2xl font-bold text-white mb-6">Select Card Color</h2>
-                    <div className="flex gap-4">
-                        {BONUS_COLORS.map((color) => (
+                <div
+                    className={`fixed inset-0 z-[100] transition-all duration-500 flex flex-col items-center justify-center ${isPeekingBoard ? 'bg-black/20 pointer-events-none' : 'bg-black/80'}`}
+                >
+                    {!isPeekingBoard ? (
+                        <>
+                            <h2 className="text-2xl font-black text-white mb-6 uppercase tracking-widest animate-in fade-in zoom-in">
+                                Select Joker Color
+                            </h2>
+                            <div className="flex gap-4 p-8 bg-white/5 rounded-3xl backdrop-blur-md border border-white/10 shadow-2xl animate-in slide-in-from-bottom-4">
+                                {BONUS_COLORS.map((color) => (
+                                    <button
+                                        key={color}
+                                        onClick={() => handleSelectBonusColor(color)}
+                                        className={`w-16 h-16 rounded-full bg-gradient-to-br ${(GEM_TYPES as any)[color.toUpperCase()].color} border-2 border-white/50 shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:scale-110 active:scale-95 transition-all`}
+                                    />
+                                ))}
+                            </div>
                             <button
-                                key={color}
-                                onClick={() => handleSelectBonusColor(color)}
-                                className={`w-16 h-16 rounded-full bg-gradient-to-br ${(GEM_TYPES as any)[color.toUpperCase()].color} border-2 border-white/50 shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:scale-110 transition-transform`}
-                            />
-                        ))}
-                    </div>
+                                onClick={() => setIsPeekingBoard(true)}
+                                className="mt-8 flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white font-bold border border-slate-600 transition-all hover:scale-105 active:scale-95"
+                            >
+                                <Users size={18} /> View Board
+                            </button>
+                        </>
+                    ) : (
+                        <div className="absolute bottom-12 pointer-events-auto animate-in fade-in slide-in-from-bottom-8">
+                            <button
+                                onClick={() => setIsPeekingBoard(false)}
+                                className="flex items-center gap-3 px-10 py-5 rounded-full bg-amber-600 hover:bg-amber-500 text-white font-black uppercase tracking-wider shadow-[0_0_30px_rgba(217,119,6,0.4)] transition-all hover:scale-110 active:scale-95"
+                            >
+                                <ArrowLeft size={24} /> Back to Color Selection
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
             {winner && !isReviewing && (

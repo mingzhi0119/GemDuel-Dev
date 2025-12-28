@@ -136,6 +136,12 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
                     state.toastMessage = 'Extortion blocked by Pacifist!';
                 } else {
                     let stolenColor = randoms?.extortionColor;
+
+                    // Verify if the forced random color is actually stealable
+                    if (stolenColor && state.inventories[opponent][stolenColor] <= 0) {
+                        stolenColor = undefined;
+                    }
+
                     if (!stolenColor) {
                         const stealableColors = Object.keys(state.inventories[opponent]).filter(
                             (k) =>
@@ -168,7 +174,7 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
         const randColor = (randoms?.expansionColor ||
             ['red', 'green', 'blue', 'white', 'black'][Math.floor(Math.random() * 5)]) as GemColor;
         state.inventories[state.turn][randColor]++;
-        
+
         // Track as extra allocation (vanishes on use)
         if (!state.extraAllocation) {
             state.extraAllocation = {
@@ -177,7 +183,7 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
             };
         }
         state.extraAllocation[state.turn][randColor]++;
-        
+
         addFeedback(state, state.turn, randColor, 1);
         state.toastMessage = 'Aggressive Expansion: +1 Gem!';
     }

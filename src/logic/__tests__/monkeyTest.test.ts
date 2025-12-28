@@ -57,7 +57,10 @@ describe('Monkey Test - Random Stress Test', () => {
             },
         };
 
-        return applyBuffInitEffects(state, randoms);
+        // Wrap in produce because state from Immer is frozen
+        return produce(state, (draft) => {
+            applyBuffInitEffects(draft, randoms);
+        });
     };
 
     // Helper: Check state invariants

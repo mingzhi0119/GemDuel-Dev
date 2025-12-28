@@ -14,9 +14,10 @@ export const computeAiAction = (state: GameState): GameAction | null => {
     if (state.gameMode === 'DRAFT_PHASE') {
         const pool = state.p2DraftPool || state.draftPool || [];
         if (pool.length > 0) {
-            // AI just picks the first one for now (or random)
             const chosen = pool[Math.floor(Math.random() * pool.length)];
-            return { type: 'SELECT_BUFF', payload: { buffId: chosen.id } };
+            const basics = ['red', 'green', 'blue', 'white', 'black'];
+            const randomColor = basics[Math.floor(Math.random() * basics.length)];
+            return { type: 'SELECT_BUFF', payload: { buffId: chosen.id, randomColor } };
         }
         return null;
     }
