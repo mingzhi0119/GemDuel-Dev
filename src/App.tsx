@@ -55,7 +55,7 @@ export default function GemDuelBoard() {
     const { resolution, setResolution, settings, RESOLUTION_SETTINGS, theme, setTheme } =
         useSettings();
 
-    const { state, handlers, getters, historyControls, online } = useGameLogic();
+    const { state, handlers, getters, historyControls, online } = useGameLogic(onlineSetup);
 
     useEffect(() => {
         if (window.ipcRenderer) {

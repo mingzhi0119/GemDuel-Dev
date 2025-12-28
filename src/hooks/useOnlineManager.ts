@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Peer, DataConnection } from 'peerjs';
 import { GameAction } from '../types';
 
@@ -15,6 +15,12 @@ export const useOnlineManager = (
     >('disconnected');
     const [isHost, setIsHost] = useState(false);
 
+    // Keep the latest callback in a ref to avoid re-triggering effects
+    const onActionReceivedRef = useRef(onActionReceived);
+    useEffect(() => {
+        onActionReceivedRef.current = onActionReceived;
+    }, [onActionReceived]);
+
     const setupConnection = useCallback(
         (connection: DataConnection) => {
             connection.on('open', () => {
@@ -26,7 +32,7 @@ export const useOnlineManager = (
             connection.on('data', (data: any) => {
                 console.log('Received data:', data);
                 if (data.type === 'GAME_ACTION') {
-                    onActionReceived(data.action);
+                    onActionReceivedRef.current(data.action);
                 }
             });
 
@@ -35,12 +41,17 @@ export const useOnlineManager = (
                 setConn(null);
             });
         },
-        [onActionReceived]
+        [] // No dependencies needed now
     );
 
     // Initialize Peer only when enabled
     useEffect(() => {
         if (!enabled) return;
+
+        // If we already have a peer instance, don't recreate it
+        // Check if the peer is destroyed or disconnected if you want more robust handling,
+        // but for now, simple existence check prevents loop.
+        // Actually, we rely on cleanup function to destroy, so we should be fine recreating if enabled changes.
 
         const newPeer = new Peer();
 
@@ -59,8 +70,10 @@ export const useOnlineManager = (
 
         return () => {
             newPeer.destroy();
+            setPeer(null);
+            setPeerId('');
         };
-    }, [setupConnection]);
+    }, [enabled, setupConnection]); // setupConnection is now stable
 
     const connectToPeer = useCallback(
         (id: string) => {

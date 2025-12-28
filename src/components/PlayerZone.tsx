@@ -331,7 +331,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                             >
                                                 {card.points > 0 && (
                                                     <div className="absolute top-0.5 right-0.5 px-0.5 rounded-sm bg-black/30 backdrop-blur-[1px] flex items-center justify-center">
-                                                        <span className="text-[10px] font-black text-white leading-none drop-shadow-md">
+                                                        <span className="text-[12pt] font-black text-white leading-none drop-shadow-md">
                                                             {card.points}
                                                         </span>
                                                     </div>
@@ -346,20 +346,9 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
 
                                     {stats.bonusCount > 0 && (
                                         <div
-                                            className={`absolute -bottom-2 -right-2 text-[10px] font-black px-1.5 rounded-full border z-20 shadow-md flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-slate-800 border-slate-300'}`}
+                                            className={`absolute -bottom-2 -right-2 text-[9px] font-bold px-1 rounded-full border z-20 shadow-md flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-slate-800 border-slate-300'}`}
                                         >
                                             {stats.bonusCount}
-                                        </div>
-                                    )}
-
-                                    {/* Cumulative Points for this color stack */}
-                                    {stats.points > 0 && (
-                                        <div
-                                            className={`absolute top-1 right-1 text-[12pt] font-black px-1.5 py-0 rounded-md border z-30 shadow-xl flex items-center justify-center
-                                            ${theme === 'dark' ? 'bg-amber-600 text-white border-amber-400' : 'bg-amber-500 text-white border-amber-300'}
-                                        `}
-                                        >
-                                            {stats.points}
                                         </div>
                                     )}
                                 </div>

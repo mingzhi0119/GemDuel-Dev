@@ -11,7 +11,7 @@ import { GameState, Card, PlayerKey, GemCoord, GameAction, GemTypeObject } from 
 import { computeAiAction } from '../logic/ai/aiPlayer';
 import { useOnlineManager } from './useOnlineManager';
 
-export const useGameLogic = () => {
+export const useGameLogic = (shouldConnect: boolean = false) => {
     // 1. Core State & History
     const {
         history,
@@ -62,7 +62,7 @@ export const useGameLogic = () => {
         [recordLocalAction]
     );
 
-    const online = useOnlineManager(handleRemoteAction, gameState.isOnline);
+    const online = useOnlineManager(handleRemoteAction, gameState.isOnline || shouldConnect);
 
     // Wrapper for recording actions (local + broadcast)
     const recordAction = useCallback(
