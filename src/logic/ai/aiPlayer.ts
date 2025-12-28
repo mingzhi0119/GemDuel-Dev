@@ -4,7 +4,7 @@ import { validateGemSelection } from '../validators';
 import { ABILITIES } from '../../constants';
 
 /**
- * Heuristic-based AI for Splendor Duel
+ * Heuristic-based AI for Gem Duel
  */
 export const computeAiAction = (state: GameState): GameAction | null => {
     const aiPlayer = state.turn;

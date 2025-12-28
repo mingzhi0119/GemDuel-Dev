@@ -332,10 +332,10 @@ export default function GemDuelBoard() {
                 >
                     <div className="flex flex-col items-center gap-2 animate-in slide-in-from-bottom-4 duration-700">
                         <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-gradient-to-br from-amber-400 to-amber-600 bg-clip-text text-transparent drop-shadow-lg">
-                            SPLENDOR DUEL
+                            GEM DUEL
                         </h1>
                         <span className="text-sm uppercase tracking-widest opacity-60">
-                            Reimagined
+                            Tactical Reimagined
                         </span>
                     </div>
 

@@ -1,5 +1,5 @@
 /**
- * Core Game Types for Splendor Duel
+ * Core Game Types for Gem Duel
  *
  * This file defines the fundamental TypeScript interfaces and types
  * that ensure type safety across the entire game logic layer.

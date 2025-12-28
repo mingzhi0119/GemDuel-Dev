@@ -1,9 +1,9 @@
-# Gem Duel: Splendor Duel Reimagined
+# Gem Duel: Tactical Gem-Collecting Reimagined
 
 [![Release](https://img.shields.io/badge/version-5.0.0-purple.svg)]()
 [![Build](https://github.com/mingzhi0119/GemDuel-Dev/actions/workflows/build.yml/badge.svg)](https://github.com/mingzhi0119/GemDuel-Dev/actions)
 
-A high-fidelity digital remake of the popular strategy board game **Splendor Duel**, enhanced with modern architecture and a deep **Roguelike Expansion**. Built with React, TypeScript, and Electron.
+A high-fidelity digital implementation of a competitive strategic gem-collecting board game, enhanced with modern architecture and a deep **Roguelike Expansion**. Built with React, TypeScript, and Electron.
 
 ## 🚀 Key Features
 
@@ -29,7 +29,7 @@ A high-fidelity digital remake of the popular strategy board game **Splendor Due
 ## 🎨 UI & UX
 
 - **Authoritative Feedback**: Real-time "Your Turn" indicators and status markers.
-- **Information Integrity**: 100% synced with official card data (CSV-verified).
+- **Information Integrity**: Precision engine synced with verified balanced card data.
 - **Responsive Design**: Supports multiple resolutions with dynamic scaling for the game board and dashboards.
 - **Accessible UI**: High-visibility score markers (12pt Black) and smart tooltip positioning.
 
