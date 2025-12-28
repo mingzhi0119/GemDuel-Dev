@@ -238,7 +238,6 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
 
     state.playerReserved[player].push(card);
 
-    const { level, idx } = payload;
     const isExtra = (payload as any).isExtra;
     const extraIdx = (payload as any).extraIdx;
     const deck = state.decks[level];

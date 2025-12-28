@@ -144,7 +144,7 @@ export const Card: React.FC<CardProps> = React.memo(
             >
                 {/* 1. Top Left: Points & Ability */}
                 <div className="absolute top-1 left-1.5 flex flex-row items-center gap-1 pointer-events-none z-10">
-                    {card.points > 0 && (
+                    {Number(card.points) > 0 && (
                         <span
                             className={`font-bold text-white leading-none drop-shadow-md ${pointSize}`}
                         >
@@ -172,7 +172,7 @@ export const Card: React.FC<CardProps> = React.memo(
                     <div className="absolute bottom-1.5 left-1.5 pointer-events-none z-10">
                         <div className="flex flex-col gap-0.5">
                             {Object.entries(card.cost)
-                                .filter(([, amt]) => (amt as number) > 0)
+                                .filter(([, amt]) => Number(amt) > 0)
                                 .map(([color, amt]) => (
                                     // 🟢 修复：min-w-[18px] min-h-[18px] 强制保持圆形
                                     <div
@@ -195,21 +195,16 @@ export const Card: React.FC<CardProps> = React.memo(
                 )}
 
                 {/* 4. Bottom Right: Crowns */}
-                <div className="absolute bottom-1.5 right-1.5 pointer-events-none flex items-center gap-0.5 z-10">
-                    {card.crowns && card.crowns > 0 && (
-                        <>
+                <div className="absolute bottom-1.5 right-1.5 pointer-events-none flex flex-col items-center gap-0.5 z-10">
+                    {Number(card.crowns) > 0 &&
+                        Array.from({ length: Number(card.crowns) }).map((_, i) => (
                             <Crown
+                                key={i}
                                 size={crownIconSize}
                                 className="text-yellow-400 drop-shadow-md"
                                 fill="currentColor"
                             />
-                            {card.crowns > 1 && (
-                                <span className="text-[10px] font-black text-white drop-shadow-md leading-none">
-                                    {card.crowns}
-                                </span>
-                            )}
-                        </>
-                    )}
+                        ))}
                 </div>
 
                 {/* 5. Royal Badge */}

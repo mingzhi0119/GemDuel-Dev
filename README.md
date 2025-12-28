@@ -53,6 +53,10 @@ Break away from the symmetry! Before the game begins, players participate in a *
 - **Royal Court:** Claim powerful Royal cards upon reaching Crown milestones (3 and 6).
 - **Three Victory Paths:** 20 Points, 10 Crowns, or 10 Points in a single color.
 
+### Visual Design
+
+- **Vertical Crown Stacking:** Cards featuring multiple crowns display them in a distinct vertical arrangement in the bottom-right corner, enhancing readability and visual flair.
+
 ### Technical Highlights
 
 - **Pure Logic Engine:** Decoupled game rules for high-performance state transitions.
