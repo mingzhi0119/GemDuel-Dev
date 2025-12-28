@@ -8,6 +8,7 @@ interface RoyalCourtProps {
     gameMode: GamePhase | string;
     handleSelectRoyal: (card: RoyalCard) => void;
     theme: 'light' | 'dark';
+    canInteract?: boolean;
 }
 
 export const RoyalCourt: React.FC<RoyalCourtProps> = ({
@@ -15,11 +16,13 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     gameMode,
     handleSelectRoyal,
     theme,
+    canInteract = true,
 }) => {
     return (
         <div
             className={`flex flex-col gap-4 items-center p-4 rounded-3xl border backdrop-blur-sm shrink-0 w-fit transition-colors duration-500
             ${theme === 'dark' ? 'bg-slate-900/40 border-slate-800/50' : 'bg-white/40 border-slate-200/50'}
+            ${!canInteract ? 'opacity-70 pointer-events-none' : ''}
         `}
         >
             <h2 className="text-[10px] font-bold text-yellow-500/70 uppercase tracking-widest flex items-center gap-2 mb-2">

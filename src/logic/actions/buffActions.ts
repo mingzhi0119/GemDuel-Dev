@@ -16,6 +16,7 @@ export interface SelectBuffPayload {
     buffId: string;
     randomColor?: GemColor;
     initRandoms?: Record<PlayerKey, any>;
+    p2DraftPoolIndices?: number[]; // For syncing P2's pool
 }
 
 /**
@@ -185,6 +186,7 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
     const buffId = typeof payload === 'object' ? payload.buffId : payload;
     const randomColor = typeof payload === 'object' ? payload.randomColor : null;
     const initRandoms = typeof payload === 'object' ? payload.initRandoms : {};
+    const p2Indices = typeof payload === 'object' ? payload.p2DraftPoolIndices : null;
     const player = state.turn;
 
     // 1. Determine Pool
@@ -217,8 +219,15 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
             state.turn = nextPlayer;
             if (nextPlayer === 'p2') {
                 const levelBuffs = Object.values(BUFFS).filter((b) => b.level === state.buffLevel);
-                const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
-                state.p2DraftPool = shuffled.slice(0, 4);
+
+                if (p2Indices && p2Indices.length === 4) {
+                    // Deterministic generation from payload
+                    state.p2DraftPool = p2Indices.map((i) => levelBuffs[i]);
+                } else {
+                    // Fallback to random (Local/AI)
+                    const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
+                    state.p2DraftPool = shuffled.slice(0, 4);
+                }
             }
         } else {
             // 4. Draft Complete - INLINE INITIALIZATION

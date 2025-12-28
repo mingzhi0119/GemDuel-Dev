@@ -13,6 +13,7 @@ interface GameActionsProps {
     activeBuff?: Buff;
     onPeekDeck?: (level: number) => void;
     theme: 'light' | 'dark';
+    canInteract?: boolean;
 }
 
 export const GameActions: React.FC<GameActionsProps> = ({
@@ -26,12 +27,15 @@ export const GameActions: React.FC<GameActionsProps> = ({
     activeBuff,
     onPeekDeck,
     theme,
+    canInteract = true,
 }) => {
     const bagCount = bag ? bag.length : 0;
     const selectedCount = selectedGems ? selectedGems.length : 0;
 
     return (
-        <div className="flex flex-col gap-4 items-center mt-4 z-50">
+        <div
+            className={`flex flex-col gap-4 items-center mt-4 z-50 ${!canInteract ? 'opacity-50 pointer-events-none' : ''}`}
+        >
             {/* Game Action Buttons */}
             {gameMode === 'RESERVE_WAITING_GEM' ? (
                 // Cancel Reserve Mode - replaces other buttons

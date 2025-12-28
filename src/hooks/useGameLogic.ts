@@ -10,6 +10,7 @@ import { validateGemSelection } from '../logic/validators';
 import { GameState, Card, PlayerKey, GemCoord, GameAction, GemTypeObject } from '../types';
 import { computeAiAction } from '../logic/ai/aiPlayer';
 import { useOnlineManager } from './useOnlineManager';
+import { generateGameStateHash } from '../utils/checksum';
 
 export const useGameLogic = (shouldConnect: boolean = false) => {
     // 1. Core State & History
@@ -52,32 +53,32 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
             };
             clearAndInit(flattenedAction);
         }
-    }, [gameState.gameMode, history.length, clearAndInit, gameState]);
+    }, [gameState.gameMode, history, clearAndInit, gameState]);
 
     // 3. Online Manager
     const handleRemoteAction = useCallback(
-        (action: GameAction) => {
-            recordLocalAction(action);
+        (action: GameAction, remoteChecksum?: string) => {
+            if (action.type === 'INIT' || action.type === 'INIT_DRAFT') {
+                // Critical: Reset local history to match Host's initial state
+                clearAndInit(action);
+            } else {
+                // Checksum Validation
+                if (remoteChecksum && gameState) {
+                    const predictedState = applyAction(gameState, action);
+                    const localChecksum = generateGameStateHash(predictedState);
+                    if (localChecksum !== remoteChecksum) {
+                        console.error(
+                            `DESYNC DETECTED! Local: ${localChecksum} vs Remote: ${remoteChecksum}`
+                        );
+                    }
+                }
+                recordLocalAction(action);
+            }
         },
-        [recordLocalAction]
+        [recordLocalAction, clearAndInit, gameState]
     );
 
     const online = useOnlineManager(handleRemoteAction, gameState.isOnline || shouldConnect);
-
-    // Wrapper for recording actions (local + broadcast)
-    const recordAction = useCallback(
-        (action: GameAction) => {
-            recordLocalAction(action);
-            if (gameState.isOnline) {
-                online.sendAction(action);
-            }
-        },
-        [gameState.isOnline, online, recordLocalAction]
-    );
-
-    // 4. UI/Transient State
-    const [selectedGems, setSelectedGems] = useState<GemCoord[]>([]);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     // 5. Turn Logic Helper
     const isMyTurn = useMemo(() => {
@@ -85,6 +86,37 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
         const myRole: PlayerKey = online.isHost ? 'p1' : 'p2';
         return gameState.turn === myRole;
     }, [gameState.isOnline, gameState.turn, online.isHost]);
+
+    // Wrapper for recording actions (local + broadcast)
+    const recordAction = useCallback(
+        (action: GameAction) => {
+            // Security Check for Online Mode: Prevent local actions if not my turn
+            // Note: We allow INIT/INIT_DRAFT actions which are system-driven during setup
+            if (
+                gameState.isOnline &&
+                !isMyTurn &&
+                action.type !== 'INIT' &&
+                action.type !== 'INIT_DRAFT'
+            ) {
+                console.warn('Blocked action from non-active player');
+                return;
+            }
+
+            recordLocalAction(action);
+            // Send if we are in an active online state OR if we are connected (for INIT actions)
+            if (gameState.isOnline || online.connectionStatus === 'connected') {
+                // Predict next state to generate checksum
+                const nextState = applyAction(gameState, action);
+                const checksum = generateGameStateHash(nextState);
+                online.sendAction(action, checksum);
+            }
+        },
+        [gameState, online, recordLocalAction, isMyTurn]
+    );
+
+    // 4. UI/Transient State
+    const [selectedGems, setSelectedGems] = useState<GemCoord[]>([]);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
     // 6. AI Engine Trigger
     useEffect(() => {
@@ -421,6 +453,11 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
         if (canUndo) undo();
     };
 
+    const handleRedo = () => {
+        if (gameState?.isOnline) return;
+        if (canRedo) redo();
+    };
+
     const activatePrivilegeMode = () => {
         if (!isMyTurn) return;
         if (!gameState || gameState.winner) return;
@@ -475,9 +512,25 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
     const handleSelectBuff = (buffId: string) => {
         if (!isMyTurn) return;
         const basics = ['red', 'green', 'blue', 'white', 'black'];
-        const randomColor = basics[Math.floor(Math.random() * basics.length)];
+        const randomColor = basics[Math.floor(Math.random() * basics.length)] as GemColor;
 
-        recordAction({ type: 'SELECT_BUFF', payload: { buffId, randomColor } });
+        let p2DraftPoolIndices: number[] | undefined;
+
+        // If P1 is selecting and it's Roguelike, generate P2's pool indices deterministically
+        if (gameState.turn === 'p1' && gameState.gameMode === 'DRAFT_PHASE') {
+            const levelBuffs = Object.values(BUFFS).filter((b) => b.level === gameState.buffLevel);
+            // Create array of indices [0, 1, 2, ...]
+            const indices = levelBuffs.map((_, i) => i);
+            // Shuffle indices
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            // Take first 4
+            p2DraftPoolIndices = indices.slice(0, 4);
+        }
+
+        recordAction({ type: 'SELECT_BUFF', payload: { buffId, randomColor, p2DraftPoolIndices } });
     };
 
     const handleCloseModal = () => {
@@ -538,12 +591,13 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
             isSelected,
             getCrownCount: boundGetCrownCount,
             canAfford,
+            isMyTurn,
         },
         historyControls: {
             undo: handleUndo,
-            redo,
-            canUndo,
-            canRedo,
+            redo: handleRedo,
+            canUndo: !gameState?.isOnline && canUndo,
+            canRedo: !gameState?.isOnline && canRedo,
             currentIndex,
             historyLength: history.length,
             history,

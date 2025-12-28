@@ -10,6 +10,7 @@ interface GameBoardProps {
     gameMode: GamePhase | string;
     bonusGemTarget: GemTypeObject | null;
     theme: 'light' | 'dark';
+    canInteract?: boolean;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
@@ -21,18 +22,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     gameMode,
     bonusGemTarget,
     theme,
+    canInteract = true,
 }) => {
     return (
         <div
             className={`p-3 rounded-2xl shadow-2xl border transition-colors duration-300 backdrop-blur-sm
             ${theme === 'dark' ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white/60 border-slate-200/50'}
             ${gameMode === 'DISCARD_EXCESS_GEMS' ? 'border-red-500/50' : ''}
+            ${!canInteract ? 'opacity-70' : ''}
         `}
         >
             <div className="text-right text-[10px] text-slate-500 mb-1 font-mono">
                 Bag: {bag.length}
             </div>
-            <div className="grid grid-cols-5 grid-rows-5 gap-2 w-[300px] h-[300px]">
+            <div
+                className={`grid grid-cols-5 grid-rows-5 gap-2 w-[300px] h-[300px] ${!canInteract ? 'pointer-events-none' : ''}`}
+            >
                 {board.map((row, r) =>
                     row.map((gem, c) => {
                         // Defensive check: gem might be undefined

@@ -127,7 +127,7 @@ export default function GemDuelBoard() {
         importHistory,
     } = handlers;
 
-    const { getPlayerScore, isSelected, getCrownCount } = getters;
+    const { getPlayerScore, isSelected, getCrownCount, isMyTurn } = getters;
 
     const effectiveGameMode = isReviewing ? 'REVIEW' : winner ? 'GAME_OVER' : gameMode;
 
@@ -201,7 +201,7 @@ export default function GemDuelBoard() {
                     <div className="flex flex-col md:flex-row gap-8 w-full max-w-4xl px-8">
                         {/* Host Section */}
                         <div
-                            className={`flex-1 p-8 rounded-3xl border-2 transition-all ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'} flex flex-col items-center gap-6`}
+                            className={`flex-1 p-8 rounded-3xl border-2 transition-all ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'} flex flex-col items-center gap-6 ${!online.isHost && online.connectionStatus === 'connected' ? 'opacity-30 pointer-events-none' : ''}`}
                         >
                             <h3 className="text-xl font-bold">Host a Game</h3>
                             <p className="text-center text-sm opacity-60">
@@ -427,6 +427,8 @@ export default function GemDuelBoard() {
                 activePlayer={turn}
                 onSelectBuff={handleSelectBuff}
                 theme={theme}
+                localPlayer={online.isHost ? 'p1' : 'p2'}
+                isOnline={state.isOnline}
             />
         );
     }
@@ -472,6 +474,8 @@ export default function GemDuelBoard() {
                 activePlayer={turn}
                 playerBuffs={playerBuffs}
                 theme={theme}
+                localPlayer={online.isHost ? 'p1' : 'p2'}
+                isOnline={state.isOnline}
             />
 
             {/* Floating Controls (Z-Index High) */}
@@ -678,6 +682,7 @@ export default function GemDuelBoard() {
                             gameMode={effectiveGameMode}
                             bonusGemTarget={bonusGemTarget}
                             theme={theme}
+                            canInteract={isMyTurn}
                         />
                         <GameActions
                             handleReplenish={handleReplenish}
@@ -690,6 +695,7 @@ export default function GemDuelBoard() {
                             activeBuff={playerBuffs[turn]}
                             onPeekDeck={handlePeekDeck}
                             theme={theme}
+                            canInteract={isMyTurn}
                         />
                     </div>
 
@@ -701,6 +707,7 @@ export default function GemDuelBoard() {
                             gameMode={effectiveGameMode}
                             handleSelectRoyal={handleSelectRoyal}
                             theme={theme}
+                            canInteract={isMyTurn}
                         />
                         <div
                             className={`flex flex-col gap-3 items-center p-2 lg:p-3 rounded-2xl border backdrop-blur-sm transition-colors duration-500

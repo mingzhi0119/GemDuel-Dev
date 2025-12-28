@@ -11,6 +11,8 @@ interface TopBarProps {
     activePlayer: PlayerKey;
     theme: 'light' | 'dark';
     playerBuffs?: Record<PlayerKey, Buff>;
+    localPlayer?: PlayerKey;
+    isOnline?: boolean;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -22,6 +24,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     activePlayer,
     theme,
     playerBuffs = {} as Record<PlayerKey, Buff>,
+    localPlayer,
+    isOnline,
 }) => {
     const getVictoryGoals = (pid: PlayerKey) => {
         const buff = playerBuffs[pid]?.effects?.winCondition || {};
@@ -37,12 +41,31 @@ export const TopBar: React.FC<TopBarProps> = ({
     const isP1Winning = p1Score >= p1Goals.points * 0.75 || p1Crowns >= p1Goals.crowns * 0.7;
     const isP2Winning = p2Score >= p2Goals.points * 0.75 || p2Crowns >= p2Goals.crowns * 0.7;
 
+    const isMyTurn = isOnline && localPlayer === activePlayer;
+
     return (
         <div
             className={`fixed top-0 left-0 w-full h-16 lg:h-20 backdrop-blur-md border-b z-[60] flex items-center justify-between px-2 lg:px-8 transition-colors duration-500
             ${theme === 'dark' ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-200'}
         `}
         >
+            {/* Turn Indicator (Online Only) */}
+            {isOnline && (
+                <div
+                    className={`absolute top-full left-1/2 -translate-x-1/2 -mt-3 px-4 py-1 rounded-b-xl shadow-lg border-x border-b text-[10px] font-black uppercase tracking-widest transition-all duration-500 z-50
+                    ${
+                        isMyTurn
+                            ? 'bg-emerald-500 text-white border-emerald-600 translate-y-0 opacity-100 animate-pulse'
+                            : theme === 'dark'
+                              ? 'bg-slate-800 text-slate-500 border-slate-700 translate-y-[-50%] opacity-0'
+                              : 'bg-slate-200 text-slate-400 border-slate-300 translate-y-[-50%] opacity-0'
+                    }
+                `}
+                >
+                    Your Turn
+                </div>
+            )}
+
             {/* Player 1 Overview (Left) */}
             <div
                 className={`flex items-center gap-2 lg:gap-8 transition-all duration-500 ${activePlayer === 'p1' ? 'opacity-100 scale-105' : 'opacity-100'}`}

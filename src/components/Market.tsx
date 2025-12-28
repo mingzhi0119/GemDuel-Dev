@@ -36,28 +36,33 @@ export const Market: React.FC<MarketProps> = React.memo(
         isOnline,
         localPlayer,
     }) => {
+        // Validation: Is it my turn?
+        const canInteract = !isOnline || turn === localPlayer;
+
         // Optimization: Stable callback for buying cards
         const handleBuy = useCallback(
             (card: CardType, context: any) => {
-                if (card && context) {
+                if (canInteract && card && context) {
                     initiateBuy(card, 'market', context);
                 }
             },
-            [initiateBuy]
+            [initiateBuy, canInteract]
         );
 
         // Optimization: Stable callback for reserving cards
         const handleReserve = useCallback(
             (card: CardType, context: any) => {
-                if (card && context) {
+                if (canInteract && card && context) {
                     handleReserveCard(card, context.level, context.idx);
                 }
             },
-            [handleReserveCard]
+            [handleReserveCard, canInteract]
         );
 
         return (
-            <div className="flex flex-col gap-4 items-center shrink-0 w-fit">
+            <div
+                className={`flex flex-col gap-4 items-center shrink-0 w-fit ${!canInteract ? 'pointer-events-none opacity-80' : ''}`}
+            >
                 <h2
                     className={`text-[10px] font-bold uppercase tracking-widest mb-1 text-center ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}
                 >
@@ -72,7 +77,7 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                     const revealL1 = lvl === 1 && visibilityBuffs.revealDeck1;
                     const revealL3 = lvl === 3 && visibilityBuffs.extraL3;
-                    
+
                     const deck = decks[lvl];
                     const topCard = deck.length > 0 ? deck[deck.length - 1] : null;
                     const isRevealed = revealL1 && topCard; // Only revealL1 shows card inside deck container

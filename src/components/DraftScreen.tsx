@@ -11,6 +11,8 @@ interface DraftScreenProps {
     activePlayer: PlayerKey;
     onSelectBuff: (buffId: string) => void;
     theme: 'light' | 'dark';
+    localPlayer?: PlayerKey; // Added to check permissions
+    isOnline?: boolean;
 }
 
 export const DraftScreen: React.FC<DraftScreenProps> = ({
@@ -21,8 +23,11 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     activePlayer,
     onSelectBuff,
     theme,
+    localPlayer,
+    isOnline = false,
 }) => {
     const currentPool = activePlayer === 'p1' ? draftPool : p2DraftPool;
+    const canInteract = !isOnline || activePlayer === localPlayer;
 
     return (
         <div
@@ -94,8 +99,10 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                 {currentPool.map((buff, idx) => (
                     <button
                         key={buff.id}
-                        onClick={() => onSelectBuff(buff.id)}
-                        className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-2xl
+                        disabled={!canInteract}
+                        onClick={() => canInteract && onSelectBuff(buff.id)}
+                        className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300 
+                            ${canInteract ? 'hover:scale-105 hover:-translate-y-2 hover:shadow-2xl cursor-pointer' : 'opacity-50 cursor-not-allowed'}
                             ${BUFF_STYLES[buff.level]}
                             ${theme === 'dark' ? 'hover:shadow-purple-900/50' : 'hover:shadow-purple-200/50'}
                         `}

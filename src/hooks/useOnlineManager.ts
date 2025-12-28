@@ -3,7 +3,7 @@ import { Peer, DataConnection } from 'peerjs';
 import { GameAction } from '../types';
 
 export const useOnlineManager = (
-    onActionReceived: (action: GameAction) => void,
+    onActionReceived: (action: GameAction, checksum?: string) => void,
     enabled: boolean = false
 ) => {
     const [peer, setPeer] = useState<Peer | null>(null);
@@ -32,7 +32,7 @@ export const useOnlineManager = (
             connection.on('data', (data: any) => {
                 console.log('Received data:', data);
                 if (data.type === 'GAME_ACTION') {
-                    onActionReceivedRef.current(data.action);
+                    onActionReceivedRef.current(data.action, data.checksum);
                 }
             });
 
@@ -87,9 +87,9 @@ export const useOnlineManager = (
     );
 
     const sendAction = useCallback(
-        (action: GameAction) => {
+        (action: GameAction, checksum?: string) => {
             if (conn && conn.open) {
-                conn.send({ type: 'GAME_ACTION', action });
+                conn.send({ type: 'GAME_ACTION', action, checksum });
             }
         },
         [conn]
