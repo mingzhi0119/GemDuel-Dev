@@ -14,7 +14,7 @@ export interface SelectRoyalPayload {
 }
 
 export const handleForceRoyalSelection = (state: GameState): GameState => {
-    state.gameMode = GAME_PHASES.SELECT_ROYAL;
+    state.phase = GAME_PHASES.SELECT_ROYAL;
     state.nextPlayerAfterRoyal = state.turn === 'p1' ? 'p2' : 'p1';
     state.pendingReserve = null;
     state.pendingBuy = null;
@@ -52,7 +52,7 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
             row.some((g) => g.type.id === (card.bonusColor as any))
         );
         if (hasGem) {
-            state.gameMode = GAME_PHASES.BONUS_ACTION;
+            state.phase = GAME_PHASES.BONUS_ACTION;
             state.bonusGemTarget =
                 GEM_TYPES[card.bonusColor.toUpperCase() as keyof typeof GEM_TYPES];
             if (!state.nextPlayerAfterRoyal) state.nextPlayerAfterRoyal = nextTurn;
@@ -76,7 +76,7 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
             );
 
             if (hasStealable) {
-                state.gameMode = GAME_PHASES.STEAL_ACTION;
+                state.phase = GAME_PHASES.STEAL_ACTION;
                 if (!state.nextPlayerAfterRoyal) state.nextPlayerAfterRoyal = nextTurn;
                 return state;
             } else {

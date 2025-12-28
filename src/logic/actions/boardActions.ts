@@ -227,7 +227,7 @@ export const handleTakeBonusGem = (state: GameState, payload: BonusGemPayload): 
     const gemCap = state.playerBuffs?.[state.turn]?.effects?.passive?.gemCap || 10;
 
     if (totalGems > gemCap) {
-        state.gameMode = GAME_PHASES.DISCARD_EXCESS_GEMS;
+        state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
         return state;
     }
 
@@ -296,7 +296,7 @@ export const handleStealGem = (state: GameState, payload: StealGemPayload): Game
     const gemCap = state.playerBuffs?.[player]?.effects?.passive?.gemCap || 10;
 
     if (totalGems > gemCap) {
-        state.gameMode = GAME_PHASES.DISCARD_EXCESS_GEMS;
+        state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
         return state;
     }
 

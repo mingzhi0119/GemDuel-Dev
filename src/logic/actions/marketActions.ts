@@ -31,7 +31,7 @@ export interface ReserveDeckPayload {
 
 export const handleInitiateBuyJoker = (state: GameState, payload: any): GameState => {
     state.pendingBuy = payload;
-    state.gameMode = GAME_PHASES.SELECT_CARD_COLOR;
+    state.phase = GAME_PHASES.SELECT_CARD_COLOR;
     return state;
 };
 
@@ -212,7 +212,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
             );
 
             if (hasStealable) {
-                state.gameMode = GAME_PHASES.STEAL_ACTION;
+                state.phase = GAME_PHASES.STEAL_ACTION;
                 // Save the intended next turn (handles AGAIN ability)
                 state.nextPlayerAfterRoyal = nextTurn;
                 return state;
@@ -229,7 +229,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
             row.some((g) => g.type.id === (card as any).bonusColor)
         );
         if (hasGem) {
-            state.gameMode = GAME_PHASES.BONUS_ACTION;
+            state.phase = GAME_PHASES.BONUS_ACTION;
             state.bonusGemTarget = GEM_TYPES[targetColor as keyof typeof GEM_TYPES];
             return state;
         } else {
@@ -255,19 +255,19 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
 export const handleInitiateReserve = (state: GameState, payload: any): GameState => {
     state.pendingReserve = payload;
-    state.gameMode = GAME_PHASES.RESERVE_WAITING_GEM;
+    state.phase = GAME_PHASES.RESERVE_WAITING_GEM;
     return state;
 };
 
 export const handleInitiateReserveDeck = (state: GameState, payload: any): GameState => {
     state.pendingReserve = { ...payload, isDeck: true };
-    state.gameMode = GAME_PHASES.RESERVE_WAITING_GEM;
+    state.phase = GAME_PHASES.RESERVE_WAITING_GEM;
     return state;
 };
 
 export const handleCancelReserve = (state: GameState): GameState => {
     state.pendingReserve = null;
-    state.gameMode = GAME_PHASES.IDLE;
+    state.phase = GAME_PHASES.IDLE;
     return state;
 };
 
@@ -306,20 +306,30 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
         }
     }
 
-    // Patient Investor: +2 gold on first reserve
+    // Patient Investor: +1 gold on first reserve
     const buff = state.playerBuffs?.[player];
     if (buff?.effects?.passive?.firstReserveBonus) {
         if (!buff.state) buff.state = {};
         if (!(buff.state as any).hasReserved) {
             (buff.state as any).hasReserved = true;
-            state.inventories[player].gold += 2;
-            addFeedback(state, player, 'gold', 2);
-            state.toastMessage = 'Patient Investor: +2 Gold!';
+            state.inventories[player].gold += 1;
+
+            // Register as extra allocation so it won't return to bag
+            if (!state.extraAllocation) {
+                state.extraAllocation = {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                };
+            }
+            state.extraAllocation[player].gold = (state.extraAllocation[player].gold || 0) + 1;
+
+            addFeedback(state, player, 'gold', 1);
+            state.toastMessage = 'Patient Investor: +1 Extra Gold!';
         }
     }
 
     state.pendingReserve = null;
-    state.gameMode = GAME_PHASES.IDLE;
+    state.phase = GAME_PHASES.IDLE;
     finalizeTurn(state, player === 'p1' ? 'p2' : 'p1');
     return state;
 };
@@ -348,20 +358,30 @@ export const handleReserveDeck = (state: GameState, payload: ReserveDeckPayload)
         }
     }
 
-    // Patient Investor: +2 gold on first reserve
+    // Patient Investor: +1 gold on first reserve
     const buff = state.playerBuffs?.[player];
     if (buff?.effects?.passive?.firstReserveBonus) {
         if (!buff.state) buff.state = {};
         if (!(buff.state as any).hasReserved) {
             (buff.state as any).hasReserved = true;
-            state.inventories[player].gold += 2;
-            addFeedback(state, player, 'gold', 2);
-            state.toastMessage = 'Patient Investor: +2 Gold!';
+            state.inventories[player].gold += 1;
+
+            // Register as extra allocation so it won't return to bag
+            if (!state.extraAllocation) {
+                state.extraAllocation = {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                };
+            }
+            state.extraAllocation[player].gold = (state.extraAllocation[player].gold || 0) + 1;
+
+            addFeedback(state, player, 'gold', 1);
+            state.toastMessage = 'Patient Investor: +1 Extra Gold!';
         }
     }
 
     state.pendingReserve = null;
-    state.gameMode = GAME_PHASES.IDLE;
+    state.phase = GAME_PHASES.IDLE;
     finalizeTurn(state, player === 'p1' ? 'p2' : 'p1');
     return state;
 };

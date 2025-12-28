@@ -4,6 +4,8 @@ import { GameAction } from '../types';
 
 export const useOnlineManager = (
     onActionReceived: (action: GameAction, checksum?: string) => void,
+    onStateReceived: (state: any) => void,
+    onGuestRequestReceived: (action: GameAction) => void,
     enabled: boolean = false
 ) => {
     const [peer, setPeer] = useState<Peer | null>(null);
@@ -15,43 +17,44 @@ export const useOnlineManager = (
     >('disconnected');
     const [isHost, setIsHost] = useState(false);
 
-    // Keep the latest callback in a ref to avoid re-triggering effects
+    // Keep the latest callbacks in refs
     const onActionReceivedRef = useRef(onActionReceived);
+    const onStateReceivedRef = useRef(onStateReceived);
+    const onGuestRequestReceivedRef = useRef(onGuestRequestReceived);
+
     useEffect(() => {
         onActionReceivedRef.current = onActionReceived;
-    }, [onActionReceived]);
+        onStateReceivedRef.current = onStateReceived;
+        onGuestRequestReceivedRef.current = onGuestRequestReceived;
+    }, [onActionReceived, onStateReceived, onGuestRequestReceived]);
 
-    const setupConnection = useCallback(
-        (connection: DataConnection) => {
-            connection.on('open', () => {
-                setConnectionStatus('connected');
-                setConn(connection);
-                setRemotePeerId(connection.peer);
-            });
+    const setupConnection = useCallback((connection: DataConnection) => {
+        connection.on('open', () => {
+            setConnectionStatus('connected');
+            setConn(connection);
+            setRemotePeerId(connection.peer);
+        });
 
-            connection.on('data', (data: any) => {
-                console.log('Received data:', data);
-                if (data.type === 'GAME_ACTION') {
-                    onActionReceivedRef.current(data.action, data.checksum);
-                }
-            });
+        connection.on('data', (data: any) => {
+            console.log('Received P2P data:', data.type);
+            if (data.type === 'SYNC_STATE') {
+                onStateReceivedRef.current(data.state);
+            } else if (data.type === 'GUEST_REQUEST') {
+                onGuestRequestReceivedRef.current(data.action);
+            } else if (data.type === 'GAME_ACTION') {
+                onActionReceivedRef.current(data.action, data.checksum);
+            }
+        });
 
-            connection.on('close', () => {
-                setConnectionStatus('disconnected');
-                setConn(null);
-            });
-        },
-        [] // No dependencies needed now
-    );
+        connection.on('close', () => {
+            setConnectionStatus('disconnected');
+            setConn(null);
+        });
+    }, []);
 
     // Initialize Peer only when enabled
     useEffect(() => {
         if (!enabled) return;
-
-        // If we already have a peer instance, don't recreate it
-        // Check if the peer is destroyed or disconnected if you want more robust handling,
-        // but for now, simple existence check prevents loop.
-        // Actually, we rely on cleanup function to destroy, so we should be fine recreating if enabled changes.
 
         const newPeer = new Peer();
 
@@ -73,7 +76,7 @@ export const useOnlineManager = (
             setPeer(null);
             setPeerId('');
         };
-    }, [enabled, setupConnection]); // setupConnection is now stable
+    }, [enabled, setupConnection]);
 
     const connectToPeer = useCallback(
         (id: string) => {
@@ -95,6 +98,24 @@ export const useOnlineManager = (
         [conn]
     );
 
+    const sendGuestRequest = useCallback(
+        (action: GameAction) => {
+            if (conn && conn.open) {
+                conn.send({ type: 'GUEST_REQUEST', action });
+            }
+        },
+        [conn]
+    );
+
+    const sendState = useCallback(
+        (state: any) => {
+            if (conn && conn.open) {
+                conn.send({ type: 'SYNC_STATE', state });
+            }
+        },
+        [conn]
+    );
+
     return {
         peerId,
         remotePeerId,
@@ -102,5 +123,7 @@ export const useOnlineManager = (
         isHost,
         connectToPeer,
         sendAction,
+        sendGuestRequest,
+        sendState,
     };
 };

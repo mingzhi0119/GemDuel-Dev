@@ -26,6 +26,9 @@ export const finalizeTurn = (
     instantInv?: Record<GemColor | 'gold' | 'pearl', number>
 ): void => {
     // ========== TRACK PLAYER TURN COUNTS ==========
+    if (!state.playerTurnCounts) {
+        state.playerTurnCounts = { p1: 0, p2: 0 };
+    }
     // Increment the turn count for the player who just finished their major action
     state.playerTurnCounts[state.turn]++;
 
@@ -38,7 +41,7 @@ export const finalizeTurn = (
     const currentBuffObj = state.playerBuffs?.[state.turn];
     if (currentBuffObj?.id === 'royal_envoy' && state.playerTurnCounts[state.turn] === 5) {
         if (state.royalDeck.length > 0) {
-            state.gameMode = GAME_PHASES.SELECT_ROYAL;
+            state.phase = GAME_PHASES.SELECT_ROYAL;
             state.nextPlayerAfterRoyal = nextPlayer;
             state.toastMessage = 'Royal Envoy: Pick a Royal Card!';
             return;
@@ -122,7 +125,7 @@ export const finalizeTurn = (
         if (state.royalDeck.length > 0) {
             const milestoneHit = crowns >= 6 && !milestones[6] ? 6 : 3;
             state.royalMilestones[state.turn][milestoneHit] = true;
-            state.gameMode = GAME_PHASES.SELECT_ROYAL;
+            state.phase = GAME_PHASES.SELECT_ROYAL;
             state.nextPlayerAfterRoyal = nextPlayer;
             return;
         }
@@ -137,7 +140,7 @@ export const finalizeTurn = (
 
     if (totalGems > gemCap) {
         // Enter discard phase, don't switch turn yet
-        state.gameMode = GAME_PHASES.DISCARD_EXCESS_GEMS;
+        state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
         if (!state.nextPlayerAfterRoyal) {
             state.nextPlayerAfterRoyal = nextPlayer;
         }
@@ -146,6 +149,6 @@ export const finalizeTurn = (
 
     // ========== NORMAL TURN TRANSITION ==========
     state.turn = nextPlayer;
-    state.gameMode = GAME_PHASES.IDLE;
+    state.phase = GAME_PHASES.IDLE;
     state.nextPlayerAfterRoyal = null;
 };

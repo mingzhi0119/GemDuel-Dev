@@ -12,7 +12,8 @@ export const generateGameStateHash = (state: GameState | null): string => {
     const criticalState = {
         board: state.board.map((row) => row.map((cell) => cell.type.id)), // Only check gem types, not UIDs if they differ
         turn: state.turn,
-        gameMode: state.gameMode,
+        phase: state.phase,
+        mode: state.mode,
         inventories: state.inventories,
         privileges: state.privileges,
         playerTableau: {

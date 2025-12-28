@@ -168,6 +168,11 @@ export const BUFF_NONE: Buff = {
 // ============================================================================
 
 /**
+ * High-level Game Mode (Match Type)
+ */
+export type GameMode = 'LOCAL_PVP' | 'PVE' | 'ONLINE_MULTIPLAYER';
+
+/**
  * Game phases define the state machine flow
  */
 export type GamePhase =
@@ -186,26 +191,7 @@ export type GamePhase =
  */
 export type PlayerKey = 'p1' | 'p2';
 
-/**
- * Board grid cell containing a single gem
- */
-export interface BoardCell {
-    type: GemTypeObject;
-    uid: string;
-}
-
-/**
- * Gem in the bag (for drawing)
- */
-export type BagItem = BoardCell | string;
-
-/**
- * UI/Modal state
- */
-export interface ActiveModal {
-    type: 'PEEK' | 'WIN' | 'DRAFT' | string;
-    data?: any;
-}
+// ... (BoardCell, BagItem, ActiveModal) ...
 
 /**
  * Main game state - the single source of truth
@@ -217,10 +203,9 @@ export interface GameState {
 
     // ========== TURN & PHASE ==========
     turn: PlayerKey; // Current player ('p1' or 'p2')
-    gameMode: GamePhase; // Current game phase
-    isPvE: boolean; // True if playing against AI
-    isOnline: boolean; // True if playing online
-    isHost: boolean; // True if this client is the host (p1)
+    phase: GamePhase; // Current game phase (was phase)
+    mode: GameMode; // Match Type (LOCAL, PVE, ONLINE)
+    isHost: boolean; // Authoritative identity (P1=true, P2=false)
 
     // ========== MODALS & UI ==========
     activeModal: ActiveModal | null;
@@ -260,8 +245,8 @@ export interface GameState {
     extraAllocation: Record<PlayerKey, GemInventory>; // Track extra gems that don't return to bag
     extraPrivileges: Record<PlayerKey, number>; // Special non-stealable privileges (max 1)
     playerBuffs: Record<PlayerKey, Buff>;
-    draftPool: Buff[];
-    p2DraftPool?: Buff[]; // Buffs for P2's turn
+    draftPool: string[]; // Store only Buff IDs
+    p2DraftPool?: string[]; // Store only Buff IDs
     p1SelectedBuff?: Buff | null; // Track P1 choice for P2's turn
     draftOrder: PlayerKey[];
     buffLevel: number;

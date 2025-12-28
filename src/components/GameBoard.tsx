@@ -7,7 +7,7 @@ interface GameBoardProps {
     handleGemClick: (r: number, c: number) => void;
     isSelected: (r: number, c: number) => boolean;
     selectedGems: GemCoord[];
-    gameMode: GamePhase | string;
+    phase: GamePhase | string;
     bonusGemTarget: GemTypeObject | null;
     theme: 'light' | 'dark';
     canInteract?: boolean;
@@ -19,7 +19,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     handleGemClick,
     isSelected,
     selectedGems,
-    gameMode,
+    phase,
     bonusGemTarget,
     theme,
     canInteract = true,
@@ -28,8 +28,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <div
             className={`p-3 rounded-2xl shadow-2xl border transition-colors duration-300 backdrop-blur-sm
             ${theme === 'dark' ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white/60 border-slate-200/50'}
-            ${gameMode === 'DISCARD_EXCESS_GEMS' ? 'border-red-500/50' : ''}
-            ${!canInteract ? 'opacity-70' : ''}
+            ${phase === 'DISCARD_EXCESS_GEMS' ? 'border-red-500/50' : ''}
         `}
         >
             <div className="text-right text-[10px] text-slate-500 mb-1 font-mono">
@@ -40,31 +39,42 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             >
                 {board.map((row, r) =>
                     row.map((gem, c) => {
-                        // Defensive check: gem might be undefined
                         if (!gem || !gem.type) {
                             return (
                                 <button
                                     key={`${r}-${c}-empty`}
                                     disabled
-                                    className={`relative group w-full h-full rounded-full flex items-center justify-center transition-all duration-150 cursor-default`}
+                                    className="relative group w-full h-full rounded-full flex items-center justify-center cursor-default"
                                 >
                                     <div
                                         className={`w-2 h-2 rounded-full ${theme === 'dark' ? 'bg-slate-700/30' : 'bg-slate-300/50'}`}
-                                    ></div>
+                                    />
                                 </button>
                             );
                         }
 
                         const isSelectedGem = isSelected(r, c);
                         const isGold = gem.type.id === 'gold';
-                        let isTarget = false;
-                        if (gameMode === 'RESERVE_WAITING_GEM') isTarget = isGold;
-                        else if (gameMode === 'PRIVILEGE_ACTION') isTarget = !isGold;
-                        else if (gameMode === 'BONUS_ACTION')
-                            isTarget = gem.type.id === bonusGemTarget?.id;
                         const isEmpty = gem.type.id === 'empty';
-                        const isReviewOrOver = gameMode === 'REVIEW' || gameMode === 'GAME_OVER';
+
+                        // Target Logic
+                        let isTarget = false;
+                        if (phase === 'RESERVE_WAITING_GEM') isTarget = isGold;
+                        else if (phase === 'PRIVILEGE_ACTION') isTarget = !isGold && !isEmpty;
+                        else if (phase === 'BONUS_ACTION')
+                            isTarget = gem.type.id === bonusGemTarget?.id;
+
+                        // Visual Dimming Logic: Only dim in specific target-selection modes
+                        const isTargetSelectionMode = [
+                            'RESERVE_WAITING_GEM',
+                            'PRIVILEGE_ACTION',
+                            'BONUS_ACTION',
+                        ].includes(phase);
+                        const shouldDim = isTargetSelectionMode && !isTarget && !isEmpty;
+
+                        const isReviewOrOver = phase === 'REVIEW' || phase === 'GAME_OVER';
                         const isInteractive = !isEmpty && !isReviewOrOver;
+
                         return (
                             <button
                                 key={`${r}-${c}-${gem.uid || 'null'}`}
@@ -75,13 +85,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                                 {isEmpty ? (
                                     <div
                                         className={`w-2 h-2 rounded-full ${theme === 'dark' ? 'bg-slate-700/30' : 'bg-slate-300/50'}`}
-                                    ></div>
+                                    />
                                 ) : (
                                     <div
                                         className={`w-full h-full rounded-full shadow-inner bg-gradient-to-br ${gem.type.color} border ${gem.type.border} 
                                     ${isSelectedGem ? 'ring-2 ring-white scale-105 shadow-[0_0_10px_white]' : 'opacity-90'} 
                                     ${isTarget ? 'ring-4 ring-white animate-pulse z-20' : ''}
-                                    ${!isEmpty && gameMode !== 'IDLE' && !isReviewOrOver && !isTarget ? 'opacity-20 grayscale' : ''}
+                                    ${shouldDim ? 'opacity-20 grayscale' : ''}
                                 `}
                                     >
                                         {isGold && (

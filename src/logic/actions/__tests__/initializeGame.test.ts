@@ -17,7 +17,7 @@ describe('Game Initialization Direct', () => {
 
         expect(result).toBeDefined();
         expect(result.turn).toBe('p1');
-        expect(result.gameMode).toBe('IDLE');
+        expect(result.phase).toBe('IDLE');
         expect(result.playerBuffs.p1).toBeDefined();
         expect(result.playerBuffs.p2).toBeDefined();
     });
@@ -37,7 +37,7 @@ describe('Game Initialization Direct', () => {
         const result = handleInitDraft(null, payload);
 
         expect(result).toBeDefined();
-        expect(result.gameMode).toBe('DRAFT_PHASE');
+        expect(result.phase).toBe('DRAFT_PHASE');
         expect(result.turn).toBe('p1');
         expect(result.draftPool.length).toBe(2);
         expect(result.buffLevel).toBe(1);

@@ -160,8 +160,8 @@ export const BUFFS = {
         id: 'privilege_favor',
         level: 1,
         label: 'Privilege Favor',
-        desc: 'Start with 1 Special Privilege (Protected) and 1 Extra Gold.',
-        effects: { onInit: { privilege: 1, gold: 1 } },
+        desc: 'Start with 1 Special Privilege (Protected).',
+        effects: { onInit: { privilege: 1 } },
     },
     HEAD_START: {
         id: 'head_start',
@@ -202,15 +202,15 @@ export const BUFFS = {
         id: 'patient_investor',
         level: 1,
         label: 'Patient Investor',
-        desc: 'Gain 2 Extra Gold on your first Reserve action.',
-        effects: { passive: { firstReserveBonus: 2 } },
+        desc: 'Gain 1 Extra Gold on your first Reserve action.',
+        effects: { passive: { firstReserveBonus: 1 } },
     },
     INSIGHT: {
         id: 'insight',
         level: 1,
         label: 'Insight',
-        desc: 'You can always see the top card of the Level 1 Deck.',
-        effects: { passive: { revealDeck1: true } },
+        desc: 'You can always see the top card of the Level 1 Deck. Win Condition: 18 Points.',
+        effects: { passive: { revealDeck1: true }, winCondition: { points: 18 } },
     },
 
     // --- Level 2 ---
@@ -260,8 +260,8 @@ export const BUFFS = {
         id: 'recycler',
         level: 2,
         label: 'Recycler',
-        desc: 'Get 1 Extra Gem back when buying Level 2 or 3 cards.',
-        effects: { passive: { recycler: true } },
+        desc: 'Start with 1 random Extra Gem. Get 1 Extra Gem back when buying Level 2 or 3 cards.',
+        effects: { onInit: { randomGem: 1 }, passive: { recycler: true } },
     },
     AGGRESSIVE_EXPANSION: {
         id: 'aggressive_expansion',

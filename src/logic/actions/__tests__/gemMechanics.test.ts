@@ -9,7 +9,7 @@ describe('Take Gems & Refill Workflow', () => {
     });
 
     it('initial game mode should be IDLE', () => {
-        expect(INITIAL_STATE_SKELETON.gameMode).toBe(GAME_PHASES.IDLE);
+        expect(INITIAL_STATE_SKELETON.phase).toBe(GAME_PHASES.IDLE);
     });
 
     it('should have proper game board initialized', () => {
@@ -43,7 +43,7 @@ describe('Take Gems & Refill Workflow', () => {
     it('refill button should be disabled when bag is empty', () => {
         const bagCount = INITIAL_STATE_SKELETON.bag.length;
         expect(bagCount).toBe(0);
-        // In GameActions.jsx: disabled={bagCount === 0 || gameMode !== 'IDLE' || selectedCount > 0}
+        // In GameActions.jsx: disabled={bagCount === 0 || phase !== 'IDLE' || selectedCount > 0}
         // So button should be disabled when bag is empty
     });
 

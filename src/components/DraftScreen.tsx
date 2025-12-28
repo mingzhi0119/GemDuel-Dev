@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Crown, Shield, Swords, ArrowRight } from 'lucide-react';
 import { BUFF_STYLES } from '../styles/buffs';
+import { BUFFS } from '../constants'; // Import for reconstruction
 import { Buff, PlayerKey } from '../types';
 
 interface DraftScreenProps {
@@ -26,7 +27,21 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     localPlayer,
     isOnline = false,
 }) => {
-    const currentPool = activePlayer === 'p1' ? draftPool : p2DraftPool;
+    const rawPool = (activePlayer === 'p1' ? draftPool : p2DraftPool) || [];
+    console.log('[UI-DRAFT-SCREEN] Raw Pool IDs from State:', rawPool);
+
+    // RECONSTRUCTION: Map basic sync data (IDs) back to full local constants
+    const currentPool = rawPool.map((p) => {
+        const id = typeof p === 'string' ? p : p.id;
+        const fullData = Object.values(BUFFS).find((b) => b.id === id);
+        return fullData || (typeof p === 'object' ? p : { id: p, label: 'Unknown', desc: '' });
+    });
+
+    // RECONSTRUCTION: Also reconstruct p1SelectedBuff if it only contains an ID
+    const fullP1Choice = p1SelectedBuff
+        ? Object.values(BUFFS).find((b) => b.id === p1SelectedBuff.id) || p1SelectedBuff
+        : null;
+
     const canInteract = !isOnline || activePlayer === localPlayer;
 
     return (
@@ -59,20 +74,24 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
             </div>
 
             {/* P1 Choice Context (Only for P2) */}
-            {activePlayer === 'p2' && p1SelectedBuff && (
+
+            {activePlayer === 'p2' && fullP1Choice && (
                 <div className="z-10 mb-8 animate-in fade-in zoom-in duration-500">
                     <div
-                        className={`px-6 py-4 rounded-2xl border-2 shadow-xl flex items-center gap-4 ${BUFF_STYLES[p1SelectedBuff.level]} bg-opacity-40 backdrop-blur-md`}
+                        className={`px-6 py-4 rounded-2xl border-2 shadow-xl flex items-center gap-4 ${BUFF_STYLES[fullP1Choice.level || 1]} bg-opacity-40 backdrop-blur-md`}
                     >
                         <div className="flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
                                 Player 1 Selected
                             </span>
-                            <span className="text-xl font-black">{p1SelectedBuff.label}</span>
+
+                            <span className="text-xl font-black">{fullP1Choice.label}</span>
                         </div>
+
                         <div className="h-10 w-[2px] bg-white/20" />
+
                         <p className="text-sm max-w-[200px] opacity-80 leading-tight italic">
-                            "{p1SelectedBuff.desc}"
+                            "{fullP1Choice.desc}"
                         </p>
                     </div>
                 </div>
@@ -99,10 +118,12 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                 {currentPool.map((buff, idx) => (
                     <button
                         key={buff.id}
+                        id={`buff-select-${buff.id}`}
+                        name="buff-selection"
                         disabled={!canInteract}
                         onClick={() => canInteract && onSelectBuff(buff.id)}
                         className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300 
-                            ${canInteract ? 'hover:scale-105 hover:-translate-y-2 hover:shadow-2xl cursor-pointer' : 'opacity-50 cursor-not-allowed'}
+                            ${canInteract ? 'hover:scale-105 hover:-translate-y-2 hover:shadow-2xl cursor-pointer' : 'opacity-50 cursor-default'}
                             ${BUFF_STYLES[buff.level]}
                             ${theme === 'dark' ? 'hover:shadow-purple-900/50' : 'hover:shadow-purple-200/50'}
                         `}
@@ -129,7 +150,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                         </p>
 
                         {/* Win Condition Changes (if any) */}
-                        {buff.effects.winCondition && (
+                        {buff.effects?.winCondition && (
                             <div className="mt-auto pt-3 border-t border-white/10 text-[10px] space-y-1 opacity-90">
                                 <p className="font-bold uppercase opacity-60 mb-1">
                                     Win Condition:

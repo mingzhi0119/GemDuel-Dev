@@ -101,7 +101,7 @@ const refundColor = paidColors[0] as GemColor;
 if (abilities.includes(ABILITIES.BONUS_GEM.id)) {
     const hasGem = state.board.some(...);
     if (hasGem) {
-        state.gameMode = GAME_PHASES.BONUS_ACTION;
+        state.phase = GAME_PHASES.BONUS_ACTION;
         state.bonusGemTarget = { source: 'card', count: 1 };  // ❌ Object
         return state;
     }
@@ -111,7 +111,7 @@ if (abilities.includes(ABILITIES.BONUS_GEM.id)) {
 if (abilities.includes(ABILITIES.BONUS_GEM.id)) {
     const hasGem = state.board.some(...);
     if (hasGem) {
-        state.gameMode = GAME_PHASES.BONUS_ACTION;
+        state.phase = GAME_PHASES.BONUS_ACTION;
         state.bonusGemTarget = (card as any).bonusColor;  // ✅ String like 'red'
         return state;
     }

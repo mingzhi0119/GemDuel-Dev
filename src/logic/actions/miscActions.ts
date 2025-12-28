@@ -65,6 +65,7 @@ export const handlePeekDeck = (state: GameState, payload: { level: 1 | 2 | 3 }):
         data: {
             cards: top3,
             level: level,
+            initiator: state.turn, // Track who opened this
         },
     };
 

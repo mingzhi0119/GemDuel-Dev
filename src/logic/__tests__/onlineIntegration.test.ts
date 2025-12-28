@@ -106,7 +106,7 @@ describe('Online Integration Simulation', () => {
         const h = getHostState();
         const g = getGuestState();
 
-        expect(g.gameMode).toBe('IDLE');
+        expect(g.phase).toBe('IDLE');
         expect(g.turn).toBe('p1');
         // Check Board sync
         expect(g.board[0][0].uid).toBe(h.board[0][0].uid);
@@ -127,8 +127,7 @@ describe('Online Integration Simulation', () => {
             bag: [],
             market: { 1: [], 2: [], 3: [] },
             decks: { 1: [], 2: [], 3: [] },
-            isPvE: false,
-            isOnline: true,
+            mode: 'ONLINE_MULTIPLAYER',
             isHost: true,
             initRandoms: { p1: {}, p2: {} },
             draftPool: [
@@ -143,7 +142,7 @@ describe('Online Integration Simulation', () => {
         let h = getHostState();
         let g = getGuestState();
 
-        expect(g.gameMode).toBe('DRAFT_PHASE');
+        expect(g.phase).toBe('DRAFT_PHASE');
         expect(g.turn).toBe('p1'); // P1 picks first now
 
         // 2. P1 (Host) selects Buff
@@ -161,23 +160,17 @@ describe('Online Integration Simulation', () => {
         expect(g.playerBuffs.p1.id).toBe('buff1');
         expect(g.turn).toBe('p2');
         expect(g.p2DraftPool).toBeDefined();
-        // Since we provided indices [0, 1, 2, 3], length should be 4 (or less if pool is small)
-        // With mock pool of 2 items, indices 2 and 3 might be undefined, but logic handles it?
-        // Logic: levelBuffs[i]. If undefined, it will be undefined in array.
-        // Real game has enough buffs.
 
-        // 3. P2 (Guest) selects Buff
-        // P2 picks from whatever pool they have.
-        // Let's simulate P2 picking.
-        const p2Choice = g.p2DraftPool![0].id;
-        guestActLocal({ type: 'SELECT_BUFF', payload: { buffId: p2Choice, randomColor: 'blue' } });
+        // 3. Guest (P2) selects Buff
+        const p2Buff = g.p2DraftPool![0];
+        guestActLocal({ type: 'SELECT_BUFF', payload: { buffId: p2Buff.id, randomColor: 'blue' } });
 
         h = getHostState();
         g = getGuestState();
 
-        expect(h.gameMode).toBe('IDLE');
-        expect(g.gameMode).toBe('IDLE');
-        expect(h.playerBuffs.p2.id).toBe(p2Choice);
+        expect(h.phase).toBe('IDLE');
+        expect(g.phase).toBe('IDLE');
+        expect(h.playerBuffs.p2.id).toBe(p2Buff.id);
 
         // 4. Flattening
         // In the Hook, Host detects IDLE and broadcasts FLATTEN?

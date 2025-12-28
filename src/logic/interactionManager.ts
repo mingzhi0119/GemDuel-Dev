@@ -45,7 +45,7 @@ export const processGemClick = (
     const gem = gameState.board[r][c];
     if (!gem || !gem.type || gem.type.id === 'empty') return { error: 'Empty cell' };
 
-    switch (gameState.gameMode) {
+    switch (gameState.phase) {
         case 'BONUS_ACTION':
             if (gem.type.id !== gameState.bonusGemTarget?.id) {
                 return { error: `Must select a ${gameState.bonusGemTarget?.label} gem!` };
@@ -122,7 +122,7 @@ export const processOpponentGemClick = (
     gemId: GemColor
 ): GemClickResult => {
     if (!gameState || gameState.winner) return { error: 'Game Over' };
-    if (gameState.gameMode !== 'STEAL_ACTION') return { error: 'Not in Steal Mode' };
+    if (gameState.phase !== 'STEAL_ACTION') return { error: 'Not in Steal Mode' };
 
     if (gemId === 'gold') return { error: 'Cannot steal Gold!' };
 

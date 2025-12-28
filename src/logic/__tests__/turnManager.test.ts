@@ -31,7 +31,7 @@ describe('turnManager', () => {
             }) as any;
 
             expect(state.turn).toBe('p2');
-            expect(state.gameMode).toBe('IDLE');
+            expect(state.phase).toBe('IDLE');
         });
 
         describe('Win Conditions', () => {
@@ -85,7 +85,7 @@ describe('turnManager', () => {
                     finalizeTurn(draft, 'p2');
                 }) as any;
 
-                expect(state.gameMode).toBe('SELECT_ROYAL');
+                expect(state.phase).toBe('SELECT_ROYAL');
                 expect(state.royalMilestones.p1[3]).toBe(true);
                 expect(state.nextPlayerAfterRoyal).toBe('p2'); // Should return to this after royal
                 expect(state.winner).toBe(null); // Game not over
@@ -102,7 +102,7 @@ describe('turnManager', () => {
                     finalizeTurn(draft, 'p2');
                 }) as any;
 
-                expect(state.gameMode).toBe('SELECT_ROYAL');
+                expect(state.phase).toBe('SELECT_ROYAL');
                 expect(state.royalMilestones.p1[6]).toBe(true);
             });
         });
@@ -117,7 +117,7 @@ describe('turnManager', () => {
                     finalizeTurn(draft, 'p2');
                 }) as any;
 
-                expect(state.gameMode).toBe('DISCARD_EXCESS_GEMS');
+                expect(state.phase).toBe('DISCARD_EXCESS_GEMS');
                 expect(state.nextPlayerAfterRoyal).toBe('p2');
                 // Turn should NOT change yet
                 expect(state.turn).toBe('p1');
@@ -137,7 +137,7 @@ describe('turnManager', () => {
 
                 // 11 <= 12, so valid. Should switch turn.
                 expect(state.turn).toBe('p2');
-                expect(state.gameMode).toBe('IDLE');
+                expect(state.phase).toBe('IDLE');
             });
         });
 
@@ -202,7 +202,7 @@ describe('turnManager', () => {
 
                 // current logic: if ((crowns >= 3 && !milestones[3]) || (crowns >= 6 && !milestones[6]))
                 // it picks one.
-                expect(state.gameMode).toBe('SELECT_ROYAL');
+                expect(state.phase).toBe('SELECT_ROYAL');
                 expect(state.royalMilestones.p1[6] || state.royalMilestones.p1[3]).toBe(true);
             });
         });

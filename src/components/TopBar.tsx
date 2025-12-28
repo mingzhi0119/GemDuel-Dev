@@ -1,6 +1,6 @@
-import React from 'react';
-import { Crown, Trophy, History } from 'lucide-react';
+import { Crown, Trophy } from 'lucide-react';
 import { PlayerKey, Buff } from '../types';
+import { BUFFS } from '../constants'; // Added for reconstruction
 
 interface TopBarProps {
     p1Score: number;
@@ -28,10 +28,14 @@ export const TopBar: React.FC<TopBarProps> = ({
     isOnline,
 }) => {
     const getVictoryGoals = (pid: PlayerKey) => {
-        const buff = playerBuffs[pid]?.effects?.winCondition || {};
+        const rawBuff = playerBuffs[pid];
+        // Reconstruct to get effects
+        const buff = Object.values(BUFFS).find((b) => b.id === rawBuff?.id) || rawBuff;
+        const winCondition = buff?.effects?.winCondition || {};
+
         return {
-            points: buff.points || 20,
-            crowns: buff.crowns || 10,
+            points: winCondition.points || 20,
+            crowns: winCondition.crowns || 10,
         };
     };
 

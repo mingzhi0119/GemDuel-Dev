@@ -17,7 +17,7 @@ export interface UsePrivilegePayload {
  * Activate privilege action phase
  */
 export const handleActivatePrivilege = (state: GameState): GameState => {
-    state.gameMode = GAME_PHASES.PRIVILEGE_ACTION;
+    state.phase = GAME_PHASES.PRIVILEGE_ACTION;
     state.privilegeGemCount = 0;
     return state;
 };
@@ -26,7 +26,7 @@ export const handleActivatePrivilege = (state: GameState): GameState => {
  * Cancel privilege action phase
  */
 export const handleCancelPrivilege = (state: GameState): GameState => {
-    state.gameMode = GAME_PHASES.IDLE;
+    state.phase = GAME_PHASES.IDLE;
     state.privilegeGemCount = 0;
     return state;
 };
@@ -98,6 +98,6 @@ export const handleUsePrivilege = (state: GameState, payload: UsePrivilegePayloa
         }
     }
 
-    state.gameMode = GAME_PHASES.IDLE;
+    state.phase = GAME_PHASES.IDLE;
     return state;
 };

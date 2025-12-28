@@ -121,8 +121,8 @@ it('should change game mode to DISCARD_EXCESS_GEMS', () => {
 
     const result = handleStealGem(testState, { gemId: 'blue' });
 
-    if (result.gameMode === 'DISCARD_EXCESS_GEMS') {
-        expect(result.gameMode).toBe('DISCARD_EXCESS_GEMS');
+    if (result.phase === 'DISCARD_EXCESS_GEMS') {
+        expect(result.phase).toBe('DISCARD_EXCESS_GEMS');
     }
 });
 ```
@@ -154,7 +154,7 @@ const createGameState = (overrides = {}) => ({
 // In test:
 const state = createGameState({
     turn: 'p1',
-    gameMode: 'BONUS_ACTION',
+    phase: 'BONUS_ACTION',
 });
 ```
 

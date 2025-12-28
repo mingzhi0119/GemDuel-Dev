@@ -80,7 +80,7 @@ export default function GemDuelBoard() {
         selectedGems,
         errorMsg,
         winner,
-        gameMode,
+        phase,
         bonusGemTarget,
         decks,
         market,
@@ -129,7 +129,7 @@ export default function GemDuelBoard() {
 
     const { getPlayerScore, isSelected, getCrownCount, isMyTurn } = getters;
 
-    const effectiveGameMode = isReviewing ? 'REVIEW' : winner ? 'GAME_OVER' : gameMode;
+    const effectiveGameMode = isReviewing ? 'REVIEW' : winner ? 'GAME_OVER' : phase;
 
     const handleDownloadReplay = () => {
         const data = {
@@ -166,14 +166,14 @@ export default function GemDuelBoard() {
     // --- 0. Online Sync Effect: Auto-start guest game when host starts ---
     useEffect(() => {
         if (
-            !state.isOnline &&
+            state.mode !== 'ONLINE_MULTIPLAYER' &&
             online.connectionStatus === 'connected' &&
             !online.isHost &&
             historyControls.historyLength > 0
         ) {
             // Guest follows host setup via useOnlineManager
         }
-    }, [state.isOnline, online.connectionStatus, online.isHost, historyControls.historyLength]);
+    }, [state.mode, online.connectionStatus, online.isHost, historyControls.historyLength]);
 
     // --- 1. Start Screen ---
     if (historyControls.historyLength === 0) {
@@ -235,25 +235,42 @@ export default function GemDuelBoard() {
                                         {online.connectionStatus}
                                     </span>
                                 </div>
-                                <button
-                                    disabled={online.connectionStatus !== 'connected'}
-                                    onClick={() =>
-                                        startGame({
-                                            useBuffs: true,
-                                            isPvE: false,
-                                            isOnline: true,
-                                            isHost: true,
-                                        })
-                                    }
-                                    className={`w-full py-4 rounded-2xl font-black uppercase tracking-wider transition-all
-                                        ${
-                                            online.connectionStatus === 'connected'
-                                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-900/20 active:scale-95'
-                                                : 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                        }`}
-                                >
-                                    Start Roguelike Duel
-                                </button>
+
+                                {online.connectionStatus === 'connected' ? (
+                                    <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2">
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-center opacity-40 mb-1">
+                                            Select Match Type
+                                        </span>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={() =>
+                                                    startGame('ONLINE_MULTIPLAYER', {
+                                                        useBuffs: false,
+                                                        isHost: true,
+                                                    })
+                                                }
+                                                className="py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs transition-all active:scale-95 shadow-lg"
+                                            >
+                                                Classic
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    startGame('ONLINE_MULTIPLAYER', {
+                                                        useBuffs: true,
+                                                        isHost: true,
+                                                    })
+                                                }
+                                                className="py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-xs transition-all active:scale-95 shadow-lg"
+                                            >
+                                                Roguelike
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="py-4 text-center text-xs opacity-40 italic">
+                                        Waiting for connection...
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -291,8 +308,13 @@ export default function GemDuelBoard() {
                             </button>
 
                             {online.connectionStatus === 'connected' && (
-                                <div className="text-emerald-400 text-sm font-bold flex items-center gap-2 animate-bounce">
-                                    <CheckCircle2 size={16} /> Connected! Wait for Host...
+                                <div className="text-emerald-400 text-sm font-bold flex flex-col items-center gap-2 animate-bounce mt-4">
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={16} /> Connected!
+                                    </div>
+                                    <span className="text-[10px] uppercase opacity-60">
+                                        Host is selecting mode...
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -388,7 +410,7 @@ export default function GemDuelBoard() {
 
                 <div className="flex flex-col md:flex-row gap-6 mt-4">
                     <button
-                        onClick={() => startGame({ useBuffs: gameConfig.useBuffs, isPvE: false })}
+                        onClick={() => startGame('LOCAL_PVP', { useBuffs: gameConfig.useBuffs })}
                         className="group relative w-64 h-40 rounded-2xl border-2 border-slate-300 hover:border-emerald-500 bg-white/5 hover:bg-emerald-500/10 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden"
                     >
                         <Users size={40} className="text-emerald-500" />
@@ -397,7 +419,7 @@ export default function GemDuelBoard() {
                     </button>
 
                     <button
-                        onClick={() => startGame({ useBuffs: gameConfig.useBuffs, isPvE: true })}
+                        onClick={() => startGame('PVE', { useBuffs: gameConfig.useBuffs })}
                         className="group relative w-64 h-40 rounded-2xl border-2 border-slate-300 hover:border-amber-500 bg-white/5 hover:bg-amber-500/10 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden"
                     >
                         <User size={40} className="text-amber-500" />
@@ -417,7 +439,7 @@ export default function GemDuelBoard() {
     }
 
     // --- 2. Draft Phase ---
-    if (gameMode === 'DRAFT_PHASE') {
+    if (phase === 'DRAFT_PHASE') {
         return (
             <DraftScreen
                 draftPool={draftPool}
@@ -428,7 +450,7 @@ export default function GemDuelBoard() {
                 onSelectBuff={handleSelectBuff}
                 theme={theme}
                 localPlayer={online.isHost ? 'p1' : 'p2'}
-                isOnline={state.isOnline}
+                isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
             />
         );
     }
@@ -544,7 +566,8 @@ export default function GemDuelBoard() {
 
             {/* Debug Button Guard: Solo AI keeps it, Local PvP hides after start, Online always hides */}
             {showDebug ||
-            (!state.isOnline && (state.isPvE || historyControls.historyLength === 0)) ? (
+            (state.mode !== 'ONLINE_MULTIPLAYER' &&
+                (state.mode === 'PVE' || historyControls.historyLength === 0)) ? (
                 <button
                     onClick={() => setShowDebug(!showDebug)}
                     className={`fixed top-24 left-4 z-[100] p-2 rounded border text-[10px] transition-colors
@@ -556,8 +579,8 @@ export default function GemDuelBoard() {
             ) : null}
 
             {showDebug &&
-                !state.isOnline &&
-                (state.isPvE || historyControls.historyLength === 0) && (
+                state.mode !== 'ONLINE_MULTIPLAYER' &&
+                (state.mode === 'PVE' || historyControls.historyLength === 0) && (
                     <div className="fixed left-4 top-36 z-[90] flex flex-col gap-4 animate-in slide-in-from-left duration-300">
                         <DebugPanel
                             player="p1"
@@ -581,17 +604,19 @@ export default function GemDuelBoard() {
             {/* Modals */}
             {showRulebook && <Rulebook onClose={() => setShowRulebook(false)} theme={theme} />}
 
-            {/* Only show Peek Modal if it's My Turn (or local play) to prevent opponent from seeing it */}
-            {(!state.isOnline || (online.isHost ? turn === 'p1' : turn === 'p2')) && (
-                <DeckPeekModal
-                    isOpen={activeModal?.type === 'PEEK'}
-                    data={activeModal?.data}
-                    onClose={handleCloseModal}
-                    theme={theme}
-                />
-            )}
+            {/* Only show Peek Modal if the local player is the one who initiated it */}
+            {activeModal?.type === 'PEEK' &&
+                (state.mode !== 'ONLINE_MULTIPLAYER' ||
+                    activeModal.data?.initiator === (online.isHost ? 'p1' : 'p2')) && (
+                    <DeckPeekModal
+                        isOpen={true}
+                        data={activeModal?.data}
+                        onClose={handleCloseModal}
+                        theme={theme}
+                    />
+                )}
 
-            {gameMode === 'SELECT_CARD_COLOR' && (
+            {phase === 'SELECT_CARD_COLOR' && (
                 <div
                     className={`fixed inset-0 z-[100] transition-all duration-500 flex flex-col items-center justify-center ${isPeekingBoard ? 'bg-black/20 pointer-events-none' : 'bg-black/80'}`}
                 >
@@ -653,7 +678,7 @@ export default function GemDuelBoard() {
                         <Market
                             market={market}
                             decks={decks}
-                            gameMode={effectiveGameMode}
+                            phase={effectiveGameMode}
                             turn={turn}
                             inventories={inventories}
                             playerTableau={playerTableau}
@@ -661,8 +686,9 @@ export default function GemDuelBoard() {
                             handleReserveDeck={handleReserveDeck}
                             initiateBuy={initiateBuy}
                             handleReserveCard={handleReserveCard}
+                            onPeekDeck={handlePeekDeck}
                             theme={theme}
-                            isOnline={state.isOnline}
+                            isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
                             localPlayer={online.isHost ? 'p1' : 'p2'}
                         />
                     </div>
@@ -670,7 +696,7 @@ export default function GemDuelBoard() {
                     <div className="relative flex flex-col items-center shrink-0">
                         <StatusBar
                             errorMsg={errorMsg}
-                            isOnline={state.isOnline}
+                            isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
                             connectionStatus={online.connectionStatus}
                         />
                         <GameBoard
@@ -679,7 +705,7 @@ export default function GemDuelBoard() {
                             handleGemClick={handleGemClick}
                             isSelected={isSelected}
                             selectedGems={selectedGems}
-                            gameMode={effectiveGameMode}
+                            phase={effectiveGameMode}
                             bonusGemTarget={bonusGemTarget}
                             theme={theme}
                             canInteract={isMyTurn}
@@ -687,7 +713,7 @@ export default function GemDuelBoard() {
                         <GameActions
                             handleReplenish={handleReplenish}
                             bag={bag}
-                            gameMode={effectiveGameMode}
+                            phase={effectiveGameMode}
                             handleConfirmTake={handleConfirmTake}
                             selectedGems={selectedGems}
                             handleCancelReserve={handleCancelReserve}
@@ -704,7 +730,7 @@ export default function GemDuelBoard() {
                     >
                         <RoyalCourt
                             royalDeck={royalDeck}
-                            gameMode={effectiveGameMode}
+                            phase={effectiveGameMode}
                             handleSelectRoyal={handleSelectRoyal}
                             theme={theme}
                             canInteract={isMyTurn}
@@ -717,8 +743,12 @@ export default function GemDuelBoard() {
                             <ReplayControls
                                 undo={historyControls.undo}
                                 redo={historyControls.redo}
-                                canUndo={!state.isOnline && historyControls.canUndo}
-                                canRedo={!state.isOnline && historyControls.canRedo}
+                                canUndo={
+                                    state.mode !== 'ONLINE_MULTIPLAYER' && historyControls.canUndo
+                                }
+                                canRedo={
+                                    state.mode !== 'ONLINE_MULTIPLAYER' && historyControls.canRedo
+                                }
                                 currentIndex={historyControls.currentIndex}
                                 historyLength={historyControls.historyLength}
                                 theme={theme}

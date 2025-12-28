@@ -60,103 +60,135 @@ export interface GameAction {
 export const applyAction = (state: GameState | null, action: GameAction): GameState | null => {
     const { type, payload } = action;
 
-    // Handle initialization actions specially (they create state from null)
+    // 1. BOOTSTRAP / SYNC ACTIONS: These create or overwrite state regardless of its current existence
+    if (type === 'INIT') {
+        return handleInit(null, payload);
+    }
+    if (type === 'INIT_DRAFT') {
+        return handleInitDraft(null, payload);
+    }
+    if (type === 'FORCE_SYNC' || type === 'FLATTEN') {
+        return payload; // Atomic state replacement
+    }
+
+    // 2. STATE GUARD: For all other actions, we need an existing state
     if (!state) {
-        if (type === 'INIT') {
-            return handleInit(state, payload);
-        }
-        if (type === 'FLATTEN') {
-            return payload; // Directly use the provided state
-        }
-        if (type === 'INIT_DRAFT') {
-            return handleInitDraft(state, payload);
-        }
-        // For non-init actions, can't proceed without state
         return null;
     }
 
-    // Use Immer's produce() for efficient immutable updates
+    // 3. MUTATION ACTIONS: Using Immer produce()
     return produce(state, (draft) => {
-        // Clear previous feedback and UI state to prevent residuals
+        // Clear transient UI feedback
         draft.lastFeedback = null;
         draft.toastMessage = null;
 
         switch (type) {
             // ========== INITIALIZATION & SETUP ==========
             case 'SELECT_BUFF':
-                return handleSelectBuff(draft, payload);
+                handleSelectBuff(draft, payload);
+                break;
 
             // ========== BOARD ACTIONS ==========
             case 'TAKE_GEMS':
-                return handleTakeGems(draft, payload);
+                handleTakeGems(draft, payload);
+                break;
 
             case 'REPLENISH':
-                return handleReplenish(draft, payload);
+                handleReplenish(draft, payload);
+                break;
 
             case 'TAKE_BONUS_GEM':
-                return handleTakeBonusGem(draft, payload);
+                handleTakeBonusGem(draft, payload);
+                break;
 
             case 'DISCARD_GEM':
-                return handleDiscardGem(draft, payload);
+                handleDiscardGem(draft, payload);
+                break;
 
             case 'STEAL_GEM':
-                return handleStealGem(draft, payload);
+                handleStealGem(draft, payload);
+                break;
 
             // ========== MARKET ACTIONS ==========
             case 'INITIATE_BUY_JOKER':
-                return handleInitiateBuyJoker(draft, payload);
+                handleInitiateBuyJoker(draft, payload);
+                break;
 
             case 'BUY_CARD':
-                return handleBuyCard(draft, payload);
+                handleBuyCard(draft, payload);
+                break;
 
             case 'INITIATE_RESERVE':
-                return handleInitiateReserve(draft, payload);
+                handleInitiateReserve(draft, payload);
+                break;
 
             case 'INITIATE_RESERVE_DECK':
-                return handleInitiateReserveDeck(draft, payload);
+                handleInitiateReserveDeck(draft, payload);
+                break;
 
             case 'CANCEL_RESERVE':
-                return handleCancelReserve(draft);
+                handleCancelReserve(draft);
+                break;
 
             case 'RESERVE_CARD':
-                return handleReserveCard(draft, payload);
+                handleReserveCard(draft, payload);
+                break;
 
             case 'RESERVE_DECK':
-                return handleReserveDeck(draft, payload);
+                handleReserveDeck(draft, payload);
+                break;
 
             // ========== PRIVILEGE ACTIONS ==========
             case 'ACTIVATE_PRIVILEGE':
-                return handleActivatePrivilege(draft);
+                handleActivatePrivilege(draft);
+                break;
 
             case 'USE_PRIVILEGE':
-                return handleUsePrivilege(draft, payload);
+                handleUsePrivilege(draft, payload);
+                break;
 
             case 'CANCEL_PRIVILEGE':
-                return handleCancelPrivilege(draft);
+                handleCancelPrivilege(draft);
+                break;
 
             // ========== ROYAL ACTIONS ==========
             case 'FORCE_ROYAL_SELECTION':
-                return handleForceRoyalSelection(draft);
+                handleForceRoyalSelection(draft);
+                break;
 
             case 'SELECT_ROYAL_CARD':
-                return handleSelectRoyalCard(draft, payload);
+                handleSelectRoyalCard(draft, payload);
+                break;
 
             // ========== DEBUG ACTIONS ==========
             case 'DEBUG_ADD_CROWNS':
-                return handleDebugAddCrowns(draft, payload);
+                handleDebugAddCrowns(draft, payload);
+                break;
+
+            case 'UNDO':
+            case 'REDO':
+                if (draft.mode === 'ONLINE_MULTIPLAYER') {
+                    console.warn('Undo/Redo blocked in Online Mode');
+                    return;
+                }
+                break;
 
             case 'DEBUG_ADD_POINTS':
-                return handleDebugAddPoints(draft, payload);
+                handleDebugAddPoints(draft, payload);
+                break;
 
             case 'DEBUG_ADD_PRIVILEGE':
-                return handleDebugAddPrivilege(draft, payload);
+                handleDebugAddPrivilege(draft, payload);
+                break;
 
             // ========== MODAL ACTIONS ==========
             case 'PEEK_DECK':
-                return handlePeekDeck(draft, payload);
+                handlePeekDeck(draft, payload);
+                break;
 
             case 'CLOSE_MODAL':
-                return handleCloseModal(draft);
+                handleCloseModal(draft);
+                break;
 
             // ========== FALLBACK ==========
             default:

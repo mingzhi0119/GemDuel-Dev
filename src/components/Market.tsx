@@ -7,7 +7,7 @@ import { Card as CardType, GamePhase, PlayerKey, GemInventory, Buff } from '../t
 interface MarketProps {
     market: Record<number, (CardType | null)[]>;
     decks: Record<number, CardType[]>;
-    gameMode: GamePhase | string;
+    phase: GamePhase | string;
     turn: PlayerKey;
     inventories: Record<PlayerKey, GemInventory>;
     playerTableau: Record<PlayerKey, CardType[]>;
@@ -15,6 +15,7 @@ interface MarketProps {
     handleReserveDeck: (level: number) => void;
     initiateBuy: (card: CardType, source: string, context?: any) => void;
     handleReserveCard: (card: CardType, level: number, idx: number) => void;
+    onPeekDeck?: (level: number) => void; // Added
     theme: 'light' | 'dark';
     isOnline?: boolean;
     localPlayer?: PlayerKey;
@@ -24,7 +25,7 @@ export const Market: React.FC<MarketProps> = React.memo(
     ({
         market,
         decks,
-        gameMode,
+        phase,
         turn,
         inventories,
         playerTableau,
@@ -32,12 +33,16 @@ export const Market: React.FC<MarketProps> = React.memo(
         handleReserveDeck,
         initiateBuy,
         handleReserveCard,
+        onPeekDeck,
         theme,
         isOnline,
         localPlayer,
     }) => {
         // Validation: Is it my turn?
         const canInteract = !isOnline || turn === localPlayer;
+        const activeBuff = playerBuffs[turn];
+        const hasIntelligence =
+            activeBuff?.effects?.active === 'peek_deck' && phase === 'IDLE' && canInteract;
 
         // Optimization: Stable callback for buying cards
         const handleBuy = useCallback(
@@ -61,17 +66,40 @@ export const Market: React.FC<MarketProps> = React.memo(
 
         return (
             <div
-                className={`flex flex-col gap-4 items-center shrink-0 w-fit ${!canInteract ? 'pointer-events-none opacity-80' : ''}`}
+                className={`flex flex-col gap-4 items-center shrink-0 w-fit ${!canInteract ? 'opacity-80' : ''}`}
             >
                 <h2
                     className={`text-[10px] font-bold uppercase tracking-widest mb-1 text-center ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}
                 >
                     Market
                 </h2>
+
+                {/* Intelligence Network Floating Action (Positioned Left) */}
+                {hasIntelligence && (
+                    <div
+                        className="absolute right-full mr-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-3 rounded-xl border animate-in slide-in-from-right-4 fade-in duration-500 z-50
+                        ${theme === 'dark' ? 'bg-purple-900/20 border-purple-500/30' : 'bg-purple-50/50 border-purple-200'}
+                    "
+                    >
+                        <div className="text-purple-400 text-[8px] font-black uppercase tracking-widest text-center whitespace-nowrap">
+                            Intelligence
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            {[3, 2, 1].map((lvl) => (
+                                <button
+                                    key={lvl}
+                                    onClick={() => onPeekDeck && onPeekDeck(lvl)}
+                                    className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold transition-all hover:scale-105 active:scale-95 shadow-md"
+                                >
+                                    Peek L{lvl}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {[3, 2, 1].map((lvl) => {
-                    // Visibility Logic:
-                    // In Online Mode, only reveal if the LOCAL PLAYER has the buff.
-                    // In Hotseat Mode, reveal if the ACTIVE PLAYER has the buff.
+                    // Visibility Logic
                     const visibilitySource = isOnline && localPlayer ? localPlayer : turn;
                     const visibilityBuffs = playerBuffs?.[visibilitySource]?.effects?.passive || {};
 
@@ -80,9 +108,7 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                     const deck = decks[lvl];
                     const topCard = deck.length > 0 ? deck[deck.length - 1] : null;
-                    const isRevealed = revealL1 && topCard; // Only revealL1 shows card inside deck container
 
-                    // Logic for All-Seeing Eye extra cards
                     const extraL3Cards =
                         lvl === 3 && revealL3
                             ? [
@@ -95,6 +121,24 @@ export const Market: React.FC<MarketProps> = React.memo(
                         <div key={lvl} className="flex gap-3 justify-center items-center">
                             {/* Deck Container */}
                             <div className="relative">
+                                {/* Insight Buff (L1 Peek) - Positioned to the left of L1 Deck */}
+                                {lvl === 1 && revealL1 && topCard && (
+                                    <div className="absolute right-full mr-4 animate-in slide-in-from-right-4 fade-in duration-500">
+                                        <div className="relative p-1 border-2 border-dashed border-purple-500/50 rounded-xl">
+                                            <Card
+                                                card={topCard}
+                                                canBuy={false}
+                                                theme={theme}
+                                                isDeckPreview={true}
+                                            />
+                                            <div className="absolute inset-0 bg-black/20 rounded-lg pointer-events-none" />
+                                        </div>
+                                        <div className="text-[8px] font-black text-purple-400 uppercase tracking-widest text-center mt-1">
+                                            Insight
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Extra Cards for All-Seeing Eye (Positioned absolutely to the left) */}
                                 {lvl === 3 && extraL3Cards.length > 0 && (
                                     <div className="absolute right-full mr-4 flex gap-2 top-0">
@@ -106,7 +150,8 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                 <Card
                                                     card={card}
                                                     canBuy={
-                                                        gameMode === 'IDLE' &&
+                                                        phase === 'IDLE' &&
+                                                        canInteract &&
                                                         card !== null &&
                                                         calculateTransaction(
                                                             card,
@@ -115,7 +160,6 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                             playerBuffs[turn]
                                                         ).affordable
                                                     }
-                                                    // We use a special index to tell the handler these are from the deck
                                                     context={JSON.stringify({
                                                         level: 3,
                                                         isExtra: true,
@@ -131,10 +175,10 @@ export const Market: React.FC<MarketProps> = React.memo(
                                 )}
 
                                 <div
-                                    onClick={() => handleReserveDeck(lvl)}
+                                    onClick={() => canInteract && handleReserveDeck(lvl)}
                                     className={`w-24 h-32 shrink-0 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md relative overflow-hidden group
                             ${
-                                gameMode === 'IDLE' && decks[lvl].length > 0
+                                phase === 'IDLE' && canInteract && decks[lvl].length > 0
                                     ? (theme === 'dark'
                                           ? 'border-slate-600 hover:border-emerald-400'
                                           : 'border-slate-400 hover:border-emerald-500') +
@@ -149,26 +193,15 @@ export const Market: React.FC<MarketProps> = React.memo(
                                         className={`absolute inset-0 ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-200'}`}
                                     />
 
-                                    {isRevealed ? (
-                                        <div className="absolute inset-0 z-10 p-1 pointer-events-none">
-                                            <Card
-                                                card={topCard}
-                                                canBuy={false}
-                                                theme={theme}
-                                                isDeckPreview={true}
-                                            />
+                                    <div className="relative z-10 flex flex-col items-center">
+                                        <Layers size={18} className="text-slate-500 mb-1" />
+                                        <div className="text-slate-400 font-bold text-[10px]">
+                                            Lvl {lvl}
                                         </div>
-                                    ) : (
-                                        <div className="relative z-10 flex flex-col items-center">
-                                            <Layers size={18} className="text-slate-500 mb-1" />
-                                            <div className="text-slate-400 font-bold text-[10px]">
-                                                Lvl {lvl}
-                                            </div>
-                                            <div className="text-slate-600 text-[9px] font-mono">
-                                                {decks[lvl].length}
-                                            </div>
+                                        <div className="text-slate-600 text-[9px] font-mono">
+                                            {decks[lvl].length}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -176,9 +209,9 @@ export const Market: React.FC<MarketProps> = React.memo(
                                 <Card
                                     key={i}
                                     card={card}
-                                    // Optimization: Check affordability using unified logic
                                     canBuy={
-                                        gameMode === 'IDLE' &&
+                                        phase === 'IDLE' &&
+                                        canInteract &&
                                         card !== null &&
                                         calculateTransaction(
                                             card,

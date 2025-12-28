@@ -12,10 +12,10 @@ export const INITIAL_STATE_SKELETON: GameState = {
 
     // ========== TURN & PHASE ==========
     turn: 'p1',
-    gameMode: GAME_PHASES.IDLE,
-    isPvE: false,
-    isOnline: false,
+    phase: GAME_PHASES.IDLE,
+    mode: 'LOCAL_PVP',
     isHost: true,
+    // Legacy flags removed - derived from mode
     pendingReserve: null,
     bonusGemTarget: null,
     pendingBuy: null,

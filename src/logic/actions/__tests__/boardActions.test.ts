@@ -74,7 +74,7 @@ describe('boardActions', () => {
                 gold: 1,
                 pearl: 0,
             };
-            testState.gameMode = 'DISCARD_EXCESS_GEMS';
+            testState.phase = 'DISCARD_EXCESS_GEMS';
             testState.nextPlayerAfterRoyal = null;
 
             // Action: discard blue gem

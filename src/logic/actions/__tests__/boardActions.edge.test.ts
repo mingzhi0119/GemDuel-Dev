@@ -45,7 +45,7 @@ describe('Board Actions - Edge Cases', () => {
         expect(totalGems).toBe(11);
 
         // Critical: The game should enter discard mode and the turn should NOT change
-        expect(nextState.gameMode).toBe(GAME_PHASES.DISCARD_EXCESS_GEMS);
+        expect(nextState.phase).toBe(GAME_PHASES.DISCARD_EXCESS_GEMS);
         expect(nextState.turn).toBe('p1');
     });
 

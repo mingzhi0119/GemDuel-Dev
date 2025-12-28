@@ -11,7 +11,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
     const opponent = aiPlayer === 'p1' ? 'p2' : 'p1';
 
     // Priority 0: Handle Setup/Draft Phase
-    if (state.gameMode === 'DRAFT_PHASE') {
+    if (state.phase === 'DRAFT_PHASE') {
         const pool = state.p2DraftPool || state.draftPool || [];
         if (pool.length > 0) {
             const chosen = pool[Math.floor(Math.random() * pool.length)];
@@ -23,13 +23,13 @@ export const computeAiAction = (state: GameState): GameAction | null => {
     }
 
     // Priority 1: Handle mandatory sub-phases first
-    if (state.gameMode === 'SELECT_ROYAL') {
+    if (state.phase === 'SELECT_ROYAL') {
         // Just pick the one with most points for now
         const bestRoyal = [...state.royalDeck].sort((a, b) => b.points - a.points)[0];
         if (bestRoyal) return { type: 'SELECT_ROYAL_CARD', payload: { card: bestRoyal } };
     }
 
-    if (state.gameMode === 'DISCARD_EXCESS_GEMS') {
+    if (state.phase === 'DISCARD_EXCESS_GEMS') {
         // Discard the gem type we have the most of, but keep gold/pearls if possible
         const inv = state.inventories[aiPlayer];
         const discardOrder = (['red', 'green', 'blue', 'white', 'black'] as const)
@@ -44,7 +44,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         if (inv.gold > 0) return { type: 'DISCARD_GEM', payload: 'gold' };
     }
 
-    if (state.gameMode === 'STEAL_ACTION') {
+    if (state.phase === 'STEAL_ACTION') {
         const oppInv = state.inventories[opponent];
         const stealable = (['pearl', 'red', 'green', 'blue', 'white', 'black'] as const).filter(
             (c) => oppInv[c] > 0
@@ -54,7 +54,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         }
     }
 
-    if (state.gameMode === 'BONUS_ACTION') {
+    if (state.phase === 'BONUS_ACTION') {
         // Find the target gem on board
         for (let r = 0; r < 5; r++) {
             for (let c = 0; c < 5; c++) {
@@ -65,7 +65,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         }
     }
 
-    if (state.gameMode === 'SELECT_CARD_COLOR') {
+    if (state.phase === 'SELECT_CARD_COLOR') {
         // Pick red as default for Joker
         return {
             type: 'BUY_CARD',
@@ -76,7 +76,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         };
     }
 
-    if (state.gameMode !== 'IDLE') return null;
+    if (state.phase !== 'IDLE') return null;
 
     // Priority 2: Buy Cards
     // Check Market

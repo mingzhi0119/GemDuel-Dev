@@ -85,7 +85,7 @@ describe('Logic Discrepancy Tests (v3.1.0 JS vs Current TS)', () => {
 
         // Set up p1 with current turn
         state.turn = 'p1';
-        state.gameMode = 'IDLE';
+        state.phase = 'IDLE';
         state.board = Array.from({ length: 5 }, () =>
             Array.from({ length: 5 }, () => ({ type: GEM_TYPES.EMPTY, uid: 'e' }))
         );
@@ -119,6 +119,6 @@ describe('Logic Discrepancy Tests (v3.1.0 JS vs Current TS)', () => {
         // bonusGemTarget should be an object now
         expect(typeof nextState.bonusGemTarget).toBe('object');
         expect(nextState.bonusGemTarget.id).toBe('red');
-        expect(nextState.gameMode).toBe('BONUS_ACTION');
+        expect(nextState.phase).toBe('BONUS_ACTION');
     });
 });

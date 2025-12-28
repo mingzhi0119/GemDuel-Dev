@@ -5,7 +5,7 @@ import { RoyalCard, GamePhase } from '../types';
 
 interface RoyalCourtProps {
     royalDeck: RoyalCard[];
-    gameMode: GamePhase | string;
+    phase: GamePhase | string;
     handleSelectRoyal: (card: RoyalCard) => void;
     theme: 'light' | 'dark';
     canInteract?: boolean;
@@ -13,7 +13,7 @@ interface RoyalCourtProps {
 
 export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     royalDeck,
-    gameMode,
+    phase,
     handleSelectRoyal,
     theme,
     canInteract = true,
@@ -33,11 +33,13 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                     royalDeck.map((card) => (
                         <div
                             key={card.id}
-                            className={`relative transition-all duration-300 ${gameMode === 'SELECT_ROYAL' ? 'cursor-pointer hover:scale-110 hover:rotate-1 z-50 ring-4 ring-yellow-400/50 rounded-lg shadow-xl' : 'opacity-80 grayscale-[0.2]'}`}
-                            onClick={() => gameMode === 'SELECT_ROYAL' && handleSelectRoyal(card)}
+                            className={`relative transition-all duration-300 ${phase === 'SELECT_ROYAL' && canInteract ? 'cursor-pointer hover:scale-110 hover:rotate-1 z-50 ring-4 ring-yellow-400/50 rounded-lg shadow-xl' : 'opacity-80 grayscale-[0.2]'}`}
+                            onClick={() =>
+                                canInteract && phase === 'SELECT_ROYAL' && handleSelectRoyal(card)
+                            }
                         >
                             <Card card={card as any} isRoyal={true} />
-                            {gameMode === 'SELECT_ROYAL' && (
+                            {phase === 'SELECT_ROYAL' && canInteract && (
                                 <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full animate-bounce shadow-lg">
                                     PICK!
                                 </div>

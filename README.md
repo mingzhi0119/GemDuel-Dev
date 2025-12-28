@@ -1,92 +1,74 @@
-# Gem Duel
+# Gem Duel: Splendor Duel Reimagined
 
-**Gem Duel** is a competitive strategy game designed specifically for two players. In this digital adaptation, players act as masters of a jewelry guild, competing to satisfy monarchs and nobility by collecting gems, pearls, and gold to acquire prestigious cards.
+[![Release](https://img.shields.io/badge/version-5.0.0-purple.svg)]()
+[![Build](https://github.com/mingzhi0119/GemDuel-Dev/actions/workflows/build.yml/badge.svg)](https://github.com/mingzhi0119/GemDuel-Dev/actions)
 
-> **v4.1.0 "Global Nexus & Intelligence" Update** is now live!
+A high-fidelity digital remake of the popular strategy board game **Splendor Duel**, enhanced with modern architecture and a deep **Roguelike Expansion**. Built with React, TypeScript, and Electron.
 
-## 🚀 What's New in v4.1.0
+## 🚀 Key Features
 
-### 🌐 Online Multiplayer (P2P)
+### 🕹️ Multi-Mode Gameplay
 
-- **Decentralized Play:** Real-time online matches using **PeerJS (WebRTC)**. No central game server required—connect directly with friends via unique Room IDs.
-- **Live Sync:** Fully synchronized game state across peers using a deterministic Action-Log architecture.
+- **Local PvP**: Classic same-screen competitive play.
+- **VS AI**: Challenge a heuristic-based "Gem Bot" for solo practice.
+- **Online Multiplayer**: Seamless P2P gameplay powered by WebRTC (PeerJS) with a robust **Authoritative Host** architecture to ensure synchronization and fairness.
 
-### 🧠 AI Strategy Optimization
+### 🃏 Roguelike Evolution
 
-- **Smart Resource Management:** The AI ("Gem Bot") now intelligently monitors its gem capacity. It will automatically adjust its gem-taking strategy to prevent overflow, avoiding the efficiency loss of the discard phase.
+- **Buff Drafting**: Dynamic selection phase with 24+ unique abilities across 3 tiers (Tactic, Shift, Game Changer).
+- **Exclusive Rogue Cards**: 7 additional high-tier development cards with massive point potential and skill combos.
+- **Asymmetric Starts**: Every match feels different with randomized starting bonuses and win-condition shifts.
 
-### 📼 Replay Save/Load System
+### 🛡️ Technical Excellence
 
-- **Match Persistence:** Export your entire game history as a portable JSON file.
-- **Post-Match Analysis:** Import replay files to review every move, utilizing the infinite Undo/Redo system to analyze strategic turning points.
+- **Authoritative Sync**: Implemented a "Host-is-Law" sync protocol. Actions are validated by the Host before being broadcasted to Guests via full state snapshots.
+- **Type Safety**: 100% TypeScript codebase, providing robust logic validation and IDE support.
+- **Stress Tested**: Verified by an intensive **5000-iteration Monkey Test** suite to ensure zero memory leaks and logic crashes.
+- **High Performance**: Powered by **Vite** for near-instant hot-reloads and optimized builds.
 
-### 🛡️ Interface & QoL
+## 🎨 UI & UX
 
-- **Contextual UI:** Debug panels and replay controls now dynamically adapt to the game mode (Solo vs PvP vs Online) to ensure a fair and clean experience.
-- **Action Cancel:** Added a "Cancel" option during Privilege gem selection to prevent accidental clicks.
+- **Authoritative Feedback**: Real-time "Your Turn" indicators and status markers.
+- **Information Integrity**: 100% synced with official card data (CSV-verified).
+- **Responsive Design**: Supports multiple resolutions with dynamic scaling for the game board and dashboards.
+- **Accessible UI**: High-visibility score markers (12pt Black) and smart tooltip positioning.
 
-## 🏗️ v4.0.0 "The Modernization" Update
+## 🛠️ Getting Started
 
-### ⚛️ Modern Tech Stack
+### Prerequisites
 
-- **React 19 & Vite 6:** Upgraded to the latest industry standards for superior performance and developer experience.
-- **100% TypeScript:** The entire codebase has been migrated to TypeScript, ensuring absolute type safety and eliminating runtime logic errors.
+- Node.js (v18+)
+- npm
 
-### 🤖 AI Battle Mode (Solo PvE)
+### Installation
 
-- **Challenge the Bot:** A custom heuristic-based AI allows for solo practice and testing of complex buff combinations.
+```bash
+git clone https://github.com/mingzhi0119/GemDuel-Dev.git
+cd splendor-duel
+npm install
+```
 
-## 🚀 v3.0.0 "Fate & Fortune" Features
+### Development
 
-### 🔮 Roguelike Mode (Asymmetric Gameplay)
+```bash
+# Run web version
+npm run dev
 
-Break away from the symmetry! Before the game begins, players participate in a **Draft Phase** to select powerful Buffs.
+# Run desktop version (Electron)
+npm run electron:dev
+```
 
-- **24 Unique Buffs:** From "Color Preference" (cost reduction) to "Minimalism" (double bonuses for early cards).
-- **Dynamic Win Conditions:** Victory thresholds adapt dynamically based on your chosen Buff.
+### Testing
 
-## 🌟 Key Features
+```bash
+# Run full test suite
+npm test
+```
 
-### Core Mechanics
+## 📜 Version History
 
-- **Card Abilities:** Extra Turn, Bonus Gem, Steal, and Privilege.
-- **Royal Court:** Claim powerful Royal cards upon reaching Crown milestones (3 and 6).
-- **Three Victory Paths:** 20 Points, 10 Crowns, or 10 Points in a single color.
+Check the [Release Notes](#) for detailed changelogs. Current Stable: **v5.0.0**.
 
-### Visual Design
+---
 
-- **Vertical Crown Stacking:** Cards featuring multiple crowns display them in a distinct vertical arrangement in the bottom-right corner, enhancing readability and visual flair.
-
-### Technical Highlights
-
-- **Pure Logic Engine:** Decoupled game rules for high-performance state transitions.
-- **Deterministic Rehydration:** Supports seamless infinite undo/redo.
-- **Cross-Resolution Support:** Optimized for **1080p**, **2K**, and **4K** displays.
-
-## 🛠️ Tech Stack
-
-- **Framework:** React 19
-- **Bundler:** Vite 6
-- **Language:** TypeScript 5.8
-- **Communication:** PeerJS (WebRTC)
-- **Testing:** Vitest 3
-- **Styling:** Tailwind CSS
-
-## 📦 Getting Started
-
-1.  Clone the repository: `git clone https://github.com/mingzhi0119/GemDuel-Dev.git`
-2.  Install dependencies: `npm install`
-3.  Start the game: `npm run dev`
-
-## 🎮 How to Play
-
-Perform **ONE** main action per turn:
-
-1.  **Take Gems:** Up to 3 contiguous gems (no Gold).
-2.  **Reserve:** Take 1 Gold and reserve 1 card.
-3.  **Buy Card:** Pay the gem cost (minus bonuses).
-
-**Optional Actions:**
-
-- **Use Privilege:** Spend a scroll to take 1 non-Gold gem.
-- **Replenish:** Refill the board (opponent gains a Privilege).
+_Created with strategic precision by Mingzhi and contributors._

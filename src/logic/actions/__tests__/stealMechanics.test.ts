@@ -54,13 +54,13 @@ describe('Steal Mechanics', () => {
 
         const nextState = handleBuyCard(baseState, action);
 
-        expect(nextState.gameMode).toBe(GAME_PHASES.STEAL_ACTION);
+        expect(nextState.phase).toBe(GAME_PHASES.STEAL_ACTION);
         expect(nextState.turn).toBe('p1');
         expect(nextState.nextPlayerAfterRoyal).toBe('p2'); // Should be p2 after steal
     });
 
     it('should execute steal and switch turn', () => {
-        baseState.gameMode = GAME_PHASES.STEAL_ACTION;
+        baseState.phase = GAME_PHASES.STEAL_ACTION;
         baseState.nextPlayerAfterRoyal = 'p2';
 
         const action = {
@@ -71,7 +71,7 @@ describe('Steal Mechanics', () => {
 
         expect(nextState.inventories.p1.blue).toBe(1);
         expect(nextState.inventories.p2.blue).toBe(0);
-        expect(nextState.gameMode).toBe(GAME_PHASES.IDLE);
+        expect(nextState.phase).toBe(GAME_PHASES.IDLE);
         expect(nextState.turn).toBe('p2');
     });
 
@@ -92,11 +92,11 @@ describe('Steal Mechanics', () => {
 
         const nextState = handleBuyCard(baseState, action);
 
-        expect(nextState.gameMode).toBe(GAME_PHASES.STEAL_ACTION);
+        expect(nextState.phase).toBe(GAME_PHASES.STEAL_ACTION);
         expect(nextState.nextPlayerAfterRoyal).toBe('p1'); // AGAIN means next is p1
 
         const afterSteal = handleStealGem(nextState, { gemId: 'blue' as any });
         expect(afterSteal.turn).toBe('p1'); // Stays p1's turn
-        expect(afterSteal.gameMode).toBe(GAME_PHASES.IDLE);
+        expect(afterSteal.phase).toBe(GAME_PHASES.IDLE);
     });
 });

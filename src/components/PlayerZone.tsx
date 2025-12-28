@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, Layers, Scroll, Swords, Sparkles } from 'lucide-react';
-import { GEM_TYPES, BONUS_COLORS } from '../constants';
+import { GEM_TYPES, BONUS_COLORS, BUFFS } from '../constants';
 import { GemIcon } from './GemIcon';
 import { Card } from './Card';
 import { FloatingText } from './VisualFeedback';
@@ -13,18 +13,23 @@ interface BuffDisplayProps {
     playerKey: PlayerKey;
 }
 
-const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff, theme, playerKey }) => {
-    if (!buff || buff.id === 'none') return null;
+const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff: rawBuff, theme, playerKey }) => {
+    if (!rawBuff || rawBuff.id === 'none') return null;
 
+    // RECONSTRUCTION: Get full static data (icons, desc) from local constants using ID
+    const buff = Object.values(BUFFS).find((b) => b.id === rawBuff.id) || rawBuff;
     const levelStyle = BUFF_STYLES[buff.level] || 'border-slate-500 bg-slate-500/20 text-slate-300';
 
-    // Determine alignment classes to avoid screen edges
-    const alignClasses = playerKey === 'p1' ? 'left-0' : 'right-0';
+    // Use the state from the serialized buff (where dynamic info like discountColor is stored)
+    const buffState = rawBuff.state || {};
+    const discountColor = buffState.discountColor;
 
-    const discountColor = buff.state?.discountColor;
     let description = discountColor
         ? buff.desc.replace('Random color', `Random color (${discountColor})`)
         : buff.desc;
+
+    // Determine alignment classes to avoid screen edges
+    const alignClasses = playerKey === 'p1' ? 'left-0' : 'right-0';
 
     // Remove redundant Win Condition info from description if Victory Goals section exists
     if (buff.effects?.winCondition) {
