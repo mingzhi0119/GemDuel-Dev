@@ -427,7 +427,7 @@ export default function GemDuelBoard() {
     // --- 3. Main Game Interface ---
     return (
         <div
-            className={`h-screen w-screen font-sans flex flex-col overflow-hidden transition-colors duration-500
+            className={`h-screen w-screen font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe
         ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}
     `}
         >
@@ -604,23 +604,27 @@ export default function GemDuelBoard() {
             )}
 
             {/* 2. Middle Game Area (Centered) */}
-            <div className="flex-1 flex items-center justify-center min-h-0 relative z-10 px-6 pt-20 pb-4">
+            <div className="flex-1 flex items-center justify-center min-h-0 relative z-10 px-4 pt-16 lg:pt-20 pb-4 overflow-hidden">
                 <div
-                    className={`flex flex-row gap-8 xl:gap-16 items-center justify-center transform ${settings.boardScale} origin-center transition-all duration-500`}
+                    className={`flex flex-col lg:flex-row gap-4 lg:gap-8 xl:gap-16 items-center justify-center transform ${settings.boardScale} lg:scale-100 origin-center lg:origin-center transition-all duration-500`}
                 >
-                    <Market
-                        market={market}
-                        decks={decks}
-                        gameMode={effectiveGameMode}
-                        turn={turn}
-                        inventories={inventories}
-                        playerTableau={playerTableau}
-                        playerBuffs={playerBuffs}
-                        handleReserveDeck={handleReserveDeck}
-                        initiateBuy={initiateBuy}
-                        handleReserveCard={handleReserveCard}
-                        theme={theme}
-                    />
+                    <div
+                        className={`flex flex-row lg:flex-col items-center gap-4 transform ${settings.deckScale} lg:scale-100 origin-center`}
+                    >
+                        <Market
+                            market={market}
+                            decks={decks}
+                            gameMode={effectiveGameMode}
+                            turn={turn}
+                            inventories={inventories}
+                            playerTableau={playerTableau}
+                            playerBuffs={playerBuffs}
+                            handleReserveDeck={handleReserveDeck}
+                            initiateBuy={initiateBuy}
+                            handleReserveCard={handleReserveCard}
+                            theme={theme}
+                        />
+                    </div>
 
                     <div className="relative flex flex-col items-center shrink-0">
                         <StatusBar
@@ -652,7 +656,9 @@ export default function GemDuelBoard() {
                         />
                     </div>
 
-                    <div className="flex flex-col gap-4 items-center">
+                    <div
+                        className={`flex flex-row lg:flex-col gap-4 items-center transform ${settings.deckScale} lg:scale-100 origin-center`}
+                    >
                         <RoyalCourt
                             royalDeck={royalDeck}
                             gameMode={effectiveGameMode}
@@ -660,7 +666,7 @@ export default function GemDuelBoard() {
                             theme={theme}
                         />
                         <div
-                            className={`flex flex-col gap-3 items-center p-3 rounded-2xl border backdrop-blur-sm w-full transition-colors duration-500
+                            className={`flex flex-col gap-3 items-center p-2 lg:p-3 rounded-2xl border backdrop-blur-sm transition-colors duration-500
                       ${theme === 'dark' ? 'bg-slate-900/40 border-slate-800/50' : 'bg-white/40 border-slate-200/50'}
                   `}
                         >
@@ -680,58 +686,70 @@ export default function GemDuelBoard() {
 
             {/* 3. Bottom Dashboards (Dual Player Panels) */}
             <div
-                className={`h-[280px] shrink-0 flex w-full border-t backdrop-blur-md relative z-20 transition-colors duration-500
+                className={`${settings.zoneHeight} shrink-0 flex w-full border-t backdrop-blur-md relative z-20 transition-all duration-500
           ${theme === 'dark' ? 'border-slate-800 bg-slate-950/80' : 'border-slate-300 bg-slate-100/80'}
       `}
             >
                 {/* Player 1 Dashboard (Left) */}
                 <div
-                    className={`flex-1 border-r relative ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}`}
+                    className={`flex-1 border-r relative overflow-hidden ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}`}
                 >
-                    <PlayerZone
-                        player="p1"
-                        inventory={inventories.p1}
-                        cards={playerTableau.p1}
-                        reserved={playerReserved.p1}
-                        royals={playerRoyals.p1}
-                        privileges={privileges.p1}
-                        score={getPlayerScore('p1')}
-                        crowns={getCrownCount('p1')}
-                        lastFeedback={lastFeedback}
-                        isActive={turn === 'p1' && !isReviewing && !winner}
-                        onBuyReserved={checkAndInitiateBuyReserved}
-                        onUsePrivilege={activatePrivilegeMode}
-                        isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
-                        isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p1'}
-                        isDiscardMode={effectiveGameMode === 'DISCARD_EXCESS_GEMS' && turn === 'p1'}
-                        onGemClick={turn === 'p1' ? handleSelfGemClick : handleOpponentGemClick}
-                        buff={playerBuffs?.p1}
-                        theme={theme}
-                    />
+                    <div
+                        className={`w-full h-full transform ${settings.zoneScale} origin-center lg:scale-100`}
+                    >
+                        <PlayerZone
+                            player="p1"
+                            inventory={inventories.p1}
+                            cards={playerTableau.p1}
+                            reserved={playerReserved.p1}
+                            royals={playerRoyals.p1}
+                            privileges={privileges.p1}
+                            score={getPlayerScore('p1')}
+                            crowns={getCrownCount('p1')}
+                            lastFeedback={lastFeedback}
+                            isActive={turn === 'p1' && !isReviewing && !winner}
+                            onBuyReserved={checkAndInitiateBuyReserved}
+                            onUsePrivilege={activatePrivilegeMode}
+                            isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
+                            isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p1'}
+                            isDiscardMode={
+                                effectiveGameMode === 'DISCARD_EXCESS_GEMS' && turn === 'p1'
+                            }
+                            onGemClick={turn === 'p1' ? handleSelfGemClick : handleOpponentGemClick}
+                            buff={playerBuffs?.p1}
+                            theme={theme}
+                        />
+                    </div>
                 </div>
 
                 {/* Player 2 Dashboard (Right) */}
-                <div className="flex-1 relative">
-                    <PlayerZone
-                        player="p2"
-                        inventory={inventories.p2}
-                        cards={playerTableau.p2}
-                        reserved={playerReserved.p2}
-                        royals={playerRoyals.p2}
-                        privileges={privileges.p2}
-                        score={getPlayerScore('p2')}
-                        crowns={getCrownCount('p2')}
-                        lastFeedback={lastFeedback}
-                        isActive={turn === 'p2' && !isReviewing && !winner}
-                        onBuyReserved={checkAndInitiateBuyReserved}
-                        onUsePrivilege={activatePrivilegeMode}
-                        isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
-                        isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p2'}
-                        isDiscardMode={effectiveGameMode === 'DISCARD_EXCESS_GEMS' && turn === 'p2'}
-                        onGemClick={turn === 'p2' ? handleSelfGemClick : handleOpponentGemClick}
-                        buff={playerBuffs?.p2}
-                        theme={theme}
-                    />
+                <div className="flex-1 relative overflow-hidden">
+                    <div
+                        className={`w-full h-full transform ${settings.zoneScale} origin-center lg:scale-100`}
+                    >
+                        <PlayerZone
+                            player="p2"
+                            inventory={inventories.p2}
+                            cards={playerTableau.p2}
+                            reserved={playerReserved.p2}
+                            royals={playerRoyals.p2}
+                            privileges={privileges.p2}
+                            score={getPlayerScore('p2')}
+                            crowns={getCrownCount('p2')}
+                            lastFeedback={lastFeedback}
+                            isActive={turn === 'p2' && !isReviewing && !winner}
+                            onBuyReserved={checkAndInitiateBuyReserved}
+                            onUsePrivilege={activatePrivilegeMode}
+                            isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
+                            isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p2'}
+                            isDiscardMode={
+                                effectiveGameMode === 'DISCARD_EXCESS_GEMS' && turn === 'p2'
+                            }
+                            onGemClick={turn === 'p2' ? handleSelfGemClick : handleOpponentGemClick}
+                            buff={playerBuffs?.p2}
+                            theme={theme}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

@@ -11,6 +11,13 @@ export const RESOLUTION_SETTINGS: Record<
         deckScale: string;
     }
 > = {
+    mobile: {
+        label: 'Mobile (Auto)',
+        zoneHeight: 'h-[200px]',
+        zoneScale: 'scale-[0.55]',
+        boardScale: 'scale-[0.45]',
+        deckScale: 'scale-[0.55]',
+    },
     '1k': {
         label: '1080p (FHD)',
         zoneHeight: 'h-[160px]',
@@ -41,7 +48,10 @@ export const GAME_CONFIG = {
 };
 
 export const useSettings = (defaultResolution = '2k') => {
-    const [resolution, setResolution] = useState(defaultResolution);
+    const isSmallScreen = typeof window !== 'undefined' && window.innerWidth < 1024;
+    const initialResolution = isSmallScreen ? 'mobile' : defaultResolution;
+
+    const [resolution, setResolution] = useState(initialResolution);
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
     const settings = RESOLUTION_SETTINGS[resolution] || RESOLUTION_SETTINGS['2k'];

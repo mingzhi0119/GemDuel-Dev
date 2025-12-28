@@ -20,7 +20,7 @@ export const ResolutionSwitcher: React.FC<ResolutionSwitcherProps> = ({
     theme,
 }) => {
     return (
-        <div className="relative z-50 group">
+        <div className="relative z-50 group outline-none" tabIndex={0}>
             <button
                 className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all
                 ${
@@ -34,7 +34,7 @@ export const ResolutionSwitcher: React.FC<ResolutionSwitcherProps> = ({
                 <span className="text-xs font-bold hidden md:inline">{settings.label}</span>
             </button>
 
-            <div className="absolute right-0 top-full pt-2 hidden group-hover:block w-32 animate-in fade-in slide-in-from-top-2">
+            <div className="absolute right-0 top-full pt-2 hidden group-hover:block group-focus-within:block w-32 animate-in fade-in slide-in-from-top-2">
                 <div
                     className={`rounded-lg shadow-xl border overflow-hidden transition-colors duration-500
                     ${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}
