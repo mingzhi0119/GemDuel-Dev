@@ -30,13 +30,19 @@ export const useGameInteractions = (
     const [selectedGems, setSelectedGems] = useState<GemCoord[]>([]);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    // Reset selection on history navigation
     useEffect(() => {
         setSelectedGems([]);
-        setErrorMsg(null);
     }, [currentIndex]);
 
-    // 5. Control & Input Decoupling
+    useEffect(() => {
+        if (errorMsg) {
+            const timer = setTimeout(() => {
+                setErrorMsg(null);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [errorMsg]);
+
     const canLocalInteract = useMemo(() => {
         const mode = gameState.mode;
         if (mode === 'LOCAL_PVP') return true;

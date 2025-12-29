@@ -39,16 +39,6 @@ export const GameActions: React.FC<GameActionsProps> = ({
         <div
             className={`flex flex-col gap-4 items-center mt-4 z-50 ${!canInteract ? 'opacity-50 pointer-events-none' : ''}`}
         >
-            {phase === 'IDLE' && selectedCount > 0 && (
-                <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <button
-                        onClick={handleConfirmTake}
-                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-all active:scale-95"
-                    >
-                        <Check size={18} /> Confirm
-                    </button>
-                </div>
-            )}
             {(phase === 'RESERVE_WAITING_GEM' || phase === 'PRIVILEGE_ACTION') && (
                 <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                     <button
@@ -66,6 +56,16 @@ export const GameActions: React.FC<GameActionsProps> = ({
 
             {phase === 'IDLE' && (
                 <div className="flex flex-wrap justify-center gap-2 animate-in fade-in duration-500">
+                    {/* Confirm Selection (Get Gem) */}
+                    {selectedCount > 0 && (
+                        <button
+                            onClick={handleConfirmTake}
+                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-all active:scale-95 animate-in fade-in slide-in-from-left-4 duration-300"
+                        >
+                            <Check size={18} /> Confirm
+                        </button>
+                    )}
+
                     {/* Replenish Board */}
                     <button
                         onClick={handleReplenish}
