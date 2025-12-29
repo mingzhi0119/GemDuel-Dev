@@ -3,7 +3,7 @@ import { produce } from 'immer';
 import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { generateGemPool, generateDeck, shuffleArray } from '../../utils';
-import { GameState, PlayerKey, GemColor, Buff, GameAction } from '../../types';
+import { GameState, PlayerKey, Buff, GameAction } from '../../types';
 import { BONUS_COLORS, BUFFS } from '../../constants';
 import { applyBuffInitEffects } from '../actions/buffActions';
 

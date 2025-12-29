@@ -178,6 +178,15 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
         }
     }
 
+    const totalGems = Object.values(state.inventories[state.turn]).reduce((a, b) => a + b, 0);
+    const gemCap = state.playerBuffs?.[state.turn]?.effects?.passive?.gemCap || 10;
+
+    if (totalGems > gemCap) {
+        state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
+        return state;
+    }
+
+    finalizeTurn(state, state.turn === 'p1' ? 'p2' : 'p1');
     return state;
 };
 

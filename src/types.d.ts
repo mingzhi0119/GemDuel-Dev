@@ -32,6 +32,8 @@ export interface GemCoord {
  */
 export type GemColor = 'blue' | 'white' | 'green' | 'black' | 'red' | 'pearl' | 'gold';
 
+export type BounsColor = GemColor | 'null';
+
 /**
  * Gem type definition with styling info
  */
@@ -74,7 +76,7 @@ export interface Card {
     cost: GemInventory;
     points: number;
     ability?: CardAbility | CardAbility[];
-    bonusColor?: GemColor;
+    bonusColor?: BounsColor;
     prestige?: number;
     crowns?: number;
     bonusCount?: number;

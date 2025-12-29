@@ -1,7 +1,7 @@
 import React from 'react';
 import { Crown } from 'lucide-react';
 import { Card } from './Card';
-import { RoyalCard, GamePhase } from '../types';
+import { RoyalCard, GamePhase, Card as CardType } from '../types';
 
 interface RoyalCourtProps {
     royalDeck: RoyalCard[];

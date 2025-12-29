@@ -170,6 +170,11 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     const [isExtortionEffect, setIsExtortionEffect] = useState(false);
     const lastSeenFeedbackUid = useRef<string | null>(null);
 
+    const displayColors = [...BONUS_COLORS];
+    if (safeCards.some((c) => c.bonusColor === 'null')) {
+        displayColors.push('null' as GemColor);
+    }
+
     useEffect(() => {
         if (lastFeedback && lastFeedback.uid !== lastSeenFeedbackUid.current) {
             lastSeenFeedbackUid.current = lastFeedback.uid;
@@ -192,7 +197,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
         }
     }, [lastFeedback, player]);
 
-    const colorStats = BONUS_COLORS.reduce(
+    const colorStats = displayColors.reduce(
         (acc: Record<string, { cards: CardType[]; bonusCount: number; points: number }>, color) => {
             const colorCards = safeCards.filter((c) => c.bonusColor === color);
             acc[color] = {
@@ -301,7 +306,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                 {/* Gems Row */}
                 <div className="flex gap-3 justify-center">
                     {(Object.values(GEM_TYPES) as GemTypeObject[])
-                        .filter((g) => g.id !== 'empty')
+                        .filter((g) => g.id !== 'empty' && g.id !== 'Neutral') // Neutral is for card bg only
                         .map((gem) => {
                             const count = inventory[gem.id as GemColor] || 0;
                             const isClickable =
@@ -339,7 +344,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                 {/* Card Stacks & Bonuses */}
                 <div className="flex gap-3 items-start justify-center mt-1">
                     <Layers size={14} className="text-slate-600 mr-1 mt-1" />
-                    {BONUS_COLORS.map((color) => {
+                    {displayColors.map((color) => {
                         const stats = colorStats[color];
                         const type = GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES];
 
@@ -374,7 +379,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                         ></div>
                                     )}
 
-                                    {stats.bonusCount > 0 && (
+                                    {stats.bonusCount > 0 && color !== 'null' && (
                                         <div
                                             className={`absolute -bottom-2 -right-2 text-[9px] font-bold px-1 rounded-full border z-20 shadow-md flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-slate-800 border-slate-300'}`}
                                         >

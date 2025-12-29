@@ -160,10 +160,17 @@ export const Card: React.FC<CardProps> = React.memo(
                 {/* 2. Top Right: Bonus Gem */}
                 <div className="absolute top-1 right-1 pointer-events-none flex flex-col gap-0.5 z-10">
                     {card.bonusColor &&
-                        Array.from({ length: card.bonusCount || (isRoyal ? 0 : 1) }).map((_, i) => (
+                        card.bonusColor !== 'null' &&
+                        Array.from({
+                            length: card.bonusCount ?? (isRoyal ? 0 : 1),
+                        }).map((_, i) => (
                             <GemIcon
                                 key={i}
-                                type={GEM_TYPES[card.bonusColor!.toUpperCase()]}
+                                type={
+                                    GEM_TYPES[
+                                        card.bonusColor!.toUpperCase() as keyof typeof GEM_TYPES
+                                    ]
+                                }
                                 size={bonusGemSize}
                                 className="shadow-md"
                             />

@@ -93,7 +93,22 @@ const applyPlayerInitLogic = (
 
 const ensureStructures = (draft: GameState) => {
     if (!draft.playerBuffs) draft.playerBuffs = { p1: BUFFS.NONE as Buff, p2: BUFFS.NONE as Buff };
-    else draft.playerBuffs = { ...draft.playerBuffs };
+    else {
+        draft.playerBuffs = { ...draft.playerBuffs };
+        // Inflate buffs from BUFFS constant if they are missing effects
+        (['p1', 'p2'] as const).forEach((pid) => {
+            const current = draft.playerBuffs[pid];
+            if (current && (!current.effects || Object.keys(current.effects).length === 0)) {
+                const full = Object.values(BUFFS).find((b) => b.id === current.id);
+                if (full) {
+                    draft.playerBuffs[pid] = {
+                        ...JSON.parse(JSON.stringify(full)),
+                        state: current.state || {},
+                    };
+                }
+            }
+        });
+    }
 
     if (!draft.extraAllocation) {
         draft.extraAllocation = {

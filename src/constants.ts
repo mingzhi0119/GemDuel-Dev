@@ -58,6 +58,12 @@ export const GEM_TYPES = {
         border: 'border-yellow-200',
         label: 'Gold',
     },
+    NULL: {
+        id: 'empty' as const,
+        color: 'from-slate-500 to-slate-700',
+        border: 'border-slate-400',
+        label: 'Neutral',
+    },
     EMPTY: {
         id: 'empty' as const,
         color: 'bg-transparent',
