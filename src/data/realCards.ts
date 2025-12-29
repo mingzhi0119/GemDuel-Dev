@@ -13,7 +13,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusColor: 'black',
         bonusCount: 1,
         crowns: 0,
-        cost: { red: 1, green: 1, blue: 1, white: 1, black: 1, pearl: 0, gold: 0 },
+        cost: { red: 1, green: 1, blue: 1, white: 1, black: 0, pearl: 0, gold: 0 },
         ability: ABILITIES.NONE.id,
     },
     {
