@@ -33,10 +33,6 @@ export const finalizeTurn = (
     state.playerTurnCounts[state.turn]++;
 
     // ========== BUFF EFFECTS: Royal Envoy ==========
-    const p1Buff = state.playerBuffs?.p1?.effects?.winCondition || {};
-    const p2Buff = state.playerBuffs?.p2?.effects?.winCondition || {};
-    const currentWinBuff = state.turn === 'p1' ? p1Buff : p2Buff;
-
     // Trigger royal card selection on the 5th major action of the player
     const currentBuffObj = state.playerBuffs?.[state.turn];
     if (currentBuffObj?.id === 'royal_envoy' && state.playerTurnCounts[state.turn] === 5) {
@@ -63,12 +59,6 @@ export const finalizeTurn = (
             }
         }
     }
-
-    // ========== WIN CONDITION CHECKS ==========
-    const POINTS_GOAL = currentWinBuff.points || 20;
-    const CROWNS_GOAL = currentWinBuff.crowns || 10;
-    const SINGLE_COLOR_GOAL = currentWinBuff.singleColor || 10;
-    const DISABLE_SINGLE_COLOR = currentWinBuff.disableSingleColor || false;
 
     // Helper: Calculate player's total points
     const getPoints = (pid: PlayerKey): number => {
@@ -100,20 +90,36 @@ export const finalizeTurn = (
             .reduce((a, c) => a + c.points, 0);
     };
 
-    // Check primary win conditions
-    if (getPoints(state.turn) >= POINTS_GOAL || getCrowns(state.turn) >= CROWNS_GOAL) {
+    const isWinning = (pid: PlayerKey): boolean => {
+        const winFX = state.playerBuffs?.[pid]?.effects?.winCondition || {};
+        const pPoints = getPoints(pid);
+        const pCrowns = getCrowns(pid);
+
+        const pPointsGoal = winFX.points || 20;
+        const pCrownsGoal = winFX.crowns || 10;
+        const pSingleColorGoal = winFX.singleColor || 10;
+        const pDisableSingleColor = winFX.disableSingleColor || false;
+
+        if (pPoints >= pPointsGoal) return true;
+        if (pCrowns >= pCrownsGoal) return true;
+
+        if (!pDisableSingleColor) {
+            for (const color of BONUS_COLORS) {
+                if (getColorPoints(pid, color) >= pSingleColorGoal) return true;
+            }
+        }
+        return false;
+    };
+
+    // Check both players (current first, then opponent)
+    if (isWinning(state.turn)) {
         state.winner = state.turn;
         return;
     }
-
-    // Check single-color win condition (unless disabled by buff)
-    if (!DISABLE_SINGLE_COLOR) {
-        for (const color of BONUS_COLORS) {
-            if (getColorPoints(state.turn, color) >= SINGLE_COLOR_GOAL) {
-                state.winner = state.turn;
-                return;
-            }
-        }
+    const opponent: PlayerKey = state.turn === 'p1' ? 'p2' : 'p1';
+    if (isWinning(opponent)) {
+        state.winner = opponent;
+        return;
     }
 
     // ========== ROYAL MILESTONE CHECKS ==========

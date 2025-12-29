@@ -169,10 +169,13 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
     const p2Indices = typeof payload === 'object' ? payload.p2DraftPoolIndices : null;
     const player = state.turn;
 
-    // Buff ID assignment
-    state.playerBuffs[player] = { id: buffId, state: {} } as Buff;
+    // Buff ID assignment - FULL OBJECT from BUFFS
+    const fullBuff = Object.values(BUFFS).find((b) => b.id === buffId) || BUFFS.NONE;
+    state.playerBuffs[player] = JSON.parse(JSON.stringify(fullBuff));
+    state.playerBuffs[player].state = {};
+
     if (player === 'p1') {
-        state.p1SelectedBuff = { id: buffId } as Buff;
+        state.p1SelectedBuff = JSON.parse(JSON.stringify(fullBuff));
     }
 
     if (buffId === 'color_preference' && randomColor) {
