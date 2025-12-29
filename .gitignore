@@ -27,7 +27,7 @@ pnpm-debug.log*
 coverage/
 
 # Documentation & Reports
-GEMINI_WORKFLOW.md
+GEMINI.md
 FUTURE_OPTIMIZATIONS.md
 LOGIC_DISCREPANCY_ANALYSIS.md
 MODERNIZATION_REPORT.md
