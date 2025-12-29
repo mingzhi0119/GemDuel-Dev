@@ -3,7 +3,7 @@ import { produce } from 'immer';
 import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { generateGemPool, generateDeck, shuffleArray } from '../../utils';
-import { GameState, PlayerKey, GemColor, Buff } from '../../types';
+import { GameState, PlayerKey, GemColor, Buff, GameAction } from '../../types';
 import { BONUS_COLORS, BUFFS } from '../../constants';
 import { applyBuffInitEffects } from '../actions/buffActions';
 
@@ -162,7 +162,7 @@ describe('Monkey Test - Random Stress Test', () => {
             actionTrace.push(action);
 
             try {
-                const nextState = applyAction(state, action);
+                const nextState = applyAction(state, action as GameAction);
                 if (nextState) {
                     state = nextState;
                     checkInvariants(state, actionTrace);

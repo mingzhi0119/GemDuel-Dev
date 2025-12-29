@@ -1,12 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Peer, DataConnection } from 'peerjs';
-import { GameAction } from '../types';
+import { GameAction, GameState } from '../types';
+import { NetworkMessage } from '../types/network';
+import { PEER_CONFIG } from '../config/webrtc';
+import { useConnectionHealth } from './useConnectionHealth';
 
 export const useOnlineManager = (
     onActionReceived: (action: GameAction, checksum?: string) => void,
-    onStateReceived: (state: any) => void,
+    onStateReceived: (state: GameState) => void,
     onGuestRequestReceived: (action: GameAction) => void,
-    enabled: boolean = false
+    enabled: boolean = false,
+    getCurrentStateRef?: () => GameState // Accessor for authoritative state
 ) => {
     const [peer, setPeer] = useState<Peer | null>(null);
     const [conn, setConn] = useState<DataConnection | null>(null);
@@ -17,10 +21,13 @@ export const useOnlineManager = (
     >('disconnected');
     const [isHost, setIsHost] = useState(false);
 
-    // Keep the latest callbacks in refs
+    // Refs for callbacks and state access
     const onActionReceivedRef = useRef(onActionReceived);
     const onStateReceivedRef = useRef(onStateReceived);
     const onGuestRequestReceivedRef = useRef(onGuestRequestReceived);
+    const isHostRef = useRef(isHost);
+    const reconnectAttempts = useRef(0);
+    const MAX_RECONNECT_ATTEMPTS = 5;
 
     useEffect(() => {
         onActionReceivedRef.current = onActionReceived;
@@ -28,35 +35,82 @@ export const useOnlineManager = (
         onGuestRequestReceivedRef.current = onGuestRequestReceived;
     }, [onActionReceived, onStateReceived, onGuestRequestReceived]);
 
-    const setupConnection = useCallback((connection: DataConnection) => {
-        connection.on('open', () => {
-            setConnectionStatus('connected');
-            setConn(connection);
-            setRemotePeerId(connection.peer);
-        });
+    useEffect(() => {
+        isHostRef.current = isHost;
+    }, [isHost]);
 
-        connection.on('data', (data: any) => {
-            console.log('Received P2P data:', data.type);
-            if (data.type === 'SYNC_STATE') {
-                onStateReceivedRef.current(data.state);
-            } else if (data.type === 'GUEST_REQUEST') {
-                onGuestRequestReceivedRef.current(data.action);
-            } else if (data.type === 'GAME_ACTION') {
-                onActionReceivedRef.current(data.action, data.checksum);
+    // Send generic message wrapper
+    const sendMessage = useCallback(
+        (msg: NetworkMessage) => {
+            if (conn && conn.open) {
+                conn.send(msg);
             }
-        });
+        },
+        [conn]
+    );
 
-        connection.on('close', () => {
-            setConnectionStatus('disconnected');
-            setConn(null);
-        });
-    }, []);
+    // Health Check Hook
+    const { latency, isUnstable, handleHeartbeat } = useConnectionHealth(conn, sendMessage);
+
+    const setupConnection = useCallback(
+        (connection: DataConnection) => {
+            connection.on('open', () => {
+                setConnectionStatus('connected');
+                setConn(connection);
+                setRemotePeerId(connection.peer);
+                reconnectAttempts.current = 0; // Reset attempts on success
+            });
+
+            connection.on('data', (data: unknown) => {
+                const msg = data as NetworkMessage;
+
+                // Handle Heartbeat internally
+                if (msg.type === 'HEARTBEAT_PING' || msg.type === 'HEARTBEAT_PONG') {
+                    handleHeartbeat(msg);
+                    return;
+                }
+
+                console.log('Received P2P data:', msg.type);
+
+                if (msg.type === 'SYNC_STATE') {
+                    onStateReceivedRef.current(msg.state);
+                } else if (msg.type === 'GUEST_REQUEST') {
+                    onGuestRequestReceivedRef.current(msg.action);
+                } else if (msg.type === 'GAME_ACTION') {
+                    onActionReceivedRef.current(msg.action, msg.checksum);
+                } else if (msg.type === 'REQUEST_FULL_SYNC') {
+                    // Host Logic: Respond to Desync
+                    if (isHostRef.current && getCurrentStateRef) {
+                        console.warn(
+                            '[NET] Guest requested full sync. Sending authoritative snapshot.'
+                        );
+                        const currentState = getCurrentStateRef();
+                        sendMessage({
+                            type: 'SYNC_STATE',
+                            state: currentState,
+                            reason: 'RECOVERY',
+                        });
+                    }
+                }
+            });
+
+            connection.on('close', () => {
+                setConnectionStatus('disconnected');
+                setConn(null);
+            });
+
+            connection.on('error', (err) => {
+                console.error('[NET] Connection Error:', err);
+            });
+        },
+        [handleHeartbeat, getCurrentStateRef, sendMessage]
+    );
 
     // Initialize Peer only when enabled
     useEffect(() => {
         if (!enabled) return;
 
-        const newPeer = new Peer();
+        const newPeer = new Peer(PEER_CONFIG);
 
         newPeer.on('open', (id) => {
             setPeerId(id);
@@ -67,6 +121,32 @@ export const useOnlineManager = (
             console.log('Incoming connection from:', connection.peer);
             setupConnection(connection);
             setIsHost(true); // The one who receives connection is host (p1)
+        });
+
+        newPeer.on('disconnected', () => {
+            console.warn('[NET] Peer disconnected from signaling server.');
+            if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+                console.log(
+                    `[NET] Attempting reconnect (${reconnectAttempts.current + 1}/${MAX_RECONNECT_ATTEMPTS})...`
+                );
+                setTimeout(() => {
+                    if (!newPeer.destroyed) {
+                        newPeer.reconnect();
+                        reconnectAttempts.current++;
+                    }
+                }, 2000);
+            }
+        });
+
+        newPeer.on('error', (err) => {
+            console.error('[NET] Peer Error:', err);
+            if (
+                err.type === 'peer-unavailable' ||
+                err.type === 'network' ||
+                err.type === 'server-error'
+            ) {
+                // Potentially fatal or retryable depending on UX needs
+            }
         });
 
         setPeer(newPeer);
@@ -91,29 +171,30 @@ export const useOnlineManager = (
 
     const sendAction = useCallback(
         (action: GameAction, checksum?: string) => {
-            if (conn && conn.open) {
-                conn.send({ type: 'GAME_ACTION', action, checksum });
-            }
+            sendMessage({ type: 'GAME_ACTION', action, checksum });
         },
-        [conn]
+        [sendMessage]
     );
 
     const sendGuestRequest = useCallback(
         (action: GameAction) => {
-            if (conn && conn.open) {
-                conn.send({ type: 'GUEST_REQUEST', action });
-            }
+            sendMessage({ type: 'GUEST_REQUEST', action });
         },
-        [conn]
+        [sendMessage]
     );
 
     const sendState = useCallback(
-        (state: any) => {
-            if (conn && conn.open) {
-                conn.send({ type: 'SYNC_STATE', state });
-            }
+        (state: GameState) => {
+            sendMessage({ type: 'SYNC_STATE', state });
         },
-        [conn]
+        [sendMessage]
+    );
+
+    const sendSystemMessage = useCallback(
+        (msg: NetworkMessage) => {
+            sendMessage(msg);
+        },
+        [sendMessage]
     );
 
     return {
@@ -125,5 +206,8 @@ export const useOnlineManager = (
         sendAction,
         sendGuestRequest,
         sendState,
+        sendSystemMessage,
+        latency,
+        isUnstable,
     };
 };

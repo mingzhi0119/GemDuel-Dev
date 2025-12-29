@@ -5,13 +5,13 @@ import { Card as CardType } from '../types';
 
 interface DeckPeekModalProps {
     isOpen: boolean;
-    data: CardType[] | null;
+    cards: CardType[] | null;
     onClose: () => void;
     theme: 'light' | 'dark';
 }
 
-export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, data, onClose, theme }) => {
-    if (!isOpen || !data) return null;
+export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onClose, theme }) => {
+    if (!isOpen || !cards) return null;
 
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
@@ -48,8 +48,8 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, data, onCl
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-8 flex flex-wrap justify-center gap-6">
-                    {data.length > 0 ? (
-                        data.map((card, i) => (
+                    {cards.length > 0 ? (
+                        cards.map((card, i) => (
                             <div
                                 key={card.id || i}
                                 className="animate-in slide-in-from-bottom-4 duration-500"

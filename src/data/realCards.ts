@@ -14,7 +14,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 1, green: 1, blue: 1, white: 1, black: 1, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-bl-1',
@@ -24,7 +24,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 2, white: 2, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.AGAIN.id as any,
+        ability: ABILITIES.AGAIN.id,
     },
     {
         id: 'l1-bl-2',
@@ -34,7 +34,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 2, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.BONUS_GEM.id as any,
+        ability: ABILITIES.BONUS_GEM.id,
     },
     {
         id: 'l1-bl-3',
@@ -44,7 +44,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 3, blue: 2, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-bl-4',
@@ -54,7 +54,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 0, green: 0, blue: 0, white: 3, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-re-5',
@@ -64,7 +64,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 1, blue: 1, white: 1, black: 1, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-re-6',
@@ -74,7 +74,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 2, white: 2, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.AGAIN.id as any,
+        ability: ABILITIES.AGAIN.id,
     },
     {
         id: 'l1-re-7',
@@ -84,7 +84,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 2, white: 2, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.BONUS_GEM.id as any,
+        ability: ABILITIES.BONUS_GEM.id,
     },
     {
         id: 'l1-re-8',
@@ -94,7 +94,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 3, green: 0, blue: 0, white: 3, black: 2, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-re-9',
@@ -104,7 +104,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 3, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-gr-10',
@@ -114,7 +114,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 1, green: 0, blue: 1, white: 1, black: 1, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-gr-11',
@@ -124,7 +124,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 2, blue: 0, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.AGAIN.id as any,
+        ability: ABILITIES.AGAIN.id,
     },
     {
         id: 'l1-gr-12',
@@ -134,7 +134,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 2, white: 2, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.BONUS_GEM.id as any,
+        ability: ABILITIES.BONUS_GEM.id,
     },
     {
         id: 'l1-gr-13',
@@ -144,7 +144,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 3, white: 0, black: 2, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-gr-14',
@@ -154,7 +154,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 0, green: 3, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-bl-15',
@@ -164,7 +164,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 1, green: 1, blue: 0, white: 1, black: 1, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-bl-16',
@@ -174,7 +174,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 2, blue: 0, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.AGAIN.id as any,
+        ability: ABILITIES.AGAIN.id,
     },
     {
         id: 'l1-bl-17',
@@ -184,7 +184,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 0, blue: 0, white: 2, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.BONUS_GEM.id as any,
+        ability: ABILITIES.BONUS_GEM.id,
     },
     {
         id: 'l1-bl-18',
@@ -194,7 +194,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 0, blue: 0, white: 0, black: 3, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-bl-19',
@@ -204,7 +204,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 0, green: 3, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-wh-20',
@@ -214,7 +214,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 1, green: 1, blue: 1, white: 0, black: 1, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-wh-21',
@@ -224,7 +224,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 2, blue: 2, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.AGAIN.id as any,
+        ability: ABILITIES.AGAIN.id,
     },
     {
         id: 'l1-wh-22',
@@ -234,7 +234,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 2, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.BONUS_GEM.id as any,
+        ability: ABILITIES.BONUS_GEM.id,
     },
     {
         id: 'l1-wh-23',
@@ -244,7 +244,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 3, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-wh-24',
@@ -254,7 +254,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 0, green: 0, blue: 3, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-jo-25',
@@ -264,7 +264,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 0,
         crowns: 0,
         cost: { red: 0, green: 4, blue: 0, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-jo-26',
@@ -274,7 +274,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 0, white: 0, black: 4, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-jo-27',
@@ -284,7 +284,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 0, green: 0, blue: 0, white: 4, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-jo-28',
@@ -294,7 +294,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 2, blue: 0, white: 2, black: 1, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l1-jo-29',
@@ -304,7 +304,7 @@ const LEVEL_1_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 0, blue: 2, white: 0, black: 1, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
 ];
 
@@ -317,7 +317,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 3, blue: 0, white: 4, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.STEAL.id as any,
+        ability: ABILITIES.STEAL.id,
     },
     {
         id: 'l2-bl-33',
@@ -327,7 +327,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 2,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 2, white: 5, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-bl-34',
@@ -337,7 +337,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 2, green: 2, blue: 2, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-bl-35',
@@ -347,7 +347,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 0, blue: 0, white: 0, black: 4, pearl: 1, gold: 0 },
-        ability: ABILITIES.SCROLL.id as any,
+        ability: ABILITIES.SCROLL.id,
     },
     {
         id: 'l2-re-36',
@@ -357,7 +357,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 3, white: 0, black: 4, pearl: 0, gold: 0 },
-        ability: ABILITIES.STEAL.id as any,
+        ability: ABILITIES.STEAL.id,
     },
     {
         id: 'l2-re-37',
@@ -367,7 +367,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 2,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 0, white: 2, black: 5, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-re-38',
@@ -377,7 +377,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 0, green: 2, blue: 2, white: 2, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-re-39',
@@ -387,7 +387,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 4, green: 2, blue: 0, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.SCROLL.id as any,
+        ability: ABILITIES.SCROLL.id,
     },
     {
         id: 'l2-gr-40',
@@ -397,7 +397,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 4, green: 0, blue: 0, white: 3, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.STEAL.id as any,
+        ability: ABILITIES.STEAL.id,
     },
     {
         id: 'l2-gr-41',
@@ -407,7 +407,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 2,
         crowns: 0,
         cost: { red: 5, green: 0, blue: 0, white: 0, black: 2, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-gr-42',
@@ -417,7 +417,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 0, green: 0, blue: 2, white: 2, black: 2, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-gr-43',
@@ -427,7 +427,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 4, blue: 2, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.SCROLL.id as any,
+        ability: ABILITIES.SCROLL.id,
     },
     {
         id: 'l2-bl-44',
@@ -437,7 +437,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 4, blue: 0, white: 0, black: 3, pearl: 0, gold: 0 },
-        ability: ABILITIES.STEAL.id as any,
+        ability: ABILITIES.STEAL.id,
     },
     {
         id: 'l2-bl-45',
@@ -447,7 +447,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 2,
         crowns: 0,
         cost: { red: 2, green: 5, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-bl-46',
@@ -457,7 +457,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 2, green: 0, blue: 0, white: 2, black: 2, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-bl-47',
@@ -467,7 +467,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 4, white: 2, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.SCROLL.id as any,
+        ability: ABILITIES.SCROLL.id,
     },
     {
         id: 'l2-wh-48',
@@ -477,7 +477,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 3, green: 0, blue: 4, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.STEAL.id as any,
+        ability: ABILITIES.STEAL.id,
     },
     {
         id: 'l2-wh-49',
@@ -487,7 +487,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 2,
         crowns: 0,
         cost: { red: 0, green: 2, blue: 5, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-wh-50',
@@ -497,7 +497,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 2, green: 2, blue: 0, white: 0, black: 2, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-wh-51',
@@ -507,7 +507,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 0, white: 4, black: 2, pearl: 1, gold: 0 },
-        ability: ABILITIES.SCROLL.id as any,
+        ability: ABILITIES.SCROLL.id,
     },
     {
         id: 'l2-jo-53',
@@ -517,7 +517,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 0,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 6, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-jo-54',
@@ -527,7 +527,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 6, blue: 0, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-jo-55',
@@ -537,7 +537,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 0, green: 6, blue: 0, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l2-jo-56',
@@ -547,7 +547,7 @@ const LEVEL_2_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 0, green: 0, blue: 6, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
 ];
 
@@ -560,7 +560,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 3, green: 5, blue: 0, white: 3, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-bl-59',
@@ -570,7 +570,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 0, blue: 0, white: 2, black: 6, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-re-60',
@@ -580,7 +580,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 0, green: 3, blue: 5, white: 0, black: 3, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-re-61',
@@ -590,7 +590,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 6, green: 2, blue: 0, white: 0, black: 2, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-gr-62',
@@ -600,7 +600,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 3, green: 0, blue: 3, white: 5, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-gr-63',
@@ -610,7 +610,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 2, green: 6, blue: 2, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-bl-64',
@@ -620,7 +620,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 3, green: 0, blue: 0, white: 3, black: 5, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-bl-65',
@@ -630,7 +630,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 2, blue: 6, white: 2, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-wh-66',
@@ -640,7 +640,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 0, green: 5, blue: 3, white: 0, black: 3, pearl: 1, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-wh-67',
@@ -650,7 +650,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 2, white: 6, black: 2, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-jo-68',
@@ -669,7 +669,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 3,
         cost: { red: 0, green: 0, blue: 0, white: 0, black: 8, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-jo-70',
@@ -679,7 +679,7 @@ const LEVEL_3_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 8, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.AGAIN.id as any,
+        ability: ABILITIES.AGAIN.id,
     },
 ];
 
@@ -694,7 +694,7 @@ const ROGUE_ONLY_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 0,
         cost: { red: 0, green: 0, blue: 5, white: 0, black: 0, pearl: 1, gold: 0 },
-        ability: ABILITIES.AGAIN.id as any,
+        ability: ABILITIES.AGAIN.id,
     },
     {
         id: 'l2-cr-72',
@@ -704,7 +704,7 @@ const ROGUE_ONLY_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 0, green: 0, blue: 0, white: 3, black: 3, pearl: 1, gold: 0 },
-        ability: ABILITIES.SCROLL.id as any,
+        ability: ABILITIES.SCROLL.id,
     },
     {
         id: 'l2-ef-73',
@@ -714,7 +714,7 @@ const ROGUE_ONLY_CARDS: Card[] = [
         bonusCount: 2,
         crowns: 0,
         cost: { red: 2, green: 5, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.BONUS_GEM.id as any,
+        ability: ABILITIES.BONUS_GEM.id,
     },
     // Level 3
     {
@@ -725,7 +725,7 @@ const ROGUE_ONLY_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 4, green: 0, blue: 0, white: 4, black: 4, pearl: 0, gold: 0 },
-        ability: ABILITIES.NONE.id as any,
+        ability: ABILITIES.NONE.id,
     },
     {
         id: 'l3-jo-76',
@@ -735,7 +735,7 @@ const ROGUE_ONLY_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 0, green: 6, blue: 0, white: 0, black: 0, pearl: 2, gold: 0 },
-        ability: ABILITIES.STEAL.id as any,
+        ability: ABILITIES.STEAL.id,
     },
     {
         id: 'l3-ag-77',
@@ -745,7 +745,7 @@ const ROGUE_ONLY_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 1,
         cost: { red: 0, green: 0, blue: 2, white: 7, black: 0, pearl: 0, gold: 0 },
-        ability: ABILITIES.AGAIN.id as any,
+        ability: ABILITIES.AGAIN.id,
     },
     {
         id: 'l3-ba-78',
@@ -755,7 +755,7 @@ const ROGUE_ONLY_CARDS: Card[] = [
         bonusCount: 1,
         crowns: 2,
         cost: { red: 3, green: 3, blue: 3, white: 3, black: 3, pearl: 0, gold: 0 },
-        ability: ABILITIES.BONUS_GEM.id as any,
+        ability: ABILITIES.BONUS_GEM.id,
     },
 ];
 

@@ -6,7 +6,7 @@
 
 import { addFeedback } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
-import { GameState, PlayerKey } from '../../types';
+import { GameState, PlayerKey, PeekDeckPayload } from '../../types';
 
 /**
  * Debug: Add crowns to a player
@@ -55,21 +55,18 @@ export const handleDebugAddPrivilege = (state: GameState, payload: PlayerKey): G
 /**
  * Peek at top 3 cards of a deck (Intelligence ability)
  */
-export const handlePeekDeck = (state: GameState, payload: { level: 1 | 2 | 3 }): GameState => {
+export const handlePeekDeck = (draft: GameState, payload: PeekDeckPayload): void => {
     const { level } = payload;
-    const deck = state.decks[level];
-    const top3 = deck.slice(-3).reverse(); // Last 3 cards, reversed for viewing order
+    const deck = draft.decks[level];
+    const top3 = deck.slice(-3).reverse();
 
-    state.activeModal = {
+    draft.activeModal = {
         type: 'PEEK',
         data: {
             cards: top3,
-            level: level,
-            initiator: state.turn, // Track who opened this
+            initiator: draft.turn,
         },
     };
-
-    return state;
 };
 
 /**

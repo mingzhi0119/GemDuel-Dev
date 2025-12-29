@@ -1,22 +1,18 @@
 import { validateGemSelection } from './validators';
-import type { GameState, GemColor } from '../types.d';
-
-/**
- * Gem coordinate in grid
- */
-export interface GemCoord {
-    r: number;
-    c: number;
-}
+import type {
+    GameState,
+    GemColor,
+    GameAction,
+    GemCoord,
+    ReserveCardPayload,
+    ReserveDeckPayload,
+} from '../types';
 
 /**
  * Result of processing a gem click
  */
 export interface GemClickResult {
-    action?: {
-        type: string;
-        payload: Record<string, any>;
-    };
+    action?: GameAction;
     newSelection?: GemCoord[];
     error?: string;
 }
@@ -60,14 +56,20 @@ export const processGemClick = (
                 return {
                     action: {
                         type: 'RESERVE_DECK',
-                        payload: { ...gameState.pendingReserve, goldCoords: { r, c } },
+                        payload: {
+                            ...gameState.pendingReserve,
+                            goldCoords: { r, c },
+                        } as ReserveDeckPayload,
                     },
                 };
             } else {
                 return {
                     action: {
                         type: 'RESERVE_CARD',
-                        payload: { ...gameState.pendingReserve, goldCoords: { r, c } },
+                        payload: {
+                            ...gameState.pendingReserve,
+                            goldCoords: { r, c },
+                        } as ReserveCardPayload,
                     },
                 };
             }

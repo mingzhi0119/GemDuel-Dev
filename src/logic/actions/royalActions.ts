@@ -7,11 +7,7 @@
 import { ABILITIES, GAME_PHASES, GEM_TYPES } from '../../constants';
 import { addFeedback, addPrivilege } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
-import { GameState, RoyalCard } from '../../types';
-
-export interface SelectRoyalPayload {
-    card: RoyalCard;
-}
+import { GameState, SelectRoyalPayload } from '../../types';
 
 export const handleForceRoyalSelection = (state: GameState): GameState => {
     state.phase = GAME_PHASES.SELECT_ROYAL;
@@ -31,7 +27,7 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
     state.playerRoyals[player].push(card);
 
     // Add crown feedback
-    if ((card as any).crowns > 0) addFeedback(state, player, 'crown', (card as any).crowns);
+    if (card.crowns && card.crowns > 0) addFeedback(state, player, 'crown', card.crowns);
 
     // Determine next turn based on abilities
     const abilities = Array.isArray(card.ability)
@@ -42,15 +38,13 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
     let nextTurn = state.nextPlayerAfterRoyal || (player === 'p1' ? 'p2' : 'p1');
 
     // AGAIN ability: repeat turn
-    if (abilities.includes(ABILITIES.AGAIN.id as any)) {
+    if (abilities.includes(ABILITIES.AGAIN.id as CardAbility)) {
         nextTurn = player;
     }
 
     // BONUS_GEM ability: take a gem
-    if (abilities.includes(ABILITIES.BONUS_GEM.id as any)) {
-        const hasGem = state.board.some((row) =>
-            row.some((g) => g.type.id === (card.bonusColor as any))
-        );
+    if (abilities.includes(ABILITIES.BONUS_GEM.id as CardAbility)) {
+        const hasGem = state.board.some((row) => row.some((g) => g.type.id === card.bonusColor));
         if (hasGem) {
             state.phase = GAME_PHASES.BONUS_ACTION;
             state.bonusGemTarget =
@@ -63,7 +57,7 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
     }
 
     // STEAL ability: steal gem from opponent
-    if (abilities.includes(ABILITIES.STEAL.id as any)) {
+    if (abilities.includes(ABILITIES.STEAL.id as CardAbility)) {
         const opponent = player === 'p1' ? 'p2' : 'p1';
         const oppBuff = state.playerBuffs?.[opponent];
 
@@ -86,7 +80,7 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
     }
 
     // SCROLL ability: gain privilege
-    if (abilities.includes(ABILITIES.SCROLL.id as any)) {
+    if (abilities.includes(ABILITIES.SCROLL.id as CardAbility)) {
         const opponent = player === 'p1' ? 'p2' : 'p1';
         if (state.privileges.p1 + state.privileges.p2 < 3) {
             addPrivilege(state, player);

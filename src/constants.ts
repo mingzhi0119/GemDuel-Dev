@@ -114,7 +114,7 @@ export const ABILITIES = {
     SCROLL: { id: 'scroll', label: 'Take Scroll', icon: Scroll },
     BONUS_GEM: { id: 'bonus_gem', label: 'Take Gem', icon: Plus },
     NONE: { id: 'none', label: '', icon: null },
-};
+} as const;
 
 // 🟢 新增：皇室卡定义 (Royal Cards)
 export const ROYAL_CARDS: RoyalCard[] = [

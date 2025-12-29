@@ -20,7 +20,7 @@ export const generateGemPool = (): BoardCell[] => {
         for (let i = 0; i < count; i++) {
             pool.push({
                 uid: `${typeKey}-${i}-${Date.now()}`,
-                type: (GEM_TYPES as any)[typeKey.toUpperCase()],
+                type: GEM_TYPES[typeKey.toUpperCase() as keyof typeof GEM_TYPES],
             });
         }
     });

@@ -8,28 +8,20 @@ import { GEM_TYPES, ABILITIES, GAME_PHASES } from '../../constants';
 import { calculateTransaction } from '../../utils';
 import { addFeedback, addPrivilege } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
-import { GameState, Card, GemColor, PlayerKey } from '../../types';
+import {
+    GameState,
+    Card,
+    GemColor,
+    PlayerKey,
+    BuyCardPayload,
+    ReserveCardPayload,
+    ReserveDeckPayload,
+} from '../../types';
 
-export interface BuyCardPayload {
-    card: Card;
-    source: 'market' | 'reserved';
-    marketInfo?: { level: 1 | 2 | 3; idx: number };
-    randoms?: { bountyHunterColor?: GemColor };
-}
-
-export interface ReserveCardPayload {
-    card: Card;
-    level: 1 | 2 | 3;
-    idx: number;
-    goldCoords?: { r: number; c: number };
-}
-
-export interface ReserveDeckPayload {
-    level: 1 | 2 | 3;
-    goldCoords?: { r: number; c: number };
-}
-
-export const handleInitiateBuyJoker = (state: GameState, payload: any): GameState => {
+export const handleInitiateBuyJoker = (
+    state: GameState,
+    payload: GameState['pendingBuy']
+): GameState => {
     state.pendingBuy = payload;
     state.phase = GAME_PHASES.SELECT_CARD_COLOR;
     return state;
@@ -70,9 +62,9 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
         for (let k = 0; k < remainingToReturn; k++) {
             state.bag.push({
-                type: GEM_TYPES[color.toUpperCase()],
+                type: GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES],
                 uid: `returned-${color}-${Date.now()}-${k}`,
-            } as any);
+            } as BoardCell);
         }
     });
 
@@ -88,7 +80,10 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     }
 
     for (let k = 0; k < goldToReturn; k++) {
-        state.bag.push({ type: GEM_TYPES.GOLD, uid: `returned-gold-${Date.now()}-${k}` } as any);
+        state.bag.push({
+            type: GEM_TYPES.GOLD,
+            uid: `returned-gold-${Date.now()}-${k}`,
+        } as BoardCell);
     }
 
     // Nationalism / Minimalism: Double Bonus for first 5 cards
@@ -126,15 +121,17 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     }
 
     // Recycler: Refund one gem on lvl 2/3 card
-    if (
-        buff?.effects?.passive?.recycler &&
-        ((card as any).level === 2 || (card as any).level === 3)
-    ) {
-        const paidColors = Object.keys(gemsPaid).filter(
-            (c) => (gemsPaid as any)[c] > 0 && c !== 'pearl'
+    if (buff?.effects?.passive?.recycler && (card.level === 2 || card.level === 3)) {
+        // Discrepancy Fix: Refund the FIRST color in the cost list, not the most numerous.
+        const costColors = Object.keys(card.cost).filter(
+            (color) => card.cost[color as GemColor] > 0
         );
-        if (paidColors.length > 0) {
-            const refundColor = paidColors[0] as GemColor;
+        const paidColors = Object.keys(gemsPaid).filter((c) => gemsPaid[c as GemColor] > 0);
+
+        // Find the first color from the cost that was actually paid
+        const refundColor = costColors.find((c) => paidColors.includes(c)) as GemColor | undefined;
+
+        if (refundColor) {
             inv[refundColor]++;
 
             // Track as extra allocation
@@ -146,10 +143,14 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
             }
             state.extraAllocation[player][refundColor]++;
 
+            // Attempt to remove a returned gem of the same color from the bag
             for (let i = state.bag.length - 1; i >= 0; i--) {
                 const bagItem = state.bag[i];
-                const bag = bagItem as any;
-                if (typeof bag === 'object' && 'type' in bag && bag.type?.id === refundColor) {
+                if (
+                    typeof bagItem === 'object' &&
+                    'type' in bagItem &&
+                    bagItem.type?.id === refundColor
+                ) {
                     state.bag.splice(i, 1);
                     break;
                 }
@@ -163,10 +164,10 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     if (source === 'market' && marketInfo) {
         const { level, idx } = marketInfo;
         const deck = state.decks[level];
-        const isExtra = (marketInfo as any).isExtra;
-        const extraIdx = (marketInfo as any).extraIdx;
+        const isExtra = marketInfo.isExtra;
+        const extraIdx = marketInfo.extraIdx;
 
-        if (isExtra && level === 3) {
+        if (isExtra && level === 3 && extraIdx !== undefined) {
             // Remove specific card from deck (extra cards are deck.length - 2 and deck.length - 3)
             // extraIdx 1 -> length-2, extraIdx 2 -> length-3
             const targetIdx = deck.length - (extraIdx + 1);
@@ -178,7 +179,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
             if (deck.length > 0) {
                 state.market[level][idx] = deck.pop()!;
             } else {
-                state.market[level][idx] = null as any;
+                state.market[level][idx] = null;
             }
         }
     } else if (source === 'reserved') {
@@ -187,19 +188,19 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
     // Determine next turn
     let nextTurn: PlayerKey = player === 'p1' ? 'p2' : 'p1';
-    const abilities = Array.isArray((card as any).ability)
-        ? (card as any).ability
-        : (card as any).ability
-          ? [(card as any).ability]
+    const abilities = Array.isArray(card.ability)
+        ? card.ability
+        : card.ability
+          ? [card.ability]
           : [];
 
     // AGAIN ability: repeat turn
-    if (abilities.includes(ABILITIES.AGAIN.id)) {
+    if (abilities.includes(ABILITIES.AGAIN.id as CardAbility)) {
         nextTurn = player;
     }
 
     // STEAL ability: steal gem from opponent
-    if (abilities.includes(ABILITIES.STEAL.id as any)) {
+    if (abilities.includes(ABILITIES.STEAL.id as CardAbility)) {
         const opponent = player === 'p1' ? 'p2' : 'p1';
         const oppBuff = state.playerBuffs?.[opponent];
 
@@ -223,11 +224,9 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     }
 
     // BONUS_GEM ability: take a gem
-    if (abilities.includes(ABILITIES.BONUS_GEM.id as any)) {
-        const targetColor = String((card as any).bonusColor).toUpperCase();
-        const hasGem = state.board.some((row) =>
-            row.some((g) => g.type.id === (card as any).bonusColor)
-        );
+    if (abilities.includes(ABILITIES.BONUS_GEM.id as CardAbility)) {
+        const targetColor = String(card.bonusColor).toUpperCase();
+        const hasGem = state.board.some((row) => row.some((g) => g.type.id === card.bonusColor));
         if (hasGem) {
             state.phase = GAME_PHASES.BONUS_ACTION;
             state.bonusGemTarget = GEM_TYPES[targetColor as keyof typeof GEM_TYPES];
@@ -253,14 +252,20 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     return state;
 };
 
-export const handleInitiateReserve = (state: GameState, payload: any): GameState => {
+export const handleInitiateReserve = (
+    state: GameState,
+    payload: GameState['pendingReserve']
+): GameState => {
     state.pendingReserve = payload;
     state.phase = GAME_PHASES.RESERVE_WAITING_GEM;
     return state;
 };
 
-export const handleInitiateReserveDeck = (state: GameState, payload: any): GameState => {
-    state.pendingReserve = { ...payload, isDeck: true };
+export const handleInitiateReserveDeck = (
+    state: GameState,
+    payload: GameState['pendingReserve']
+): GameState => {
+    state.pendingReserve = { ...payload, isDeck: true } as GameState['pendingReserve'];
     state.phase = GAME_PHASES.RESERVE_WAITING_GEM;
     return state;
 };
@@ -282,18 +287,18 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
 
     state.playerReserved[player].push(card);
 
-    const isExtra = (payload as any).isExtra;
-    const extraIdx = (payload as any).extraIdx;
+    const isExtra = payload.isExtra;
+    const extraIdx = payload.extraIdx;
     const deck = state.decks[level];
 
-    if (isExtra && level === 3) {
+    if (isExtra && level === 3 && extraIdx !== undefined) {
         // extraIdx 1 -> length-2, extraIdx 2 -> length-3
         const targetIdx = deck.length - (extraIdx + 1);
         if (targetIdx >= 0) {
             deck.splice(targetIdx, 1);
         }
     } else {
-        state.market[level][idx] = deck.length > 0 ? deck.pop()! : (null as any);
+        state.market[level][idx] = deck.length > 0 ? deck.pop()! : null;
     }
 
     // Take gold gem if available
@@ -310,8 +315,8 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
     const buff = state.playerBuffs?.[player];
     if (buff?.effects?.passive?.firstReserveBonus) {
         if (!buff.state) buff.state = {};
-        if (!(buff.state as any).hasReserved) {
-            (buff.state as any).hasReserved = true;
+        if (!buff.state.hasReserved) {
+            buff.state.hasReserved = true;
             state.inventories[player].gold += 1;
 
             // Register as extra allocation so it won't return to bag
@@ -362,8 +367,8 @@ export const handleReserveDeck = (state: GameState, payload: ReserveDeckPayload)
     const buff = state.playerBuffs?.[player];
     if (buff?.effects?.passive?.firstReserveBonus) {
         if (!buff.state) buff.state = {};
-        if (!(buff.state as any).hasReserved) {
-            (buff.state as any).hasReserved = true;
+        if (!buff.state.hasReserved) {
+            buff.state.hasReserved = true;
             state.inventories[player].gold += 1;
 
             // Register as extra allocation so it won't return to bag

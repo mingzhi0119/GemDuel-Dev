@@ -5,14 +5,14 @@ import { BUFFS } from '../constants'; // Import for reconstruction
 import { Buff, PlayerKey } from '../types';
 
 interface DraftScreenProps {
-    draftPool: Buff[];
-    p2DraftPool?: Buff[];
-    p1SelectedBuff?: Buff | null;
+    draftPool: string[]; // IDs only
+    p2DraftPool?: string[]; // IDs only
+    p1SelectedBuff?: { id: string } | null;
     buffLevel: number;
     activePlayer: PlayerKey;
     onSelectBuff: (buffId: string) => void;
     theme: 'light' | 'dark';
-    localPlayer?: PlayerKey; // Added to check permissions
+    localPlayer?: PlayerKey;
     isOnline?: boolean;
 }
 
@@ -31,15 +31,14 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     console.log('[UI-DRAFT-SCREEN] Raw Pool IDs from State:', rawPool);
 
     // RECONSTRUCTION: Map basic sync data (IDs) back to full local constants
-    const currentPool = rawPool.map((p) => {
-        const id = typeof p === 'string' ? p : p.id;
+    const currentPool: Buff[] = rawPool.map((id) => {
         const fullData = Object.values(BUFFS).find((b) => b.id === id);
-        return fullData || (typeof p === 'object' ? p : { id: p, label: 'Unknown', desc: '' });
+        return (fullData as Buff) || (BUFFS.NONE as Buff);
     });
 
     // RECONSTRUCTION: Also reconstruct p1SelectedBuff if it only contains an ID
-    const fullP1Choice = p1SelectedBuff
-        ? Object.values(BUFFS).find((b) => b.id === p1SelectedBuff.id) || p1SelectedBuff
+    const fullP1Choice: Buff | null = p1SelectedBuff
+        ? (Object.values(BUFFS).find((b) => b.id === p1SelectedBuff.id) as Buff) || null
         : null;
 
     const canInteract = !isOnline || activePlayer === localPlayer;

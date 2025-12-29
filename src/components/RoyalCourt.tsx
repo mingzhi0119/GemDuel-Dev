@@ -38,7 +38,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                                 canInteract && phase === 'SELECT_ROYAL' && handleSelectRoyal(card)
                             }
                         >
-                            <Card card={card as any} isRoyal={true} />
+                            <Card card={card as unknown as CardType} isRoyal={true} />
                             {phase === 'SELECT_ROYAL' && canInteract && (
                                 <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full animate-bounce shadow-lg">
                                     PICK!

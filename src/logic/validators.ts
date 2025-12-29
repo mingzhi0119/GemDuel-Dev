@@ -5,7 +5,7 @@
  * Return validation results with error messages for user feedback.
  */
 
-import type { GemCoord } from './interactionManager';
+import type { GemCoord } from '../types';
 
 /**
  * Result of validation

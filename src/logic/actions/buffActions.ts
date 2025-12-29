@@ -1,29 +1,24 @@
-/**
- * Buff Action Handlers (ID-based Synchronization)
- *
- * This refactor uses Buff IDs for storage and synchronization,
- * ensuring compatibility with P2P serialization and complex object data.
- */
-
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { GAME_PHASES, BUFFS } from '../../constants';
-import { GameState, PlayerKey, Buff, GemColor } from '../../types';
-
-export interface BuffInitPayload {
-    initRandoms?: Record<PlayerKey, any>;
-}
-
-export interface SelectBuffPayload {
-    buffId: string;
-    randomColor?: GemColor;
-    initRandoms?: Record<PlayerKey, any>;
-    p2DraftPoolIndices?: number[];
-}
+import {
+    GameState,
+    PlayerKey,
+    Buff,
+    GemColor,
+    BuffInitPayload,
+    SelectBuffPayload,
+    BuffEffects,
+    Card,
+} from '../../types';
 
 /**
  * Internal Helper: Apply initialization logic for a single player
  */
-const applyPlayerInitLogic = (draft: GameState, pid: PlayerKey, randoms: any) => {
+const applyPlayerInitLogic = (
+    draft: GameState,
+    pid: PlayerKey,
+    randoms: Record<string, unknown>
+) => {
     const rawBuff = draft.playerBuffs[pid];
     if (!rawBuff || rawBuff.id === 'none') return;
 
@@ -35,14 +30,14 @@ const applyPlayerInitLogic = (draft: GameState, pid: PlayerKey, randoms: any) =>
         draft.playerBuffs[pid].state = {};
     }
 
-    if (buff.effects.onInit) {
-        const fx = buff.effects.onInit;
+    const fx = (buff.effects as BuffEffects).onInit;
+    if (fx) {
         if (fx.privilege)
             draft.extraPrivileges[pid] = (draft.extraPrivileges[pid] || 0) + fx.privilege;
 
         if (fx.randomGem) {
             const count = typeof fx.randomGem === 'number' ? fx.randomGem : 1;
-            const randColors = randoms.randomGems;
+            const randColors = randoms.randomGems as GemColor[];
             if (randColors) {
                 randColors.slice(0, count).forEach((randColor: GemColor) => {
                     draft.inventories[pid][randColor]++;
@@ -70,31 +65,34 @@ const applyPlayerInitLogic = (draft: GameState, pid: PlayerKey, randoms: any) =>
         }
     }
 
-    if (buff.id === 'extortion') (draft.playerBuffs[pid].state as any).refillCount = 0;
+    if (buff.id === 'extortion') {
+        const state = draft.playerBuffs[pid].state as Record<string, number>;
+        state.refillCount = 0;
+    }
     if (buff.id === 'pacifist') draft.extraPrivileges[pid] = (draft.extraPrivileges[pid] || 0) + 1;
     if (buff.id === 'color_preference') {
-        const discountColor = randoms.preferenceColor;
+        const discountColor = randoms.preferenceColor as GemColor;
         if (discountColor) {
             const dummyId = `buff-color-pref-${pid}`;
-            if (!draft.playerTableau[pid].some((c) => (c as any).id.startsWith(dummyId))) {
-                const dummyCard = {
+            if (!draft.playerTableau[pid].some((c) => c.id.startsWith(dummyId))) {
+                const dummyCard: Card = {
                     id: `${dummyId}-${Date.now()}`,
                     points: 0,
                     crowns: 0,
-                    bonusColor: discountColor as GemColor,
+                    bonusColor: discountColor,
                     bonusCount: 1,
-                    level: 0 as any,
-                    cost: {},
+                    level: 1, // Using level 1 as dummy
+                    cost: { red: 0, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
                     isBuff: true,
                 };
-                draft.playerTableau[pid].push(dummyCard as any);
+                draft.playerTableau[pid].push(dummyCard);
             }
         }
     }
 };
 
 const ensureStructures = (draft: GameState) => {
-    if (!draft.playerBuffs) draft.playerBuffs = { p1: BUFFS.NONE, p2: BUFFS.NONE };
+    if (!draft.playerBuffs) draft.playerBuffs = { p1: BUFFS.NONE as Buff, p2: BUFFS.NONE as Buff };
     else draft.playerBuffs = { ...draft.playerBuffs };
 
     if (!draft.extraAllocation) {
@@ -111,49 +109,55 @@ const ensureStructures = (draft: GameState) => {
 
 export const applyBuffInitEffects = (
     draft: GameState,
-    initRandoms: Record<PlayerKey, any> = {}
+    initRandoms: Partial<Record<PlayerKey, Record<string, unknown>>> = {}
 ): GameState => {
     ensureStructures(draft);
-    applyPlayerInitLogic(draft, 'p1', initRandoms.p1 || {});
-    applyPlayerInitLogic(draft, 'p2', initRandoms.p2 || {});
+    applyPlayerInitLogic(draft, 'p1', (initRandoms.p1 || {}) as Record<string, unknown>);
+    applyPlayerInitLogic(draft, 'p2', (initRandoms.p2 || {}) as Record<string, unknown>);
     return draft;
 };
 
-export const handleInit = (state: GameState | null, payload: BuffInitPayload & any): GameState => {
+export const handleInit = (state: GameState | null, payload: BuffInitPayload): GameState => {
     const skeleton = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
-    const initializedState = { ...skeleton, ...payload };
+
+    // Logic Regression Fix: Directly spread payload to match v3.1.0 behavior
+    const initializedState: GameState = { ...skeleton, ...payload };
+
     ensureStructures(initializedState);
-    const initRandoms = payload.initRandoms || {};
+
+    const initRandoms = (payload.initRandoms || {}) as Record<PlayerKey, Record<string, unknown>>;
     applyPlayerInitLogic(initializedState, 'p1', initRandoms.p1 || {});
     applyPlayerInitLogic(initializedState, 'p2', initRandoms.p2 || {});
+
     return initializedState;
 };
 
-export const handleInitDraft = (state: GameState | null, payload: any): GameState => {
+export const handleInitDraft = (
+    state: GameState | null,
+    payload: Record<string, unknown>
+): GameState => {
     const { draftPool, buffLevel, ...gameSetup } = payload;
     console.log('[REDUCER-INIT-DRAFT] Incoming Pool IDs:', draftPool);
 
-    // Start with a clean copy of skeleton
-
     const newState = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
 
-    // Store IDs only
     newState.draftPool = Array.isArray(draftPool)
-        ? draftPool.map((b: any) => (typeof b === 'string' ? b : b.id))
+        ? draftPool.map((b: unknown) => (typeof b === 'string' ? b : (b as { id: string }).id))
         : [];
-    newState.buffLevel = buffLevel || 1;
-    newState.pendingSetup = gameSetup;
+    newState.buffLevel = (buffLevel as number) || 1;
+    newState.pendingSetup = gameSetup as unknown as GameState['pendingSetup'];
     newState.playerTurnCounts = { p1: 0, p2: 0 };
     newState.draftOrder = ['p1', 'p2'];
     newState.phase = GAME_PHASES.DRAFT_PHASE;
     newState.turn = 'p1';
 
-    if (gameSetup.mode) newState.mode = gameSetup.mode;
-    if (gameSetup.isHost !== undefined) newState.isHost = gameSetup.isHost;
-    if (gameSetup.board) newState.board = gameSetup.board;
-    if (gameSetup.bag) newState.bag = gameSetup.bag;
-    if (gameSetup.market) newState.market = gameSetup.market;
-    if (gameSetup.decks) newState.decks = gameSetup.decks;
+    const setup = gameSetup as Partial<GameState>;
+    if (setup.mode) newState.mode = setup.mode;
+    if (setup.isHost !== undefined) newState.isHost = setup.isHost;
+    if (setup.board) newState.board = setup.board;
+    if (setup.bag) newState.bag = setup.bag;
+    if (setup.market) newState.market = setup.market;
+    if (setup.decks) newState.decks = setup.decks;
 
     return newState;
 };
@@ -172,7 +176,8 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
     }
 
     if (buffId === 'color_preference' && randomColor) {
-        (state.playerBuffs[player].state as any).discountColor = randomColor;
+        const buffState = state.playerBuffs[player].state as Record<string, unknown>;
+        buffState.discountColor = randomColor;
     }
 
     const currentIdx = state.draftOrder.indexOf(player);
@@ -184,21 +189,26 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
             if (nextPlayer === 'p2') {
                 const levelBuffs = Object.values(BUFFS).filter((b) => b.level === state.buffLevel);
                 if (p2Indices && p2Indices.length === 4) {
-                    state.p2DraftPool = p2Indices.map((i) => levelBuffs[i].id);
+                    state.p2DraftPool = p2Indices.map((i) => (levelBuffs[i] as Buff).id);
                 } else {
                     const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
-                    state.p2DraftPool = shuffled.slice(0, 4).map((b) => b.id);
+                    state.p2DraftPool = shuffled.slice(0, 4).map((b) => (b as Buff).id);
                 }
             }
         } else {
-            const setup = state.pendingSetup as any;
+            const setup = state.pendingSetup as
+                | (Partial<GameState> & { initRandoms?: Record<string, unknown> })
+                | null;
             if (setup) {
-                state.board = setup.board;
-                state.bag = setup.bag || [];
-                state.market = setup.market;
-                state.decks = setup.decks;
+                if (setup.board) state.board = setup.board;
+                if (setup.bag) state.bag = setup.bag;
+                if (setup.market) state.market = setup.market;
+                if (setup.decks) state.decks = setup.decks;
             }
-            const finalInitRandoms = (setup?.initRandoms || initRandoms) as Record<PlayerKey, any>;
+            const finalInitRandoms = (setup?.initRandoms || initRandoms) as Record<
+                PlayerKey,
+                Record<string, unknown>
+            >;
             state.pendingSetup = null;
             state.draftOrder = [];
             state.phase = GAME_PHASES.IDLE;
@@ -209,8 +219,8 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
             applyPlayerInitLogic(state, 'p2', finalInitRandoms.p2 || {});
 
             const p1Cap =
-                Object.values(BUFFS).find((b) => b.id === state.playerBuffs?.p1?.id)?.effects
-                    ?.passive?.gemCap || 10;
+                (Object.values(BUFFS).find((b) => b.id === state.playerBuffs?.p1?.id) as Buff)
+                    ?.effects?.passive?.gemCap || 10;
             const p1Total = Object.values(state.inventories.p1).reduce((a, b) => a + b, 0);
             if (p1Total > p1Cap) {
                 state.turn = 'p1';
@@ -218,8 +228,8 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
                 state.nextPlayerAfterRoyal = 'p1';
             } else {
                 const p2Cap =
-                    Object.values(BUFFS).find((b) => b.id === state.playerBuffs?.p2?.id)?.effects
-                        ?.passive?.gemCap || 10;
+                    (Object.values(BUFFS).find((b) => b.id === state.playerBuffs?.p2?.id) as Buff)
+                        ?.effects?.passive?.gemCap || 10;
                 const p2Total = Object.values(state.inventories.p2).reduce((a, b) => a + b, 0);
                 if (p2Total > p2Cap) {
                     state.turn = 'p2';

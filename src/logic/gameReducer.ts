@@ -36,15 +36,7 @@ import {
     handlePeekDeck,
     handleCloseModal,
 } from './actions/miscActions';
-import { GameState } from '../types';
-
-/**
- * Game action interface
- */
-export interface GameAction {
-    type: string;
-    payload?: any;
-}
+import { GameAction, GameState } from '../types';
 
 /**
  * Main reducer function
@@ -58,72 +50,70 @@ export interface GameAction {
  * @returns New game state (or same state for null inputs)
  */
 export const applyAction = (state: GameState | null, action: GameAction): GameState | null => {
-    const { type, payload } = action;
-
-    // 1. BOOTSTRAP / SYNC ACTIONS: These create or overwrite state regardless of its current existence
-    if (type === 'INIT') {
-        return handleInit(null, payload);
+    // 1. BOOTSTRAP / SYNC ACTIONS
+    if (action.type === 'INIT') {
+        return handleInit(null, action.payload);
     }
-    if (type === 'INIT_DRAFT') {
-        return handleInitDraft(null, payload);
+    if (action.type === 'INIT_DRAFT') {
+        return handleInitDraft(null, action.payload);
     }
-    if (type === 'FORCE_SYNC' || type === 'FLATTEN') {
-        return payload; // Atomic state replacement
+    if (action.type === 'FORCE_SYNC' || action.type === 'FLATTEN') {
+        return action.payload; // Atomic state replacement
     }
 
-    // 2. STATE GUARD: For all other actions, we need an existing state
+    // 2. STATE GUARD
     if (!state) {
         return null;
     }
 
-    // 3. MUTATION ACTIONS: Using Immer produce()
+    // 3. MUTATION ACTIONS
     return produce(state, (draft) => {
         // Clear transient UI feedback
         draft.lastFeedback = null;
         draft.toastMessage = null;
 
-        switch (type) {
+        switch (action.type) {
             // ========== INITIALIZATION & SETUP ==========
             case 'SELECT_BUFF':
-                handleSelectBuff(draft, payload);
+                handleSelectBuff(draft, action.payload);
                 break;
 
             // ========== BOARD ACTIONS ==========
             case 'TAKE_GEMS':
-                handleTakeGems(draft, payload);
+                handleTakeGems(draft, action.payload);
                 break;
 
             case 'REPLENISH':
-                handleReplenish(draft, payload);
+                handleReplenish(draft, action.payload);
                 break;
 
             case 'TAKE_BONUS_GEM':
-                handleTakeBonusGem(draft, payload);
+                handleTakeBonusGem(draft, action.payload);
                 break;
 
             case 'DISCARD_GEM':
-                handleDiscardGem(draft, payload);
+                handleDiscardGem(draft, action.payload);
                 break;
 
             case 'STEAL_GEM':
-                handleStealGem(draft, payload);
+                handleStealGem(draft, action.payload);
                 break;
 
             // ========== MARKET ACTIONS ==========
             case 'INITIATE_BUY_JOKER':
-                handleInitiateBuyJoker(draft, payload);
+                handleInitiateBuyJoker(draft, action.payload);
                 break;
 
             case 'BUY_CARD':
-                handleBuyCard(draft, payload);
+                handleBuyCard(draft, action.payload);
                 break;
 
             case 'INITIATE_RESERVE':
-                handleInitiateReserve(draft, payload);
+                handleInitiateReserve(draft, action.payload);
                 break;
 
             case 'INITIATE_RESERVE_DECK':
-                handleInitiateReserveDeck(draft, payload);
+                handleInitiateReserveDeck(draft, action.payload);
                 break;
 
             case 'CANCEL_RESERVE':
@@ -131,11 +121,11 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
                 break;
 
             case 'RESERVE_CARD':
-                handleReserveCard(draft, payload);
+                handleReserveCard(draft, action.payload);
                 break;
 
             case 'RESERVE_DECK':
-                handleReserveDeck(draft, payload);
+                handleReserveDeck(draft, action.payload);
                 break;
 
             // ========== PRIVILEGE ACTIONS ==========
@@ -144,7 +134,7 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
                 break;
 
             case 'USE_PRIVILEGE':
-                handleUsePrivilege(draft, payload);
+                handleUsePrivilege(draft, action.payload);
                 break;
 
             case 'CANCEL_PRIVILEGE':
@@ -157,12 +147,12 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
                 break;
 
             case 'SELECT_ROYAL_CARD':
-                handleSelectRoyalCard(draft, payload);
+                handleSelectRoyalCard(draft, action.payload);
                 break;
 
             // ========== DEBUG ACTIONS ==========
             case 'DEBUG_ADD_CROWNS':
-                handleDebugAddCrowns(draft, payload);
+                handleDebugAddCrowns(draft, action.payload);
                 break;
 
             case 'UNDO':
@@ -174,16 +164,16 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
                 break;
 
             case 'DEBUG_ADD_POINTS':
-                handleDebugAddPoints(draft, payload);
+                handleDebugAddPoints(draft, action.payload);
                 break;
 
             case 'DEBUG_ADD_PRIVILEGE':
-                handleDebugAddPrivilege(draft, payload);
+                handleDebugAddPrivilege(draft, action.payload);
                 break;
 
             // ========== MODAL ACTIONS ==========
             case 'PEEK_DECK':
-                handlePeekDeck(draft, payload);
+                handlePeekDeck(draft, action.payload);
                 break;
 
             case 'CLOSE_MODAL':
@@ -191,9 +181,12 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
                 break;
 
             // ========== FALLBACK ==========
-            default:
-                console.warn('Unknown action type:', type);
+            default: {
+                // This block should theoretically be unreachable if all cases are covered
+                const _exhaustiveCheck: never = action;
+                console.warn('Unknown action type:', (action as { type: string }).type);
                 break;
+            }
         }
     });
 };

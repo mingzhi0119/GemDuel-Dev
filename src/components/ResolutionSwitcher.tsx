@@ -4,11 +4,11 @@ import { Monitor } from 'lucide-react';
 interface ResolutionSwitcherProps {
     settings: {
         label: string;
-        [key: string]: any;
+        [key: string]: unknown;
     };
     resolution: string;
     setResolution: (res: string) => void;
-    RESOLUTION_SETTINGS: Record<string, { label: string; [key: string]: any }>;
+    RESOLUTION_SETTINGS: Record<string, { label: string; [key: string]: unknown }>;
     theme: 'light' | 'dark';
 }
 

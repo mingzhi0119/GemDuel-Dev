@@ -12,8 +12,8 @@
 declare global {
     interface Window {
         ipcRenderer: {
-            on: (channel: string, func: (...args: any[]) => void) => void;
-            send: (channel: string, ...args: any[]) => void;
+            on: (channel: string, func: (...args: unknown[]) => void) => void;
+            send: (channel: string, ...args: unknown[]) => void;
             removeAllListeners: (channel: string) => void;
         };
     }
@@ -137,7 +137,7 @@ export interface BuffEffects {
         singleColor?: number;
         disableSingleColor?: boolean;
     };
-    state?: Record<string, any>; // Runtime state tracking
+    state?: Record<string, unknown>; // Runtime state tracking
 }
 
 /**
@@ -149,7 +149,7 @@ export interface Buff {
     label: string;
     desc: string;
     effects: BuffEffects;
-    state?: Record<string, any>; // Runtime state for buffs
+    state?: Record<string, unknown>; // Runtime state for buffs
 }
 
 /**
@@ -191,7 +191,40 @@ export type GamePhase =
  */
 export type PlayerKey = 'p1' | 'p2';
 
-// ... (BoardCell, BagItem, ActiveModal) ...
+/**
+ * Single cell on the game board
+ */
+export interface BoardCell {
+    type: GemTypeObject;
+    uid: string;
+}
+
+/**
+ * Item in the gem bag
+ */
+export type BagItem = BoardCell | string;
+
+/**
+ * UI Modal state
+ */
+export type ActiveModal =
+    | {
+          type: 'PEEK';
+          data: {
+              cards: Card[];
+              initiator: PlayerKey;
+          };
+      }
+    | {
+          type: 'WINNER';
+          data: {
+              winner: PlayerKey;
+          };
+      }
+    | {
+          type: 'BUFF_SELECT';
+          data: Record<string, unknown>; // Keep flexible for now
+      };
 
 /**
  * Main game state - the single source of truth
@@ -209,7 +242,10 @@ export interface GameState {
 
     // ========== MODALS & UI ==========
     activeModal: ActiveModal | null;
-    lastFeedback: Record<string, any> | null;
+    lastFeedback: {
+        uid: string;
+        items: Array<{ player: PlayerKey; type: string; diff: number }>;
+    } | null;
     toastMessage: string | null;
     winner: PlayerKey | null;
 
@@ -257,9 +293,18 @@ export interface GameState {
     privilegeGemCount: number;
 
     // ========== PENDING ACTIONS (UI State) ==========
-    pendingReserve: { deckLevel: number; isDeck?: boolean } | null;
+    pendingReserve: {
+        card?: Card;
+        level: 1 | 2 | 3;
+        idx?: number;
+        isDeck?: boolean;
+    } | null;
     bonusGemTarget: GemTypeObject | null;
-    pendingBuy: { card: Card; source: string; marketInfo?: any } | null;
+    pendingBuy: {
+        card: Card;
+        source: string;
+        marketInfo?: { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number };
+    } | null;
     nextPlayerAfterRoyal: PlayerKey | null;
 }
 
@@ -268,34 +313,129 @@ export interface GameState {
 // ============================================================================
 
 /**
- * Base action structure
- */
-export interface GameAction {
-    type: string;
-    payload?: any;
-}
-
-/**
- * Payload types for specific actions
+ * Payload for taking gems from board
  */
 export interface TakeGemsPayload {
     coords: Array<{ r: number; c: number }>;
 }
 
+/**
+ * Payload for replenish action
+ */
+export interface ReplenishPayload {
+    randoms?: {
+        extortionColor?: GemColor;
+        expansionColor?: GemColor;
+    };
+}
+
+/**
+ * Payload for bonus gem
+ */
+export interface BonusGemPayload {
+    r: number;
+    c: number;
+}
+
+/**
+ * Payload for stealing gem
+ */
+export interface StealGemPayload {
+    gemId: GemColor;
+}
+
 export interface BuyCardPayload {
-    cardId: string;
+    card: Card;
     source: 'market' | 'reserved';
+    marketInfo?: { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number };
+    randoms?: { bountyHunterColor?: GemColor };
 }
 
 export interface ReserveCardPayload {
-    cardId: string;
-    deckLevel: number;
+    card: Card;
+    level: 1 | 2 | 3;
+    idx: number;
+    goldCoords?: { r: number; c: number };
+    isExtra?: boolean;
+    extraIdx?: number;
+}
+
+export interface ReserveDeckPayload {
+    level: 1 | 2 | 3;
+    goldCoords?: { r: number; c: number };
+}
+
+export interface UsePrivilegePayload {
+    r: number;
+    c: number;
+}
+
+export interface SelectRoyalPayload {
+    card: RoyalCard;
+}
+
+export interface BuffInitPayload {
+    initRandoms?: Record<PlayerKey, Record<string, unknown>>;
+    [key: string]: unknown;
 }
 
 export interface SelectBuffPayload {
     buffId: string;
-    player: PlayerKey;
+    randomColor?: GemColor;
+    initRandoms?: Record<PlayerKey, Record<string, unknown>>;
+    p2DraftPoolIndices?: number[];
 }
+
+export interface PeekDeckPayload {
+    level: 1 | 2 | 3;
+}
+
+/**
+ * Discriminated Union for all possible Game Actions
+ */
+export type GameAction =
+    // BOOTSTRAP / SYNC
+    | { type: 'INIT'; payload: BuffInitPayload }
+    | { type: 'INIT_DRAFT'; payload: Record<string, unknown> }
+    | { type: 'FORCE_SYNC'; payload: GameState }
+    | { type: 'FLATTEN'; payload: GameState }
+
+    // BUFFS
+    | { type: 'SELECT_BUFF'; payload: SelectBuffPayload | string }
+
+    // BOARD
+    | { type: 'TAKE_GEMS'; payload: TakeGemsPayload }
+    | { type: 'REPLENISH'; payload?: ReplenishPayload }
+    | { type: 'TAKE_BONUS_GEM'; payload: BonusGemPayload }
+    | { type: 'DISCARD_GEM'; payload: string } // payload is gemId
+    | { type: 'STEAL_GEM'; payload: StealGemPayload }
+
+    // MARKET
+    | { type: 'INITIATE_BUY_JOKER'; payload: Record<string, unknown> }
+    | { type: 'BUY_CARD'; payload: BuyCardPayload }
+    | { type: 'INITIATE_RESERVE'; payload: Record<string, unknown> }
+    | { type: 'INITIATE_RESERVE_DECK'; payload: Record<string, unknown> }
+    | { type: 'CANCEL_RESERVE'; payload?: undefined }
+    | { type: 'RESERVE_CARD'; payload: ReserveCardPayload }
+    | { type: 'RESERVE_DECK'; payload: ReserveDeckPayload }
+
+    // PRIVILEGE
+    | { type: 'ACTIVATE_PRIVILEGE'; payload?: undefined }
+    | { type: 'USE_PRIVILEGE'; payload: UsePrivilegePayload }
+    | { type: 'CANCEL_PRIVILEGE'; payload?: undefined }
+
+    // ROYAL
+    | { type: 'FORCE_ROYAL_SELECTION'; payload?: undefined }
+    | { type: 'SELECT_ROYAL_CARD'; payload: SelectRoyalPayload }
+
+    // DEBUG & MISC
+    | { type: 'DEBUG_ADD_CROWNS'; payload: PlayerKey }
+    | { type: 'DEBUG_ADD_POINTS'; payload: PlayerKey }
+    | { type: 'DEBUG_ADD_PRIVILEGE'; payload: PlayerKey }
+    | { type: 'UNDO'; payload?: undefined }
+    | { type: 'REDO'; payload?: undefined }
+    | { type: 'PEEK_DECK'; payload: PeekDeckPayload }
+    | { type: 'CLOSE_MODAL'; payload?: undefined };
 
 // ============================================================================
 // VALIDATION & SELECTORS

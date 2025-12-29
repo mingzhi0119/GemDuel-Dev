@@ -1,18 +1,23 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
-import { GameState, GameAction, Buff } from '../../types';
+import { GameState, GameAction, Buff, BuffInitPayload } from '../../types';
 
 // --- Authoritative Mock Infrastructure ---
+
+interface NetworkPacket {
+    type: 'SYNC_STATE' | 'GUEST_REQUEST';
+    data: GameAction | GameState | unknown;
+}
 
 class AuthoritativeMockClient {
     state: GameState;
     role: 'host' | 'guest';
-    outbox: { type: 'SYNC_STATE' | 'GUEST_REQUEST'; data: any }[] = [];
+    outbox: NetworkPacket[] = [];
 
     constructor(role: 'host' | 'guest') {
         this.role = role;
-        this.state = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON));
+        this.state = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
     }
 
     // Local UI triggers this
@@ -30,7 +35,7 @@ class AuthoritativeMockClient {
                 this.state = next;
                 this.outbox.push({
                     type: 'SYNC_STATE',
-                    data: JSON.parse(JSON.stringify(this.state)),
+                    data: JSON.parse(JSON.stringify(this.state)) as GameState,
                 });
             }
         } else {
@@ -40,24 +45,30 @@ class AuthoritativeMockClient {
     }
 
     // Received from P2P
-    receive(msg: { type: 'SYNC_STATE' | 'GUEST_REQUEST'; data: any }) {
-        if (this.role === 'host' && msg.type === 'GUEST_REQUEST') {
+    receive(msg: NetworkPacket | GameAction) {
+        if (this.role === 'host' && (msg as NetworkPacket).type === 'GUEST_REQUEST') {
             // Host validates and applies guest action
-            const next = applyAction(this.state, msg.data);
+            const next = applyAction(this.state, (msg as NetworkPacket).data as GameAction);
             if (next) {
                 this.state = next;
                 this.outbox.push({
                     type: 'SYNC_STATE',
-                    data: JSON.parse(JSON.stringify(this.state)),
+                    data: JSON.parse(JSON.stringify(this.state)) as GameState,
                 });
             }
-        } else if (this.role === 'guest' && msg.type === 'SYNC_STATE') {
+        } else if (this.role === 'guest' && (msg as NetworkPacket).type === 'SYNC_STATE') {
             // Guest overwrites memory
-            const next = applyAction(this.state, { type: 'FORCE_SYNC', payload: msg.data });
+            const next = applyAction(this.state, {
+                type: 'FORCE_SYNC',
+                payload: (msg as NetworkPacket).data as GameState,
+            });
             if (next) this.state = next;
-        } else if ((msg.type as any) === 'INIT' || (msg.type as any) === 'INIT_DRAFT') {
+        } else if (
+            (msg as GameAction).type === 'INIT' ||
+            (msg as GameAction).type === 'INIT_DRAFT'
+        ) {
             // Handle initial bootstrap
-            const next = applyAction(null, msg as any);
+            const next = applyAction(null, msg as GameAction);
             if (next) this.state = next;
         }
     }
@@ -95,7 +106,7 @@ describe('Authoritative Host Online Integration', () => {
 
     it('should only update Guest state after Host approves and syncs', () => {
         // 1. Initial Setup
-        const initAction = {
+        const initAction: GameAction = {
             type: 'INIT',
             payload: {
                 mode: 'ONLINE_MULTIPLAYER',
@@ -104,13 +115,13 @@ describe('Authoritative Host Online Integration', () => {
                         type: { id: 'red', color: '', border: '', label: '' },
                         uid: 'r',
                     }))
-                ),
-                bag: [],
-                market: { 1: [], 2: [], 3: [] },
-                decks: { 1: [], 2: [], 3: [] },
+                ) as unknown as any,
+                bag: [] as unknown as any,
+                market: { 1: [], 2: [], 3: [] } as unknown as any,
+                decks: { 1: [], 2: [], 3: [] } as unknown as any,
                 playerBuffs: {
-                    p1: { id: 'n1', level: 1, label: '', desc: '', effects: {} } as any,
-                    p2: { id: 'n2', level: 1, label: '', desc: '', effects: {} } as any,
+                    p1: { id: 'n1', level: 1, label: '', desc: '', effects: {} } as unknown as any,
+                    p2: { id: 'n2', level: 1, label: '', desc: '', effects: {} } as unknown as any,
                 },
                 playerTurnCounts: { p1: 0, p2: 0 },
                 royalMilestones: { p1: { 3: false, 6: false }, p2: { 3: false, 6: false } },
@@ -122,17 +133,30 @@ describe('Authoritative Host Online Integration', () => {
                 playerRoyals: { p1: [], p2: [] },
                 playerReserved: { p1: [], p2: [] },
                 royalDeck: [],
-            },
+            } as BuffInitPayload,
         };
 
-        host.receive(initAction as any);
-        guest.receive(initAction as any);
+        host.receive(initAction);
+        guest.receive(initAction);
 
         expect(host.state.turn).toBe('p1');
         expect(guest.state.turn).toBe('p1');
 
         // 2. Guest tries to act during Host turn (Should be blocked locally by recordAction guard)
-        guest.interact({ type: 'TAKE_GEMS', payload: { coords: [{ r: 4, c: 4 }] } });
+        host.state.board[4][4] = {
+            type: { id: 'blue', color: '', border: '', label: '' },
+            uid: 'b',
+        }; // Setup
+        guest.state.board[4][4] = {
+            type: { id: 'blue', color: '', border: '', label: '' },
+            uid: 'b',
+        };
+
+        const guestTakeAction: GameAction = {
+            type: 'TAKE_GEMS',
+            payload: { coords: [{ r: 4, c: 4 }] },
+        };
+        guest.interact(guestTakeAction);
         expect(guest.outbox.length).toBe(0); // Blocked from sending
         expect(guest.state.board[4][4].type.id).not.toBe('empty'); // Local state NOT updated
 
@@ -140,7 +164,15 @@ describe('Authoritative Host Online Integration', () => {
         flush();
 
         // 3. Host acts (P1 turn)
-        host.interact({ type: 'TAKE_GEMS', payload: { coords: [{ r: 0, c: 0 }] } });
+        host.state.board[0][0] = {
+            type: { id: 'red', color: '', border: '', label: '' },
+            uid: 'r',
+        };
+        const hostTakeAction: GameAction = {
+            type: 'TAKE_GEMS',
+            payload: { coords: [{ r: 0, c: 0 }] },
+        };
+        host.interact(hostTakeAction);
         expect(host.state.board[0][0].type.id).toBe('empty');
         expect(host.state.winner).toBeNull(); // Verify no accidental win
 
@@ -151,21 +183,22 @@ describe('Authoritative Host Online Integration', () => {
 
     it('should process Guest intent via Host authority', () => {
         // Init with p2 turn to test guest interaction
-        const initAction = {
+        const initAction: GameAction = {
             type: 'INIT',
             payload: {
                 mode: 'ONLINE_MULTIPLAYER',
                 turn: 'p2',
-                playerBuffs: { p1: { id: 'n', effects: {} }, p2: { id: 'n', effects: {} } },
-                inventories: { p1: {}, p2: { blue: 1 } },
+                playerBuffs: { p1: { id: 'n', effects: {} }, p2: { id: 'n', effects: {} } } as any,
+                inventories: { p1: {}, p2: { blue: 1 } } as any,
                 playerTurnCounts: { p1: 0, p2: 0 },
-            },
+            } as BuffInitPayload,
         };
-        host.receive(initAction as any);
-        guest.receive(initAction as any);
+        host.receive(initAction);
+        guest.receive(initAction);
 
         // Guest turn p2. Guest wants to discard.
-        guest.interact({ type: 'DISCARD_GEM', payload: 'blue' });
+        const guestDiscardAction: GameAction = { type: 'DISCARD_GEM', payload: 'blue' };
+        guest.interact(guestDiscardAction);
         expect(guest.state.inventories.p2.blue).toBe(1); // Not changed yet
 
         flush(); // Sent to Host -> Host applies -> Host syncs back

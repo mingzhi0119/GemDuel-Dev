@@ -7,8 +7,8 @@ import { Card as CardType, GemColor } from '../types';
 interface CardProps {
     card: CardType | null;
     canBuy?: boolean;
-    onClick?: (card: CardType, context?: any) => void;
-    onReserve?: (card: CardType, context?: any) => void;
+    onClick?: (card: CardType, context?: Record<string, unknown>) => void;
+    onReserve?: (card: CardType, context?: Record<string, unknown>) => void;
     context?: string;
     isReservedView?: boolean;
     isRoyal?: boolean;
@@ -86,7 +86,10 @@ export const Card: React.FC<CardProps> = React.memo(
                             size: abilityIconSize,
                             className: 'text-white drop-shadow-md',
                         };
-                        let IconComponent: React.ComponentType<any> | null = null;
+                        let IconComponent: React.ComponentType<{
+                            size?: number;
+                            className?: string;
+                        }> | null = null;
                         let bgColor = 'bg-slate-600';
 
                         switch (abilId) {

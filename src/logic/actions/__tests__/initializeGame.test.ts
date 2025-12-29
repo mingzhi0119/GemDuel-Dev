@@ -1,16 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { handleInit, handleInitDraft } from '../buffActions';
 import { BUFFS, GAME_PHASES } from '../../../constants';
+import { BuffInitPayload } from '../../../types';
 
 describe('Game Initialization Direct', () => {
     it('handleInit should create game state', () => {
-        const payload = {
+        const payload: BuffInitPayload = {
             board: Array.from({ length: 5 }, () =>
                 Array.from({ length: 5 }, () => ({ type: { id: 'red' } }))
-            ),
-            bag: [],
-            market: { 1: [], 2: [], 3: [] },
-            decks: { 1: [], 2: [], 3: [] },
+            ) as unknown as any,
+            bag: [] as unknown as any,
+            market: { 1: [], 2: [], 3: [] } as unknown as any,
+            decks: { 1: [], 2: [], 3: [] } as unknown as any,
         };
 
         const result = handleInit(null, payload);
@@ -23,7 +24,7 @@ describe('Game Initialization Direct', () => {
     });
 
     it('handleInitDraft should create draft state', () => {
-        const payload = {
+        const payload: Record<string, unknown> = {
             board: Array.from({ length: 5 }, () =>
                 Array.from({ length: 5 }, () => ({ type: { id: 'red' } }))
             ),

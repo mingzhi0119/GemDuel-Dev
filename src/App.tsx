@@ -497,7 +497,7 @@ export default function GemDuelBoard() {
                 playerBuffs={playerBuffs}
                 theme={theme}
                 localPlayer={online.isHost ? 'p1' : 'p2'}
-                isOnline={state.isOnline}
+                isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
             />
 
             {/* Floating Controls (Z-Index High) */}
@@ -610,7 +610,7 @@ export default function GemDuelBoard() {
                     activeModal.data?.initiator === (online.isHost ? 'p1' : 'p2')) && (
                     <DeckPeekModal
                         isOpen={true}
-                        data={activeModal?.data}
+                        cards={activeModal.data.cards}
                         onClose={handleCloseModal}
                         theme={theme}
                     />
@@ -630,7 +630,7 @@ export default function GemDuelBoard() {
                                     <button
                                         key={color}
                                         onClick={() => handleSelectBonusColor(color)}
-                                        className={`w-16 h-16 rounded-full bg-gradient-to-br ${(GEM_TYPES as any)[color.toUpperCase()].color} border-2 border-white/50 shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:scale-110 active:scale-95 transition-all`}
+                                        className={`w-16 h-16 rounded-full bg-gradient-to-br ${GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES].color} border-2 border-white/50 shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:scale-110 active:scale-95 transition-all`}
                                     />
                                 ))}
                             </div>

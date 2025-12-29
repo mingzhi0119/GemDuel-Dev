@@ -13,9 +13,9 @@ interface MarketProps {
     playerTableau: Record<PlayerKey, CardType[]>;
     playerBuffs: Record<PlayerKey, Buff>;
     handleReserveDeck: (level: number) => void;
-    initiateBuy: (card: CardType, source: string, context?: any) => void;
+    initiateBuy: (card: CardType, source: string, context?: Record<string, unknown>) => void;
     handleReserveCard: (card: CardType, level: number, idx: number) => void;
-    onPeekDeck?: (level: number) => void; // Added
+    onPeekDeck?: (level: number) => void;
     theme: 'light' | 'dark';
     isOnline?: boolean;
     localPlayer?: PlayerKey;
@@ -46,7 +46,7 @@ export const Market: React.FC<MarketProps> = React.memo(
 
         // Optimization: Stable callback for buying cards
         const handleBuy = useCallback(
-            (card: CardType, context: any) => {
+            (card: CardType, context: Record<string, unknown>) => {
                 if (canInteract && card && context) {
                     initiateBuy(card, 'market', context);
                 }
@@ -56,9 +56,9 @@ export const Market: React.FC<MarketProps> = React.memo(
 
         // Optimization: Stable callback for reserving cards
         const handleReserve = useCallback(
-            (card: CardType, context: any) => {
+            (card: CardType, context: Record<string, unknown>) => {
                 if (canInteract && card && context) {
-                    handleReserveCard(card, context.level, context.idx);
+                    handleReserveCard(card, context.level as number, context.idx as number);
                 }
             },
             [handleReserveCard, canInteract]

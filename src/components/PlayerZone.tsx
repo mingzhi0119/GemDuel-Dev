@@ -5,7 +5,15 @@ import { GemIcon } from './GemIcon';
 import { Card } from './Card';
 import { FloatingText } from './VisualFeedback';
 import { BUFF_STYLES } from '../styles/buffs';
-import { PlayerKey, GemInventory, Card as CardType, RoyalCard, Buff, GemColor } from '../types';
+import {
+    PlayerKey,
+    GemInventory,
+    Card as CardType,
+    RoyalCard,
+    Buff,
+    GemColor,
+    BuffEffects,
+} from '../types';
 
 interface BuffDisplayProps {
     buff?: Buff;
@@ -17,12 +25,12 @@ const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff: rawBuff, theme, playerK
     if (!rawBuff || rawBuff.id === 'none') return null;
 
     // RECONSTRUCTION: Get full static data (icons, desc) from local constants using ID
-    const buff = Object.values(BUFFS).find((b) => b.id === rawBuff.id) || rawBuff;
+    const buff = (Object.values(BUFFS).find((b) => b.id === rawBuff.id) as Buff) || rawBuff;
     const levelStyle = BUFF_STYLES[buff.level] || 'border-slate-500 bg-slate-500/20 text-slate-300';
 
     // Use the state from the serialized buff (where dynamic info like discountColor is stored)
     const buffState = rawBuff.state || {};
-    const discountColor = buffState.discountColor;
+    const discountColor = buffState.discountColor as string | undefined;
 
     let description = discountColor
         ? buff.desc.replace('Random color', `Random color (${discountColor})`)
@@ -31,8 +39,10 @@ const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff: rawBuff, theme, playerK
     // Determine alignment classes to avoid screen edges
     const alignClasses = playerKey === 'p1' ? 'left-0' : 'right-0';
 
+    const winCondition = (buff.effects as BuffEffects).winCondition;
+
     // Remove redundant Win Condition info from description if Victory Goals section exists
-    if (buff.effects?.winCondition) {
+    if (winCondition) {
         description = description
             .replace(/Win Condition:.*?\./gi, '')
             .replace(/Win Condition:.*?$/gi, '')
@@ -111,7 +121,10 @@ interface PlayerZoneProps {
     privileges: number;
     extraPrivileges?: number;
     isActive: boolean;
-    lastFeedback: any;
+    lastFeedback: {
+        uid: string;
+        items: Array<{ player: PlayerKey; type: string; diff: number }>;
+    } | null;
     onBuyReserved: (card: CardType, execute?: boolean) => boolean;
     onUsePrivilege: () => void;
     isPrivilegeMode: boolean;
@@ -146,21 +159,29 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     const safeCards = Array.isArray(cards) ? cards : [];
 
     // --- Visual Feedback Logic ---
-    const [feedbacks, setFeedbacks] = useState<any[]>([]);
+    interface FeedbackItem {
+        id: number;
+        quantity: string;
+        label: string;
+        type: string;
+    }
+    const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
     const [isExtortionEffect, setIsExtortionEffect] = useState(false);
     const lastSeenFeedbackUid = useRef<string | null>(null);
 
     useEffect(() => {
         if (lastFeedback && lastFeedback.uid !== lastSeenFeedbackUid.current) {
             lastSeenFeedbackUid.current = lastFeedback.uid;
-            const myItems = lastFeedback.items.filter((item: any) => item.player === player);
+            const myItems = lastFeedback.items.filter(
+                (item: { player: PlayerKey; type: string; diff: number }) => item.player === player
+            );
 
-            if (myItems.some((i: any) => i.type === 'extortion')) {
+            if (myItems.some((i: { type: string }) => i.type === 'extortion')) {
                 setIsExtortionEffect(true);
                 setTimeout(() => setIsExtortionEffect(false), 1000);
             }
 
-            myItems.forEach((item: any) => {
+            myItems.forEach((item: { type: string; diff: number }) => {
                 const id = Date.now() + Math.random();
                 const label = item.type.charAt(0).toUpperCase() + item.type.slice(1);
                 const quantity = item.diff > 0 ? `+${item.diff}` : `${item.diff}`;
@@ -170,15 +191,18 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
         }
     }, [lastFeedback, player]);
 
-    const colorStats = BONUS_COLORS.reduce((acc: any, color) => {
-        const colorCards = safeCards.filter((c) => c.bonusColor === color);
-        acc[color] = {
-            cards: colorCards,
-            bonusCount: colorCards.reduce((sum, c) => sum + (c.bonusCount || 1), 0),
-            points: colorCards.reduce((sum, c) => sum + c.points, 0),
-        };
-        return acc;
-    }, {});
+    const colorStats = BONUS_COLORS.reduce(
+        (acc: Record<string, { cards: CardType[]; bonusCount: number; points: number }>, color) => {
+            const colorCards = safeCards.filter((c) => c.bonusColor === color);
+            acc[color] = {
+                cards: colorCards,
+                bonusCount: colorCards.reduce((sum, c) => sum + (c.bonusCount || 1), 0),
+                points: colorCards.reduce((sum, c) => sum + c.points, 0),
+            };
+            return acc;
+        },
+        {}
+    );
 
     return (
         <div
@@ -275,7 +299,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
             <div className="flex flex-col gap-3 shrink-0 justify-center" style={{ flex: 65 }}>
                 {/* Gems Row */}
                 <div className="flex gap-3 justify-center">
-                    {(Object.values(GEM_TYPES) as any[])
+                    {(Object.values(GEM_TYPES) as Array<{ id: GemColor | 'empty'; label: string }>)
                         .filter((g) => g.id !== 'empty')
                         .map((gem) => {
                             const count = inventory[gem.id as GemColor] || 0;
@@ -299,7 +323,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                             />
                                         ))}
                                     <GemIcon
-                                        type={gem as any}
+                                        type={gem}
                                         size="w-10 h-10"
                                         count={count}
                                         className={
@@ -408,7 +432,12 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                             key={i}
                             className="transition-transform duration-200 ease-in-out shrink-0"
                         >
-                            <Card card={card as any} isRoyal={true} size="small" theme={theme} />
+                            <Card
+                                card={card as unknown as CardType}
+                                isRoyal={true}
+                                size="small"
+                                theme={theme}
+                            />
                         </div>
                     ))}
                 </div>

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { generateGemPool, generateDeck } from '../../utils';
-import { GameState, GameAction } from '../../types';
+import { GameState, GameAction, BuffInitPayload } from '../../types';
 
 // Mock utils to ensure deterministic RNG for "Host" setup generation
 // But since we are testing synchronization, we want Host to generate "random" stuff
@@ -91,17 +91,20 @@ describe('Online Integration Simulation', () => {
         const market = { 3: d3.splice(0, 3), 2: d2.splice(0, 4), 1: d1.splice(0, 5) };
 
         // This payload mimics what startGame generates
-        const setupPayload = {
-            board: Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => pool.pop()!)),
-            bag: pool,
-            market,
-            decks: { 1: d1, 2: d2, 3: d3 },
+        const setupPayload: BuffInitPayload = {
+            board: Array.from({ length: 5 }, () =>
+                Array.from({ length: 5 }, () => pool.pop()!)
+            ) as unknown as any,
+            bag: pool as unknown as any,
+            market: market as unknown as any,
+            decks: { 1: d1, 2: d2, 3: d3 } as unknown as any,
             isPvE: false,
             isOnline: true,
             isHost: true,
         };
 
-        dispatchBroadcast({ type: 'INIT', payload: setupPayload });
+        const action: GameAction = { type: 'INIT', payload: setupPayload };
+        dispatchBroadcast(action);
 
         const h = getHostState();
         const g = getGuestState();
@@ -121,7 +124,7 @@ describe('Online Integration Simulation', () => {
             simulateNetworkParams();
 
         // 1. Host starts Roguelike
-        const setupPayload = {
+        const setupPayload: Record<string, unknown> = {
             // ... minimal setup ...
             board: [],
             bag: [],
@@ -130,14 +133,12 @@ describe('Online Integration Simulation', () => {
             mode: 'ONLINE_MULTIPLAYER',
             isHost: true,
             initRandoms: { p1: {}, p2: {} },
-            draftPool: [
-                { id: 'buff1', level: 1 },
-                { id: 'buff2', level: 1 },
-            ],
+            draftPool: ['buff1', 'buff2'],
             buffLevel: 1,
         };
 
-        dispatchBroadcast({ type: 'INIT_DRAFT', payload: setupPayload });
+        const initDraftAction: GameAction = { type: 'INIT_DRAFT', payload: setupPayload };
+        dispatchBroadcast(initDraftAction);
 
         let h = getHostState();
         let g = getGuestState();
@@ -148,10 +149,11 @@ describe('Online Integration Simulation', () => {
         // 2. P1 (Host) selects Buff
         // Host must provide p2DraftPoolIndices to sync the pool
         const p2Indices = [0, 1, 2, 3]; // Deterministic indices for test
-        dispatchBroadcast({
+        const selectBuffAction: GameAction = {
             type: 'SELECT_BUFF',
             payload: { buffId: 'buff1', randomColor: 'red', p2DraftPoolIndices: p2Indices },
-        });
+        };
+        dispatchBroadcast(selectBuffAction);
 
         h = getHostState();
         g = getGuestState();
@@ -162,15 +164,19 @@ describe('Online Integration Simulation', () => {
         expect(g.p2DraftPool).toBeDefined();
 
         // 3. Guest (P2) selects Buff
-        const p2Buff = g.p2DraftPool![0];
-        guestActLocal({ type: 'SELECT_BUFF', payload: { buffId: p2Buff.id, randomColor: 'blue' } });
+        const p2BuffId = g.p2DraftPool![0];
+        const guestSelectBuffAction: GameAction = {
+            type: 'SELECT_BUFF',
+            payload: { buffId: p2BuffId, randomColor: 'blue' },
+        };
+        guestActLocal(guestSelectBuffAction);
 
         h = getHostState();
         g = getGuestState();
 
         expect(h.phase).toBe('IDLE');
         expect(g.phase).toBe('IDLE');
-        expect(h.playerBuffs.p2.id).toBe(p2Buff.id);
+        expect(h.playerBuffs.p2.id).toBe(p2BuffId);
 
         // 4. Flattening
         // In the Hook, Host detects IDLE and broadcasts FLATTEN?

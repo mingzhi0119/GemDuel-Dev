@@ -11,39 +11,15 @@
 import { GEM_TYPES, SPIRAL_ORDER, GAME_PHASES } from '../../constants';
 import { addFeedback, addPrivilege } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
-import { GameState, GemColor, BoardCell } from '../../types';
-
-/**
- * Payload for taking gems from board
- */
-export interface TakeGemsPayload {
-    coords: Array<{ r: number; c: number }>;
-}
-
-/**
- * Payload for bonus gem
- */
-export interface BonusGemPayload {
-    r: number;
-    c: number;
-}
-
-/**
- * Payload for stealing gem
- */
-export interface StealGemPayload {
-    gemId: GemColor;
-}
-
-/**
- * Payload for replenish action
- */
-export interface ReplenishPayload {
-    randoms?: {
-        extortionColor?: GemColor;
-        expansionColor?: GemColor;
-    };
-}
+import {
+    GameState,
+    GemColor,
+    BoardCell,
+    TakeGemsPayload,
+    BonusGemPayload,
+    StealGemPayload,
+    ReplenishPayload,
+} from '../../types';
 
 /**
  * Handle player taking gems from the board
@@ -124,13 +100,16 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
 
         // Handle Extortion buff effect
         const hasExtortion = buff?.effects?.active === 'replenish_steal';
-        if (hasExtortion) {
-            if (!buff.state) buff.state = {};
+        if (hasExtortion && buff && buff.state) {
             if (typeof buff.state.refillCount === 'undefined') buff.state.refillCount = 0;
-            buff.state.refillCount++;
+            const currentCount = buff.state.refillCount as number;
+            buff.state.refillCount = currentCount + 1;
 
             // Every 2nd refill, steal a gem
-            if (buff.state.refillCount > 0 && buff.state.refillCount % 2 === 0) {
+            if (
+                (buff.state.refillCount as number) > 0 &&
+                (buff.state.refillCount as number) % 2 === 0
+            ) {
                 const oppBuff = state.playerBuffs?.[opponent];
                 if (oppBuff?.effects?.passive?.immuneNegative) {
                     state.toastMessage = 'Extortion blocked by Pacifist!';
@@ -252,9 +231,9 @@ export const handleDiscardGem = (state: GameState, payload: string): GameState =
     if (currentInv[gemId] > 0) {
         currentInv[gemId]--;
         state.bag.push({
-            type: GEM_TYPES[gemId.toUpperCase()],
+            type: GEM_TYPES[gemId.toUpperCase() as keyof typeof GEM_TYPES],
             uid: `discard-${Date.now()}`,
-        } as any);
+        } as BoardCell);
 
         const totalGems = Object.values(currentInv).reduce((a, b) => a + b, 0);
         const gemCap = state.playerBuffs?.[state.turn]?.effects?.passive?.gemCap || 10;

@@ -3,10 +3,11 @@ import { applyAction } from '../../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../../initialState';
 import { GAME_PHASES } from '../../../constants';
 import { generateGemPool } from '../../../utils';
+import { GameAction, GameState } from '../../../types';
 
 // Helper to create a clean state with a pre-filled board
-const createTestState = () => {
-    const state = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON));
+const createTestState = (): GameState => {
+    const state = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
     const gemPool = generateGemPool();
     for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 5; c++) {
@@ -23,10 +24,10 @@ describe('Board Actions - Edge Cases', () => {
         state.inventories.p1.red = 9;
 
         // Place two blue gems for p1 to take
-        state.board[0][0] = { type: { id: 'blue' }, uid: 'b1' };
-        state.board[0][1] = { type: { id: 'blue' }, uid: 'b2' };
+        state.board[0][0] = { type: { id: 'blue', color: '', border: '', label: '' }, uid: 'b1' };
+        state.board[0][1] = { type: { id: 'blue', color: '', border: '', label: '' }, uid: 'b2' };
 
-        const action = {
+        const action: GameAction = {
             type: 'TAKE_GEMS',
             payload: {
                 coords: [
@@ -37,6 +38,7 @@ describe('Board Actions - Edge Cases', () => {
         };
 
         const nextState = applyAction(state, action);
+        if (!nextState) throw new Error('State update failed');
 
         // Assertions
         expect(nextState.inventories.p1.red).toBe(9);
@@ -54,11 +56,11 @@ describe('Board Actions - Edge Cases', () => {
         state.privileges.p2 = 0; // Ensure opponent starts with 0 privileges
 
         // Place three red gems in a line
-        state.board[1][0] = { type: { id: 'red' }, uid: 'r1' };
-        state.board[1][1] = { type: { id: 'red' }, uid: 'r2' };
-        state.board[1][2] = { type: { id: 'red' }, uid: 'r3' };
+        state.board[1][0] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r1' };
+        state.board[1][1] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r2' };
+        state.board[1][2] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r3' };
 
-        const action = {
+        const action: GameAction = {
             type: 'TAKE_GEMS',
             payload: {
                 coords: [
@@ -70,6 +72,7 @@ describe('Board Actions - Edge Cases', () => {
         };
 
         const nextState = applyAction(state, action);
+        if (!nextState) throw new Error('State update failed');
 
         // Assertions
         expect(nextState.inventories.p1.red).toBe(3);
@@ -86,11 +89,11 @@ describe('Board Actions - Edge Cases', () => {
         state.privileges.p2 = 1;
 
         // Place three red gems for p1 to take, triggering the privilege rule
-        state.board[1][0] = { type: { id: 'red' }, uid: 'r1' };
-        state.board[1][1] = { type: { id: 'red' }, uid: 'r2' };
-        state.board[1][2] = { type: { id: 'red' }, uid: 'r3' };
+        state.board[1][0] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r1' };
+        state.board[1][1] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r2' };
+        state.board[1][2] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r3' };
 
-        const action = {
+        const action: GameAction = {
             type: 'TAKE_GEMS',
             payload: {
                 coords: [
@@ -102,6 +105,7 @@ describe('Board Actions - Edge Cases', () => {
         };
 
         const nextState = applyAction(state, action);
+        if (!nextState) throw new Error('State update failed');
 
         // Assertions
         // Critical: p1 should lose a privilege to give one to p2, as the total cannot exceed 3.
@@ -110,13 +114,10 @@ describe('Board Actions - Edge Cases', () => {
     });
 
     it('should process gem taking correctly even with invalid (non-linear) coordinates', () => {
-        // This test checks if the reducer is too trusting. A robust reducer might ignore invalid inputs,
-        // but our current design assumes validation happens before the action is dispatched.
-        // Let's confirm the current (trusting) behavior.
         const state = createTestState();
 
         // Invalid "L" shape selection
-        const action = {
+        const action: GameAction = {
             type: 'TAKE_GEMS',
             payload: {
                 coords: [
@@ -128,24 +129,19 @@ describe('Board Actions - Edge Cases', () => {
         };
 
         // Force specific colors to avoid collision if random generation makes them same
-        state.board[0][0] = { type: { id: 'blue' }, uid: 'b1' };
-        state.board[0][1] = { type: { id: 'green' }, uid: 'g1' };
-        state.board[1][1] = { type: { id: 'red' }, uid: 'r1' };
-
-        const gem1 = 'blue';
-        const gem2 = 'green';
-        const gem3 = 'red';
+        state.board[0][0] = { type: { id: 'blue', color: '', border: '', label: '' }, uid: 'b1' };
+        state.board[0][1] = { type: { id: 'green', color: '', border: '', label: '' }, uid: 'g1' };
+        state.board[1][1] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r1' };
 
         const nextState = applyAction(state, action);
+        if (!nextState) throw new Error('State update failed');
 
         // Assertions
-        // The reducer should blindly take the gems as requested.
-        expect(nextState.inventories.p1[gem1]).toBe(1);
-        expect(nextState.inventories.p1[gem2]).toBe(1);
-        expect(nextState.inventories.p1[gem3]).toBe(1);
+        expect(nextState.inventories.p1['blue']).toBe(1);
+        expect(nextState.inventories.p1['green']).toBe(1);
+        expect(nextState.inventories.p1['red']).toBe(1);
         expect(nextState.board[0][0].type.id).toBe('empty');
         expect(nextState.board[0][1].type.id).toBe('empty');
         expect(nextState.board[1][1].type.id).toBe('empty');
-        // This test passes, confirming the reducer's behavior. This is a design choice, not necessarily a bug.
     });
 });

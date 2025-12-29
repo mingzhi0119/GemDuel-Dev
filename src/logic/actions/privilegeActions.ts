@@ -6,12 +6,7 @@
 
 import { GEM_TYPES, GAME_PHASES } from '../../constants';
 import { addFeedback } from '../stateHelpers';
-import { GameState, GemColor } from '../../types';
-
-export interface UsePrivilegePayload {
-    r: number;
-    c: number;
-}
+import { GameState, UsePrivilegePayload } from '../../types';
 
 /**
  * Activate privilege action phase

@@ -1,0 +1,399 @@
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { GRID_SIZE, BUFFS } from '../constants';
+import { generateGemPool, generateDeck, shuffleArray, calculateTransaction } from '../utils';
+import { processGemClick, processOpponentGemClick } from '../logic/interactionManager';
+import { getPlayerScore, getCrownCount } from '../logic/selectors';
+import { validateGemSelection } from '../logic/validators';
+import {
+    GameState,
+    Card,
+    PlayerKey,
+    GemCoord,
+    GemColor,
+    GameAction,
+    GemTypeObject,
+    GameMode,
+} from '../types';
+
+export const useGameInteractions = (
+    gameState: GameState,
+    networkDispatch: (action: GameAction) => void,
+    currentIndex: number // Used to reset selection on history change
+) => {
+    const [selectedGems, setSelectedGems] = useState<GemCoord[]>([]);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    // Reset selection on history navigation
+    useEffect(() => {
+        setSelectedGems([]);
+        setErrorMsg(null);
+    }, [currentIndex]);
+
+    // 5. Control & Input Decoupling
+    const canLocalInteract = useMemo(() => {
+        const mode = gameState.mode;
+        if (mode === 'LOCAL_PVP') return true;
+        if (mode === 'PVE') return gameState.turn === 'p1';
+        if (mode === 'ONLINE_MULTIPLAYER') {
+            const myRole: PlayerKey = gameState.isHost ? 'p1' : 'p2';
+            return gameState.turn === myRole;
+        }
+        return true;
+    }, [gameState.mode, gameState.turn, gameState.isHost]);
+
+    // --- Helpers ---
+    const isSelected = (r: number, c: number) => selectedGems.some((s) => s.r === r && s.c === c);
+    const canAfford = useCallback(
+        (card: Card) => {
+            if (!gameState) return false;
+            const player = gameState.turn;
+            const { affordable } = calculateTransaction(
+                card,
+                gameState.inventories[player],
+                gameState.playerTableau[player],
+                gameState.playerBuffs?.[player]
+            );
+            return affordable;
+        },
+        [gameState]
+    );
+
+    // Initialization Logic
+    const startGame = useCallback(
+        (
+            mode: GameMode,
+            options: { useBuffs: boolean; isHost?: boolean } = { useBuffs: false }
+        ) => {
+            const isRogue = options.useBuffs;
+            const fullPool = generateGemPool();
+            const initialBoardFlat = fullPool.slice(0, 25);
+            const initialBag = fullPool.slice(25);
+            const newBoard: BoardCell[][] = [];
+            for (let r = 0; r < GRID_SIZE; r++) {
+                const row: BoardCell[] = [];
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    row.push(initialBoardFlat[r * GRID_SIZE + c]);
+                }
+                newBoard.push(row);
+            }
+            const d1 = generateDeck(1, isRogue);
+            const d2 = generateDeck(2, isRogue);
+            const d3 = generateDeck(3, isRogue);
+            const market = { 3: d3.splice(0, 3), 2: d2.splice(0, 4), 1: d1.splice(0, 5) };
+            const decks = { 1: d1, 2: d2, 3: d3 };
+
+            const basics = ['red', 'green', 'blue', 'white', 'black'];
+            const initRandoms = {
+                p1: {
+                    randomGems: Array.from(
+                        { length: 5 },
+                        () => basics[Math.floor(Math.random() * 5)]
+                    ),
+                    reserveCardLevel: Math.floor(Math.random() * 3) + 1,
+                    preferenceColor: basics[Math.floor(Math.random() * 5)],
+                },
+                p2: {
+                    randomGems: Array.from(
+                        { length: 5 },
+                        () => basics[Math.floor(Math.random() * 5)]
+                    ),
+                    reserveCardLevel: Math.floor(Math.random() * 3) + 1,
+                    preferenceColor: basics[Math.floor(Math.random() * 5)],
+                },
+            };
+
+            const setupData: BuffInitPayload = {
+                mode,
+                board: newBoard,
+                bag: initialBag,
+                market,
+                decks,
+                initRandoms,
+                isHost: options.isHost ?? true,
+            };
+
+            if (options.useBuffs) {
+                const level = (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
+                const levelBuffs = Object.values(BUFFS).filter((b) => b.level === level);
+                const fullPool = shuffleArray(levelBuffs).slice(0, 3);
+                // IDs only
+                setupData.draftPool = fullPool.map((b) => b.id);
+                setupData.buffLevel = level;
+
+                const action: GameAction = {
+                    type: 'INIT_DRAFT',
+                    payload: setupData as unknown as Record<string, unknown>,
+                };
+                networkDispatch(action);
+            } else {
+                const action: GameAction = { type: 'INIT', payload: setupData };
+                networkDispatch(action);
+            }
+        },
+        [networkDispatch]
+    );
+
+    const handleSelfGemClick = (gemId: string) => {
+        if (!canLocalInteract || gameState.phase !== 'DISCARD_EXCESS_GEMS') return;
+        const action: GameAction = { type: 'DISCARD_GEM', payload: gemId };
+        networkDispatch(action);
+    };
+    const handleGemClick = (r: number, c: number) => {
+        if (!canLocalInteract || gameState.winner) return;
+        const result = processGemClick(gameState, r, c, selectedGems);
+        if (result.error) return setErrorMsg(result.error);
+        if (result.action) return networkDispatch(result.action);
+        if (result.newSelection) setSelectedGems(result.newSelection);
+    };
+    const handleOpponentGemClick = (gemId: string) => {
+        if (!canLocalInteract) return;
+        const result = processOpponentGemClick(gameState, gemId as GemColor);
+        if (result.error) return setErrorMsg(result.error);
+        if (result.action) networkDispatch(result.action);
+    };
+    const handleConfirmTake = () => {
+        if (!canLocalInteract || selectedGems.length === 0) return;
+        const check = validateGemSelection(selectedGems);
+        if (!check.valid) return setErrorMsg(check.error || 'Invalid!');
+        if (check.hasGap) return setErrorMsg('Gap detected!');
+        const buff = gameState.playerBuffs?.[gameState.turn];
+        if (buff?.effects?.passive?.noTake3 && selectedGems.length === 3)
+            return setErrorMsg('Cannot take 3 gems!');
+        const action: GameAction = { type: 'TAKE_GEMS', payload: { coords: selectedGems } };
+        networkDispatch(action);
+        setSelectedGems([]);
+    };
+    const handleReplenish = () => {
+        if (!canLocalInteract || gameState.bag.length === 0) return;
+        const basics = ['red', 'green', 'blue', 'white', 'black'];
+        const opponent = gameState.turn === 'p1' ? 'p2' : 'p1';
+        const stealable = Object.keys(gameState.inventories[opponent]).filter(
+            (k) => k !== 'gold' && k !== 'pearl' && gameState.inventories[opponent][k] > 0
+        );
+        const action: GameAction = {
+            type: 'REPLENISH',
+            payload: {
+                randoms: {
+                    expansionColor: basics[Math.floor(Math.random() * 5)] as GemColor,
+                    extortionColor: (stealable.length > 0
+                        ? stealable[Math.floor(Math.random() * stealable.length)]
+                        : undefined) as GemColor | undefined,
+                },
+            },
+        };
+        networkDispatch(action);
+    };
+    const handleReserveCard = (card: Card, level: number, idx: number) => {
+        if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) return;
+        const hasGold = gameState.board.flat().some((cell) => cell.type.id === 'gold');
+        if (hasGold) {
+            const action: GameAction = { type: 'INITIATE_RESERVE', payload: { card, level, idx } };
+            networkDispatch(action);
+            setErrorMsg('Select a Gold gem.');
+        } else {
+            const action: GameAction = {
+                type: 'RESERVE_CARD',
+                payload: { card, level: level as 1 | 2 | 3, idx },
+            };
+            networkDispatch(action);
+        }
+    };
+    const handleReserveDeck = (level: number) => {
+        if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) return;
+        if (gameState.decks[level as 1 | 2 | 3].length === 0) return setErrorMsg('Deck empty!');
+        const hasGold = gameState.board.flat().some((cell) => cell.type.id === 'gold');
+        if (hasGold) {
+            const action: GameAction = {
+                type: 'INITIATE_RESERVE_DECK',
+                payload: { level: level as 1 | 2 | 3 },
+            };
+            networkDispatch(action);
+        } else {
+            const action: GameAction = {
+                type: 'RESERVE_DECK',
+                payload: { level: level as 1 | 2 | 3 },
+            };
+            networkDispatch(action);
+        }
+    };
+    const initiateBuy = (
+        card: Card,
+        source: string = 'market',
+        marketInfo: Record<string, unknown> = {}
+    ) => {
+        if (!canLocalInteract) return;
+        const affordable = canAfford(card);
+        if (!affordable) return setErrorMsg('Cannot afford!');
+        if (card.bonusColor === 'gold') {
+            const action: GameAction = {
+                type: 'INITIATE_BUY_JOKER',
+                payload: { card, source, marketInfo },
+            };
+            networkDispatch(action);
+        } else {
+            const basics = ['red', 'green', 'blue', 'white', 'black'];
+            const action: GameAction = {
+                type: 'BUY_CARD',
+                payload: {
+                    card,
+                    source: source as 'market' | 'reserved',
+                    marketInfo: marketInfo as BuyCardPayload['marketInfo'],
+                    randoms: {
+                        bountyHunterColor: basics[Math.floor(Math.random() * 5)] as GemColor,
+                    },
+                },
+            };
+            networkDispatch(action);
+        }
+    };
+    const handleSelectBonusColor = (color: string) => {
+        if (!canLocalInteract || gameState.phase !== 'SELECT_CARD_COLOR' || !gameState.pendingBuy)
+            return;
+        const { card, source, marketInfo } = gameState.pendingBuy;
+        const basics = ['red', 'green', 'blue', 'white', 'black'];
+        const action: GameAction = {
+            type: 'BUY_CARD',
+            payload: {
+                card: { ...card, bonusColor: color as GemColor },
+                source: source as 'market' | 'reserved',
+                marketInfo,
+                randoms: { bountyHunterColor: basics[Math.floor(Math.random() * 5)] as GemColor },
+            },
+        };
+        networkDispatch(action);
+    };
+    const handleSelectRoyal = (royalCard: RoyalCard) => {
+        if (!canLocalInteract) return;
+        const action: GameAction = { type: 'SELECT_ROYAL_CARD', payload: { card: royalCard } };
+        networkDispatch(action);
+    };
+    const handleCancelReserve = () => {
+        if (canLocalInteract) {
+            const action: GameAction = { type: 'CANCEL_RESERVE' };
+            networkDispatch(action);
+        }
+    };
+    const handleCancelPrivilege = () => {
+        if (canLocalInteract) {
+            const action: GameAction = { type: 'CANCEL_PRIVILEGE' };
+            networkDispatch(action);
+        }
+    };
+
+    const activatePrivilegeMode = () => {
+        if (!canLocalInteract || gameState.phase !== 'IDLE') return;
+        const hasPrivilege =
+            gameState.privileges[gameState.turn] > 0 ||
+            (gameState.extraPrivileges && gameState.extraPrivileges[gameState.turn] > 0);
+        if (hasPrivilege) {
+            if (!gameState.board.flat().some((g) => g.type.id !== 'empty' && g.type.id !== 'gold'))
+                return setErrorMsg('No gems.');
+            const action: GameAction = { type: 'ACTIVATE_PRIVILEGE' };
+            networkDispatch(action);
+            setSelectedGems([]);
+        }
+    };
+    const checkAndInitiateBuyReserved = (card: Card, execute: boolean = false) => {
+        if (!canLocalInteract) return false;
+        const affordable = canAfford(card);
+        if (execute && affordable) initiateBuy(card, 'reserved');
+        return affordable;
+    };
+    const handleDebugAddCrowns = (pid: PlayerKey) => {
+        if (!gameState.winner) {
+            const action: GameAction = { type: 'DEBUG_ADD_CROWNS', payload: pid };
+            networkDispatch(action);
+        }
+    };
+    const handleDebugAddPoints = (pid: PlayerKey) => {
+        if (!gameState.winner) {
+            const action: GameAction = { type: 'DEBUG_ADD_POINTS', payload: pid };
+            networkDispatch(action);
+        }
+    };
+    const handleDebugAddPrivilege = (pid: PlayerKey) => {
+        if (!gameState.winner) {
+            const action: GameAction = { type: 'DEBUG_ADD_PRIVILEGE', payload: pid };
+            networkDispatch(action);
+        }
+    };
+    const handleForceRoyal = () => {
+        if (!gameState.winner) {
+            const action: GameAction = { type: 'FORCE_ROYAL_SELECTION' };
+            networkDispatch(action);
+        }
+    };
+    const handleSelectBuff = (buffId: string) => {
+        if (!canLocalInteract) return;
+        const basics = ['red', 'green', 'blue', 'white', 'black'];
+        const randomColor = basics[Math.floor(Math.random() * 5)] as GemColor;
+        let p2DraftPoolIndices: number[] | undefined;
+        if (gameState.turn === 'p1' && gameState.phase === 'DRAFT_PHASE') {
+            const levelBuffs = Object.values(BUFFS).filter((b) => b.level === gameState.buffLevel);
+            const indices = levelBuffs.map((_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            p2DraftPoolIndices = indices.slice(0, 4);
+        }
+        const action: GameAction = {
+            type: 'SELECT_BUFF',
+            payload: { buffId, randomColor, p2DraftPoolIndices },
+        };
+        networkDispatch(action);
+    };
+    const handleCloseModal = () => {
+        const action: GameAction = { type: 'CLOSE_MODAL' };
+        networkDispatch(action);
+    };
+    const handlePeekDeck = (level: number) => {
+        if (canLocalInteract) {
+            const action: GameAction = {
+                type: 'PEEK_DECK',
+                payload: { level: level as 1 | 2 | 3 },
+            };
+            networkDispatch(action);
+        }
+    };
+
+    const boundGetPlayerScore = (pid: PlayerKey) => getPlayerScore(gameState as GameState, pid);
+    const boundGetCrownCount = (pid: PlayerKey) => getCrownCount(gameState as GameState, pid);
+
+    return {
+        selectedGems,
+        errorMsg,
+        isMyTurn: canLocalInteract,
+        handlers: {
+            startGame,
+            handleSelfGemClick,
+            handleGemClick,
+            handleOpponentGemClick,
+            handleConfirmTake,
+            handleReplenish,
+            handleReserveCard,
+            handleReserveDeck,
+            initiateBuy,
+            handleSelectBonusColor,
+            handleSelectRoyal,
+            handleCancelReserve,
+            handleCancelPrivilege,
+            activatePrivilegeMode,
+            checkAndInitiateBuyReserved,
+            handleDebugAddCrowns,
+            handleDebugAddPoints,
+            handleDebugAddPrivilege,
+            handleForceRoyal,
+            handleSelectBuff,
+            handleCloseModal,
+            handlePeekDeck,
+        },
+        getters: {
+            getPlayerScore: boundGetPlayerScore,
+            isSelected,
+            getCrownCount: boundGetCrownCount,
+            canAfford,
+            isMyTurn: canLocalInteract,
+        },
+    };
+};
