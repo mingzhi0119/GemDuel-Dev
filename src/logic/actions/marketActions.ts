@@ -91,11 +91,11 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         } as BoardCell);
     }
 
-    // Nationalism / Minimalism: Double Bonus for first 5 cards
+    // Minimalism: Double Bonus for first 2 cards
     let finalCard = card;
-    if (buff?.effects?.passive?.doubleBonusFirst5 && state.playerTableau[player].length < 5) {
-        finalCard = { ...card, bonusCount: 2 };
-        state.toastMessage = 'Minimalism: Card grants Double Bonus!';
+    if (buff?.effects?.passive?.doubleBonusFirst5 && state.playerTableau[player].length < 2) {
+        finalCard = { ...card, bonusCount: (card.bonusCount ?? 1) * 2 };
+        state.toastMessage = 'Minimalist: Card grants Double Bonus!';
     }
 
     state.playerTableau[player].push(finalCard);

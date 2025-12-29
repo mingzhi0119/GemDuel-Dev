@@ -320,7 +320,7 @@ export const BUFFS = {
         id: 'minimalist',
         level: 3,
         label: 'Minimalist',
-        desc: 'First 5 cards purchased provide Double Bonuses. Max Gems: 6.',
+        desc: 'First 2 cards purchased provide Double Bonuses. Max Gems: 6.',
         effects: { passive: { doubleBonusFirst5: true, gemCap: 6 } },
     },
     PACIFIST: {

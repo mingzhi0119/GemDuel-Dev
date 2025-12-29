@@ -63,7 +63,7 @@ export const calculateTransaction = (
         (acc, color) => {
             acc[color] = playerTableau
                 .filter((c) => c.bonusColor === color && !c.isBuff) // ✅ 排除虚拟卡
-                .reduce((sum, c) => sum + (c.bonusCount || 1), 0);
+                .reduce((sum, c) => sum + (c.bonusCount ?? 1), 0);
             return acc;
         },
         {} as Record<GemColor, number>

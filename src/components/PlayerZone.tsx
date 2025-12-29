@@ -202,7 +202,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
             const colorCards = safeCards.filter((c) => c.bonusColor === color);
             acc[color] = {
                 cards: colorCards,
-                bonusCount: colorCards.reduce((sum, c) => sum + (c.bonusCount || 1), 0),
+                bonusCount: colorCards.reduce((sum, c) => sum + (c.bonusCount ?? 1), 0),
                 points: colorCards.reduce((sum, c) => sum + c.points, 0),
             };
             return acc;
