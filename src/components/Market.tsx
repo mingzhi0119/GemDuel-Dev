@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
 import { Layers } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { Card } from './Card';
+import { withGameAnimation } from '../hoc/withGameAnimation';
 import { calculateTransaction } from '../utils';
 import {
     Card as CardType,
@@ -10,6 +12,8 @@ import {
     Buff,
     InitiateBuyJokerPayload,
 } from '../types';
+
+const AnimatedCard = withGameAnimation(Card);
 
 interface MarketProps {
     market: Record<number, (CardType | null)[]>;
@@ -57,7 +61,7 @@ export const Market: React.FC<MarketProps> = React.memo(
 
         // Optimization: Stable callback for buying cards
         const handleBuy = useCallback(
-            (card: CardType, context: Record<string, unknown>) => {
+            (card: CardType, context?: Record<string, unknown>) => {
                 if (canInteract && card && context) {
                     initiateBuy(card, 'market', context as InitiateBuyJokerPayload['marketInfo']);
                 }
@@ -67,7 +71,7 @@ export const Market: React.FC<MarketProps> = React.memo(
 
         // Optimization: Stable callback for reserving cards
         const handleReserve = useCallback(
-            (card: CardType, context: Record<string, unknown>) => {
+            (card: CardType, context?: Record<string, unknown>) => {
                 if (canInteract && card && context) {
                     handleReserveCard(card, context.level as number, context.idx as number);
                 }
@@ -129,7 +133,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                             : [];
 
                     return (
-                        <div key={lvl} className="flex gap-3 justify-center items-center">
+                        <div key={lvl} className="flex gap-3 justify-center items-center relative">
                             {/* Deck Container */}
                             <div className="relative">
                                 {/* Insight Buff (L1 Peek) - Positioned to the left of L1 Deck */}
@@ -216,27 +220,49 @@ export const Market: React.FC<MarketProps> = React.memo(
                                 </div>
                             </div>
 
-                            {market[lvl].map((card, i) => (
-                                <Card
-                                    key={i}
-                                    card={card}
-                                    canBuy={
-                                        phase === 'IDLE' &&
-                                        canInteract &&
-                                        card !== null &&
-                                        calculateTransaction(
-                                            card,
-                                            inventories[turn],
-                                            playerTableau[turn],
-                                            playerBuffs[turn]
-                                        ).affordable
-                                    }
-                                    context={JSON.stringify({ level: lvl, idx: i })}
-                                    onClick={handleBuy}
-                                    onReserve={handleReserve}
-                                    theme={theme}
-                                />
-                            ))}
+                            {/* Market Cards */}
+                            <div className="flex gap-3">
+                                {market[lvl].map((card, i) => (
+                                    <div
+                                        key={`slot-${lvl}-${i}`}
+                                        className="relative w-24 h-32 flex items-center justify-center"
+                                    >
+                                        <AnimatePresence mode="wait">
+                                            {card && (
+                                                <AnimatedCard
+                                                    key={card.id} // Stable Card ID triggers exit/enter on change
+                                                    card={card}
+                                                    canBuy={
+                                                        phase === 'IDLE' &&
+                                                        canInteract &&
+                                                        calculateTransaction(
+                                                            card,
+                                                            inventories[turn],
+                                                            playerTableau[turn],
+                                                            playerBuffs[turn]
+                                                        ).affordable
+                                                    }
+                                                    context={JSON.stringify({ level: lvl, idx: i })}
+                                                    onClick={handleBuy}
+                                                    onReserve={handleReserve}
+                                                    theme={theme}
+                                                    animationConfig={{
+                                                        mode:
+                                                            card.bonusColor === 'null'
+                                                                ? 'prestige'
+                                                                : 'acquire',
+                                                        layout: false,
+                                                        // P1 is on the left, P2 is on the right.
+                                                        // Market is also on the left.
+                                                        targetX: turn === 'p1' ? 0 : 600,
+                                                        targetY: 500,
+                                                    }}
+                                                />
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     );
                 })}

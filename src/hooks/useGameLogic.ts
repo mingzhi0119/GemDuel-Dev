@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GameState, GemCoord, GameAction } from '../types';
 import { useAIController } from './useAIController';
 import { useGameState } from './useGameState';
@@ -48,39 +48,44 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
         historyControls.historyLength,
     ]);
 
-    return {
-        state: {
-            ...gameState,
-            selectedGems: interactions.selectedGems,
-            errorMsg: interactions.errorMsg,
-        } as Readonly<GameState & { selectedGems: GemCoord[]; errorMsg: string | null }>,
+    const result = useMemo(
+        () => ({
+            state: {
+                ...gameState,
+                selectedGems: interactions.selectedGems,
+                errorMsg: interactions.errorMsg,
+            } as Readonly<GameState & { selectedGems: GemCoord[]; errorMsg: string | null }>,
 
-        handlers: {
-            ...interactions.handlers,
-            importHistory: historyControls.importHistory,
-        },
+            handlers: {
+                ...interactions.handlers,
+                importHistory: historyControls.importHistory,
+            },
 
-        getters: interactions.getters,
+            getters: interactions.getters,
 
-        historyControls: {
-            ...historyControls,
-            // Override undo/redo to block in online mode
-            undo: () =>
-                !gameState.mode.startsWith('ONLINE') &&
-                historyControls.canUndo &&
-                historyControls.undo(),
-            redo: () =>
-                !gameState.mode.startsWith('ONLINE') &&
-                historyControls.canRedo &&
-                historyControls.redo(),
-            canUndo: !gameState.mode.startsWith('ONLINE') && historyControls.canUndo,
-            canRedo: !gameState.mode.startsWith('ONLINE') && historyControls.canRedo,
-        },
+            historyControls: {
+                ...historyControls,
+                // Override undo/redo to block in online mode
+                undo: () =>
+                    !gameState.mode.startsWith('ONLINE') &&
+                    historyControls.canUndo &&
+                    historyControls.undo(),
+                redo: () =>
+                    !gameState.mode.startsWith('ONLINE') &&
+                    historyControls.canRedo &&
+                    historyControls.redo(),
+                canUndo: !gameState.mode.startsWith('ONLINE') && historyControls.canUndo,
+                canRedo: !gameState.mode.startsWith('ONLINE') && historyControls.canRedo,
+            },
 
-        online: {
-            ...online,
-            latency: online.latency,
-            isUnstable: online.isUnstable,
-        },
-    };
+            online: {
+                ...online,
+                latency: online.latency,
+                isUnstable: online.isUnstable,
+            },
+        }),
+        [gameState, interactions, historyControls, online]
+    );
+
+    return result;
 };

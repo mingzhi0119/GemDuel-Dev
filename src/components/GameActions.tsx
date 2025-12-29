@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, RefreshCw, X, Eye } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GamePhase, BagItem, Buff, GemCoord } from '../types';
 
 interface GameActionsProps {
@@ -30,40 +31,58 @@ export const GameActions: React.FC<GameActionsProps> = ({
 
     return (
         <div
-            className={`flex flex-col gap-4 items-center mt-4 z-50 ${!canInteract ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`flex flex-col gap-4 items-center z-50 justify-start ${!canInteract ? 'opacity-50 pointer-events-none' : ''}`}
         >
-            {(phase === 'RESERVE_WAITING_GEM' || phase === 'PRIVILEGE_ACTION') && (
-                <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <button
-                        onClick={
-                            phase === 'RESERVE_WAITING_GEM'
-                                ? handleCancelReserve
-                                : handleCancelPrivilege
-                        }
-                        className="flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-rose-900/20 transition-all active:scale-95"
+            <AnimatePresence mode="wait">
+                {(phase === 'RESERVE_WAITING_GEM' || phase === 'PRIVILEGE_ACTION') && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="flex gap-4"
                     >
-                        <X size={18} /> Cancel
-                    </button>
-                </div>
-            )}
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={
+                                phase === 'RESERVE_WAITING_GEM'
+                                    ? handleCancelReserve
+                                    : handleCancelPrivilege
+                            }
+                            className="flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-rose-900/20 transition-colors"
+                        >
+                            <X size={18} /> Cancel
+                        </motion.button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {phase === 'IDLE' && (
-                <div className="flex flex-wrap justify-center gap-2 animate-in fade-in duration-500">
+                <div className="flex flex-wrap justify-center gap-2">
                     {/* Confirm Selection (Get Gem) */}
-                    {selectedCount > 0 && (
-                        <button
-                            onClick={handleConfirmTake}
-                            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-all active:scale-95 animate-in fade-in slide-in-from-left-4 duration-300"
-                        >
-                            <Check size={18} /> Confirm
-                        </button>
-                    )}
+                    <AnimatePresence>
+                        {selectedCount > 0 && (
+                            <motion.button
+                                initial={{ opacity: 0, x: -20, scale: 0.8 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={handleConfirmTake}
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-colors"
+                            >
+                                <Check size={18} /> Confirm
+                            </motion.button>
+                        )}
+                    </AnimatePresence>
 
                     {/* Replenish Board */}
-                    <button
+                    <motion.button
+                        layout
+                        whileTap={selectedCount === 0 && bagCount > 0 ? { scale: 0.95 } : {}}
                         onClick={handleReplenish}
                         disabled={bagCount === 0 || phase !== 'IDLE' || selectedCount > 0}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all border active:scale-95
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-colors border
                             ${
                                 bagCount > 0 && phase === 'IDLE' && selectedCount === 0
                                     ? theme === 'dark'
@@ -77,7 +96,7 @@ export const GameActions: React.FC<GameActionsProps> = ({
                     >
                         <RefreshCw size={16} />
                         Refill ({bagCount})
-                    </button>
+                    </motion.button>
                 </div>
             )}
         </div>

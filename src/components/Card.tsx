@@ -131,13 +131,13 @@ export const Card: React.FC<CardProps> = React.memo(
         return (
             <div
                 onClick={handleCardClick}
-                className={`relative ${containerSize} rounded-lg border transition-all duration-200 bg-gradient-to-b ${bgGradient} overflow-hidden group ${className}
+                className={`relative ${containerSize} rounded-lg border transition-colors duration-200 bg-gradient-to-b ${bgGradient} overflow-hidden group ${className}
         ${
             canBuy && !isRoyal
                 ? (theme === 'dark'
                       ? 'border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
                       : 'border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]') +
-                  ' cursor-pointer hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-0'
+                  ' cursor-pointer'
                 : isRoyal
                   ? 'border-yellow-700/50'
                   : (theme === 'dark' ? 'border-slate-600' : 'border-slate-300') +
@@ -145,6 +145,7 @@ export const Card: React.FC<CardProps> = React.memo(
         }
     `}
             >
+                {renderCardFace()}
                 {/* 1. Top Left: Points & Ability */}
                 <div className="absolute top-1 left-1.5 flex flex-row items-center gap-1 pointer-events-none z-10">
                     {Number(card.points) > 0 && (
@@ -219,9 +220,12 @@ export const Card: React.FC<CardProps> = React.memo(
 
                 {/* 5. Royal Badge */}
                 {isRoyal && (
-                    <div className="absolute bottom-2 left-2 pointer-events-none">
-                        <Crown size={royalBadgeSize} className="text-white/20 -rotate-12" />
-                    </div>
+                    <>
+                        <div className="absolute inset-0 bg-yellow-500/10 animate-pulse pointer-events-none z-0" />
+                        <div className="absolute bottom-2 left-2 pointer-events-none z-10">
+                            <Crown size={royalBadgeSize} className="text-white/20 -rotate-12" />
+                        </div>
+                    </>
                 )}
 
                 {/* 6. Reserve Button */}

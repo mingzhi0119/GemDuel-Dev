@@ -1,77 +1,44 @@
-import { useState, useEffect } from 'react';
-import {
-    RotateCcw,
-    BookOpen,
-    Sun,
-    Moon,
-    Users,
-    User,
-    Globe,
-    Copy,
-    CheckCircle2,
-    ArrowLeft,
-    Download,
-    Upload,
-} from 'lucide-react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { RotateCcw, BookOpen, Sun, Moon, Users, ArrowLeft, Download, Upload } from 'lucide-react';
 
 import { PlayerZone } from './components/PlayerZone';
 import { DebugPanel } from './components/DebugPanel';
 import { ResolutionSwitcher } from './components/ResolutionSwitcher';
-import { WinnerModal } from './components/WinnerModal';
 import { Market } from './components/Market';
 import { GameBoard } from './components/GameBoard';
 import { StatusBar } from './components/StatusBar';
 import { GameActions } from './components/GameActions';
 import { ReplayControls } from './components/ReplayControls';
 import { RoyalCourt } from './components/RoyalCourt';
-import { Rulebook } from './components/Rulebook';
 import { TopBar } from './components/TopBar';
 import { DraftScreen } from './components/DraftScreen';
-import { DeckPeekModal } from './components/DeckPeekModal';
+import { WinnerModal } from './components/WinnerModal';
+
+import { UpdateNotification } from './components/UpdateNotification';
+import { OnlineSetup } from './components/OnlineSetup';
+import { GameConfigMenu } from './components/GameConfigMenu';
+
+const Rulebook = lazy(() => import('./components/Rulebook').then((m) => ({ default: m.Rulebook })));
+const DeckPeekModal = lazy(() =>
+    import('./components/DeckPeekModal').then((m) => ({ default: m.DeckPeekModal }))
+);
 
 import { useGameLogic } from './hooks/useGameLogic';
 import { useSettings } from './hooks/useSettings';
 import { GEM_TYPES, BONUS_COLORS } from './constants';
+import { GemColor } from './types';
 
 export default function GemDuelBoard() {
     const [showDebug, setShowDebug] = useState(false);
-    const [updateInfo, setUpdateInfo] = useState<{
-        available: boolean;
-        progress: number;
-        downloaded: boolean;
-    }>({
-        available: false,
-        progress: 0,
-        downloaded: false,
-    });
     const [isReviewing, setIsReviewing] = useState(false);
     const [showRulebook, setShowRulebook] = useState(false);
-    const [gameConfig, setGameConfig] = useState<{ useBuffs: boolean } | null>(null);
     const [onlineSetup, setOnlineSetup] = useState(false);
-    const [roomInput, setRoomInput] = useState('');
-    const [copySuccess, setCopySetup] = useState(false);
     const [isPeekingBoard, setIsPeekingBoard] = useState(false);
+    const [persistentWinner, setPersistentWinner] = useState<GemColor | string | null>(null);
 
     const { resolution, setResolution, settings, RESOLUTION_SETTINGS, theme, setTheme } =
         useSettings();
-
     const { state, handlers, getters, historyControls, online } = useGameLogic(onlineSetup);
-
-    useEffect(() => {
-        if (window.ipcRenderer) {
-            window.ipcRenderer.on('update_available', () => {
-                setUpdateInfo((prev) => ({ ...prev, available: true }));
-            });
-
-            window.ipcRenderer.on('download_progress', (percent: number) => {
-                setUpdateInfo((prev) => ({ ...prev, progress: Math.round(percent) }));
-            });
-
-            window.ipcRenderer.on('update_downloaded', () => {
-                setUpdateInfo((prev) => ({ ...prev, downloaded: true }));
-            });
-        }
-    }, []);
 
     const {
         board,
@@ -101,6 +68,21 @@ export default function GemDuelBoard() {
         extraPrivileges,
     } = state;
 
+    // Track the winner persistently once detected
+    useEffect(() => {
+        if (winner && !persistentWinner) {
+            setPersistentWinner(winner);
+        }
+    }, [winner, persistentWinner]);
+
+    // Reset states when starting a new game
+    useEffect(() => {
+        if (historyControls.historyLength === 0) {
+            setPersistentWinner(null);
+            setIsReviewing(false);
+        }
+    }, [historyControls.historyLength]);
+
     const {
         handleSelfGemClick,
         handleGemClick,
@@ -128,7 +110,6 @@ export default function GemDuelBoard() {
     } = handlers;
 
     const { getPlayerScore, isSelected, getCrownCount, isMyTurn } = getters;
-
     const effectiveGameMode = isReviewing ? 'REVIEW' : winner ? 'GAME_OVER' : phase;
 
     const handleDownloadReplay = () => {
@@ -163,7 +144,6 @@ export default function GemDuelBoard() {
         reader.readAsText(file);
     };
 
-    // --- 0. Online Sync Effect: Auto-start guest game when host starts ---
     useEffect(() => {
         if (
             state.mode !== 'ONLINE_MULTIPLAYER' &&
@@ -175,270 +155,27 @@ export default function GemDuelBoard() {
         }
     }, [state.mode, online.connectionStatus, online.isHost, historyControls.historyLength]);
 
-    // --- 1. Start Screen ---
     if (historyControls.historyLength === 0) {
         if (onlineSetup) {
             return (
-                <div
-                    className={`h-screen w-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500
-                  ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}
-                >
-                    <button
-                        onClick={() => setOnlineSetup(false)}
-                        className="absolute top-8 left-8 flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity"
-                    >
-                        <ArrowLeft size={20} /> Back
-                    </button>
-
-                    <div className="flex flex-col items-center gap-2">
-                        <Globe size={48} className="text-blue-400 animate-pulse" />
-                        <h2 className="text-3xl font-black uppercase tracking-tighter">
-                            Online Nexus
-                        </h2>
-                        <span className="text-xs opacity-50">Powered by WebRTC P2P</span>
-                    </div>
-
-                    <div className="flex flex-col md:flex-row gap-8 w-full max-w-4xl px-8">
-                        {/* Host Section */}
-                        <div
-                            className={`flex-1 p-8 rounded-3xl border-2 transition-all ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'} flex flex-col items-center gap-6 ${!online.isHost && online.connectionStatus === 'connected' ? 'opacity-30 pointer-events-none' : ''}`}
-                        >
-                            <h3 className="text-xl font-bold">Host a Game</h3>
-                            <p className="text-center text-sm opacity-60">
-                                Share your ID with a friend to start a match.
-                            </p>
-
-                            <div
-                                className={`w-full p-4 rounded-xl flex items-center justify-between gap-4 ${theme === 'dark' ? 'bg-black/40' : 'bg-slate-100'}`}
-                            >
-                                <code className="text-lg font-mono font-bold text-blue-400 break-all">
-                                    {online.peerId || 'Generating...'}
-                                </code>
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(online.peerId);
-                                        setCopySetup(true);
-                                        setTimeout(() => setCopySetup(false), 2000);
-                                    }}
-                                    className="p-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 transition-colors"
-                                >
-                                    {copySuccess ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                                </button>
-                            </div>
-
-                            <div className="w-full flex flex-col gap-3">
-                                <div className="flex items-center justify-between px-2">
-                                    <span className="text-xs opacity-60">Connection Status</span>
-                                    <span
-                                        className={`text-xs font-bold uppercase ${online.connectionStatus === 'connected' ? 'text-emerald-400' : online.connectionStatus === 'connecting' ? 'text-amber-400' : 'text-rose-400'}`}
-                                    >
-                                        {online.connectionStatus}
-                                    </span>
-                                </div>
-
-                                {online.connectionStatus === 'connected' ? (
-                                    <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2">
-                                        <span className="text-[10px] uppercase font-black tracking-widest text-center opacity-40 mb-1">
-                                            Select Match Type
-                                        </span>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button
-                                                onClick={() =>
-                                                    startGame('ONLINE_MULTIPLAYER', {
-                                                        useBuffs: false,
-                                                        isHost: true,
-                                                    })
-                                                }
-                                                className="py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs transition-all active:scale-95 shadow-lg"
-                                            >
-                                                Classic
-                                            </button>
-                                            <button
-                                                onClick={() =>
-                                                    startGame('ONLINE_MULTIPLAYER', {
-                                                        useBuffs: true,
-                                                        isHost: true,
-                                                    })
-                                                }
-                                                className="py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-xs transition-all active:scale-95 shadow-lg"
-                                            >
-                                                Roguelike
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="py-4 text-center text-xs opacity-40 italic">
-                                        Waiting for connection...
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Join Section */}
-                        <div
-                            className={`flex-1 p-8 rounded-3xl border-2 transition-all ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'} flex flex-col items-center gap-6`}
-                        >
-                            <h3 className="text-xl font-bold">Join a Game</h3>
-                            <p className="text-center text-sm opacity-60">
-                                Enter your friend's ID to connect to their lobby.
-                            </p>
-
-                            <input
-                                type="text"
-                                placeholder="Paste ID here..."
-                                value={roomInput}
-                                onChange={(e) => setRoomInput(e.target.value)}
-                                className={`w-full p-4 rounded-xl font-mono text-center outline-none border-2 transition-all
-                                    ${theme === 'dark' ? 'bg-black/40 border-slate-800 focus:border-amber-500' : 'bg-slate-100 border-slate-200 focus:border-amber-500'}`}
-                            />
-
-                            <button
-                                onClick={() => online.connectToPeer(roomInput)}
-                                disabled={!roomInput || online.connectionStatus === 'connected'}
-                                className={`w-full py-4 rounded-2xl font-black uppercase tracking-wider transition-all
-                                    ${
-                                        roomInput && online.connectionStatus !== 'connected'
-                                            ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-xl shadow-amber-900/20 active:scale-95'
-                                            : 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                    }`}
-                            >
-                                {online.connectionStatus === 'connecting'
-                                    ? 'Connecting...'
-                                    : 'Connect to Host'}
-                            </button>
-
-                            {online.connectionStatus === 'connected' && (
-                                <div className="text-emerald-400 text-sm font-bold flex flex-col items-center gap-2 animate-bounce mt-4">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle2 size={16} /> Connected!
-                                    </div>
-                                    <span className="text-[10px] uppercase opacity-60">
-                                        Host is selecting mode...
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        if (!gameConfig) {
-            return (
-                <div
-                    className={`h-screen w-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500
-                  ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}
-              `}
-                >
-                    <div className="flex flex-col items-center gap-2 animate-in slide-in-from-bottom-4 duration-700">
-                        <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-gradient-to-br from-amber-400 to-amber-600 bg-clip-text text-transparent drop-shadow-lg">
-                            GEM DUEL
-                        </h1>
-                        <span className="text-sm uppercase tracking-widest opacity-60">
-                            Tactical Reimagined
-                        </span>
-                    </div>
-
-                    <div className="flex flex-col md:flex-row gap-6 mt-8">
-                        <button
-                            onClick={() => setGameConfig({ useBuffs: false })}
-                            className="group relative w-64 h-40 rounded-2xl border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden
-                              border-slate-300 hover:border-blue-500 bg-white/5 hover:bg-blue-500/10"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <span className="text-2xl font-bold">Classic</span>
-                            <span className="text-xs opacity-70 max-w-[80%] text-center">
-                                Standard rules. Pure strategy.
-                            </span>
-                        </button>
-
-                        <button
-                            onClick={() => setGameConfig({ useBuffs: true })}
-                            className="group relative w-64 h-40 rounded-2xl border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden
-                              border-slate-300 hover:border-purple-500 bg-white/5 hover:bg-purple-500/10"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="flex items-center gap-2">
-                                <span className="text-2xl font-bold">Roguelike</span>
-                                <span className="bg-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                                    NEW
-                                </span>
-                            </div>
-                            <span className="text-xs opacity-70 max-w-[80%] text-center">
-                                Random starting buffs & distinct playstyles.
-                            </span>
-                        </button>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-4 mt-8">
-                        <div className="h-px w-64 bg-gradient-to-r from-transparent via-slate-500/20 to-transparent" />
-                        <button
-                            onClick={() => setOnlineSetup(true)}
-                            className="group flex items-center gap-3 px-8 py-4 rounded-2xl border-2 border-blue-500/30 hover:border-blue-500 bg-blue-500/5 hover:bg-blue-500/10 transition-all hover:scale-105 active:scale-95"
-                        >
-                            <Globe className="text-blue-400 group-hover:rotate-12 transition-transform" />
-                            <div className="flex flex-col items-start">
-                                <span className="text-lg font-bold">Online Duel</span>
-                                <span className="text-[10px] opacity-50 uppercase tracking-widest font-black">
-                                    Remote Multiplayer
-                                </span>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div className="absolute bottom-8 text-xs opacity-30">
-                        Select a mode to begin
-                    </div>
-                </div>
+                <OnlineSetup
+                    onBack={() => setOnlineSetup(false)}
+                    online={online}
+                    startGame={startGame}
+                    theme={theme}
+                />
             );
         }
 
         return (
-            <div
-                className={`h-screen w-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500
-              ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}
-          `}
-            >
-                <div className="flex flex-col items-center gap-2">
-                    <h2 className="text-2xl font-bold uppercase tracking-widest opacity-80">
-                        Select Opponent
-                    </h2>
-                    <span className="text-xs opacity-50">
-                        {gameConfig.useBuffs ? 'Roguelike Mode' : 'Classic Mode'}
-                    </span>
-                </div>
-
-                <div className="flex flex-col md:flex-row gap-6 mt-4">
-                    <button
-                        onClick={() => startGame('LOCAL_PVP', { useBuffs: gameConfig.useBuffs })}
-                        className="group relative w-64 h-40 rounded-2xl border-2 border-slate-300 hover:border-emerald-500 bg-white/5 hover:bg-emerald-500/10 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden"
-                    >
-                        <Users size={40} className="text-emerald-500" />
-                        <span className="text-xl font-bold">Local PvP</span>
-                        <span className="text-[10px] opacity-60">Play with a friend locally</span>
-                    </button>
-
-                    <button
-                        onClick={() => startGame('PVE', { useBuffs: gameConfig.useBuffs })}
-                        className="group relative w-64 h-40 rounded-2xl border-2 border-slate-300 hover:border-amber-500 bg-white/5 hover:bg-amber-500/10 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden"
-                    >
-                        <User size={40} className="text-amber-500" />
-                        <span className="text-xl font-bold">vs AI (Solo)</span>
-                        <span className="text-[10px] opacity-60">Challenge the Gem Bot</span>
-                    </button>
-                </div>
-
-                <button
-                    onClick={() => setGameConfig(null)}
-                    className="text-xs underline opacity-40 hover:opacity-100 transition-opacity mt-4"
-                >
-                    Back to Mode Selection
-                </button>
-            </div>
+            <GameConfigMenu
+                onOnlineSetup={() => setOnlineSetup(true)}
+                onStartGame={startGame}
+                theme={theme}
+            />
         );
     }
 
-    // --- 2. Draft Phase ---
     if (phase === 'DRAFT_PHASE') {
         return (
             <DraftScreen
@@ -455,38 +192,12 @@ export default function GemDuelBoard() {
         );
     }
 
-    // --- 3. Main Game Interface ---
     return (
         <div
-            className={`h-screen w-screen font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe
-        ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}
-    `}
+            className={`h-screen w-screen font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}
         >
-            {/* Update Notification */}
-            {updateInfo.available && (
-                <div className="fixed bottom-4 left-4 z-[200] bg-slate-900 border border-blue-500/50 p-4 rounded-xl shadow-2xl animate-in slide-in-from-left duration-500 min-w-[240px]">
-                    <h4 className="text-blue-400 font-bold text-sm mb-1 flex items-center gap-2">
-                        <Globe size={14} className="animate-pulse" />
-                        {updateInfo.downloaded ? 'Update Ready' : 'Downloading Update...'}
-                    </h4>
-                    {!updateInfo.downloaded ? (
-                        <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
-                            <div
-                                className="bg-blue-500 h-full transition-all duration-300"
-                                style={{ width: `${updateInfo.progress}%` }}
-                            />
-                        </div>
-                    ) : (
-                        <button
-                            onClick={() => window.ipcRenderer.send('restart_app')}
-                            className="w-full mt-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors"
-                        >
-                            Restart Now
-                        </button>
-                    )}
-                </div>
-            )}
-            {/* 1. Top Global Status Bar */}
+            <UpdateNotification />
+
             <TopBar
                 p1Score={getPlayerScore('p1')}
                 p1Crowns={getCrownCount('p1')}
@@ -500,7 +211,6 @@ export default function GemDuelBoard() {
                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
             />
 
-            {/* Floating Controls (Z-Index High) */}
             <div className="fixed top-24 right-4 z-[200] flex flex-col gap-2">
                 <ResolutionSwitcher
                     settings={settings}
@@ -510,24 +220,21 @@ export default function GemDuelBoard() {
                     theme={theme}
                 />
 
-                {/* Replay Actions */}
                 <div className="flex flex-col gap-2 border-y border-slate-700/30 py-2 my-1">
                     <button
                         onClick={handleDownloadReplay}
-                        className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center
-                            ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-600 border-slate-300'}
-                        `}
+                        className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-600 border-slate-300'}`}
                         title="Download Replay"
+                        aria-label="Download Replay"
                     >
                         <Download size={16} />
                         <span className="text-[10px] font-bold hidden md:inline">Save</span>
                     </button>
 
                     <label
-                        className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center cursor-pointer
-                            ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-600 border-slate-300'}
-                        `}
+                        className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center cursor-pointer ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-600 border-slate-300'}`}
                         title="Upload Replay"
+                        aria-label="Upload Replay"
                     >
                         <Upload size={16} />
                         <span className="text-[10px] font-bold hidden md:inline">Load</span>
@@ -542,20 +249,17 @@ export default function GemDuelBoard() {
 
                 <button
                     onClick={() => setShowRulebook(true)}
-                    className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center
-                ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-white border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-800 border-slate-300'}
-            `}
+                    className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-white border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-800 border-slate-300'}`}
+                    aria-label="Open Rules"
                 >
                     <BookOpen size={16} />
                     <span className="text-xs font-bold hidden md:inline">Rules</span>
                 </button>
 
-                {/* Theme Toggle Button */}
                 <button
                     onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-                    className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center
-                ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-white border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-800 border-slate-300'}
-            `}
+                    className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-white border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-800 border-slate-300'}`}
+                    aria-label="Toggle Theme"
                 >
                     {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
                     <span className="text-xs font-bold hidden md:inline">
@@ -564,57 +268,59 @@ export default function GemDuelBoard() {
                 </button>
             </div>
 
-            {/* Debug Button Guard: Solo AI keeps it, Local PvP hides after start, Online always hides */}
-            {showDebug ||
-            (state.mode !== 'ONLINE_MULTIPLAYER' &&
-                (state.mode === 'PVE' || historyControls.historyLength === 0)) ? (
+            {(showDebug ||
+                (state.mode !== 'ONLINE_MULTIPLAYER' &&
+                    (state.mode === 'PVE' || historyControls.historyLength === 0))) && (
                 <button
                     onClick={() => setShowDebug(!showDebug)}
-                    className={`fixed top-24 left-4 z-[100] p-2 rounded border text-[10px] transition-colors
-                ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-red-900/60 text-slate-400 border-slate-700' : 'bg-white/80 hover:bg-red-100 text-slate-600 border-slate-300'}
-            `}
+                    className={`fixed top-24 left-4 z-[100] p-2 rounded border text-[10px] transition-colors ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-red-900/60 text-slate-400 border-slate-700' : 'bg-white/80 hover:bg-red-100 text-slate-600 border-slate-300'}`}
                 >
                     {showDebug ? 'CLOSE DEBUG' : 'OPEN DEBUG'}
                 </button>
-            ) : null}
+            )}
 
-            {showDebug &&
-                state.mode !== 'ONLINE_MULTIPLAYER' &&
-                (state.mode === 'PVE' || historyControls.historyLength === 0) && (
-                    <div className="fixed left-4 top-36 z-[90] flex flex-col gap-4 animate-in slide-in-from-left duration-300">
-                        <DebugPanel
-                            player="p1"
-                            onAddCrowns={() => handleDebugAddCrowns('p1')}
-                            onAddPoints={() => handleDebugAddPoints('p1')}
-                            onAddPrivilege={() => handleDebugAddPrivilege('p1')}
-                            onForceRoyal={() => handleForceRoyal()}
-                            theme={theme}
-                        />
-                        <DebugPanel
-                            player="p2"
-                            onAddCrowns={() => handleDebugAddCrowns('p2')}
-                            onAddPoints={() => handleDebugAddPoints('p2')}
-                            onAddPrivilege={() => handleDebugAddPrivilege('p2')}
-                            onForceRoyal={() => handleForceRoyal()}
-                            theme={theme}
-                        />
-                    </div>
-                )}
-
-            {/* Modals */}
-            {showRulebook && <Rulebook onClose={() => setShowRulebook(false)} theme={theme} />}
-
-            {/* Only show Peek Modal if the local player is the one who initiated it */}
-            {activeModal?.type === 'PEEK' &&
-                (state.mode !== 'ONLINE_MULTIPLAYER' ||
-                    activeModal.data?.initiator === (online.isHost ? 'p1' : 'p2')) && (
-                    <DeckPeekModal
-                        isOpen={true}
-                        cards={activeModal.data.cards}
-                        onClose={handleCloseModal}
+            {showDebug && state.mode !== 'ONLINE_MULTIPLAYER' && (
+                <div className="fixed left-4 top-36 z-[90] flex flex-col gap-4 animate-in slide-in-from-left duration-300">
+                    <DebugPanel
+                        player="p1"
+                        onAddCrowns={() => handleDebugAddCrowns('p1')}
+                        onAddPoints={() => handleDebugAddPoints('p1')}
+                        onAddPrivilege={() => handleDebugAddPrivilege('p1')}
+                        onForceRoyal={() => handleForceRoyal()}
                         theme={theme}
                     />
-                )}
+                    <DebugPanel
+                        player="p2"
+                        onAddCrowns={() => handleDebugAddCrowns('p2')}
+                        onAddPoints={() => handleDebugAddPoints('p2')}
+                        onAddPrivilege={() => handleDebugAddPrivilege('p2')}
+                        onForceRoyal={() => handleForceRoyal()}
+                        theme={theme}
+                    />
+                </div>
+            )}
+
+            <Suspense fallback={<div className="fixed inset-0 z-[200] bg-black/50" />}>
+                {showRulebook && <Rulebook onClose={() => setShowRulebook(false)} theme={theme} />}
+
+                {activeModal?.type === 'PEEK' &&
+                    (state.mode !== 'ONLINE_MULTIPLAYER' ||
+                        activeModal.data?.initiator === (online.isHost ? 'p1' : 'p2')) && (
+                        <DeckPeekModal
+                            isOpen={true}
+                            cards={activeModal.data.cards}
+                            onClose={handleCloseModal}
+                            theme={theme}
+                        />
+                    )}
+            </Suspense>
+
+            {persistentWinner && !isReviewing && (
+                <WinnerModal
+                    winner={persistentWinner as PlayerKey}
+                    onReview={() => setIsReviewing(true)}
+                />
+            )}
 
             {phase === 'SELECT_CARD_COLOR' && (
                 <div
@@ -631,6 +337,7 @@ export default function GemDuelBoard() {
                                         key={color}
                                         onClick={() => handleSelectBonusColor(color)}
                                         className={`w-16 h-16 rounded-full bg-gradient-to-br ${GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES].color} border-2 border-white/50 shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:scale-110 active:scale-95 transition-all`}
+                                        aria-label={`Select ${color} color`}
                                     />
                                 ))}
                             </div>
@@ -653,9 +360,7 @@ export default function GemDuelBoard() {
                     )}
                 </div>
             )}
-            {winner && !isReviewing && (
-                <WinnerModal winner={winner} onReview={() => setIsReviewing(true)} />
-            )}
+
             {isReviewing && (
                 <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4">
                     <button
@@ -668,7 +373,7 @@ export default function GemDuelBoard() {
             )}
 
             {/* 2. Middle Game Area (Centered) */}
-            <div className="flex-1 flex items-center justify-center min-h-0 relative z-10 px-4 pt-16 lg:pt-20 pb-4 overflow-hidden">
+            <div className="flex-1 flex items-center justify-center min-h-0 relative z-30 px-4 pt-16 lg:pt-20 pb-4">
                 <div
                     className={`flex flex-col lg:flex-row gap-4 lg:gap-8 xl:gap-16 items-center justify-center transform ${settings.boardScale} lg:scale-100 origin-center lg:origin-center transition-all duration-500`}
                 >
@@ -694,11 +399,15 @@ export default function GemDuelBoard() {
                     </div>
 
                     <div className="relative flex flex-col items-center shrink-0">
-                        <StatusBar
-                            errorMsg={errorMsg}
-                            isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
-                            connectionStatus={online.connectionStatus}
-                        />
+                        {/* Fixed height container for Status/Online info */}
+                        <div className="h-12 w-full flex items-center justify-center">
+                            <StatusBar
+                                errorMsg={errorMsg}
+                                isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
+                                connectionStatus={online.connectionStatus}
+                            />
+                        </div>
+
                         <GameBoard
                             board={board}
                             bag={bag}
@@ -710,17 +419,21 @@ export default function GemDuelBoard() {
                             theme={theme}
                             canInteract={isMyTurn}
                         />
-                        <GameActions
-                            handleReplenish={handleReplenish}
-                            bag={bag}
-                            phase={effectiveGameMode}
-                            handleConfirmTake={handleConfirmTake}
-                            selectedGems={selectedGems}
-                            handleCancelReserve={handleCancelReserve}
-                            handleCancelPrivilege={handleCancelPrivilege}
-                            theme={theme}
-                            canInteract={isMyTurn}
-                        />
+
+                        {/* Fixed height container for actions to prevent board jumping */}
+                        <div className="h-24 w-full flex items-start justify-center pt-4">
+                            <GameActions
+                                handleReplenish={handleReplenish}
+                                bag={bag}
+                                phase={effectiveGameMode}
+                                handleConfirmTake={handleConfirmTake}
+                                selectedGems={selectedGems}
+                                handleCancelReserve={handleCancelReserve}
+                                handleCancelPrivilege={handleCancelPrivilege}
+                                theme={theme}
+                                canInteract={isMyTurn}
+                            />
+                        </div>
                     </div>
 
                     <div
@@ -734,9 +447,7 @@ export default function GemDuelBoard() {
                             canInteract={isMyTurn}
                         />
                         <div
-                            className={`flex flex-col gap-3 items-center p-2 lg:p-3 rounded-2xl border backdrop-blur-sm transition-colors duration-500
-                      ${theme === 'dark' ? 'bg-slate-900/40 border-slate-800/50' : 'bg-white/40 border-slate-200/50'}
-                  `}
+                            className={`flex flex-col gap-3 items-center p-2 lg:p-3 rounded-2xl border backdrop-blur-sm transition-colors duration-500 ${theme === 'dark' ? 'bg-slate-900/40 border-slate-800/50' : 'bg-white/40 border-slate-200/50'}`}
                         >
                             <ReplayControls
                                 undo={historyControls.undo}
@@ -756,13 +467,9 @@ export default function GemDuelBoard() {
                 </div>
             </div>
 
-            {/* 3. Bottom Dashboards (Dual Player Panels) */}
             <div
-                className={`${settings.zoneHeight} shrink-0 flex w-full border-t backdrop-blur-md relative z-20 transition-all duration-500
-          ${theme === 'dark' ? 'border-slate-800 bg-slate-950/80' : 'border-slate-300 bg-slate-100/80'}
-      `}
+                className={`${settings.zoneHeight} shrink-0 flex w-full border-t backdrop-blur-md relative z-20 transition-all duration-500 ${theme === 'dark' ? 'border-slate-800 bg-slate-950/80' : 'border-slate-300 bg-slate-100/80'}`}
             >
-                {/* Player 1 Dashboard (Left) */}
                 <div
                     className={`flex-1 border-r relative ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}`}
                 >
@@ -795,7 +502,6 @@ export default function GemDuelBoard() {
                     </div>
                 </div>
 
-                {/* Player 2 Dashboard (Right) */}
                 <div className="flex-1 relative">
                     <div
                         className={`w-full h-full transform ${settings.zoneScale} origin-center lg:scale-100`}

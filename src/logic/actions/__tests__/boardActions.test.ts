@@ -9,9 +9,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { handleDiscardGem } from '../boardActions';
 import { INITIAL_STATE_SKELETON } from '../../initialState';
 import { GEM_TYPES } from '../../../constants';
+import { GameState } from '../../../types';
 
 describe('boardActions', () => {
-    let testState;
+    let testState: GameState;
 
     beforeEach(() => {
         // Create a fresh copy of initial state for each test

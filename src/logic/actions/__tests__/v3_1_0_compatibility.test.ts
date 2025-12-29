@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { validateGemSelection } from '../../validators';
 import { calculateTransaction } from '../../../utils';
+import { GemColor } from '../../../types';
 
 describe('v3.1.0 Compatibility Fixes', () => {
     // ========== 修复 1: Gap Detection ==========
@@ -205,7 +206,7 @@ describe('v3.1.0 Compatibility Fixes', () => {
             ];
 
             // 模拟 getColorPoints 逻辑（在 turnManager 中）
-            const getColorPoints = (color) => {
+            const getColorPoints = (color: GemColor) => {
                 return mockTableau
                     .filter((c) => c.bonusColor === color && !c.isBuff)
                     .reduce((a, c) => a + c.points, 0);

@@ -1,6 +1,38 @@
+import React, { useEffect, useState, useRef } from 'react';
 import { Crown, Trophy } from 'lucide-react';
+import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '../types';
 import { BUFFS } from '../constants'; // Added for reconstruction
+
+interface AnimatedScoreProps {
+    value: number;
+    className?: string;
+}
+
+const AnimatedScore: React.FC<AnimatedScoreProps> = ({ value, className }) => {
+    const springValue = useSpring(value, { stiffness: 50, damping: 30 });
+    const displayValue = useTransform(springValue, (latest) => Math.floor(latest));
+    const [isPulsing, setIsPulsing] = useState(false);
+    const prevValue = useRef(value);
+
+    useEffect(() => {
+        springValue.set(value);
+        if (value > prevValue.current) {
+            setIsPulsing(true);
+            setTimeout(() => setIsPulsing(false), 600);
+        }
+        prevValue.current = value;
+    }, [value, springValue]);
+
+    return (
+        <motion.span
+            animate={isPulsing ? { scale: [1, 1.4, 1], color: ['#fff', '#fbbf24', '#fff'] } : {}}
+            className={className}
+        >
+            <motion.span>{displayValue}</motion.span>
+        </motion.span>
+    );
+};
 
 interface TopBarProps {
     p1Score: number;
@@ -54,21 +86,21 @@ export const TopBar: React.FC<TopBarProps> = ({
         `}
         >
             {/* Turn Indicator (Online Only) */}
-            {isOnline && (
-                <div
-                    className={`absolute top-full left-1/2 -translate-x-1/2 -mt-3 px-4 py-1 rounded-b-xl shadow-lg border-x border-b text-[10px] font-black uppercase tracking-widest transition-all duration-500 z-50
-                    ${
-                        isMyTurn
-                            ? 'bg-emerald-500 text-white border-emerald-600 translate-y-0 opacity-100 animate-pulse'
-                            : theme === 'dark'
-                              ? 'bg-slate-800 text-slate-500 border-slate-700 translate-y-[-50%] opacity-0'
-                              : 'bg-slate-200 text-slate-400 border-slate-300 translate-y-[-50%] opacity-0'
-                    }
-                `}
-                >
-                    Your Turn
-                </div>
-            )}
+            <AnimatePresence>
+                {isOnline && isMyTurn && (
+                    <motion.div
+                        initial={{ y: -50, opacity: 0, x: '-50%' }}
+                        animate={{ y: 0, opacity: 1, x: '-50%' }}
+                        exit={{ y: -50, opacity: 0, x: '-50%' }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                        className="absolute top-full left-1/2 -mt-3 px-6 py-1.5 rounded-b-xl shadow-lg border-x border-b bg-emerald-500 border-emerald-600 z-50 flex items-center gap-2"
+                    >
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white animate-pulse">
+                            Your Turn
+                        </span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Player 1 Overview (Left) */}
             <div
@@ -82,9 +114,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                         className={`flex items-center gap-1 lg:gap-2 ${isP1Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
                     >
                         <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
-                        <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
-                            {p1Score}
-                        </span>
+                        <AnimatedScore
+                            value={p1Score}
+                            className="text-xl lg:text-4xl font-black drop-shadow-lg"
+                        />
                         <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
                             /{p1Goals.points}
                         </span>
@@ -146,9 +179,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                         className={`flex items-center gap-1 lg:gap-2 ${isP2Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
                     >
                         <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
-                        <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
-                            {p2Score}
-                        </span>
+                        <AnimatedScore
+                            value={p2Score}
+                            className="text-xl lg:text-4xl font-black drop-shadow-lg"
+                        />
                         <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
                             /{p2Goals.points}
                         </span>

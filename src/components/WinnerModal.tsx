@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Trophy, Eye } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { PlayerKey } from '../types';
 
 interface WinnerModalProps {
@@ -8,6 +9,35 @@ interface WinnerModalProps {
 }
 
 export const WinnerModal: React.FC<WinnerModalProps> = ({ winner, onReview }) => {
+    useEffect(() => {
+        if (winner) {
+            const duration = 3000;
+            const end = Date.now() + duration;
+
+            const frame = () => {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#34d399', '#ffbbf24', '#f472b6'],
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#34d399', '#ffbbf24', '#f472b6'],
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            };
+            frame();
+        }
+    }, [winner]);
+
     if (!winner) return null;
 
     return (

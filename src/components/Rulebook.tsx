@@ -45,6 +45,7 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                         </button>
                         <button
                             onClick={onClose}
+                            aria-label="Close Rules"
                             className={`${theme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'} transition-colors`}
                         >
                             <X size={24} />

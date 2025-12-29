@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, Layers, Scroll, Swords, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GEM_TYPES, BONUS_COLORS, BUFFS } from '../constants';
 import { GemIcon } from './GemIcon';
 import { Card } from './Card';
-import { FloatingText } from './VisualFeedback';
+import { FloatingText, FloatingGem } from './VisualFeedback';
 import { BUFF_STYLES } from '../styles/buffs';
+import { cn } from '../utils';
 import {
     PlayerKey,
     GemInventory,
@@ -138,6 +140,72 @@ interface PlayerZoneProps {
     crowns: number;
 }
 
+interface StackOverlayProps {
+    isOpen: boolean;
+    color: string;
+    cards: CardType[];
+    onClose: () => void;
+    theme: 'light' | 'dark';
+}
+
+const StackOverlay: React.FC<StackOverlayProps> = ({ isOpen, color, cards, onClose, theme }) => {
+    if (!isOpen) return null;
+    const type = GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES] || GEM_TYPES.NULL;
+
+    const colorMap: Record<string, string> = {
+        blue: '#60a5fa', // blue-400
+        white: '#f1f5f9', // slate-100
+        green: '#34d399', // emerald-400
+        black: '#94a3b8', // slate-400
+        red: '#f87171', // red-400
+        pearl: '#f472b6', // pink-400
+        gold: '#fbbf24', // amber-400
+    };
+
+    const textColor = colorMap[type.id] || '#94a3b8';
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={`absolute inset-0 z-[100] rounded-2xl flex flex-col overflow-hidden shadow-inner ${theme === 'dark' ? 'bg-slate-900/95' : 'bg-white/95'}`}
+        >
+            {/* Color Label */}
+            <div className="absolute top-3 left-4 z-[110] flex items-center gap-2">
+                <span
+                    className="text-sm font-black uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm"
+                    style={{ color: textColor }}
+                >
+                    Color: {type.label}
+                </span>
+            </div>
+
+            <div className="absolute top-2 right-2 z-[110]">
+                <button
+                    onClick={onClose}
+                    className={`p-2 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 ${theme === 'dark' ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}
+                >
+                    <Shield size={16} className="rotate-45" />
+                </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 flex flex-wrap items-center justify-center gap-4">
+                {cards.map((card, i) => (
+                    <motion.div
+                        key={card.id || i}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.2, delay: i * 0.03 }}
+                    >
+                        <Card card={card} canBuy={false} theme={theme} size="default" />
+                    </motion.div>
+                ))}
+            </div>
+        </motion.div>
+    );
+};
+
 export const PlayerZone: React.FC<PlayerZoneProps> = ({
     player,
     inventory,
@@ -158,6 +226,9 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     theme,
 }) => {
     const safeCards = Array.isArray(cards) ? cards : [];
+    const [selectedStack, setSelectedStack] = useState<{ color: string; cards: CardType[] } | null>(
+        null
+    );
 
     // --- Visual Feedback Logic ---
     interface FeedbackItem {
@@ -170,10 +241,9 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     const [isExtortionEffect, setIsExtortionEffect] = useState(false);
     const lastSeenFeedbackUid = useRef<string | null>(null);
 
+    // Only display stacks for valid gem colors.
+    // Pure point cards (gray) are direct score contributions and not stacked visually.
     const displayColors = [...BONUS_COLORS];
-    if (safeCards.some((c) => c.bonusColor === 'null')) {
-        displayColors.push('null' as GemColor);
-    }
 
     useEffect(() => {
         if (lastFeedback && lastFeedback.uid !== lastSeenFeedbackUid.current) {
@@ -228,6 +298,18 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
         ${isExtortionEffect ? 'ring-4 ring-purple-500 bg-purple-500/10 animate-pulse' : ''}
     `}
         >
+            <AnimatePresence>
+                {selectedStack && (
+                    <StackOverlay
+                        isOpen={true}
+                        color={selectedStack.color}
+                        cards={selectedStack.cards}
+                        onClose={() => setSelectedStack(null)}
+                        theme={theme}
+                    />
+                )}
+            </AnimatePresence>
+
             {/* Module 1: Identity & Privileges */}
             <div
                 className={`flex flex-col gap-3 min-w-[80px] shrink-0 items-center justify-center border-r pr-4 transition-colors duration-500
@@ -306,7 +388,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                 {/* Gems Row */}
                 <div className="flex gap-3 justify-center">
                     {(Object.values(GEM_TYPES) as GemTypeObject[])
-                        .filter((g) => g.id !== 'empty' && g.id !== 'Neutral') // Neutral is for card bg only
+                        .filter((g) => g.id !== 'empty') // Neutral is for card bg only
                         .map((gem) => {
                             const count = inventory[gem.id as GemColor] || 0;
                             const isClickable =
@@ -319,15 +401,30 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                     onClick={() => isClickable && onGemClick && onGemClick(gem.id)}
                                     className={`relative transition-all group ${isClickable ? 'cursor-pointer hover:scale-110 active:scale-95 ring-2 ring-rose-500 rounded-full' : ''}`}
                                 >
-                                    {feedbacks
-                                        .filter((f) => f.type === gem.id)
-                                        .map((f) => (
-                                            <FloatingText
-                                                key={f.id}
-                                                quantity={f.quantity}
-                                                label={f.label}
-                                            />
-                                        ))}
+                                    <AnimatePresence>
+                                        {feedbacks
+                                            .filter((f) => f.type === gem.id)
+                                            .map((f) =>
+                                                // If the label is a Gem Color (e.g. 'Blue'), show FloatingGem
+                                                // Otherwise show FloatingText (e.g. for text-based feedback if any, though mostly colors now)
+                                                // Actually, let's prefer FloatingGem for valid gem types
+                                                Object.keys(GEM_TYPES)
+                                                    .map((k) => k.toLowerCase())
+                                                    .includes(f.type) ? (
+                                                    <FloatingGem
+                                                        key={f.id}
+                                                        type={f.type}
+                                                        count={parseInt(f.quantity)}
+                                                    />
+                                                ) : (
+                                                    <FloatingText
+                                                        key={f.id}
+                                                        quantity={f.quantity}
+                                                        label={f.label}
+                                                    />
+                                                )
+                                            )}
+                                    </AnimatePresence>
                                     <GemIcon
                                         type={gem}
                                         size="w-10 h-10"
@@ -352,41 +449,110 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                             <div
                                 key={color}
                                 className="flex flex-col items-center gap-1 min-w-[32px]"
+                                onClick={() =>
+                                    stats.cards.length > 0 &&
+                                    setSelectedStack({ color, cards: stats.cards })
+                                }
                             >
-                                <div className="relative w-14 h-20 group/stack">
+                                <motion.div
+                                    animate={stats.cards.length > 0 ? { scale: [1, 1.1, 1] } : {}}
+                                    key={stats.cards.length}
+                                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                                    className="relative w-[72px] h-[96px] group/stack cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                >
                                     {stats.cards.length > 0 ? (
                                         stats.cards.map((card: CardType, idx: number) => (
                                             <div
                                                 key={idx}
-                                                className={`absolute w-14 h-20 rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm flex items-center justify-center transition-all duration-200 z-10`}
+                                                className="absolute inset-0 z-10"
                                                 style={{
                                                     top: `${idx * -2}px`,
                                                     left: `${idx * 1}px`,
                                                 }}
                                             >
-                                                {card.points > 0 && (
-                                                    <div className="absolute top-0.5 right-0.5 px-0.5 rounded-sm bg-black/30 backdrop-blur-[1px] flex items-center justify-center">
-                                                        <span className="text-[12pt] font-black text-white leading-none drop-shadow-md">
-                                                            {card.points}
-                                                        </span>
-                                                    </div>
+                                                {/* Only the top card is fully rendered, but we keep the structure for stacking */}
+                                                {idx === stats.cards.length - 1 ? (
+                                                    <Card
+                                                        card={card}
+                                                        canBuy={false}
+                                                        size="small"
+                                                        theme={theme}
+                                                        className="shadow-md"
+                                                    />
+                                                ) : (
+                                                    <div
+                                                        className={`w-[72px] h-[96px] rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm transition-all duration-200 opacity-40`}
+                                                    />
                                                 )}
+
+                                                {/* Global Score Indicator (Center of the top card) */}
+                                                {idx === stats.cards.length - 1 &&
+                                                    stats.points > 0 && (
+                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                                                            <motion.div
+                                                                animate={
+                                                                    stats.points >= 7
+                                                                        ? {
+                                                                              scale: [1, 1.1, 1],
+                                                                              filter: [
+                                                                                  'drop-shadow(0 0 2px #fbbf24)',
+                                                                                  'drop-shadow(0 0 8px #f59e0b)',
+                                                                                  'drop-shadow(0 0 2px #fbbf24)',
+                                                                              ],
+                                                                          }
+                                                                        : {}
+                                                                }
+                                                                transition={{
+                                                                    duration: 2,
+                                                                    repeat: Infinity,
+                                                                    ease: 'easeInOut',
+                                                                }}
+                                                                className={cn(
+                                                                    'px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-[2px] border shadow-xl transition-colors',
+                                                                    stats.points >= 7
+                                                                        ? 'border-amber-400 shadow-amber-500/20'
+                                                                        : 'border-white/20'
+                                                                )}
+                                                            >
+                                                                <span
+                                                                    className={cn(
+                                                                        'text-sm font-black drop-shadow-md',
+                                                                        stats.points >= 7
+                                                                            ? 'text-amber-400'
+                                                                            : 'text-amber-200/90'
+                                                                    )}
+                                                                >
+                                                                    {stats.points}
+                                                                </span>
+                                                            </motion.div>
+                                                        </div>
+                                                    )}
+
+                                                {/* Global Bonus Indicator (Bottom Right of the top card) */}
+                                                {idx === stats.cards.length - 1 &&
+                                                    stats.bonusCount > 0 && (
+                                                        <div className="absolute -bottom-2 -right-2 z-40">
+                                                            <div
+                                                                className={`px-1.5 py-0.5 rounded-full border shadow-lg flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-slate-800 border-slate-300'}`}
+                                                            >
+                                                                <span className="text-[10px] font-black">
+                                                                    {stats.bonusCount}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                             </div>
                                         ))
                                     ) : (
                                         <div
-                                            className={`w-14 h-20 rounded border ${theme === 'dark' ? 'border-slate-800 bg-slate-900/20' : 'border-slate-300 bg-slate-200/20'}`}
-                                        ></div>
-                                    )}
-
-                                    {stats.bonusCount > 0 && color !== 'null' && (
-                                        <div
-                                            className={`absolute -bottom-2 -right-2 text-[9px] font-bold px-1 rounded-full border z-20 shadow-md flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-slate-800 border-slate-300'}`}
+                                            className={`w-[72px] h-[96px] rounded border border-dashed flex items-center justify-center ${theme === 'dark' ? 'border-slate-800 bg-slate-900/20' : 'border-slate-300 bg-slate-200/20'}`}
                                         >
-                                            {stats.bonusCount}
+                                            <div
+                                                className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} opacity-20`}
+                                            />
                                         </div>
                                     )}
-                                </div>
+                                </motion.div>
                             </div>
                         );
                     })}

@@ -1,7 +1,7 @@
 {
     "name": "gem-duel",
     "private": true,
-    "version": "5.1.0",
+    "version": "5.2.0-pre.1",
     "description": "A competitive strategy gem-collecting game built with React and Electron.",
     "author": "Mingzhi",
     "main": "electron/main.js",
@@ -53,13 +53,20 @@
         ]
     },
     "dependencies": {
+        "@types/canvas-confetti": "^1.9.0",
+        "canvas-confetti": "^1.9.4",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
         "electron-is-dev": "^3.0.1",
         "electron-updater": "^6.6.2",
+        "framer-motion": "^12.23.26",
         "immer": "^11.1.0",
         "lucide-react": "^0.479.0",
         "peerjs": "^1.5.5",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
+        "tailwind-merge": "^3.4.0",
+        "tailwindcss-animate": "^1.0.7",
         "use-immer": "^0.11.0"
     },
     "devDependencies": {

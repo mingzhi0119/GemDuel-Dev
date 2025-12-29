@@ -40,6 +40,7 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
                     </h2>
                     <button
                         onClick={onClose}
+                        aria-label="Close Modal"
                         className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
                     >
                         <X size={20} />

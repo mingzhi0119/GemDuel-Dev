@@ -18,7 +18,7 @@ describe('utils', () => {
         const createCard = (level: 1 | 2 | 3, cost: Partial<GemInventory>): Card => ({
             id: 'test-card',
             level,
-            cost: { ...baseInv, ...cost },
+            cost: { ...baseInv, ...cost } as GemInventory,
             points: 0,
             bonusColor: 'blue',
         });

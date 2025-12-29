@@ -22,6 +22,7 @@ export const ResolutionSwitcher: React.FC<ResolutionSwitcherProps> = ({
     return (
         <div className="relative z-50 group outline-none" tabIndex={0}>
             <button
+                aria-label="Change Resolution"
                 className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all
                 ${
                     theme === 'dark'
