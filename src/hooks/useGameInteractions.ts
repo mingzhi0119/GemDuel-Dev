@@ -13,6 +13,13 @@ import {
     GameAction,
     GemTypeObject,
     GameMode,
+    BoardCell,
+    BuffInitPayload,
+    BuyCardPayload,
+    RoyalCard,
+    InitiateBuyJokerPayload,
+    InitiateReservePayload,
+    InitiateReserveDeckPayload,
 } from '../types';
 
 export const useGameInteractions = (
@@ -187,7 +194,10 @@ export const useGameInteractions = (
         if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) return;
         const hasGold = gameState.board.flat().some((cell) => cell.type.id === 'gold');
         if (hasGold) {
-            const action: GameAction = { type: 'INITIATE_RESERVE', payload: { card, level, idx } };
+            const action: GameAction = {
+                type: 'INITIATE_RESERVE',
+                payload: { card, level: level as 1 | 2 | 3, idx },
+            };
             networkDispatch(action);
             setErrorMsg('Select a Gold gem.');
         } else {
@@ -219,7 +229,7 @@ export const useGameInteractions = (
     const initiateBuy = (
         card: Card,
         source: string = 'market',
-        marketInfo: Record<string, unknown> = {}
+        marketInfo?: InitiateBuyJokerPayload['marketInfo']
     ) => {
         if (!canLocalInteract) return;
         const affordable = canAfford(card);
@@ -237,7 +247,7 @@ export const useGameInteractions = (
                 payload: {
                     card,
                     source: source as 'market' | 'reserved',
-                    marketInfo: marketInfo as BuyCardPayload['marketInfo'],
+                    marketInfo,
                     randoms: {
                         bountyHunterColor: basics[Math.floor(Math.random() * 5)] as GemColor,
                     },

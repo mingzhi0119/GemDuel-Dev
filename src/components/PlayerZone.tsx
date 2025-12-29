@@ -13,6 +13,7 @@ import {
     Buff,
     GemColor,
     BuffEffects,
+    GemTypeObject,
 } from '../types';
 
 interface BuffDisplayProps {
@@ -299,7 +300,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
             <div className="flex flex-col gap-3 shrink-0 justify-center" style={{ flex: 65 }}>
                 {/* Gems Row */}
                 <div className="flex gap-3 justify-center">
-                    {(Object.values(GEM_TYPES) as Array<{ id: GemColor | 'empty'; label: string }>)
+                    {(Object.values(GEM_TYPES) as GemTypeObject[])
                         .filter((g) => g.id !== 'empty')
                         .map((gem) => {
                             const count = inventory[gem.id as GemColor] || 0;

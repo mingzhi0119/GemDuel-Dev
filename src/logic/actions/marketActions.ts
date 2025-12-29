@@ -16,11 +16,16 @@ import {
     BuyCardPayload,
     ReserveCardPayload,
     ReserveDeckPayload,
+    CardAbility,
+    BoardCell,
+    InitiateBuyJokerPayload,
+    InitiateReservePayload,
+    InitiateReserveDeckPayload,
 } from '../../types';
 
 export const handleInitiateBuyJoker = (
     state: GameState,
-    payload: GameState['pendingBuy']
+    payload: InitiateBuyJokerPayload
 ): GameState => {
     state.pendingBuy = payload;
     state.phase = GAME_PHASES.SELECT_CARD_COLOR;
@@ -254,7 +259,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
 export const handleInitiateReserve = (
     state: GameState,
-    payload: GameState['pendingReserve']
+    payload: InitiateReservePayload
 ): GameState => {
     state.pendingReserve = payload;
     state.phase = GAME_PHASES.RESERVE_WAITING_GEM;
@@ -263,7 +268,7 @@ export const handleInitiateReserve = (
 
 export const handleInitiateReserveDeck = (
     state: GameState,
-    payload: GameState['pendingReserve']
+    payload: InitiateReserveDeckPayload
 ): GameState => {
     state.pendingReserve = { ...payload, isDeck: true } as GameState['pendingReserve'];
     state.phase = GAME_PHASES.RESERVE_WAITING_GEM;

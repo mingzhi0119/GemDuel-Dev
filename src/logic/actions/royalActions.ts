@@ -7,7 +7,7 @@
 import { ABILITIES, GAME_PHASES, GEM_TYPES } from '../../constants';
 import { addFeedback, addPrivilege } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
-import { GameState, SelectRoyalPayload } from '../../types';
+import { GameState, SelectRoyalPayload, CardAbility } from '../../types';
 
 export const handleForceRoyalSelection = (state: GameState): GameState => {
     state.phase = GAME_PHASES.SELECT_ROYAL;

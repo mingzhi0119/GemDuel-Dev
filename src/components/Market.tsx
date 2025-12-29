@@ -2,7 +2,14 @@ import React, { useCallback } from 'react';
 import { Layers } from 'lucide-react';
 import { Card } from './Card';
 import { calculateTransaction } from '../utils';
-import { Card as CardType, GamePhase, PlayerKey, GemInventory, Buff } from '../types';
+import {
+    Card as CardType,
+    GamePhase,
+    PlayerKey,
+    GemInventory,
+    Buff,
+    InitiateBuyJokerPayload,
+} from '../types';
 
 interface MarketProps {
     market: Record<number, (CardType | null)[]>;
@@ -13,7 +20,11 @@ interface MarketProps {
     playerTableau: Record<PlayerKey, CardType[]>;
     playerBuffs: Record<PlayerKey, Buff>;
     handleReserveDeck: (level: number) => void;
-    initiateBuy: (card: CardType, source: string, context?: Record<string, unknown>) => void;
+    initiateBuy: (
+        card: CardType,
+        source: string,
+        marketInfo?: InitiateBuyJokerPayload['marketInfo']
+    ) => void;
     handleReserveCard: (card: CardType, level: number, idx: number) => void;
     onPeekDeck?: (level: number) => void;
     theme: 'light' | 'dark';
@@ -48,7 +59,7 @@ export const Market: React.FC<MarketProps> = React.memo(
         const handleBuy = useCallback(
             (card: CardType, context: Record<string, unknown>) => {
                 if (canInteract && card && context) {
-                    initiateBuy(card, 'market', context);
+                    initiateBuy(card, 'market', context as InitiateBuyJokerPayload['marketInfo']);
                 }
             },
             [initiateBuy, canInteract]

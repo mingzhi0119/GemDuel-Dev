@@ -374,6 +374,22 @@ export interface SelectRoyalPayload {
     card: RoyalCard;
 }
 
+export interface InitiateBuyJokerPayload {
+    card: Card;
+    source: string;
+    marketInfo?: { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number };
+}
+
+export interface InitiateReservePayload {
+    card: Card;
+    level: 1 | 2 | 3;
+    idx: number;
+}
+
+export interface InitiateReserveDeckPayload {
+    level: 1 | 2 | 3;
+}
+
 export interface BuffInitPayload {
     initRandoms?: Record<PlayerKey, Record<string, unknown>>;
     [key: string]: unknown;
@@ -411,10 +427,10 @@ export type GameAction =
     | { type: 'STEAL_GEM'; payload: StealGemPayload }
 
     // MARKET
-    | { type: 'INITIATE_BUY_JOKER'; payload: Record<string, unknown> }
+    | { type: 'INITIATE_BUY_JOKER'; payload: InitiateBuyJokerPayload }
     | { type: 'BUY_CARD'; payload: BuyCardPayload }
-    | { type: 'INITIATE_RESERVE'; payload: Record<string, unknown> }
-    | { type: 'INITIATE_RESERVE_DECK'; payload: Record<string, unknown> }
+    | { type: 'INITIATE_RESERVE'; payload: InitiateReservePayload }
+    | { type: 'INITIATE_RESERVE_DECK'; payload: InitiateReserveDeckPayload }
     | { type: 'CANCEL_RESERVE'; payload?: undefined }
     | { type: 'RESERVE_CARD'; payload: ReserveCardPayload }
     | { type: 'RESERVE_DECK'; payload: ReserveDeckPayload }
