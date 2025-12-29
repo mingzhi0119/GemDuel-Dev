@@ -26,6 +26,15 @@ pnpm-debug.log*
 # Testing
 coverage/
 
+# Documentation & Reports
+GEMINI_WORKFLOW.md
+FUTURE_OPTIMIZATIONS.md
+LOGIC_DISCREPANCY_ANALYSIS.md
+MODERNIZATION_REPORT.md
+QA_COMPARISON_REPORT.md
+TYPESCRIPT_MIGRATION.md
+V3_1_0_COMPATIBILITY_FIXES.md
+
 # Misc
 .env
 .env.*
