@@ -12,8 +12,6 @@ interface GameActionsProps {
     handleCancelPrivilege: () => void;
     theme: 'light' | 'dark';
     canInteract?: boolean;
-    activeBuff?: Buff;
-    onPeekDeck?: (level: 1 | 2 | 3) => void;
 }
 
 export const GameActions: React.FC<GameActionsProps> = ({
@@ -26,14 +24,9 @@ export const GameActions: React.FC<GameActionsProps> = ({
     handleCancelPrivilege,
     theme,
     canInteract = true,
-    activeBuff,
-    onPeekDeck,
 }) => {
     const bagCount = bag ? bag.length : 0;
     const selectedCount = selectedGems ? selectedGems.length : 0;
-
-    // Buff Action: Peek Deck (Intelligence)
-    const hasIntelligence = activeBuff?.effects?.active === 'peek_deck';
 
     return (
         <div
@@ -85,21 +78,6 @@ export const GameActions: React.FC<GameActionsProps> = ({
                         <RefreshCw size={16} />
                         Refill ({bagCount})
                     </button>
-
-                    {/* Buff Active Actions */}
-                    {hasIntelligence && phase === 'IDLE' && selectedCount === 0 && onPeekDeck && (
-                        <div className="flex gap-2">
-                            {([1, 2, 3] as const).map((lvl) => (
-                                <button
-                                    key={lvl}
-                                    onClick={() => onPeekDeck(lvl)}
-                                    className="flex items-center gap-1.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-400 border border-purple-500/30 px-3 py-2 rounded-full text-xs font-bold transition-all shadow-lg active:scale-95"
-                                >
-                                    <Eye size={14} /> Peek L{lvl}
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </div>
             )}
         </div>

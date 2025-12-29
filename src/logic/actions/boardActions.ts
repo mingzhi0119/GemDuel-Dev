@@ -186,7 +186,7 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
         return state;
     }
 
-    finalizeTurn(state, state.turn === 'p1' ? 'p2' : 'p1');
+    state.phase = GAME_PHASES.IDLE;
     return state;
 };
 

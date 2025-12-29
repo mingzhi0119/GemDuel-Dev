@@ -88,9 +88,9 @@ export const Market: React.FC<MarketProps> = React.memo(
                 {/* Intelligence Network Floating Action (Positioned Left) */}
                 {hasIntelligence && (
                     <div
-                        className="absolute right-full mr-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-3 rounded-xl border animate-in slide-in-from-right-4 fade-in duration-500 z-50
+                        className={`absolute right-full mr-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 p-3 rounded-xl border animate-in slide-in-from-right-4 fade-in duration-500 z-50
                         ${theme === 'dark' ? 'bg-purple-900/20 border-purple-500/30' : 'bg-purple-50/50 border-purple-200'}
-                    "
+                    `}
                     >
                         <div className="text-purple-400 text-[8px] font-black uppercase tracking-widest text-center whitespace-nowrap">
                             Intelligence

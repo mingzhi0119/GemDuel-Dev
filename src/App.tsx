@@ -718,8 +718,6 @@ export default function GemDuelBoard() {
                             selectedGems={selectedGems}
                             handleCancelReserve={handleCancelReserve}
                             handleCancelPrivilege={handleCancelPrivilege}
-                            activeBuff={playerBuffs[turn]}
-                            onPeekDeck={handlePeekDeck}
                             theme={theme}
                             canInteract={isMyTurn}
                         />
