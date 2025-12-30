@@ -24,7 +24,7 @@ interface BuffDisplayProps {
     playerKey: PlayerKey;
 }
 
-const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff: rawBuff, theme, playerKey }) => {
+const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff: rawBuff, theme }) => {
     if (!rawBuff || rawBuff.id === 'none') return null;
 
     // RECONSTRUCTION: Get full static data (icons, desc) from local constants using ID
@@ -39,8 +39,8 @@ const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff: rawBuff, theme, playerK
         ? buff.desc.replace('Random color', `Random color (${discountColor})`)
         : buff.desc;
 
-    // Determine alignment classes to avoid screen edges
-    const alignClasses = playerKey === 'p1' ? 'left-0' : 'right-0';
+    // Fixed alignment to avoid overlapping with adjacent zones (especially P1 overlay close button)
+    const alignClasses = 'left-0';
 
     const winCondition = (buff.effects as BuffEffects).winCondition;
 
@@ -55,7 +55,7 @@ const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff: rawBuff, theme, playerK
     }
 
     return (
-        <div className="relative group/buff mt-2">
+        <div className="relative group/buff mt-2 w-fit">
             <div
                 className={`
                 flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider cursor-help transition-all hover:scale-105
@@ -169,10 +169,10 @@ const StackOverlay: React.FC<StackOverlayProps> = ({ isOpen, color, cards, onClo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`absolute inset-0 z-[100] rounded-2xl flex flex-col overflow-hidden shadow-inner ${theme === 'dark' ? 'bg-slate-900/95' : 'bg-white/95'}`}
+            className={`absolute inset-0 z-[600] rounded-2xl flex flex-col overflow-hidden shadow-inner ${theme === 'dark' ? 'bg-slate-900/95' : 'bg-white/95'}`}
         >
             {/* Color Label */}
-            <div className="absolute top-3 left-4 z-[110] flex items-center gap-2">
+            <div className="absolute top-3 left-4 z-[610] flex items-center gap-2">
                 <span
                     className="text-sm font-black uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm"
                     style={{ color: textColor }}
@@ -181,7 +181,7 @@ const StackOverlay: React.FC<StackOverlayProps> = ({ isOpen, color, cards, onClo
                 </span>
             </div>
 
-            <div className="absolute top-2 right-2 z-[110]">
+            <div className="absolute top-2 right-2 z-[610]">
                 <button
                     onClick={onClose}
                     className={`p-2 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 ${theme === 'dark' ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}
