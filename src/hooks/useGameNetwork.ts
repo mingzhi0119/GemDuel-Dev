@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useOnlineManager } from './useOnlineManager';
 import { validateOnlineAction } from '../logic/authority';
 import { generateGameStateHash } from '../utils/checksum';
@@ -11,6 +11,10 @@ export const useGameNetwork = (
     clearAndInit: (action: GameAction) => void,
     shouldConnect: boolean
 ) => {
+    // Ref to break circular dependency
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onlineRef = useRef<any>(null);
+
     // Remote Action Handler (Logic for RECEIVING)
     const handleRemoteAction = useCallback(
         (action: GameAction, remoteChecksum?: string) => {
@@ -28,14 +32,14 @@ export const useGameNetwork = (
                     if (localHash !== remoteChecksum) {
                         console.error(`DESYNC: Local ${localHash} vs Remote ${remoteChecksum}`);
                         // Trigger Recovery
-                        online.sendSystemMessage({ type: 'REQUEST_FULL_SYNC' });
+                        onlineRef.current?.sendSystemMessage({ type: 'REQUEST_FULL_SYNC' });
                         return; // Do NOT apply corrupt action
                     }
                 }
                 localDispatch(action);
             }
         },
-        [localDispatch, clearAndInit, gameState, online]
+        [localDispatch, clearAndInit, gameState]
     );
 
     const handleStateReceived = useCallback(
@@ -64,6 +68,11 @@ export const useGameNetwork = (
         gameState.mode === 'ONLINE_MULTIPLAYER' || shouldConnect,
         () => gameState
     );
+
+    // Sync ref
+    useEffect(() => {
+        onlineRef.current = online;
+    }, [online]);
 
     // Smart Dispatcher (Logic for SENDING/RECORDING)
     const networkDispatch = useCallback(
