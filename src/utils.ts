@@ -62,7 +62,11 @@ export const calculateTransaction = (
     const bonuses = BONUS_COLORS.reduce(
         (acc, color) => {
             acc[color] = playerTableau
-                .filter((c) => c.bonusColor === color && !c.isBuff) // ✅ 排除虚拟卡
+                .filter(
+                    (c) =>
+                        c.bonusColor === color &&
+                        (!c.isBuff || (c.id && c.id.startsWith('buff-color-pref')))
+                ) // ✅ Allow Color Preference dummy cards
                 .reduce((sum, c) => sum + (c.bonusCount ?? 1), 0);
             return acc;
         },

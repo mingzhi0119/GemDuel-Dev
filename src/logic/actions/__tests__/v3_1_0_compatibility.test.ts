@@ -70,7 +70,7 @@ describe('v3.1.0 Compatibility Fixes', () => {
 
     // ========== 修复 2 & 3 & 4: Color Preference 虚拟卡处理 ==========
     describe('Fix #2, #3, #4: Color Preference Dummy Card Handling', () => {
-        it('should exclude buff dummy cards from bonus calculation', () => {
+        it('should INCLUDE Color Preference dummy cards in bonus calculation', () => {
             const playerTableau = [
                 // Real card with 2 bonuses
                 {
@@ -82,7 +82,7 @@ describe('v3.1.0 Compatibility Fixes', () => {
                     level: 1,
                     cost: {},
                 },
-                // Dummy card for Color Preference (should be ignored)
+                // Dummy card for Color Preference (should be counted)
                 {
                     id: 'buff-color-pref-p1-1234',
                     bonusColor: 'red',
@@ -113,8 +113,8 @@ describe('v3.1.0 Compatibility Fixes', () => {
             } as any;
 
             const transaction = calculateTransaction(card, playerInv, playerTableau as any[]);
-            // 成本 3，折扣 2（来自真实卡），所以需要 1 颗红宝石
-            expect(transaction.gemsPaid.red).toBe(1);
+            // 成本 3，折扣 2（来自真实卡）+ 1 (来自 Color Preference)，所以需要 0 颗红宝石
+            expect(transaction.gemsPaid.red).toBe(0);
             expect(transaction.goldCost).toBe(0);
         });
 
@@ -156,7 +156,7 @@ describe('v3.1.0 Compatibility Fixes', () => {
             expect(transaction.goldCost).toBe(0);
         });
 
-        it('should not count isBuff cards in bonuses', () => {
+        it('should not count GENERIC isBuff cards in bonuses', () => {
             const tableau = [
                 {
                     id: 'real1',
@@ -296,8 +296,9 @@ describe('v3.1.0 Compatibility Fixes', () => {
 
             const transaction = calculateTransaction(testCard, playerInv, playerTableau as any[]);
 
-            // ✅ 只应用 real card 的 2 个折扣，所以需要 3 蓝色
-            expect(transaction.gemsPaid.blue).toBe(3);
+            // ✅ 应该应用 real card (2) + Color Preference (1) = 3 个折扣
+            // 成本 5 - 3 = 2，所以需要 2 蓝色
+            expect(transaction.gemsPaid.blue).toBe(2);
             expect(transaction.goldCost).toBe(0);
 
             // 验证颜色得分计算（排除虚拟卡）
