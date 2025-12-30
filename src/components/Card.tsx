@@ -242,6 +242,7 @@ export const Card: React.FC<CardProps> = React.memo(
                                     ]
                                 }
                                 size={bonusGemSize}
+                                theme={theme}
                                 className="shadow-md"
                             />
                         ))}

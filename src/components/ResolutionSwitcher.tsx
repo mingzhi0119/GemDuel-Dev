@@ -23,11 +23,11 @@ export const ResolutionSwitcher: React.FC<ResolutionSwitcherProps> = ({
         <div className="relative z-50 group outline-none" tabIndex={0}>
             <button
                 aria-label="Change Resolution"
-                className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all
+                className={`p-2 rounded-lg backdrop-blur-md border transition-all flex items-center gap-2 shadow-none
                 ${
                     theme === 'dark'
-                        ? 'bg-slate-800/80 hover:bg-slate-700 text-white border-slate-600'
-                        : 'bg-white/80 hover:bg-slate-50 text-slate-800 border-slate-300'
+                        ? 'bg-transparent hover:bg-white/10 text-slate-400 hover:text-slate-100 border-white/10 hover:border-white/20'
+                        : 'bg-white hover:bg-stone-50 text-stone-800 border-stone-200'
                 }
             `}
             >
@@ -37,8 +37,12 @@ export const ResolutionSwitcher: React.FC<ResolutionSwitcherProps> = ({
 
             <div className="absolute right-0 top-full pt-2 hidden group-hover:block group-focus-within:block w-32 animate-in fade-in slide-in-from-top-2">
                 <div
-                    className={`rounded-lg shadow-xl border overflow-hidden transition-colors duration-500
-                    ${theme === 'dark' ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}
+                    className={`rounded-lg border overflow-hidden transition-all duration-500 shadow-none
+                    ${
+                        theme === 'dark'
+                            ? 'bg-slate-900 border-white/10'
+                            : 'bg-white border-stone-200 shadow-lg'
+                    }
                 `}
                 >
                     {Object.entries(RESOLUTION_SETTINGS).map(([key, config]) => (

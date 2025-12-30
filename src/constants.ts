@@ -165,6 +165,7 @@ export const BUFFS = {
     PRIVILEGE_FAVOR: {
         id: 'privilege_favor',
         level: 1,
+        category: 'victory',
         label: 'Privilege Favor',
         desc: 'Start with 1 Special Privilege (Protected).',
         effects: { onInit: { privilege: 1 } },
@@ -172,13 +173,15 @@ export const BUFFS = {
     HEAD_START: {
         id: 'head_start',
         level: 1,
+        category: 'victory',
         label: 'Head Start',
-        desc: 'Start with 1 random Extra Gem. Win Condition: 18 Points.',
+        desc: 'Start with 1 random Extra Gem. Goal: 18 Points.',
         effects: { onInit: { randomGem: 1 }, winCondition: { points: 18 } },
     },
     ROYAL_BLOOD: {
         id: 'royal_blood',
         level: 1,
+        category: 'victory',
         label: 'Royal Blood',
         desc: 'Start with 1 Crown.',
         effects: { onInit: { crowns: 1 } },
@@ -186,6 +189,7 @@ export const BUFFS = {
     INTELLIGENCE: {
         id: 'intelligence',
         level: 1,
+        category: 'intel',
         label: 'Intelligence',
         desc: 'Action: Peek at top 3 cards of any deck.',
         effects: { active: 'peek_deck' },
@@ -193,13 +197,15 @@ export const BUFFS = {
     DEEP_POCKETS: {
         id: 'deep_pockets',
         level: 1,
+        category: 'economy',
         label: 'Deep Pockets',
-        desc: 'Gem holding limit increased to 12.',
+        desc: 'Gem Capacity increased to 12.',
         effects: { passive: { gemCap: 12 } },
     },
     BACKUP_SUPPLY: {
         id: 'backup_supply',
         level: 1,
+        category: 'economy',
         label: 'Backup Supply',
         desc: 'Start with 2 random Extra Gems.',
         effects: { onInit: { randomGem: 2 } },
@@ -207,6 +213,7 @@ export const BUFFS = {
     PATIENT_INVESTOR: {
         id: 'patient_investor',
         level: 1,
+        category: 'economy',
         label: 'Patient Investor',
         desc: 'Gain 1 Extra Gold on your first Reserve action.',
         effects: { passive: { firstReserveBonus: 1 } },
@@ -214,13 +221,15 @@ export const BUFFS = {
     INSIGHT: {
         id: 'insight',
         level: 1,
+        category: 'intel',
         label: 'Insight',
-        desc: 'You can always see the top card of the Level 1 Deck. Win Condition: 18 Points.',
+        desc: 'You can always see the top card of the Level 1 Deck. Goal: 18 Points.',
         effects: { passive: { revealDeck1: true }, winCondition: { points: 18 } },
     },
     DOWN_PAYMENT: {
         id: 'down_payment',
         level: 1,
+        category: 'discount',
         label: 'Down Payment',
         desc: 'Reserved cards cost 1 less (basic gems only).',
         effects: { passive: { reservedDiscount: 1 } },
@@ -228,6 +237,7 @@ export const BUFFS = {
     NIMBLE_FINGERS: {
         id: 'nimble_fingers',
         level: 1,
+        category: 'economy',
         label: 'Nimble Fingers',
         desc: 'Gain 1 random basic gem when you Reserve a card.',
         effects: { passive: { reserveBonusGem: true } },
@@ -237,13 +247,15 @@ export const BUFFS = {
     PEARL_TRADER: {
         id: 'pearl_trader',
         level: 2,
+        category: 'economy',
         label: 'Pearl Trader',
-        desc: 'Gem holding limit increased to 11. Start with 1 Extra Pearl.',
+        desc: 'Gem Capacity increased to 11. Start with 1 Extra Pearl.',
         effects: { onInit: { pearl: 1 }, passive: { gemCap: 11 } },
     },
     GOLD_RESERVE: {
         id: 'gold_reserve',
         level: 2,
+        category: 'economy',
         label: 'Gold Reserve',
         desc: 'Start with 1 Extra Gold and 1 random Reserved Card.',
         effects: { onInit: { gold: 1, reserveCard: 1 } },
@@ -251,6 +263,7 @@ export const BUFFS = {
     COLOR_PREFERENCE: {
         id: 'color_preference',
         level: 2,
+        category: 'discount',
         label: 'Color Preference',
         desc: 'Random color costs -1 for you (assigned at start).',
         effects: { passive: { discountRandom: 1 } },
@@ -258,6 +271,7 @@ export const BUFFS = {
     EXTORTION: {
         id: 'extortion',
         level: 2,
+        category: 'control',
         label: 'Extortion',
         desc: 'Every 2nd time you Replenish the board, steal 1 basic gem from opponent.',
         effects: { active: 'replenish_steal' },
@@ -265,6 +279,7 @@ export const BUFFS = {
     FLEXIBLE_DISCOUNT: {
         id: 'flexible_discount',
         level: 2,
+        category: 'discount',
         label: 'Flexible Discount',
         desc: 'Reduce cost of Level 2 and 3 cards by 1 (basic gems only).',
         effects: { passive: { discountAny: 1 } },
@@ -272,6 +287,7 @@ export const BUFFS = {
     BOUNTY_HUNTER: {
         id: 'bounty_hunter',
         level: 2,
+        category: 'economy',
         label: 'Bounty Hunter',
         desc: 'Gain 1 random Extra Gem when you buy a card with Crowns.',
         effects: { passive: { crownBonusGem: true } },
@@ -279,6 +295,7 @@ export const BUFFS = {
     RECYCLER: {
         id: 'recycler',
         level: 2,
+        category: 'economy',
         label: 'Recycler',
         desc: 'Start with 1 random Extra Gem. Get 1 Extra Gem back when buying Level 2 or 3 cards.',
         effects: { onInit: { randomGem: 1 }, passive: { recycler: true } },
@@ -286,6 +303,7 @@ export const BUFFS = {
     AGGRESSIVE_EXPANSION: {
         id: 'aggressive_expansion',
         level: 2,
+        category: 'control',
         label: 'Aggressive Expansion',
         desc: 'Gain 1 random Extra Gem when you Replenish the board.',
         effects: { passive: { refillBonus: true } },
@@ -293,6 +311,7 @@ export const BUFFS = {
     SPECULATOR: {
         id: 'speculator',
         level: 2,
+        category: 'intel',
         label: 'Speculator',
         desc: 'Gain 2 random basic gems after buying a reserved card.',
         effects: { passive: { buyReservedBonus: 2 } },
@@ -300,6 +319,7 @@ export const BUFFS = {
     HOARDER: {
         id: 'hoarder',
         level: 2,
+        category: 'economy',
         label: 'Hoarder',
         desc: 'If holding 3 reserved cards, gain 1 random basic gem at start of turn.',
         effects: { passive: { hoarderBonus: true } },
@@ -309,36 +329,41 @@ export const BUFFS = {
     GREED_KING: {
         id: 'greed_king',
         level: 3,
+        category: 'victory',
         label: 'King of Greed',
-        desc: 'All cards give +1 Point. Win Condition: 25 Points.',
+        desc: 'All cards give +1 Point. Goal: 25 Points.',
         effects: { passive: { pointBonus: 1 }, winCondition: { points: 25 } },
     },
     ROYAL_ENVOY: {
         id: 'royal_envoy',
         level: 3,
+        category: 'victory',
         label: 'Royal Envoy',
-        desc: 'Can pick remaining Royal Card at Turn 5. No Single Color Win.',
+        desc: 'Can pick remaining Royal Card at Turn 5. No Single Color Win path.',
         effects: { active: 'turn5_royal', winCondition: { disableSingleColor: true } },
     },
     DOUBLE_AGENT: {
         id: 'double_agent',
         level: 3,
+        category: 'control',
         label: 'Double Agent',
-        desc: 'Privileges take 2 gems. Gem Cap: 8.',
+        desc: 'Privileges take 2 gems. Gem Capacity: 8.',
         effects: { passive: { privilegeBuff: 2, gemCap: 8 } },
     },
     ALL_SEEING_EYE: {
         id: 'all_seeing_eye',
         level: 3,
+        category: 'victory',
         label: 'All-Seeing Eye',
-        desc: 'Reveal 2 extra Level 3 cards. Pay L3 cards with Gold at half value. Win Condition: Single Color 13.',
+        desc: 'Reveal 2 extra Level 3 cards. Pay L3 cards with Gold at half value. Goal: 13 points of a single color.',
         effects: { passive: { extraL3: true, goldBuff: true }, winCondition: { singleColor: 13 } },
     },
     WONDER_ARCHITECT: {
         id: 'wonder_architect',
         level: 3,
+        category: 'discount',
         label: 'Wonder Architect',
-        desc: 'First 3 Level 3 cards cost 3 less (basic gems only). Win Condition: 13 Crowns (No Single Color Win).',
+        desc: 'First 3 Level 3 cards cost 3 less (basic gems only). Goal: 13 Crowns (No Single Color Win path).',
         effects: {
             passive: { l3Discount: 3 },
             winCondition: { crowns: 13, disableSingleColor: true },
@@ -347,13 +372,15 @@ export const BUFFS = {
     MINIMALIST: {
         id: 'minimalist',
         level: 3,
+        category: 'economy',
         label: 'Minimalist',
-        desc: 'First 2 cards purchased provide Double Bonuses. Max Gems: 6.',
+        desc: 'First 2 cards purchased provide Double Bonuses. Gem Capacity: 6.',
         effects: { passive: { doubleBonusFirst5: true, gemCap: 6 } },
     },
     PACIFIST: {
         id: 'pacifist',
         level: 3,
+        category: 'victory',
         label: 'Pacifist',
         desc: 'Immune to negative effects (Theft). Start with 1 Special Privilege (Protected).',
         effects: { passive: { immuneNegative: true } },
@@ -361,6 +388,7 @@ export const BUFFS = {
     DESPERATE_GAMBLE: {
         id: 'desperate_gamble',
         level: 3,
+        category: 'control',
         label: 'Desperate Gamble',
         desc: 'Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special Privilege (Protected) every 2 turns.',
         effects: { onInit: { gold: 2 }, passive: { noTake3: true, periodicPrivilege: 2 } },
@@ -368,6 +396,7 @@ export const BUFFS = {
     PUPPET_MASTER: {
         id: 'puppet_master',
         level: 3,
+        category: 'intel',
         label: 'The Puppet Master',
         desc: 'Destroy reserved card anytime (back to deck) to gain 1 random gem. Special Action.',
         effects: { active: 'discard_reserved' },
@@ -375,8 +404,9 @@ export const BUFFS = {
     COLLECTOR: {
         id: 'collector',
         level: 3,
+        category: 'control',
         label: 'The Collector',
-        desc: "You can reserve opponent's reserved cards. Win Condition: 22 Points.",
+        desc: "You can reserve opponent's reserved cards. Goal: 22 Points.",
         effects: { passive: { stealReserved: true }, winCondition: { points: 22 } },
     },
 

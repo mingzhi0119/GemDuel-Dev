@@ -91,6 +91,10 @@ ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
 });
 
+ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+});
+
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {

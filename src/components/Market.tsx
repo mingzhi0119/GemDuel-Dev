@@ -81,10 +81,13 @@ export const Market: React.FC<MarketProps> = React.memo(
 
         return (
             <div
-                className={`flex flex-col gap-4 items-center shrink-0 w-fit ${!canInteract ? 'opacity-80' : ''}`}
+                className={`flex flex-col gap-6 items-center shrink-0 p-8 rounded-[2.5rem] transition-all duration-500 backdrop-blur-sm
+                ${theme === 'dark' ? 'bg-transparent border-none shadow-none' : 'bg-transparent'}
+                ${!canInteract ? 'opacity-80' : ''}`}
             >
                 <h2
-                    className={`text-[10px] font-bold uppercase tracking-widest mb-1 text-center ${theme === 'dark' ? 'text-slate-500' : 'text-slate-400'}`}
+                    className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1 text-center 
+                    ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
                 >
                     Market
                 </h2>

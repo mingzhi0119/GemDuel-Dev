@@ -220,31 +220,31 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
             {/* Module 1: Identity & Privileges */}
             <div
                 className={`flex flex-col gap-4 min-w-[100px] shrink-0 items-center justify-start pt-2 border-r pr-4 transition-colors duration-500
-          ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}
+          ${theme === 'dark' ? 'border-slate-800' : 'border-stone-200'}
       `}
             >
                 <div className="flex flex-col items-center gap-1">
                     <div
-                        className={`p-2 rounded-full shadow-lg ${isActive ? (player === 'p1' ? 'bg-emerald-600 shadow-emerald-900/50' : 'bg-blue-600 shadow-blue-900/50') : theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'}`}
+                        className={`p-2 rounded-full ${isActive ? (player === 'p1' ? 'bg-emerald-600' : 'bg-blue-600') : theme === 'dark' ? 'bg-slate-700' : 'bg-stone-300'}`}
                     >
                         {player === 'p1' ? (
                             <Shield
                                 size={20}
                                 className={
-                                    theme === 'dark' || isActive ? 'text-white' : 'text-slate-600'
+                                    theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
                                 }
                             />
                         ) : (
                             <Swords
                                 size={20}
                                 className={
-                                    theme === 'dark' || isActive ? 'text-white' : 'text-slate-600'
+                                    theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
                                 }
                             />
                         )}
                     </div>
                     <h3
-                        className={`font-bold text-xs whitespace-nowrap uppercase tracking-wider ${isActive ? (player === 'p1' ? 'text-emerald-400' : 'text-blue-400') : 'text-slate-500'}`}
+                        className={`font-black text-[10px] whitespace-nowrap uppercase tracking-[0.2em] ${isActive ? (player === 'p1' ? 'text-emerald-600' : 'text-blue-600') : 'text-stone-400'}`}
                     >
                         {player === 'p1' ? 'Player 1' : 'Player 2'}
                     </h3>
@@ -301,11 +301,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                     )}
                                     title="Special Privilege (Protected)"
                                 >
-                                    <Scroll
-                                        size={20}
-                                        fill="#fbbf24"
-                                        className="text-yellow-500 drop-shadow-md"
-                                    />
+                                    <Scroll size={20} fill="#fbbf24" className="text-yellow-500" />
                                 </button>
                             );
                         }
@@ -316,7 +312,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                     <Scroll
                                         size={20}
                                         className={
-                                            theme === 'dark' ? 'text-slate-800' : 'text-slate-300'
+                                            theme === 'dark' ? 'text-slate-800' : 'text-stone-200'
                                         }
                                     />
                                 </div>
@@ -360,6 +356,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                                         key={f.id}
                                                         type={f.type}
                                                         count={parseInt(f.quantity)}
+                                                        theme={theme}
                                                     />
                                                 ) : (
                                                     <FloatingText
@@ -374,6 +371,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                         type={gem}
                                         size="w-10 h-10"
                                         count={count}
+                                        theme={theme}
                                         className={
                                             count === 0 ? 'grayscale opacity-30' : 'shadow-lg'
                                         }
@@ -477,7 +475,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                                     stats.bonusCount > 0 && (
                                                         <div className="absolute -bottom-2 -right-2 z-40">
                                                             <div
-                                                                className={`px-1.5 py-0.5 rounded-full border shadow-lg flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-slate-800 border-slate-300'}`}
+                                                                className={`px-1.5 py-0.5 rounded-full border shadow-lg flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-stone-800 border-stone-300'}`}
                                                             >
                                                                 <span className="text-[10px] font-black">
                                                                     {stats.bonusCount}
@@ -489,7 +487,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                         ))
                                     ) : (
                                         <div
-                                            className={`w-[72px] h-[96px] rounded border border-dashed flex items-center justify-center ${theme === 'dark' ? 'border-slate-800 bg-slate-900/20' : 'border-slate-300 bg-slate-200/20'}`}
+                                            className={`w-[72px] h-[96px] rounded border border-dashed flex items-center justify-center ${theme === 'dark' ? 'border-slate-800 bg-slate-900/20' : 'border-stone-200 bg-stone-100/50'}`}
                                         >
                                             <div
                                                 className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} opacity-20`}
@@ -506,14 +504,16 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
             {/* Module 3: Reserved & Royals (Compact) */}
             <div
                 className={`flex flex-col justify-center gap-2 border-l pl-4 min-w-0 transition-colors duration-500
-          ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}
+          ${theme === 'dark' ? 'border-slate-800' : 'border-stone-200'}
       `}
                 style={{ flex: 35 }}
             >
                 {/* Reserved Section - No Stacking */}
                 <div className="w-full flex items-center justify-start gap-2 overflow-x-auto py-1">
                     {reserved.length === 0 && (
-                        <span className="text-[10px] text-slate-700 italic w-full text-center">
+                        <span
+                            className={`text-[10px] italic w-full text-center ${theme === 'dark' ? 'text-slate-700' : 'text-stone-400'}`}
+                        >
                             No Reserved Cards
                         </span>
                     )}
@@ -551,7 +551,9 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                 {/* Royal Section - No Stacking */}
                 <div className="w-full flex items-center justify-start gap-2 overflow-x-auto py-1">
                     {royals.length === 0 && (
-                        <span className="text-[10px] text-slate-700 italic w-full text-center">
+                        <span
+                            className={`text-[10px] italic w-full text-center ${theme === 'dark' ? 'text-slate-700' : 'text-stone-400'}`}
+                        >
                             No Royal Cards
                         </span>
                     )}

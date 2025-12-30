@@ -29,7 +29,12 @@ import {
     handleActivatePrivilege,
     handleCancelPrivilege,
 } from './actions/privilegeActions';
-import { handleSelectBuff, handleInit, handleInitDraft } from './actions/buffActions';
+import {
+    handleSelectBuff,
+    handleInit,
+    handleInitDraft,
+    handleRerollBuffs,
+} from './actions/buffActions';
 import {
     handleDebugAddCrowns,
     handleDebugAddPoints,
@@ -174,6 +179,10 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
 
             case 'DEBUG_ADD_PRIVILEGE':
                 handleDebugAddPrivilege(draft, action.payload);
+                break;
+
+            case 'DEBUG_REROLL_BUFFS':
+                handleRerollBuffs(draft, action.payload);
                 break;
 
             // ========== MODAL ACTIONS ==========

@@ -1,5 +1,6 @@
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { GAME_PHASES, BUFFS } from '../../constants';
+import { shuffleArray } from '../../utils';
 import {
     GameState,
     PlayerKey,
@@ -233,8 +234,29 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
             state.turn = 'p1';
 
             ensureStructures(state);
-            applyPlayerInitLogic(state, 'p1', finalInitRandoms.p1 || {});
             applyPlayerInitLogic(state, 'p2', finalInitRandoms.p2 || {});
         }
     }
+};
+
+export const handleRerollBuffs = (state: GameState, payload: { level?: number }): void => {
+    if (state.phase !== GAME_PHASES.DRAFT_PHASE || state.turn !== 'p1') return;
+
+    const level = payload.level ?? state.buffLevel;
+    const levelBuffs = Object.values(BUFFS).filter((b) => b.level === level);
+
+    const categoriesSeen = new Set<string>();
+    const p1Pool: typeof levelBuffs = [];
+    const shuffledPool = shuffleArray([...levelBuffs]);
+
+    for (const b of shuffledPool) {
+        if (b.category && !categoriesSeen.has(b.category)) {
+            p1Pool.push(b);
+            categoriesSeen.add(b.category);
+            if (p1Pool.length === 3) break;
+        }
+    }
+
+    state.buffLevel = level;
+    state.draftPool = p1Pool.map((b) => b.id);
 };

@@ -1,33 +1,31 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
-import { RotateCcw, BookOpen, Sun, Moon, Users, ArrowLeft, Download, Upload } from 'lucide-react';
-
-import { PlayerZone } from './components/PlayerZone';
-import { DebugPanel } from './components/DebugPanel';
-import { ResolutionSwitcher } from './components/ResolutionSwitcher';
-import { Market } from './components/Market';
-import { GameBoard } from './components/GameBoard';
-import { StatusBar } from './components/StatusBar';
-import { GameActions } from './components/GameActions';
-import { ReplayControls } from './components/ReplayControls';
-import { RoyalCourt } from './components/RoyalCourt';
-import { TopBar } from './components/TopBar';
+import React, { useState, useEffect, Suspense } from 'react';
+import { Download, Upload, RotateCcw, BookOpen, Moon, Sun, Users, ArrowLeft } from 'lucide-react';
 import { DraftScreen } from './components/DraftScreen';
+import { TopBar } from './components/TopBar';
+import { GameBoard } from './components/GameBoard';
+import { GameActions } from './components/GameActions';
+import { PlayerZone } from './components/PlayerZone';
+import { Market } from './components/Market';
+import { RoyalCourt } from './components/RoyalCourt';
+import { StatusBar } from './components/StatusBar';
+import { ReplayControls } from './components/ReplayControls';
+import { ResolutionSwitcher } from './components/ResolutionSwitcher';
 import { WinnerModal } from './components/WinnerModal';
-import { Footer } from './components/Footer';
-
-import { UpdateNotification } from './components/UpdateNotification';
 import { OnlineSetup } from './components/OnlineSetup';
 import { GameConfigMenu } from './components/GameConfigMenu';
-
-const Rulebook = lazy(() => import('./components/Rulebook').then((m) => ({ default: m.Rulebook })));
-const DeckPeekModal = lazy(() =>
-    import('./components/DeckPeekModal').then((m) => ({ default: m.DeckPeekModal }))
-);
-
+import { DebugPanel } from './components/DebugPanel';
+import { UpdateNotification } from './components/UpdateNotification';
 import { useGameLogic } from './hooks/useGameLogic';
 import { useSettings } from './hooks/useSettings';
 import { GEM_TYPES, BONUS_COLORS } from './constants';
 import { GemColor, PlayerKey } from './types';
+
+const Rulebook = React.lazy(() =>
+    import('./components/Rulebook').then((m) => ({ default: m.Rulebook }))
+);
+const DeckPeekModal = React.lazy(() =>
+    import('./components/DeckPeekModal').then((m) => ({ default: m.DeckPeekModal }))
+);
 
 export default function GemDuelBoard() {
     const [showDebug, setShowDebug] = useState(false);
@@ -37,6 +35,21 @@ export default function GemDuelBoard() {
     const [isPeekingBoard, setIsPeekingBoard] = useState(false);
     const [persistentWinner, setPersistentWinner] = useState<GemColor | string | null>(null);
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+    const [appVersion, setAppVersion] = useState<string>('5.2.7');
+
+    useEffect(() => {
+        const fetchVersion = async () => {
+            try {
+                if (window.electron?.getAppVersion) {
+                    const version = await window.electron.getAppVersion();
+                    if (version) setAppVersion(version);
+                }
+            } catch (err) {
+                console.error('Failed to fetch app version:', err);
+            }
+        };
+        fetchVersion();
+    }, []);
 
     const { resolution, setResolution, settings, RESOLUTION_SETTINGS, theme, setTheme } =
         useSettings();
@@ -64,7 +77,6 @@ export default function GemDuelBoard() {
         playerBuffs,
         draftPool,
         p2DraftPool,
-        p1SelectedBuff,
         buffLevel,
         activeModal,
         extraPrivileges,
@@ -123,7 +135,7 @@ export default function GemDuelBoard() {
 
     const handleDownloadReplay = () => {
         const data = {
-            version: '4.0.1',
+            version: appVersion,
             timestamp: new Date().toISOString(),
             history: historyControls.history,
         };
@@ -190,23 +202,30 @@ export default function GemDuelBoard() {
             <DraftScreen
                 draftPool={draftPool}
                 p2DraftPool={p2DraftPool}
-                p1SelectedBuff={p1SelectedBuff}
                 buffLevel={buffLevel}
                 activePlayer={turn}
                 onSelectBuff={handleSelectBuff}
+                onReroll={handlers.handleRerollBuffs}
                 theme={theme}
                 localPlayer={online.isHost ? 'p1' : 'p2'}
                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
+                isPvE={state.mode === 'PVE'}
             />
         );
     }
 
     return (
         <div
-            className={`h-screen w-screen font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}
+            className={`h-screen w-screen font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe 
+            ${theme === 'dark' ? 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f111a] to-black text-slate-200' : 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#fffefc] via-[#f7f5f0] to-[#e6e2da] text-stone-800'}
+        `}
         >
             <UpdateNotification />
-            <Footer />
+
+            {/* Floating Version Watermark */}
+            <div className="fixed bottom-2 right-3 z-[100] pointer-events-none select-none font-mono text-[10px] opacity-40 text-stone-500 whitespace-nowrap">
+                v{appVersion}
+            </div>
 
             <TopBar
                 p1Score={getPlayerScore('p1')}
@@ -230,10 +249,11 @@ export default function GemDuelBoard() {
                     theme={theme}
                 />
 
-                <div className="flex flex-col gap-2 border-y border-slate-700/30 py-2 my-1">
+                <div className="flex flex-col gap-2 border-y border-stone-200/30 py-2 my-1">
                     <button
                         onClick={handleDownloadReplay}
-                        className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-600 border-slate-300'}`}
+                        className={`p-2 rounded-lg backdrop-blur-md border flex items-center gap-2 transition-all justify-center shadow-none 
+                        ${theme === 'dark' ? 'bg-transparent hover:bg-white/10 text-slate-400 hover:text-slate-100 border-white/10 hover:border-white/20' : 'bg-white hover:bg-stone-50 text-stone-600 border-stone-200'}`}
                         title="Download Replay"
                         aria-label="Download Replay"
                     >
@@ -242,7 +262,8 @@ export default function GemDuelBoard() {
                     </button>
 
                     <label
-                        className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center cursor-pointer ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-600 border-slate-300'}`}
+                        className={`p-2 rounded-lg backdrop-blur-md border flex items-center gap-2 transition-all justify-center cursor-pointer shadow-none 
+                        ${theme === 'dark' ? 'bg-transparent hover:bg-white/10 text-slate-400 hover:text-slate-100 border-white/10 hover:border-white/20' : 'bg-white hover:bg-stone-50 text-stone-600 border-stone-200'}`}
                         title="Upload Replay"
                         aria-label="Upload Replay"
                     >
@@ -259,7 +280,8 @@ export default function GemDuelBoard() {
 
                 <button
                     onClick={() => setShowRestartConfirm(true)}
-                    className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center ${theme === 'dark' ? 'bg-red-900/40 hover:bg-red-800/60 text-red-200 border-red-900/50' : 'bg-red-50 hover:bg-red-100 text-red-800 border-red-200'}`}
+                    className={`p-2 rounded-lg backdrop-blur-md border flex items-center gap-2 transition-all justify-center shadow-none 
+                    ${theme === 'dark' ? 'bg-red-950/20 hover:bg-red-900/40 text-red-400/80 hover:text-red-300 border-red-900/20 hover:border-red-800/40' : 'bg-red-50 hover:bg-red-100 text-red-800 border-red-200'}`}
                     aria-label="Restart Game"
                 >
                     <RotateCcw size={16} />
@@ -268,7 +290,8 @@ export default function GemDuelBoard() {
 
                 <button
                     onClick={() => setShowRulebook(true)}
-                    className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-white border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-800 border-slate-300'}`}
+                    className={`p-2 rounded-lg backdrop-blur-md border flex items-center gap-2 transition-all justify-center shadow-none 
+                    ${theme === 'dark' ? 'bg-transparent hover:bg-white/10 text-slate-400 hover:text-slate-100 border-white/10 hover:border-white/20' : 'bg-white hover:bg-stone-50 text-stone-800 border-stone-200'}`}
                     aria-label="Open Rules"
                 >
                     <BookOpen size={16} />
@@ -277,7 +300,8 @@ export default function GemDuelBoard() {
 
                 <button
                     onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-                    className={`p-2 rounded-lg backdrop-blur-md border shadow-xl flex items-center gap-2 transition-all justify-center ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-slate-700 text-white border-slate-600' : 'bg-white/80 hover:bg-slate-50 text-slate-800 border-slate-300'}`}
+                    className={`p-2 rounded-lg backdrop-blur-md border flex items-center gap-2 transition-all justify-center shadow-none 
+                    ${theme === 'dark' ? 'bg-transparent hover:bg-white/10 text-slate-400 hover:text-slate-100 border-white/10 hover:border-white/20' : 'bg-white hover:bg-stone-50 text-stone-800 border-stone-200'}`}
                     aria-label="Toggle Theme"
                 >
                     {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
@@ -292,7 +316,8 @@ export default function GemDuelBoard() {
                     (state.mode === 'PVE' || historyControls.historyLength === 0))) && (
                 <button
                     onClick={() => setShowDebug(!showDebug)}
-                    className={`fixed top-24 left-4 z-[100] p-2 rounded border text-[10px] transition-colors ${theme === 'dark' ? 'bg-slate-800/80 hover:bg-red-900/60 text-slate-400 border-slate-700' : 'bg-white/80 hover:bg-red-100 text-slate-600 border-slate-300'}`}
+                    className={`fixed top-24 left-4 z-[100] p-2 rounded border text-[10px] transition-colors shadow-none 
+                    ${theme === 'dark' ? 'bg-transparent hover:bg-white/10 text-slate-400 hover:text-slate-100 border-white/10 hover:border-white/20' : 'bg-white/80 hover:bg-red-100 text-stone-600 border-stone-300'}`}
                 >
                     {showDebug ? 'CLOSE DEBUG' : 'OPEN DEBUG'}
                 </button>
@@ -319,7 +344,7 @@ export default function GemDuelBoard() {
                 </div>
             )}
 
-            <Suspense fallback={<div className="fixed inset-0 z-[200] bg-black/50" />}>
+            <React.Suspense fallback={<div className="fixed inset-0 z-[200] bg-black/50" />}>
                 {showRulebook && <Rulebook onClose={() => setShowRulebook(false)} theme={theme} />}
 
                 {activeModal?.type === 'PEEK' &&
@@ -332,7 +357,7 @@ export default function GemDuelBoard() {
                             theme={theme}
                         />
                     )}
-            </Suspense>
+            </React.Suspense>
 
             {persistentWinner && !isReviewing && (
                 <WinnerModal
@@ -392,7 +417,7 @@ export default function GemDuelBoard() {
             )}
 
             {/* 2. Middle Game Area (Centered) */}
-            <div className="flex-1 flex items-center justify-center min-h-0 relative z-30 px-4 pt-16 lg:pt-20 pb-4">
+            <div className="flex-1 flex items-center justify-center min-h-0 relative z-30 px-4 pt-16 lg:pt-20 pb-4 transition-all duration-500">
                 <div
                     className={`flex flex-col lg:flex-row gap-4 lg:gap-8 xl:gap-16 items-center justify-center transform ${settings.boardScale} lg:scale-100 origin-center lg:origin-center transition-all duration-500`}
                 >
@@ -466,7 +491,7 @@ export default function GemDuelBoard() {
                             canInteract={isMyTurn}
                         />
                         <div
-                            className={`flex flex-col gap-3 items-center p-2 lg:p-3 rounded-2xl border backdrop-blur-sm transition-colors duration-500 ${theme === 'dark' ? 'bg-slate-900/40 border-slate-800/50' : 'bg-white/40 border-slate-200/50'}`}
+                            className={`flex flex-col gap-3 items-center p-2 lg:p-3 transition-all duration-500`}
                         >
                             <ReplayControls
                                 undo={historyControls.undo}
@@ -487,10 +512,18 @@ export default function GemDuelBoard() {
             </div>
 
             <div
-                className={`${settings.zoneHeight} shrink-0 flex w-full border-t backdrop-blur-md relative z-20 transition-all duration-500 ${theme === 'dark' ? 'border-slate-800 bg-slate-950/80' : 'border-slate-300 bg-slate-100/80'}`}
+                className={`${settings.zoneHeight} shrink-0 flex w-full backdrop-blur-xl relative z-20 transition-all duration-500 
+                ${theme === 'dark' ? 'bg-black/30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]' : 'bg-white/80'}`}
             >
                 <div
-                    className={`flex-1 border-r relative ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}`}
+                    className={`flex-1 relative transition-all duration-500 border-2
+                    ${
+                        theme === 'dark'
+                            ? 'border-white/5 bg-emerald-900/10'
+                            : turn === 'p1' && !winner
+                              ? 'animate-breathe-emerald bg-emerald-50/30'
+                              : 'border-emerald-50 bg-emerald-50/30'
+                    }`}
                 >
                     <div
                         className={`w-full h-full transform ${settings.zoneScale} origin-center lg:scale-100`}
@@ -522,7 +555,16 @@ export default function GemDuelBoard() {
                     </div>
                 </div>
 
-                <div className="flex-1 relative">
+                <div
+                    className={`flex-1 relative transition-all duration-500 border-2
+                    ${
+                        theme === 'dark'
+                            ? 'border-white/5 bg-blue-900/10'
+                            : turn === 'p2' && !winner
+                              ? 'animate-breathe-blue bg-slate-50/30'
+                              : 'border-blue-50 bg-slate-50/30'
+                    }`}
+                >
                     <div
                         className={`w-full h-full transform ${settings.zoneScale} origin-center lg:scale-100`}
                     >

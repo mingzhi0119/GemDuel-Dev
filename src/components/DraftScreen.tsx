@@ -1,5 +1,18 @@
 import React from 'react';
-import { Sparkles, Crown, Shield, Swords, ArrowRight } from 'lucide-react';
+import {
+    Sparkles,
+    Crown,
+    Shield,
+    Swords,
+    ArrowRight,
+    Coins,
+    Tag,
+    Zap,
+    Eye,
+    Trophy,
+    RefreshCw,
+    Layers,
+} from 'lucide-react';
 import { BUFF_STYLES } from '../styles/buffs';
 import { BUFFS } from '../constants'; // Import for reconstruction
 import { Buff, PlayerKey } from '../types';
@@ -7,39 +20,66 @@ import { Buff, PlayerKey } from '../types';
 interface DraftScreenProps {
     draftPool: string[]; // IDs only
     p2DraftPool?: string[]; // IDs only
-    p1SelectedBuff?: { id: string } | null;
     buffLevel: number;
     activePlayer: PlayerKey;
     onSelectBuff: (buffId: string) => void;
+    onReroll?: (level?: number) => void;
     theme: 'light' | 'dark';
     localPlayer?: PlayerKey;
     isOnline?: boolean;
+    isPvE?: boolean;
 }
 
 export const DraftScreen: React.FC<DraftScreenProps> = ({
     draftPool,
     p2DraftPool = [],
-    p1SelectedBuff = null,
     buffLevel,
     activePlayer,
     onSelectBuff,
+    onReroll,
     theme,
     localPlayer,
     isOnline = false,
+    isPvE = false,
 }) => {
     const rawPool = (activePlayer === 'p1' ? draftPool : p2DraftPool) || [];
     console.log('[UI-DRAFT-SCREEN] Raw Pool IDs from State:', rawPool);
+
+    const getBuffIcon = (category?: string) => {
+        switch (category) {
+            case 'economy':
+                return { Icon: Coins, color: 'text-amber-400' };
+            case 'discount':
+                return { Icon: Tag, color: 'text-blue-400' };
+            case 'control':
+                return { Icon: Zap, color: 'text-red-500' };
+            case 'intel':
+                return { Icon: Eye, color: 'text-cyan-400' };
+            case 'victory':
+                return { Icon: Trophy, color: 'text-orange-500' };
+            default:
+                return { Icon: Sparkles, color: 'text-purple-400' };
+        }
+    };
+
+    const getDraftTitle = (level: number) => {
+        switch (level) {
+            case 1:
+                return 'Minor Tactic Draft';
+            case 2:
+                return 'Tactical Shift Draft';
+            case 3:
+                return 'Expert Game-Changer Draft';
+            default:
+                return `Level ${level} Buff Selection`;
+        }
+    };
 
     // RECONSTRUCTION: Map basic sync data (IDs) back to full local constants
     const currentPool: Buff[] = rawPool.map((id) => {
         const fullData = Object.values(BUFFS).find((b) => b.id === id);
         return (fullData as Buff) || (BUFFS.NONE as Buff);
     });
-
-    // RECONSTRUCTION: Also reconstruct p1SelectedBuff if it only contains an ID
-    const fullP1Choice: Buff | null = p1SelectedBuff
-        ? (Object.values(BUFFS).find((b) => b.id === p1SelectedBuff.id) as Buff) || null
-        : null;
 
     const canInteract = !isOnline || activePlayer === localPlayer;
 
@@ -60,6 +100,49 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
             `}
             />
 
+            {/* PVE Customize Panel (PVE P1 Only) */}
+            {isPvE && activePlayer === 'p1' && onReroll && (
+                <div className="absolute top-8 right-8 z-[100] flex flex-col items-end gap-2 animate-in fade-in slide-in-from-right-4 duration-500">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Layers size={12} className="text-yellow-500" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500/80">
+                            PVE CUSTOMIZE
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/5 shadow-2xl">
+                        <button
+                            onClick={() => onReroll()}
+                            className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-500 text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 group"
+                        >
+                            <RefreshCw
+                                size={14}
+                                className="transition-transform group-active:rotate-180 duration-500"
+                            />
+                            Refresh Pool
+                        </button>
+                        <div className="h-6 w-px bg-white/10 mx-1" />
+                        <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg">
+                            {[1, 2, 3].map((lvl) => (
+                                <button
+                                    key={lvl}
+                                    onClick={() => onReroll(lvl)}
+                                    className={`
+                                        text-[10px] font-black w-8 h-8 flex items-center justify-center rounded-lg transition-all active:scale-95
+                                        ${
+                                            buffLevel === lvl
+                                                ? 'bg-amber-400 text-amber-950 shadow-inner'
+                                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                        }
+                                    `}
+                                >
+                                    L{lvl}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="z-10 text-center mb-6 animate-in slide-in-from-top-10 duration-700">
                 <div className="flex items-center justify-center gap-3 mb-2">
@@ -69,32 +152,10 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                     </h1>
                     <Sparkles className="text-amber-400" size={32} />
                 </div>
-                <p className={`text-lg font-medium opacity-60`}>Level {buffLevel} Buff Selection</p>
+                <p className={`text-lg font-black uppercase tracking-widest opacity-60`}>
+                    {getDraftTitle(buffLevel)}
+                </p>
             </div>
-
-            {/* P1 Choice Context (Only for P2) */}
-
-            {activePlayer === 'p2' && fullP1Choice && (
-                <div className="z-10 mb-8 animate-in fade-in zoom-in duration-500">
-                    <div
-                        className={`px-6 py-4 rounded-2xl border-2 shadow-xl flex items-center gap-4 ${BUFF_STYLES[fullP1Choice.level || 1]} bg-opacity-40 backdrop-blur-md`}
-                    >
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
-                                Player 1 Selected
-                            </span>
-
-                            <span className="text-xl font-black">{fullP1Choice.label}</span>
-                        </div>
-
-                        <div className="h-10 w-[2px] bg-white/20" />
-
-                        <p className="text-sm max-w-[200px] opacity-80 leading-tight italic">
-                            "{fullP1Choice.desc}"
-                        </p>
-                    </div>
-                </div>
-            )}
 
             {/* Active Player Indicator */}
             <div
@@ -114,75 +175,106 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
 
             {/* Buff Cards */}
             <div className="z-10 flex flex-wrap justify-center gap-6 max-w-7xl px-4">
-                {currentPool.map((buff, idx) => (
-                    <button
-                        key={buff.id}
-                        id={`buff-select-${buff.id}`}
-                        name="buff-selection"
-                        disabled={!canInteract}
-                        onClick={() => canInteract && onSelectBuff(buff.id)}
-                        className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300 
-                            ${canInteract ? 'hover:scale-105 hover:-translate-y-2 hover:shadow-2xl cursor-pointer' : 'opacity-50 cursor-default'}
-                            ${BUFF_STYLES[buff.level]}
-                            ${theme === 'dark' ? 'hover:shadow-purple-900/50' : 'hover:shadow-purple-200/50'}
-                        `}
-                        style={{ animationDelay: `${idx * 100}ms` }}
-                    >
-                        {/* Card Header */}
-                        <div className="flex justify-between items-start mb-3">
-                            <div className="p-2 rounded-xl bg-white/10 backdrop-blur-sm">
-                                <Crown size={22} className="text-amber-300" />
-                            </div>
-                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 border px-2 py-1 rounded-full">
-                                Lvl {buff.level}
-                            </span>
-                        </div>
+                {currentPool.map((buff, idx) => {
+                    const { Icon, color: iconColor } = getBuffIcon(buff.category);
+                    const isP1ChoiceSlot = activePlayer === 'p2' && idx === 0;
 
-                        {/* Title */}
-                        <h3 className="text-xl font-black mb-3 leading-tight group-hover:text-white transition-colors">
-                            {buff.label}
-                        </h3>
-
-                        {/* Description */}
-                        <p className="text-xs font-medium leading-relaxed opacity-80 mb-4 flex-grow">
-                            {buff.desc}
-                        </p>
-
-                        {/* Win Condition Changes (if any) */}
-                        {buff.effects?.winCondition && (
-                            <div className="mt-auto pt-3 border-t border-white/10 text-[10px] space-y-1 opacity-90">
-                                <p className="font-bold uppercase opacity-60 mb-1">
-                                    Win Condition:
-                                </p>
-                                {buff.effects.winCondition.points && (
-                                    <div className="flex justify-between">
-                                        <span>Points:</span>
-                                        <span className="font-mono font-bold text-amber-300">
-                                            {buff.effects.winCondition.points}
-                                        </span>
-                                    </div>
-                                )}
-                                {buff.effects.winCondition.crowns && (
-                                    <div className="flex justify-between">
-                                        <span>Crowns:</span>
-                                        <span className="font-mono font-bold text-amber-300">
-                                            {buff.effects.winCondition.crowns}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Select Action */}
-                        <div
-                            className={`absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-2 font-bold uppercase tracking-widest text-[10px]
-                            ${theme === 'dark' ? 'text-white' : 'text-slate-900'}
-                        `}
+                    return (
+                        <button
+                            key={buff.id}
+                            id={`buff-select-${buff.id}`}
+                            name="buff-selection"
+                            disabled={!canInteract}
+                            onClick={() => canInteract && onSelectBuff(buff.id)}
+                            className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300 
+                                ${canInteract ? 'hover:scale-105 hover:-translate-y-2 hover:shadow-2xl cursor-pointer' : 'opacity-50 cursor-default'}
+                                ${BUFF_STYLES[buff.level]}
+                                ${theme === 'dark' ? 'hover:shadow-purple-900/50' : 'hover:shadow-purple-200/50'}
+                                ${isP1ChoiceSlot ? 'border-amber-400 ring-2 ring-amber-400/50' : ''}
+                            `}
+                            style={{ animationDelay: `${idx * 100}ms` }}
                         >
-                            Select <ArrowRight size={14} />
-                        </div>
-                    </button>
-                ))}
+                            {/* Card Header */}
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="p-2 rounded-xl bg-white/10 backdrop-blur-sm">
+                                    <Icon size={22} className={iconColor} />
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 border px-2 py-1 rounded-full">
+                                        Lvl {buff.level}
+                                    </span>
+                                    {buff.category && (
+                                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 px-2">
+                                            {buff.category}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* P1 Choice Badge */}
+                            {isP1ChoiceSlot && (
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-amber-400 text-amber-950 text-[8px] font-black uppercase px-3 py-1 rounded-full shadow-lg z-20">
+                                    Player 1's Choice
+                                </div>
+                            )}
+
+                            {/* Title */}
+                            <h3 className="text-xl font-black mb-3 leading-tight group-hover:text-white transition-colors">
+                                {buff.label}
+                            </h3>
+
+                            {/* Description */}
+                            <p className="text-xs font-medium leading-relaxed opacity-80 mb-4 flex-grow">
+                                {buff.desc}
+                            </p>
+
+                            {/* Win Condition Changes (if any) */}
+                            {buff.effects?.winCondition &&
+                                (buff.effects.winCondition.points ||
+                                    buff.effects.winCondition.crowns ||
+                                    buff.effects.winCondition.singleColor) && (
+                                    <div className="mt-auto pt-3 border-t border-white/10 text-[10px] space-y-1 opacity-90">
+                                        <p className="font-bold uppercase opacity-60 mb-1">
+                                            Goal Adjustment:
+                                        </p>
+                                        {buff.effects.winCondition.points && (
+                                            <div className="flex justify-between">
+                                                <span>Points:</span>
+                                                <span className="font-mono font-bold text-amber-300">
+                                                    {buff.effects.winCondition.points}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {buff.effects.winCondition.crowns && (
+                                            <div className="flex justify-between">
+                                                <span>Crowns:</span>
+                                                <span className="font-mono font-bold text-amber-300">
+                                                    {buff.effects.winCondition.crowns}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {buff.effects.winCondition.singleColor && (
+                                            <div className="flex justify-between">
+                                                <span>Points (1 Color):</span>
+                                                <span className="font-mono font-bold text-amber-300">
+                                                    {buff.effects.winCondition.singleColor}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                            {/* Select Action */}
+                            <div
+                                className={`absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-2 font-bold uppercase tracking-widest text-[10px]
+                                ${theme === 'dark' ? 'text-white' : 'text-slate-900'}
+                            `}
+                            >
+                                Select <ArrowRight size={14} />
+                            </div>
+                        </button>
+                    );
+                })}
             </div>
 
             <div className="absolute bottom-8 text-[10px] uppercase font-black tracking-tighter opacity-30 z-10 flex gap-12">

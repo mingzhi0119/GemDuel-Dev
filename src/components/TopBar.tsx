@@ -1,5 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Crown, Trophy, Sparkles } from 'lucide-react';
+import {
+    Crown,
+    Trophy,
+    Sparkles,
+    Coins,
+    Tag,
+    Zap,
+    Eye,
+    Search,
+    Hand,
+    ArrowDownCircle,
+} from 'lucide-react';
 import { motion, AnimatePresence, animate } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '../types';
 import { BUFFS } from '../constants';
@@ -73,6 +84,25 @@ const TopBarBuff = ({
 
     const buff = (Object.values(BUFFS).find((b) => b.id === rawBuff.id) as Buff) || rawBuff;
 
+    const getBuffIcon = (category?: string) => {
+        switch (category) {
+            case 'economy':
+                return { Icon: Coins, color: 'text-amber-400' };
+            case 'discount':
+                return { Icon: Tag, color: 'text-blue-400' };
+            case 'control':
+                return { Icon: Zap, color: 'text-red-500' };
+            case 'intel':
+                return { Icon: Eye, color: 'text-cyan-400' };
+            case 'victory':
+                return { Icon: Trophy, color: 'text-orange-500' };
+            default:
+                return { Icon: Sparkles, color: 'text-purple-400' };
+        }
+    };
+
+    const { Icon, color: iconColor } = getBuffIcon(buff.category);
+
     // Theme-aware level styles
     const levelStyles: Record<number, string> = {
         1:
@@ -103,7 +133,7 @@ const TopBarBuff = ({
                 ${levelStyle}
             `}
             >
-                <Sparkles size={12} />
+                <Icon size={12} className={iconColor} />
                 <span>{buff.label}</span>
             </div>
 
@@ -123,6 +153,15 @@ const TopBarBuff = ({
                     <span className="text-[8px] opacity-50 font-mono">LVL {buff.level}</span>
                 </div>
                 <p className="text-[10px] leading-relaxed opacity-90">{buff.desc}</p>
+                {buff.category && (
+                    <div className="flex justify-end mt-1.5 pt-1.5 border-t border-white/5">
+                        <span
+                            className={`text-[8px] font-black uppercase tracking-widest ${iconColor}`}
+                        >
+                            {buff.category}
+                        </span>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -163,7 +202,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     return (
         <div
             className={`fixed top-0 left-0 w-full h-16 lg:h-20 backdrop-blur-md border-b z-[60] flex items-center justify-between px-2 lg:px-8 transition-colors duration-500
-            ${theme === 'dark' ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-200'}
+            ${theme === 'dark' ? 'bg-slate-950/90 border-slate-800' : 'bg-[#fffefc]/90 border-stone-200/60'}
         `}
         >
             {/* 1/4 and 3/4 Positioned Buffs (Absolute) */}
@@ -201,14 +240,16 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <div className="flex flex-col items-start gap-0.5">
                     <div className="flex items-center gap-2 lg:gap-6">
                         <div
-                            className={`flex items-center gap-1 lg:gap-2 ${isP1Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
+                            className={`flex items-center gap-1 lg:gap-2 ${isP1Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
                         >
                             <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
                             <AnimatedScore
                                 value={p1Score}
                                 className="text-xl lg:text-4xl font-black drop-shadow-lg"
                             />
-                            <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
+                            <span
+                                className={`text-[10px] font-bold mt-1 lg:mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
+                            >
                                 /{p1Goals.points}
                             </span>
                         </div>
@@ -219,7 +260,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                             <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
                                 {p1Crowns}
                             </span>
-                            <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
+                            <span
+                                className={`text-[10px] font-bold mt-1 lg:mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
+                            >
                                 /{p1Goals.crowns}
                             </span>
                         </div>
@@ -230,28 +273,36 @@ export const TopBar: React.FC<TopBarProps> = ({
             {/* Center Info */}
             <div className="flex flex-col items-center justify-center">
                 <div
-                    className={`flex items-center gap-3 px-3 lg:px-6 py-1 lg:py-2 rounded-2xl border shadow-inner transition-all duration-500
-                    ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800' : 'bg-slate-200/50 border-slate-300'}
+                    className={`flex items-center gap-4 px-6 lg:px-10 py-2 lg:py-3 rounded-2xl transition-all duration-500
+                    ${
+                        theme === 'dark'
+                            ? 'bg-slate-800/40 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.05)]'
+                            : 'bg-white border-2 border-stone-200 shadow-none'
+                    }
                 `}
                 >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                         <span
-                            className={`text-[10px] lg:text-sm font-black transition-colors ${activePlayer === 'p1' ? 'text-emerald-500' : 'text-slate-500'}`}
+                            className={`text-[10px] lg:text-base font-black transition-colors ${activePlayer === 'p1' ? 'text-emerald-500' : theme === 'dark' ? 'text-slate-500' : 'text-stone-800'}`}
                         >
                             {playerTurnCounts.p1}
                         </span>
-                        <span className="text-[8px] lg:text-[10px] font-bold uppercase tracking-tighter opacity-40">
+                        <span
+                            className={`text-[8px] lg:text-[10px] font-black uppercase tracking-tighter ${theme === 'dark' ? 'opacity-40' : 'text-stone-400'}`}
+                        >
                             turn
                         </span>
                     </div>
-                    <div className="h-4 w-px bg-slate-500/30" />
-                    <div className="flex items-center gap-1.5">
+                    <div className="h-4 w-px bg-stone-200/50" />
+                    <div className="flex items-center gap-2">
                         <span
-                            className={`text-[10px] lg:text-sm font-black transition-colors ${activePlayer === 'p2' ? 'text-blue-500' : 'text-slate-500'}`}
+                            className={`text-[10px] lg:text-base font-black transition-colors ${activePlayer === 'p2' ? 'text-blue-500' : theme === 'dark' ? 'text-slate-500' : 'text-stone-800'}`}
                         >
                             {playerTurnCounts.p2}
                         </span>
-                        <span className="text-[8px] lg:text-[10px] font-bold uppercase tracking-tighter opacity-40">
+                        <span
+                            className={`text-[8px] lg:text-[10px] font-black uppercase tracking-tighter ${theme === 'dark' ? 'opacity-40' : 'text-stone-400'}`}
+                        >
                             turn
                         </span>
                     </div>
@@ -268,14 +319,16 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <div className="flex flex-col items-end gap-0.5">
                     <div className="flex items-center gap-2 lg:gap-6 flex-row-reverse">
                         <div
-                            className={`flex items-center gap-1 lg:gap-2 ${isP2Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
+                            className={`flex items-center gap-1 lg:gap-2 ${isP2Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
                         >
                             <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
                             <AnimatedScore
                                 value={p2Score}
                                 className="text-xl lg:text-4xl font-black drop-shadow-lg"
                             />
-                            <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
+                            <span
+                                className={`text-[10px] font-bold mt-1 lg:mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
+                            >
                                 /{p2Goals.points}
                             </span>
                         </div>
@@ -286,7 +339,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                             <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
                                 {p2Crowns}
                             </span>
-                            <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
+                            <span
+                                className={`text-[10px] font-bold mt-1 lg:mt-2 ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
+                            >
                                 /{p2Goals.crowns}
                             </span>
                         </div>

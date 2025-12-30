@@ -91,13 +91,19 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
     }) => {
         return (
             <div
-                className={`p-3 rounded-2xl shadow-2xl border transition-colors duration-300 backdrop-blur-sm
-            ${theme === 'dark' ? 'bg-slate-800/80 border-slate-700/50' : 'bg-white/60 border-slate-200/50'}
-            ${phase === 'DISCARD_EXCESS_GEMS' ? 'border-red-500/50' : ''}
+                className={`p-4 rounded-[2rem] border transition-all duration-500 backdrop-blur-md
+            ${
+                theme === 'dark'
+                    ? 'bg-slate-800/40 border-white/10 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.05)]'
+                    : 'bg-white border-stone-200/60'
+            }
+            ${phase === 'DISCARD_EXCESS_GEMS' ? 'border-red-500/50 ring-2 ring-red-500/10' : ''}
         `}
             >
-                <div className="text-right text-[10px] text-slate-500 mb-1 font-mono">
-                    Bag: {bag.length}
+                <div
+                    className={`text-right text-[10px] mb-2 font-mono font-bold tracking-tighter ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
+                >
+                    BAG: {bag.length}
                 </div>
                 <div
                     className={`grid grid-cols-5 grid-rows-5 gap-2 w-[300px] h-[300px] ${!canInteract ? 'pointer-events-none' : ''}`}

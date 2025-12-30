@@ -132,9 +132,22 @@ export const useGameInteractions = (
             if (options.useBuffs) {
                 const level = (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
                 const levelBuffs = Object.values(BUFFS).filter((b) => b.level === level);
-                const fullPool = shuffleArray(levelBuffs).slice(0, 3);
+
+                // Select 3 for P1 from DIFFERENT categories
+                const categoriesSeen = new Set<string>();
+                const p1Pool: typeof levelBuffs = [];
+                const shuffledPool = shuffleArray([...levelBuffs]);
+
+                for (const b of shuffledPool) {
+                    if (b.category && !categoriesSeen.has(b.category)) {
+                        p1Pool.push(b);
+                        categoriesSeen.add(b.category);
+                        if (p1Pool.length === 3) break;
+                    }
+                }
+
                 // IDs only
-                setupData.draftPool = fullPool.map((b) => b.id);
+                setupData.draftPool = p1Pool.map((b) => b.id);
                 setupData.buffLevel = level;
 
                 const action: GameAction = {
@@ -435,17 +448,37 @@ export const useGameInteractions = (
             const basics = ['red', 'green', 'blue', 'white', 'black'];
             const randomColor = basics[Math.floor(Math.random() * 5)] as GemColor;
             let p2DraftPoolIndices: number[] | undefined;
+
             if (gameState.turn === 'p1' && gameState.phase === 'DRAFT_PHASE') {
                 const levelBuffs = Object.values(BUFFS).filter(
                     (b) => b.level === gameState.buffLevel
                 );
-                const indices = levelBuffs.map((_, i) => i);
-                for (let i = indices.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [indices[i], indices[j]] = [indices[j], indices[i]];
+                const selectedBuff = levelBuffs.find((b) => b.id === buffId);
+                const selectedCategory = selectedBuff?.category;
+
+                const p1ChoiceIdx = levelBuffs.findIndex((b) => b.id === buffId);
+
+                // Slot 1: P1's Choice
+                const finalIndices: number[] = [p1ChoiceIdx];
+
+                // Slots 2-4: 3 new buffs of DIFFERENT categories, none matching selectedCategory
+                const poolForP2 = levelBuffs.filter(
+                    (b) => b.id !== buffId && b.category !== selectedCategory
+                );
+                const shuffledPool = shuffleArray([...poolForP2]);
+                const categoriesSeen = new Set<string>();
+
+                for (const b of shuffledPool) {
+                    if (b.category && !categoriesSeen.has(b.category)) {
+                        const idx = levelBuffs.findIndex((lb) => lb.id === b.id);
+                        finalIndices.push(idx);
+                        categoriesSeen.add(b.category);
+                        if (finalIndices.length === 4) break;
+                    }
                 }
-                p2DraftPoolIndices = indices.slice(0, 4);
+                p2DraftPoolIndices = finalIndices;
             }
+
             const action: GameAction = {
                 type: 'SELECT_BUFF',
                 payload: { buffId, randomColor, p2DraftPoolIndices },
@@ -466,6 +499,19 @@ export const useGameInteractions = (
                 const action: GameAction = {
                     type: 'PEEK_DECK',
                     payload: { level: level as 1 | 2 | 3 },
+                };
+                networkDispatch(action);
+            }
+        },
+        [canLocalInteract, networkDispatch]
+    );
+
+    const handleRerollBuffs = useCallback(
+        (level?: number) => {
+            if (canLocalInteract) {
+                const action: GameAction = {
+                    type: 'DEBUG_REROLL_BUFFS',
+                    payload: { level },
                 };
                 networkDispatch(action);
             }
@@ -517,6 +563,7 @@ export const useGameInteractions = (
             handleSelectBuff,
             handleCloseModal,
             handlePeekDeck,
+            handleRerollBuffs,
         }),
         [
             startGame,
@@ -542,6 +589,7 @@ export const useGameInteractions = (
             handleSelectBuff,
             handleCloseModal,
             handlePeekDeck,
+            handleRerollBuffs,
         ]
     );
 

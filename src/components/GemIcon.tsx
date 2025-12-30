@@ -6,6 +6,7 @@ interface GemIconProps {
     size?: string;
     className?: string;
     count?: number;
+    theme?: 'light' | 'dark';
 }
 
 export const GemIcon: React.FC<GemIconProps> = ({
@@ -13,6 +14,7 @@ export const GemIcon: React.FC<GemIconProps> = ({
     size = 'w-6 h-6',
     className = '',
     count,
+    theme = 'dark',
 }) => (
     <div
         className={`relative ${size} rounded-full bg-gradient-to-br ${type.color} border ${type.border} shadow-sm ${className}`}
@@ -29,7 +31,15 @@ export const GemIcon: React.FC<GemIconProps> = ({
             </span>
         )}
         {count !== undefined && (
-            <span className="absolute -bottom-1 -right-1 z-10 rounded-full border border-slate-600 bg-slate-900 px-1.5 text-[10px] font-bold text-white">
+            <span
+                className={`absolute -bottom-1 -right-1 z-10 rounded-full px-1.5 text-[10px] font-black border shadow-md
+                ${
+                    theme === 'dark'
+                        ? 'bg-slate-900 text-white border-slate-600'
+                        : 'bg-white text-stone-800 border-stone-200'
+                }
+            `}
+            >
                 {count}
             </span>
         )}

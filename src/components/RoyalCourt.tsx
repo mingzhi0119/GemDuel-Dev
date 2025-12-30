@@ -20,12 +20,19 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
 }) => {
     return (
         <div
-            className={`flex flex-col gap-4 items-center p-4 rounded-3xl border backdrop-blur-sm shrink-0 w-fit transition-colors duration-500
-            ${theme === 'dark' ? 'bg-slate-900/40 border-slate-800/50' : 'bg-white/40 border-slate-200/50'}
+            className={`flex flex-col gap-4 items-center p-5 rounded-[2rem] border backdrop-blur-md shrink-0 w-fit transition-all duration-500
+            ${
+                theme === 'dark'
+                    ? 'bg-slate-800/40 border-white/10 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.05)]'
+                    : 'bg-white border-stone-200/60'
+            }
             ${!canInteract ? 'opacity-70 pointer-events-none' : ''}
         `}
         >
-            <h2 className="text-[10px] font-bold text-yellow-500/70 uppercase tracking-widest flex items-center gap-2 mb-2">
+            <h2
+                className={`text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 mb-2
+                ${theme === 'dark' ? 'text-yellow-500/70' : 'text-amber-700/80'}`}
+            >
                 <Crown size={14} /> Royal Court
             </h2>
             <div className="grid grid-cols-2 gap-3">
@@ -47,7 +54,10 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                         </div>
                     ))
                 ) : (
-                    <div className="col-span-2 h-64 flex items-center justify-center text-slate-700 italic text-xs">
+                    <div
+                        className={`col-span-2 h-64 flex items-center justify-center italic text-xs 
+                        ${theme === 'dark' ? 'text-slate-700' : 'text-stone-400'}`}
+                    >
                         Court is Empty
                     </div>
                 )}

@@ -39,7 +39,11 @@ export const FloatingText: React.FC<FloatingTextProps> = ({ quantity, label }) =
     );
 };
 
-export const FloatingGem: React.FC<{ type: string; count: number }> = ({ type, count }) => {
+export const FloatingGem: React.FC<{ type: string; count: number; theme?: 'light' | 'dark' }> = ({
+    type,
+    count,
+    theme = 'dark',
+}) => {
     // Determine GemTypeObject based on type string (e.g. 'blue', 'gold')
     const gemKey = type.toUpperCase() as keyof typeof GEM_TYPES;
     const gemType = GEM_TYPES[gemKey] || GEM_TYPES.EMPTY;
@@ -53,7 +57,7 @@ export const FloatingGem: React.FC<{ type: string; count: number }> = ({ type, c
             className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex items-center gap-1"
         >
             <span className="font-black text-white text-xl drop-shadow-md">+{count}</span>
-            <GemIcon type={gemType} size="w-8 h-8" className="shadow-lg" />
+            <GemIcon type={gemType} size="w-8 h-8" theme={theme} className="shadow-lg" />
         </motion.div>
     );
 };

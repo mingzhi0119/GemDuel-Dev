@@ -25,8 +25,12 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
 
     return (
         <div
-            className={`flex items-center gap-4 p-3 rounded-2xl border shadow-2xl backdrop-blur-md transition-colors duration-500
-            ${theme === 'dark' ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-200'}
+            className={`flex items-center gap-4 p-3 rounded-2xl border backdrop-blur-md transition-all duration-500
+            ${
+                theme === 'dark'
+                    ? 'bg-slate-800/40 border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.05)]'
+                    : 'bg-white border-stone-200 shadow-none'
+            }
         `}
         >
             <button

@@ -23,25 +23,25 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
 
             {/* Modal */}
             <div
-                className={`relative w-full max-w-4xl max-h-[80vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden animate-in zoom-in-95 duration-300
-                ${theme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}
+                className={`relative w-full max-w-4xl max-h-[80vh] rounded-[2rem] shadow-2xl border flex flex-col overflow-hidden animate-in zoom-in-95 duration-300
+                ${theme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-stone-200'}
             `}
             >
                 {/* Header */}
                 <div
-                    className={`flex items-center justify-between p-4 border-b
-                    ${theme === 'dark' ? 'border-slate-800' : 'border-slate-100'}
+                    className={`flex items-center justify-between p-5 border-b
+                    ${theme === 'dark' ? 'border-slate-800' : 'border-stone-100'}
                 `}
                 >
                     <h2
-                        className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
+                        className={`text-xl font-black uppercase tracking-wider ${theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
                     >
                         Deck Intelligence
                     </h2>
                     <button
                         onClick={onClose}
                         aria-label="Close Modal"
-                        className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+                        className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-stone-100 text-stone-400'}`}
                     >
                         <X size={20} />
                     </button>
@@ -60,7 +60,9 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
                             </div>
                         ))
                     ) : (
-                        <div className="h-48 flex items-center justify-center text-slate-500 italic">
+                        <div
+                            className={`h-48 flex items-center justify-center italic ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
+                        >
                             No cards left in this deck.
                         </div>
                     )}
@@ -69,12 +71,11 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
                 {/* Footer */}
                 <div
                     className={`p-4 border-t flex justify-end
-                    ${theme === 'dark' ? 'border-slate-800 bg-slate-950/30' : 'border-slate-100 bg-slate-50'}
-                `}
+                    ${theme === 'dark' ? 'border-slate-800 bg-slate-950/30' : 'border-stone-100 bg-[#fdfbf7]'}`}
                 >
                     <button
                         onClick={onClose}
-                        className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg font-bold transition-all active:scale-95"
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-purple-900/20"
                     >
                         Done
                     </button>

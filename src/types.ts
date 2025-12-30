@@ -16,6 +16,9 @@ declare global {
             send: (channel: string, ...args: unknown[]) => void;
             removeAllListeners: (channel: string) => void;
         };
+        electron: {
+            getAppVersion: () => Promise<string>;
+        };
     }
 }
 
@@ -154,6 +157,7 @@ export interface BuffEffects {
 export interface Buff {
     id: string;
     level: 0 | 1 | 2 | 3;
+    category?: 'economy' | 'discount' | 'control' | 'intel' | 'victory';
     label: string;
     desc: string;
     effects: BuffEffects;
@@ -461,6 +465,7 @@ export type GameAction =
     | { type: 'UNDO'; payload?: undefined }
     | { type: 'REDO'; payload?: undefined }
     | { type: 'PEEK_DECK'; payload: PeekDeckPayload }
+    | { type: 'DEBUG_REROLL_BUFFS'; payload: { level?: number } }
     | { type: 'CLOSE_MODAL'; payload?: undefined };
 
 // ============================================================================
