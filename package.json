@@ -1,7 +1,7 @@
 {
     "name": "gem-duel",
     "private": true,
-    "version": "5.2.3",
+    "version": "5.2.4",
     "description": "A competitive strategy gem-collecting game built with React and Electron.",
     "author": "Mingzhi",
     "main": "electron/main.js",
