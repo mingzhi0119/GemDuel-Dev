@@ -252,7 +252,7 @@ export const BUFFS = {
         id: 'flexible_discount',
         level: 2,
         label: 'Flexible Discount',
-        desc: 'Reduce cost of Level 2 and 3 cards by 1.',
+        desc: 'Reduce cost of Level 2 and 3 cards by 1 (basic gems only).',
         effects: { passive: { discountAny: 1 } },
     },
     BOUNTY_HUNTER: {
@@ -310,7 +310,7 @@ export const BUFFS = {
         id: 'wonder_architect',
         level: 3,
         label: 'Wonder Architect',
-        desc: 'Level 3 cards cost 3 less. Win Condition: 13 Crowns (No Single Color Win).',
+        desc: 'First 3 Level 3 cards cost 3 less (basic gems only). Win Condition: 13 Crowns (No Single Color Win).',
         effects: {
             passive: { l3Discount: 3 },
             winCondition: { crowns: 13, disableSingleColor: true },

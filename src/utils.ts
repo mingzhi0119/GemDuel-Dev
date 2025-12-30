@@ -77,7 +77,14 @@ export const calculateTransaction = (
 
     // Flexible Discount: Only applies to Level 2 and 3 cards
     const discountAny = card.level === 2 || card.level === 3 ? buffEffects.discountAny || 0 : 0;
-    const l3Discount = card.level === 3 && buffEffects.l3Discount ? buffEffects.l3Discount : 0;
+
+    // Wonder Architect: Only applies to first 3 Level 3 cards
+    const l3PurchasedCount = (playerBuffs?.state?.l3PurchasedCount as number) || 0;
+    const l3Discount =
+        card.level === 3 && buffEffects.l3Discount && l3PurchasedCount < 3
+            ? buffEffects.l3Discount
+            : 0;
+
     const totalFlatDiscount = discountAny + l3Discount;
 
     const rawCost: Record<string, number> = {};
@@ -92,9 +99,9 @@ export const calculateTransaction = (
         rawCost[color] = needed;
     });
 
-    // 2. Apply Flat Discounts (Buffs)
+    // 2. Apply Flat Discounts (Buffs) to BASIC colors only
     let remainingDiscount = totalFlatDiscount;
-    Object.keys(rawCost).forEach((color) => {
+    BONUS_COLORS.forEach((color) => {
         if (remainingDiscount > 0 && rawCost[color] > 0) {
             const reduction = Math.min(rawCost[color], remainingDiscount);
             rawCost[color] -= reduction;

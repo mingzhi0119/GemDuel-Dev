@@ -299,7 +299,7 @@ Pearl Trader: Gem limit increased to 11. Start with 1 Extra Pearl.
 Gold Reserve: Start with 1 Extra Gold and 1 random Reserved Card.
 Color Preference: Random color costs -1 for you (assigned at start).
 Extortion: Every 2nd time you Replenish the board, steal 1 basic gem from opponent.
-Flexible Discount: Reduce cost of Level 2 and 3 cards by 1.
+Flexible Discount: Reduce cost of Level 2 and 3 cards by 1 (basic gems only).
 Bounty Hunter: Gain 1 random Extra Gem when you buy a card with Crowns.
 Recycler: Get 1 Extra Gem back when buying Level 2 or 3 cards.
 Aggressive Expansion: Gain 1 random Extra Gem when you Replenish the board.
@@ -310,7 +310,7 @@ King of Greed: All cards give +1 Point. Win Condition: 25 Points.
 Royal Envoy: Can pick remaining Royal Card at Turn 5. No Single Color Win.
 Double Agent: Privileges take 2 gems. Gem Cap: 8.
 All-Seeing Eye: Reveal 2 extra L3 cards. Pay L3 cards with Gold at half value. Win Condition: Single Color 13.
-Wonder Architect: Level 3 cards cost 3 less. Win Condition: 13 Crowns (No Single Color Win).
+Wonder Architect: First 3 Level 3 cards cost 3 less (basic gems only). Win Condition: 13 Crowns (No Single Color Win).
 Minimalist: First 5 cards purchased provide Double Bonuses. Max Gems: 6.
 Pacifist: Immune to negative effects (Theft). Start with 1 Special Privilege (Protected).
 Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special Privilege (Protected) every 2 turns.
@@ -333,7 +333,7 @@ Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special 
 黄金储备 (Gold Reserve)：开始时获得 1 个额外黄金和 1 张随机保留卡。
 色彩偏好 (Color Preference)：随机一种颜色对你而言成本 -1。
 巧取豪夺 (Extortion)：你每执行 2 次补给版图，就从对手那里偷取 1 个基础宝石。
-灵活折扣 (Flexible Discount)：购买 2 级和 3 级卡牌时，成本减少 1。
+灵活折扣 (Flexible Discount)：购买 2 级和 3 级卡牌时，基础宝石成本减少 1。
 赏金猎人 (Bounty Hunter)：当你购买带有皇冠的卡牌时，获得 1 个额外随机宝石。
 回收者 (Recycler)：购买 2 级或 3 级卡牌时，退回 1 个额外宝石。
 激进扩张 (Aggressive Expansion)：当你补给版图时，获得 1 个额外随机宝石。
@@ -344,7 +344,7 @@ Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special 
 皇家特使 (Royal Envoy)：可以在第 5 回合直接拿取剩余的皇室卡。取消单色获胜。
 双重间谍 (Double Agent)：特权可以拿取 2 个宝石。宝石上限：8。
 全知之眼 (All-Seeing Eye)：展示 2 张额外 L3 卡。用黄金支付 3 级卡时价值翻倍。获胜条件：单色 13 分。
-奇迹建筑师 (Wonder Architect)：3 级卡成本减少 3。获胜条件：13 个皇冠（取消单色获胜）。
+奇迹建筑师 (Wonder Architect)：前 3 张 3 级卡基础宝石成本减少 3。获胜条件：13 个皇冠（取消单色获胜）。
 极简主义 (Minimalist)：购买的前 5 张卡提供双倍奖励。宝石上限：6。
 和平主义者 (Pacifist)：免疫负面效果（偷取）。开始时获得 1 个特殊特权（受保护）。
 孤注一掷 (Desperate Gamble)：开始时获得 2 个额外黄金。无法执行“拿取 3 个宝石”。每 2 回合获得一个特殊的保护特权。

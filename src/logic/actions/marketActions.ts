@@ -100,6 +100,12 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
     state.playerTableau[player].push(finalCard);
 
+    // Wonder Architect: Track Level 3 purchases
+    if (finalCard.level === 3 && buff?.effects?.passive?.l3Discount) {
+        if (!buff.state) buff.state = {};
+        buff.state.l3PurchasedCount = ((buff.state.l3PurchasedCount as number) || 0) + 1;
+    }
+
     // Handle crowns
     if (finalCard.crowns && finalCard.crowns > 0) {
         addFeedback(state, player, 'crown', finalCard.crowns);
@@ -125,21 +131,20 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         }
     }
 
-    // Recycler: Refund one gem on lvl 2/3 card
+    // Recycler: Refund one RANDOM basic gem from cost on lvl 2/3 card
     if (buff?.effects?.passive?.recycler && (card.level === 2 || card.level === 3)) {
-        // Discrepancy Fix: Refund the FIRST color in the cost list, not the most numerous.
-        const costColors = Object.keys(card.cost).filter(
-            (color) => card.cost[color as GemColor] > 0
+        // Filter cost colors to basic ones only (exclude pearl, gold)
+        const basicCostColors = (Object.keys(card.cost) as GemColor[]).filter(
+            (color) => card.cost[color] > 0 && color !== 'pearl' && color !== 'gold'
         );
-        const paidColors = Object.keys(gemsPaid).filter((c) => gemsPaid[c as GemColor] > 0);
 
-        // Find the first color from the cost that was actually paid
-        const refundColor = costColors.find((c) => paidColors.includes(c)) as GemColor | undefined;
+        if (basicCostColors.length > 0) {
+            // Pick a random color from the cost
+            const refundColor = basicCostColors[Math.floor(Math.random() * basicCostColors.length)];
 
-        if (refundColor) {
             inv[refundColor]++;
 
-            // Track as extra allocation
+            // Track as extra allocation (vanishes on use)
             if (!state.extraAllocation) {
                 state.extraAllocation = {
                     p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
@@ -148,20 +153,8 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
             }
             state.extraAllocation[player][refundColor]++;
 
-            // Attempt to remove a returned gem of the same color from the bag
-            for (let i = state.bag.length - 1; i >= 0; i--) {
-                const bagItem = state.bag[i];
-                if (
-                    typeof bagItem === 'object' &&
-                    'type' in bagItem &&
-                    bagItem.type?.id === refundColor
-                ) {
-                    state.bag.splice(i, 1);
-                    break;
-                }
-            }
             addFeedback(state, player, refundColor, 1);
-            state.toastMessage = 'Recycled 1 Gem!';
+            state.toastMessage = `Recycled 1 ${refundColor.toUpperCase()}!`;
         }
     }
 

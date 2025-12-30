@@ -175,12 +175,16 @@ describe('Comprehensive Buff Tests', () => {
             expect(state.inventories.p1.blue).toBe(1);
         });
 
-        it('FLEXIBLE_DISCOUNT: Reduces L2/L3 cost', () => {
+        it('FLEXIBLE_DISCOUNT: Reduces L2/L3 cost (basic gems only)', () => {
             let state = createBuffState(BUFFS.FLEXIBLE_DISCOUNT.id);
+
             state = giveInfiniteGems(state, 'p1');
 
             const l2Card = { level: 2, cost: { red: 2 }, points: 0 } as Card;
+
             const l1Card = { level: 1, cost: { red: 2 }, points: 0 } as Card;
+
+            const pearlCard = { level: 2, cost: { pearl: 1 }, points: 0 } as Card;
 
             const res2 = calculateTransaction(
                 l2Card,
@@ -188,6 +192,7 @@ describe('Comprehensive Buff Tests', () => {
                 [],
                 state.playerBuffs.p1
             );
+
             expect(res2.gemsPaid.red).toBe(1); // 2 - 1 = 1
 
             const res1 = calculateTransaction(
@@ -196,7 +201,17 @@ describe('Comprehensive Buff Tests', () => {
                 [],
                 state.playerBuffs.p1
             );
+
             expect(res1.gemsPaid.red).toBe(2);
+
+            const resPearl = calculateTransaction(
+                pearlCard,
+                state.inventories.p1,
+                [],
+                state.playerBuffs.p1
+            );
+
+            expect(resPearl.gemsPaid.pearl).toBe(1); // No discount for pearls
         });
 
         it('BOUNTY_HUNTER: Gains gem on buying crown card', () => {
@@ -219,22 +234,34 @@ describe('Comprehensive Buff Tests', () => {
             expect(state.inventories.p1.blue).toBe(1);
         });
 
-        it('RECYCLER: Refunds 1 gem for L2/L3', () => {
+        it('RECYCLER: Refunds 1 RANDOM basic gem from cost for L2/L3', () => {
             let state = createBuffState(BUFFS.RECYCLER.id);
             state = produce(state, (draft) => {
                 draft.turn = 'p1';
-                draft.inventories.p1.red = 5;
+                draft.inventories.p1 = {
+                    red: 5,
+                    blue: 5,
+                    white: 0,
+                    green: 0,
+                    black: 0,
+                    gold: 0,
+                    pearl: 1,
+                };
             });
 
-            const l2Card = { level: 2, cost: { red: 3 }, points: 1 } as Card;
-
+            // Card costs 3 red and 1 pearl
+            const l2Card = { level: 2, cost: { red: 3, pearl: 1 }, points: 1 } as Card;
             state = produce(state, (draft) => {
                 handleBuyCard(draft, { card: l2Card, source: 'market' });
             });
 
-            expect(state.inventories.p1.red).toBe(3); // 5 - 3 + 1 = 3
+            // Since only 'red' is a basic gem in the cost, it MUST return red.
+            // Pearl should be ignored.
+            // Net red: 5 - 3 + 1 = 3.
+            expect(state.inventories.p1.red).toBe(3);
+            expect(state.extraAllocation.p1.red).toBe(1);
+            expect(state.toastMessage?.toUpperCase()).toContain('RECYCLED 1 RED');
         });
-
         it('AGGRESSIVE_EXPANSION: Gains gem on replenish', () => {
             let state = createBuffState(BUFFS.AGGRESSIVE_EXPANSION.id);
             state = produce(state, (draft) => {
@@ -300,18 +327,41 @@ describe('Comprehensive Buff Tests', () => {
             expect(res.goldCost).toBe(2);
         });
 
-        it('WONDER_ARCHITECT: L3 cost reduced by 3', () => {
+        it('WONDER_ARCHITECT: L3 cost reduced by 3 (basic gems only, first 3 cards)', () => {
             let state = createBuffState(BUFFS.WONDER_ARCHITECT.id);
-            state = giveInfiniteGems(state, 'p1');
-            const l3Card = { level: 3, cost: { red: 5 } } as Card;
 
-            const res = calculateTransaction(
-                l3Card,
+            state = giveInfiniteGems(state, 'p1');
+
+            const l3Card = { level: 3, cost: { red: 5 }, points: 0 } as Card;
+
+            const l3PearlCard = { level: 3, cost: { pearl: 1 }, points: 0 } as Card;
+
+            // 1st Card
+
+            let res = calculateTransaction(l3Card, state.inventories.p1, [], state.playerBuffs.p1);
+
+            expect(res.gemsPaid.red).toBe(2); // 5 - 3 = 2
+
+            // Simulate buying 3 cards
+
+            state = produce(state, (draft) => {
+                draft.playerBuffs.p1.state = { l3PurchasedCount: 3 };
+            });
+
+            // 4th Card (No discount)
+
+            res = calculateTransaction(l3Card, state.inventories.p1, [], state.playerBuffs.p1);
+
+            expect(res.gemsPaid.red).toBe(5);
+
+            const resPearl = calculateTransaction(
+                l3PearlCard,
                 state.inventories.p1,
                 [],
                 state.playerBuffs.p1
             );
-            expect(res.gemsPaid.red).toBe(2); // 5 - 3 = 2
+
+            expect(resPearl.gemsPaid.pearl).toBe(1); // No discount for pearls
         });
 
         it('MINIMALIST: Double bonus for first 2 cards', () => {
