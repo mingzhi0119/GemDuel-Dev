@@ -10,7 +10,7 @@ interface OnlineSetupProps {
         isHost: boolean;
         connectToPeer: (id: string) => void;
     };
-    startGame: (mode: GameMode, config: any) => void;
+    startGame: (mode: GameMode, config: { useBuffs: boolean; isHost?: boolean }) => void;
     theme: string;
 }
 

@@ -115,13 +115,25 @@ describe('Authoritative Host Online Integration', () => {
                         type: { id: 'red', color: '', border: '', label: '' },
                         uid: 'r',
                     }))
-                ) as unknown as any,
-                bag: [] as unknown as any,
-                market: { 1: [], 2: [], 3: [] } as unknown as any,
-                decks: { 1: [], 2: [], 3: [] } as unknown as any,
+                ) as unknown as unknown,
+                bag: [] as unknown as unknown,
+                market: { 1: [], 2: [], 3: [] } as unknown as unknown,
+                decks: { 1: [], 2: [], 3: [] } as unknown as unknown,
                 playerBuffs: {
-                    p1: { id: 'n1', level: 1, label: '', desc: '', effects: {} } as unknown as any,
-                    p2: { id: 'n2', level: 1, label: '', desc: '', effects: {} } as unknown as any,
+                    p1: {
+                        id: 'n1',
+                        level: 1,
+                        label: '',
+                        desc: '',
+                        effects: {},
+                    } as unknown as unknown,
+                    p2: {
+                        id: 'n2',
+                        level: 1,
+                        label: '',
+                        desc: '',
+                        effects: {},
+                    } as unknown as unknown,
                 },
                 playerTurnCounts: { p1: 0, p2: 0 },
                 royalMilestones: { p1: { 3: false, 6: false }, p2: { 3: false, 6: false } },
@@ -188,8 +200,11 @@ describe('Authoritative Host Online Integration', () => {
             payload: {
                 mode: 'ONLINE_MULTIPLAYER',
                 turn: 'p2',
-                playerBuffs: { p1: { id: 'n', effects: {} }, p2: { id: 'n', effects: {} } } as any,
-                inventories: { p1: {}, p2: { blue: 1 } } as any,
+                playerBuffs: {
+                    p1: { id: 'n', effects: {} },
+                    p2: { id: 'n', effects: {} },
+                } as unknown as unknown,
+                inventories: { p1: {}, p2: { blue: 1 } } as unknown as unknown,
                 playerTurnCounts: { p1: 0, p2: 0 },
             } as BuffInitPayload,
         };

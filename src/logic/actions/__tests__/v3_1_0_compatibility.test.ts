@@ -6,7 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { validateGemSelection } from '../../validators';
 import { calculateTransaction } from '../../../utils';
-import { GemColor } from '../../../types';
+import { GemColor, Card } from '../../../types';
 
 describe('v3.1.0 Compatibility Fixes', () => {
     // ========== 修复 1: Gap Detection ==========
@@ -110,9 +110,13 @@ describe('v3.1.0 Compatibility Fixes', () => {
                 cost: { red: 3 },
                 points: 5,
                 bonusColor: 'red',
-            } as any;
+            } as unknown as Card;
 
-            const transaction = calculateTransaction(card, playerInv, playerTableau as any[]);
+            const transaction = calculateTransaction(
+                card,
+                playerInv,
+                playerTableau as unknown as Card[]
+            );
             // 成本 3，折扣 2（来自真实卡）+ 1 (来自 Color Preference)，所以需要 0 颗红宝石
             expect(transaction.gemsPaid.red).toBe(0);
             expect(transaction.goldCost).toBe(0);
@@ -147,9 +151,13 @@ describe('v3.1.0 Compatibility Fixes', () => {
                 cost: { blue: 4 },
                 points: 3,
                 bonusColor: 'green',
-            } as any;
+            } as unknown as Card;
 
-            const transaction = calculateTransaction(card, playerInv, playerTableau as any[]);
+            const transaction = calculateTransaction(
+                card,
+                playerInv,
+                playerTableau as unknown as Card[]
+            );
 
             // ✅ 应该使用 3 个蓝色折扣，成本 4，所以需要 1 蓝色
             expect(transaction.gemsPaid.blue).toBe(1);
@@ -185,9 +193,9 @@ describe('v3.1.0 Compatibility Fixes', () => {
                 cost: { green: 3 },
                 points: 2,
                 bonusColor: 'red',
-            } as any;
+            } as unknown as Card;
 
-            const result = calculateTransaction(card, inv, tableau as any[]);
+            const result = calculateTransaction(card, inv, tableau as unknown as Card[]);
 
             // ✅ 只能使用 real1 的 1 个折扣（不使用虚拟卡的 5 个）
             // 成本 3，折扣 1，所以需要 2 颗宝石
@@ -292,9 +300,13 @@ describe('v3.1.0 Compatibility Fixes', () => {
                 cost: { blue: 5 },
                 points: 6,
                 bonusColor: 'red',
-            } as any;
+            } as unknown as Card;
 
-            const transaction = calculateTransaction(testCard, playerInv, playerTableau as any[]);
+            const transaction = calculateTransaction(
+                testCard,
+                playerInv,
+                playerTableau as unknown as Card[]
+            );
 
             // ✅ 应该应用 real card (2) + Color Preference (1) = 3 个折扣
             // 成本 5 - 3 = 2，所以需要 2 蓝色

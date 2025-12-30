@@ -35,7 +35,7 @@ export const useGameNetwork = (
                 localDispatch(action);
             }
         },
-        [localDispatch, clearAndInit, gameState]
+        [localDispatch, clearAndInit, gameState, online]
     );
 
     const handleStateReceived = useCallback(
@@ -106,7 +106,7 @@ export const useGameNetwork = (
         if (gameState.mode === 'ONLINE_MULTIPLAYER' && gameState.isHost) {
             online.sendState(gameState);
         }
-    }, [gameState.mode, gameState.isHost, online.sendState]);
+    }, [gameState.mode, gameState.isHost, online.sendState, gameState, online]);
     // Note: removed history.length dependency to avoid excessive broadcasting,
     // but Host should probably broadcast on meaningful state changes.
     // Ideally this is handled by the "Smart Dispatcher" sending actions,

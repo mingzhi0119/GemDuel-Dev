@@ -3,7 +3,7 @@ import { handleBuyCard } from '../marketActions';
 import { handleStealGem } from '../boardActions';
 import { INITIAL_STATE_SKELETON } from '../../initialState';
 import { ABILITIES, GAME_PHASES } from '../../../constants';
-import { GameState } from '../../../types';
+import { GameState, Card, PlayerKey, Buff, GemColor } from '../../../types';
 
 describe('Steal Mechanics', () => {
     let baseState: GameState;
@@ -29,7 +29,10 @@ describe('Steal Mechanics', () => {
             pearl: 0,
             gold: 0,
         };
-        baseState.playerBuffs = { p1: {} as any, p2: {} as any };
+        baseState.playerBuffs = {
+            p1: {} as unknown as Buff,
+            p2: {} as unknown as Buff,
+        };
         baseState.playerTableau = { p1: [], p2: [] };
         baseState.playerReserved = { p1: [], p2: [] };
         baseState.playerRoyals = { p1: [], p2: [] };
@@ -45,7 +48,7 @@ describe('Steal Mechanics', () => {
             points: 1,
             bonusColor: 'blue',
             ability: 'steal',
-        } as any;
+        } as unknown as Card;
 
         const action = {
             card: stealCard,
@@ -64,7 +67,7 @@ describe('Steal Mechanics', () => {
         baseState.nextPlayerAfterRoyal = 'p2';
 
         const action = {
-            gemId: 'blue' as any,
+            gemId: 'blue' as unknown as GemColor,
         };
 
         const nextState = handleStealGem(baseState, action);
@@ -83,7 +86,7 @@ describe('Steal Mechanics', () => {
             points: 1,
             bonusColor: 'blue',
             ability: ['again', 'steal'],
-        } as any;
+        } as unknown as Card;
 
         const action = {
             card: complexCard,
@@ -95,7 +98,7 @@ describe('Steal Mechanics', () => {
         expect(nextState.phase).toBe(GAME_PHASES.STEAL_ACTION);
         expect(nextState.nextPlayerAfterRoyal).toBe('p1'); // AGAIN means next is p1
 
-        const afterSteal = handleStealGem(nextState, { gemId: 'blue' as any });
+        const afterSteal = handleStealGem(nextState, { gemId: 'blue' as unknown as GemColor });
         expect(afterSteal.turn).toBe('p1'); // Stays p1's turn
         expect(afterSteal.phase).toBe(GAME_PHASES.IDLE);
     });

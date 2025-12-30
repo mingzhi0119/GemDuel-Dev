@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { finalizeTurn } from '../turnManager';
 import { produce } from 'immer';
-import { GameState } from '../../types';
+import { GameState, GemInventory, RoyalCard, Card, Buff } from '../../types';
 import { createMockState } from './testHelpers';
 
 describe('turnManager', () => {
@@ -50,7 +50,7 @@ describe('turnManager', () => {
 
             it('should declare winner if single color points reached (default 10)', () => {
                 // Need to add cards to tableau
-                const card = { points: 10, bonusColor: 'blue', isBuff: false } as any;
+                const card = { points: 10, bonusColor: 'blue', isBuff: false } as unknown as Card;
                 const startState = produce(baseState, (draft) => {
                     draft.playerTableau.p1.push(card);
                 });
@@ -68,7 +68,7 @@ describe('turnManager', () => {
                 const startState = createMockState({
                     turn: 'p1',
                     extraCrowns: { p1: 3, p2: 0 },
-                    royalDeck: [{ id: 'royal1' }] as any, // ensure deck not empty
+                    royalDeck: [{ id: 'royal1' }] as unknown as RoyalCard[], // ensure deck not empty
                 });
 
                 const state = produce(startState, (draft) => {
@@ -85,7 +85,7 @@ describe('turnManager', () => {
                 const startState = createMockState({
                     turn: 'p1',
                     extraCrowns: { p1: 6, p2: 0 },
-                    royalDeck: [{ id: 'royal1' }] as any,
+                    royalDeck: [{ id: 'royal1' }] as unknown as RoyalCard[],
                     royalMilestones: { p1: { 3: true }, p2: {} }, // 3 already taken
                 });
 
@@ -101,7 +101,7 @@ describe('turnManager', () => {
         describe('Gem Capacity', () => {
             it('should trigger discard phase if gems > 10', () => {
                 const startState = produce(baseState, (draft) => {
-                    draft.inventories.p1 = { blue: 11 } as any;
+                    draft.inventories.p1 = { blue: 11 } as unknown as GemInventory;
                 });
 
                 const state = produce(startState, (draft) => {
@@ -116,10 +116,10 @@ describe('turnManager', () => {
 
             it('should respect buffed gem capacity', () => {
                 const startState = produce(baseState, (draft) => {
-                    draft.inventories.p1 = { blue: 11 } as any;
+                    draft.inventories.p1 = { blue: 11 } as unknown as GemInventory;
                     draft.playerBuffs.p1 = {
                         effects: { passive: { gemCap: 12 } },
-                    } as any;
+                    } as unknown as Buff;
                 });
 
                 const state = produce(startState, (draft) => {
@@ -139,7 +139,10 @@ describe('turnManager', () => {
                     extraPoints: { p1: Number.MAX_SAFE_INTEGER - 100, p2: 0 },
                 });
                 const state = produce(startState, (draft) => {
-                    draft.playerTableau.p1.push({ points: 200, bonusColor: 'red' } as any);
+                    draft.playerTableau.p1.push({
+                        points: 200,
+                        bonusColor: 'red',
+                    } as unknown as Card);
                     finalizeTurn(draft, 'p2');
                 });
                 expect(state.winner).toBe('p1');
@@ -153,14 +156,17 @@ describe('turnManager', () => {
                         label: 'Test',
                         desc: '',
                         effects: { passive: { pointBonus: 5 } },
-                    } as any;
-                    draft.playerTableau.p1.push({ points: 0, bonusColor: 'red' } as any);
+                    } as unknown as Buff;
+                    draft.playerTableau.p1.push({
+                        points: 0,
+                        bonusColor: 'red',
+                    } as unknown as Card);
                     draft.playerRoyals.p1.push({
                         points: 0,
                         bonusColor: 'blue',
                         ability: 'none',
                         label: '',
-                    } as any);
+                    } as unknown as RoyalCard);
                 });
                 const state = produce(startState, (draft) => {
                     finalizeTurn(draft, 'p2');
@@ -172,8 +178,14 @@ describe('turnManager', () => {
 
                 const winningState = produce(startState, (draft) => {
                     // Add more items to reach 20 points
-                    draft.playerTableau.p1.push({ points: 0, bonusColor: 'green' } as any);
-                    draft.playerTableau.p1.push({ points: 0, bonusColor: 'white' } as any);
+                    draft.playerTableau.p1.push({
+                        points: 0,
+                        bonusColor: 'green',
+                    } as unknown as Card);
+                    draft.playerTableau.p1.push({
+                        points: 0,
+                        bonusColor: 'white',
+                    } as unknown as Card);
                     finalizeTurn(draft, 'p2');
                 });
                 // 4 items * 5 bonus = 20 points. Should win.
@@ -185,7 +197,7 @@ describe('turnManager', () => {
                 const startState = createMockState({
                     turn: 'p1',
                     extraCrowns: { p1: 6, p2: 0 },
-                    royalDeck: [{ id: 'r1' }, { id: 'r2' }] as any,
+                    royalDeck: [{ id: 'r1' }, { id: 'r2' }] as unknown as RoyalCard[],
                     royalMilestones: { p1: { 3: false, 6: false }, p2: {} },
                 });
                 const state = produce(startState, (draft) => {

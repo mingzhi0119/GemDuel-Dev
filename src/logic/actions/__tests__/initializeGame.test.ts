@@ -8,10 +8,10 @@ describe('Game Initialization Direct', () => {
         const payload: BuffInitPayload = {
             board: Array.from({ length: 5 }, () =>
                 Array.from({ length: 5 }, () => ({ type: { id: 'red' } }))
-            ) as unknown as any,
-            bag: [] as unknown as any,
-            market: { 1: [], 2: [], 3: [] } as unknown as any,
-            decks: { 1: [], 2: [], 3: [] } as unknown as any,
+            ) as unknown as unknown,
+            bag: [] as unknown as unknown,
+            market: { 1: [], 2: [], 3: [] } as unknown as unknown,
+            decks: { 1: [], 2: [], 3: [] } as unknown as unknown,
         };
 
         const result = handleInit(null, payload);

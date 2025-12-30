@@ -2,13 +2,20 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import isDev from 'electron-is-dev';
+import log from 'electron-log';
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
+
+// Configure logging
+autoUpdater.logger = log;
+log.transports.file.level = 'debug';
+log.info('App starting...');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow;
+let updateFailureCount = 0;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -20,7 +27,7 @@ function createWindow() {
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
         },
-        title: 'GemDuel v5.2.3',
+        title: `GemDuel v${app.getVersion()}`,
         backgroundColor: '#020617',
     });
 
@@ -35,6 +42,8 @@ function createWindow() {
     if (isDev) {
         mainWindow.webContents.openDevTools();
     } else {
+        autoUpdater.autoDownload = true;
+        autoUpdater.allowPrerelease = true;
         autoUpdater.checkForUpdatesAndNotify();
     }
 
@@ -43,15 +52,38 @@ function createWindow() {
     });
 }
 
-autoUpdater.on('update-available', () => {
+autoUpdater.on('checking-for-update', () => {
+    log.info('Checking for update...');
+});
+
+autoUpdater.on('update-available', (info) => {
+    log.info(
+        `Update available: Current version ${app.getVersion()}, Available version ${info.version}`
+    );
     if (mainWindow) mainWindow.webContents.send('update_available');
 });
 
+autoUpdater.on('update-not-available', () => {
+    log.info('Update not available.');
+});
+
+autoUpdater.on('error', (err) => {
+    log.error('Error in auto-updater:', err);
+    updateFailureCount++;
+    if (updateFailureCount > 2) {
+        log.warn('Update failed multiple times. Resetting failure count.');
+        updateFailureCount = 0;
+        // Optional: Implement actual cache clearing if needed (e.g. deleting local app data folder for updates)
+    }
+});
+
 autoUpdater.on('download-progress', (progressObj) => {
+    log.info(`Download progress: ${progressObj.percent}%`);
     if (mainWindow) mainWindow.webContents.send('download_progress', progressObj.percent);
 });
 
-autoUpdater.on('update-downloaded', () => {
+autoUpdater.on('update-downloaded', (info) => {
+    log.info('Update downloaded; will install now', info);
     if (mainWindow) mainWindow.webContents.send('update_downloaded');
 });
 

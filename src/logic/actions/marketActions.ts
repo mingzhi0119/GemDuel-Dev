@@ -8,6 +8,7 @@ import { GEM_TYPES, ABILITIES, GAME_PHASES } from '../../constants';
 import { calculateTransaction } from '../../utils';
 import { addFeedback, addPrivilege } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
+import { getPlayerScore, getCrownCount } from '../selectors';
 import {
     GameState,
     Card,
@@ -27,6 +28,43 @@ export const handleInitiateBuyJoker = (
     state: GameState,
     payload: InitiateBuyJokerPayload
 ): GameState => {
+    // Check if adding this card (points/crowns) triggers an instant win
+    // We ignore the bonus color points for the check since we haven't picked it yet
+    const player = state.turn;
+    const currentPoints = getPlayerScore(state, player);
+    const currentCrowns = getCrownCount(state, player);
+    const winFX = state.playerBuffs?.[player]?.effects?.winCondition || {};
+
+    const pPointsGoal = winFX.points || 20;
+    const pCrownsGoal = winFX.crowns || 10;
+
+    const potentialPoints = currentPoints + payload.card.points;
+    const potentialCrowns = currentCrowns + (payload.card.crowns || 0);
+
+    if (potentialPoints >= pPointsGoal || potentialCrowns >= pCrownsGoal) {
+        // Instant win detected! Auto-assign color to highest scoring color to maximize stats
+        const colors: GemColor[] = ['blue', 'white', 'green', 'black', 'red'];
+        const bestColor = colors.reduce((a, b) => {
+            const pointsA = state.playerTableau[player]
+                .filter((c) => c.bonusColor === a)
+                .reduce((sum, c) => sum + c.points, 0);
+            const pointsB = state.playerTableau[player]
+                .filter((c) => c.bonusColor === b)
+                .reduce((sum, c) => sum + c.points, 0);
+            return pointsA > pointsB ? a : b;
+        });
+
+        // Proceed directly to buy with auto-selected color
+        return handleBuyCard(state, {
+            card: { ...payload.card, bonusColor: bestColor },
+            source: payload.source as 'market' | 'reserved',
+            marketInfo: payload.marketInfo,
+            randoms: {
+                bountyHunterColor: 'red', // Default fallback, will be randomized in logic if needed but not crit for win
+            },
+        });
+    }
+
     state.pendingBuy = payload;
     state.phase = GAME_PHASES.SELECT_CARD_COLOR;
     return state;
@@ -161,17 +199,14 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         }
     }
 
-    // Recycler: Refund one RANDOM basic gem from cost on lvl 2/3 card
+    // Recycler: Refund one basic gem from cost on lvl 2/3 card
     if (buff?.effects?.passive?.recycler && (card.level === 2 || card.level === 3)) {
-        // Filter cost colors to basic ones only (exclude pearl, gold)
-        const basicCostColors = (Object.keys(card.cost) as GemColor[]).filter(
+        // Find the FIRST color in the cost object that was actually paid for
+        const refundColor = (Object.keys(card.cost) as GemColor[]).find(
             (color) => card.cost[color] > 0 && color !== 'pearl' && color !== 'gold'
         );
 
-        if (basicCostColors.length > 0) {
-            // Pick a random color from the cost
-            const refundColor = basicCostColors[Math.floor(Math.random() * basicCostColors.length)];
-
+        if (refundColor) {
             inv[refundColor]++;
 
             // Track as extra allocation (vanishes on use)

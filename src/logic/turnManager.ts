@@ -101,11 +101,13 @@ export const finalizeTurn = (
     // Check both players (current first, then opponent)
     if (isWinning(state.turn)) {
         state.winner = state.turn;
+        state.phase = GAME_PHASES.IDLE; // Close any open pickers
         return;
     }
     const opponent: PlayerKey = state.turn === 'p1' ? 'p2' : 'p1';
     if (isWinning(opponent)) {
         state.winner = opponent;
+        state.phase = GAME_PHASES.IDLE; // Close any open pickers
         return;
     }
 

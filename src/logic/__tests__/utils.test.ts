@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateTransaction } from '../../utils';
-import { Card, GemInventory, Buff } from '../../types';
+import { Card, GemInventory, Buff, GemColor } from '../../types';
 
 describe('utils', () => {
     describe('calculateTransaction', () => {
@@ -100,14 +100,14 @@ describe('utils', () => {
             const tableau = [
                 {
                     id: 'p1',
-                    bonusColor: 'pearl' as any,
+                    bonusColor: 'pearl' as unknown as GemColor,
                     bonusCount: 1,
                     points: 0,
                     cost: baseInv,
                     level: 1,
                 },
             ];
-            const result = calculateTransaction(card, baseInv, tableau as any, null);
+            const result = calculateTransaction(card, baseInv, tableau as unknown as Card[], null);
             expect(result.goldCost).toBe(2);
         });
 

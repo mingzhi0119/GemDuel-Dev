@@ -64,7 +64,7 @@ describe('Monkey Test - Random Stress Test', () => {
     };
 
     // Helper: Check state invariants
-    const checkInvariants = (state: GameState, actionTrace: any[]) => {
+    const checkInvariants = (state: GameState, actionTrace: unknown[]) => {
         const errorContext = (msg: string) =>
             `Invariant Violated: ${msg}\nLast Action: ${JSON.stringify(actionTrace[actionTrace.length - 1])}`;
 
@@ -104,7 +104,7 @@ describe('Monkey Test - Random Stress Test', () => {
     it('should survive 5000 random interactions with Roguelike buffs without entering an illegal state', () => {
         // Always test with buffs enabled for maximum complexity
         let state = createFullInitialState();
-        const actionTrace: any[] = [];
+        const actionTrace: unknown[] = [];
         const actionTypes = [
             'TAKE_GEMS',
             'REPLENISH',
@@ -119,7 +119,7 @@ describe('Monkey Test - Random Stress Test', () => {
 
         for (let i = 0; i < 5000; i++) {
             const type = actionTypes[Math.floor(Math.random() * actionTypes.length)];
-            let payload: any = undefined;
+            let payload: unknown = undefined;
 
             // Generate somewhat plausible payloads to stress deep logic paths
             switch (type) {
@@ -167,7 +167,7 @@ describe('Monkey Test - Random Stress Test', () => {
                     state = nextState;
                     checkInvariants(state, actionTrace);
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Monkey Test Crash Detected!');
                 console.error('Iteration:', i);
                 console.error('Trace:', JSON.stringify(actionTrace, null, 2));

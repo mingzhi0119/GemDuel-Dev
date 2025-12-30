@@ -24,8 +24,12 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
         historyControls.currentIndex
     );
 
+    const isViewingHistory =
+        historyControls.historyLength > 0 &&
+        historyControls.currentIndex < historyControls.historyLength - 1;
+
     // 4. AI Controller
-    useAIController(gameState, networkDispatch);
+    useAIController(gameState, networkDispatch, isViewingHistory);
 
     // 5. Flattening Logic (moved from original useGameLogic)
     useEffect(() => {
@@ -46,6 +50,7 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
         historyControls.clearAndInit,
         gameState,
         historyControls.historyLength,
+        historyControls,
     ]);
 
     const result = useMemo(
