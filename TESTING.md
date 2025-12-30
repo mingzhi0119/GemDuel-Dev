@@ -1,4 +1,4 @@
-# Testing Guide - Splendor Duel
+# Testing Guide - Gem Duel
 
 This document explains how to write and run tests for the game logic using Vitest.
 

@@ -44,7 +44,7 @@ A high-fidelity digital implementation of a competitive strategic gem-collecting
 
 ```bash
 git clone https://github.com/mingzhi0119/GemDuel-Dev.git
-cd splendor-duel
+cd gem-duel
 npm install
 ```
 
