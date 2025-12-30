@@ -92,12 +92,10 @@ describe('Online Integration Simulation', () => {
 
         // This payload mimics what startGame generates
         const setupPayload: BuffInitPayload = {
-            board: Array.from({ length: 5 }, () =>
-                Array.from({ length: 5 }, () => pool.pop()!)
-            ) as unknown as any,
-            bag: pool as unknown as any,
-            market: market as unknown as any,
-            decks: { 1: d1, 2: d2, 3: d3 } as unknown as any,
+            board: Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => pool.pop()!)),
+            bag: pool,
+            market: market,
+            decks: { 1: d1, 2: d2, 3: d3 },
             isPvE: false,
             isOnline: true,
             isHost: true,
@@ -133,7 +131,7 @@ describe('Online Integration Simulation', () => {
             mode: 'ONLINE_MULTIPLAYER',
             isHost: true,
             initRandoms: { p1: {}, p2: {} },
-            draftPool: ['buff1', 'buff2'],
+            draftPool: ['privilege_favor', 'head_start'],
             buffLevel: 1,
         };
 
@@ -151,15 +149,19 @@ describe('Online Integration Simulation', () => {
         const p2Indices = [0, 1, 2, 3]; // Deterministic indices for test
         const selectBuffAction: GameAction = {
             type: 'SELECT_BUFF',
-            payload: { buffId: 'buff1', randomColor: 'red', p2DraftPoolIndices: p2Indices },
+            payload: {
+                buffId: 'privilege_favor',
+                randomColor: 'red',
+                p2DraftPoolIndices: p2Indices,
+            },
         };
         dispatchBroadcast(selectBuffAction);
 
         h = getHostState();
         g = getGuestState();
 
-        expect(h.playerBuffs.p1.id).toBe('buff1');
-        expect(g.playerBuffs.p1.id).toBe('buff1');
+        expect(h.playerBuffs.p1.id).toBe('privilege_favor');
+        expect(g.playerBuffs.p1.id).toBe('privilege_favor');
         expect(g.turn).toBe('p2');
         expect(g.p2DraftPool).toBeDefined();
 

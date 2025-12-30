@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Crown, Trophy } from 'lucide-react';
+import { Crown, Trophy, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '../types';
-import { BUFFS } from '../constants'; // Added for reconstruction
+import { BUFFS } from '../constants';
+import { BUFF_STYLES } from '../styles/buffs';
 
 interface AnimatedScoreProps {
     value: number;
@@ -47,6 +48,74 @@ interface TopBarProps {
     isOnline?: boolean;
 }
 
+const TopBarBuff = ({
+    buff: rawBuff,
+    playerKey,
+    theme,
+}: {
+    buff: Buff;
+    playerKey: PlayerKey;
+    theme: 'light' | 'dark';
+}) => {
+    if (!rawBuff || rawBuff.id === 'none') return null;
+
+    const buff = (Object.values(BUFFS).find((b) => b.id === rawBuff.id) as Buff) || rawBuff;
+
+    // Theme-aware level styles
+    const levelStyles: Record<number, string> = {
+        1:
+            theme === 'dark'
+                ? 'border-blue-400 bg-blue-900/30 text-blue-200'
+                : 'border-blue-500 bg-blue-50 text-blue-700',
+        2:
+            theme === 'dark'
+                ? 'border-purple-400 bg-purple-900/30 text-purple-200'
+                : 'border-purple-500 bg-purple-50 text-purple-700',
+        3:
+            theme === 'dark'
+                ? 'border-amber-400 bg-amber-900/30 text-amber-200'
+                : 'border-amber-500 bg-amber-50 text-amber-700',
+    };
+
+    const levelStyle =
+        levelStyles[buff.level] ||
+        (theme === 'dark'
+            ? 'border-slate-500 bg-slate-500/20 text-slate-300'
+            : 'border-slate-400 bg-slate-50 text-slate-600');
+
+    return (
+        <div className="relative group flex flex-col items-center">
+            <div
+                className={`
+                flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest cursor-help transition-all hover:scale-105 shadow-md
+                ${levelStyle}
+            `}
+            >
+                <Sparkles size={12} />
+                <span>{buff.label}</span>
+            </div>
+
+            {/* Tooltip */}
+            <div
+                className={`
+                absolute top-full mt-3 w-56 p-3 rounded-xl border shadow-2xl backdrop-blur-md z-[500] opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none transform -translate-x-1/2 left-1/2 scale-95 group-hover:scale-100
+                ${theme === 'dark' ? 'bg-slate-900/95 border-slate-700 text-slate-200' : 'bg-white/95 border-slate-200 text-slate-800'}
+            `}
+            >
+                <div className="flex items-center justify-between mb-1.5">
+                    <span
+                        className={`text-[10px] font-bold uppercase tracking-wider ${playerKey === 'p1' ? 'text-emerald-400' : 'text-blue-400'}`}
+                    >
+                        {buff.label}
+                    </span>
+                    <span className="text-[8px] opacity-50 font-mono">LVL {buff.level}</span>
+                </div>
+                <p className="text-[10px] leading-relaxed opacity-90">{buff.desc}</p>
+            </div>
+        </div>
+    );
+};
+
 export const TopBar: React.FC<TopBarProps> = ({
     p1Score,
     p1Crowns,
@@ -85,6 +154,14 @@ export const TopBar: React.FC<TopBarProps> = ({
             ${theme === 'dark' ? 'bg-slate-950/90 border-slate-800' : 'bg-white/90 border-slate-200'}
         `}
         >
+            {/* 1/4 and 3/4 Positioned Buffs (Absolute) */}
+            <div className="absolute left-1/4 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+                <TopBarBuff buff={playerBuffs['p1']} playerKey="p1" theme={theme} />
+            </div>
+            <div className="absolute left-3/4 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+                <TopBarBuff buff={playerBuffs['p2']} playerKey="p2" theme={theme} />
+            </div>
+
             {/* Turn Indicator (Online Only) */}
             <AnimatePresence>
                 {isOnline && isMyTurn && (
@@ -109,29 +186,31 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span className="text-xs lg:text-lg font-black text-emerald-500 uppercase tracking-widest drop-shadow-md hidden sm:inline">
                     P1
                 </span>
-                <div className="flex items-center gap-2 lg:gap-6">
-                    <div
-                        className={`flex items-center gap-1 lg:gap-2 ${isP1Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
-                    >
-                        <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
-                        <AnimatedScore
-                            value={p1Score}
-                            className="text-xl lg:text-4xl font-black drop-shadow-lg"
-                        />
-                        <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
-                            /{p1Goals.points}
-                        </span>
-                    </div>
-                    <div
-                        className={`flex items-center gap-1 lg:gap-2 ${p1Crowns >= p1Goals.crowns - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}
-                    >
-                        <Crown className="w-4 h-4 lg:w-6 lg:h-6" fill="currentColor" />
-                        <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
-                            {p1Crowns}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
-                            /{p1Goals.crowns}
-                        </span>
+                <div className="flex flex-col items-start gap-0.5">
+                    <div className="flex items-center gap-2 lg:gap-6">
+                        <div
+                            className={`flex items-center gap-1 lg:gap-2 ${isP1Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
+                        >
+                            <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
+                            <AnimatedScore
+                                value={p1Score}
+                                className="text-xl lg:text-4xl font-black drop-shadow-lg"
+                            />
+                            <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
+                                /{p1Goals.points}
+                            </span>
+                        </div>
+                        <div
+                            className={`flex items-center gap-1 lg:gap-2 ${p1Crowns >= p1Goals.crowns - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}
+                        >
+                            <Crown className="w-4 h-4 lg:w-6 lg:h-6" fill="currentColor" />
+                            <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
+                                {p1Crowns}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
+                                /{p1Goals.crowns}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -174,29 +253,31 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <span className="text-xs lg:text-lg font-black text-blue-500 uppercase tracking-widest drop-shadow-md hidden sm:inline">
                     P2
                 </span>
-                <div className="flex items-center gap-2 lg:gap-6 flex-row-reverse">
-                    <div
-                        className={`flex items-center gap-1 lg:gap-2 ${isP2Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
-                    >
-                        <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
-                        <AnimatedScore
-                            value={p2Score}
-                            className="text-xl lg:text-4xl font-black drop-shadow-lg"
-                        />
-                        <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
-                            /{p2Goals.points}
-                        </span>
-                    </div>
-                    <div
-                        className={`flex items-center gap-1 lg:gap-2 ${p2Crowns >= p2Goals.crowns - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}
-                    >
-                        <Crown className="w-4 h-4 lg:w-6 lg:h-6" fill="currentColor" />
-                        <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
-                            {p2Crowns}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
-                            /{p2Goals.crowns}
-                        </span>
+                <div className="flex flex-col items-end gap-0.5">
+                    <div className="flex items-center gap-2 lg:gap-6 flex-row-reverse">
+                        <div
+                            className={`flex items-center gap-1 lg:gap-2 ${isP2Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-slate-800'}`}
+                        >
+                            <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
+                            <AnimatedScore
+                                value={p2Score}
+                                className="text-xl lg:text-4xl font-black drop-shadow-lg"
+                            />
+                            <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
+                                /{p2Goals.points}
+                            </span>
+                        </div>
+                        <div
+                            className={`flex items-center gap-1 lg:gap-2 ${p2Crowns >= p2Goals.crowns - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}
+                        >
+                            <Crown className="w-4 h-4 lg:w-6 lg:h-6" fill="currentColor" />
+                            <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
+                                {p2Crowns}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-bold mt-1 lg:mt-2">
+                                /{p2Goals.crowns}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>

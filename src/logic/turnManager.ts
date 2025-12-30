@@ -25,39 +25,9 @@ export const finalizeTurn = (
     nextPlayer: PlayerKey,
     instantInv?: Record<GemColor | 'gold' | 'pearl', number>
 ): void => {
-    // ========== TRACK PLAYER TURN COUNTS ==========
+    // ========== TRACK PLAYER TURN COUNTS INITIALIZATION ==========
     if (!state.playerTurnCounts) {
         state.playerTurnCounts = { p1: 0, p2: 0 };
-    }
-    // Increment the turn count for the player who just finished their major action
-    state.playerTurnCounts[state.turn]++;
-
-    // ========== BUFF EFFECTS: Royal Envoy ==========
-    // Trigger royal card selection on the 5th major action of the player
-    const currentBuffObj = state.playerBuffs?.[state.turn];
-    if (currentBuffObj?.id === 'royal_envoy' && state.playerTurnCounts[state.turn] === 5) {
-        if (state.royalDeck.length > 0) {
-            state.phase = GAME_PHASES.SELECT_ROYAL;
-            state.nextPlayerAfterRoyal = nextPlayer;
-            state.toastMessage = 'Royal Envoy: Pick a Royal Card!';
-            return;
-        }
-    }
-
-    // ========== BUFF EFFECTS: Desperate Gamble (Periodic Privilege) ==========
-    const nextBuffObj = state.playerBuffs?.[nextPlayer];
-    if (nextBuffObj?.id === 'desperate_gamble') {
-        // Grant privilege at the START of the turn (2, 4, 6...)
-        // Since they finished N turns, they are starting N+1 turn.
-        const nextTurnNumber = state.playerTurnCounts[nextPlayer] + 1;
-        if (nextTurnNumber % 2 === 0) {
-            if (!state.extraPrivileges) state.extraPrivileges = { p1: 0, p2: 0 };
-
-            if (state.extraPrivileges[nextPlayer] < 1) {
-                state.extraPrivileges[nextPlayer] = 1;
-                state.toastMessage = `Desperate Gamble: Gained Special Privilege for Turn ${nextTurnNumber}!`;
-            }
-        }
     }
 
     // Helper: Calculate player's total points
@@ -122,6 +92,26 @@ export const finalizeTurn = (
         return;
     }
 
+    // ========== BUFF EFFECTS: Royal Envoy ==========
+    // Trigger royal card selection on the 5th major action of the player
+    const currentBuffObj = state.playerBuffs?.[state.turn];
+    // Check for 4 because we haven't incremented yet (it's the end of their 5th turn)
+    if (currentBuffObj?.id === 'royal_envoy' && state.playerTurnCounts[state.turn] === 4) {
+        if (state.royalDeck.length > 0) {
+            state.phase = GAME_PHASES.SELECT_ROYAL;
+            state.nextPlayerAfterRoyal = nextPlayer;
+            state.toastMessage = 'Royal Envoy: Pick a Royal Card!';
+            // Ensure we don't trigger this again if they enter discard phase later?
+            // Actually playerTurnCounts will still be 4.
+            // We should probably mark this buff as used.
+            if (!currentBuffObj.state) currentBuffObj.state = {};
+            if (!currentBuffObj.state.envoyTriggered) {
+                currentBuffObj.state.envoyTriggered = true;
+                return;
+            }
+        }
+    }
+
     // ========== ROYAL MILESTONE CHECKS ==========
     const crowns = getCrowns(state.turn);
     const milestones = state.royalMilestones[state.turn];
@@ -153,7 +143,21 @@ export const finalizeTurn = (
         return;
     }
 
+    // ========== BUFF EFFECTS: Desperate Gamble (Periodic Privilege) ==========
+    const nextBuffObj = state.playerBuffs?.[nextPlayer];
+    if (nextBuffObj?.id === 'desperate_gamble') {
+        const nextTurnNumber = state.playerTurnCounts[nextPlayer] + 1;
+        if (nextTurnNumber % 2 === 0) {
+            if (!state.extraPrivileges) state.extraPrivileges = { p1: 0, p2: 0 };
+            if (state.extraPrivileges[nextPlayer] < 1) {
+                state.extraPrivileges[nextPlayer] = 1;
+                state.toastMessage = `Desperate Gamble: Gained Special Privilege for Turn ${nextTurnNumber}!`;
+            }
+        }
+    }
+
     // ========== NORMAL TURN TRANSITION ==========
+    state.playerTurnCounts[state.turn]++; // Increment completed turn count
     state.turn = nextPlayer;
     state.phase = GAME_PHASES.IDLE;
     state.nextPlayerAfterRoyal = null;

@@ -235,26 +235,6 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
             ensureStructures(state);
             applyPlayerInitLogic(state, 'p1', finalInitRandoms.p1 || {});
             applyPlayerInitLogic(state, 'p2', finalInitRandoms.p2 || {});
-
-            const p1Cap =
-                (Object.values(BUFFS).find((b) => b.id === state.playerBuffs?.p1?.id) as Buff)
-                    ?.effects?.passive?.gemCap || 10;
-            const p1Total = Object.values(state.inventories.p1).reduce((a, b) => a + b, 0);
-            if (p1Total > p1Cap) {
-                state.turn = 'p1';
-                state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
-                state.nextPlayerAfterRoyal = 'p1';
-            } else {
-                const p2Cap =
-                    (Object.values(BUFFS).find((b) => b.id === state.playerBuffs?.p2?.id) as Buff)
-                        ?.effects?.passive?.gemCap || 10;
-                const p2Total = Object.values(state.inventories.p2).reduce((a, b) => a + b, 0);
-                if (p2Total > p2Cap) {
-                    state.turn = 'p2';
-                    state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
-                    state.nextPlayerAfterRoyal = 'p1';
-                }
-            }
         }
     }
 };

@@ -14,106 +14,8 @@ import {
     RoyalCard,
     Buff,
     GemColor,
-    BuffEffects,
     GemTypeObject,
 } from '../types';
-
-interface BuffDisplayProps {
-    buff?: Buff;
-    theme: 'light' | 'dark';
-    playerKey: PlayerKey;
-}
-
-const BuffDisplay: React.FC<BuffDisplayProps> = ({ buff: rawBuff, theme }) => {
-    if (!rawBuff || rawBuff.id === 'none') return null;
-
-    // RECONSTRUCTION: Get full static data (icons, desc) from local constants using ID
-    const buff = (Object.values(BUFFS).find((b) => b.id === rawBuff.id) as Buff) || rawBuff;
-    const levelStyle = BUFF_STYLES[buff.level] || 'border-slate-500 bg-slate-500/20 text-slate-300';
-
-    // Use the state from the serialized buff (where dynamic info like discountColor is stored)
-    const buffState = rawBuff.state || {};
-    const discountColor = buffState.discountColor as string | undefined;
-
-    let description = discountColor
-        ? buff.desc.replace('Random color', `Random color (${discountColor})`)
-        : buff.desc;
-
-    // Fixed alignment to avoid overlapping with adjacent zones (especially P1 overlay close button)
-    const alignClasses = 'left-0';
-
-    const winCondition = (buff.effects as BuffEffects).winCondition;
-
-    // Remove redundant Win Condition info from description if Victory Goals section exists
-    if (winCondition) {
-        description = description
-            .replace(/Win Condition:.*?\./gi, '')
-            .replace(/Win Condition:.*?$/gi, '')
-            .replace(/\(No Single Color Win\)/gi, '')
-            .replace(/No Single Color Win\.?/gi, '')
-            .trim();
-    }
-
-    return (
-        <div className="relative group/buff mt-2 w-fit">
-            <div
-                className={`
-                flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider cursor-help transition-all hover:scale-105
-                ${levelStyle}
-            `}
-            >
-                <Sparkles size={10} />
-                <span className="truncate max-w-[60px]">{buff.label}</span>
-            </div>
-
-            {/* Tooltip */}
-            <div
-                className={`
-                absolute bottom-full ${alignClasses} mb-2 w-48 p-3 rounded-lg border shadow-xl backdrop-blur-md z-[500] opacity-0 group-hover/buff:opacity-100 transition-opacity duration-200
-                ${theme === 'dark' ? 'bg-slate-900/95 border-slate-700 text-slate-200' : 'bg-white/95 border-slate-200 text-slate-800'}
-            `}
-            >
-                <div className="flex items-center justify-between mb-1">
-                    <span
-                        className={`text-xs font-bold ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`}
-                    >
-                        {buff.label}
-                    </span>
-                    <span className="text-[9px] opacity-60 uppercase">Lvl {buff.level}</span>
-                </div>
-                <p className="text-[10px] leading-snug opacity-90">{description}</p>
-                {buff.effects?.winCondition && (
-                    <div className="mt-2 pt-2 border-t border-white/10 flex flex-col gap-0.5">
-                        <span className="text-[9px] font-bold uppercase opacity-70">
-                            Victory Goals:
-                        </span>
-                        {buff.effects.winCondition.points && (
-                            <div className="text-[10px] flex justify-between">
-                                <span>Points:</span> <span>{buff.effects.winCondition.points}</span>
-                            </div>
-                        )}
-                        {buff.effects.winCondition.crowns && (
-                            <div className="text-[10px] flex justify-between">
-                                <span>Crowns:</span> <span>{buff.effects.winCondition.crowns}</span>
-                            </div>
-                        )}
-                        {buff.effects.winCondition.singleColor && (
-                            <div className="text-[10px] flex justify-between">
-                                <span>Single Color:</span>{' '}
-                                <span>{buff.effects.winCondition.singleColor}</span>
-                            </div>
-                        )}
-                        {buff.effects.winCondition.disableSingleColor && (
-                            <div className="text-[10px] text-rose-400">
-                                Single Color Victory Disabled
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
 
 interface PlayerZoneProps {
     player: PlayerKey;
@@ -222,7 +124,6 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     onGemClick,
     isStealMode,
     isDiscardMode,
-    buff,
     theme,
 }) => {
     const safeCards = Array.isArray(cards) ? cards : [];
@@ -312,7 +213,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
 
             {/* Module 1: Identity & Privileges */}
             <div
-                className={`flex flex-col gap-3 min-w-[80px] shrink-0 items-center justify-center border-r pr-4 transition-colors duration-500
+                className={`flex flex-col gap-4 min-w-[100px] shrink-0 items-center justify-start pt-2 border-r pr-4 transition-colors duration-500
           ${theme === 'dark' ? 'border-slate-800' : 'border-slate-300'}
       `}
             >
@@ -341,45 +242,83 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                     >
                         {player === 'p1' ? 'Player 1' : 'Player 2'}
                     </h3>
-                    <BuffDisplay buff={buff} theme={theme} playerKey={player} />
                 </div>
-                <div className="flex items-center gap-1 justify-center flex-wrap max-w-[80px]">
-                    {Array.from({ length: Math.max(0, privileges) }).map((_, i) => (
-                        <button
-                            key={`std-${i}`}
-                            disabled={!isActive || isPrivilegeMode}
-                            onClick={onUsePrivilege}
-                            className={`transition-all ${isActive && !isPrivilegeMode ? 'hover:scale-110 hover:text-amber-100 cursor-pointer animate-pulse' : 'opacity-80 cursor-default'}`}
-                        >
-                            <Scroll
-                                size={16}
-                                fill="#fcd34d"
-                                className={theme === 'dark' ? 'text-amber-200' : 'text-amber-500'}
-                            />
-                        </button>
-                    ))}
-                    {/* Extra Privileges (Gold) */}
-                    {Array.from({ length: Math.max(0, extraPrivileges) }).map((_, i) => (
-                        <button
-                            key={`extra-${i}`}
-                            disabled={!isActive || isPrivilegeMode}
-                            onClick={onUsePrivilege}
-                            className={`transition-all ${isActive && !isPrivilegeMode ? 'hover:scale-110 hover:text-yellow-200 cursor-pointer animate-pulse' : 'opacity-80 cursor-default'}`}
-                            title="Special Privilege (Protected)"
-                        >
-                            <Scroll
-                                size={16}
-                                fill="#fbbf24"
-                                className="text-yellow-500 drop-shadow-md"
-                            />
-                        </button>
-                    ))}
-                    {privileges === 0 && extraPrivileges === 0 && (
-                        <Scroll
-                            size={16}
-                            className={theme === 'dark' ? 'text-slate-800' : 'text-slate-300'}
-                        />
-                    )}
+                <div className="grid grid-cols-2 gap-2 justify-items-start h-[48px] items-start">
+                    {(() => {
+                        const total = privileges + extraPrivileges;
+                        const items = [];
+                        let currentIndex = 0;
+
+                        // Collect standard scrolls
+                        for (let i = 0; i < Math.max(0, privileges); i++) {
+                            const idx = currentIndex++;
+                            items.push(
+                                <button
+                                    key={`std-${i}`}
+                                    disabled={!isActive || isPrivilegeMode}
+                                    onClick={onUsePrivilege}
+                                    className={cn(
+                                        'transition-all',
+                                        isActive && !isPrivilegeMode
+                                            ? 'hover:scale-110 hover:text-amber-100 cursor-pointer animate-pulse'
+                                            : 'opacity-80 cursor-default',
+                                        (total === 1 || (total === 3 && idx === 2)) &&
+                                            'col-span-2 justify-self-center'
+                                    )}
+                                >
+                                    <Scroll
+                                        size={20}
+                                        fill="#fcd34d"
+                                        className={
+                                            theme === 'dark' ? 'text-amber-200' : 'text-amber-500'
+                                        }
+                                    />
+                                </button>
+                            );
+                        }
+
+                        // Collect extra scrolls
+                        for (let i = 0; i < Math.max(0, extraPrivileges); i++) {
+                            const idx = currentIndex++;
+                            items.push(
+                                <button
+                                    key={`extra-${i}`}
+                                    disabled={!isActive || isPrivilegeMode}
+                                    onClick={onUsePrivilege}
+                                    className={cn(
+                                        'transition-all',
+                                        isActive && !isPrivilegeMode
+                                            ? 'hover:scale-110 hover:text-yellow-200 cursor-pointer animate-pulse'
+                                            : 'opacity-80 cursor-default',
+                                        (total === 1 || (total === 3 && idx === 2)) &&
+                                            'col-span-2 justify-self-center'
+                                    )}
+                                    title="Special Privilege (Protected)"
+                                >
+                                    <Scroll
+                                        size={20}
+                                        fill="#fbbf24"
+                                        className="text-yellow-500 drop-shadow-md"
+                                    />
+                                </button>
+                            );
+                        }
+
+                        if (items.length === 0) {
+                            return (
+                                <div className="col-span-2 justify-self-center">
+                                    <Scroll
+                                        size={20}
+                                        className={
+                                            theme === 'dark' ? 'text-slate-800' : 'text-slate-300'
+                                        }
+                                    />
+                                </div>
+                            );
+                        }
+
+                        return items;
+                    })()}
                 </div>
             </div>
 

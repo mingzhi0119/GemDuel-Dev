@@ -178,14 +178,6 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
         }
     }
 
-    const totalGems = Object.values(state.inventories[state.turn]).reduce((a, b) => a + b, 0);
-    const gemCap = state.playerBuffs?.[state.turn]?.effects?.passive?.gemCap || 10;
-
-    if (totalGems > gemCap) {
-        state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
-        return state;
-    }
-
     state.phase = GAME_PHASES.IDLE;
     return state;
 };
@@ -210,14 +202,6 @@ export const handleTakeBonusGem = (state: GameState, payload: BonusGemPayload): 
     state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
     state.inventories[state.turn][gemType] = (state.inventories[state.turn][gemType] || 0) + 1;
     state.bonusGemTarget = null;
-
-    const totalGems = Object.values(state.inventories[state.turn]).reduce((a, b) => a + b, 0);
-    const gemCap = state.playerBuffs?.[state.turn]?.effects?.passive?.gemCap || 10;
-
-    if (totalGems > gemCap) {
-        state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
-        return state;
-    }
 
     finalizeTurn(state, state.nextPlayerAfterRoyal || (state.turn === 'p1' ? 'p2' : 'p1'));
     return state;
@@ -278,15 +262,6 @@ export const handleStealGem = (state: GameState, payload: StealGemPayload): Game
 
     addFeedback(state, player, gemId, 1);
     addFeedback(state, opponent, gemId, -1);
-
-    // Check if player now exceeds gem cap
-    const totalGems = Object.values(state.inventories[player]).reduce((a, b) => a + b, 0);
-    const gemCap = state.playerBuffs?.[player]?.effects?.passive?.gemCap || 10;
-
-    if (totalGems > gemCap) {
-        state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
-        return state;
-    }
 
     finalizeTurn(state, state.nextPlayerAfterRoyal || opponent);
     return state;
