@@ -131,8 +131,14 @@ export interface BuffEffects {
         goldBuff?: boolean;
         l3Discount?: number;
         noTake3?: boolean;
+        // New Reservation Buffs
+        reservedDiscount?: number;
+        reserveBonusGem?: boolean;
+        buyReservedBonus?: number;
+        hoarderBonus?: boolean;
+        stealReserved?: boolean;
     };
-    active?: string; // e.g., 'peek_deck', 'replenish_steal'
+    active?: string; // e.g., 'peek_deck', 'replenish_steal', 'discard_reserved'
     winCondition?: {
         points?: number;
         crowns?: number;
@@ -360,6 +366,7 @@ export interface ReserveCardPayload {
     goldCoords?: { r: number; c: number };
     isExtra?: boolean;
     extraIdx?: number;
+    isSteal?: boolean; // For Collector buff
 }
 
 export interface ReserveDeckPayload {
@@ -436,6 +443,7 @@ export type GameAction =
     | { type: 'CANCEL_RESERVE'; payload?: undefined }
     | { type: 'RESERVE_CARD'; payload: ReserveCardPayload }
     | { type: 'RESERVE_DECK'; payload: ReserveDeckPayload }
+    | { type: 'DISCARD_RESERVED'; payload: { cardId: string } }
 
     // PRIVILEGE
     | { type: 'ACTIVATE_PRIVILEGE'; payload?: undefined }

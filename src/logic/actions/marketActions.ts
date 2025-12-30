@@ -32,6 +32,23 @@ export const handleInitiateBuyJoker = (
     return state;
 };
 
+// Helper to grant random basic gems
+const grantRandomBasicGems = (state: GameState, player: PlayerKey, count: number) => {
+    const basics: GemColor[] = ['red', 'green', 'blue', 'white', 'black'];
+    for (let i = 0; i < count; i++) {
+        const randColor = basics[Math.floor(Math.random() * basics.length)];
+        state.inventories[player][randColor]++;
+        if (!state.extraAllocation) {
+            state.extraAllocation = {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            };
+        }
+        state.extraAllocation[player][randColor]++;
+        addFeedback(state, player, randColor, 1);
+    }
+};
+
 export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameState => {
     const { card, source, marketInfo, randoms } = payload;
     const player = state.turn;
@@ -41,7 +58,13 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
     state.pendingBuy = null;
 
-    const { affordable, goldCost, gemsPaid } = calculateTransaction(card, inv, tableau, buff);
+    const { affordable, goldCost, gemsPaid } = calculateTransaction(
+        card,
+        inv,
+        tableau,
+        buff,
+        source === 'reserved'
+    );
 
     if (!affordable) {
         state.toastMessage = 'Cannot afford this card!';
@@ -99,6 +122,13 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     }
 
     state.playerTableau[player].push(finalCard);
+
+    // Speculator: Gain 2 gems after buying reserved
+    if (source === 'reserved' && buff?.effects?.passive?.buyReservedBonus) {
+        const count = buff.effects.passive.buyReservedBonus;
+        grantRandomBasicGems(state, player, count);
+        state.toastMessage = `Speculator: Recycled ${count} gems!`;
+    }
 
     // Wonder Architect: Track Level 3 purchases
     if (finalCard.level === 3 && buff?.effects?.passive?.l3Discount) {
@@ -250,6 +280,26 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     return state;
 };
 
+export const handleDiscardReserved = (state: GameState, payload: { cardId: string }): GameState => {
+    const player = state.turn;
+    const cardIdx = state.playerReserved[player].findIndex((c) => c.id === payload.cardId);
+    if (cardIdx === -1) return state;
+
+    const card = state.playerReserved[player].splice(cardIdx, 1)[0];
+    const buff = state.playerBuffs?.[player];
+
+    if (buff?.effects?.active === 'discard_reserved' || buff?.id === 'puppet_master') {
+        grantRandomBasicGems(state, player, 1);
+        state.toastMessage = 'Puppet Master: Card recycled!';
+        // Put card at bottom of its corresponding deck
+        if (card.level >= 1 && card.level <= 3) {
+            state.decks[card.level as 1 | 2 | 3].unshift(card);
+        }
+    }
+
+    return state;
+};
+
 export const handleInitiateReserve = (
     state: GameState,
     payload: InitiateReservePayload
@@ -275,28 +325,43 @@ export const handleCancelReserve = (state: GameState): GameState => {
 };
 
 export const handleReserveCard = (state: GameState, payload: ReserveCardPayload): GameState => {
-    const { card, level, idx, goldCoords } = payload;
+    const { card, level, idx, goldCoords, isSteal } = payload;
     const player = state.turn;
+    const opponent = player === 'p1' ? 'p2' : 'p1';
+    const buff = state.playerBuffs?.[player];
 
     if (state.playerReserved[player].length >= 3) {
         state.toastMessage = 'Reserve limit reached!';
         return state;
     }
 
-    state.playerReserved[player].push(card);
-
-    const isExtra = payload.isExtra;
-    const extraIdx = payload.extraIdx;
-    const deck = state.decks[level];
-
-    if (isExtra && level === 3 && extraIdx !== undefined) {
-        // extraIdx 1 -> length-2, extraIdx 2 -> length-3
-        const targetIdx = deck.length - (extraIdx + 1);
-        if (targetIdx >= 0) {
-            deck.splice(targetIdx, 1);
+    if (isSteal) {
+        if (!buff?.effects?.passive?.stealReserved) {
+            state.toastMessage = 'Requires Collector buff!';
+            return state;
         }
+        // Remove from opponent hand
+        state.playerReserved[opponent] = state.playerReserved[opponent].filter(
+            (c) => c.id !== card.id
+        );
+        state.playerReserved[player].push(card);
+        state.toastMessage = 'The Collector: Card stolen!';
     } else {
-        state.market[level][idx] = deck.length > 0 ? deck.pop()! : null;
+        state.playerReserved[player].push(card);
+
+        const isExtra = payload.isExtra;
+        const extraIdx = payload.extraIdx;
+        const deck = state.decks[level];
+
+        if (isExtra && level === 3 && extraIdx !== undefined) {
+            // extraIdx 1 -> length-2, extraIdx 2 -> length-3
+            const targetIdx = deck.length - (extraIdx + 1);
+            if (targetIdx >= 0) {
+                deck.splice(targetIdx, 1);
+            }
+        } else if (level && idx !== undefined && state.market[level]) {
+            state.market[level][idx] = deck.length > 0 ? deck.pop()! : null;
+        }
     }
 
     // Take gold gem if available
@@ -310,7 +375,6 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
     }
 
     // Patient Investor: +1 gold on first reserve
-    const buff = state.playerBuffs?.[player];
     if (buff?.effects?.passive?.firstReserveBonus) {
         if (!buff.state) buff.state = {};
         if (!buff.state.hasReserved) {
@@ -333,6 +397,13 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
 
     state.pendingReserve = null;
     state.phase = GAME_PHASES.IDLE;
+
+    // Nimble Fingers: Gain gem on reserve
+    if (buff?.effects?.passive?.reserveBonusGem) {
+        grantRandomBasicGems(state, player, 1);
+        state.toastMessage = 'Nimble Fingers: +1 Gem!';
+    }
+
     finalizeTurn(state, player === 'p1' ? 'p2' : 'p1');
     return state;
 };
@@ -340,6 +411,7 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
 export const handleReserveDeck = (state: GameState, payload: ReserveDeckPayload): GameState => {
     const { level, goldCoords } = payload;
     const player = state.turn;
+    const buff = state.playerBuffs?.[player];
 
     if (state.playerReserved[player].length >= 3) {
         state.toastMessage = 'Reserve limit reached!';
@@ -362,7 +434,6 @@ export const handleReserveDeck = (state: GameState, payload: ReserveDeckPayload)
     }
 
     // Patient Investor: +1 gold on first reserve
-    const buff = state.playerBuffs?.[player];
     if (buff?.effects?.passive?.firstReserveBonus) {
         if (!buff.state) buff.state = {};
         if (!buff.state.hasReserved) {
@@ -385,6 +456,13 @@ export const handleReserveDeck = (state: GameState, payload: ReserveDeckPayload)
 
     state.pendingReserve = null;
     state.phase = GAME_PHASES.IDLE;
+
+    // Nimble Fingers: Gain gem on reserve
+    if (buff?.effects?.passive?.reserveBonusGem) {
+        grantRandomBasicGems(state, player, 1);
+        state.toastMessage = 'Nimble Fingers: +1 Gem!';
+    }
+
     finalizeTurn(state, player === 'p1' ? 'p2' : 'p1');
     return state;
 };

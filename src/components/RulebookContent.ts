@@ -292,6 +292,8 @@ Deep Pockets: Gem holding limit increased to 12.
 Backup Supply: Start with 2 random Extra Gems.
 Patient Investor: Gain 2 Extra Gold on your first Reserve action.
 Insight: You can always see the top card of the Level 1 Deck.
+Down Payment: Reserved cards cost 1 less (basic gems only).
+Nimble Fingers: Gain 1 random basic gem when you Reserve a card.
 
 Level 2: Tactical Shifts
 
@@ -303,6 +305,8 @@ Flexible Discount: Reduce cost of Level 2 and 3 cards by 1 (basic gems only).
 Bounty Hunter: Gain 1 random Extra Gem when you buy a card with Crowns.
 Recycler: Get 1 Extra Gem back when buying Level 2 or 3 cards.
 Aggressive Expansion: Gain 1 random Extra Gem when you Replenish the board.
+Speculator: Gain 2 random basic gems after buying a reserved card.
+Hoarder: If holding 3 reserved cards, gain 1 random basic gem at start of turn.
 
 Level 3: Game Changers
 
@@ -314,6 +318,8 @@ Wonder Architect: First 3 Level 3 cards cost 3 less (basic gems only). Win Condi
 Minimalist: First 5 cards purchased provide Double Bonuses. Max Gems: 6.
 Pacifist: Immune to negative effects (Theft). Start with 1 Special Privilege (Protected).
 Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special Privilege (Protected) every 2 turns.
+The Puppet Master: Destroy reserved card (back to deck) to gain 1 random gem. Special Action.
+The Collector: You can reserve opponent's reserved cards. Win Condition: 22 Points.
         `,
             zh: `
 1 级：微调 (Minor Tweaks)
@@ -326,6 +332,8 @@ Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special 
 后备补给 (Backup Supply)：开始时获得 2 个随机额外宝石。
 耐心投资者 (Patient Investor)：在你的第一次保留行动中获得 2 个额外黄金。
 洞察力 (Insight)：你始终可以看到 1 级卡组顶部的牌。
+预付定金 (Down Payment)：保留的卡牌成本减少 1（仅限基础宝石）。
+快手窃贼 (Nimble Fingers)：当你执行保留行动时，获得一个随机基础宝石。
 
 2 级：流派 (Tactical Shifts)
 
@@ -335,8 +343,10 @@ Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special 
 巧取豪夺 (Extortion)：你每执行 2 次补给版图，就从对手那里偷取 1 个基础宝石。
 灵活折扣 (Flexible Discount)：购买 2 级和 3 级卡牌时，基础宝石成本减少 1。
 赏金猎人 (Bounty Hunter)：当你购买带有皇冠的卡牌时，获得 1 个额外随机宝石。
-回收者 (Recycler)：购买 2 级或 3 级卡牌时，退回 1 个额外宝石。
+回收者 (Recycler)：购买 2 级或 3 级卡牌时，随机退回 1 个基础宝石。
 激进扩张 (Aggressive Expansion)：当你补给版图时，获得 1 个额外随机宝石。
+投机商 (Speculator)：购买一张保留卡后，获得 2 个随机基础宝石。
+资源囤积者 (Hoarder)：如果你手中持有 3 张保留卡，回合开始自动获得 1 个随机基础宝石。
 
 3 级：规则改变 (Game Changers)
 
@@ -348,6 +358,8 @@ Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special 
 极简主义 (Minimalist)：购买的前 5 张卡提供双倍奖励。宝石上限：6。
 和平主义者 (Pacifist)：免疫负面效果（偷取）。开始时获得 1 个特殊特权（受保护）。
 孤注一掷 (Desperate Gamble)：开始时获得 2 个额外黄金。无法执行“拿取 3 个宝石”。每 2 回合获得一个特殊的保护特权。
+幕后推手 (The Puppet Master)：随时销毁保留区的卡（回到牌库底）以获得 1 个随机宝石。特殊行动。
+收藏狂人 (The Collector)：你可以直接保留对手已保留的卡。获胜条件：22 分。
 `,
         },
     },

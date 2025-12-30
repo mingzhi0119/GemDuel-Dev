@@ -3,11 +3,12 @@ import { produce } from 'immer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { BUFFS, GAME_PHASES, GEM_TYPES } from '../../constants';
 import { applyBuffInitEffects } from '../actions/buffActions';
-import { handleBuyCard, handleReserveCard } from '../actions/marketActions';
+import { handleBuyCard, handleReserveCard, handleDiscardReserved } from '../actions/marketActions';
 import { handleReplenish } from '../actions/boardActions';
 import { handleUsePrivilege } from '../actions/privilegeActions';
 import { calculateTransaction } from '../../utils';
 import { getPlayerScore, hasExcessGems } from '../selectors';
+import { finalizeTurn } from '../turnManager';
 import { GameState, Card } from '../../types';
 
 // Helper to create state with a specific buff for P1
@@ -120,6 +121,47 @@ describe('Comprehensive Buff Tests', () => {
                 handleReserveCard(draft, { card: { id: 'c2' } as Card, level: 1, idx: 0 });
             });
             expect(state.inventories.p1.gold).toBe(1);
+        });
+
+        it('INSIGHT: Flag revealDeck1 is true', () => {
+            const state = createBuffState(BUFFS.INSIGHT.id);
+            expect(state.playerBuffs.p1.effects.passive?.revealDeck1).toBe(true);
+        });
+
+        it('DOWN_PAYMENT: Discount 1 basic gem for reserved cards', () => {
+            let state = createBuffState(BUFFS.DOWN_PAYMENT.id);
+            state = giveInfiniteGems(state, 'p1');
+            const card = { level: 1, cost: { red: 2 } } as Card;
+
+            // Not reserved
+            let res = calculateTransaction(
+                card,
+                state.inventories.p1,
+                [],
+                state.playerBuffs.p1,
+                false
+            );
+            expect(res.gemsPaid.red).toBe(2);
+
+            // Reserved
+            res = calculateTransaction(card, state.inventories.p1, [], state.playerBuffs.p1, true);
+            expect(res.gemsPaid.red).toBe(1);
+        });
+
+        it('NIMBLE_FINGERS: Gain random gem on reserve', () => {
+            let state = createBuffState(BUFFS.NIMBLE_FINGERS.id);
+            state = produce(state, (draft) => {
+                draft.turn = 'p1';
+                draft.decks[1] = [{ id: 'c1', level: 1, cost: {}, points: 0 } as Card];
+            });
+
+            state = produce(state, (draft) => {
+                handleReserveCard(draft, { card: { id: 'c1' } as Card, level: 1, idx: 0 });
+            });
+
+            const total = Object.values(state.inventories.p1).reduce((a, b) => a + b, 0);
+            expect(total).toBe(1);
+            expect(state.toastMessage).toContain('Nimble Fingers');
         });
     });
 
@@ -274,6 +316,43 @@ describe('Comprehensive Buff Tests', () => {
 
             expect(state.inventories.p1.green).toBe(1);
         });
+
+        it('SPECULATOR: Gain 2 gems after buying reserved card', () => {
+            let state = createBuffState(BUFFS.SPECULATOR.id);
+            state = produce(state, (draft) => {
+                draft.turn = 'p1';
+                draft.playerReserved.p1 = [{ id: 'res1', level: 1, cost: {}, points: 0 } as Card];
+                draft.inventories.p1.gold = 10;
+            });
+
+            state = produce(state, (draft) => {
+                handleBuyCard(draft, { card: state.playerReserved.p1[0], source: 'reserved' });
+            });
+
+            const total = Object.values(state.inventories.p1).reduce((a, b) => a + b, 0);
+            expect(total).toBe(12); // 10 gold + 2 random
+            expect(state.toastMessage).toContain('Speculator');
+        });
+
+        it('HOARDER: Gain gem at start of turn if holding 3 cards', () => {
+            let state = createBuffState(BUFFS.HOARDER.id);
+            state = produce(state, (draft) => {
+                draft.turn = 'p2'; // Opponent ends turn
+                draft.playerReserved.p1 = [
+                    { id: 'r1' } as Card,
+                    { id: 'r2' } as Card,
+                    { id: 'r3' } as Card,
+                ];
+            });
+
+            state = produce(state, (draft) => {
+                finalizeTurn(draft, 'p1');
+            });
+
+            const total = Object.values(state.inventories.p1).reduce((a, b) => a + b, 0);
+            expect(total).toBe(1);
+            expect(state.toastMessage).toContain('Hoarder');
+        });
     });
 
     describe('Level 3: Game Changers', () => {
@@ -401,6 +480,59 @@ describe('Comprehensive Buff Tests', () => {
             });
 
             expect(state.inventories.p1.red).toBe(5);
+        });
+
+        it('PUPPET_MASTER: Can discard reserved card for random gem', () => {
+            let state = createBuffState(BUFFS.PUPPET_MASTER.id);
+            state = produce(state, (draft) => {
+                draft.turn = 'p1';
+                draft.playerReserved.p1 = [{ id: 'res1', level: 1, cost: {}, points: 0 } as Card];
+            });
+
+            state = produce(state, (draft) => {
+                handleDiscardReserved(draft, { cardId: 'res1' });
+            });
+
+            expect(state.playerReserved.p1.length).toBe(0);
+            expect(state.decks[1].length).toBe(1);
+            expect(Object.values(state.inventories.p1).reduce((a, b) => a + b, 0)).toBe(1);
+        });
+
+        it('COLLECTOR: Can steal opponent reserved card + Win 22', () => {
+            let state = createBuffState(BUFFS.COLLECTOR.id);
+            state = produce(state, (draft) => {
+                draft.turn = 'p1';
+                draft.playerReserved.p2 = [{ id: 'target', level: 1, cost: {}, points: 0 } as Card];
+            });
+
+            state = produce(state, (draft) => {
+                handleReserveCard(draft, {
+                    card: state.playerReserved.p2[0],
+                    isSteal: true,
+                    level: 1,
+                    idx: 0,
+                });
+            });
+
+            expect(state.playerReserved.p1[0].id).toBe('target');
+            expect(state.playerReserved.p2.length).toBe(0);
+
+            // Win condition test
+            state = produce(state, (draft) => {
+                draft.extraPoints.p1 = 21;
+            });
+            state = produce(state, (draft) => {
+                finalizeTurn(draft, 'p2');
+            });
+            expect(state.winner).toBe(null); // 21 < 22
+
+            state = produce(state, (draft) => {
+                draft.extraPoints.p1 = 22;
+            });
+            state = produce(state, (draft) => {
+                finalizeTurn(draft, 'p2');
+            });
+            expect(state.winner).toBe('p1');
         });
     });
 });

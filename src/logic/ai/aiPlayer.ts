@@ -117,7 +117,8 @@ export const computeAiAction = (state: GameState): GameAction | null => {
                     card,
                     state.inventories[aiPlayer],
                     state.playerTableau[aiPlayer],
-                    state.playerBuffs[aiPlayer]
+                    state.playerBuffs[aiPlayer],
+                    false
                 ).affordable
             ) {
                 buyableFromMarket.push({ card, level: lvl, idx: i });
@@ -131,7 +132,8 @@ export const computeAiAction = (state: GameState): GameAction | null => {
                 card,
                 state.inventories[aiPlayer],
                 state.playerTableau[aiPlayer],
-                state.playerBuffs[aiPlayer]
+                state.playerBuffs[aiPlayer],
+                true
             ).affordable
     );
 

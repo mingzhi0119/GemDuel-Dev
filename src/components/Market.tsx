@@ -172,7 +172,8 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                             card,
                                                             inventories[turn],
                                                             playerTableau[turn],
-                                                            playerBuffs[turn]
+                                                            playerBuffs[turn],
+                                                            false
                                                         ).affordable
                                                     }
                                                     context={JSON.stringify({
@@ -239,7 +240,8 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                             card,
                                                             inventories[turn],
                                                             playerTableau[turn],
-                                                            playerBuffs[turn]
+                                                            playerBuffs[turn],
+                                                            false
                                                         ).affordable
                                                     }
                                                     context={JSON.stringify({ level: lvl, idx: i })}

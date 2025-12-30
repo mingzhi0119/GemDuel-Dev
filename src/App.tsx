@@ -26,7 +26,7 @@ const DeckPeekModal = lazy(() =>
 import { useGameLogic } from './hooks/useGameLogic';
 import { useSettings } from './hooks/useSettings';
 import { GEM_TYPES, BONUS_COLORS } from './constants';
-import { GemColor } from './types';
+import { GemColor, PlayerKey } from './types';
 
 export default function GemDuelBoard() {
     const [showDebug, setShowDebug] = useState(false);
@@ -91,6 +91,7 @@ export default function GemDuelBoard() {
         handleReplenish,
         handleReserveCard,
         handleReserveDeck,
+        handleDiscardReserved,
         initiateBuy,
         handleSelectRoyal,
         handleCancelReserve,
@@ -489,6 +490,7 @@ export default function GemDuelBoard() {
                             lastFeedback={lastFeedback}
                             isActive={turn === 'p1' && !isReviewing && !winner}
                             onBuyReserved={checkAndInitiateBuyReserved}
+                            onDiscardReserved={handleDiscardReserved}
                             onUsePrivilege={activatePrivilegeMode}
                             isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
                             isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p1'}
@@ -519,6 +521,7 @@ export default function GemDuelBoard() {
                             lastFeedback={lastFeedback}
                             isActive={turn === 'p2' && !isReviewing && !winner}
                             onBuyReserved={checkAndInitiateBuyReserved}
+                            onDiscardReserved={handleDiscardReserved}
                             onUsePrivilege={activatePrivilegeMode}
                             isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
                             isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p2'}

@@ -8,6 +8,23 @@
 import { BONUS_COLORS, GAME_PHASES } from '../constants';
 import { GameState, PlayerKey, GemColor } from '../types';
 
+// Helper to grant random basic gems (duplicate logic from marketActions, maybe move to utils? keeping for now)
+const grantRandomBasicGems = (state: GameState, player: PlayerKey, count: number) => {
+    const basics: GemColor[] = ['red', 'green', 'blue', 'white', 'black'];
+    for (let i = 0; i < count; i++) {
+        const randColor = basics[Math.floor(Math.random() * basics.length)];
+        state.inventories[player][randColor]++;
+        if (!state.extraAllocation) {
+            state.extraAllocation = {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            };
+        }
+        state.extraAllocation[player][randColor]++;
+        // addFeedback doesn't exist here, manually adding if possible or skip feedback
+    }
+};
+
 /**
  * Finalize current player's turn and check for:
  * - Win conditions (points, crowns, single color)
@@ -32,17 +49,16 @@ export const finalizeTurn = (
 
     // Helper: Calculate player's total points
     const getPoints = (pid: PlayerKey): number => {
-        const cardPoints = state.playerTableau[pid].reduce((a, c) => a + c.points, 0);
-        const royalPoints = state.playerRoyals[pid].reduce((a, c) => a + c.points, 0);
+        const cardPointsCorrect = state.playerTableau[pid].reduce((a, c) => a + c.points, 0);
+        const royalPointsCorrect = state.playerRoyals[pid].reduce((a, c) => a + c.points, 0);
         const extra = state.extraPoints ? state.extraPoints[pid] : 0;
         const buffBonus =
             state.playerBuffs && state.playerBuffs[pid].effects?.passive?.pointBonus
                 ? (state.playerTableau[pid].length + state.playerRoyals[pid].length) *
                   state.playerBuffs[pid].effects.passive.pointBonus
                 : 0;
-        return cardPoints + royalPoints + extra + buffBonus;
+        return cardPointsCorrect + royalPointsCorrect + extra + buffBonus;
     };
-
     // Helper: Calculate player's total crowns
     const getCrowns = (pid: PlayerKey): number => {
         const cardCrowns = [...state.playerTableau[pid], ...state.playerRoyals[pid]].reduce(
@@ -65,6 +81,7 @@ export const finalizeTurn = (
         const pPoints = getPoints(pid);
         const pCrowns = getCrowns(pid);
 
+        // Standard goal is 20, but Collector needs 22
         const pPointsGoal = winFX.points || 20;
         const pCrownsGoal = winFX.crowns || 10;
         const pSingleColorGoal = winFX.singleColor || 10;
@@ -90,6 +107,13 @@ export const finalizeTurn = (
     if (isWinning(opponent)) {
         state.winner = opponent;
         return;
+    }
+
+    // ========== BUFF EFFECTS: Hoarder ==========
+    const nextBuffEffect = state.playerBuffs?.[nextPlayer]?.effects?.passive;
+    if (nextBuffEffect?.hoarderBonus && state.playerReserved[nextPlayer].length === 3) {
+        grantRandomBasicGems(state, nextPlayer, 1);
+        state.toastMessage = `Hoarder: +1 Gem for ${nextPlayer === 'p1' ? 'Player 1' : 'Player 2'}!`;
     }
 
     // ========== BUFF EFFECTS: Royal Envoy ==========

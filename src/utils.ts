@@ -57,7 +57,8 @@ export const calculateTransaction = (
     card: Card,
     playerInv: GemInventory,
     playerTableau: Card[],
-    playerBuffs: Buff | null = null
+    playerBuffs: Buff | null = null,
+    isReserved: boolean = false
 ) => {
     const bonuses = BONUS_COLORS.reduce(
         (acc, color) => {
@@ -85,7 +86,11 @@ export const calculateTransaction = (
             ? buffEffects.l3Discount
             : 0;
 
-    const totalFlatDiscount = discountAny + l3Discount;
+    // Down Payment: Only applies to reserved cards
+    const reservedDiscount =
+        isReserved && buffEffects.reservedDiscount ? buffEffects.reservedDiscount : 0;
+
+    const totalFlatDiscount = discountAny + l3Discount + reservedDiscount;
 
     const rawCost: Record<string, number> = {};
 

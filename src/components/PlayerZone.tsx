@@ -31,6 +31,7 @@ interface PlayerZoneProps {
         items: Array<{ player: PlayerKey; type: string; diff: number }>;
     } | null;
     onBuyReserved: (card: CardType, execute?: boolean) => boolean;
+    onDiscardReserved: (cardId: string) => void;
     onUsePrivilege: () => void;
     isPrivilegeMode: boolean;
     onGemClick: (color: string) => void;
@@ -119,17 +120,22 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     isActive,
     lastFeedback,
     onBuyReserved,
+    onDiscardReserved,
     onUsePrivilege,
     isPrivilegeMode,
     onGemClick,
     isStealMode,
     isDiscardMode,
+    buff,
     theme,
 }) => {
     const safeCards = Array.isArray(cards) ? cards : [];
     const [selectedStack, setSelectedStack] = useState<{ color: string; cards: CardType[] } | null>(
         null
     );
+
+    const hasPuppetMaster =
+        buff?.effects?.active === 'discard_reserved' || buff?.id === 'puppet_master';
 
     // --- Visual Feedback Logic ---
     interface FeedbackItem {
@@ -514,7 +520,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                     {reserved.map((card, i) => (
                         <div
                             key={i}
-                            className="transition-transform duration-200 ease-in-out shrink-0"
+                            className="transition-transform duration-200 ease-in-out shrink-0 relative group/card"
                         >
                             <Card
                                 card={card}
@@ -526,6 +532,18 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                 size="small"
                                 theme={theme}
                             />
+                            {hasPuppetMaster && isActive && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDiscardReserved(card.id);
+                                    }}
+                                    className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-rose-500 z-50"
+                                    title="Discard Card (Puppet Master)"
+                                >
+                                    <span className="text-[10px] font-black">X</span>
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>

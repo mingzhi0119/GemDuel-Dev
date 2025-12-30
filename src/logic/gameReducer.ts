@@ -21,6 +21,7 @@ import {
     handleCancelReserve,
     handleReserveCard,
     handleReserveDeck,
+    handleDiscardReserved,
 } from './actions/marketActions';
 import { handleSelectRoyalCard, handleForceRoyalSelection } from './actions/royalActions';
 import {
@@ -126,6 +127,10 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
 
             case 'RESERVE_DECK':
                 handleReserveDeck(draft, action.payload);
+                break;
+
+            case 'DISCARD_RESERVED':
+                handleDiscardReserved(draft, action.payload);
                 break;
 
             // ========== PRIVILEGE ACTIONS ==========

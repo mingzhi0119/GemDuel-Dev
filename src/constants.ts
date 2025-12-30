@@ -218,6 +218,20 @@ export const BUFFS = {
         desc: 'You can always see the top card of the Level 1 Deck. Win Condition: 18 Points.',
         effects: { passive: { revealDeck1: true }, winCondition: { points: 18 } },
     },
+    DOWN_PAYMENT: {
+        id: 'down_payment',
+        level: 1,
+        label: 'Down Payment',
+        desc: 'Reserved cards cost 1 less (basic gems only).',
+        effects: { passive: { reservedDiscount: 1 } },
+    },
+    NIMBLE_FINGERS: {
+        id: 'nimble_fingers',
+        level: 1,
+        label: 'Nimble Fingers',
+        desc: 'Gain 1 random basic gem when you Reserve a card.',
+        effects: { passive: { reserveBonusGem: true } },
+    },
 
     // --- Level 2 ---
     PEARL_TRADER: {
@@ -275,6 +289,20 @@ export const BUFFS = {
         label: 'Aggressive Expansion',
         desc: 'Gain 1 random Extra Gem when you Replenish the board.',
         effects: { passive: { refillBonus: true } },
+    },
+    SPECULATOR: {
+        id: 'speculator',
+        level: 2,
+        label: 'Speculator',
+        desc: 'Gain 2 random basic gems after buying a reserved card.',
+        effects: { passive: { buyReservedBonus: 2 } },
+    },
+    HOARDER: {
+        id: 'hoarder',
+        level: 2,
+        label: 'Hoarder',
+        desc: 'If holding 3 reserved cards, gain 1 random basic gem at start of turn.',
+        effects: { passive: { hoarderBonus: true } },
     },
 
     // --- Level 3 ---
@@ -336,6 +364,20 @@ export const BUFFS = {
         label: 'Desperate Gamble',
         desc: 'Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special Privilege (Protected) every 2 turns.',
         effects: { onInit: { gold: 2 }, passive: { noTake3: true, periodicPrivilege: 2 } },
+    },
+    PUPPET_MASTER: {
+        id: 'puppet_master',
+        level: 3,
+        label: 'The Puppet Master',
+        desc: 'Destroy reserved card anytime (back to deck) to gain 1 random gem. Special Action.',
+        effects: { active: 'discard_reserved' },
+    },
+    COLLECTOR: {
+        id: 'collector',
+        level: 3,
+        label: 'The Collector',
+        desc: "You can reserve opponent's reserved cards. Win Condition: 22 Points.",
+        effects: { passive: { stealReserved: true }, winCondition: { points: 22 } },
     },
 
     // Default

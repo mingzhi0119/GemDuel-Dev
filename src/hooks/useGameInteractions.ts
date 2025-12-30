@@ -55,16 +55,20 @@ export const useGameInteractions = (
     }, [gameState.mode, gameState.turn, gameState.isHost]);
 
     // --- Helpers ---
-    const isSelected = (r: number, c: number) => selectedGems.some((s) => s.r === r && s.c === c);
+    const isSelected = useCallback(
+        (r: number, c: number) => selectedGems.some((s) => s.r === r && s.c === c),
+        [selectedGems]
+    );
     const canAfford = useCallback(
-        (card: Card) => {
+        (card: Card, isReserved: boolean = false) => {
             if (!gameState) return false;
             const player = gameState.turn;
             const { affordable } = calculateTransaction(
                 card,
                 gameState.inventories[player],
                 gameState.playerTableau[player],
-                gameState.playerBuffs?.[player]
+                gameState.playerBuffs[player],
+                isReserved
             );
             return affordable;
         },
@@ -280,7 +284,7 @@ export const useGameInteractions = (
             marketInfo?: InitiateBuyJokerPayload['marketInfo']
         ) => {
             if (!canLocalInteract) return;
-            const affordable = canAfford(card);
+            const affordable = canAfford(card, source === 'reserved');
             if (!affordable) return setErrorMsg('Cannot afford!');
             if (card.bonusColor === 'gold') {
                 const action: GameAction = {
@@ -381,7 +385,7 @@ export const useGameInteractions = (
     const checkAndInitiateBuyReserved = useCallback(
         (card: Card, execute: boolean = false) => {
             if (!canLocalInteract) return false;
-            const affordable = canAfford(card);
+            const affordable = canAfford(card, true);
             if (execute && affordable) initiateBuy(card, 'reserved');
             return affordable;
         },
@@ -478,6 +482,16 @@ export const useGameInteractions = (
         [gameState]
     );
 
+    const handleDiscardReserved = useCallback(
+        (cardId: string) => {
+            if (canLocalInteract) {
+                const action: GameAction = { type: 'DISCARD_RESERVED', payload: { cardId } };
+                networkDispatch(action);
+            }
+        },
+        [canLocalInteract, networkDispatch]
+    );
+
     const handlers = useMemo(
         () => ({
             startGame,
@@ -488,6 +502,7 @@ export const useGameInteractions = (
             handleReplenish,
             handleReserveCard,
             handleReserveDeck,
+            handleDiscardReserved,
             initiateBuy,
             handleSelectBonusColor,
             handleSelectRoyal,
@@ -512,6 +527,7 @@ export const useGameInteractions = (
             handleReplenish,
             handleReserveCard,
             handleReserveDeck,
+            handleDiscardReserved,
             initiateBuy,
             handleSelectBonusColor,
             handleSelectRoyal,
