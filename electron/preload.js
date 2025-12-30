@@ -1,4 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const pkg = require('../package.json');
+
+contextBridge.exposeInMainWorld('electron', {
+    version: pkg.version,
+});
 
 contextBridge.exposeInMainWorld('ipcRenderer', {
     send: (channel, data) => ipcRenderer.send(channel, data),

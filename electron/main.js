@@ -14,14 +14,17 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
+        autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
         },
-        title: 'Gem Duel',
+        title: 'GemDuel v5.2.3',
         backgroundColor: '#020617',
     });
+
+    mainWindow.setMenuBarVisibility(false);
 
     const startUrl = isDev
         ? 'http://localhost:5173'
