@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Crown, Trophy, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, animate } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '../types';
 import { BUFFS } from '../constants';
 import { BUFF_STYLES } from '../styles/buffs';
@@ -11,19 +11,31 @@ interface AnimatedScoreProps {
 }
 
 const AnimatedScore: React.FC<AnimatedScoreProps> = ({ value, className }) => {
-    const springValue = useSpring(value, { stiffness: 50, damping: 30 });
-    const displayValue = useTransform(springValue, (latest) => Math.floor(latest));
+    const [displayValue, setDisplayValue] = useState(value);
     const [isPulsing, setIsPulsing] = useState(false);
     const prevValue = useRef(value);
 
     useEffect(() => {
-        springValue.set(value);
-        if (value > prevValue.current) {
-            setIsPulsing(true);
-            setTimeout(() => setIsPulsing(false), 600);
+        if (value !== prevValue.current) {
+            const delta = Math.abs(value - prevValue.current);
+            const stepDuration = 0.1; // 100ms per point
+
+            // Animate the number rolling
+            const controls = animate(prevValue.current, value, {
+                duration: delta * stepDuration,
+                ease: 'linear',
+                onUpdate: (latest) => setDisplayValue(Math.floor(latest)),
+            });
+
+            if (value > prevValue.current) {
+                setIsPulsing(true);
+                setTimeout(() => setIsPulsing(false), 600);
+            }
+
+            prevValue.current = value;
+            return () => controls.stop();
         }
-        prevValue.current = value;
-    }, [value, springValue]);
+    }, [value]);
 
     return (
         <motion.span
