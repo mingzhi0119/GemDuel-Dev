@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Shield, Layers, Scroll, Swords, Sparkles } from 'lucide-react';
+import { Shield, Scroll, Swords, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GEM_TYPES, BONUS_COLORS, BUFFS } from '../constants';
 import { GemIcon } from './GemIcon';
@@ -440,7 +440,6 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
 
                 {/* Card Stacks & Bonuses */}
                 <div className="flex gap-3 items-start justify-center mt-1">
-                    <Layers size={14} className="text-slate-600 mr-1 mt-1" />
                     {displayColors.map((color) => {
                         const stats = colorStats[color];
                         const type = GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES];
