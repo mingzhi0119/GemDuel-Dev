@@ -5,7 +5,11 @@ import { useGameState } from './useGameState';
 import { useGameNetwork } from './useGameNetwork';
 import { useGameInteractions } from './useGameInteractions';
 
-export const useGameLogic = (shouldConnect: boolean = false, targetIP: string = 'localhost') => {
+export const useGameLogic = (
+    shouldConnect: boolean = false,
+    targetIP: string = 'localhost',
+    isReviewing: boolean = false
+) => {
     // 1. Core State Management
     const { gameState, dispatch, historyControls } = useGameState();
 
@@ -22,7 +26,8 @@ export const useGameLogic = (shouldConnect: boolean = false, targetIP: string = 
     const interactions = useGameInteractions(
         gameState,
         networkDispatch,
-        historyControls.currentIndex
+        historyControls.currentIndex,
+        isReviewing
     );
 
     const isViewingHistory =

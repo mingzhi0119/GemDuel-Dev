@@ -20,12 +20,14 @@ import {
     InitiateBuyJokerPayload,
     InitiateReservePayload,
     InitiateReserveDeckPayload,
+    Buff,
 } from '../types';
 
 export const useGameInteractions = (
     gameState: GameState,
     networkDispatch: (action: GameAction) => void,
-    currentIndex: number // Used to reset selection on history change
+    currentIndex: number, // Used to reset selection on history change
+    isReviewing: boolean = false
 ) => {
     const [selectedGems, setSelectedGems] = useState<GemCoord[]>([]);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -44,6 +46,7 @@ export const useGameInteractions = (
     }, [errorMsg]);
 
     const canLocalInteract = useMemo(() => {
+        if (isReviewing || gameState.winner) return false;
         const mode = gameState.mode;
         if (mode === 'LOCAL_PVP') return true;
         if (mode === 'PVE') return gameState.turn === 'p1';
@@ -52,7 +55,7 @@ export const useGameInteractions = (
             return gameState.turn === myRole;
         }
         return true;
-    }, [gameState.mode, gameState.turn, gameState.isHost]);
+    }, [gameState.mode, gameState.turn, gameState.isHost, gameState.winner, isReviewing]);
 
     // --- Helpers ---
     const isSelected = useCallback(
@@ -131,7 +134,9 @@ export const useGameInteractions = (
 
             if (options.useBuffs) {
                 const level = (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
-                const levelBuffs = Object.values(BUFFS).filter((b) => b.level === level);
+                const levelBuffs = (Object.values(BUFFS) as Buff[]).filter(
+                    (b) => b.level === level
+                );
 
                 // Select 3 for P1 from DIFFERENT categories
                 const categoriesSeen = new Set<string>();
@@ -450,7 +455,7 @@ export const useGameInteractions = (
             let p2DraftPoolIndices: number[] | undefined;
 
             if (gameState.turn === 'p1' && gameState.phase === 'DRAFT_PHASE') {
-                const levelBuffs = Object.values(BUFFS).filter(
+                const levelBuffs = (Object.values(BUFFS) as Buff[]).filter(
                     (b) => b.level === gameState.buffLevel
                 );
                 const selectedBuff = levelBuffs.find((b) => b.id === buffId);

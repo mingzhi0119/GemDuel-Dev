@@ -19,12 +19,19 @@ import { BUFF_STYLES } from '../styles/buffs';
 interface AnimatedScoreProps {
     value: number;
     className?: string;
+    theme: 'light' | 'dark';
 }
 
-const AnimatedScore: React.FC<AnimatedScoreProps> = ({ value, className }) => {
+const AnimatedScore: React.FC<AnimatedScoreProps> = ({ value, className, theme }) => {
     const [displayValue, setDisplayValue] = useState(value);
     const [isPulsing, setIsPulsing] = useState(false);
     const prevValue = useRef(value);
+
+    // Define pulse colors based on theme
+    const pulseColors =
+        theme === 'dark'
+            ? ['#ffffff', '#fbbf24', '#ffffff'] // White -> Amber -> White
+            : ['#0f172a', '#ea580c', '#0f172a']; // Slate-900 -> Orange-600 -> Slate-900
 
     useEffect(() => {
         if (value !== prevValue.current) {
@@ -50,7 +57,7 @@ const AnimatedScore: React.FC<AnimatedScoreProps> = ({ value, className }) => {
 
     return (
         <motion.span
-            animate={isPulsing ? { scale: [1, 1.4, 1], color: ['#fff', '#fbbf24', '#fff'] } : {}}
+            animate={isPulsing ? { scale: [1, 1.4, 1], color: pulseColors } : {}}
             className={className}
         >
             <motion.span>{displayValue}</motion.span>
@@ -199,6 +206,12 @@ export const TopBar: React.FC<TopBarProps> = ({
 
     const isMyTurn = isOnline && localPlayer === activePlayer;
 
+    // Helper for winning text color
+    const getWinningClass = (isWinning: boolean) => {
+        if (!isWinning) return theme === 'dark' ? 'text-white' : 'text-slate-900';
+        return theme === 'dark' ? 'animate-pulse text-yellow-400' : 'animate-pulse text-orange-600';
+    };
+
     return (
         <div
             className={`fixed top-0 left-0 w-full h-16 lg:h-20 backdrop-blur-md border-b z-[60] flex items-center justify-between px-2 lg:px-8 transition-colors duration-500
@@ -240,11 +253,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <div className="flex flex-col items-start gap-0.5">
                     <div className="flex items-center gap-2 lg:gap-6">
                         <div
-                            className={`flex items-center gap-1 lg:gap-2 ${isP1Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
+                            className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isP1Winning)}`}
                         >
                             <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
                             <AnimatedScore
                                 value={p1Score}
+                                theme={theme}
                                 className="text-xl lg:text-4xl font-black drop-shadow-lg"
                             />
                             <span
@@ -319,11 +333,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <div className="flex flex-col items-end gap-0.5">
                     <div className="flex items-center gap-2 lg:gap-6 flex-row-reverse">
                         <div
-                            className={`flex items-center gap-1 lg:gap-2 ${isP2Winning ? 'animate-pulse text-yellow-400' : theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
+                            className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isP2Winning)}`}
                         >
                             <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
                             <AnimatedScore
                                 value={p2Score}
+                                theme={theme}
                                 className="text-xl lg:text-4xl font-black drop-shadow-lg"
                             />
                             <span

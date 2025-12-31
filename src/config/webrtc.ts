@@ -34,15 +34,34 @@ export const GET_ICE_SERVERS = (): RTCIceServer[] => {
  * @param isHost - Whether this peer is the host (runs local server)
  * @param targetIP - IP address to connect to (for guests). Defaults to 'localhost'
  */
-export const createPeerConfig = (isHost: boolean, targetIP: string = 'localhost') => {
-    const host = isHost ? 'localhost' : targetIP;
+/**
+ * Creates PeerJS configuration.
+ * Defaults to PeerJS public cloud if targetIP is not specified or is 'cloud'.
+ * @param isHost - whether this peer identifies as host (not relevant for cloud config usually, but kept for interface)
+ * @param targetIP - Optional: custom signaling server Host/IP. Pass 'localhost' for local dev.
+ */
+export const createPeerConfig = (isHost: boolean, targetIP?: string) => {
+    const isLocal =
+        targetIP === 'localhost' || targetIP?.startsWith('192') || targetIP?.startsWith('10.');
 
+    if (isLocal && targetIP) {
+        return {
+            host: targetIP,
+            port: 9000,
+            path: '/gemduel',
+            secure: false,
+            debug: 2,
+            config: {
+                iceServers: GET_ICE_SERVERS(),
+                iceTransportPolicy: 'all' as RTCIceTransportPolicy,
+            },
+        };
+    }
+
+    // PeerJS Cloud Config (Default)
     return {
-        host,
-        port: 9000,
-        path: '/gemduel',
-        secure: false, // IMPORTANT: Local connections use HTTP not HTTPS
-        debug: 2, // 0=None, 1=Errors, 2=Warnings, 3=All
+        secure: true, // Cloud requires SSL
+        debug: 2,
         config: {
             iceServers: GET_ICE_SERVERS(),
             iceTransportPolicy: 'all' as RTCIceTransportPolicy,
@@ -50,5 +69,4 @@ export const createPeerConfig = (isHost: boolean, targetIP: string = 'localhost'
     };
 };
 
-// Legacy export for backwards compatibility (defaults to host mode with localhost)
-export const PEER_CONFIG = createPeerConfig(true, 'localhost');
+export const PEER_CONFIG = createPeerConfig(true);

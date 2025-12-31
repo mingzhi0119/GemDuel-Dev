@@ -197,6 +197,29 @@ export const Card: React.FC<CardProps> = React.memo(
             );
         };
 
+        const getScoreColor = (color: string | undefined | null) => {
+            switch (color) {
+                case 'blue':
+                    return 'text-blue-300';
+                case 'green':
+                    return theme === 'dark' ? 'text-emerald-300' : 'text-emerald-400';
+                case 'red':
+                    return theme === 'dark' ? 'text-rose-300' : 'text-rose-500';
+                case 'black':
+                    return theme === 'dark' ? 'text-slate-500' : 'text-black';
+                case 'white':
+                    return 'text-white';
+                case 'gold':
+                    return theme === 'dark' ? 'text-amber-300' : 'text-amber-500';
+                case 'null':
+                case null:
+                case undefined:
+                    return theme === 'dark' ? 'text-gray-200' : 'text-gray-400';
+                default:
+                    return 'text-white';
+            }
+        };
+
         return (
             <div
                 onClick={handleCardClick}
@@ -219,7 +242,9 @@ export const Card: React.FC<CardProps> = React.memo(
                 <div className="absolute top-1 left-1.5 flex flex-row items-center gap-1 pointer-events-none z-10">
                     {Number(card.points) > 0 && (
                         <span
-                            className={`font-bold text-white leading-none drop-shadow-md ${pointSize}`}
+                            className={`font-bold leading-none drop-shadow-md ${pointSize} ${getScoreColor(
+                                card.bonusColor
+                            )}`}
                         >
                             {card.points}
                         </span>

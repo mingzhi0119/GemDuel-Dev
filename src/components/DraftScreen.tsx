@@ -109,7 +109,10 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                             PVE CUSTOMIZE
                         </span>
                     </div>
-                    <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/5 shadow-2xl">
+                    <div
+                        className={`flex items-center gap-2 p-1.5 rounded-2xl backdrop-blur-xl shadow-2xl transition-colors
+                        ${theme === 'dark' ? 'bg-black/20 border border-white/5' : 'bg-white/60 border border-slate-200'}`}
+                    >
                         <button
                             onClick={() => onReroll()}
                             className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-500 text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 group"
@@ -120,8 +123,12 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                             />
                             Refresh Pool
                         </button>
-                        <div className="h-6 w-px bg-white/10 mx-1" />
-                        <div className="flex items-center gap-1 bg-black/20 p-1 rounded-lg">
+                        <div
+                            className={`h-6 w-px mx-1 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-300'}`}
+                        />
+                        <div
+                            className={`flex items-center gap-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-black/20' : 'bg-white'}`}
+                        >
                             {[1, 2, 3].map((lvl) => (
                                 <button
                                     key={lvl}
@@ -131,7 +138,9 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                         ${
                                             buffLevel === lvl
                                                 ? 'bg-amber-400 text-amber-950 shadow-inner'
-                                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                                : theme === 'dark'
+                                                  ? 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
                                         }
                                     `}
                                 >
@@ -188,7 +197,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                             onClick={() => canInteract && onSelectBuff(buff.id)}
                             className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300 
                                 ${canInteract ? 'hover:scale-105 hover:-translate-y-2 hover:shadow-2xl cursor-pointer' : 'opacity-50 cursor-default'}
-                                ${BUFF_STYLES[buff.level]}
+                                ${theme === 'dark' ? BUFF_STYLES[buff.level] : 'bg-white border-slate-200 shadow-xl'}
                                 ${theme === 'dark' ? 'hover:shadow-purple-900/50' : 'hover:shadow-purple-200/50'}
                                 ${isP1ChoiceSlot ? 'border-amber-400 ring-2 ring-amber-400/50' : ''}
                             `}
@@ -196,15 +205,23 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                         >
                             {/* Card Header */}
                             <div className="flex justify-between items-start mb-3">
-                                <div className="p-2 rounded-xl bg-white/10 backdrop-blur-sm">
+                                <div
+                                    className={`p-2 rounded-xl backdrop-blur-sm ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-100'}`}
+                                >
                                     <Icon size={22} className={iconColor} />
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 border px-2 py-1 rounded-full">
+                                    <span
+                                        className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border 
+                                        ${theme === 'dark' ? 'border-white/20 opacity-60' : 'border-slate-300 opacity-100 text-slate-600'}`}
+                                    >
                                         Lvl {buff.level}
                                     </span>
                                     {buff.category && (
-                                        <span className="text-[8px] font-black uppercase tracking-tighter opacity-40 px-2">
+                                        <span
+                                            className={`text-[8px] font-black uppercase tracking-tighter px-2 
+                                            ${theme === 'dark' ? 'opacity-40' : 'text-slate-400 opacity-100'}`}
+                                        >
                                             {buff.category}
                                         </span>
                                     )}
@@ -219,12 +236,18 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                             )}
 
                             {/* Title */}
-                            <h3 className="text-xl font-black mb-3 leading-tight group-hover:text-white transition-colors">
+                            <h3
+                                className={`text-xl font-black mb-3 leading-tight transition-colors 
+                                ${theme === 'dark' ? 'group-hover:text-white' : 'text-slate-900 group-hover:text-amber-600'}`}
+                            >
                                 {buff.label}
                             </h3>
 
                             {/* Description */}
-                            <p className="text-xs font-medium leading-relaxed opacity-80 mb-4 flex-grow">
+                            <p
+                                className={`text-xs font-medium leading-relaxed mb-4 flex-grow 
+                                ${theme === 'dark' ? 'opacity-80' : 'text-slate-600'}`}
+                            >
                                 {buff.desc}
                             </p>
 
@@ -233,30 +256,59 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                 (buff.effects.winCondition.points ||
                                     buff.effects.winCondition.crowns ||
                                     buff.effects.winCondition.singleColor) && (
-                                    <div className="mt-auto pt-3 border-t border-white/10 text-[10px] space-y-1 opacity-90">
-                                        <p className="font-bold uppercase opacity-60 mb-1">
+                                    <div
+                                        className={`mt-auto pt-3 border-t text-[10px] space-y-1 opacity-90 
+                                        ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}
+                                    >
+                                        <p
+                                            className={`font-bold uppercase mb-1 ${theme === 'dark' ? 'opacity-60' : 'text-slate-400'}`}
+                                        >
                                             Goal Adjustment:
                                         </p>
                                         {buff.effects.winCondition.points && (
                                             <div className="flex justify-between">
-                                                <span>Points:</span>
-                                                <span className="font-mono font-bold text-amber-300">
+                                                <span
+                                                    className={
+                                                        theme === 'dark' ? '' : 'text-slate-700'
+                                                    }
+                                                >
+                                                    Points:
+                                                </span>
+                                                <span
+                                                    className={`font-mono font-bold ${theme === 'dark' ? 'text-amber-300' : 'text-amber-600'}`}
+                                                >
                                                     {buff.effects.winCondition.points}
                                                 </span>
                                             </div>
                                         )}
                                         {buff.effects.winCondition.crowns && (
                                             <div className="flex justify-between">
-                                                <span>Crowns:</span>
-                                                <span className="font-mono font-bold text-amber-300">
+                                                <span
+                                                    className={
+                                                        theme === 'dark' ? '' : 'text-slate-700'
+                                                    }
+                                                >
+                                                    Crowns:
+                                                </span>
+                                                <span
+                                                    className={`font-mono font-bold ${theme === 'dark' ? 'text-amber-300' : 'text-amber-600'}`}
+                                                >
                                                     {buff.effects.winCondition.crowns}
                                                 </span>
                                             </div>
                                         )}
                                         {buff.effects.winCondition.singleColor && (
                                             <div className="flex justify-between">
-                                                <span>Points (1 Color):</span>
-                                                <span className="font-mono font-bold text-amber-300">
+                                                <span
+                                                    className={
+                                                        theme === 'dark' ? '' : 'text-slate-700'
+                                                    }
+                                                >
+                                                    Points (1 Color):
+                                                </span>
+                                                <span
+                                                    className={`font-mono font-bold ${theme === 'dark' ? 'text-amber-300' : 'text-amber-600'}`}
+                                                >
                                                     {buff.effects.winCondition.singleColor}
                                                 </span>
                                             </div>

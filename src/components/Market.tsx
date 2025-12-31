@@ -53,8 +53,9 @@ export const Market: React.FC<MarketProps> = React.memo(
         isOnline,
         localPlayer,
     }) => {
-        // Validation: Is it my turn?
-        const canInteract = !isOnline || turn === localPlayer;
+        // Validation: Is it my turn and not in review/game over?
+        const canInteract =
+            (!isOnline || turn === localPlayer) && phase !== 'REVIEW' && phase !== 'GAME_OVER';
         const activeBuff = playerBuffs[turn];
         const hasIntelligence =
             activeBuff?.effects?.active === 'peek_deck' && phase === 'IDLE' && canInteract;
@@ -185,7 +186,9 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                         extraIdx: idx + 1,
                                                     })}
                                                     onClick={handleBuy}
-                                                    onReserve={handleReserve}
+                                                    onReserve={
+                                                        canInteract ? handleReserve : undefined
+                                                    }
                                                     theme={theme}
                                                 />
                                             </div>
@@ -249,7 +252,9 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                     }
                                                     context={JSON.stringify({ level: lvl, idx: i })}
                                                     onClick={handleBuy}
-                                                    onReserve={handleReserve}
+                                                    onReserve={
+                                                        canInteract ? handleReserve : undefined
+                                                    }
                                                     theme={theme}
                                                     animationConfig={{
                                                         mode:

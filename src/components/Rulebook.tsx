@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { RULEBOOK_CONTENT } from './RulebookContent';
+import { CardAnatomyPage } from './CardAnatomyPage';
 
 interface RulebookProps {
     onClose: () => void;
@@ -13,6 +14,31 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
 
     const content = RULEBOOK_CONTENT[page];
     const totalPages = RULEBOOK_CONTENT.length;
+
+    // Render custom component pages
+    const renderContent = () => {
+        if (!content) return null;
+
+        if (content.isCustom === 'card_anatomy') {
+            return <CardAnatomyPage theme={theme} lang={lang} />;
+        }
+
+        // Default text-based page
+        return (
+            <>
+                <h3
+                    className={`text-2xl font-black uppercase tracking-tight mb-6 pb-3 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
+                >
+                    {content.title?.[lang] || 'Untitled'}
+                </h3>
+                <div
+                    className={`leading-relaxed whitespace-pre-wrap text-sm md:text-base ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600 font-medium'}`}
+                >
+                    {content.body?.[lang] || 'No content available.'}
+                </div>
+            </>
+        );
+    };
 
     return (
         <div
@@ -57,16 +83,15 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                 <div className="flex-1 overflow-y-auto p-8 md:p-10">
                     {content && (
                         <>
-                            <h3
-                                className={`text-2xl font-black uppercase tracking-tight mb-6 pb-3 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
-                            >
-                                {content.title?.[lang] || 'Untitled'}
-                            </h3>
-                            <div
-                                className={`leading-relaxed whitespace-pre-wrap text-sm md:text-base ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600 font-medium'}`}
-                            >
-                                {content.body?.[lang] || 'No content available.'}
-                            </div>
+                            {/* Title for custom pages */}
+                            {content.isCustom && (
+                                <h3
+                                    className={`text-2xl font-black uppercase tracking-tight mb-6 pb-3 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
+                                >
+                                    {content.title?.[lang] || 'Untitled'}
+                                </h3>
+                            )}
+                            {renderContent()}
                         </>
                     )}
                 </div>

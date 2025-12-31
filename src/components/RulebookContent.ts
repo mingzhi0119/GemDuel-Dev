@@ -1,6 +1,7 @@
 export interface RulebookPage {
     title: { en: string; zh: string };
     body: { en: string; zh: string };
+    isCustom?: string; // If set, renders a custom component instead of text
 }
 
 export const RULEBOOK_CONTENT: RulebookPage[] = [
@@ -54,6 +55,12 @@ Components
     特权卷轴：允许执行额外行动的代币。
 `,
         },
+    },
+    {
+        // Custom page rendered by CardAnatomyPage component
+        title: { en: 'Card Anatomy & Abilities', zh: '卡牌结构与能力' },
+        body: { en: '', zh: '' },
+        isCustom: 'card_anatomy',
     },
     {
         title: { en: 'Turn Overview', zh: '回合概述' },

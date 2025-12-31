@@ -11,7 +11,7 @@ import { StatusBar } from './components/StatusBar';
 import { ReplayControls } from './components/ReplayControls';
 import { ResolutionSwitcher } from './components/ResolutionSwitcher';
 import { WinnerModal } from './components/WinnerModal';
-import { OnlineSetup } from './components/OnlineSetup';
+import { OnlineMenu } from './components/OnlineMenu';
 import { GameConfigMenu } from './components/GameConfigMenu';
 import { DebugPanel } from './components/DebugPanel';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -35,8 +35,7 @@ export default function GemDuelBoard() {
     const [isPeekingBoard, setIsPeekingBoard] = useState(false);
     const [persistentWinner, setPersistentWinner] = useState<GemColor | string | null>(null);
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
-    const [appVersion, setAppVersion] = useState<string>('5.2.9');
-    const [targetIP, setTargetIP] = useState('localhost'); // Host IP for guest connections
+    const [appVersion, setAppVersion] = useState<string>('5.2.11');
 
     useEffect(() => {
         const fetchVersion = async () => {
@@ -56,7 +55,8 @@ export default function GemDuelBoard() {
         useSettings();
     const { state, handlers, getters, historyControls, online } = useGameLogic(
         onlineSetup,
-        targetIP
+        undefined, // Cloud mode uses default ID generation
+        isReviewing
     );
 
     const {
@@ -183,12 +183,11 @@ export default function GemDuelBoard() {
     if (historyControls.historyLength === 0) {
         if (onlineSetup) {
             return (
-                <OnlineSetup
+                <OnlineMenu
                     onBack={() => setOnlineSetup(false)}
                     online={online}
                     startGame={startGame}
                     theme={theme}
-                    onHostIPChange={setTargetIP}
                 />
             );
         }
