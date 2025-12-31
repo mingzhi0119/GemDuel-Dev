@@ -35,7 +35,7 @@ export default function GemDuelBoard() {
     const [isPeekingBoard, setIsPeekingBoard] = useState(false);
     const [persistentWinner, setPersistentWinner] = useState<GemColor | string | null>(null);
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
-    const [appVersion, setAppVersion] = useState<string>('5.2.8');
+    const [appVersion, setAppVersion] = useState<string>('5.2.9');
     const [targetIP, setTargetIP] = useState('localhost'); // Host IP for guest connections
 
     useEffect(() => {
