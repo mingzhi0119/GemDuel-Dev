@@ -29,11 +29,26 @@ export const GET_ICE_SERVERS = (): RTCIceServer[] => {
     return servers;
 };
 
-// PeerJS Config Wrapper
-export const PEER_CONFIG = {
-    debug: 2, // 0=None, 1=Errors, 2=Warnings, 3=All
-    config: {
-        iceServers: GET_ICE_SERVERS(),
-        iceTransportPolicy: 'all' as RTCIceTransportPolicy, // 'relay' forces TURN (good for debugging)
-    },
+/**
+ * Creates PeerJS configuration for local host-as-server architecture.
+ * @param isHost - Whether this peer is the host (runs local server)
+ * @param targetIP - IP address to connect to (for guests). Defaults to 'localhost'
+ */
+export const createPeerConfig = (isHost: boolean, targetIP: string = 'localhost') => {
+    const host = isHost ? 'localhost' : targetIP;
+
+    return {
+        host,
+        port: 9000,
+        path: '/gemduel',
+        secure: false, // IMPORTANT: Local connections use HTTP not HTTPS
+        debug: 2, // 0=None, 1=Errors, 2=Warnings, 3=All
+        config: {
+            iceServers: GET_ICE_SERVERS(),
+            iceTransportPolicy: 'all' as RTCIceTransportPolicy,
+        },
+    };
 };
+
+// Legacy export for backwards compatibility (defaults to host mode with localhost)
+export const PEER_CONFIG = createPeerConfig(true, 'localhost');

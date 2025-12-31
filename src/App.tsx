@@ -35,7 +35,8 @@ export default function GemDuelBoard() {
     const [isPeekingBoard, setIsPeekingBoard] = useState(false);
     const [persistentWinner, setPersistentWinner] = useState<GemColor | string | null>(null);
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
-    const [appVersion, setAppVersion] = useState<string>('5.2.7');
+    const [appVersion, setAppVersion] = useState<string>('5.2.8');
+    const [targetIP, setTargetIP] = useState('localhost'); // Host IP for guest connections
 
     useEffect(() => {
         const fetchVersion = async () => {
@@ -53,7 +54,10 @@ export default function GemDuelBoard() {
 
     const { resolution, setResolution, settings, RESOLUTION_SETTINGS, theme, setTheme } =
         useSettings();
-    const { state, handlers, getters, historyControls, online } = useGameLogic(onlineSetup);
+    const { state, handlers, getters, historyControls, online } = useGameLogic(
+        onlineSetup,
+        targetIP
+    );
 
     const {
         board,
@@ -184,6 +188,7 @@ export default function GemDuelBoard() {
                     online={online}
                     startGame={startGame}
                     theme={theme}
+                    onHostIPChange={setTargetIP}
                 />
             );
         }

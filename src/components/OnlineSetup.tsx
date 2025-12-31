@@ -12,11 +12,19 @@ interface OnlineSetupProps {
     };
     startGame: (mode: GameMode, config: { useBuffs: boolean; isHost?: boolean }) => void;
     theme: string;
+    onHostIPChange: (ip: string) => void; // New prop to notify parent of IP changes
 }
 
-export function OnlineSetup({ onBack, online, startGame, theme }: OnlineSetupProps) {
+export function OnlineSetup({
+    onBack,
+    online,
+    startGame,
+    theme,
+    onHostIPChange,
+}: OnlineSetupProps) {
     const [roomInput, setRoomInput] = useState('');
     const [copySuccess, setCopySetup] = useState(false);
+    const [hostIP, setHostIP] = useState('localhost'); // Default to localhost for testing
 
     return (
         <div
@@ -123,14 +131,38 @@ export function OnlineSetup({ onBack, online, startGame, theme }: OnlineSetupPro
                         Enter your friend's ID to connect to their lobby.
                     </p>
 
-                    <input
-                        type="text"
-                        placeholder="Paste ID here..."
-                        value={roomInput}
-                        onChange={(e) => setRoomInput(e.target.value)}
-                        className={`w-full p-4 rounded-xl font-mono text-center outline-none border-2 transition-all
-                                    ${theme === 'dark' ? 'bg-black/40 border-slate-800 focus:border-amber-500' : 'bg-slate-100 border-slate-200 focus:border-amber-500'}`}
-                    />
+                    {/* Host IP Input */}
+                    <div className="w-full flex flex-col gap-2">
+                        <label className="text-xs font-semibold opacity-70">Host IP Address</label>
+                        <input
+                            type="text"
+                            placeholder="localhost or 26.x.x.x (Radmin VPN)"
+                            value={hostIP}
+                            onChange={(e) => {
+                                setHostIP(e.target.value);
+                                onHostIPChange(e.target.value);
+                            }}
+                            className={`w-full p-3 rounded-xl font-mono text-sm outline-none border-2 transition-all
+                                        ${theme === 'dark' ? 'bg-black/40 border-slate-800 focus:border-blue-500' : 'bg-slate-100 border-slate-200 focus:border-blue-500'}`}
+                        />
+                        <span className="text-[10px] opacity-50">
+                            💡 Use <code className="bg-black/20 px-1 rounded">localhost</code> for
+                            local testing or your friend's Radmin VPN IP
+                        </span>
+                    </div>
+
+                    {/* Peer ID Input */}
+                    <div className="w-full flex flex-col gap-2">
+                        <label className="text-xs font-semibold opacity-70">Friend's Peer ID</label>
+                        <input
+                            type="text"
+                            placeholder="Paste ID here..."
+                            value={roomInput}
+                            onChange={(e) => setRoomInput(e.target.value)}
+                            className={`w-full p-4 rounded-xl font-mono text-center outline-none border-2 transition-all
+                                        ${theme === 'dark' ? 'bg-black/40 border-slate-800 focus:border-amber-500' : 'bg-slate-100 border-slate-200 focus:border-amber-500'}`}
+                        />
+                    </div>
 
                     <button
                         onClick={() => online.connectToPeer(roomInput)}

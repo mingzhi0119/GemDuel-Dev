@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Peer, DataConnection } from 'peerjs';
 import { GameAction, GameState } from '../types';
 import { NetworkMessage } from '../types/network';
-import { PEER_CONFIG } from '../config/webrtc';
+import { createPeerConfig } from '../config/webrtc';
 import { useConnectionHealth } from './useConnectionHealth';
 
 export const useOnlineManager = (
@@ -10,7 +10,8 @@ export const useOnlineManager = (
     onStateReceived: (state: GameState) => void,
     onGuestRequestReceived: (action: GameAction) => void,
     enabled: boolean = false,
-    getCurrentStateRef?: () => GameState // Accessor for authoritative state
+    getCurrentStateRef?: () => GameState, // Accessor for authoritative state
+    targetIP: string = 'localhost' // IP address for guest to connect to
 ) => {
     const [peer, setPeer] = useState<Peer | null>(null);
     const [conn, setConn] = useState<DataConnection | null>(null);
@@ -106,20 +107,36 @@ export const useOnlineManager = (
         [handleHeartbeat, getCurrentStateRef, sendMessage]
     );
 
+    const setupConnectionRef = useRef(setupConnection);
+    useEffect(() => {
+        setupConnectionRef.current = setupConnection;
+    }, [setupConnection]);
+
     // Initialize Peer only when enabled
     useEffect(() => {
-        if (!enabled) return;
+        if (!enabled) {
+            console.log('[NET] Manager disabled, skipping peer init.');
+            return;
+        }
 
-        const newPeer = new Peer(PEER_CONFIG);
+        console.log('[NET] Initializing Peer...');
+        console.log(`[NET] Target IP: ${targetIP}, Will be host: ${!isHost}`);
+
+        // Use configurable peer config based on role
+        // Note: At initialization we don't know if we'll be host yet,
+        // so we default to localhost. The actual host/guest is determined
+        // when connection is established.
+        const peerConfig = createPeerConfig(true, targetIP);
+        const newPeer = new Peer(peerConfig);
 
         newPeer.on('open', (id) => {
             setPeerId(id);
-            console.log('My peer ID is: ' + id);
+            console.log('[NET] My peer ID is: ' + id);
         });
 
         newPeer.on('connection', (connection) => {
-            console.log('Incoming connection from:', connection.peer);
-            setupConnection(connection);
+            console.log('[NET] Incoming connection from:', connection.peer);
+            setupConnectionRef.current(connection);
             setIsHost(true); // The one who receives connection is host (p1)
         });
 
@@ -152,21 +169,25 @@ export const useOnlineManager = (
         setPeer(newPeer);
 
         return () => {
+            console.log('[NET] Destroying Peer instance.');
             newPeer.destroy();
             setPeer(null);
             setPeerId('');
         };
-    }, [enabled, setupConnection]);
+    }, [enabled, targetIP]); // Re-init if targetIP changes
 
     const connectToPeer = useCallback(
         (id: string) => {
-            if (!peer) return;
+            if (!peer) {
+                console.error('[NET] Cannot connect: Peer instance not ready.');
+                return;
+            }
             setConnectionStatus('connecting');
             const connection = peer.connect(id);
-            setupConnection(connection);
+            setupConnectionRef.current(connection);
             setIsHost(false); // The one who initiates connection is guest (p2)
         },
-        [peer, setupConnection]
+        [peer]
     );
 
     const sendAction = useCallback(

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DataConnection } from 'peerjs';
 import { NetworkMessage } from '../types/network';
 
@@ -42,16 +42,19 @@ export const useConnectionHealth = (
     }, [connection, sendMessage]);
 
     // 2. Message Handler (Call this from useOnlineManager when data arrives)
-    const handleHeartbeat = (msg: NetworkMessage) => {
-        if (msg.type === 'HEARTBEAT_PING') {
-            sendMessage({ type: 'HEARTBEAT_PONG', timestamp: msg.timestamp });
-        } else if (msg.type === 'HEARTBEAT_PONG') {
-            const rtt = Date.now() - msg.timestamp;
-            setLatency(rtt);
-            lastPongRef.current = Date.now();
-            setIsUnstable(false);
-        }
-    };
+    const handleHeartbeat = useCallback(
+        (msg: NetworkMessage) => {
+            if (msg.type === 'HEARTBEAT_PING') {
+                sendMessage({ type: 'HEARTBEAT_PONG', timestamp: msg.timestamp });
+            } else if (msg.type === 'HEARTBEAT_PONG') {
+                const rtt = Date.now() - msg.timestamp;
+                setLatency(rtt);
+                lastPongRef.current = Date.now();
+                setIsUnstable(false);
+            }
+        },
+        [sendMessage]
+    );
 
     return { latency, isUnstable, handleHeartbeat };
 };

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import isDev from 'electron-is-dev';
 import log from 'electron-log';
 import pkg from 'electron-updater';
+import { PeerServer } from 'peer';
 const { autoUpdater } = pkg;
 
 // Configure logging
@@ -16,6 +17,7 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow;
 let updateFailureCount = 0;
+let peerServer = null; // Keep reference to prevent garbage collection
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -95,9 +97,40 @@ ipcMain.handle('get-app-version', () => {
     return app.getVersion();
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    // Start Local PeerJS Signaling Server
+    try {
+        peerServer = PeerServer({
+            port: 9000,
+            path: '/gemduel',
+            proxied: true,
+        });
+
+        log.info('[P2P] Local Signaling Server running on port 9000');
+        console.log('[P2P] Local Signaling Server running on port 9000');
+
+        peerServer.on('connection', (client) => {
+            log.info(`[P2P] Client connected: ${client.getId()}`);
+        });
+
+        peerServer.on('disconnect', (client) => {
+            log.info(`[P2P] Client disconnected: ${client.getId()}`);
+        });
+    } catch (err) {
+        log.error('[P2P] Failed to start PeerServer:', err);
+        console.error('[P2P] Failed to start PeerServer:', err);
+    }
+
+    createWindow();
+});
 
 app.on('window-all-closed', () => {
+    // Clean up PeerServer on exit
+    if (peerServer) {
+        log.info('[P2P] Shutting down PeerServer...');
+        // PeerServer doesn't have explicit close method, node will clean up
+    }
+
     if (process.platform !== 'darwin') {
         app.quit();
     }

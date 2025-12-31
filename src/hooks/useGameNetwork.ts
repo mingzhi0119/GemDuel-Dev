@@ -9,7 +9,8 @@ export const useGameNetwork = (
     gameState: GameState,
     localDispatch: (action: GameAction) => void,
     clearAndInit: (action: GameAction) => void,
-    shouldConnect: boolean
+    shouldConnect: boolean,
+    targetIP: string = 'localhost'
 ) => {
     // Ref to break circular dependency
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,7 +67,8 @@ export const useGameNetwork = (
         handleStateReceived,
         handleGuestRequest,
         gameState.mode === 'ONLINE_MULTIPLAYER' || shouldConnect,
-        () => gameState
+        () => gameState,
+        targetIP
     );
 
     // Sync ref

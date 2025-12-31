@@ -5,7 +5,7 @@ import { useGameState } from './useGameState';
 import { useGameNetwork } from './useGameNetwork';
 import { useGameInteractions } from './useGameInteractions';
 
-export const useGameLogic = (shouldConnect: boolean = false) => {
+export const useGameLogic = (shouldConnect: boolean = false, targetIP: string = 'localhost') => {
     // 1. Core State Management
     const { gameState, dispatch, historyControls } = useGameState();
 
@@ -14,7 +14,8 @@ export const useGameLogic = (shouldConnect: boolean = false) => {
         gameState,
         dispatch,
         historyControls.clearAndInit,
-        shouldConnect
+        shouldConnect,
+        targetIP
     );
 
     // 3. User Interaction Handlers
