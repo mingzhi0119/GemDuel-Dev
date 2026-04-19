@@ -1,5 +1,6 @@
-import { GameState, GameAction } from '../types';
-import { validateGuestCommand } from './commandGate';
+import type { GameAction, GameState } from '../types';
+import type { GuestIntentCommand } from '../types/network';
+import { validateGuestCommand, validateGuestIntentCommand } from './commandGate';
 
 /**
  * Validates if an action received from a Guest is permissible.
@@ -16,3 +17,14 @@ export const validateOnlineAction = (state: GameState, action: GameAction): bool
     }
     return true;
 };
+
+export const reviewOnlineIntent = (state: GameState, command: GuestIntentCommand) => {
+    const result = validateGuestIntentCommand(state, command);
+    if (!result.valid) {
+        console.warn(result.reason || `Host rejected guest intent ${command.kind}.`);
+    }
+    return result;
+};
+
+export const validateOnlineIntent = (state: GameState, command: GuestIntentCommand): boolean =>
+    reviewOnlineIntent(state, command).valid;

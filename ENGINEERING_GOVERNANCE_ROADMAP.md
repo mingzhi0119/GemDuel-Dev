@@ -16,18 +16,18 @@ Allowed status values:
 
 ## Scorecard
 
-| Dimension                             | Audit Baseline | Current After Priority 1 | Target | Status        | Main Governance Gap                                                                                                         |
-| ------------------------------------- | -------------: | -----------------------: | -----: | ------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Correctness                           |           5/10 |                     7/10 |  8/10+ | `In Progress` | The command gate and rollback path are in place, but not every domain rule is modeled through one invariant engine yet.     |
-| Boundary Security                     |           3/10 |                     7/10 |  8/10+ | `In Progress` | External input is much better defended, but replay, desktop, and storage boundaries still need one shared schema system.    |
-| State Machine Consistency             |           4/10 |                     7/10 |  8/10+ | `In Progress` | Phase rules are now centralized, but the FSM is still not fully declarative for every gameplay subflow.                     |
-| Online Authority                      |           3/10 |                     6/10 |  8/10+ | `In Progress` | Guest actions now pass through allowlists and command validation, but protocol DTOs are still too close to reducer actions. |
-| Electron Security                     |           3/10 |                     6/10 |  8/10+ | `In Progress` | The preload surface is narrowed, but IPC governance and contract tests are still missing.                                   |
-| Architecture Layering                 |           4/10 |                     6/10 |  8/10+ | `In Progress` | Core orchestration is cleaner, but gameplay hooks still own too much behavior.                                              |
-| Type Contracts                        |           4/10 |                     6/10 |  8/10+ | `In Progress` | Bootstrap DTOs improved, but UI context, modal payloads, and replay/import contracts still need tightening.                 |
-| Test Coverage                         |           5/10 |                     7/10 |  8/10+ | `In Progress` | Negative-path and FSM coverage improved, but property-based, Electron, and recovery coverage are still missing.             |
-| Observability / Operations            |           5/10 |                     6/10 |  8/10+ | `Unstarted`   | Logging and updater policy are better, but telemetry, alerting, and release health gates do not exist yet.                  |
-| Dependency / Configuration Governance |           4/10 |                     6/10 |  8/10+ | `In Progress` | Sensitive runtime config is better controlled, but vulnerability automation and config ownership remain weak.               |
+| Dimension                             | Audit Baseline | Current After Priority 2 | Target | Status        | Main Governance Gap                                                                                                             |
+| ------------------------------------- | -------------: | -----------------------: | -----: | ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Correctness                           |           5/10 |                     7/10 |  8/10+ | `In Progress` | The command gate is stronger end to end, but some domain invariants still live in spread-out reducers instead of one engine.    |
+| Boundary Security                     |           3/10 |                     8/10 |  8/10+ | `In Progress` | Network ingress is versioned and validated now, but desktop, replay, and storage boundaries still need the same rigor.          |
+| State Machine Consistency             |           4/10 |                     8/10 |  8/10+ | `In Progress` | Protocol handlers now depend on the same gate, but the FSM is still not fully declarative for every gameplay subflow.           |
+| Online Authority                      |           3/10 |                     8/10 |  8/10+ | `In Progress` | Host authority is now explicit and logged, but ordering, replay, and broader multiplayer resilience still need more coverage.   |
+| Electron Security                     |           3/10 |                     6/10 |  8/10+ | `In Progress` | The preload surface is narrowed, but IPC governance and contract tests are still missing.                                       |
+| Architecture Layering                 |           4/10 |                     7/10 |  8/10+ | `In Progress` | The protocol boundary now lives in pure modules, but gameplay hooks still own too much orchestration.                           |
+| Type Contracts                        |           4/10 |                     7/10 |  8/10+ | `In Progress` | Network DTOs are explicit and versioned now, but UI context, modal payloads, and replay/import contracts still need tightening. |
+| Test Coverage                         |           5/10 |                     8/10 |  8/10+ | `In Progress` | Recovery and protocol regressions are covered now, but property-based and Electron-level failure coverage are still missing.    |
+| Observability / Operations            |           5/10 |                     6/10 |  8/10+ | `Unstarted`   | Logging and updater policy are better, but telemetry, alerting, and release health gates do not exist yet.                      |
+| Dependency / Configuration Governance |           4/10 |                     6/10 |  8/10+ | `In Progress` | Sensitive runtime config is better controlled, but vulnerability automation and config ownership remain weak.                   |
 
 ## Dimension Summaries
 
@@ -217,13 +217,19 @@ Allowed status values:
 
 ### Priority 2. Protocol Decoupling and Authority Contract v2
 
-- Status: `Unstarted`
+- Status: `Completed`
 - Why this comes second: The current online layer is safer, but it still reuses local action shapes too directly.
 - Deliverables:
 - Introduce distinct protocol DTOs for guest intent, host approval, sync, and recovery.
 - Add a host-side permission table and `CommandValidator` for all network-originated commands.
 - Add protocol versioning and recovery test fixtures.
 - Separate host approval logging from reducer application.
+- Completed in this phase:
+- Added protocol v2 DTOs for bootstrap, guest intent, host decision, sync, recovery, and heartbeat traffic.
+- Removed reducer `GameAction` from the wire contract and translated intents at the network boundary instead.
+- Added host approval logging plus explicit approval and rejection responses for guest requests.
+- Added checksum-backed guest verification and recovery-request handling for suspicious or stale approvals.
+- Added protocol parser, direction-hardening, authority, and recovery tests.
 - Raises: `Online Authority`, `Boundary Security`, `Test Coverage`
 
 ### Priority 3. Hook and Orchestration Decomposition
@@ -299,6 +305,7 @@ These items are already done and should be treated as governance prerequisites, 
 - Status: `Completed` - Runtime validation now protects network messages and core action payloads.
 - Status: `Completed` - Host authority was tightened with guest allowlists and reducer-side rejection rules.
 - Status: `Completed` - A centralized FSM policy and reducer command gate now govern phase legality and illegal-state rollback.
+- Status: `Completed` - Protocol v2 now separates bootstrap, guest intent, host approval, sync, and recovery from reducer-ready local actions.
 - Status: `Completed` - The preload bridge now exposes a narrow Electron API instead of raw IPC primitives.
 - Status: `Completed` - Production updater policy and runtime ICE injection are now safer than the original audit baseline.
 - Status: `Completed` - Setup and draft bootstrap flows now use named DTOs instead of wide untyped payloads.

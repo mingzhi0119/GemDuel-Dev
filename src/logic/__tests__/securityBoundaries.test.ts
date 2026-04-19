@@ -3,27 +3,32 @@ import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { parseNetworkMessage } from '../actionValidation';
 import { GameAction, GameState } from '../../types';
+import { NETWORK_PROTOCOL_VERSION } from '../../types/network';
+import { getInboundMessageCheck } from '../networkProtocol';
 
 const cloneState = (): GameState => JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
 
 describe('Security Boundaries', () => {
-    it('rejects malicious remote GAME_ACTION sync replacements', () => {
+    it('rejects stale protocol versions before the payload reaches runtime logic', () => {
         const message = parseNetworkMessage({
-            type: 'GAME_ACTION',
-            action: {
-                type: 'FORCE_SYNC',
-                payload: cloneState(),
+            version: 1,
+            type: 'BOOTSTRAP_STATE',
+            command: {
+                kind: 'INIT',
+                setup: cloneState(),
             },
         });
 
         expect(message).toBeNull();
     });
 
-    it('rejects malformed guest requests before they reach the reducer', () => {
+    it('rejects malformed guest intents before they reach the reducer', () => {
         const message = parseNetworkMessage({
-            type: 'GUEST_REQUEST',
-            action: {
-                type: 'TAKE_GEMS',
+            version: NETWORK_PROTOCOL_VERSION,
+            type: 'GUEST_INTENT',
+            requestId: 'guest-1',
+            command: {
+                kind: 'TAKE_GEMS',
                 payload: {
                     coords: [{ r: 0, c: 'bad' }],
                 },
@@ -35,10 +40,11 @@ describe('Security Boundaries', () => {
 
     it('rejects malformed bootstrap INIT_DRAFT payloads before sync', () => {
         const message = parseNetworkMessage({
-            type: 'GAME_ACTION',
-            action: {
-                type: 'INIT_DRAFT',
-                payload: {
+            version: NETWORK_PROTOCOL_VERSION,
+            type: 'BOOTSTRAP_STATE',
+            command: {
+                kind: 'INIT_DRAFT',
+                setup: {
                     mode: 'ONLINE_MULTIPLAYER',
                     board: [],
                     bag: [],
@@ -53,6 +59,44 @@ describe('Security Boundaries', () => {
         });
 
         expect(message).toBeNull();
+    });
+
+    it('rejects approved host decisions that omit the checksum contract', () => {
+        const message = parseNetworkMessage({
+            version: NETWORK_PROTOCOL_VERSION,
+            type: 'HOST_DECISION',
+            requestId: 'guest-2',
+            intentKind: 'TAKE_GEMS',
+            approved: true,
+            command: {
+                kind: 'TAKE_GEMS',
+                payload: { coords: [{ r: 0, c: 0 }] },
+            },
+        });
+
+        expect(message).toBeNull();
+    });
+
+    it('rejects directionally invalid messages for each network role', () => {
+        const syncStateCheck = getInboundMessageCheck('host', {
+            version: NETWORK_PROTOCOL_VERSION,
+            type: 'SYNC_STATE',
+            snapshot: cloneState(),
+            reason: 'TURN_SYNC',
+        });
+        const guestIntentCheck = getInboundMessageCheck('guest', {
+            version: NETWORK_PROTOCOL_VERSION,
+            type: 'GUEST_INTENT',
+            requestId: 'guest-3',
+            command: {
+                kind: 'CLOSE_MODAL',
+            },
+        });
+
+        expect(syncStateCheck.accepted).toBe(false);
+        expect(syncStateCheck.reason).toContain('Host rejected');
+        expect(guestIntentCheck.accepted).toBe(false);
+        expect(guestIntentCheck.reason).toContain('Guest rejected');
     });
 
     it('does not allow STEAL_GEM to advance the turn outside STEAL_ACTION', () => {

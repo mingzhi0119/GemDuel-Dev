@@ -1,19 +1,48 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Peer, DataConnection } from 'peerjs';
-import { GameAction, GameState } from '../types';
-import { NetworkMessage } from '../types/network';
+import type { GameState } from '../types';
+import type {
+    BootstrapCommand,
+    GuestIntentCommand,
+    HostDecisionMessage,
+    NetworkMessage,
+    NetworkSyncReason,
+    RecoveryReason,
+} from '../types/network';
+import { NETWORK_PROTOCOL_VERSION } from '../types/network';
 import { createPeerConfig } from '../config/webrtc';
 import { useConnectionHealth } from './useConnectionHealth';
 import { parseNetworkMessage } from '../logic/actionValidation';
+import { getInboundMessageCheck } from '../logic/networkProtocol';
+
+export interface OnlineManagerHandlers {
+    onBootstrapReceived: (command: BootstrapCommand, checksum?: string) => void;
+    onStateReceived: (state: GameState, reason: NetworkSyncReason) => void;
+    onGuestIntentReceived: (requestId: string, command: GuestIntentCommand) => void;
+    onHostDecisionReceived: (decision: HostDecisionMessage) => void;
+}
+
+export interface OnlineManagerController {
+    peerId: string;
+    remotePeerId: string;
+    connectionStatus: 'disconnected' | 'connecting' | 'connected';
+    isHost: boolean;
+    connectToPeer: (id: string) => void;
+    sendBootstrap: (command: BootstrapCommand, checksum?: string) => void;
+    sendGuestIntent: (requestId: string, command: GuestIntentCommand) => void;
+    sendHostDecision: (decision: Omit<HostDecisionMessage, 'type' | 'version'>) => void;
+    sendState: (state: GameState, reason?: NetworkSyncReason) => void;
+    requestRecovery: (reason: RecoveryReason, requestId?: string) => void;
+    latency: number;
+    isUnstable: boolean;
+}
 
 export const useOnlineManager = (
-    onActionReceived: (action: GameAction, checksum?: string) => void,
-    onStateReceived: (state: GameState) => void,
-    onGuestRequestReceived: (action: GameAction) => void,
+    handlers: OnlineManagerHandlers,
     enabled: boolean = false,
-    getCurrentStateRef?: () => GameState, // Accessor for authoritative state
-    targetIP: string = 'localhost' // IP address for guest to connect to
-) => {
+    getCurrentStateRef?: () => GameState,
+    targetIP: string = 'localhost'
+): OnlineManagerController => {
     const [peer, setPeer] = useState<Peer | null>(null);
     const [conn, setConn] = useState<DataConnection | null>(null);
     const [peerId, setPeerId] = useState<string>('');
@@ -23,26 +52,20 @@ export const useOnlineManager = (
     >('disconnected');
     const [isHost, setIsHost] = useState(false);
 
-    // Refs for callbacks and state access
-    const onActionReceivedRef = useRef(onActionReceived);
-    const onStateReceivedRef = useRef(onStateReceived);
-    const onGuestRequestReceivedRef = useRef(onGuestRequestReceived);
+    const handlersRef = useRef(handlers);
     const isHostRef = useRef(isHost);
     const reconnectAttempts = useRef(0);
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const MAX_RECONNECT_ATTEMPTS = 5;
 
     useEffect(() => {
-        onActionReceivedRef.current = onActionReceived;
-        onStateReceivedRef.current = onStateReceived;
-        onGuestRequestReceivedRef.current = onGuestRequestReceived;
-    }, [onActionReceived, onStateReceived, onGuestRequestReceived]);
+        handlersRef.current = handlers;
+    }, [handlers]);
 
     useEffect(() => {
         isHostRef.current = isHost;
     }, [isHost]);
 
-    // Send generic message wrapper
     const sendMessage = useCallback(
         (msg: NetworkMessage) => {
             if (conn && conn.open) {
@@ -52,7 +75,6 @@ export const useOnlineManager = (
         [conn]
     );
 
-    // Health Check Hook
     const { latency, isUnstable, handleHeartbeat } = useConnectionHealth(conn, sendMessage);
 
     const setupConnection = useCallback(
@@ -61,7 +83,7 @@ export const useOnlineManager = (
                 setConnectionStatus('connected');
                 setConn(connection);
                 setRemotePeerId(connection.peer);
-                reconnectAttempts.current = 0; // Reset attempts on success
+                reconnectAttempts.current = 0;
             });
 
             connection.on('data', (data: unknown) => {
@@ -71,45 +93,46 @@ export const useOnlineManager = (
                     return;
                 }
 
-                // Handle Heartbeat internally
                 if (msg.type === 'HEARTBEAT_PING' || msg.type === 'HEARTBEAT_PONG') {
                     handleHeartbeat(msg);
                     return;
                 }
 
+                const role = isHostRef.current ? 'host' : 'guest';
+                const directionCheck = getInboundMessageCheck(role, msg);
+                if (!directionCheck.accepted) {
+                    console.warn(`[NET] ${directionCheck.reason}`);
+                    return;
+                }
+
                 console.log('Received P2P data:', msg.type);
 
-                if (msg.type === 'SYNC_STATE') {
-                    if (isHostRef.current) {
-                        console.warn('[NET] Host rejected inbound SYNC_STATE message.');
-                        return;
-                    }
-                    onStateReceivedRef.current(msg.state);
-                } else if (msg.type === 'GUEST_REQUEST') {
-                    if (!isHostRef.current) {
-                        console.warn('[NET] Guest rejected inbound GUEST_REQUEST message.');
-                        return;
-                    }
-                    onGuestRequestReceivedRef.current(msg.action);
-                } else if (msg.type === 'GAME_ACTION') {
-                    if (isHostRef.current) {
-                        console.warn('[NET] Host rejected inbound GAME_ACTION message.');
-                        return;
-                    }
-                    onActionReceivedRef.current(msg.action, msg.checksum);
-                } else if (msg.type === 'REQUEST_FULL_SYNC') {
-                    // Host Logic: Respond to Desync
-                    if (isHostRef.current && getCurrentStateRef) {
-                        console.warn(
-                            '[NET] Guest requested full sync. Sending authoritative snapshot.'
-                        );
-                        const currentState = getCurrentStateRef();
-                        sendMessage({
-                            type: 'SYNC_STATE',
-                            state: currentState,
-                            reason: 'RECOVERY',
-                        });
-                    }
+                switch (msg.type) {
+                    case 'BOOTSTRAP_STATE':
+                        handlersRef.current.onBootstrapReceived(msg.command, msg.checksum);
+                        break;
+                    case 'SYNC_STATE':
+                        handlersRef.current.onStateReceived(msg.snapshot, msg.reason);
+                        break;
+                    case 'GUEST_INTENT':
+                        handlersRef.current.onGuestIntentReceived(msg.requestId, msg.command);
+                        break;
+                    case 'HOST_DECISION':
+                        handlersRef.current.onHostDecisionReceived(msg);
+                        break;
+                    case 'RECOVERY_REQUEST':
+                        if (isHostRef.current && getCurrentStateRef) {
+                            console.warn(
+                                `[NET] Guest requested recovery (${msg.reason}). Sending authoritative snapshot.`
+                            );
+                            sendMessage({
+                                version: NETWORK_PROTOCOL_VERSION,
+                                type: 'SYNC_STATE',
+                                snapshot: getCurrentStateRef(),
+                                reason: 'RECOVERY',
+                            });
+                        }
+                        break;
                 }
             });
 
@@ -128,7 +151,7 @@ export const useOnlineManager = (
                 console.error('[NET] Connection Error:', err);
             });
         },
-        [handleHeartbeat, getCurrentStateRef, sendMessage]
+        [getCurrentStateRef, handleHeartbeat, sendMessage]
     );
 
     const setupConnectionRef = useRef(setupConnection);
@@ -136,7 +159,6 @@ export const useOnlineManager = (
         setupConnectionRef.current = setupConnection;
     }, [setupConnection]);
 
-    // Initialize Peer only when enabled
     useEffect(() => {
         if (!enabled) {
             console.log('[NET] Manager disabled, skipping peer init.');
@@ -146,10 +168,6 @@ export const useOnlineManager = (
         console.log('[NET] Initializing Peer...');
         console.log(`[NET] Target IP: ${targetIP}`);
 
-        // Use configurable peer config based on role
-        // Note: At initialization we don't know if we'll be host yet,
-        // so we default to localhost. The actual host/guest is determined
-        // when connection is established.
         const peerConfig = createPeerConfig(true, targetIP);
         const newPeer = new Peer(peerConfig);
 
@@ -162,7 +180,7 @@ export const useOnlineManager = (
             console.log('[NET] Incoming connection from:', connection.peer);
             isHostRef.current = true;
             setupConnectionRef.current(connection);
-            setIsHost(true); // The one who receives connection is host (p1)
+            setIsHost(true);
         });
 
         newPeer.on('disconnected', () => {
@@ -183,13 +201,6 @@ export const useOnlineManager = (
 
         newPeer.on('error', (err) => {
             console.error('[NET] Peer Error:', err);
-            if (
-                err.type === 'peer-unavailable' ||
-                err.type === 'network' ||
-                err.type === 'server-error'
-            ) {
-                // Potentially fatal or retryable depending on UX needs
-            }
         });
 
         setPeer(newPeer);
@@ -204,7 +215,7 @@ export const useOnlineManager = (
             setPeer(null);
             setPeerId('');
         };
-    }, [enabled, targetIP]); // Re-init if targetIP changes
+    }, [enabled, targetIP]);
 
     const connectToPeer = useCallback(
         (id: string) => {
@@ -216,35 +227,66 @@ export const useOnlineManager = (
             isHostRef.current = false;
             const connection = peer.connect(id);
             setupConnectionRef.current(connection);
-            setIsHost(false); // The one who initiates connection is guest (p2)
+            setIsHost(false);
         },
         [peer]
     );
 
-    const sendAction = useCallback(
-        (action: GameAction, checksum?: string) => {
-            sendMessage({ type: 'GAME_ACTION', action, checksum });
+    const sendBootstrap = useCallback(
+        (command: BootstrapCommand, checksum?: string) => {
+            sendMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'BOOTSTRAP_STATE',
+                command,
+                checksum,
+            });
         },
         [sendMessage]
     );
 
-    const sendGuestRequest = useCallback(
-        (action: GameAction) => {
-            sendMessage({ type: 'GUEST_REQUEST', action });
+    const sendGuestIntent = useCallback(
+        (requestId: string, command: GuestIntentCommand) => {
+            sendMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'GUEST_INTENT',
+                requestId,
+                command,
+            });
+        },
+        [sendMessage]
+    );
+
+    const sendHostDecision = useCallback(
+        (decision: Omit<HostDecisionMessage, 'type' | 'version'>) => {
+            sendMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'HOST_DECISION',
+                ...decision,
+            });
         },
         [sendMessage]
     );
 
     const sendState = useCallback(
-        (state: GameState) => {
-            sendMessage({ type: 'SYNC_STATE', state });
+        (state: GameState, reason: NetworkSyncReason = 'TURN_SYNC') => {
+            sendMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'SYNC_STATE',
+                snapshot: state,
+                reason,
+            });
         },
         [sendMessage]
     );
 
-    const sendSystemMessage = useCallback(
-        (msg: NetworkMessage) => {
-            sendMessage(msg);
+    const requestRecovery = useCallback(
+        (reason: RecoveryReason, requestId?: string) => {
+            sendMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'RECOVERY_REQUEST',
+                reason,
+                requestId,
+            });
         },
         [sendMessage]
     );
@@ -255,10 +297,11 @@ export const useOnlineManager = (
         connectionStatus,
         isHost,
         connectToPeer,
-        sendAction,
-        sendGuestRequest,
+        sendBootstrap,
+        sendGuestIntent,
+        sendHostDecision,
         sendState,
-        sendSystemMessage,
+        requestRecovery,
         latency,
         isUnstable,
     };

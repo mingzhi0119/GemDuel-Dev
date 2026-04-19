@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DataConnection } from 'peerjs';
-import { NetworkMessage } from '../types/network';
+import { HeartbeatMessage, NETWORK_PROTOCOL_VERSION, NetworkMessage } from '../types/network';
 
 const PING_INTERVAL_MS = 2000;
 const TIMEOUT_THRESHOLD_MS = 6000; // Missed 3 pings = trouble
@@ -33,7 +33,11 @@ export const useConnectionHealth = (
                 setIsUnstable(false);
             }
 
-            sendMessage({ type: 'HEARTBEAT_PING', timestamp: now });
+            sendMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'HEARTBEAT_PING',
+                timestamp: now,
+            });
         }, PING_INTERVAL_MS);
 
         return () => {
@@ -43,9 +47,13 @@ export const useConnectionHealth = (
 
     // 2. Message Handler (Call this from useOnlineManager when data arrives)
     const handleHeartbeat = useCallback(
-        (msg: NetworkMessage) => {
+        (msg: HeartbeatMessage) => {
             if (msg.type === 'HEARTBEAT_PING') {
-                sendMessage({ type: 'HEARTBEAT_PONG', timestamp: msg.timestamp });
+                sendMessage({
+                    version: NETWORK_PROTOCOL_VERSION,
+                    type: 'HEARTBEAT_PONG',
+                    timestamp: msg.timestamp,
+                });
             } else if (msg.type === 'HEARTBEAT_PONG') {
                 const rtt = Date.now() - msg.timestamp;
                 setLatency(rtt);

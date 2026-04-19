@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { validateOnlineAction } from '../authority';
+import { reviewOnlineIntent, validateOnlineAction } from '../authority';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { GameState, GameAction } from '../../types';
+import type { GuestIntentCommand } from '../../types/network';
 
 describe('Authority Validator', () => {
     const mockState: GameState = {
@@ -41,12 +42,49 @@ describe('Authority Validator', () => {
         consoleSpy.mockRestore();
     });
 
-    it('should REJECT guest actions that do not match the current phase', () => {
-        const action: GameAction = { type: 'TAKE_BONUS_GEM', payload: { r: 0, c: 0 } };
+    it('should REJECT guest intents that do not match the current phase', () => {
+        const command: GuestIntentCommand = { kind: 'TAKE_BONUS_GEM', payload: { r: 0, c: 0 } };
 
         const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        expect(validateOnlineAction(mockState, action)).toBe(false);
+        const review = reviewOnlineIntent(mockState, command);
+        expect(review.valid).toBe(false);
         expect(consoleSpy).toHaveBeenCalled();
         consoleSpy.mockRestore();
+    });
+
+    it('should REJECT valid-but-unauthorized guest intents that target missing ownership', () => {
+        const state = {
+            ...mockState,
+            playerReserved: {
+                ...mockState.playerReserved,
+                p2: [],
+            },
+        } as GameState;
+        const command: GuestIntentCommand = {
+            kind: 'BUY_CARD',
+            payload: {
+                card: {
+                    id: 'reserved-card',
+                    level: 1,
+                    cost: {
+                        blue: 0,
+                        white: 0,
+                        green: 0,
+                        black: 0,
+                        red: 0,
+                        pearl: 0,
+                        gold: 0,
+                    },
+                    points: 0,
+                    bonusColor: 'blue',
+                },
+                source: 'reserved',
+            },
+        };
+
+        const review = reviewOnlineIntent(state, command);
+
+        expect(review.valid).toBe(false);
+        expect(review.reason).toContain('Reserved card');
     });
 });

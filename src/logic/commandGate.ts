@@ -1,6 +1,8 @@
 import type { GameAction, GameState } from '../types';
+import type { GuestIntentCommand } from '../types/network';
 import { getActionRejectionReason, isRuntimeActionShapeValid } from './actionValidation';
 import { getStateIntegrityError, getTransitionIntegrityError } from './fsm';
+import { GUEST_INTENT_PERMISSION_TABLE, guestIntentToAction } from './networkProtocol';
 
 const GUEST_ACTION_ALLOWLIST = new Set<GameAction['type']>([
     'SELECT_BUFF',
@@ -76,6 +78,27 @@ export const validateGuestCommand = (
     }
 
     return validateCommand(state, action);
+};
+
+export const validateGuestIntentCommand = (
+    state: GameState,
+    command: GuestIntentCommand
+): CommandValidationResult => {
+    if (state.turn !== 'p2') {
+        return {
+            valid: false,
+            reason: `Host rejected ${command.kind} because it is currently ${state.turn}'s turn.`,
+        };
+    }
+
+    if (!GUEST_INTENT_PERMISSION_TABLE[command.kind]) {
+        return {
+            valid: false,
+            reason: `Guest intent ${command.kind} is not permitted by the online protocol.`,
+        };
+    }
+
+    return validateCommand(state, guestIntentToAction(command));
 };
 
 export const validatePostActionState = (
