@@ -2,14 +2,14 @@ import React from 'react';
 import { Crown, Download, RotateCcw, Hand, Scroll, Plus } from 'lucide-react';
 import { GEM_TYPES, ABILITIES } from '../constants';
 import { GemIcon } from './GemIcon';
-import { Card as CardType, GemColor } from '../types';
+import { Card as CardType, CardInteractionContext, GemColor } from '../types';
 
 interface CardProps {
     card: CardType | null;
     canBuy?: boolean;
-    onClick?: (card: CardType, context?: Record<string, unknown>) => void;
-    onReserve?: (card: CardType, context?: Record<string, unknown>) => void;
-    context?: string;
+    onClick?: (card: CardType, context?: CardInteractionContext) => void;
+    onReserve?: (card: CardType, context?: CardInteractionContext) => void;
+    context?: CardInteractionContext;
     isReservedView?: boolean;
     isRoyal?: boolean;
     className?: string;
@@ -17,6 +17,54 @@ interface CardProps {
     theme?: 'light' | 'dark';
     isDeckPreview?: boolean;
 }
+
+const BASE_CARD_SIZE = Object.freeze({
+    width: 96,
+    height: 128,
+});
+
+export const STANDARD_CARD_SIZE = Object.freeze({
+    width: 120,
+    height: 160,
+});
+
+export const SMALL_CARD_SCALE = 0.75;
+
+export const SMALL_CARD_SIZE = Object.freeze({
+    width: Math.round(STANDARD_CARD_SIZE.width * SMALL_CARD_SCALE),
+    height: Math.round(STANDARD_CARD_SIZE.height * SMALL_CARD_SCALE),
+});
+
+const getCardDimensions = (size: CardProps['size']) =>
+    size === 'small' ? SMALL_CARD_SIZE : STANDARD_CARD_SIZE;
+
+const scaleCardMetric = (value: number, cardScale: number) =>
+    Math.max(1, Math.round(value * cardScale));
+
+const WildBonusDisc = ({ diameter, theme }: { diameter: number; theme: 'light' | 'dark' }) => (
+    <div
+        className={`relative overflow-hidden rounded-full border ${
+            theme === 'dark'
+                ? 'border-white/35 shadow-[0_2px_8px_rgba(0,0,0,0.45)]'
+                : 'border-slate-400/80 shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+        }`}
+        style={{
+            width: `${diameter}px`,
+            height: `${diameter}px`,
+            background:
+                'conic-gradient(from -90deg, #2563eb 0deg 72deg, #f8fafc 72deg 144deg, #10b981 144deg 216deg, #0f172a 216deg 288deg, #ef4444 288deg 360deg)',
+        }}
+        title="Wild bonus"
+    >
+        <div
+            className={`absolute inset-[22%] rounded-full ${
+                theme === 'dark'
+                    ? 'border border-white/30 bg-white/10'
+                    : 'border border-white/80 bg-white/35'
+            }`}
+        />
+    </div>
+);
 
 export const Card: React.FC<CardProps> = React.memo(
     ({
@@ -31,27 +79,43 @@ export const Card: React.FC<CardProps> = React.memo(
         size = 'default',
         theme = 'dark',
     }) => {
+        const dimensions = getCardDimensions(size);
+        const cardScale = dimensions.width / BASE_CARD_SIZE.width;
+        const cornerRadiusPx = scaleCardMetric(8, cardScale);
+        const topInsetPx = scaleCardMetric(4, cardScale);
+        const sideInsetPx = scaleCardMetric(6, cardScale);
+        const bottomInsetPx = scaleCardMetric(6, cardScale);
+        const topRightInsetPx = scaleCardMetric(4, cardScale);
+        const topClusterGapPx = scaleCardMetric(4, cardScale);
+        const stackedGapPx = scaleCardMetric(2, cardScale);
+        const pointFontSizePx = scaleCardMetric(18, cardScale);
+        const abilityIconSizePx = scaleCardMetric(12, cardScale);
+        const abilityBadgePaddingPx = scaleCardMetric(2, cardScale);
+        const abilityBadgeRadiusPx = scaleCardMetric(6, cardScale);
+        const bonusGemSizePx = scaleCardMetric(20, cardScale);
+        const costContainerSizePx = scaleCardMetric(18, cardScale);
+        const costTextSizePx = scaleCardMetric(9, cardScale);
+        const crownIconSizePx = scaleCardMetric(12, cardScale);
+        const royalBadgeSizePx = scaleCardMetric(24, cardScale);
+        const reserveButtonIconSizePx = scaleCardMetric(16, cardScale);
+        const reserveButtonPaddingPx = scaleCardMetric(6, cardScale);
+
         // Empty State
         if (!card)
             return (
-                <div className="w-24 h-32 bg-slate-800/50 rounded-lg border border-dashed border-slate-700 flex items-center justify-center text-slate-600 text-xs">
+                <div
+                    className="bg-slate-800/50 rounded-lg border border-dashed border-slate-700 flex items-center justify-center text-slate-600 text-xs"
+                    style={{
+                        width: `${dimensions.width}px`,
+                        height: `${dimensions.height}px`,
+                        borderRadius: `${cornerRadiusPx}px`,
+                    }}
+                >
                     Empty
                 </div>
             );
 
         // Size-dependent styles
-        const isSmall = size === 'small';
-        const containerSize = isSmall ? 'w-[72px] h-[96px]' : 'w-24 h-32';
-        const pointSize = isSmall ? 'text-base' : 'text-lg';
-        const abilityIconSize = isSmall ? 10 : 12;
-        const bonusGemSize = isSmall ? 'w-4 h-4' : 'w-5 h-5';
-        const costContainerSize = isSmall ? 'w-[14px] h-[14px]' : 'w-[18px] h-[18px]';
-        const costTextSize = isSmall ? 'text-[7px]' : 'text-[9px]';
-        const crownIconSize = isSmall ? 10 : 12;
-        const royalBadgeSize = isSmall ? 20 : 24;
-        const reserveButtonIconSize = isSmall ? 12 : 16;
-        const reserveButtonPadding = isSmall ? 'p-1' : 'p-1.5';
-
         // Background Gradient
         const bgGradient = isRoyal
             ? 'from-yellow-600 to-amber-800 ring-2 ring-yellow-400/50'
@@ -63,8 +127,7 @@ export const Card: React.FC<CardProps> = React.memo(
 
         const handleCardClick = () => {
             if ((canBuy || isRoyal) && onClick) {
-                const ctx = context ? JSON.parse(context) : undefined;
-                onClick(card, ctx);
+                onClick(card, context);
             }
         };
 
@@ -149,10 +212,16 @@ export const Card: React.FC<CardProps> = React.memo(
             if (abilitiesList.length === 0) return null;
 
             return (
-                <div className="flex flex-row gap-0.5 mt-0.5">
+                <div
+                    className="flex flex-row"
+                    style={{
+                        gap: `${stackedGapPx}px`,
+                        marginTop: `${stackedGapPx}px`,
+                    }}
+                >
                     {abilitiesList.map((abilId, idx) => {
                         const iconProps = {
-                            size: abilityIconSize,
+                            size: abilityIconSizePx,
                             className: 'text-white drop-shadow-md',
                         };
                         let IconComponent: React.ComponentType<{
@@ -186,8 +255,12 @@ export const Card: React.FC<CardProps> = React.memo(
                         return (
                             <div
                                 key={idx}
-                                className={`p-0.5 rounded-md ${bgColor} shadow-md flex items-center justify-center`}
+                                className={`${bgColor} shadow-md flex items-center justify-center`}
                                 title={abilId}
+                                style={{
+                                    padding: `${abilityBadgePaddingPx}px`,
+                                    borderRadius: `${abilityBadgeRadiusPx}px`,
+                                }}
                             >
                                 <IconComponent {...iconProps} />
                             </div>
@@ -223,28 +296,43 @@ export const Card: React.FC<CardProps> = React.memo(
         return (
             <div
                 onClick={handleCardClick}
-                className={`relative ${containerSize} rounded-lg border transition-colors duration-200 bg-gradient-to-b ${bgGradient} overflow-hidden group ${className}
+                className={`relative rounded-lg border transition-colors duration-200 bg-gradient-to-b ${bgGradient} overflow-hidden group ${className}
         ${
             canBuy && !isRoyal
                 ? (theme === 'dark'
                       ? 'border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
-                      : 'border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]') +
+                      : 'border-emerald-500 shadow-[0_4px_12px_rgba(0,0,0,0.05),0_0_10px_rgba(16,185,129,0.28)]') +
                   ' cursor-pointer'
                 : isRoyal
-                  ? 'border-yellow-700/50'
-                  : (theme === 'dark' ? 'border-slate-600' : 'border-slate-300') +
+                  ? theme === 'dark'
+                      ? 'border-yellow-700/50'
+                      : 'border-yellow-600/60 shadow-[0_4px_12px_rgba(0,0,0,0.05)]'
+                  : (theme === 'dark'
+                        ? 'border-slate-600'
+                        : 'border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.05)]') +
                     ' opacity-90 cursor-default'
         }
     `}
+                style={{
+                    width: `${dimensions.width}px`,
+                    height: `${dimensions.height}px`,
+                    borderRadius: `${cornerRadiusPx}px`,
+                }}
             >
                 {renderCardFace()}
                 {/* 1. Top Left: Points & Ability */}
-                <div className="absolute top-1 left-1.5 flex flex-row items-center gap-1 pointer-events-none z-10">
+                <div
+                    className="absolute flex flex-row items-center pointer-events-none z-10"
+                    style={{
+                        top: `${topInsetPx}px`,
+                        left: `${sideInsetPx}px`,
+                        gap: `${topClusterGapPx}px`,
+                    }}
+                >
                     {Number(card.points) > 0 && (
                         <span
-                            className={`font-bold leading-none drop-shadow-md ${pointSize} ${getScoreColor(
-                                card.bonusColor
-                            )}`}
+                            className={`font-bold leading-none drop-shadow-md ${getScoreColor(card.bonusColor)}`}
+                            style={{ fontSize: `${pointFontSizePx}px` }}
                         >
                             {card.points}
                         </span>
@@ -253,44 +341,76 @@ export const Card: React.FC<CardProps> = React.memo(
                 </div>
 
                 {/* 2. Top Right: Bonus Gem */}
-                <div className="absolute top-1 right-1 pointer-events-none flex flex-col gap-0.5 z-10">
+                <div
+                    className="absolute pointer-events-none flex flex-col z-10"
+                    style={{
+                        top: `${topInsetPx}px`,
+                        right: `${topRightInsetPx}px`,
+                        gap: `${stackedGapPx}px`,
+                    }}
+                >
                     {card.bonusColor &&
                         card.bonusColor !== 'null' &&
                         Array.from({
                             length: card.bonusCount ?? (isRoyal ? 0 : 1),
-                        }).map((_, i) => (
-                            <GemIcon
-                                key={i}
-                                type={
-                                    GEM_TYPES[
-                                        card.bonusColor!.toUpperCase() as keyof typeof GEM_TYPES
-                                    ]
-                                }
-                                size={bonusGemSize}
-                                theme={theme}
-                                className="shadow-md"
-                            />
-                        ))}
+                        }).map((_, i) =>
+                            card.bonusColor === 'gold' ? (
+                                <WildBonusDisc
+                                    key={`wild-${i}`}
+                                    diameter={bonusGemSizePx}
+                                    theme={theme}
+                                />
+                            ) : (
+                                <div
+                                    key={i}
+                                    style={{
+                                        width: `${bonusGemSizePx}px`,
+                                        height: `${bonusGemSizePx}px`,
+                                    }}
+                                >
+                                    <GemIcon
+                                        type={
+                                            GEM_TYPES[
+                                                card.bonusColor!.toUpperCase() as keyof typeof GEM_TYPES
+                                            ]
+                                        }
+                                        size="w-full h-full"
+                                        theme={theme}
+                                        className="shadow-md"
+                                    />
+                                </div>
+                            )
+                        )}
                 </div>
 
                 {/* 3. Bottom Left: Cost */}
                 {card.cost && (
-                    <div className="absolute bottom-1.5 left-1.5 pointer-events-none z-10">
-                        <div className="flex flex-col gap-0.5">
+                    <div
+                        className="absolute pointer-events-none z-10"
+                        style={{
+                            bottom: `${bottomInsetPx}px`,
+                            left: `${sideInsetPx}px`,
+                        }}
+                    >
+                        <div className="flex flex-col" style={{ gap: `${stackedGapPx}px` }}>
                             {Object.entries(card.cost)
                                 .filter(([, amt]) => Number(amt) > 0)
                                 .map(([color, amt]) => (
-                                    // 🟢 修复：min-w-[18px] min-h-[18px] 强制保持圆形
                                     <div
                                         key={color}
                                         className={`
-                    relative flex items-center justify-center ${costContainerSize} rounded-full shrink-0
+                    relative flex items-center justify-center rounded-full shrink-0
                     bg-gradient-to-br ${GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES].color} 
                     shadow-[0_1px_2px_rgba(0,0,0,0.5)] border border-white/10
                 `}
+                                        style={{
+                                            width: `${costContainerSizePx}px`,
+                                            height: `${costContainerSizePx}px`,
+                                        }}
                                     >
                                         <span
-                                            className={`${costTextSize} font-black text-white z-10 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] leading-none`}
+                                            className="font-black text-white z-10 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] leading-none"
+                                            style={{ fontSize: `${costTextSizePx}px` }}
                                         >
                                             {amt}
                                         </span>
@@ -301,12 +421,19 @@ export const Card: React.FC<CardProps> = React.memo(
                 )}
 
                 {/* 4. Bottom Right: Crowns */}
-                <div className="absolute bottom-1.5 right-1.5 pointer-events-none flex flex-col items-center gap-0.5 z-10">
+                <div
+                    className="absolute pointer-events-none flex flex-col items-center z-10"
+                    style={{
+                        bottom: `${bottomInsetPx}px`,
+                        right: `${sideInsetPx}px`,
+                        gap: `${stackedGapPx}px`,
+                    }}
+                >
                     {Number(card.crowns) > 0 &&
                         Array.from({ length: Number(card.crowns) }).map((_, i) => (
                             <Crown
                                 key={i}
-                                size={crownIconSize}
+                                size={crownIconSizePx}
                                 className="text-yellow-400 drop-shadow-md"
                                 fill="currentColor"
                             />
@@ -317,25 +444,34 @@ export const Card: React.FC<CardProps> = React.memo(
                 {isRoyal && (
                     <>
                         <div className="absolute inset-0 bg-yellow-500/10 animate-pulse pointer-events-none z-0" />
-                        <div className="absolute bottom-2 left-2 pointer-events-none z-10">
-                            <Crown size={royalBadgeSize} className="text-white/20 -rotate-12" />
+                        <div
+                            className="absolute pointer-events-none z-10"
+                            style={{
+                                bottom: `${scaleCardMetric(8, cardScale)}px`,
+                                left: `${scaleCardMetric(8, cardScale)}px`,
+                            }}
+                        >
+                            <Crown size={royalBadgeSizePx} className="text-white/20 -rotate-12" />
                         </div>
                     </>
                 )}
 
                 {/* 6. Reserve Button */}
                 {!isReservedView && !isRoyal && onReserve && (
-                    <div className="absolute inset-x-0 top-2 flex items-start justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                    <div
+                        className="absolute inset-x-0 flex items-start justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                        style={{ top: `${scaleCardMetric(8, cardScale)}px` }}
+                    >
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                const ctx = context ? JSON.parse(context) : undefined;
-                                onReserve(card, ctx);
+                                onReserve(card, context);
                             }}
-                            className={`bg-yellow-500 hover:bg-yellow-400 ${reserveButtonPadding} rounded-full text-white shadow-lg transition-transform hover:scale-110 active:scale-90`}
+                            className="bg-yellow-500 hover:bg-yellow-400 rounded-full text-white shadow-lg transition-transform hover:scale-110 active:scale-90"
                             title="Reserve"
+                            style={{ padding: `${reserveButtonPaddingPx}px` }}
                         >
-                            <Download size={reserveButtonIconSize} />
+                            <Download size={reserveButtonIconSizePx} />
                         </button>
                     </div>
                 )}

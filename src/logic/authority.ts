@@ -1,4 +1,6 @@
-import { GameState, GameAction } from '../types';
+import type { GameAction, GameState } from '../types';
+import type { GuestIntentCommand } from '../types/network';
+import { validateGuestCommand, validateGuestIntentCommand } from './commandGate';
 
 /**
  * Validates if an action received from a Guest is permissible.
@@ -8,16 +10,21 @@ import { GameState, GameAction } from '../types';
  * @returns true if action is valid to process, false otherwise
  */
 export const validateOnlineAction = (state: GameState, action: GameAction): boolean => {
-    if (action.type === 'INIT' || action.type === 'INIT_DRAFT') return true;
-
-    // In Online Mode, if I am Host (P1), I receive actions from Guest (P2).
-    // Guest should only send actions when it is their turn (P2).
-
-    if (state.turn !== 'p2') {
-        console.warn(
-            `Host rejected request: Action ${action.type} received during ${state.turn}'s turn`
-        );
+    const result = validateGuestCommand(state, action);
+    if (!result.valid) {
+        console.warn(result.reason || `Host rejected guest action ${action.type}.`);
         return false;
     }
     return true;
 };
+
+export const reviewOnlineIntent = (state: GameState, command: GuestIntentCommand) => {
+    const result = validateGuestIntentCommand(state, command);
+    if (!result.valid) {
+        console.warn(result.reason || `Host rejected guest intent ${command.kind}.`);
+    }
+    return result;
+};
+
+export const validateOnlineIntent = (state: GameState, command: GuestIntentCommand): boolean =>
+    reviewOnlineIntent(state, command).valid;

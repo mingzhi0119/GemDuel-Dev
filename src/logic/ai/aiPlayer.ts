@@ -88,7 +88,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
             type: 'BUY_CARD',
             payload: {
                 card: { ...pending.card, bonusColor: 'red' },
-                source: pending.source as 'market' | 'reserved',
+                source: pending.source,
                 marketInfo: pending.marketInfo
                     ? {
                           level: pending.marketInfo.level as 1 | 2 | 3,

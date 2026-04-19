@@ -28,8 +28,8 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
             className={`flex items-center gap-4 p-3 rounded-2xl border backdrop-blur-md transition-all duration-500
             ${
                 theme === 'dark'
-                    ? 'bg-slate-800/40 border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.05)]'
-                    : 'bg-white border-stone-200 shadow-none'
+                    ? 'bg-slate-800/70 border-slate-600 shadow-[0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
+                    : 'bg-white border-stone-300 shadow-none'
             }
         `}
         >
@@ -45,8 +45,8 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                                   : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200') +
                               ' hover:border-amber-500 hover:text-amber-500 hover:shadow-[0_0_10px_rgba(245,158,11,0.3)]'
                             : (theme === 'dark'
-                                  ? 'bg-slate-900/30 border-slate-800 text-slate-700'
-                                  : 'bg-slate-100/30 border-slate-200 text-slate-300') +
+                                  ? 'bg-slate-900/40 border-slate-700 text-slate-400'
+                                  : 'bg-slate-100/60 border-slate-300 text-slate-500') +
                               ' cursor-not-allowed'
                     }
                 `}
@@ -55,13 +55,21 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
             </button>
 
             <div className="flex flex-col items-center min-w-[4rem]">
-                <span className="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">
+                <span
+                    className={`text-[10px] uppercase font-bold tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
+                >
                     Action
                 </span>
                 <span
                     className={`text-base font-mono font-bold tabular-nums ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}
                 >
-                    {currentStep} <span className="text-slate-600 mx-1">/</span> {historyLength}
+                    {currentStep}{' '}
+                    <span
+                        className={`${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mx-1`}
+                    >
+                        /
+                    </span>{' '}
+                    {historyLength}
                 </span>
             </div>
 
@@ -77,8 +85,8 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                                   : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200') +
                               ' hover:border-cyan-500 hover:text-cyan-500 hover:shadow-[0_0_10px_rgba(6,182,212,0.3)]'
                             : (theme === 'dark'
-                                  ? 'bg-slate-900/30 border-slate-800 text-slate-700'
-                                  : 'bg-slate-100/30 border-slate-200 text-slate-300') +
+                                  ? 'bg-slate-900/40 border-slate-700 text-slate-400'
+                                  : 'bg-slate-100/60 border-slate-300 text-slate-500') +
                               ' cursor-not-allowed'
                     }
                 `}

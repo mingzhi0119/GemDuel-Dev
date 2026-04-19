@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
-import { generateGemPool, generateDeck } from '../../utils';
-import { GameState, GameAction, BuffInitPayload } from '../../types';
+import { buildStartGameAction, createGameSetupPayload } from '../gameSetup';
+import { GameState, GameAction } from '../../types';
 
 // Mock utils to ensure deterministic RNG for "Host" setup generation
 // But since we are testing synchronization, we want Host to generate "random" stuff
@@ -82,26 +82,13 @@ describe('Online Integration Simulation', () => {
 
     it('should synchronize Classic Game initialization', () => {
         const { getHostState, getGuestState, dispatchBroadcast } = simulateNetworkParams();
-
-        // 1. Host starts game
-        const pool = generateGemPool();
-        const d1 = generateDeck(1);
-        const d2 = generateDeck(2);
-        const d3 = generateDeck(3);
-        const market = { 3: d3.splice(0, 3), 2: d2.splice(0, 4), 1: d1.splice(0, 5) };
-
-        // This payload mimics what startGame generates
-        const setupPayload: BuffInitPayload = {
-            board: Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => pool.pop()!)),
-            bag: pool,
-            market: market,
-            decks: { 1: d1, 2: d2, 3: d3 },
-            isPvE: false,
-            isOnline: true,
-            isHost: true,
+        const action: GameAction = {
+            type: 'INIT',
+            payload: createGameSetupPayload('ONLINE_MULTIPLAYER', {
+                useBuffs: false,
+                isHost: true,
+            }),
         };
-
-        const action: GameAction = { type: 'INIT', payload: setupPayload };
         dispatchBroadcast(action);
 
         const h = getHostState();
@@ -120,22 +107,10 @@ describe('Online Integration Simulation', () => {
     it('should synchronize Roguelike Draft and Flattening', () => {
         const { getHostState, getGuestState, dispatchBroadcast, guestActLocal } =
             simulateNetworkParams();
-
-        // 1. Host starts Roguelike
-        const setupPayload: Record<string, unknown> = {
-            // ... minimal setup ...
-            board: [],
-            bag: [],
-            market: { 1: [], 2: [], 3: [] },
-            decks: { 1: [], 2: [], 3: [] },
-            mode: 'ONLINE_MULTIPLAYER',
+        const initDraftAction = buildStartGameAction('ONLINE_MULTIPLAYER', {
+            useBuffs: true,
             isHost: true,
-            initRandoms: { p1: {}, p2: {} },
-            draftPool: ['privilege_favor', 'head_start'],
-            buffLevel: 1,
-        };
-
-        const initDraftAction: GameAction = { type: 'INIT_DRAFT', payload: setupPayload };
+        });
         dispatchBroadcast(initDraftAction);
 
         let h = getHostState();
@@ -146,11 +121,12 @@ describe('Online Integration Simulation', () => {
 
         // 2. P1 (Host) selects Buff
         // Host must provide p2DraftPoolIndices to sync the pool
+        const selectedBuffId = h.draftPool[0];
         const p2Indices = [0, 1, 2, 3]; // Deterministic indices for test
         const selectBuffAction: GameAction = {
             type: 'SELECT_BUFF',
             payload: {
-                buffId: 'privilege_favor',
+                buffId: selectedBuffId,
                 randomColor: 'red',
                 p2DraftPoolIndices: p2Indices,
             },
@@ -160,8 +136,8 @@ describe('Online Integration Simulation', () => {
         h = getHostState();
         g = getGuestState();
 
-        expect(h.playerBuffs.p1.id).toBe('privilege_favor');
-        expect(g.playerBuffs.p1.id).toBe('privilege_favor');
+        expect(h.playerBuffs.p1.id).toBe(selectedBuffId);
+        expect(g.playerBuffs.p1.id).toBe(selectedBuffId);
         expect(g.turn).toBe('p2');
         expect(g.p2DraftPool).toBeDefined();
 

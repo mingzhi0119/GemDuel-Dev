@@ -26,7 +26,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ errorMsg, isOnline, connec
             {isOnline && (
                 <div
                     className={`absolute -top-8 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-all whitespace-nowrap
-                    ${connectionStatus === 'connected' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}
+                    ${connectionStatus === 'connected' ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/50' : 'bg-rose-500/25 text-rose-200 border border-rose-400/50'}
                 `}
                 >
                     {connectionStatus === 'connected' ? (

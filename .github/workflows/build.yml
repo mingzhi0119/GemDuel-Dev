@@ -1,31 +1,47 @@
 name: Build and Release
 
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+    push:
+        tags:
+            - 'v*'
+    workflow_dispatch:
 
 jobs:
-  release:
-    runs-on: windows-latest
-    permissions:
-      contents: write
+    release:
+        runs-on: windows-latest
+        permissions:
+            contents: write
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm install
+            - name: Install Dependencies
+              run: npm ci
 
-      - name: Build and Publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run electron:build -- -p always
+            - name: Dependency Governance Check
+              run: npm run deps:check
+
+            - name: Lint
+              run: npm run lint
+
+            - name: Test
+              run: npm test
+
+            - name: Desktop Governance Check
+              run: npm run desktop:check
+
+            - name: Release Health Checklist
+              shell: pwsh
+              run: Get-Content RELEASE_HEALTH_CHECKLIST.md
+
+            - name: Build and Publish
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: npm run electron:build -- -p always

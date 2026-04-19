@@ -1,9 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { GameState, GemCoord, GameAction } from '../types';
 import { useAIController } from './useAIController';
 import { useGameState } from './useGameState';
 import { useGameNetwork } from './useGameNetwork';
 import { useGameInteractions } from './useGameInteractions';
+import { useHistoryFlattening } from './useHistoryFlattening';
+import { usePlayableHistoryControls } from './usePlayableHistoryControls';
 
 export const useGameLogic = (
     shouldConnect: boolean = false,
@@ -37,27 +39,9 @@ export const useGameLogic = (
     // 4. AI Controller
     useAIController(gameState, networkDispatch, isViewingHistory);
 
-    // 5. Flattening Logic (moved from original useGameLogic)
-    useEffect(() => {
-        if (
-            gameState.phase === 'IDLE' &&
-            historyControls.historyLength > 1 &&
-            historyControls.history.some((a) => a.type === 'SELECT_BUFF' || a.type === 'INIT_DRAFT')
-        ) {
-            const flattenedAction: GameAction = {
-                type: 'FLATTEN',
-                payload: JSON.parse(JSON.stringify(gameState)),
-            };
-            historyControls.clearAndInit(flattenedAction);
-        }
-    }, [
-        gameState.phase,
-        historyControls.history,
-        historyControls.clearAndInit,
-        gameState,
-        historyControls.historyLength,
-        historyControls,
-    ]);
+    // 5. History Flattening
+    useHistoryFlattening(gameState, historyControls);
+    const playableHistoryControls = usePlayableHistoryControls(gameState.mode, historyControls);
 
     const result = useMemo(
         () => ({
@@ -74,28 +58,11 @@ export const useGameLogic = (
 
             getters: interactions.getters,
 
-            historyControls: {
-                ...historyControls,
-                // Override undo/redo to block in online mode
-                undo: () =>
-                    !gameState.mode.startsWith('ONLINE') &&
-                    historyControls.canUndo &&
-                    historyControls.undo(),
-                redo: () =>
-                    !gameState.mode.startsWith('ONLINE') &&
-                    historyControls.canRedo &&
-                    historyControls.redo(),
-                canUndo: !gameState.mode.startsWith('ONLINE') && historyControls.canUndo,
-                canRedo: !gameState.mode.startsWith('ONLINE') && historyControls.canRedo,
-            },
+            historyControls: playableHistoryControls,
 
-            online: {
-                ...online,
-                latency: online.latency,
-                isUnstable: online.isUnstable,
-            },
+            online,
         }),
-        [gameState, interactions, historyControls, online]
+        [gameState, historyControls.importHistory, interactions, online, playableHistoryControls]
     );
 
     return result;

@@ -6,10 +6,11 @@ This document explains how to write and run tests for the game logic using Vites
 
 Tests are configured using **Vitest** with the following setup:
 
-- **Framework**: Vitest v4
+- **Framework**: Vitest v3
 - **Environment**: happy-dom
 - **UI Dashboard**: Available via `npm run test:ui`
-- **Coverage**: Available via `npm run test:coverage`
+- **Coverage**: Available via `npm run test:coverage` using `@vitest/coverage-v8`
+- **Property Testing**: `fast-check` is used for shrinking-friendly negative-path and invariant tests
 
 ## Running Tests
 
@@ -25,6 +26,12 @@ npm run test:ui
 
 # Generate coverage report
 npm run test:coverage
+
+# Run desktop release governance checks
+npm run desktop:check
+
+# Run production dependency and runtime governance checks
+npm run deps:check
 ```
 
 ## Test Structure
@@ -242,7 +249,11 @@ Add to your CI pipeline:
 ```bash
 npm test -- --run  # Run once (no watch mode)
 npm run test:coverage  # Generate coverage report
+npm run desktop:check  # Fail if Electron IPC or BrowserWindow security drifts
+npm run deps:check  # Fail if production audit, overrides, or runtime env governance drift
 ```
+
+For desktop releases, pair those commands with the operational review in `RELEASE_HEALTH_CHECKLIST.md` and the ownership rules in `DEPENDENCY_RUNTIME_GOVERNANCE.md`.
 
 Both commands will exit with a non-zero code on failure, triggering CI failure.
 

@@ -7,6 +7,8 @@ interface GemIconProps {
     className?: string;
     count?: number;
     theme?: 'light' | 'dark';
+    countClassName?: string;
+    countStyle?: React.CSSProperties;
 }
 
 export const GemIcon: React.FC<GemIconProps> = ({
@@ -15,21 +17,15 @@ export const GemIcon: React.FC<GemIconProps> = ({
     className = '',
     count,
     theme = 'dark',
+    countClassName = '',
+    countStyle,
 }) => (
     <div
-        className={`relative ${size} rounded-full bg-gradient-to-br ${type.color} border ${type.border} shadow-sm ${className}`}
+        className={`relative ${size} rounded-full bg-gradient-to-br ${type.color} border ${type.border} ${
+            theme === 'dark' ? 'shadow-sm' : 'shadow-[0_4px_12px_rgba(0,0,0,0.05)]'
+        } ${className}`}
         title={type.label}
     >
-        {type.id === 'pearl' && (
-            <span className="flex h-full items-center justify-center text-[10px] font-bold text-pink-900">
-                P
-            </span>
-        )}
-        {type.id === 'gold' && (
-            <span className="flex h-full items-center justify-center text-[10px] font-bold text-yellow-900">
-                G
-            </span>
-        )}
         {count !== undefined && (
             <span
                 className={`absolute -bottom-1 -right-1 z-10 rounded-full px-1.5 text-[10px] font-black border shadow-md
@@ -38,7 +34,8 @@ export const GemIcon: React.FC<GemIconProps> = ({
                         ? 'bg-slate-900 text-white border-slate-600'
                         : 'bg-white text-stone-800 border-stone-200'
                 }
-            `}
+            ${countClassName}`}
+                style={countStyle}
             >
                 {count}
             </span>

@@ -28,20 +28,37 @@ export const GameActions: React.FC<GameActionsProps> = ({
 }) => {
     const bagCount = bag ? bag.length : 0;
     const selectedCount = selectedGems ? selectedGems.length : 0;
+    const showCancel = phase === 'RESERVE_WAITING_GEM' || phase === 'PRIVILEGE_ACTION';
+    const showRefill = phase === 'IDLE';
 
     return (
         <div
             className={`flex flex-col gap-4 items-center z-50 justify-start ${!canInteract ? 'opacity-50 pointer-events-none' : ''}`}
         >
-            <AnimatePresence mode="wait">
-                {(phase === 'RESERVE_WAITING_GEM' || phase === 'PRIVILEGE_ACTION') && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="flex gap-4"
+            <AnimatePresence>
+                {showRefill && selectedCount > 0 && (
+                    <motion.button
+                        initial={{ opacity: 0, x: -20, scale: 0.8 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleConfirmTake}
+                        className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-colors"
                     >
+                        <Check size={18} /> Confirm
+                    </motion.button>
+                )}
+            </AnimatePresence>
+
+            <div className="flex min-h-[48px] items-center justify-center">
+                <AnimatePresence mode="wait" initial={false}>
+                    {showCancel && (
                         <motion.button
+                            key="cancel"
+                            initial={{ opacity: 0, scale: 0.96 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.96 }}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={
@@ -53,38 +70,20 @@ export const GameActions: React.FC<GameActionsProps> = ({
                         >
                             <X size={18} /> Cancel
                         </motion.button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )}
 
-            {phase === 'IDLE' && (
-                <div className="flex flex-wrap justify-center gap-2">
-                    {/* Confirm Selection (Get Gem) */}
-                    <AnimatePresence>
-                        {selectedCount > 0 && (
-                            <motion.button
-                                initial={{ opacity: 0, x: -20, scale: 0.8 }}
-                                animate={{ opacity: 1, x: 0, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={handleConfirmTake}
-                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-colors"
-                            >
-                                <Check size={18} /> Confirm
-                            </motion.button>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Replenish Board */}
-                    <motion.button
-                        layout
-                        whileTap={selectedCount === 0 && bagCount > 0 ? { scale: 0.95 } : {}}
-                        onClick={handleReplenish}
-                        disabled={bagCount === 0 || phase !== 'IDLE' || selectedCount > 0}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold uppercase tracking-wider text-[10px] transition-all duration-300 border
+                    {showRefill && (
+                        <motion.button
+                            key="refill"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            whileTap={selectedCount === 0 && bagCount > 0 ? { scale: 0.95 } : {}}
+                            onClick={handleReplenish}
+                            disabled={bagCount === 0 || selectedCount > 0}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold uppercase tracking-wider text-[10px] transition-all duration-300 border
                             ${
-                                bagCount > 0 && phase === 'IDLE' && selectedCount === 0
+                                bagCount > 0 && selectedCount === 0
                                     ? theme === 'dark'
                                         ? 'bg-slate-800 border-slate-600 text-slate-200 hover:bg-slate-700'
                                         : 'bg-white border-stone-300 text-stone-800 shadow-sm hover:border-stone-400 active:bg-stone-100'
@@ -93,12 +92,13 @@ export const GameActions: React.FC<GameActionsProps> = ({
                                           : 'bg-stone-100/50 border-stone-200/50 text-stone-400') +
                                       ' cursor-default opacity-50'
                             }`}
-                    >
-                        <RefreshCw size={14} />
-                        Refill ({bagCount})
-                    </motion.button>
-                </div>
-            )}
+                        >
+                            <RefreshCw size={14} />
+                            Refill ({bagCount})
+                        </motion.button>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 };

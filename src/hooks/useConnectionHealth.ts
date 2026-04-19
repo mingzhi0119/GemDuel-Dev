@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DataConnection } from 'peerjs';
-import { NetworkMessage } from '../types/network';
+import { HeartbeatMessage, NETWORK_PROTOCOL_VERSION, NetworkMessage } from '../types/network';
+import { reportReleaseHealth } from '../observability/releaseHealth';
 
 const PING_INTERVAL_MS = 2000;
 const TIMEOUT_THRESHOLD_MS = 6000; // Missed 3 pings = trouble
@@ -13,6 +14,7 @@ export const useConnectionHealth = (
     const [isUnstable, setIsUnstable] = useState(false);
     const lastPongRef = useRef<number>(Date.now());
     const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const unstableReportedRef = useRef(false);
 
     // 1. Heartbeat Loop
     useEffect(() => {
@@ -28,29 +30,71 @@ export const useConnectionHealth = (
             if (now - lastPongRef.current > TIMEOUT_THRESHOLD_MS) {
                 console.warn('[NET] Connection unstable: No PONG received.');
                 setIsUnstable(true);
+                if (!unstableReportedRef.current) {
+                    unstableReportedRef.current = true;
+                    reportReleaseHealth({
+                        category: 'network',
+                        name: 'HEARTBEAT_TIMEOUT',
+                        severity: 'warn',
+                        message: 'Connection became unstable after missed heartbeat responses.',
+                        context: {
+                            timeoutMs: TIMEOUT_THRESHOLD_MS,
+                        },
+                    });
+                }
                 // Optional: Trigger active reconnection logic here
             } else {
                 setIsUnstable(false);
+                if (unstableReportedRef.current) {
+                    unstableReportedRef.current = false;
+                    reportReleaseHealth({
+                        category: 'network',
+                        name: 'HEARTBEAT_RESTORED',
+                        severity: 'info',
+                        message: 'Connection heartbeat recovered after an unstable period.',
+                    });
+                }
             }
 
-            sendMessage({ type: 'HEARTBEAT_PING', timestamp: now });
+            sendMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'HEARTBEAT_PING',
+                timestamp: now,
+            });
         }, PING_INTERVAL_MS);
 
         return () => {
             if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+            unstableReportedRef.current = false;
         };
     }, [connection, sendMessage]);
 
     // 2. Message Handler (Call this from useOnlineManager when data arrives)
     const handleHeartbeat = useCallback(
-        (msg: NetworkMessage) => {
+        (msg: HeartbeatMessage) => {
             if (msg.type === 'HEARTBEAT_PING') {
-                sendMessage({ type: 'HEARTBEAT_PONG', timestamp: msg.timestamp });
+                sendMessage({
+                    version: NETWORK_PROTOCOL_VERSION,
+                    type: 'HEARTBEAT_PONG',
+                    timestamp: msg.timestamp,
+                });
             } else if (msg.type === 'HEARTBEAT_PONG') {
                 const rtt = Date.now() - msg.timestamp;
                 setLatency(rtt);
                 lastPongRef.current = Date.now();
                 setIsUnstable(false);
+                if (unstableReportedRef.current) {
+                    unstableReportedRef.current = false;
+                    reportReleaseHealth({
+                        category: 'network',
+                        name: 'HEARTBEAT_RESTORED',
+                        severity: 'info',
+                        message: 'Connection heartbeat recovered after receiving a PONG.',
+                        context: {
+                            latencyMs: rtt,
+                        },
+                    });
+                }
             }
         },
         [sendMessage]

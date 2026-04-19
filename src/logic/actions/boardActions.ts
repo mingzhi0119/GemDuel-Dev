@@ -38,11 +38,13 @@ export const handleTakeGems = (state: GameState, payload: TakeGemsPayload): Game
     const newInv = { ...state.inventories[state.turn] };
     let pearlCount = 0;
     const colorCounts: Record<string, number> = {};
+    const collectedTypes: string[] = [];
 
     // Take gems from board and update inventory
     coords.forEach(({ r, c }) => {
         const gem = state.board[r][c];
         const gemType = gem.type.id;
+        collectedTypes.push(gemType);
         newInv[gemType as GemColor] = (newInv[gemType as GemColor] || 0) + 1;
         state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
 
@@ -51,9 +53,7 @@ export const handleTakeGems = (state: GameState, payload: TakeGemsPayload): Game
     });
 
     // Add feedback for special gems
-    const specialGems = coords
-        .map(({ r, c }) => state.board[r][c].type.id)
-        .filter((t) => t === 'pearl' || t === 'gold');
+    const specialGems = collectedTypes.filter((t) => t === 'pearl' || t === 'gold');
     specialGems.forEach((t) => addFeedback(state, state.turn, t, 1));
 
     // Check if opponent should get privilege

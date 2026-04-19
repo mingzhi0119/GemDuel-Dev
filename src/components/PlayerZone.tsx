@@ -3,7 +3,8 @@ import { Shield, Scroll, Swords, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GEM_TYPES, BONUS_COLORS, BUFFS } from '../constants';
 import { GemIcon } from './GemIcon';
-import { Card } from './Card';
+import { Card, STANDARD_CARD_SIZE } from './Card';
+import { GEM_BOARD_GEM_SIZE_PX } from './GameBoard';
 import { FloatingText, FloatingGem } from './VisualFeedback';
 import { BUFF_STYLES } from '../styles/buffs';
 import { cn } from '../utils';
@@ -114,7 +115,6 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     inventory,
     cards,
     reserved,
-    royals = [],
     privileges,
     extraPrivileges = 0,
     isActive,
@@ -129,6 +129,11 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     buff,
     theme,
 }) => {
+    const stackOffsetY = Math.round((STANDARD_CARD_SIZE.height / 96) * -2);
+    const stackOffsetX = Math.round((STANDARD_CARD_SIZE.width / 72) * 1);
+    const inventoryGemSizePx = GEM_BOARD_GEM_SIZE_PX;
+    const inventoryGemBadgeSizePx = Math.round(inventoryGemSizePx * 0.42);
+    const inventoryGemCountFontPx = Math.round(inventoryGemSizePx * 0.24);
     const safeCards = Array.isArray(cards) ? cards : [];
     const [selectedStack, setSelectedStack] = useState<{ color: string; cards: CardType[] } | null>(
         null
@@ -189,7 +194,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
 
     return (
         <div
-            className={`flex w-full h-full flex-row items-center p-4 transition-all duration-500 gap-4
+            className={`flex w-full h-full flex-row items-stretch p-4 transition-all duration-500 gap-4
         ${
             isActive
                 ? theme === 'dark'
@@ -199,7 +204,6 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                   ? 'bg-slate-950/40 opacity-90'
                   : 'bg-slate-100/40 opacity-90'
         }
-        ${isActive ? `ring-1 ${player === 'p1' ? 'ring-emerald-500/30' : 'ring-blue-500/30'}` : ''} 
         ${isStealMode ? 'ring-2 ring-rose-500 animate-pulse' : ''}
         ${isDiscardMode && isActive ? 'ring-2 ring-red-500 animate-pulse' : ''}
         ${isExtortionEffect ? 'ring-4 ring-purple-500 bg-purple-500/10 animate-pulse' : ''}
@@ -219,24 +223,24 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
 
             {/* Module 1: Identity & Privileges */}
             <div
-                className={`flex flex-col gap-4 min-w-[100px] shrink-0 items-center justify-start pt-2 border-r pr-4 transition-colors duration-500
-          ${theme === 'dark' ? 'border-slate-800' : 'border-stone-200'}
+                className={`self-stretch flex flex-col gap-5 min-w-[128px] shrink-0 items-center justify-center border-r pr-3 transition-colors duration-500
+          ${theme === 'dark' ? 'border-slate-700' : 'border-stone-300'}
       `}
             >
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-2">
                     <div
-                        className={`p-2 rounded-full ${isActive ? (player === 'p1' ? 'bg-emerald-600' : 'bg-blue-600') : theme === 'dark' ? 'bg-slate-700' : 'bg-stone-300'}`}
+                        className={`p-3 rounded-full ${isActive ? (player === 'p1' ? 'bg-emerald-600' : 'bg-blue-600') : theme === 'dark' ? 'bg-slate-700' : 'bg-stone-300'}`}
                     >
                         {player === 'p1' ? (
                             <Shield
-                                size={20}
+                                size={30}
                                 className={
                                     theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
                                 }
                             />
                         ) : (
                             <Swords
-                                size={20}
+                                size={30}
                                 className={
                                     theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
                                 }
@@ -244,12 +248,20 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                         )}
                     </div>
                     <h3
-                        className={`font-black text-[10px] whitespace-nowrap uppercase tracking-[0.2em] ${isActive ? (player === 'p1' ? 'text-emerald-600' : 'text-blue-600') : 'text-stone-400'}`}
+                        className={`font-black text-[15px] whitespace-nowrap uppercase tracking-[0.14em] ${
+                            isActive
+                                ? player === 'p1'
+                                    ? 'text-emerald-500'
+                                    : 'text-blue-500'
+                                : theme === 'dark'
+                                  ? 'text-slate-300'
+                                  : 'text-stone-600'
+                        }`}
                     >
                         {player === 'p1' ? 'Player 1' : 'Player 2'}
                     </h3>
                 </div>
-                <div className="grid grid-cols-2 gap-2 justify-items-start h-[48px] items-start">
+                <div className="grid grid-cols-2 gap-2 justify-items-start h-[72px] items-start">
                     {(() => {
                         const total = privileges + extraPrivileges;
                         const items = [];
@@ -273,7 +285,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                     )}
                                 >
                                     <Scroll
-                                        size={20}
+                                        size={30}
                                         fill="#fcd34d"
                                         className={
                                             theme === 'dark' ? 'text-amber-200' : 'text-amber-500'
@@ -301,7 +313,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                     )}
                                     title="Special Privilege (Protected)"
                                 >
-                                    <Scroll size={20} fill="#fbbf24" className="text-yellow-500" />
+                                    <Scroll size={30} fill="#fbbf24" className="text-yellow-500" />
                                 </button>
                             );
                         }
@@ -310,9 +322,9 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                             return (
                                 <div className="col-span-2 justify-self-center">
                                     <Scroll
-                                        size={20}
+                                        size={30}
                                         className={
-                                            theme === 'dark' ? 'text-slate-800' : 'text-stone-200'
+                                            theme === 'dark' ? 'text-slate-500' : 'text-stone-400'
                                         }
                                     />
                                 </div>
@@ -325,9 +337,12 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
             </div>
 
             {/* Module 2: Resources (Inventory & Stacks) */}
-            <div className="flex flex-col gap-3 shrink-0 justify-center" style={{ flex: 65 }}>
+            <div
+                className="self-stretch flex flex-col gap-3 shrink-0 justify-center"
+                style={{ flex: 65 }}
+            >
                 {/* Gems Row */}
-                <div className="flex gap-3 justify-center">
+                <div className="flex gap-3 justify-center items-center">
                     {(Object.values(GEM_TYPES) as GemTypeObject[])
                         .filter((g) => g.id !== 'empty') // Neutral is for card bg only
                         .map((gem) => {
@@ -367,22 +382,39 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                                 )
                                             )}
                                     </AnimatePresence>
-                                    <GemIcon
-                                        type={gem}
-                                        size="w-10 h-10"
-                                        count={count}
-                                        theme={theme}
-                                        className={
-                                            count === 0 ? 'grayscale opacity-30' : 'shadow-lg'
-                                        }
-                                    />
+                                    <div
+                                        style={{
+                                            width: `${inventoryGemSizePx}px`,
+                                            height: `${inventoryGemSizePx}px`,
+                                        }}
+                                    >
+                                        <GemIcon
+                                            type={gem}
+                                            size="w-full h-full"
+                                            count={count}
+                                            theme={theme}
+                                            countClassName="-bottom-2 -right-2 px-2 py-0.5"
+                                            countStyle={{
+                                                minWidth: `${inventoryGemBadgeSizePx}px`,
+                                                minHeight: `${inventoryGemBadgeSizePx}px`,
+                                                fontSize: `${inventoryGemCountFontPx}px`,
+                                                lineHeight: 1,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                            }}
+                                            className={
+                                                count === 0 ? 'grayscale opacity-50' : 'shadow-lg'
+                                            }
+                                        />
+                                    </div>
                                 </div>
                             );
                         })}
                 </div>
 
                 {/* Card Stacks & Bonuses */}
-                <div className="flex gap-3 items-start justify-center mt-1">
+                <div className="flex gap-3 items-start justify-center mt-1 overflow-x-auto py-2 pr-2 max-w-full">
                     {displayColors.map((color) => {
                         const stats = colorStats[color];
                         const type = GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES];
@@ -400,7 +432,11 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                     animate={stats.cards.length > 0 ? { scale: [1, 1.1, 1] } : {}}
                                     key={stats.cards.length}
                                     transition={{ duration: 0.4, ease: 'easeOut' }}
-                                    className="relative w-[72px] h-[96px] group/stack cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                    className="relative group/stack cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                    style={{
+                                        width: `${STANDARD_CARD_SIZE.width}px`,
+                                        height: `${STANDARD_CARD_SIZE.height}px`,
+                                    }}
                                 >
                                     {stats.cards.length > 0 ? (
                                         stats.cards.map((card: CardType, idx: number) => (
@@ -408,8 +444,8 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                                 key={idx}
                                                 className="absolute inset-0 z-10"
                                                 style={{
-                                                    top: `${idx * -2}px`,
-                                                    left: `${idx * 1}px`,
+                                                    top: `${idx * stackOffsetY}px`,
+                                                    left: `${idx * stackOffsetX}px`,
                                                 }}
                                             >
                                                 {/* Only the top card is fully rendered, but we keep the structure for stacking */}
@@ -417,13 +453,16 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                                     <Card
                                                         card={card}
                                                         canBuy={false}
-                                                        size="small"
                                                         theme={theme}
                                                         className="shadow-md"
                                                     />
                                                 ) : (
                                                     <div
-                                                        className={`w-[72px] h-[96px] rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm transition-all duration-200 opacity-40`}
+                                                        className={`rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm transition-all duration-200 opacity-40`}
+                                                        style={{
+                                                            width: `${STANDARD_CARD_SIZE.width}px`,
+                                                            height: `${STANDARD_CARD_SIZE.height}px`,
+                                                        }}
                                                     />
                                                 )}
 
@@ -487,7 +526,15 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                         ))
                                     ) : (
                                         <div
-                                            className={`w-[72px] h-[96px] rounded border border-dashed flex items-center justify-center ${theme === 'dark' ? 'border-slate-800 bg-slate-900/20' : 'border-stone-200 bg-stone-100/50'}`}
+                                            className={`rounded border border-dashed flex items-center justify-center ${
+                                                theme === 'dark'
+                                                    ? 'border-slate-600 bg-slate-800/35'
+                                                    : 'border-stone-300 bg-stone-100/70'
+                                            }`}
+                                            style={{
+                                                width: `${STANDARD_CARD_SIZE.width}px`,
+                                                height: `${STANDARD_CARD_SIZE.height}px`,
+                                            }}
                                         >
                                             <div
                                                 className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} opacity-20`}
@@ -501,18 +548,17 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                 </div>
             </div>
 
-            {/* Module 3: Reserved & Royals (Compact) */}
+            {/* Module 3: Hand / Reserved Cards */}
             <div
-                className={`flex flex-col justify-center gap-2 border-l pl-4 min-w-0 transition-colors duration-500
-          ${theme === 'dark' ? 'border-slate-800' : 'border-stone-200'}
+                className={`self-stretch flex items-center border-l pl-4 min-w-0 transition-colors duration-500
+          ${theme === 'dark' ? 'border-slate-700' : 'border-stone-300'}
       `}
                 style={{ flex: 35 }}
             >
-                {/* Reserved Section - No Stacking */}
-                <div className="w-full flex items-center justify-start gap-2 overflow-x-auto py-1">
+                <div className="w-full flex items-center justify-start gap-3 overflow-x-auto py-2 pr-2">
                     {reserved.length === 0 && (
                         <span
-                            className={`text-[10px] italic w-full text-center ${theme === 'dark' ? 'text-slate-700' : 'text-stone-400'}`}
+                            className={`text-[10px] italic w-full text-center ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
                         >
                             No Reserved Cards
                         </span>
@@ -529,7 +575,6 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                     isActive && onBuyReserved(card) && onBuyReserved(card, true)
                                 }
                                 isReservedView={true}
-                                size="small"
                                 theme={theme}
                             />
                             {hasPuppetMaster && isActive && (
@@ -544,30 +589,6 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                     <span className="text-[10px] font-black">X</span>
                                 </button>
                             )}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Royal Section - No Stacking */}
-                <div className="w-full flex items-center justify-start gap-2 overflow-x-auto py-1">
-                    {royals.length === 0 && (
-                        <span
-                            className={`text-[10px] italic w-full text-center ${theme === 'dark' ? 'text-slate-700' : 'text-stone-400'}`}
-                        >
-                            No Royal Cards
-                        </span>
-                    )}
-                    {royals.map((card, i) => (
-                        <div
-                            key={i}
-                            className="transition-transform duration-200 ease-in-out shrink-0"
-                        >
-                            <Card
-                                card={card as unknown as CardType}
-                                isRoyal={true}
-                                size="small"
-                                theme={theme}
-                            />
                         </div>
                     ))}
                 </div>

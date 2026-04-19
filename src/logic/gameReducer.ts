@@ -43,6 +43,7 @@ import {
     handleCloseModal,
 } from './actions/miscActions';
 import { GameAction, GameState } from '../types';
+import { validateCommand, validatePostActionState, validateStateSnapshot } from './commandGate';
 
 /**
  * Main reducer function
@@ -56,15 +57,39 @@ import { GameAction, GameState } from '../types';
  * @returns New game state (or same state for null inputs)
  */
 export const applyAction = (state: GameState | null, action: GameAction): GameState | null => {
+    const commandValidation = validateCommand(state, action);
+    if (!commandValidation.valid) {
+        console.warn(
+            `[COMMAND_GATE] Rejected action ${action.type}: ${commandValidation.reason || 'Unknown validation error.'}`
+        );
+        return state;
+    }
+
     // 1. BOOTSTRAP / SYNC ACTIONS
     if (action.type === 'INIT') {
-        return handleInit(null, action.payload);
+        const nextState = handleInit(null, action.payload);
+        const snapshotValidation = validateStateSnapshot(nextState);
+        if (!snapshotValidation.valid) {
+            console.warn(
+                `[FSM] Rejected bootstrap action ${action.type}: ${snapshotValidation.reason || 'Unknown state validation error.'}`
+            );
+            return state;
+        }
+        return nextState;
     }
     if (action.type === 'INIT_DRAFT') {
-        return handleInitDraft(null, action.payload);
+        const nextState = handleInitDraft(null, action.payload);
+        const snapshotValidation = validateStateSnapshot(nextState);
+        if (!snapshotValidation.valid) {
+            console.warn(
+                `[FSM] Rejected bootstrap action ${action.type}: ${snapshotValidation.reason || 'Unknown state validation error.'}`
+            );
+            return state;
+        }
+        return nextState;
     }
     if (action.type === 'FORCE_SYNC' || action.type === 'FLATTEN') {
-        return action.payload; // Atomic state replacement
+        return action.payload; // Atomic state replacement already validated at the command gate
     }
 
     // 2. STATE GUARD
@@ -73,7 +98,7 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
     }
 
     // 3. MUTATION ACTIONS
-    return produce(state, (draft) => {
+    const nextState = produce(state, (draft) => {
         // Clear transient UI feedback
         draft.lastFeedback = null;
         draft.toastMessage = null;
@@ -203,4 +228,14 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
             }
         }
     });
+
+    const postActionValidation = validatePostActionState(state, action, nextState);
+    if (!postActionValidation.valid) {
+        console.warn(
+            `[FSM] Rolled back action ${action.type}: ${postActionValidation.reason || 'Unknown transition validation error.'}`
+        );
+        return state;
+    }
+
+    return nextState;
 };

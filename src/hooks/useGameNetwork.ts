@@ -1,9 +1,27 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { useOnlineManager } from './useOnlineManager';
-import { validateOnlineAction } from '../logic/authority';
-import { generateGameStateHash } from '../utils/checksum';
-import { applyAction } from '../logic/gameReducer';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { reviewOnlineIntent } from '../logic/authority';
+import {
+    computeBootstrapChecksum,
+    computeGuestIntentChecksum,
+    verifyApprovedHostDecision,
+} from '../logic/networkChecksums';
+import {
+    actionToBootstrapCommand,
+    actionToGuestIntentCommand,
+    bootstrapCommandToAction,
+    guestIntentToAction,
+} from '../logic/networkProtocol';
 import { GameState, GameAction } from '../types';
+import type {
+    BootstrapCommand,
+    GuestIntentCommand,
+    HostApprovalLogEntry,
+    HostDecisionMessage,
+} from '../types/network';
+import { useOnlineManager, type OnlineManagerController } from './useOnlineManager';
+import { reportReleaseHealth } from '../observability/releaseHealth';
+
+const MAX_APPROVAL_LOG_ENTRIES = 25;
 
 export const useGameNetwork = (
     gameState: GameState,
@@ -12,89 +30,280 @@ export const useGameNetwork = (
     shouldConnect: boolean,
     targetIP: string = 'localhost'
 ) => {
-    // Ref to break circular dependency
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onlineRef = useRef<any>(null);
+    const onlineRef = useRef<OnlineManagerController | null>(null);
+    const requestCounterRef = useRef(0);
+    const skipNextHostSyncRef = useRef(false);
+    const pendingGuestIntentRef = useRef<{
+        requestId: string;
+        command: GuestIntentCommand;
+    } | null>(null);
+    const [approvalLog, setApprovalLog] = useState<HostApprovalLogEntry[]>([]);
 
-    // Remote Action Handler (Logic for RECEIVING)
-    const handleRemoteAction = useCallback(
-        (action: GameAction, remoteChecksum?: string) => {
-            console.log(`[NET-RECEIVE] Action: ${action.type}`, action.payload);
-            if (action.type === 'INIT' || action.type === 'INIT_DRAFT') {
-                const guestAction = {
-                    ...action,
-                    payload: { ...action.payload, isHost: false },
-                };
-                clearAndInit(guestAction);
-            } else {
-                if (remoteChecksum && gameState) {
-                    const predicted = applyAction(gameState, action);
-                    const localHash = generateGameStateHash(predicted);
-                    if (localHash !== remoteChecksum) {
-                        console.error(`DESYNC: Local ${localHash} vs Remote ${remoteChecksum}`);
-                        // Trigger Recovery
-                        onlineRef.current?.sendSystemMessage({ type: 'REQUEST_FULL_SYNC' });
-                        return; // Do NOT apply corrupt action
-                    }
+    const appendApprovalLog = useCallback((entry: HostApprovalLogEntry) => {
+        setApprovalLog((previous) => [entry, ...previous].slice(0, MAX_APPROVAL_LOG_ENTRIES));
+    }, []);
+
+    const handleBootstrapReceived = useCallback(
+        (command: BootstrapCommand, remoteChecksum?: string) => {
+            console.log(`[NET-RECEIVE] Bootstrap: ${command.kind}`);
+            const guestBootstrapAction = bootstrapCommandToAction(command, false);
+
+            if (remoteChecksum) {
+                const localChecksum = computeBootstrapChecksum(command, false);
+                if (!localChecksum || localChecksum !== remoteChecksum) {
+                    console.error(
+                        `[NET] Bootstrap checksum mismatch: local ${localChecksum} vs remote ${remoteChecksum}`
+                    );
+                    reportReleaseHealth({
+                        category: 'recovery',
+                        name: 'BOOTSTRAP_CHECKSUM_MISMATCH',
+                        severity: 'error',
+                        message: 'Bootstrap checksum verification failed on the guest.',
+                    });
+                    onlineRef.current?.requestRecovery('CHECKSUM_MISMATCH');
+                    return;
                 }
-                localDispatch(action);
             }
+
+            clearAndInit(guestBootstrapAction);
         },
-        [localDispatch, clearAndInit, gameState]
+        [clearAndInit]
     );
 
     const handleStateReceived = useCallback(
         (authoritativeState: GameState) => {
+            pendingGuestIntentRef.current = null;
             const guestStateSnapshot = { ...authoritativeState, isHost: false };
             localDispatch({ type: 'FORCE_SYNC', payload: guestStateSnapshot });
         },
         [localDispatch]
     );
 
-    const handleGuestRequest = useCallback(
-        (action: GameAction) => {
-            if (gameState.mode === 'ONLINE_MULTIPLAYER' && gameState.isHost) {
-                if (validateOnlineAction(gameState, action)) {
-                    localDispatch(action);
-                }
+    const handleGuestIntent = useCallback(
+        (requestId: string, command: GuestIntentCommand) => {
+            if (gameState.mode !== 'ONLINE_MULTIPLAYER' || !gameState.isHost) {
+                return;
             }
+
+            const review = reviewOnlineIntent(gameState, command);
+            const logBase = {
+                requestId,
+                intentKind: command.kind,
+                createdAt: Date.now(),
+            } as const;
+
+            if (!review.valid) {
+                const rejectionDecision: Omit<HostDecisionMessage, 'type' | 'version'> = {
+                    requestId,
+                    intentKind: command.kind,
+                    approved: false,
+                    reason: review.reason || 'Host rejected the guest intent.',
+                };
+
+                appendApprovalLog({
+                    ...logBase,
+                    approved: false,
+                    reason: rejectionDecision.reason,
+                });
+                reportReleaseHealth({
+                    category: 'network',
+                    name: 'HOST_INTENT_REJECTED',
+                    severity: 'warn',
+                    message: 'Host rejected a guest intent during authority review.',
+                    context: {
+                        intentKind: command.kind,
+                    },
+                });
+                onlineRef.current?.sendHostDecision(rejectionDecision);
+                return;
+            }
+
+            const checksum = computeGuestIntentChecksum(gameState, command);
+            if (!checksum) {
+                const staleDecision: Omit<HostDecisionMessage, 'type' | 'version'> = {
+                    requestId,
+                    intentKind: command.kind,
+                    approved: false,
+                    reason: 'Host could not derive a deterministic checksum for the request.',
+                };
+
+                appendApprovalLog({
+                    ...logBase,
+                    approved: false,
+                    reason: staleDecision.reason,
+                });
+                reportReleaseHealth({
+                    category: 'recovery',
+                    name: 'HOST_CHECKSUM_DERIVATION_FAILED',
+                    severity: 'error',
+                    message: 'Host could not derive a deterministic checksum for a guest intent.',
+                    context: {
+                        intentKind: command.kind,
+                    },
+                });
+                onlineRef.current?.sendHostDecision(staleDecision);
+                return;
+            }
+
+            const approvalDecision: Omit<HostDecisionMessage, 'type' | 'version'> = {
+                requestId,
+                intentKind: command.kind,
+                approved: true,
+                command,
+                checksum,
+            };
+
+            appendApprovalLog({
+                ...logBase,
+                approved: true,
+                checksum: approvalDecision.checksum,
+            });
+            localDispatch(guestIntentToAction(command));
+            onlineRef.current?.sendHostDecision(approvalDecision);
         },
-        [gameState, localDispatch]
+        [appendApprovalLog, gameState, localDispatch]
+    );
+
+    const handleHostDecision = useCallback(
+        (decision: HostDecisionMessage) => {
+            const pendingIntent = pendingGuestIntentRef.current;
+
+            if (!pendingIntent) {
+                console.warn(
+                    '[NET] Ignoring late host decision because no guest intent is pending.'
+                );
+                reportReleaseHealth({
+                    category: 'recovery',
+                    name: 'HOST_DECISION_LATE',
+                    severity: 'warn',
+                    message: 'Guest ignored a late host decision because no intent was pending.',
+                });
+                return;
+            }
+
+            if (
+                pendingIntent.requestId !== decision.requestId ||
+                pendingIntent.command.kind !== decision.intentKind
+            ) {
+                console.warn(
+                    '[NET] Guest received an unexpected host decision. Requesting authoritative recovery.'
+                );
+                reportReleaseHealth({
+                    category: 'recovery',
+                    name: 'HOST_DECISION_STALE',
+                    severity: 'warn',
+                    message:
+                        'Guest received a stale or mismatched host decision and requested recovery.',
+                    context: {
+                        intentKind: decision.intentKind,
+                    },
+                });
+                onlineRef.current?.requestRecovery('STALE_PACKET', decision.requestId);
+                return;
+            }
+
+            pendingGuestIntentRef.current = null;
+
+            if (!decision.approved) {
+                console.warn(
+                    `[NET] Host rejected guest intent ${decision.intentKind}: ${decision.reason || 'Unknown reason.'}`
+                );
+                reportReleaseHealth({
+                    category: 'network',
+                    name: 'HOST_DECISION_REJECTED',
+                    severity: 'warn',
+                    message: 'Guest received a host rejection for a multiplayer intent.',
+                    context: {
+                        intentKind: decision.intentKind,
+                    },
+                });
+                return;
+            }
+
+            const verification = verifyApprovedHostDecision(gameState, decision);
+            if (!verification.valid) {
+                console.error(
+                    `[NET] Approved decision for ${decision.intentKind} failed verification (${verification.reason}).`
+                );
+                reportReleaseHealth({
+                    category: 'recovery',
+                    name: 'HOST_DECISION_VERIFICATION_FAILED',
+                    severity: 'error',
+                    message:
+                        'Guest failed to verify an approved host decision and requested recovery.',
+                    context: {
+                        intentKind: decision.intentKind,
+                        reason: verification.reason || 'STALE_PACKET',
+                    },
+                });
+                onlineRef.current?.requestRecovery(
+                    verification.reason || 'STALE_PACKET',
+                    decision.requestId
+                );
+                return;
+            }
+
+            console.log(
+                `[NET] Guest verified approved ${decision.intentKind} checksum and is waiting for authoritative sync.`
+            );
+            reportReleaseHealth({
+                category: 'network',
+                name: 'HOST_DECISION_VERIFIED',
+                severity: 'info',
+                message:
+                    'Guest verified an approved host decision and is awaiting authoritative sync.',
+                context: {
+                    intentKind: decision.intentKind,
+                },
+            });
+        },
+        [gameState]
     );
 
     const online = useOnlineManager(
-        handleRemoteAction,
-        handleStateReceived,
-        handleGuestRequest,
+        {
+            onBootstrapReceived: handleBootstrapReceived,
+            onStateReceived: handleStateReceived,
+            onGuestIntentReceived: handleGuestIntent,
+            onHostDecisionReceived: handleHostDecision,
+        },
         gameState.mode === 'ONLINE_MULTIPLAYER' || shouldConnect,
         () => gameState,
         targetIP
     );
 
-    // Sync ref
     useEffect(() => {
         onlineRef.current = online;
     }, [online]);
 
-    // Smart Dispatcher (Logic for SENDING/RECORDING)
     const networkDispatch = useCallback(
         (action: GameAction) => {
             console.log(`[ACTION-RECORD] Type: ${action.type}`, action.payload);
-            const isInit = action.type === 'INIT' || action.type === 'INIT_DRAFT';
+            const bootstrapCommand = actionToBootstrapCommand(action);
 
             if (gameState.mode === 'ONLINE_MULTIPLAYER') {
                 if (gameState.isHost) {
                     localDispatch(action);
 
-                    // Predict and sync immediately for initial actions
-                    if (isInit) {
-                        const next = applyAction(null, action);
-                        const hash = generateGameStateHash(next);
-                        online.sendAction(action, hash);
+                    if (bootstrapCommand) {
+                        skipNextHostSyncRef.current = true;
+                        const checksum = computeBootstrapChecksum(bootstrapCommand, false);
+                        online.sendBootstrap(bootstrapCommand, checksum || undefined);
                     }
                 } else {
-                    if (gameState.turn === 'p2') {
-                        online.sendGuestRequest(action);
+                    const guestIntent = actionToGuestIntentCommand(action);
+                    if (gameState.turn === 'p2' && guestIntent) {
+                        requestCounterRef.current += 1;
+                        const requestId = `guest-${Date.now()}-${requestCounterRef.current}`;
+                        pendingGuestIntentRef.current = {
+                            requestId,
+                            command: guestIntent,
+                        };
+                        online.sendGuestIntent(requestId, guestIntent);
+                    } else if (!guestIntent) {
+                        console.warn(
+                            `[NET] Guest attempted to send non-protocol action ${action.type}.`
+                        );
                     }
                 }
                 return;
@@ -102,30 +311,38 @@ export const useGameNetwork = (
 
             localDispatch(action);
 
-            // If we are starting an online game from local, broadcast it
-            if (isInit && (action.payload.mode === 'ONLINE_MULTIPLAYER' || shouldConnect)) {
-                const next = applyAction(null, action);
-                const hash = generateGameStateHash(next);
-                online.sendAction(action, hash);
+            if (
+                bootstrapCommand &&
+                (bootstrapCommand.setup.mode === 'ONLINE_MULTIPLAYER' || shouldConnect)
+            ) {
+                skipNextHostSyncRef.current = true;
+                const checksum = computeBootstrapChecksum(bootstrapCommand, false);
+                online.sendBootstrap(bootstrapCommand, checksum || undefined);
             }
         },
-        [gameState, online, localDispatch, shouldConnect]
+        [gameState, localDispatch, online, shouldConnect]
     );
 
-    // Host Broadcast Effect
     useEffect(() => {
         if (gameState.mode === 'ONLINE_MULTIPLAYER' && gameState.isHost) {
-            online.sendState(gameState);
+            if (skipNextHostSyncRef.current) {
+                skipNextHostSyncRef.current = false;
+                return;
+            }
+            online.sendState(gameState, 'TURN_SYNC');
         }
-    }, [gameState.mode, gameState.isHost, online.sendState, gameState, online]);
-    // Note: removed history.length dependency to avoid excessive broadcasting,
-    // but Host should probably broadcast on meaningful state changes.
-    // Ideally this is handled by the "Smart Dispatcher" sending actions,
-    // and sync is only for recovery or join.
-    // Keeping it simple to match original logic but being careful.
+    }, [gameState, online]);
+
+    const onlineWithApprovalLog = useMemo(
+        () => ({
+            ...online,
+            approvalLog,
+        }),
+        [approvalLog, online]
+    );
 
     return {
-        online,
+        online: onlineWithApprovalLog,
         networkDispatch,
     };
 };
