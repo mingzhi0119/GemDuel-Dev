@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { Layers } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
-import { Card } from './Card';
+import { Card, STANDARD_CARD_SIZE } from './Card';
 import { withGameAnimation } from '../hoc/withGameAnimation';
 import { calculateTransaction } from '../utils';
 import {
@@ -90,7 +90,7 @@ export const Market: React.FC<MarketProps> = React.memo(
             >
                 <h2
                     className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1 text-center 
-                    ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
+                    ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
                 >
                     Market
                 </h2>
@@ -201,7 +201,7 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                                 <div
                                     onClick={() => canInteract && handleReserveDeck(lvl)}
-                                    className={`w-24 h-32 shrink-0 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md relative overflow-hidden group
+                                    className={`shrink-0 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md relative overflow-hidden group
                             ${
                                 phase === 'IDLE' && canInteract && decks[lvl].length > 0
                                     ? (theme === 'dark'
@@ -209,21 +209,32 @@ export const Market: React.FC<MarketProps> = React.memo(
                                           : 'border-slate-400 hover:border-emerald-500') +
                                       ' cursor-pointer hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-0'
                                     : (theme === 'dark'
-                                          ? 'border-slate-800 opacity-40'
-                                          : 'border-slate-300 opacity-40') + ' cursor-default'
+                                          ? 'border-slate-700 opacity-60'
+                                          : 'border-slate-300 opacity-55') + ' cursor-default'
                             }
                         `}
+                                    style={{
+                                        width: `${STANDARD_CARD_SIZE.width}px`,
+                                        height: `${STANDARD_CARD_SIZE.height}px`,
+                                    }}
                                 >
                                     <div
-                                        className={`absolute inset-0 ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-200'}`}
+                                        className={`absolute inset-0 ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`}
                                     />
 
                                     <div className="relative z-10 flex flex-col items-center">
-                                        <Layers size={18} className="text-slate-500 mb-1" />
-                                        <div className="text-slate-400 font-bold text-[10px]">
+                                        <Layers
+                                            size={18}
+                                            className={`mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
+                                        />
+                                        <div
+                                            className={`font-bold text-[10px] ${theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}`}
+                                        >
                                             Lvl {lvl}
                                         </div>
-                                        <div className="text-slate-600 text-[9px] font-mono">
+                                        <div
+                                            className={`text-[9px] font-mono ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}
+                                        >
                                             {decks[lvl].length}
                                         </div>
                                     </div>
@@ -235,7 +246,11 @@ export const Market: React.FC<MarketProps> = React.memo(
                                 {market[lvl].map((card, i) => (
                                     <div
                                         key={`slot-${lvl}-${i}`}
-                                        className="relative w-24 h-32 flex items-center justify-center"
+                                        className="relative flex items-center justify-center"
+                                        style={{
+                                            width: `${STANDARD_CARD_SIZE.width}px`,
+                                            height: `${STANDARD_CARD_SIZE.height}px`,
+                                        }}
                                     >
                                         <AnimatePresence mode="wait">
                                             {card && (

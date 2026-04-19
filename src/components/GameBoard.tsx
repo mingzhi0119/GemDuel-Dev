@@ -2,17 +2,21 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { withGameAnimation } from '../hoc/withGameAnimation';
 import { SPIRAL_ORDER } from '../constants';
-import { BoardCell, BagItem, GamePhase, GemCoord, GemTypeObject } from '../types';
+import { BoardCell, GamePhase, GemCoord, GemTypeObject } from '../types';
+
+export const GEM_BOARD_SIZE_PX = 375;
+export const GEM_BOARD_GAP_PX = 8;
+export const GEM_BOARD_GEM_SIZE_PX = Math.round((GEM_BOARD_SIZE_PX - GEM_BOARD_GAP_PX * 4) / 5);
 
 interface GemButtonProps {
     r: number;
     c: number;
     gem: BoardCell;
+    theme: 'light' | 'dark';
     isSelectedGem: boolean;
     isTarget: boolean;
     shouldDim: boolean;
     isInteractive: boolean;
-    isGold: boolean;
     selectionIndex: number;
     onGemClick: (r: number, c: number) => void;
 }
@@ -22,11 +26,11 @@ const GemButton: React.FC<GemButtonProps> = React.memo(
         r,
         c,
         gem,
+        theme,
         isSelectedGem,
         isTarget,
         shouldDim,
         isInteractive,
-        isGold,
         selectionIndex,
         onGemClick,
     }) => {
@@ -46,12 +50,21 @@ const GemButton: React.FC<GemButtonProps> = React.memo(
                     ${isTarget ? 'ring-4 ring-white animate-pulse z-20' : ''}
                     ${shouldDim ? 'opacity-20 grayscale' : ''}
                 `}
+                    style={
+                        theme === 'light'
+                            ? {
+                                  boxShadow: [
+                                      '0 4px 12px rgba(0,0,0,0.05)',
+                                      'inset 0 1px 2px rgba(255,255,255,0.35)',
+                                      isSelectedGem ? '0 0 10px rgba(255,255,255,0.9)' : '',
+                                      isTarget ? '0 0 18px rgba(255,255,255,0.9)' : '',
+                                  ]
+                                      .filter(Boolean)
+                                      .join(', '),
+                              }
+                            : undefined
+                    }
                 >
-                    {isGold && (
-                        <div className="absolute inset-0 flex items-center justify-center text-yellow-900 font-bold text-xs opacity-50">
-                            G
-                        </div>
-                    )}
                     {isSelectedGem && (
                         <div className="absolute inset-0 flex items-center justify-center font-bold text-white drop-shadow-md text-lg">
                             {selectionIndex + 1}
@@ -67,7 +80,6 @@ const AnimatedGem = withGameAnimation(GemButton);
 
 interface GameBoardProps {
     board: BoardCell[][];
-    bag: BagItem[];
     handleGemClick: (r: number, c: number) => void;
     isSelected: (r: number, c: number) => boolean;
     selectedGems: GemCoord[];
@@ -80,7 +92,6 @@ interface GameBoardProps {
 export const GameBoard: React.FC<GameBoardProps> = React.memo(
     ({
         board,
-        bag,
         handleGemClick,
         isSelected,
         selectedGems,
@@ -94,19 +105,18 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                 className={`p-4 rounded-[2rem] border transition-all duration-500 backdrop-blur-md
             ${
                 theme === 'dark'
-                    ? 'bg-slate-800/40 border-white/10 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.05)]'
-                    : 'bg-white border-stone-200/60'
+                    ? 'bg-slate-800/70 border-slate-600 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
+                    : 'bg-white border-stone-300/80'
             }
             ${phase === 'DISCARD_EXCESS_GEMS' ? 'border-red-500/50 ring-2 ring-red-500/10' : ''}
         `}
             >
                 <div
-                    className={`text-right text-[10px] mb-2 font-mono font-bold tracking-tighter ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
-                >
-                    BAG: {bag.length}
-                </div>
-                <div
-                    className={`grid grid-cols-5 grid-rows-5 gap-2 w-[300px] h-[300px] ${!canInteract ? 'pointer-events-none' : ''}`}
+                    className={`grid grid-cols-5 grid-rows-5 gap-2 ${!canInteract ? 'pointer-events-none' : ''}`}
+                    style={{
+                        width: `${GEM_BOARD_SIZE_PX}px`,
+                        height: `${GEM_BOARD_SIZE_PX}px`,
+                    }}
                 >
                     {board.map((row, r) =>
                         row.map((gem, c) => {
@@ -148,11 +158,11 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                                                 r={r}
                                                 c={c}
                                                 gem={gem}
+                                                theme={theme}
                                                 isSelectedGem={isSelectedGem}
                                                 isTarget={isTarget}
                                                 shouldDim={shouldDim}
                                                 isInteractive={isInteractive}
-                                                isGold={isGold}
                                                 selectionIndex={selectedGems.findIndex(
                                                     (s) => s.r === r && s.c === c
                                                 )}
