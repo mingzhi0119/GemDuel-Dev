@@ -24,6 +24,11 @@ describe('release health checklist governance', () => {
 
         expect(errors).toContain('Missing required checklist command npm run lint.');
         expect(errors).toContain('Missing required checklist command npm run test:security.');
+        expect(errors).toContain('Checklist must link to the release-health SLO document.');
+        expect(errors).toContain('Checklist must link to the fault drill runbook.');
+        expect(errors).toContain(
+            'Checklist must document the release-health report export script.'
+        );
         expect(errors).toContain(
             'Checklist must document how operators fetch the sanitized release-health snapshot.'
         );
@@ -36,6 +41,9 @@ describe('release health checklist governance', () => {
         const checklistText = [
             ...REQUIRED_RELEASE_CHECKLIST_COMMANDS.map((command) => `- \`${command}\``),
             ...getReleaseHealthIndicatorKeys().map((indicatorKey) => `- \`${indicatorKey}\``),
+            '- `OPERATIONS_SLO.md`',
+            '- `OPERATIONS_FAULT_DRILLS.md`',
+            '- `scripts/export-release-health-report.mjs`',
             '- `window.electron.getReleaseHealthSnapshot()`',
         ].join('\n');
 

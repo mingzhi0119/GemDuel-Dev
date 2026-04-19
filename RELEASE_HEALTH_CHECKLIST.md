@@ -11,6 +11,7 @@ Use this checklist before shipping a desktop release or cutting a release candid
 - `npm run release:check`
 - `npm run desktop:check`
 - GitHub release workflow green on the tagged build
+- `scripts/export-release-health-report.mjs` can turn a `window.electron.getReleaseHealthSnapshot()` payload or `[RELEASE_HEALTH]` log stream into a machine-readable report.
 
 ## Release-Health Indicators
 
@@ -51,4 +52,5 @@ Target baseline for a clean release smoke test:
 - Release-health logs are structured JSON lines prefixed with `[RELEASE_HEALTH]`.
 - The desktop process emits a final `[RELEASE_HEALTH_SUMMARY]` snapshot before quit.
 - The renderer can fetch the current sanitized snapshot through `window.electron.getReleaseHealthSnapshot()` for support diagnostics.
+- The operational contract lives in `OPERATIONS_SLO.md`, `OPERATIONS_FAULT_DRILLS.md`, and `electron/governance/release-health-operations.snapshot.json`.
 - `npm run release:check` validates the checklist command gates and indicator inventory against the live monitor contract.

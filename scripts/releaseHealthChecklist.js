@@ -35,6 +35,18 @@ export const collectReleaseHealthChecklistErrors = (checklistText) => {
         }
     }
 
+    if (!checklistText.includes('`OPERATIONS_SLO.md`')) {
+        issues.push('Checklist must link to the release-health SLO document.');
+    }
+
+    if (!checklistText.includes('`OPERATIONS_FAULT_DRILLS.md`')) {
+        issues.push('Checklist must link to the fault drill runbook.');
+    }
+
+    if (!checklistText.includes('`scripts/export-release-health-report.mjs`')) {
+        issues.push('Checklist must document the release-health report export script.');
+    }
+
     if (!checklistText.includes('`window.electron.getReleaseHealthSnapshot()`')) {
         issues.push(
             'Checklist must document how operators fetch the sanitized release-health snapshot.'

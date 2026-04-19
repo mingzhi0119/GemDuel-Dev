@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 1,
+    "reportVersion": 1,
+    "sourceFormats": ["release-health-summary", "release-health-jsonl"],
+    "indicatorThresholds": {
+        "startupFailures": {
+            "warningMax": 0,
+            "incidentMax": 0
+        },
+        "runtimeConfigFailures": {
+            "warningMax": 0,
+            "incidentMax": 0
+        },
+        "updaterFailures": {
+            "warningMax": 0,
+            "incidentMax": 0
+        },
+        "peerFailures": {
+            "warningMax": 0,
+            "incidentMax": 0
+        },
+        "recoveryRequests": {
+            "warningMax": 0,
+            "incidentMax": 1
+        },
+        "ipcRejected": {
+            "warningMax": 0,
+            "incidentMax": 0
+        }
+    },
+    "alertRouting": {
+        "startupFailures": "pager",
+        "runtimeConfigFailures": "pager",
+        "updaterFailures": "pager",
+        "peerFailures": "pager",
+        "recoveryRequests": "warn",
+        "ipcRejected": "pager"
+    },
+    "drills": [
+        {
+            "id": "updater-fail",
+            "title": "Updater check failure",
+            "signal": "UPDATER_CHECK_FAILED",
+            "expectedIndicator": "updaterFailures",
+            "expectedSeverity": "error",
+            "trigger": "Force the updater check path to reject or emit repeated updater errors.",
+            "rollback": "Remove the fault injection and verify the next updater run succeeds."
+        },
+        {
+            "id": "ipc-reject",
+            "title": "Unauthorized IPC reject",
+            "signal": "IPC_REQUEST_REJECTED",
+            "expectedIndicator": "ipcRejected",
+            "expectedSeverity": "warn",
+            "trigger": "Call a governed IPC channel from an untrusted sender or with invalid payload arguments.",
+            "rollback": "Restore the trusted sender context and resend a valid request."
+        },
+        {
+            "id": "network-recovery",
+            "title": "Network recovery request",
+            "signal": "RECOVERY_REQUEST_SENT",
+            "expectedIndicator": "recoveryRequests",
+            "expectedSeverity": "warn",
+            "trigger": "Break the peer connection or inject a malformed packet that forces recovery.",
+            "rollback": "Allow the host to resend an authoritative snapshot and verify the session stabilizes."
+        }
+    ]
+}
