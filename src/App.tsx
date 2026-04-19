@@ -17,6 +17,7 @@ import { DebugPanel } from './components/DebugPanel';
 import { UpdateNotification } from './components/UpdateNotification';
 import { useGameLogic } from './hooks/useGameLogic';
 import { useSettings } from './hooks/useSettings';
+import { setRuntimeIceServers } from './config/webrtc';
 import { GEM_TYPES, BONUS_COLORS } from './constants';
 import { GemColor, PlayerKey } from './types';
 
@@ -38,17 +39,21 @@ export default function GemDuelBoard() {
     const [appVersion, setAppVersion] = useState<string>('5.2.11');
 
     useEffect(() => {
-        const fetchVersion = async () => {
+        const loadRuntimeAppConfig = async () => {
             try {
-                if (window.electron?.getAppVersion) {
-                    const version = await window.electron.getAppVersion();
-                    if (version) setAppVersion(version);
-                }
+                const [version, iceServers] = await Promise.all([
+                    window.electron?.getAppVersion?.(),
+                    window.electron?.getRuntimeIceServers?.(),
+                ]);
+
+                if (version) setAppVersion(version);
+                if (iceServers) setRuntimeIceServers(iceServers);
             } catch (err) {
-                console.error('Failed to fetch app version:', err);
+                console.error('Failed to load runtime app config:', err);
             }
         };
-        fetchVersion();
+
+        loadRuntimeAppConfig();
     }, []);
 
     const { resolution, setResolution, settings, RESOLUTION_SETTINGS, theme, setTheme } =

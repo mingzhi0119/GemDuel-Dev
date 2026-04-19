@@ -4,6 +4,7 @@ import { GameAction, GameState } from '../types';
 import { NetworkMessage } from '../types/network';
 import { createPeerConfig } from '../config/webrtc';
 import { useConnectionHealth } from './useConnectionHealth';
+import { parseNetworkMessage } from '../logic/actionValidation';
 
 export const useOnlineManager = (
     onActionReceived: (action: GameAction, checksum?: string) => void,
@@ -28,6 +29,7 @@ export const useOnlineManager = (
     const onGuestRequestReceivedRef = useRef(onGuestRequestReceived);
     const isHostRef = useRef(isHost);
     const reconnectAttempts = useRef(0);
+    const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const MAX_RECONNECT_ATTEMPTS = 5;
 
     useEffect(() => {
@@ -63,7 +65,11 @@ export const useOnlineManager = (
             });
 
             connection.on('data', (data: unknown) => {
-                const msg = data as NetworkMessage;
+                const msg = parseNetworkMessage(data);
+                if (!msg) {
+                    console.warn('[NET] Rejected malformed network message.');
+                    return;
+                }
 
                 // Handle Heartbeat internally
                 if (msg.type === 'HEARTBEAT_PING' || msg.type === 'HEARTBEAT_PONG') {
@@ -74,10 +80,22 @@ export const useOnlineManager = (
                 console.log('Received P2P data:', msg.type);
 
                 if (msg.type === 'SYNC_STATE') {
+                    if (isHostRef.current) {
+                        console.warn('[NET] Host rejected inbound SYNC_STATE message.');
+                        return;
+                    }
                     onStateReceivedRef.current(msg.state);
                 } else if (msg.type === 'GUEST_REQUEST') {
+                    if (!isHostRef.current) {
+                        console.warn('[NET] Guest rejected inbound GUEST_REQUEST message.');
+                        return;
+                    }
                     onGuestRequestReceivedRef.current(msg.action);
                 } else if (msg.type === 'GAME_ACTION') {
+                    if (isHostRef.current) {
+                        console.warn('[NET] Host rejected inbound GAME_ACTION message.');
+                        return;
+                    }
                     onActionReceivedRef.current(msg.action, msg.checksum);
                 } else if (msg.type === 'REQUEST_FULL_SYNC') {
                     // Host Logic: Respond to Desync
@@ -96,8 +114,14 @@ export const useOnlineManager = (
             });
 
             connection.on('close', () => {
-                setConnectionStatus('disconnected');
-                setConn(null);
+                setConn((current) => {
+                    if (current === connection) {
+                        setConnectionStatus('disconnected');
+                        setRemotePeerId('');
+                        return null;
+                    }
+                    return current;
+                });
             });
 
             connection.on('error', (err) => {
@@ -120,7 +144,7 @@ export const useOnlineManager = (
         }
 
         console.log('[NET] Initializing Peer...');
-        console.log(`[NET] Target IP: ${targetIP}, Will be host: ${!isHost}`);
+        console.log(`[NET] Target IP: ${targetIP}`);
 
         // Use configurable peer config based on role
         // Note: At initialization we don't know if we'll be host yet,
@@ -136,6 +160,7 @@ export const useOnlineManager = (
 
         newPeer.on('connection', (connection) => {
             console.log('[NET] Incoming connection from:', connection.peer);
+            isHostRef.current = true;
             setupConnectionRef.current(connection);
             setIsHost(true); // The one who receives connection is host (p1)
         });
@@ -146,7 +171,8 @@ export const useOnlineManager = (
                 console.log(
                     `[NET] Attempting reconnect (${reconnectAttempts.current + 1}/${MAX_RECONNECT_ATTEMPTS})...`
                 );
-                setTimeout(() => {
+                if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+                reconnectTimeoutRef.current = setTimeout(() => {
                     if (!newPeer.destroyed) {
                         newPeer.reconnect();
                         reconnectAttempts.current++;
@@ -170,6 +196,10 @@ export const useOnlineManager = (
 
         return () => {
             console.log('[NET] Destroying Peer instance.');
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+                reconnectTimeoutRef.current = null;
+            }
             newPeer.destroy();
             setPeer(null);
             setPeerId('');
@@ -183,6 +213,7 @@ export const useOnlineManager = (
                 return;
             }
             setConnectionStatus('connecting');
+            isHostRef.current = false;
             const connection = peer.connect(id);
             setupConnectionRef.current(connection);
             setIsHost(false); // The one who initiates connection is guest (p2)

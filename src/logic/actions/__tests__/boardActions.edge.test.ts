@@ -113,7 +113,7 @@ describe('Board Actions - Edge Cases', () => {
         expect(nextState.privileges.p2).toBe(2);
     });
 
-    it('should process gem taking correctly even with invalid (non-linear) coordinates', () => {
+    it('should reject invalid non-linear gem selections at the reducer layer', () => {
         const state = createTestState();
 
         // Invalid "L" shape selection
@@ -132,16 +132,36 @@ describe('Board Actions - Edge Cases', () => {
         state.board[0][0] = { type: { id: 'blue', color: '', border: '', label: '' }, uid: 'b1' };
         state.board[0][1] = { type: { id: 'green', color: '', border: '', label: '' }, uid: 'g1' };
         state.board[1][1] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r1' };
+        const originalState = JSON.parse(JSON.stringify(state)) as GameState;
 
         const nextState = applyAction(state, action);
         if (!nextState) throw new Error('State update failed');
 
         // Assertions
-        expect(nextState.inventories.p1['blue']).toBe(1);
-        expect(nextState.inventories.p1['green']).toBe(1);
-        expect(nextState.inventories.p1['red']).toBe(1);
-        expect(nextState.board[0][0].type.id).toBe('empty');
-        expect(nextState.board[0][1].type.id).toBe('empty');
-        expect(nextState.board[1][1].type.id).toBe('empty');
+        expect(nextState.inventories).toEqual(originalState.inventories);
+        expect(nextState.board[0][0].type.id).toBe('blue');
+        expect(nextState.board[0][1].type.id).toBe('green');
+        expect(nextState.board[1][1].type.id).toBe('red');
+    });
+
+    it('should reject out-of-bounds gem selections without crashing', () => {
+        const state = createTestState();
+        const originalState = JSON.parse(JSON.stringify(state)) as GameState;
+
+        const action: GameAction = {
+            type: 'TAKE_GEMS',
+            payload: {
+                coords: [
+                    { r: 0, c: 0 },
+                    { r: 5, c: 0 },
+                ],
+            },
+        };
+
+        const nextState = applyAction(state, action);
+        if (!nextState) throw new Error('State update failed');
+
+        expect(nextState.board).toEqual(originalState.board);
+        expect(nextState.inventories).toEqual(originalState.inventories);
     });
 });

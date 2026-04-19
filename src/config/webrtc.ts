@@ -1,71 +1,85 @@
-// src/config/webrtc.ts
+const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:global.stun.twilio.com:3478' },
+];
 
-/**
- * Generates the ICE Server configuration for WebRTC.
- * Includes public STUN servers and optional private TURN servers.
- */
-export const GET_ICE_SERVERS = (): RTCIceServer[] => {
-    // 1. Always include free STUN servers as baseline
-    const servers: RTCIceServer[] = [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:global.stun.twilio.com:3478' },
-    ];
+let runtimeIceServers: RTCIceServer[] = [];
 
-    // 2. Inject TURN credentials from Environment Variables (Security Best Practice)
-    // NEVER commit hardcoded TURN credentials to Git.
-    if (import.meta.env.VITE_TURN_USER && import.meta.env.VITE_TURN_PASS) {
-        servers.push({
-            urls: 'turn:global.turn.metered.ca:80', // Example Provider
-            username: import.meta.env.VITE_TURN_USER,
-            credential: import.meta.env.VITE_TURN_PASS,
-        });
-        servers.push({
-            urls: 'turn:global.turn.metered.ca:443',
-            username: import.meta.env.VITE_TURN_USER,
-            credential: import.meta.env.VITE_TURN_PASS,
-        });
+const isStringArray = (value: unknown): value is string[] =>
+    Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+
+const normalizeIceServer = (value: unknown): RTCIceServer | null => {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        return null;
     }
 
-    return servers;
+    const candidate = value as Record<string, unknown>;
+    if (typeof candidate.urls !== 'string' && !isStringArray(candidate.urls)) {
+        return null;
+    }
+
+    const normalized: RTCIceServer = { urls: candidate.urls };
+
+    if (candidate.username !== undefined) {
+        if (typeof candidate.username !== 'string') return null;
+        normalized.username = candidate.username;
+    }
+
+    if (candidate.credential !== undefined) {
+        if (typeof candidate.credential !== 'string') return null;
+        normalized.credential = candidate.credential;
+    }
+
+    return normalized;
 };
 
-/**
- * Creates PeerJS configuration for local host-as-server architecture.
- * @param isHost - Whether this peer is the host (runs local server)
- * @param targetIP - IP address to connect to (for guests). Defaults to 'localhost'
- */
+export const setRuntimeIceServers = (servers: unknown): RTCIceServer[] => {
+    if (!Array.isArray(servers)) {
+        runtimeIceServers = [];
+        return runtimeIceServers;
+    }
+
+    runtimeIceServers = servers
+        .map((server) => normalizeIceServer(server))
+        .filter((server): server is RTCIceServer => server !== null);
+
+    return runtimeIceServers;
+};
+
+export const resetRuntimeIceServers = () => {
+    runtimeIceServers = [];
+};
+
+export const getIceServers = (): RTCIceServer[] => [...DEFAULT_ICE_SERVERS, ...runtimeIceServers];
+
 /**
  * Creates PeerJS configuration.
  * Defaults to PeerJS public cloud if targetIP is not specified or is 'cloud'.
- * @param isHost - whether this peer identifies as host (not relevant for cloud config usually, but kept for interface)
- * @param targetIP - Optional: custom signaling server Host/IP. Pass 'localhost' for local dev.
  */
-export const createPeerConfig = (isHost: boolean, targetIP?: string) => {
+export const createPeerConfig = (_isHost: boolean, targetIP?: string) => {
     const isLocal =
         targetIP === 'localhost' || targetIP?.startsWith('192') || targetIP?.startsWith('10.');
+    const baseConfig = {
+        debug: import.meta.env.DEV ? 2 : 1,
+        config: {
+            iceServers: getIceServers(),
+            iceTransportPolicy: 'all' as RTCIceTransportPolicy,
+        },
+    };
 
     if (isLocal && targetIP) {
         return {
+            ...baseConfig,
             host: targetIP,
             port: 9000,
             path: '/gemduel',
             secure: false,
-            debug: 2,
-            config: {
-                iceServers: GET_ICE_SERVERS(),
-                iceTransportPolicy: 'all' as RTCIceTransportPolicy,
-            },
         };
     }
 
-    // PeerJS Cloud Config (Default)
     return {
-        secure: true, // Cloud requires SSL
-        debug: 2,
-        config: {
-            iceServers: GET_ICE_SERVERS(),
-            iceTransportPolicy: 'all' as RTCIceTransportPolicy,
-        },
+        ...baseConfig,
+        secure: true,
     };
 };
 

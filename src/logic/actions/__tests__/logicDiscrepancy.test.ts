@@ -3,19 +3,15 @@ import { applyAction } from '../../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../../initialState';
 import { BUFFS, GEM_TYPES } from '../../../constants';
 import { Card, GameAction } from '../../../types';
+import { createGameSetupPayload } from '../../gameSetup';
 
 // Helper to create a clean state
 const createTestState = () => JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON));
 
 describe('Logic Discrepancy Tests (v3.1.0 JS vs Current TS)', () => {
-    it('[handleInit] should correctly apply ALL properties from payload, not just board/bag/market/decks', () => {
-        // This test is based on the logic from the original JS version (git tag v3.1.0)
-        // The original JS logic used { ...skeleton, ...payload }, applying all payload properties.
-        // The TS migration changed this to only apply specific properties, which is a logic regression.
-
-        // Let's craft a payload that includes a non-standard initial state.
+    it('[handleInit] should ignore non-setup state overrides and keep the bootstrap DTO narrow', () => {
         const customPayload = {
-            // Custom property that the TS version would ignore without the fix
+            ...createGameSetupPayload('LOCAL_PVP'),
             privileges: { p1: 3, p2: 3 },
         };
 
@@ -27,12 +23,9 @@ describe('Logic Discrepancy Tests (v3.1.0 JS vs Current TS)', () => {
         // The initial state is null
         const nextState = applyAction(null, action);
 
-        // Assertions
         expect(nextState).not.toBeNull();
-        // The original logic would have respected the custom privileges.
-        // The current TS logic will ignore it, and privileges will be the default {p1: 0, p2: 1}.
-        expect(nextState!.privileges.p1).toBe(3);
-        expect(nextState!.privileges.p2).toBe(3);
+        expect(nextState!.privileges.p1).toBe(0);
+        expect(nextState!.privileges.p2).toBe(1);
     });
 
     it('[handleBuyCard] Recycler buff should refund the FIRST color paid, not the most numerous', () => {
@@ -54,6 +47,7 @@ describe('Logic Discrepancy Tests (v3.1.0 JS vs Current TS)', () => {
             crowns: 0,
             ability: 'none',
         };
+        state.market[2][0] = cardToBuy;
 
         // Pre-fill the bag so the refund logic can execute correctly
         state.bag.push({ type: GEM_TYPES.BLUE, uid: 'b-bag' });
@@ -92,6 +86,7 @@ describe('Logic Discrepancy Tests (v3.1.0 JS vs Current TS)', () => {
             bonusColor: 'red',
             ability: 'bonus_gem',
         };
+        state.market[1][0] = cardWithBonus;
 
         // Add a matching gem to the board so the bonus gem action is available
         state.board[0][0] = { type: GEM_TYPES.RED, uid: 'red-gem-1' };

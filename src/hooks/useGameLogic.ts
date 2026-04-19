@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { GameState, GemCoord, GameAction } from '../types';
 import { useAIController } from './useAIController';
 import { useGameState } from './useGameState';
 import { useGameNetwork } from './useGameNetwork';
 import { useGameInteractions } from './useGameInteractions';
+import { useHistoryFlattening } from './useHistoryFlattening';
 
 export const useGameLogic = (
     shouldConnect: boolean = false,
@@ -37,27 +38,8 @@ export const useGameLogic = (
     // 4. AI Controller
     useAIController(gameState, networkDispatch, isViewingHistory);
 
-    // 5. Flattening Logic (moved from original useGameLogic)
-    useEffect(() => {
-        if (
-            gameState.phase === 'IDLE' &&
-            historyControls.historyLength > 1 &&
-            historyControls.history.some((a) => a.type === 'SELECT_BUFF' || a.type === 'INIT_DRAFT')
-        ) {
-            const flattenedAction: GameAction = {
-                type: 'FLATTEN',
-                payload: JSON.parse(JSON.stringify(gameState)),
-            };
-            historyControls.clearAndInit(flattenedAction);
-        }
-    }, [
-        gameState.phase,
-        historyControls.history,
-        historyControls.clearAndInit,
-        gameState,
-        historyControls.historyLength,
-        historyControls,
-    ]);
+    // 5. History Flattening
+    useHistoryFlattening(gameState, historyControls);
 
     const result = useMemo(
         () => ({

@@ -15,20 +15,25 @@ export function UpdateNotification() {
     });
 
     useEffect(() => {
-        if (window.ipcRenderer) {
-            window.ipcRenderer.on('update_available', () => {
-                setUpdateInfo((prev) => ({ ...prev, available: true }));
-            });
+        if (!window.electron) return;
 
-            window.ipcRenderer.on('download_progress', (arg: unknown) => {
-                const percent = arg as number;
-                setUpdateInfo((prev) => ({ ...prev, progress: Math.round(percent) }));
-            });
+        const unsubscribeAvailable = window.electron.onUpdateAvailable(() => {
+            setUpdateInfo((prev) => ({ ...prev, available: true }));
+        });
 
-            window.ipcRenderer.on('update_downloaded', () => {
-                setUpdateInfo((prev) => ({ ...prev, downloaded: true }));
-            });
-        }
+        const unsubscribeProgress = window.electron.onDownloadProgress((percent) => {
+            setUpdateInfo((prev) => ({ ...prev, progress: Math.round(percent) }));
+        });
+
+        const unsubscribeDownloaded = window.electron.onUpdateDownloaded(() => {
+            setUpdateInfo((prev) => ({ ...prev, downloaded: true }));
+        });
+
+        return () => {
+            unsubscribeAvailable();
+            unsubscribeProgress();
+            unsubscribeDownloaded();
+        };
     }, []);
 
     if (!updateInfo.available) return null;
@@ -48,7 +53,7 @@ export function UpdateNotification() {
                 </div>
             ) : (
                 <button
-                    onClick={() => window.ipcRenderer.send('restart_app')}
+                    onClick={() => window.electron.restartApp()}
                     className="w-full mt-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors"
                 >
                     Restart Now

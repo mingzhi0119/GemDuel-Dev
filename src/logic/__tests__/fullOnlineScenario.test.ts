@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
-import { GameState, GameAction, Buff, BuffInitPayload } from '../../types';
+import { createGameSetupPayload } from '../gameSetup';
+import { GameState, GameAction } from '../../types';
 
 // --- Authoritative Mock Infrastructure ---
 
@@ -108,44 +109,10 @@ describe('Authoritative Host Online Integration', () => {
         // 1. Initial Setup
         const initAction: GameAction = {
             type: 'INIT',
-            payload: {
-                mode: 'ONLINE_MULTIPLAYER',
-                board: Array.from({ length: 5 }, () =>
-                    Array.from({ length: 5 }, () => ({
-                        type: { id: 'red', color: '', border: '', label: '' },
-                        uid: 'r',
-                    }))
-                ) as unknown as unknown,
-                bag: [] as unknown as unknown,
-                market: { 1: [], 2: [], 3: [] } as unknown as unknown,
-                decks: { 1: [], 2: [], 3: [] } as unknown as unknown,
-                playerBuffs: {
-                    p1: {
-                        id: 'n1',
-                        level: 1,
-                        label: '',
-                        desc: '',
-                        effects: {},
-                    } as unknown as unknown,
-                    p2: {
-                        id: 'n2',
-                        level: 1,
-                        label: '',
-                        desc: '',
-                        effects: {},
-                    } as unknown as unknown,
-                },
-                playerTurnCounts: { p1: 0, p2: 0 },
-                royalMilestones: { p1: { 3: false, 6: false }, p2: { 3: false, 6: false } },
-                inventories: {
-                    p1: { red: 0, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-                    p2: { red: 0, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-                },
-                playerTableau: { p1: [], p2: [] },
-                playerRoyals: { p1: [], p2: [] },
-                playerReserved: { p1: [], p2: [] },
-                royalDeck: [],
-            } as BuffInitPayload,
+            payload: createGameSetupPayload('ONLINE_MULTIPLAYER', {
+                useBuffs: false,
+                isHost: true,
+            }),
         };
 
         host.receive(initAction);
@@ -194,22 +161,22 @@ describe('Authoritative Host Online Integration', () => {
     });
 
     it('should process Guest intent via Host authority', () => {
-        // Init with p2 turn to test guest interaction
         const initAction: GameAction = {
             type: 'INIT',
-            payload: {
-                mode: 'ONLINE_MULTIPLAYER',
-                turn: 'p2',
-                playerBuffs: {
-                    p1: { id: 'n', effects: {} },
-                    p2: { id: 'n', effects: {} },
-                } as unknown as unknown,
-                inventories: { p1: {}, p2: { blue: 1 } } as unknown as unknown,
-                playerTurnCounts: { p1: 0, p2: 0 },
-            } as BuffInitPayload,
+            payload: createGameSetupPayload('ONLINE_MULTIPLAYER', {
+                useBuffs: false,
+                isHost: true,
+            }),
         };
         host.receive(initAction);
         guest.receive(initAction);
+
+        host.state.turn = 'p2';
+        guest.state.turn = 'p2';
+        host.state.phase = 'DISCARD_EXCESS_GEMS';
+        guest.state.phase = 'DISCARD_EXCESS_GEMS';
+        host.state.inventories.p2.blue = 1;
+        guest.state.inventories.p2.blue = 1;
 
         // Guest turn p2. Guest wants to discard.
         const guestDiscardAction: GameAction = { type: 'DISCARD_GEM', payload: 'blue' };

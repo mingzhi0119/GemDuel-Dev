@@ -1,9 +1,13 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { GRID_SIZE, BUFFS } from '../constants';
-import { generateGemPool, generateDeck, shuffleArray, calculateTransaction } from '../utils';
+import { calculateTransaction } from '../utils';
 import { processGemClick, processOpponentGemClick } from '../logic/interactionManager';
 import { getPlayerScore, getCrownCount } from '../logic/selectors';
 import { validateGemSelection } from '../logic/validators';
+import {
+    buildP2DraftPoolIndices,
+    buildStartGameAction,
+    getRandomBasicGemColor,
+} from '../logic/gameSetup';
 import {
     GameState,
     Card,
@@ -11,16 +15,12 @@ import {
     GemCoord,
     GemColor,
     GameAction,
-    GemTypeObject,
     GameMode,
-    BoardCell,
-    BuffInitPayload,
     BuyCardPayload,
     RoyalCard,
     InitiateBuyJokerPayload,
     InitiateReservePayload,
     InitiateReserveDeckPayload,
-    Buff,
 } from '../types';
 
 export const useGameInteractions = (
@@ -84,86 +84,7 @@ export const useGameInteractions = (
             mode: GameMode,
             options: { useBuffs: boolean; isHost?: boolean } = { useBuffs: false }
         ) => {
-            const isRogue = options.useBuffs;
-            const fullPool = generateGemPool();
-            const initialBoardFlat = fullPool.slice(0, 25);
-            const initialBag = fullPool.slice(25);
-            const newBoard: BoardCell[][] = [];
-            for (let r = 0; r < GRID_SIZE; r++) {
-                const row: BoardCell[] = [];
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    row.push(initialBoardFlat[r * GRID_SIZE + c]);
-                }
-                newBoard.push(row);
-            }
-            const d1 = generateDeck(1, isRogue);
-            const d2 = generateDeck(2, isRogue);
-            const d3 = generateDeck(3, isRogue);
-            const market = { 3: d3.splice(0, 3), 2: d2.splice(0, 4), 1: d1.splice(0, 5) };
-            const decks = { 1: d1, 2: d2, 3: d3 };
-
-            const basics = ['red', 'green', 'blue', 'white', 'black'];
-            const initRandoms = {
-                p1: {
-                    randomGems: Array.from(
-                        { length: 5 },
-                        () => basics[Math.floor(Math.random() * 5)]
-                    ),
-                    reserveCardLevel: Math.floor(Math.random() * 3) + 1,
-                    preferenceColor: basics[Math.floor(Math.random() * 5)],
-                },
-                p2: {
-                    randomGems: Array.from(
-                        { length: 5 },
-                        () => basics[Math.floor(Math.random() * 5)]
-                    ),
-                    reserveCardLevel: Math.floor(Math.random() * 3) + 1,
-                    preferenceColor: basics[Math.floor(Math.random() * 5)],
-                },
-            };
-
-            const setupData: BuffInitPayload = {
-                mode,
-                board: newBoard,
-                bag: initialBag,
-                market,
-                decks,
-                initRandoms,
-                isHost: options.isHost ?? true,
-            };
-
-            if (options.useBuffs) {
-                const level = (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
-                const levelBuffs = (Object.values(BUFFS) as Buff[]).filter(
-                    (b) => b.level === level
-                );
-
-                // Select 3 for P1 from DIFFERENT categories
-                const categoriesSeen = new Set<string>();
-                const p1Pool: typeof levelBuffs = [];
-                const shuffledPool = shuffleArray([...levelBuffs]);
-
-                for (const b of shuffledPool) {
-                    if (b.category && !categoriesSeen.has(b.category)) {
-                        p1Pool.push(b);
-                        categoriesSeen.add(b.category);
-                        if (p1Pool.length === 3) break;
-                    }
-                }
-
-                // IDs only
-                setupData.draftPool = p1Pool.map((b) => b.id);
-                setupData.buffLevel = level;
-
-                const action: GameAction = {
-                    type: 'INIT_DRAFT',
-                    payload: setupData as unknown as Record<string, unknown>,
-                };
-                networkDispatch(action);
-            } else {
-                const action: GameAction = { type: 'INIT', payload: setupData };
-                networkDispatch(action);
-            }
+            networkDispatch(buildStartGameAction(mode, options));
         },
         [networkDispatch]
     );
@@ -213,7 +134,6 @@ export const useGameInteractions = (
 
     const handleReplenish = useCallback(() => {
         if (!canLocalInteract || gameState.bag.length === 0) return;
-        const basics = ['red', 'green', 'blue', 'white', 'black'];
         const opponent = gameState.turn === 'p1' ? 'p2' : 'p1';
         const stealable = Object.keys(gameState.inventories[opponent]).filter(
             (k) => k !== 'gold' && k !== 'pearl' && gameState.inventories[opponent][k] > 0
@@ -222,7 +142,7 @@ export const useGameInteractions = (
             type: 'REPLENISH',
             payload: {
                 randoms: {
-                    expansionColor: basics[Math.floor(Math.random() * 5)] as GemColor,
+                    expansionColor: getRandomBasicGemColor(),
                     extortionColor: (stealable.length > 0
                         ? stealable[Math.floor(Math.random() * stealable.length)]
                         : undefined) as GemColor | undefined,
@@ -311,7 +231,6 @@ export const useGameInteractions = (
                 };
                 networkDispatch(action);
             } else {
-                const basics = ['red', 'green', 'blue', 'white', 'black'];
                 const action: GameAction = {
                     type: 'BUY_CARD',
                     payload: {
@@ -319,7 +238,7 @@ export const useGameInteractions = (
                         source: source as 'market' | 'reserved',
                         marketInfo,
                         randoms: {
-                            bountyHunterColor: basics[Math.floor(Math.random() * 5)] as GemColor,
+                            bountyHunterColor: getRandomBasicGemColor(),
                         },
                     },
                 };
@@ -338,7 +257,6 @@ export const useGameInteractions = (
             )
                 return;
             const { card, source, marketInfo } = gameState.pendingBuy;
-            const basics = ['red', 'green', 'blue', 'white', 'black'];
             const action: GameAction = {
                 type: 'BUY_CARD',
                 payload: {
@@ -346,7 +264,7 @@ export const useGameInteractions = (
                     source: source as 'market' | 'reserved',
                     marketInfo,
                     randoms: {
-                        bountyHunterColor: basics[Math.floor(Math.random() * 5)] as GemColor,
+                        bountyHunterColor: getRandomBasicGemColor(),
                     },
                 },
             };
@@ -450,39 +368,11 @@ export const useGameInteractions = (
     const handleSelectBuff = useCallback(
         (buffId: string) => {
             if (!canLocalInteract) return;
-            const basics = ['red', 'green', 'blue', 'white', 'black'];
-            const randomColor = basics[Math.floor(Math.random() * 5)] as GemColor;
-            let p2DraftPoolIndices: number[] | undefined;
-
-            if (gameState.turn === 'p1' && gameState.phase === 'DRAFT_PHASE') {
-                const levelBuffs = (Object.values(BUFFS) as Buff[]).filter(
-                    (b) => b.level === gameState.buffLevel
-                );
-                const selectedBuff = levelBuffs.find((b) => b.id === buffId);
-                const selectedCategory = selectedBuff?.category;
-
-                const p1ChoiceIdx = levelBuffs.findIndex((b) => b.id === buffId);
-
-                // Slot 1: P1's Choice
-                const finalIndices: number[] = [p1ChoiceIdx];
-
-                // Slots 2-4: 3 new buffs of DIFFERENT categories, none matching selectedCategory
-                const poolForP2 = levelBuffs.filter(
-                    (b) => b.id !== buffId && b.category !== selectedCategory
-                );
-                const shuffledPool = shuffleArray([...poolForP2]);
-                const categoriesSeen = new Set<string>();
-
-                for (const b of shuffledPool) {
-                    if (b.category && !categoriesSeen.has(b.category)) {
-                        const idx = levelBuffs.findIndex((lb) => lb.id === b.id);
-                        finalIndices.push(idx);
-                        categoriesSeen.add(b.category);
-                        if (finalIndices.length === 4) break;
-                    }
-                }
-                p2DraftPoolIndices = finalIndices;
-            }
+            const randomColor = getRandomBasicGemColor();
+            const p2DraftPoolIndices =
+                gameState.turn === 'p1' && gameState.phase === 'DRAFT_PHASE'
+                    ? buildP2DraftPoolIndices(gameState.buffLevel, buffId)
+                    : undefined;
 
             const action: GameAction = {
                 type: 'SELECT_BUFF',

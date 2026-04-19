@@ -11,13 +11,13 @@
 
 declare global {
     interface Window {
-        ipcRenderer: {
-            on: (channel: string, func: (...args: unknown[]) => void) => void;
-            send: (channel: string, ...args: unknown[]) => void;
-            removeAllListeners: (channel: string) => void;
-        };
         electron: {
             getAppVersion: () => Promise<string>;
+            getRuntimeIceServers: () => Promise<RTCIceServer[]>;
+            restartApp: () => void;
+            onUpdateAvailable: (callback: () => void) => () => void;
+            onDownloadProgress: (callback: (percent: number) => void) => () => void;
+            onUpdateDownloaded: (callback: () => void) => () => void;
         };
     }
 }
@@ -34,6 +34,7 @@ export interface GemCoord {
  * Union type for all gem colors in the game
  */
 export type GemColor = 'blue' | 'white' | 'green' | 'black' | 'red' | 'pearl' | 'gold';
+export type BasicGemColor = Exclude<GemColor, 'pearl' | 'gold'>;
 
 export type BounsColor = GemColor | 'null';
 
@@ -86,6 +87,18 @@ export interface Card {
     uid?: string;
     isBuff?: boolean;
     image?: string | null;
+}
+
+export interface DeckState {
+    1: Card[];
+    2: Card[];
+    3: Card[];
+}
+
+export interface MarketState {
+    1: (Card | null)[];
+    2: (Card | null)[];
+    3: (Card | null)[];
 }
 
 /**
@@ -216,6 +229,27 @@ export interface BoardCell {
  */
 export type BagItem = BoardCell | string;
 
+export interface PlayerInitRandoms {
+    randomGems: BasicGemColor[];
+    reserveCardLevel: 1 | 2 | 3;
+    preferenceColor: BasicGemColor;
+}
+
+export interface GameSetupPayload {
+    mode: GameMode;
+    board: BoardCell[][];
+    bag: BagItem[];
+    market: MarketState;
+    decks: DeckState;
+    initRandoms: Record<PlayerKey, PlayerInitRandoms>;
+    isHost: boolean;
+}
+
+export interface InitDraftPayload extends GameSetupPayload {
+    draftPool: string[];
+    buffLevel: 1 | 2 | 3;
+}
+
 /**
  * UI Modal state
  */
@@ -262,16 +296,8 @@ export interface GameState {
     winner: PlayerKey | null;
 
     // ========== CARD MANAGEMENT ==========
-    decks: {
-        1: Card[];
-        2: Card[];
-        3: Card[];
-    };
-    market: {
-        1: (Card | null)[];
-        2: (Card | null)[];
-        3: (Card | null)[];
-    };
+    decks: DeckState;
+    market: MarketState;
     playerTableau: Record<PlayerKey, Card[]>; // Cards player owns
     playerReserved: Record<PlayerKey, Card[]>; // Cards in hand/reserved
     playerRoyals: Record<PlayerKey, RoyalCard[]>; // Royal cards owned
@@ -298,10 +324,7 @@ export interface GameState {
     p1SelectedBuff?: Buff | null; // Track P1 choice for P2's turn
     draftOrder: PlayerKey[];
     buffLevel: number;
-    pendingSetup: {
-        board?: BoardCell[][];
-        decks?: Record<string, Card[]>;
-    } | null;
+    pendingSetup: GameSetupPayload | null;
     privilegeGemCount: number;
 
     // ========== PENDING ACTIONS (UI State) ==========
@@ -403,15 +426,12 @@ export interface InitiateReserveDeckPayload {
     level: 1 | 2 | 3;
 }
 
-export interface BuffInitPayload {
-    initRandoms?: Record<PlayerKey, Record<string, unknown>>;
-    [key: string]: unknown;
-}
+export type BuffInitPayload = GameSetupPayload;
 
 export interface SelectBuffPayload {
     buffId: string;
     randomColor?: GemColor;
-    initRandoms?: Record<PlayerKey, Record<string, unknown>>;
+    initRandoms?: Partial<Record<PlayerKey, PlayerInitRandoms>>;
     p2DraftPoolIndices?: number[];
 }
 
@@ -425,7 +445,7 @@ export interface PeekDeckPayload {
 export type GameAction =
     // BOOTSTRAP / SYNC
     | { type: 'INIT'; payload: BuffInitPayload }
-    | { type: 'INIT_DRAFT'; payload: Record<string, unknown> }
+    | { type: 'INIT_DRAFT'; payload: InitDraftPayload }
     | { type: 'FORCE_SYNC'; payload: GameState }
     | { type: 'FLATTEN'; payload: GameState }
 
