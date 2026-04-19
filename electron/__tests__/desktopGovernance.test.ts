@@ -77,11 +77,37 @@ describe('electron desktop governance', () => {
         ).toEqual({ ok: false, reason: 'Untrusted renderer origin.' });
     });
 
-    it('rejects payload arguments for no-argument IPC channels', () => {
+    it('validates payload shapes for governed IPC channels', () => {
         expect(validateIpcArgs('restart_app', [])).toEqual({ ok: true, args: [] });
         expect(validateIpcArgs('restart_app', ['unexpected'])).toEqual({
             ok: false,
             reason: 'This channel does not accept payload arguments.',
+        });
+        expect(
+            validateIpcArgs('report-release-health', [
+                {
+                    source: 'renderer',
+                    category: 'runtime',
+                    name: 'APP_RUNTIME_CONFIG_LOADED',
+                    severity: 'info',
+                    message: 'Loaded.',
+                },
+            ])
+        ).toEqual({
+            ok: true,
+            args: [
+                {
+                    source: 'renderer',
+                    category: 'runtime',
+                    name: 'APP_RUNTIME_CONFIG_LOADED',
+                    severity: 'info',
+                    message: 'Loaded.',
+                },
+            ],
+        });
+        expect(validateIpcArgs('report-release-health', ['invalid'])).toEqual({
+            ok: false,
+            reason: 'Release-health payload did not match the allowlisted schema.',
         });
     });
 

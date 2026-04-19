@@ -51,7 +51,9 @@ describe('electron preload contract', () => {
         const bridge = createElectronBridge(ipcRenderer) as {
             getAppVersion: () => Promise<string>;
             getRuntimeIceServers: () => Promise<string>;
+            getReleaseHealthSnapshot: () => Promise<string>;
             restartApp: () => void;
+            reportReleaseHealth: (event: { name: string }) => void;
             onUpdateAvailable: (callback: () => void) => () => void;
             onDownloadProgress: (callback: (value: number) => void) => () => void;
             onUpdateDownloaded: (callback: () => void) => () => void;
@@ -59,7 +61,11 @@ describe('electron preload contract', () => {
 
         await expect(bridge.getAppVersion()).resolves.toBe('get-app-version');
         await expect(bridge.getRuntimeIceServers()).resolves.toBe('get-runtime-ice-servers');
+        await expect(bridge.getReleaseHealthSnapshot()).resolves.toBe(
+            'get-release-health-snapshot'
+        );
         bridge.restartApp();
+        bridge.reportReleaseHealth({ name: 'APP_RUNTIME_CONFIG_LOADED' });
 
         const onAvailable = vi.fn();
         const onProgress = vi.fn();
@@ -75,7 +81,11 @@ describe('electron preload contract', () => {
 
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-app-version');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-runtime-ice-servers');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-release-health-snapshot');
         expect(ipcRenderer.send).toHaveBeenCalledWith('restart_app');
+        expect(ipcRenderer.send).toHaveBeenCalledWith('report-release-health', {
+            name: 'APP_RUNTIME_CONFIG_LOADED',
+        });
         expect(onAvailable).toHaveBeenCalledTimes(1);
         expect(onProgress).toHaveBeenCalledWith(42);
         expect(onDownloaded).toHaveBeenCalledTimes(1);

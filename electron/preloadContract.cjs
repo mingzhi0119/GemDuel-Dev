@@ -14,6 +14,13 @@ const IPC_ALLOWLIST = Object.freeze({
             payload: 'none',
             threat: 'Read-only runtime relay config, sanitized before renderer access.',
         }),
+        getReleaseHealthSnapshot: Object.freeze({
+            api: 'getReleaseHealthSnapshot',
+            channel: 'get-release-health-snapshot',
+            owner: 'Release health monitor',
+            payload: 'none',
+            threat: 'Read-only snapshot of sanitized release-health indicators and recent events.',
+        }),
     }),
     sends: Object.freeze({
         restartApp: Object.freeze({
@@ -22,6 +29,13 @@ const IPC_ALLOWLIST = Object.freeze({
             owner: 'Desktop shell',
             payload: 'none',
             threat: 'Privileged updater install trigger; sender must be authorized.',
+        }),
+        reportReleaseHealth: Object.freeze({
+            api: 'reportReleaseHealth',
+            channel: 'report-release-health',
+            owner: 'Renderer observability',
+            payload: 'ReleaseHealthEvent',
+            threat: 'Structured renderer health event, validated and redacted before persistence.',
         }),
     }),
     events: Object.freeze({
@@ -80,7 +94,11 @@ const createElectronBridge = (ipcRenderer) =>
     Object.freeze({
         getAppVersion: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getAppVersion),
         getRuntimeIceServers: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getRuntimeIceServers),
+        getReleaseHealthSnapshot: () =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot),
         restartApp: () => ipcRenderer.send(IPC_SEND_CHANNELS.restartApp),
+        reportReleaseHealth: (event) =>
+            ipcRenderer.send(IPC_SEND_CHANNELS.reportReleaseHealth, event),
         onUpdateAvailable: (callback) =>
             subscribe(
                 ipcRenderer,

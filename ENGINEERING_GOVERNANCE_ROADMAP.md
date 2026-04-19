@@ -16,7 +16,7 @@ Allowed status values:
 
 ## Scorecard
 
-| Dimension                             | Audit Baseline | Current After Priority 6 | Target | Status        | Main Governance Gap                                                                                                                                                  |
+| Dimension                             | Audit Baseline | Current After Priority 7 | Target | Status        | Main Governance Gap                                                                                                                                                  |
 | ------------------------------------- | -------------: | -----------------------: | -----: | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Correctness                           |           5/10 |                     8/10 |  8/10+ | `In Progress` | Core ingress contracts are stronger now, and regression depth improved, but some gameplay invariants still live in spread-out reducers instead of one engine.        |
 | Boundary Security                     |           3/10 |                     8/10 |  8/10+ | `In Progress` | Network, replay, and desktop trust boundaries are much tighter now, but local persistence and broader desktop failure coverage still need the same rigor.            |
@@ -26,8 +26,8 @@ Allowed status values:
 | Architecture Layering                 |           4/10 |                     8/10 |  8/10+ | `In Progress` | Large hooks are smaller and cleaner now, but replay, settings, and some UI-only wiring can still be split more deliberately.                                         |
 | Type Contracts                        |           4/10 |                     8/10 |  8/10+ | `In Progress` | Most hot-path DTOs are named and validated now, but view-mode typing and some snapshot-heavy contracts still need tightening.                                        |
 | Test Coverage                         |           5/10 |                     9/10 |  8/10+ | `In Progress` | Property-based testing, desktop boundary contracts, and coverage gates are in place now, but hook-level recovery and full Electron E2E are still thinner than ideal. |
-| Observability / Operations            |           5/10 |                     7/10 |  8/10+ | `In Progress` | Release-time governance checks and IPC rejection logging exist now, but telemetry, alerting, and field health indicators still do not.                               |
-| Dependency / Configuration Governance |           4/10 |                     7/10 |  8/10+ | `In Progress` | Desktop runtime flags and env parsing are governed now, but dependency audit automation and config ownership remain weak.                                            |
+| Observability / Operations            |           5/10 |                     8/10 |  8/10+ | `In Progress` | Structured release-health logging and checklists now exist, but automated alerting and field telemetry sinks still do not.                                           |
+| Dependency / Configuration Governance |           4/10 |                     7/10 |  8/10+ | `In Progress` | Runtime redaction and release-health policy are defined now, but dependency audit automation and config ownership remain weak.                                       |
 
 ## Dimension Summaries
 
@@ -166,10 +166,10 @@ Allowed status values:
 
 ### 9. Observability / Operations
 
-- Status: `Unstarted`
+- Status: `In Progress`
 - Baseline: `5/10`
 - Target: `8/10+`
-- Main issue: The project has logs and an updater, but not an operational discipline.
+- Main issue: The project now has structured release-health logging and checklists, but still lacks external alerting and field telemetry sinks.
 - Practical path to 8/10+:
 - Define release-health telemetry for startup, updater, peer connection, sync recovery, and fatal reducer rejection events.
 - Standardize log structure and severity so production logs are searchable and actionable.
@@ -300,12 +300,17 @@ Allowed status values:
 
 ### Priority 7. Release Observability Baseline
 
-- Status: `Unstarted`
+- Status: `Completed`
 - Why this matters: Once the core logic is safer, the next biggest gap is supportability in production.
 - Deliverables:
 - Add structured release-health logging for updater, startup, peer connection, and recovery flows.
 - Define failure-rate indicators and a release checklist.
 - Decide what must be visible in logs and what must be redacted.
+- Completed in this phase:
+- Added a structured release-health monitor with sanitized JSON event logging, severity tallies, recent-event history, and session indicators for startup, runtime config, updater, peer, recovery, and IPC rejection paths.
+- Added a governed renderer-to-main release-health reporting channel plus a read-only snapshot channel for support diagnostics.
+- Instrumented startup, updater, peer lifecycle, heartbeat instability, bootstrap checksum mismatch, host decision rejection, and recovery-request paths with machine-readable health events.
+- Added a release-health checklist and surfaced it in the GitHub release workflow so the release path includes both technical gates and operational review.
 - Raises: `Observability / Operations`, `Dependency / Configuration Governance`
 
 ### Priority 8. Dependency and Runtime Configuration Governance
@@ -334,6 +339,7 @@ These items are already done and should be treated as governance prerequisites, 
 - Status: `Completed` - The preload bridge now exposes a narrow Electron API instead of raw IPC primitives.
 - Status: `Completed` - Priority 5 added a governance-owned negative-path matrix, property-based stress tests, preload/runtime config contract tests, and active coverage gating for critical logic files.
 - Status: `Completed` - Priority 6 added an Electron IPC allowlist, sender validation, release-time desktop governance checks, and CI enforcement for release builds.
+- Status: `Completed` - Priority 7 added structured release-health logging, sanitized indicators, release checklists, and renderer-to-main diagnostics for startup, updater, peer, and recovery flows.
 - Status: `Completed` - Production updater policy and runtime ICE injection are now safer than the original audit baseline.
 - Status: `Completed` - Setup and draft bootstrap flows now use named DTOs instead of wide untyped payloads.
 

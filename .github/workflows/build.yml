@@ -34,6 +34,10 @@ jobs:
             - name: Desktop Governance Check
               run: npm run desktop:check
 
+            - name: Release Health Checklist
+              shell: pwsh
+              run: Get-Content RELEASE_HEALTH_CHECKLIST.md
+
             - name: Build and Publish
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

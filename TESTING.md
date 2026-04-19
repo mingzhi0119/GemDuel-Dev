@@ -249,6 +249,8 @@ npm run test:coverage  # Generate coverage report
 npm run desktop:check  # Fail if Electron IPC or BrowserWindow security drifts
 ```
 
+For desktop releases, pair those commands with the operational review in `RELEASE_HEALTH_CHECKLIST.md`.
+
 Both commands will exit with a non-zero code on failure, triggering CI failure.
 
 ## Type Safety in Tests

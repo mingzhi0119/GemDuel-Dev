@@ -19,6 +19,7 @@ import type {
     HostDecisionMessage,
 } from '../types/network';
 import { useOnlineManager, type OnlineManagerController } from './useOnlineManager';
+import { reportReleaseHealth } from '../observability/releaseHealth';
 
 const MAX_APPROVAL_LOG_ENTRIES = 25;
 
@@ -53,6 +54,12 @@ export const useGameNetwork = (
                     console.error(
                         `[NET] Bootstrap checksum mismatch: local ${localChecksum} vs remote ${remoteChecksum}`
                     );
+                    reportReleaseHealth({
+                        category: 'recovery',
+                        name: 'BOOTSTRAP_CHECKSUM_MISMATCH',
+                        severity: 'error',
+                        message: 'Bootstrap checksum verification failed on the guest.',
+                    });
                     onlineRef.current?.requestRecovery('CHECKSUM_MISMATCH');
                     return;
                 }
@@ -98,6 +105,15 @@ export const useGameNetwork = (
                     approved: false,
                     reason: rejectionDecision.reason,
                 });
+                reportReleaseHealth({
+                    category: 'network',
+                    name: 'HOST_INTENT_REJECTED',
+                    severity: 'warn',
+                    message: 'Host rejected a guest intent during authority review.',
+                    context: {
+                        intentKind: command.kind,
+                    },
+                });
                 onlineRef.current?.sendHostDecision(rejectionDecision);
                 return;
             }
@@ -115,6 +131,15 @@ export const useGameNetwork = (
                     ...logBase,
                     approved: false,
                     reason: staleDecision.reason,
+                });
+                reportReleaseHealth({
+                    category: 'recovery',
+                    name: 'HOST_CHECKSUM_DERIVATION_FAILED',
+                    severity: 'error',
+                    message: 'Host could not derive a deterministic checksum for a guest intent.',
+                    context: {
+                        intentKind: command.kind,
+                    },
                 });
                 onlineRef.current?.sendHostDecision(staleDecision);
                 return;
@@ -147,6 +172,12 @@ export const useGameNetwork = (
                 console.warn(
                     '[NET] Ignoring late host decision because no guest intent is pending.'
                 );
+                reportReleaseHealth({
+                    category: 'recovery',
+                    name: 'HOST_DECISION_LATE',
+                    severity: 'warn',
+                    message: 'Guest ignored a late host decision because no intent was pending.',
+                });
                 return;
             }
 
@@ -157,6 +188,16 @@ export const useGameNetwork = (
                 console.warn(
                     '[NET] Guest received an unexpected host decision. Requesting authoritative recovery.'
                 );
+                reportReleaseHealth({
+                    category: 'recovery',
+                    name: 'HOST_DECISION_STALE',
+                    severity: 'warn',
+                    message:
+                        'Guest received a stale or mismatched host decision and requested recovery.',
+                    context: {
+                        intentKind: decision.intentKind,
+                    },
+                });
                 onlineRef.current?.requestRecovery('STALE_PACKET', decision.requestId);
                 return;
             }
@@ -167,6 +208,15 @@ export const useGameNetwork = (
                 console.warn(
                     `[NET] Host rejected guest intent ${decision.intentKind}: ${decision.reason || 'Unknown reason.'}`
                 );
+                reportReleaseHealth({
+                    category: 'network',
+                    name: 'HOST_DECISION_REJECTED',
+                    severity: 'warn',
+                    message: 'Guest received a host rejection for a multiplayer intent.',
+                    context: {
+                        intentKind: decision.intentKind,
+                    },
+                });
                 return;
             }
 
@@ -175,6 +225,17 @@ export const useGameNetwork = (
                 console.error(
                     `[NET] Approved decision for ${decision.intentKind} failed verification (${verification.reason}).`
                 );
+                reportReleaseHealth({
+                    category: 'recovery',
+                    name: 'HOST_DECISION_VERIFICATION_FAILED',
+                    severity: 'error',
+                    message:
+                        'Guest failed to verify an approved host decision and requested recovery.',
+                    context: {
+                        intentKind: decision.intentKind,
+                        reason: verification.reason || 'STALE_PACKET',
+                    },
+                });
                 onlineRef.current?.requestRecovery(
                     verification.reason || 'STALE_PACKET',
                     decision.requestId
@@ -185,6 +246,16 @@ export const useGameNetwork = (
             console.log(
                 `[NET] Guest verified approved ${decision.intentKind} checksum and is waiting for authoritative sync.`
             );
+            reportReleaseHealth({
+                category: 'network',
+                name: 'HOST_DECISION_VERIFIED',
+                severity: 'info',
+                message:
+                    'Guest verified an approved host decision and is awaiting authoritative sync.',
+                context: {
+                    intentKind: decision.intentKind,
+                },
+            });
         },
         [gameState]
     );

@@ -18,6 +18,7 @@ import { UpdateNotification } from './components/UpdateNotification';
 import { useGameLogic } from './hooks/useGameLogic';
 import { useSettings } from './hooks/useSettings';
 import { setRuntimeIceServers } from './config/webrtc';
+import { reportReleaseHealth } from './observability/releaseHealth';
 import { MAX_REPLAY_FILE_BYTES, parseReplayFile } from './logic/replayImport';
 import { GEM_TYPES, BONUS_COLORS } from './constants';
 import { GemColor, PlayerKey, ReplayFile } from './types';
@@ -49,8 +50,23 @@ export default function GemDuelBoard() {
 
                 if (version) setAppVersion(version);
                 if (iceServers) setRuntimeIceServers(iceServers);
-            } catch (err) {
-                console.error('Failed to load runtime app config:', err);
+                reportReleaseHealth({
+                    category: 'runtime',
+                    name: 'APP_RUNTIME_CONFIG_LOADED',
+                    severity: 'info',
+                    message: 'Renderer loaded runtime app configuration successfully.',
+                    context: {
+                        hasVersion: Boolean(version),
+                        iceServerCount: Array.isArray(iceServers) ? iceServers.length : 0,
+                    },
+                });
+            } catch {
+                reportReleaseHealth({
+                    category: 'runtime',
+                    name: 'APP_RUNTIME_CONFIG_FAILED',
+                    severity: 'error',
+                    message: 'Renderer failed to load runtime app configuration.',
+                });
             }
         };
 

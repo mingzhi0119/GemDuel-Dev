@@ -25,6 +25,7 @@ export default defineConfig({
                 'src/logic/actions/boardActions.ts',
                 'src/logic/actions/marketActions.ts',
                 'electron/desktopGovernance.js',
+                'electron/releaseHealth.js',
                 'electron/runtimeConfig.js',
                 'electron/preloadContract.cjs',
             ],

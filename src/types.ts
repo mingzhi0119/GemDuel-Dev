@@ -5,6 +5,8 @@
  * that ensure type safety across the entire game logic layer.
  */
 
+import type { ReleaseHealthEvent } from './observability/releaseHealth';
+
 // ============================================================================
 // GEM TYPES & COLORS
 // ============================================================================
@@ -14,7 +16,36 @@ declare global {
         electron: {
             getAppVersion: () => Promise<string>;
             getRuntimeIceServers: () => Promise<RTCIceServer[]>;
+            getReleaseHealthSnapshot: () => Promise<{
+                startedAt: string;
+                lastEventAt: string | null;
+                totalEvents: number;
+                severityCounts: Record<'info' | 'warn' | 'error', number>;
+                indicators: {
+                    startupFailures: number;
+                    runtimeConfigFailures: number;
+                    updaterFailures: number;
+                    peerFailures: number;
+                    recoveryRequests: number;
+                    ipcRejected: number;
+                };
+                counters: Record<
+                    string,
+                    {
+                        count: number;
+                        severity: 'info' | 'warn' | 'error';
+                        lastAt: string;
+                    }
+                >;
+                recentEvents: Array<
+                    ReleaseHealthEvent & {
+                        source: 'main' | 'renderer';
+                        timestamp: string;
+                    }
+                >;
+            }>;
             restartApp: () => void;
+            reportReleaseHealth: (event: ReleaseHealthEvent & { source?: 'renderer' }) => void;
             onUpdateAvailable: (callback: () => void) => () => void;
             onDownloadProgress: (callback: (percent: number) => void) => () => void;
             onUpdateDownloaded: (callback: () => void) => () => void;

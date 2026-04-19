@@ -14,6 +14,7 @@ import { createPeerConfig } from '../config/webrtc';
 import { useConnectionHealth } from './useConnectionHealth';
 import { parseNetworkMessage } from '../logic/actionValidation';
 import { getInboundMessageCheck } from '../logic/networkProtocol';
+import { reportReleaseHealth } from '../observability/releaseHealth';
 
 export interface OnlineManagerHandlers {
     onBootstrapReceived: (command: BootstrapCommand, checksum?: string) => void;
@@ -84,12 +85,28 @@ export const useOnlineManager = (
                 setConn(connection);
                 setRemotePeerId(connection.peer);
                 reconnectAttempts.current = 0;
+                reportReleaseHealth({
+                    category: 'peer',
+                    name: 'PEER_CONNECTION_OPENED',
+                    severity: 'info',
+                    message: 'Peer data connection opened successfully.',
+                    context: {
+                        role: isHostRef.current ? 'host' : 'guest',
+                        remotePeerId: connection.peer,
+                    },
+                });
             });
 
             connection.on('data', (data: unknown) => {
                 const msg = parseNetworkMessage(data);
                 if (!msg) {
                     console.warn('[NET] Rejected malformed network message.');
+                    reportReleaseHealth({
+                        category: 'network',
+                        name: 'NETWORK_MESSAGE_REJECTED',
+                        severity: 'warn',
+                        message: 'Inbound network payload was rejected by the runtime parser.',
+                    });
                     return;
                 }
 
@@ -102,6 +119,16 @@ export const useOnlineManager = (
                 const directionCheck = getInboundMessageCheck(role, msg);
                 if (!directionCheck.accepted) {
                     console.warn(`[NET] ${directionCheck.reason}`);
+                    reportReleaseHealth({
+                        category: 'network',
+                        name: 'NETWORK_DIRECTION_REJECTED',
+                        severity: 'warn',
+                        message: 'Inbound network payload violated the role-direction contract.',
+                        context: {
+                            reason: directionCheck.reason,
+                            type: msg.type,
+                        },
+                    });
                     return;
                 }
 
@@ -125,6 +152,16 @@ export const useOnlineManager = (
                             console.warn(
                                 `[NET] Guest requested recovery (${msg.reason}). Sending authoritative snapshot.`
                             );
+                            reportReleaseHealth({
+                                category: 'recovery',
+                                name: 'RECOVERY_REQUEST_RECEIVED',
+                                severity: 'warn',
+                                message:
+                                    'Host received a recovery request and sent an authoritative snapshot.',
+                                context: {
+                                    reason: msg.reason,
+                                },
+                            });
                             sendMessage({
                                 version: NETWORK_PROTOCOL_VERSION,
                                 type: 'SYNC_STATE',
@@ -137,6 +174,15 @@ export const useOnlineManager = (
             });
 
             connection.on('close', () => {
+                reportReleaseHealth({
+                    category: 'peer',
+                    name: 'PEER_CONNECTION_CLOSED',
+                    severity: 'warn',
+                    message: 'Peer data connection closed.',
+                    context: {
+                        remotePeerId: connection.peer,
+                    },
+                });
                 setConn((current) => {
                     if (current === connection) {
                         setConnectionStatus('disconnected');
@@ -149,6 +195,12 @@ export const useOnlineManager = (
 
             connection.on('error', (err) => {
                 console.error('[NET] Connection Error:', err);
+                reportReleaseHealth({
+                    category: 'peer',
+                    name: 'PEER_CONNECTION_ERROR',
+                    severity: 'error',
+                    message: 'Peer data connection emitted an error.',
+                });
             });
         },
         [getCurrentStateRef, handleHeartbeat, sendMessage]
@@ -167,6 +219,15 @@ export const useOnlineManager = (
 
         console.log('[NET] Initializing Peer...');
         console.log(`[NET] Target IP: ${targetIP}`);
+        reportReleaseHealth({
+            category: 'peer',
+            name: 'PEER_INITIALIZING',
+            severity: 'info',
+            message: 'Peer manager started initializing the local peer instance.',
+            context: {
+                targetIp: targetIP,
+            },
+        });
 
         const peerConfig = createPeerConfig(true, targetIP);
         const newPeer = new Peer(peerConfig);
@@ -174,6 +235,15 @@ export const useOnlineManager = (
         newPeer.on('open', (id) => {
             setPeerId(id);
             console.log('[NET] My peer ID is: ' + id);
+            reportReleaseHealth({
+                category: 'peer',
+                name: 'PEER_READY',
+                severity: 'info',
+                message: 'Peer manager received a local peer identifier from the signaling layer.',
+                context: {
+                    peerId: id,
+                },
+            });
         });
 
         newPeer.on('connection', (connection) => {
@@ -181,10 +251,28 @@ export const useOnlineManager = (
             isHostRef.current = true;
             setupConnectionRef.current(connection);
             setIsHost(true);
+            reportReleaseHealth({
+                category: 'peer',
+                name: 'PEER_INCOMING_CONNECTION',
+                severity: 'info',
+                message: 'Peer manager accepted an incoming multiplayer connection.',
+                context: {
+                    remotePeerId: connection.peer,
+                },
+            });
         });
 
         newPeer.on('disconnected', () => {
             console.warn('[NET] Peer disconnected from signaling server.');
+            reportReleaseHealth({
+                category: 'peer',
+                name: 'PEER_SIGNALING_DISCONNECTED',
+                severity: 'warn',
+                message: 'Peer manager disconnected from the signaling server.',
+                context: {
+                    attempt: reconnectAttempts.current + 1,
+                },
+            });
             if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
                 console.log(
                     `[NET] Attempting reconnect (${reconnectAttempts.current + 1}/${MAX_RECONNECT_ATTEMPTS})...`
@@ -194,19 +282,51 @@ export const useOnlineManager = (
                     if (!newPeer.destroyed) {
                         newPeer.reconnect();
                         reconnectAttempts.current++;
+                        reportReleaseHealth({
+                            category: 'peer',
+                            name: 'PEER_RECONNECT_SCHEDULED',
+                            severity: 'info',
+                            message: 'Peer manager scheduled a reconnect attempt.',
+                            context: {
+                                attempt: reconnectAttempts.current,
+                                maxAttempts: MAX_RECONNECT_ATTEMPTS,
+                            },
+                        });
                     }
                 }, 2000);
+            } else {
+                reportReleaseHealth({
+                    category: 'peer',
+                    name: 'PEER_RECONNECT_EXHAUSTED',
+                    severity: 'error',
+                    message: 'Peer manager exhausted its reconnect attempts.',
+                    context: {
+                        maxAttempts: MAX_RECONNECT_ATTEMPTS,
+                    },
+                });
             }
         });
 
         newPeer.on('error', (err) => {
             console.error('[NET] Peer Error:', err);
+            reportReleaseHealth({
+                category: 'peer',
+                name: 'PEER_ERROR',
+                severity: 'error',
+                message: 'Peer manager emitted a signaling-layer error.',
+            });
         });
 
         setPeer(newPeer);
 
         return () => {
             console.log('[NET] Destroying Peer instance.');
+            reportReleaseHealth({
+                category: 'peer',
+                name: 'PEER_DESTROYED',
+                severity: 'info',
+                message: 'Peer manager destroyed the local peer instance during cleanup.',
+            });
             if (reconnectTimeoutRef.current) {
                 clearTimeout(reconnectTimeoutRef.current);
                 reconnectTimeoutRef.current = null;
@@ -221,10 +341,26 @@ export const useOnlineManager = (
         (id: string) => {
             if (!peer) {
                 console.error('[NET] Cannot connect: Peer instance not ready.');
+                reportReleaseHealth({
+                    category: 'peer',
+                    name: 'PEER_CONNECT_ATTEMPT_REJECTED',
+                    severity: 'error',
+                    message:
+                        'Outgoing peer connection was attempted before the local peer was ready.',
+                });
                 return;
             }
             setConnectionStatus('connecting');
             isHostRef.current = false;
+            reportReleaseHealth({
+                category: 'peer',
+                name: 'PEER_CONNECT_REQUESTED',
+                severity: 'info',
+                message: 'Outgoing peer connection was requested.',
+                context: {
+                    remotePeerId: id,
+                },
+            });
             const connection = peer.connect(id);
             setupConnectionRef.current(connection);
             setIsHost(false);
@@ -281,6 +417,16 @@ export const useOnlineManager = (
 
     const requestRecovery = useCallback(
         (reason: RecoveryReason, requestId?: string) => {
+            reportReleaseHealth({
+                category: 'recovery',
+                name: 'RECOVERY_REQUEST_SENT',
+                severity: 'warn',
+                message: 'Client requested an authoritative recovery snapshot.',
+                context: {
+                    reason,
+                    requestId,
+                },
+            });
             sendMessage({
                 version: NETWORK_PROTOCOL_VERSION,
                 type: 'RECOVERY_REQUEST',

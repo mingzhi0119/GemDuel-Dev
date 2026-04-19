@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import preloadContract from './preloadContract.cjs';
+import { RELEASE_HEALTH_EVENT_SCHEMA } from './releaseHealth.js';
 
 const { ELECTRON_BRIDGE_API_KEYS, IPC_INVOKE_CHANNELS, IPC_SEND_CHANNELS, UPDATE_CHANNELS } =
     preloadContract;
@@ -13,10 +14,13 @@ const MAIN_WINDOW_WEB_PREFERENCES_SCHEMA = z.object({
 });
 
 const NO_ARGS_SCHEMA = z.tuple([]);
-
-const NO_ARG_CHANNELS = new Set([
-    ...Object.values(IPC_INVOKE_CHANNELS),
-    ...Object.values(IPC_SEND_CHANNELS),
+const RELEASE_HEALTH_EVENT_TUPLE_SCHEMA = z.tuple([RELEASE_HEALTH_EVENT_SCHEMA]);
+const IPC_ARG_SCHEMAS = new Map([
+    [IPC_INVOKE_CHANNELS.getAppVersion, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.getRuntimeIceServers, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot, NO_ARGS_SCHEMA],
+    [IPC_SEND_CHANNELS.restartApp, NO_ARGS_SCHEMA],
+    [IPC_SEND_CHANNELS.reportReleaseHealth, RELEASE_HEALTH_EVENT_TUPLE_SCHEMA],
 ]);
 
 export const createMainWindowOptions = ({ preloadPath, appVersion }) => ({
@@ -55,18 +59,23 @@ export const validateMainWindowOptions = (options) => {
 };
 
 export const validateIpcArgs = (channel, args) => {
-    if (!NO_ARG_CHANNELS.has(channel)) {
+    const schema = IPC_ARG_SCHEMAS.get(channel);
+
+    if (!schema) {
         return {
             ok: false,
             reason: `Unknown IPC channel ${channel}.`,
         };
     }
 
-    const parsed = NO_ARGS_SCHEMA.safeParse(args);
+    const parsed = schema.safeParse(args);
     if (!parsed.success) {
         return {
             ok: false,
-            reason: 'This channel does not accept payload arguments.',
+            reason:
+                channel === IPC_SEND_CHANNELS.reportReleaseHealth
+                    ? 'Release-health payload did not match the allowlisted schema.'
+                    : 'This channel does not accept payload arguments.',
         };
     }
 
