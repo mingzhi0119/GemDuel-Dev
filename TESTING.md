@@ -26,6 +26,9 @@ npm run test:ui
 
 # Generate coverage report
 npm run test:coverage
+
+# Run desktop release governance checks
+npm run desktop:check
 ```
 
 ## Test Structure
@@ -243,6 +246,7 @@ Add to your CI pipeline:
 ```bash
 npm test -- --run  # Run once (no watch mode)
 npm run test:coverage  # Generate coverage report
+npm run desktop:check  # Fail if Electron IPC or BrowserWindow security drifts
 ```
 
 Both commands will exit with a non-zero code on failure, triggering CI failure.

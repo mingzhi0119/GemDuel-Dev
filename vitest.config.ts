@@ -24,6 +24,7 @@ export default defineConfig({
                 'src/logic/validators.ts',
                 'src/logic/actions/boardActions.ts',
                 'src/logic/actions/marketActions.ts',
+                'electron/desktopGovernance.js',
                 'electron/runtimeConfig.js',
                 'electron/preloadContract.cjs',
             ],

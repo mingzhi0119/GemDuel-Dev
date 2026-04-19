@@ -3,7 +3,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
     getAutoUpdaterPolicy,
+    getRuntimeLogLevel,
     getRuntimeIceServersFromEnv,
+    normalizeBooleanEnv,
     normalizeIceServer,
 } from '../runtimeConfig.js';
 
@@ -57,11 +59,14 @@ describe('electron runtime config', () => {
     });
 
     it('derives updater policy from version and env toggles', () => {
+        const logger = { warn: vi.fn() };
+
         expect(
             getAutoUpdaterPolicy({
                 disableUpdatesEnv: 'false',
                 allowPrereleaseEnv: 'false',
                 appVersion: '5.2.11',
+                logger,
             })
         ).toEqual({
             enabled: true,
@@ -74,11 +79,59 @@ describe('electron runtime config', () => {
                 disableUpdatesEnv: 'true',
                 allowPrereleaseEnv: 'false',
                 appVersion: '5.2.11-beta.1',
+                logger,
             })
         ).toEqual({
             enabled: false,
             autoDownload: true,
             allowPrerelease: true,
         });
+    });
+
+    it('fails closed for malformed boolean env toggles', () => {
+        const logger = { warn: vi.fn() };
+
+        expect(
+            normalizeBooleanEnv({
+                envName: 'GEMDUEL_DISABLE_UPDATES',
+                rawValue: 'sometimes',
+                defaultValue: false,
+                logger,
+            })
+        ).toBe(false);
+
+        expect(
+            getAutoUpdaterPolicy({
+                disableUpdatesEnv: 'sometimes',
+                allowPrereleaseEnv: 'nope',
+                appVersion: '5.2.11',
+                logger,
+            })
+        ).toEqual({
+            enabled: true,
+            autoDownload: true,
+            allowPrerelease: false,
+        });
+        expect(logger.warn).toHaveBeenCalled();
+    });
+
+    it('normalizes runtime log level to an allowlisted value', () => {
+        const logger = { warn: vi.fn() };
+
+        expect(
+            getRuntimeLogLevel({
+                rawLevel: 'debug',
+                fallbackLevel: 'info',
+                logger,
+            })
+        ).toBe('debug');
+        expect(
+            getRuntimeLogLevel({
+                rawLevel: 'trace',
+                fallbackLevel: 'info',
+                logger,
+            })
+        ).toBe('info');
+        expect(logger.warn).toHaveBeenCalled();
     });
 });

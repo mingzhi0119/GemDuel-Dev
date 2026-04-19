@@ -4,17 +4,19 @@ import { createRequire } from 'node:module';
 import { describe, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const { UPDATE_CHANNELS, createElectronBridge } = require('../preloadContract.cjs') as {
-    UPDATE_CHANNELS: Record<string, string>;
-    createElectronBridge: (ipcRenderer: {
-        invoke: ReturnType<typeof vi.fn>;
-        send: ReturnType<typeof vi.fn>;
-        on: ReturnType<typeof vi.fn>;
-        removeListener: ReturnType<typeof vi.fn>;
-    }) => {
-        [key: string]: unknown;
+const { ELECTRON_BRIDGE_API_KEYS, UPDATE_CHANNELS, createElectronBridge } =
+    require('../preloadContract.cjs') as {
+        ELECTRON_BRIDGE_API_KEYS: string[];
+        UPDATE_CHANNELS: Record<string, string>;
+        createElectronBridge: (ipcRenderer: {
+            invoke: ReturnType<typeof vi.fn>;
+            send: ReturnType<typeof vi.fn>;
+            on: ReturnType<typeof vi.fn>;
+            removeListener: ReturnType<typeof vi.fn>;
+        }) => {
+            [key: string]: unknown;
+        };
     };
-};
 
 describe('electron preload contract', () => {
     it('exposes only the expected renderer-safe API surface', () => {
@@ -26,14 +28,7 @@ describe('electron preload contract', () => {
         };
 
         const bridge = createElectronBridge(ipcRenderer);
-        expect(Object.keys(bridge).sort()).toEqual([
-            'getAppVersion',
-            'getRuntimeIceServers',
-            'onDownloadProgress',
-            'onUpdateAvailable',
-            'onUpdateDownloaded',
-            'restartApp',
-        ]);
+        expect(Object.keys(bridge).sort()).toEqual(ELECTRON_BRIDGE_API_KEYS);
         expect('send' in bridge).toBe(false);
         expect('on' in bridge).toBe(false);
     });
@@ -74,9 +69,9 @@ describe('electron preload contract', () => {
         const unsubscribeProgress = bridge.onDownloadProgress(onProgress);
         const unsubscribeDownloaded = bridge.onUpdateDownloaded(onDownloaded);
 
-        listeners.get(UPDATE_CHANNELS.available)?.({}, undefined);
-        listeners.get(UPDATE_CHANNELS.progress)?.({}, 42);
-        listeners.get(UPDATE_CHANNELS.downloaded)?.({}, undefined);
+        listeners.get(UPDATE_CHANNELS.updateAvailable)?.({}, undefined);
+        listeners.get(UPDATE_CHANNELS.downloadProgress)?.({}, 42);
+        listeners.get(UPDATE_CHANNELS.updateDownloaded)?.({}, undefined);
 
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-app-version');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-runtime-ice-servers');
@@ -90,14 +85,33 @@ describe('electron preload contract', () => {
         unsubscribeDownloaded();
 
         expect(ipcRenderer.on).toHaveBeenCalledWith(
-            UPDATE_CHANNELS.available,
+            UPDATE_CHANNELS.updateAvailable,
             expect.any(Function)
         );
-        expect(ipcRenderer.on).toHaveBeenCalledWith(UPDATE_CHANNELS.progress, expect.any(Function));
         expect(ipcRenderer.on).toHaveBeenCalledWith(
-            UPDATE_CHANNELS.downloaded,
+            UPDATE_CHANNELS.downloadProgress,
+            expect.any(Function)
+        );
+        expect(ipcRenderer.on).toHaveBeenCalledWith(
+            UPDATE_CHANNELS.updateDownloaded,
             expect.any(Function)
         );
         expect(ipcRenderer.removeListener).toHaveBeenCalledTimes(3);
+    });
+
+    it('rejects non-function callbacks for event subscriptions', () => {
+        const ipcRenderer = {
+            invoke: vi.fn(),
+            send: vi.fn(),
+            on: vi.fn(),
+            removeListener: vi.fn(),
+        };
+        const bridge = createElectronBridge(ipcRenderer) as {
+            onUpdateAvailable: (callback: unknown) => () => void;
+        };
+
+        expect(() => bridge.onUpdateAvailable('not-a-function')).toThrow(
+            '[IPC] onUpdateAvailable requires a callback function.'
+        );
     });
 });

@@ -23,6 +23,47 @@ export const normalizeIceServer = (value) => {
     return { urls, username, credential };
 };
 
+const VALID_LOG_LEVELS = new Set(['error', 'warn', 'info', 'verbose', 'debug', 'silly']);
+
+export const normalizeBooleanEnv = ({
+    envName,
+    rawValue,
+    defaultValue = false,
+    logger = console,
+}) => {
+    if (rawValue === undefined || rawValue === null || rawValue === '') {
+        return defaultValue;
+    }
+
+    if (rawValue === 'true') {
+        return true;
+    }
+
+    if (rawValue === 'false') {
+        return false;
+    }
+
+    logger.warn?.(
+        `[CONFIG] ${envName} must be "true" or "false". Falling back to ${String(defaultValue)}.`
+    );
+    return defaultValue;
+};
+
+export const getRuntimeLogLevel = ({ rawLevel, fallbackLevel, logger = console }) => {
+    if (!rawLevel) {
+        return fallbackLevel;
+    }
+
+    if (VALID_LOG_LEVELS.has(rawLevel)) {
+        return rawLevel;
+    }
+
+    logger.warn?.(
+        `[CONFIG] GEMDUEL_LOG_LEVEL must be one of ${Array.from(VALID_LOG_LEVELS).join(', ')}. Falling back to ${fallbackLevel}.`
+    );
+    return fallbackLevel;
+};
+
 export const getRuntimeIceServersFromEnv = (rawConfig, logger = console) => {
     if (!rawConfig) {
         return [];
@@ -55,8 +96,24 @@ export const getRuntimeIceServersFromEnv = (rawConfig, logger = console) => {
     }
 };
 
-export const getAutoUpdaterPolicy = ({ disableUpdatesEnv, allowPrereleaseEnv, appVersion }) => ({
-    enabled: disableUpdatesEnv !== 'true',
+export const getAutoUpdaterPolicy = ({
+    disableUpdatesEnv,
+    allowPrereleaseEnv,
+    appVersion,
+    logger = console,
+}) => ({
+    enabled: !normalizeBooleanEnv({
+        envName: 'GEMDUEL_DISABLE_UPDATES',
+        rawValue: disableUpdatesEnv,
+        defaultValue: false,
+        logger,
+    }),
     autoDownload: true,
-    allowPrerelease: allowPrereleaseEnv === 'true' || appVersion.includes('-'),
+    allowPrerelease:
+        normalizeBooleanEnv({
+            envName: 'GEMDUEL_ALLOW_PRERELEASE',
+            rawValue: allowPrereleaseEnv,
+            defaultValue: false,
+            logger,
+        }) || appVersion.includes('-'),
 });
