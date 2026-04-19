@@ -161,7 +161,7 @@ export interface BuffEffects {
         singleColor?: number;
         disableSingleColor?: boolean;
     };
-    state?: Record<string, unknown>; // Runtime state tracking
+    state?: BuffRuntimeState; // Runtime state tracking
 }
 
 /**
@@ -174,7 +174,13 @@ export interface Buff {
     label: string;
     desc: string;
     effects: BuffEffects;
-    state?: Record<string, unknown>; // Runtime state for buffs
+    state?: BuffRuntimeState; // Runtime state for buffs
+}
+
+export interface BuffRuntimeState {
+    refillCount?: number;
+    discountColor?: BasicGemColor;
+    [key: string]: unknown;
 }
 
 /**
@@ -250,27 +256,33 @@ export interface InitDraftPayload extends GameSetupPayload {
     buffLevel: 1 | 2 | 3;
 }
 
+export type CardActionSource = 'market' | 'reserved';
+
+export interface MarketCardSlot {
+    level: 1 | 2 | 3;
+    idx: number;
+}
+
+export type MarketCardRef =
+    | (MarketCardSlot & { isExtra?: false; extraIdx?: undefined })
+    | (MarketCardSlot & { level: 3; isExtra: true; extraIdx: number });
+
+export type CardInteractionContext = MarketCardRef;
+
+export type P2DraftPoolIndices = [number, number, number, number];
+
+export interface PeekModalData {
+    cards: Card[];
+    initiator: PlayerKey;
+}
+
 /**
  * UI Modal state
  */
-export type ActiveModal =
-    | {
-          type: 'PEEK';
-          data: {
-              cards: Card[];
-              initiator: PlayerKey;
-          };
-      }
-    | {
-          type: 'WINNER';
-          data: {
-              winner: PlayerKey;
-          };
-      }
-    | {
-          type: 'BUFF_SELECT';
-          data: Record<string, unknown>; // Keep flexible for now
-      };
+export type ActiveModal = {
+    type: 'PEEK';
+    data: PeekModalData;
+};
 
 /**
  * Main game state - the single source of truth
@@ -337,8 +349,8 @@ export interface GameState {
     bonusGemTarget: GemTypeObject | null;
     pendingBuy: {
         card: Card;
-        source: string;
-        marketInfo?: { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number };
+        source: CardActionSource;
+        marketInfo?: MarketCardRef;
     } | null;
     nextPlayerAfterRoyal: PlayerKey | null;
 }
@@ -381,8 +393,8 @@ export interface StealGemPayload {
 
 export interface BuyCardPayload {
     card: Card;
-    source: 'market' | 'reserved';
-    marketInfo?: { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number };
+    source: CardActionSource;
+    marketInfo?: MarketCardRef;
     randoms?: { bountyHunterColor?: GemColor };
 }
 
@@ -412,8 +424,8 @@ export interface SelectRoyalPayload {
 
 export interface InitiateBuyJokerPayload {
     card: Card;
-    source: string;
-    marketInfo?: { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number };
+    source: CardActionSource;
+    marketInfo?: MarketCardRef;
 }
 
 export interface InitiateReservePayload {
@@ -430,9 +442,9 @@ export type BuffInitPayload = GameSetupPayload;
 
 export interface SelectBuffPayload {
     buffId: string;
-    randomColor?: GemColor;
+    randomColor?: BasicGemColor;
     initRandoms?: Partial<Record<PlayerKey, PlayerInitRandoms>>;
-    p2DraftPoolIndices?: number[];
+    p2DraftPoolIndices?: P2DraftPoolIndices;
 }
 
 export interface PeekDeckPayload {
@@ -450,7 +462,7 @@ export type GameAction =
     | { type: 'FLATTEN'; payload: GameState }
 
     // BUFFS
-    | { type: 'SELECT_BUFF'; payload: SelectBuffPayload | string }
+    | { type: 'SELECT_BUFF'; payload: SelectBuffPayload }
 
     // BOARD
     | { type: 'TAKE_GEMS'; payload: TakeGemsPayload }
@@ -487,6 +499,12 @@ export type GameAction =
     | { type: 'PEEK_DECK'; payload: PeekDeckPayload }
     | { type: 'DEBUG_REROLL_BUFFS'; payload: { level?: number } }
     | { type: 'CLOSE_MODAL'; payload?: undefined };
+
+export interface ReplayFile {
+    version: string;
+    timestamp: string;
+    history: GameAction[];
+}
 
 // ============================================================================
 // VALIDATION & SELECTORS

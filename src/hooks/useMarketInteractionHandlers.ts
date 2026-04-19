@@ -74,7 +74,7 @@ export const useMarketInteractionHandlers = ({
     const initiateBuy = useCallback(
         (
             card: Card,
-            source: string = 'market',
+            source: InitiateBuyJokerPayload['source'] = 'market',
             marketInfo?: InitiateBuyJokerPayload['marketInfo']
         ) => {
             if (!canLocalInteract) return;
@@ -82,14 +82,7 @@ export const useMarketInteractionHandlers = ({
                 return setErrorMsg('Cannot afford!');
             }
 
-            networkDispatch(
-                buildBuyAction(
-                    card,
-                    source as 'market' | 'reserved',
-                    marketInfo,
-                    getRandomBasicGemColor()
-                )
-            );
+            networkDispatch(buildBuyAction(card, source, marketInfo, getRandomBasicGemColor()));
         },
         [canAfford, canLocalInteract, networkDispatch, setErrorMsg]
     );

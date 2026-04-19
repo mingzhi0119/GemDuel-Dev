@@ -2,14 +2,14 @@ import React from 'react';
 import { Crown, Download, RotateCcw, Hand, Scroll, Plus } from 'lucide-react';
 import { GEM_TYPES, ABILITIES } from '../constants';
 import { GemIcon } from './GemIcon';
-import { Card as CardType, GemColor } from '../types';
+import { Card as CardType, CardInteractionContext, GemColor } from '../types';
 
 interface CardProps {
     card: CardType | null;
     canBuy?: boolean;
-    onClick?: (card: CardType, context?: Record<string, unknown>) => void;
-    onReserve?: (card: CardType, context?: Record<string, unknown>) => void;
-    context?: string;
+    onClick?: (card: CardType, context?: CardInteractionContext) => void;
+    onReserve?: (card: CardType, context?: CardInteractionContext) => void;
+    context?: CardInteractionContext;
     isReservedView?: boolean;
     isRoyal?: boolean;
     className?: string;
@@ -63,8 +63,7 @@ export const Card: React.FC<CardProps> = React.memo(
 
         const handleCardClick = () => {
             if ((canBuy || isRoyal) && onClick) {
-                const ctx = context ? JSON.parse(context) : undefined;
-                onClick(card, ctx);
+                onClick(card, context);
             }
         };
 
@@ -329,8 +328,7 @@ export const Card: React.FC<CardProps> = React.memo(
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                const ctx = context ? JSON.parse(context) : undefined;
-                                onReserve(card, ctx);
+                                onReserve(card, context);
                             }}
                             className={`bg-yellow-500 hover:bg-yellow-400 ${reserveButtonPadding} rounded-full text-white shadow-lg transition-transform hover:scale-110 active:scale-90`}
                             title="Reserve"

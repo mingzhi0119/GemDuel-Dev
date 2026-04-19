@@ -8,6 +8,7 @@ import type {
     GameAction,
     GameMode,
     InitDraftPayload,
+    P2DraftPoolIndices,
     PlayerInitRandoms,
 } from '../types';
 
@@ -62,7 +63,7 @@ export const buildDraftPoolForLevel = (level: 1 | 2 | 3): string[] => {
 export const buildP2DraftPoolIndices = (
     buffLevel: number,
     selectedBuffId: string
-): number[] | undefined => {
+): P2DraftPoolIndices | undefined => {
     if (buffLevel !== 1 && buffLevel !== 2 && buffLevel !== 3) {
         return undefined;
     }
@@ -94,7 +95,7 @@ export const buildP2DraftPoolIndices = (
         if (finalIndices.length === 4) break;
     }
 
-    return finalIndices.length === 4 ? finalIndices : undefined;
+    return finalIndices.length === 4 ? (finalIndices as P2DraftPoolIndices) : undefined;
 };
 
 export const createGameSetupPayload = (

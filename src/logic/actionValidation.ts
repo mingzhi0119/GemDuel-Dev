@@ -16,6 +16,7 @@ import type {
     PeekDeckPayload,
     PlayerKey,
     PlayerInitRandoms,
+    MarketCardRef,
     ReplenishPayload,
     ReserveCardPayload,
     ReserveDeckPayload,
@@ -35,6 +36,11 @@ import type {
 import { NETWORK_PROTOCOL_VERSION } from '../types/network';
 import { getCommandPhaseRejectionReason } from './fsm';
 import { GUEST_INTENT_PERMISSION_TABLE } from './networkProtocol';
+import {
+    cardActionSourceSchema,
+    marketCardRefSchema,
+    selectBuffPayloadSchema,
+} from './runtimeSchemas';
 import { validateGemSelection } from './validators';
 
 const PLAYER_KEYS = new Set<PlayerKey>(['p1', 'p2']);
@@ -168,14 +174,8 @@ const isRoyalCardLike = (value: unknown): value is RoyalCard => {
     );
 };
 
-const isMarketInfo = (
-    value: unknown
-): value is { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number } => {
-    if (!isPlainObject(value) || !isLevel(value.level) || !isInteger(value.idx)) return false;
-    if (value.isExtra !== undefined && typeof value.isExtra !== 'boolean') return false;
-    if (value.extraIdx !== undefined && !isInteger(value.extraIdx)) return false;
-    return true;
-};
+const isMarketInfo = (value: unknown): value is MarketCardRef =>
+    marketCardRefSchema.safeParse(value).success;
 
 const isTakeGemsPayload = (value: unknown): value is BonusGemPayload | { coords: GemCoord[] } =>
     isPlainObject(value) && isGemCoordsArray(value.coords);
@@ -221,7 +221,7 @@ const isBuyCardPayload = (value: unknown): value is BuyCardPayload => {
 const isInitiateBuyJokerPayload = (value: unknown): value is InitiateBuyJokerPayload =>
     isPlainObject(value) &&
     isCardLike(value.card) &&
-    typeof value.source === 'string' &&
+    cardActionSourceSchema.safeParse(value.source).success &&
     (value.marketInfo === undefined || isMarketInfo(value.marketInfo));
 
 const isInitiateReservePayload = (value: unknown): value is InitiateReservePayload =>
@@ -257,29 +257,8 @@ const isSelectRoyalPayload = (value: unknown): value is SelectRoyalPayload =>
 const isPeekDeckPayload = (value: unknown): value is PeekDeckPayload =>
     isPlainObject(value) && isLevel(value.level);
 
-const isSelectBuffPayload = (value: unknown): value is SelectBuffPayload | string => {
-    if (typeof value === 'string') return true;
-    if (!isPlainObject(value) || typeof value.buffId !== 'string') return false;
-    if (value.randomColor !== undefined && !isGemColor(value.randomColor)) return false;
-    if (value.initRandoms !== undefined) {
-        if (!isPlainObject(value.initRandoms)) return false;
-        if (value.initRandoms.p1 !== undefined && !isPlayerInitRandomsLike(value.initRandoms.p1)) {
-            return false;
-        }
-        if (value.initRandoms.p2 !== undefined && !isPlayerInitRandomsLike(value.initRandoms.p2)) {
-            return false;
-        }
-    }
-    if (value.p2DraftPoolIndices !== undefined) {
-        if (
-            !Array.isArray(value.p2DraftPoolIndices) ||
-            !value.p2DraftPoolIndices.every((entry) => isInteger(entry))
-        ) {
-            return false;
-        }
-    }
-    return true;
-};
+const isSelectBuffPayload = (value: unknown): value is SelectBuffPayload =>
+    selectBuffPayloadSchema.safeParse(value).success;
 
 const isGameSetupPayload = (value: unknown): value is BuffInitPayload =>
     isPlainObject(value) &&
@@ -563,21 +542,11 @@ const isWithinBoard = ({ r, c }: GemCoord): boolean =>
     r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE;
 
 const sameMarketInfo = (
-    left: { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number } | undefined,
-    right: { level: 1 | 2 | 3; idx: number; isExtra?: boolean; extraIdx?: number } | undefined
+    left: MarketCardRef | undefined,
+    right: MarketCardRef | undefined
 ): boolean => JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
 
-const getMarketCard = (
-    state: GameState,
-    marketInfo:
-        | {
-              level: 1 | 2 | 3;
-              idx: number;
-              isExtra?: boolean;
-              extraIdx?: number;
-          }
-        | undefined
-): Card | null => {
+const getMarketCard = (state: GameState, marketInfo: MarketCardRef | undefined): Card | null => {
     if (!marketInfo) return null;
     const { level, idx, isExtra, extraIdx } = marketInfo;
 
@@ -632,14 +601,7 @@ const validateCardSource = (
     state: GameState,
     source: 'market' | 'reserved',
     card: Card,
-    marketInfo?:
-        | {
-              level: 1 | 2 | 3;
-              idx: number;
-              isExtra?: boolean;
-              extraIdx?: number;
-          }
-        | undefined
+    marketInfo?: MarketCardRef
 ): string | null => {
     if (source === 'reserved') {
         return state.playerReserved[state.turn].some((entry) => entry.id === card.id)

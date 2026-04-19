@@ -6,6 +6,7 @@ import {
     PlayerKey,
     Buff,
     BuffInitPayload,
+    BuffRuntimeState,
     SelectBuffPayload,
     BuffEffects,
     Card,
@@ -166,11 +167,8 @@ export const handleInitDraft = (state: GameState | null, payload: InitDraftPaylo
     return newState;
 };
 
-export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | string): void => {
-    const buffId = typeof payload === 'object' ? payload.buffId : payload;
-    const randomColor = typeof payload === 'object' ? payload.randomColor : null;
-    const initRandoms = typeof payload === 'object' ? payload.initRandoms : {};
-    const p2Indices = typeof payload === 'object' ? payload.p2DraftPoolIndices : null;
+export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): void => {
+    const { buffId, randomColor, initRandoms = {}, p2DraftPoolIndices: p2Indices } = payload;
     const player = state.turn;
 
     // Buff ID assignment - FULL OBJECT from BUFFS
@@ -183,7 +181,7 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload | 
     }
 
     if (buffId === 'color_preference' && randomColor) {
-        const buffState = state.playerBuffs[player].state as Record<string, unknown>;
+        const buffState = state.playerBuffs[player].state as BuffRuntimeState;
         buffState.discountColor = randomColor;
     }
 

@@ -28,7 +28,7 @@ export type BootstrapCommand =
     | { kind: 'INIT_DRAFT'; setup: InitDraftPayload };
 
 export type GuestIntentCommand =
-    | { kind: 'SELECT_BUFF'; payload: SelectBuffPayload | string }
+    | { kind: 'SELECT_BUFF'; payload: SelectBuffPayload }
     | { kind: 'TAKE_GEMS'; payload: { coords: Array<{ r: number; c: number }> } }
     | { kind: 'REPLENISH'; payload?: ReplenishPayload }
     | { kind: 'TAKE_BONUS_GEM'; payload: BonusGemPayload }

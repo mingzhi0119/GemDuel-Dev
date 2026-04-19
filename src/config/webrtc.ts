@@ -1,3 +1,5 @@
+import { parseRuntimeIceServers } from '../logic/runtimeSchemas';
+
 const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:global.stun.twilio.com:3478' },
@@ -5,44 +7,8 @@ const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
 
 let runtimeIceServers: RTCIceServer[] = [];
 
-const isStringArray = (value: unknown): value is string[] =>
-    Array.isArray(value) && value.every((entry) => typeof entry === 'string');
-
-const normalizeIceServer = (value: unknown): RTCIceServer | null => {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-        return null;
-    }
-
-    const candidate = value as Record<string, unknown>;
-    if (typeof candidate.urls !== 'string' && !isStringArray(candidate.urls)) {
-        return null;
-    }
-
-    const normalized: RTCIceServer = { urls: candidate.urls };
-
-    if (candidate.username !== undefined) {
-        if (typeof candidate.username !== 'string') return null;
-        normalized.username = candidate.username;
-    }
-
-    if (candidate.credential !== undefined) {
-        if (typeof candidate.credential !== 'string') return null;
-        normalized.credential = candidate.credential;
-    }
-
-    return normalized;
-};
-
 export const setRuntimeIceServers = (servers: unknown): RTCIceServer[] => {
-    if (!Array.isArray(servers)) {
-        runtimeIceServers = [];
-        return runtimeIceServers;
-    }
-
-    runtimeIceServers = servers
-        .map((server) => normalizeIceServer(server))
-        .filter((server): server is RTCIceServer => server !== null);
-
+    runtimeIceServers = parseRuntimeIceServers(servers);
     return runtimeIceServers;
 };
 

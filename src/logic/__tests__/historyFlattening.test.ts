@@ -6,7 +6,7 @@ describe('History Flattening', () => {
     it('flattens only after draft/setup history returns to IDLE', () => {
         const draftHistory: GameAction[] = [
             { type: 'INIT_DRAFT', payload: {} as never },
-            { type: 'SELECT_BUFF', payload: 'privilege_favor' },
+            { type: 'SELECT_BUFF', payload: { buffId: 'privilege_favor', randomColor: 'red' } },
         ];
 
         expect(shouldFlattenHistory('IDLE', draftHistory.length, draftHistory)).toBe(true);

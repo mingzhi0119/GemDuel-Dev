@@ -18,8 +18,9 @@ import { UpdateNotification } from './components/UpdateNotification';
 import { useGameLogic } from './hooks/useGameLogic';
 import { useSettings } from './hooks/useSettings';
 import { setRuntimeIceServers } from './config/webrtc';
+import { MAX_REPLAY_FILE_BYTES, parseReplayFile } from './logic/replayImport';
 import { GEM_TYPES, BONUS_COLORS } from './constants';
-import { GemColor, PlayerKey } from './types';
+import { GemColor, PlayerKey, ReplayFile } from './types';
 
 const Rulebook = React.lazy(() =>
     import('./components/Rulebook').then((m) => ({ default: m.Rulebook }))
@@ -143,7 +144,7 @@ export default function GemDuelBoard() {
     };
 
     const handleDownloadReplay = () => {
-        const data = {
+        const data: ReplayFile = {
             version: appVersion,
             timestamp: new Date().toISOString(),
             history: historyControls.history,
@@ -160,13 +161,26 @@ export default function GemDuelBoard() {
     const handleUploadReplay = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        if (file.size > MAX_REPLAY_FILE_BYTES) {
+            console.error('Replay file is too large to import safely.');
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
-                const data = JSON.parse(event.target?.result as string);
-                if (data.history && Array.isArray(data.history)) {
-                    importHistory(data.history);
+                if (typeof event.target?.result !== 'string') {
+                    console.error('Replay file could not be read as text.');
+                    return;
                 }
+
+                const parsedJson = JSON.parse(event.target.result);
+                const replay = parseReplayFile(parsedJson);
+                if (!replay.ok) {
+                    console.error(`Replay import rejected: ${replay.reason}`);
+                    return;
+                }
+
+                importHistory(replay.replay.history);
             } catch (err) {
                 console.error('Failed to parse replay file', err);
             }

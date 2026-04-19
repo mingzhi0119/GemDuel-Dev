@@ -6,6 +6,8 @@ import { withGameAnimation } from '../hoc/withGameAnimation';
 import { calculateTransaction } from '../utils';
 import {
     Card as CardType,
+    CardActionSource,
+    CardInteractionContext,
     GamePhase,
     PlayerKey,
     GemInventory,
@@ -26,7 +28,7 @@ interface MarketProps {
     handleReserveDeck: (level: number) => void;
     initiateBuy: (
         card: CardType,
-        source: string,
+        source: CardActionSource,
         marketInfo?: InitiateBuyJokerPayload['marketInfo']
     ) => void;
     handleReserveCard: (card: CardType, level: number, idx: number) => void;
@@ -62,9 +64,9 @@ export const Market: React.FC<MarketProps> = React.memo(
 
         // Optimization: Stable callback for buying cards
         const handleBuy = useCallback(
-            (card: CardType, context?: Record<string, unknown>) => {
+            (card: CardType, context?: CardInteractionContext) => {
                 if (canInteract && card && context) {
-                    initiateBuy(card, 'market', context as InitiateBuyJokerPayload['marketInfo']);
+                    initiateBuy(card, 'market', context);
                 }
             },
             [initiateBuy, canInteract]
@@ -72,9 +74,9 @@ export const Market: React.FC<MarketProps> = React.memo(
 
         // Optimization: Stable callback for reserving cards
         const handleReserve = useCallback(
-            (card: CardType, context?: Record<string, unknown>) => {
+            (card: CardType, context?: CardInteractionContext) => {
                 if (canInteract && card && context) {
-                    handleReserveCard(card, context.level as number, context.idx as number);
+                    handleReserveCard(card, context.level, context.idx);
                 }
             },
             [handleReserveCard, canInteract]
@@ -180,11 +182,12 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                             false
                                                         ).affordable
                                                     }
-                                                    context={JSON.stringify({
+                                                    context={{
                                                         level: 3,
+                                                        idx,
                                                         isExtra: true,
                                                         extraIdx: idx + 1,
-                                                    })}
+                                                    }}
                                                     onClick={handleBuy}
                                                     onReserve={
                                                         canInteract ? handleReserve : undefined
@@ -250,7 +253,10 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                             false
                                                         ).affordable
                                                     }
-                                                    context={JSON.stringify({ level: lvl, idx: i })}
+                                                    context={{
+                                                        level: lvl as 1 | 2 | 3,
+                                                        idx: i,
+                                                    }}
                                                     onClick={handleBuy}
                                                     onReserve={
                                                         canInteract ? handleReserve : undefined

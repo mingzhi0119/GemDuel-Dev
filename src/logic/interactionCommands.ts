@@ -3,6 +3,7 @@ import type {
     BasicGemColor,
     BuyCardPayload,
     Card,
+    CardActionSource,
     GameAction,
     GameState,
     GameMode,
@@ -81,7 +82,7 @@ export const buildReserveDeckFlow = (level: 1 | 2 | 3, hasGold: boolean): Reserv
 
 export const buildBuyAction = (
     card: Card,
-    source: 'market' | 'reserved',
+    source: CardActionSource,
     marketInfo: MarketInfo,
     bountyHunterColor: BasicGemColor
 ): Extract<GameAction, { type: 'INITIATE_BUY_JOKER' | 'BUY_CARD' }> =>
@@ -110,7 +111,7 @@ export const buildSelectBonusColorAction = (
     type: 'BUY_CARD',
     payload: {
         card: { ...pendingBuy.card, bonusColor: color },
-        source: pendingBuy.source as 'market' | 'reserved',
+        source: pendingBuy.source,
         marketInfo: pendingBuy.marketInfo,
         randoms: {
             bountyHunterColor,

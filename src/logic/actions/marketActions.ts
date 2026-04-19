@@ -57,7 +57,7 @@ export const handleInitiateBuyJoker = (
         // Proceed directly to buy with auto-selected color
         return handleBuyCard(state, {
             card: { ...payload.card, bonusColor: bestColor },
-            source: payload.source as 'market' | 'reserved',
+            source: payload.source,
             marketInfo: payload.marketInfo,
             randoms: {
                 bountyHunterColor: 'red', // Default fallback, will be randomized in logic if needed but not crit for win
