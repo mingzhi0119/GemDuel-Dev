@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { GameAction, GameState } from '../types';
+import { shouldFlattenHistory } from '../logic/historyFlattening';
 
 interface HistoryFlatteningControls {
     history: GameAction[];
@@ -13,10 +14,10 @@ export const useHistoryFlattening = (
 ) => {
     useEffect(() => {
         if (
-            gameState.phase === 'IDLE' &&
-            historyControls.historyLength > 1 &&
-            historyControls.history.some(
-                (action) => action.type === 'SELECT_BUFF' || action.type === 'INIT_DRAFT'
+            shouldFlattenHistory(
+                gameState.phase,
+                historyControls.historyLength,
+                historyControls.history
             )
         ) {
             const flattenedAction: GameAction = {

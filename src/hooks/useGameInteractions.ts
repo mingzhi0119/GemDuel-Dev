@@ -1,70 +1,36 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import { calculateTransaction } from '../utils';
-import { processGemClick, processOpponentGemClick } from '../logic/interactionManager';
 import { getPlayerScore, getCrownCount } from '../logic/selectors';
-import { validateGemSelection } from '../logic/validators';
-import {
-    buildP2DraftPoolIndices,
-    buildStartGameAction,
-    getRandomBasicGemColor,
-} from '../logic/gameSetup';
-import {
-    GameState,
-    Card,
-    PlayerKey,
-    GemCoord,
-    GemColor,
-    GameAction,
-    GameMode,
-    BuyCardPayload,
-    RoyalCard,
-    InitiateBuyJokerPayload,
-    InitiateReservePayload,
-    InitiateReserveDeckPayload,
-} from '../types';
+import { canPlayerInteract } from '../logic/interactionAccess';
+import { useInteractionFeedback } from './useInteractionFeedback';
+import { useBoardInteractionHandlers } from './useBoardInteractionHandlers';
+import { useMarketInteractionHandlers } from './useMarketInteractionHandlers';
+import { useMetaInteractionHandlers } from './useMetaInteractionHandlers';
+import { useDebugInteractionHandlers } from './useDebugInteractionHandlers';
+import type { Card, GameAction, GameMode, GameState, GemCoord, PlayerKey } from '../types';
 
 export const useGameInteractions = (
     gameState: GameState,
     networkDispatch: (action: GameAction) => void,
-    currentIndex: number, // Used to reset selection on history change
+    currentIndex: number,
     isReviewing: boolean = false
 ) => {
-    const [selectedGems, setSelectedGems] = useState<GemCoord[]>([]);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const { selectedGems, setSelectedGems, clearSelectedGems, errorMsg, setErrorMsg } =
+        useInteractionFeedback(currentIndex);
 
-    useEffect(() => {
-        setSelectedGems([]);
-    }, [currentIndex]);
+    const canLocalInteract = useMemo(
+        () => canPlayerInteract(gameState, isReviewing),
+        [gameState, isReviewing]
+    );
 
-    useEffect(() => {
-        if (errorMsg) {
-            const timer = setTimeout(() => {
-                setErrorMsg(null);
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [errorMsg]);
-
-    const canLocalInteract = useMemo(() => {
-        if (isReviewing || gameState.winner) return false;
-        const mode = gameState.mode;
-        if (mode === 'LOCAL_PVP') return true;
-        if (mode === 'PVE') return gameState.turn === 'p1';
-        if (mode === 'ONLINE_MULTIPLAYER') {
-            const myRole: PlayerKey = gameState.isHost ? 'p1' : 'p2';
-            return gameState.turn === myRole;
-        }
-        return true;
-    }, [gameState.mode, gameState.turn, gameState.isHost, gameState.winner, isReviewing]);
-
-    // --- Helpers ---
     const isSelected = useCallback(
-        (r: number, c: number) => selectedGems.some((s) => s.r === r && s.c === c),
+        (r: number, c: number) =>
+            selectedGems.some((selection) => selection.r === r && selection.c === c),
         [selectedGems]
     );
+
     const canAfford = useCallback(
         (card: Card, isReserved: boolean = false) => {
-            if (!gameState) return false;
             const player = gameState.turn;
             const { affordable } = calculateTransaction(
                 card,
@@ -78,414 +44,54 @@ export const useGameInteractions = (
         [gameState]
     );
 
-    // Initialization Logic
-    const startGame = useCallback(
-        (
-            mode: GameMode,
-            options: { useBuffs: boolean; isHost?: boolean } = { useBuffs: false }
-        ) => {
-            networkDispatch(buildStartGameAction(mode, options));
-        },
-        [networkDispatch]
-    );
-
-    const handleSelfGemClick = useCallback(
-        (gemId: string) => {
-            if (!canLocalInteract || gameState.phase !== 'DISCARD_EXCESS_GEMS') return;
-            const action: GameAction = { type: 'DISCARD_GEM', payload: gemId };
-            networkDispatch(action);
-        },
-        [canLocalInteract, gameState.phase, networkDispatch]
-    );
-
-    const handleGemClick = useCallback(
-        (r: number, c: number) => {
-            if (!canLocalInteract || gameState.winner) return;
-            const result = processGemClick(gameState, r, c, selectedGems);
-            if (result.error) return setErrorMsg(result.error);
-            if (result.action) return networkDispatch(result.action);
-            if (result.newSelection) setSelectedGems(result.newSelection);
-        },
-        [canLocalInteract, gameState, selectedGems, networkDispatch]
-    );
-
-    const handleOpponentGemClick = useCallback(
-        (gemId: string) => {
-            if (!canLocalInteract) return;
-            const result = processOpponentGemClick(gameState, gemId as GemColor);
-            if (result.error) return setErrorMsg(result.error);
-            if (result.action) networkDispatch(result.action);
-        },
-        [canLocalInteract, gameState, networkDispatch]
-    );
-
-    const handleConfirmTake = useCallback(() => {
-        if (!canLocalInteract || selectedGems.length === 0) return;
-        const check = validateGemSelection(selectedGems);
-        if (!check.valid) return setErrorMsg(check.error || 'Invalid!');
-        if (check.hasGap) return setErrorMsg('Gap detected!');
-        const buff = gameState.playerBuffs?.[gameState.turn];
-        if (buff?.effects?.passive?.noTake3 && selectedGems.length === 3)
-            return setErrorMsg('Cannot take 3 gems!');
-        const action: GameAction = { type: 'TAKE_GEMS', payload: { coords: selectedGems } };
-        networkDispatch(action);
-        setSelectedGems([]);
-    }, [canLocalInteract, selectedGems, gameState.playerBuffs, gameState.turn, networkDispatch]);
-
-    const handleReplenish = useCallback(() => {
-        if (!canLocalInteract || gameState.bag.length === 0) return;
-        const opponent = gameState.turn === 'p1' ? 'p2' : 'p1';
-        const stealable = Object.keys(gameState.inventories[opponent]).filter(
-            (k) => k !== 'gold' && k !== 'pearl' && gameState.inventories[opponent][k] > 0
-        );
-        const action: GameAction = {
-            type: 'REPLENISH',
-            payload: {
-                randoms: {
-                    expansionColor: getRandomBasicGemColor(),
-                    extortionColor: (stealable.length > 0
-                        ? stealable[Math.floor(Math.random() * stealable.length)]
-                        : undefined) as GemColor | undefined,
-                },
-            },
-        };
-        networkDispatch(action);
-    }, [
+    const boardHandlers = useBoardInteractionHandlers({
+        gameState,
         canLocalInteract,
-        gameState.bag.length,
-        gameState.turn,
-        gameState.inventories,
         networkDispatch,
-    ]);
+        selectedGems,
+        setSelectedGems,
+        clearSelectedGems,
+        setErrorMsg,
+    });
 
-    const handleReserveCard = useCallback(
-        (card: Card, level: number, idx: number) => {
-            if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) return;
-            const hasGold = gameState.board.flat().some((cell) => cell.type.id === 'gold');
-            if (hasGold) {
-                const action: GameAction = {
-                    type: 'INITIATE_RESERVE',
-                    payload: { card, level: level as 1 | 2 | 3, idx },
-                };
-                networkDispatch(action);
-                setErrorMsg('Select a Gold gem.');
-            } else {
-                const action: GameAction = {
-                    type: 'RESERVE_CARD',
-                    payload: { card, level: level as 1 | 2 | 3, idx },
-                };
-                networkDispatch(action);
-            }
-        },
-        [
-            canLocalInteract,
-            gameState.playerReserved,
-            gameState.turn,
-            gameState.board,
-            networkDispatch,
-        ]
-    );
-
-    const handleReserveDeck = useCallback(
-        (level: number) => {
-            if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) return;
-            if (gameState.decks[level as 1 | 2 | 3].length === 0) return setErrorMsg('Deck empty!');
-            const hasGold = gameState.board.flat().some((cell) => cell.type.id === 'gold');
-            if (hasGold) {
-                const action: GameAction = {
-                    type: 'INITIATE_RESERVE_DECK',
-                    payload: { level: level as 1 | 2 | 3 },
-                };
-                networkDispatch(action);
-            } else {
-                const action: GameAction = {
-                    type: 'RESERVE_DECK',
-                    payload: { level: level as 1 | 2 | 3 },
-                };
-                networkDispatch(action);
-            }
-        },
-        [
-            canLocalInteract,
-            gameState.playerReserved,
-            gameState.turn,
-            gameState.decks,
-            gameState.board,
-            networkDispatch,
-        ]
-    );
-
-    const initiateBuy = useCallback(
-        (
-            card: Card,
-            source: string = 'market',
-            marketInfo?: InitiateBuyJokerPayload['marketInfo']
-        ) => {
-            if (!canLocalInteract) return;
-            const affordable = canAfford(card, source === 'reserved');
-            if (!affordable) return setErrorMsg('Cannot afford!');
-            if (card.bonusColor === 'gold') {
-                const action: GameAction = {
-                    type: 'INITIATE_BUY_JOKER',
-                    payload: { card, source, marketInfo },
-                };
-                networkDispatch(action);
-            } else {
-                const action: GameAction = {
-                    type: 'BUY_CARD',
-                    payload: {
-                        card,
-                        source: source as 'market' | 'reserved',
-                        marketInfo,
-                        randoms: {
-                            bountyHunterColor: getRandomBasicGemColor(),
-                        },
-                    },
-                };
-                networkDispatch(action);
-            }
-        },
-        [canLocalInteract, canAfford, networkDispatch]
-    );
-
-    const handleSelectBonusColor = useCallback(
-        (color: string) => {
-            if (
-                !canLocalInteract ||
-                gameState.phase !== 'SELECT_CARD_COLOR' ||
-                !gameState.pendingBuy
-            )
-                return;
-            const { card, source, marketInfo } = gameState.pendingBuy;
-            const action: GameAction = {
-                type: 'BUY_CARD',
-                payload: {
-                    card: { ...card, bonusColor: color as GemColor },
-                    source: source as 'market' | 'reserved',
-                    marketInfo,
-                    randoms: {
-                        bountyHunterColor: getRandomBasicGemColor(),
-                    },
-                },
-            };
-            networkDispatch(action);
-        },
-        [canLocalInteract, gameState.phase, gameState.pendingBuy, networkDispatch]
-    );
-
-    const handleSelectRoyal = useCallback(
-        (royalCard: RoyalCard) => {
-            if (!canLocalInteract) return;
-            const action: GameAction = { type: 'SELECT_ROYAL_CARD', payload: { card: royalCard } };
-            networkDispatch(action);
-        },
-        [canLocalInteract, networkDispatch]
-    );
-
-    const handleCancelReserve = useCallback(() => {
-        if (canLocalInteract) {
-            const action: GameAction = { type: 'CANCEL_RESERVE' };
-            networkDispatch(action);
-        }
-    }, [canLocalInteract, networkDispatch]);
-
-    const handleCancelPrivilege = useCallback(() => {
-        if (canLocalInteract) {
-            const action: GameAction = { type: 'CANCEL_PRIVILEGE' };
-            networkDispatch(action);
-        }
-    }, [canLocalInteract, networkDispatch]);
-
-    const activatePrivilegeMode = useCallback(() => {
-        if (!canLocalInteract || gameState.phase !== 'IDLE') return;
-        const hasPrivilege =
-            gameState.privileges[gameState.turn] > 0 ||
-            (gameState.extraPrivileges && gameState.extraPrivileges[gameState.turn] > 0);
-        if (hasPrivilege) {
-            if (!gameState.board.flat().some((g) => g.type.id !== 'empty' && g.type.id !== 'gold'))
-                return setErrorMsg('No gems.');
-            const action: GameAction = { type: 'ACTIVATE_PRIVILEGE' };
-            networkDispatch(action);
-            setSelectedGems([]);
-        }
-    }, [
+    const marketHandlers = useMarketInteractionHandlers({
+        gameState,
         canLocalInteract,
-        gameState.phase,
-        gameState.privileges,
-        gameState.turn,
-        gameState.extraPrivileges,
-        gameState.board,
         networkDispatch,
-    ]);
+        setErrorMsg,
+        canAfford,
+    });
 
-    const checkAndInitiateBuyReserved = useCallback(
-        (card: Card, execute: boolean = false) => {
-            if (!canLocalInteract) return false;
-            const affordable = canAfford(card, true);
-            if (execute && affordable) initiateBuy(card, 'reserved');
-            return affordable;
-        },
-        [canLocalInteract, canAfford, initiateBuy]
-    );
+    const metaHandlers = useMetaInteractionHandlers({
+        gameState,
+        canLocalInteract,
+        networkDispatch,
+    });
 
-    const handleDebugAddCrowns = useCallback(
-        (pid: PlayerKey) => {
-            if (!gameState.winner) {
-                const action: GameAction = { type: 'DEBUG_ADD_CROWNS', payload: pid };
-                networkDispatch(action);
-            }
-        },
-        [gameState.winner, networkDispatch]
-    );
-
-    const handleDebugAddPoints = useCallback(
-        (pid: PlayerKey) => {
-            if (!gameState.winner) {
-                const action: GameAction = { type: 'DEBUG_ADD_POINTS', payload: pid };
-                networkDispatch(action);
-            }
-        },
-        [gameState.winner, networkDispatch]
-    );
-
-    const handleDebugAddPrivilege = useCallback(
-        (pid: PlayerKey) => {
-            if (!gameState.winner) {
-                const action: GameAction = { type: 'DEBUG_ADD_PRIVILEGE', payload: pid };
-                networkDispatch(action);
-            }
-        },
-        [gameState.winner, networkDispatch]
-    );
-
-    const handleForceRoyal = useCallback(() => {
-        if (!gameState.winner) {
-            const action: GameAction = { type: 'FORCE_ROYAL_SELECTION' };
-            networkDispatch(action);
-        }
-    }, [gameState.winner, networkDispatch]);
-
-    const handleSelectBuff = useCallback(
-        (buffId: string) => {
-            if (!canLocalInteract) return;
-            const randomColor = getRandomBasicGemColor();
-            const p2DraftPoolIndices =
-                gameState.turn === 'p1' && gameState.phase === 'DRAFT_PHASE'
-                    ? buildP2DraftPoolIndices(gameState.buffLevel, buffId)
-                    : undefined;
-
-            const action: GameAction = {
-                type: 'SELECT_BUFF',
-                payload: { buffId, randomColor, p2DraftPoolIndices },
-            };
-            networkDispatch(action);
-        },
-        [canLocalInteract, gameState.turn, gameState.phase, gameState.buffLevel, networkDispatch]
-    );
-
-    const handleCloseModal = useCallback(() => {
-        const action: GameAction = { type: 'CLOSE_MODAL' };
-        networkDispatch(action);
-    }, [networkDispatch]);
-
-    const handlePeekDeck = useCallback(
-        (level: number) => {
-            if (canLocalInteract) {
-                const action: GameAction = {
-                    type: 'PEEK_DECK',
-                    payload: { level: level as 1 | 2 | 3 },
-                };
-                networkDispatch(action);
-            }
-        },
-        [canLocalInteract, networkDispatch]
-    );
-
-    const handleRerollBuffs = useCallback(
-        (level?: number) => {
-            if (canLocalInteract) {
-                const action: GameAction = {
-                    type: 'DEBUG_REROLL_BUFFS',
-                    payload: { level },
-                };
-                networkDispatch(action);
-            }
-        },
-        [canLocalInteract, networkDispatch]
-    );
+    const debugHandlers = useDebugInteractionHandlers({
+        gameState,
+        canLocalInteract,
+        networkDispatch,
+    });
 
     const boundGetPlayerScore = useCallback(
-        (pid: PlayerKey) => getPlayerScore(gameState as GameState, pid),
-        [gameState]
-    );
-    const boundGetCrownCount = useCallback(
-        (pid: PlayerKey) => getCrownCount(gameState as GameState, pid),
+        (playerId: PlayerKey) => getPlayerScore(gameState, playerId),
         [gameState]
     );
 
-    const handleDiscardReserved = useCallback(
-        (cardId: string) => {
-            if (canLocalInteract) {
-                const action: GameAction = { type: 'DISCARD_RESERVED', payload: { cardId } };
-                networkDispatch(action);
-            }
-        },
-        [canLocalInteract, networkDispatch]
+    const boundGetCrownCount = useCallback(
+        (playerId: PlayerKey) => getCrownCount(gameState, playerId),
+        [gameState]
     );
 
     const handlers = useMemo(
         () => ({
-            startGame,
-            handleSelfGemClick,
-            handleGemClick,
-            handleOpponentGemClick,
-            handleConfirmTake,
-            handleReplenish,
-            handleReserveCard,
-            handleReserveDeck,
-            handleDiscardReserved,
-            initiateBuy,
-            handleSelectBonusColor,
-            handleSelectRoyal,
-            handleCancelReserve,
-            handleCancelPrivilege,
-            activatePrivilegeMode,
-            checkAndInitiateBuyReserved,
-            handleDebugAddCrowns,
-            handleDebugAddPoints,
-            handleDebugAddPrivilege,
-            handleForceRoyal,
-            handleSelectBuff,
-            handleCloseModal,
-            handlePeekDeck,
-            handleRerollBuffs,
+            ...metaHandlers,
+            ...boardHandlers,
+            ...marketHandlers,
+            ...debugHandlers,
         }),
-        [
-            startGame,
-            handleSelfGemClick,
-            handleGemClick,
-            handleOpponentGemClick,
-            handleConfirmTake,
-            handleReplenish,
-            handleReserveCard,
-            handleReserveDeck,
-            handleDiscardReserved,
-            initiateBuy,
-            handleSelectBonusColor,
-            handleSelectRoyal,
-            handleCancelReserve,
-            handleCancelPrivilege,
-            activatePrivilegeMode,
-            checkAndInitiateBuyReserved,
-            handleDebugAddCrowns,
-            handleDebugAddPoints,
-            handleDebugAddPrivilege,
-            handleForceRoyal,
-            handleSelectBuff,
-            handleCloseModal,
-            handlePeekDeck,
-            handleRerollBuffs,
-        ]
+        [boardHandlers, debugHandlers, marketHandlers, metaHandlers]
     );
 
     const getters = useMemo(
@@ -496,10 +102,10 @@ export const useGameInteractions = (
             canAfford,
             isMyTurn: canLocalInteract,
         }),
-        [boundGetPlayerScore, isSelected, boundGetCrownCount, canAfford, canLocalInteract]
+        [boundGetCrownCount, boundGetPlayerScore, canAfford, canLocalInteract, isSelected]
     );
 
-    const result = useMemo(
+    return useMemo(
         () => ({
             selectedGems,
             errorMsg,
@@ -507,8 +113,6 @@ export const useGameInteractions = (
             handlers,
             getters,
         }),
-        [selectedGems, errorMsg, canLocalInteract, handlers, getters]
+        [canLocalInteract, errorMsg, getters, handlers, selectedGems]
     );
-
-    return result;
 };

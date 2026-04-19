@@ -5,6 +5,7 @@ import { useGameState } from './useGameState';
 import { useGameNetwork } from './useGameNetwork';
 import { useGameInteractions } from './useGameInteractions';
 import { useHistoryFlattening } from './useHistoryFlattening';
+import { usePlayableHistoryControls } from './usePlayableHistoryControls';
 
 export const useGameLogic = (
     shouldConnect: boolean = false,
@@ -40,6 +41,7 @@ export const useGameLogic = (
 
     // 5. History Flattening
     useHistoryFlattening(gameState, historyControls);
+    const playableHistoryControls = usePlayableHistoryControls(gameState.mode, historyControls);
 
     const result = useMemo(
         () => ({
@@ -56,28 +58,11 @@ export const useGameLogic = (
 
             getters: interactions.getters,
 
-            historyControls: {
-                ...historyControls,
-                // Override undo/redo to block in online mode
-                undo: () =>
-                    !gameState.mode.startsWith('ONLINE') &&
-                    historyControls.canUndo &&
-                    historyControls.undo(),
-                redo: () =>
-                    !gameState.mode.startsWith('ONLINE') &&
-                    historyControls.canRedo &&
-                    historyControls.redo(),
-                canUndo: !gameState.mode.startsWith('ONLINE') && historyControls.canUndo,
-                canRedo: !gameState.mode.startsWith('ONLINE') && historyControls.canRedo,
-            },
+            historyControls: playableHistoryControls,
 
-            online: {
-                ...online,
-                latency: online.latency,
-                isUnstable: online.isUnstable,
-            },
+            online,
         }),
-        [gameState, interactions, historyControls, online]
+        [gameState, historyControls.importHistory, interactions, online, playableHistoryControls]
     );
 
     return result;
