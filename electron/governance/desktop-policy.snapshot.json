@@ -1,0 +1,32 @@
+{
+    "policyVersion": 1,
+    "mainWindow": {
+        "autoHideMenuBar": true,
+        "webPreferences": {
+            "nodeIntegration": false,
+            "contextIsolation": true,
+            "webSecurity": true,
+            "allowRunningInsecureContent": false
+        }
+    },
+    "bridgeApiKeys": [
+        "getAppVersion",
+        "getReleaseHealthSnapshot",
+        "getRuntimeIceServers",
+        "onDownloadProgress",
+        "onUpdateAvailable",
+        "onUpdateDownloaded",
+        "reportReleaseHealth",
+        "restartApp"
+    ],
+    "allowlistedChannels": [
+        "download_progress",
+        "get-app-version",
+        "get-release-health-snapshot",
+        "get-runtime-ice-servers",
+        "report-release-health",
+        "restart_app",
+        "update_available",
+        "update_downloaded"
+    ]
+}

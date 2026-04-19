@@ -1,6 +1,7 @@
 import type {
     BootstrapCommand,
     GuestIntentCommand,
+    HostDecisionReasonCode,
     NetworkMessage,
     NetworkSyncReason,
     RecoveryReason,
@@ -31,6 +32,10 @@ import {
 
 const NETWORK_SYNC_REASONS = new Set<NetworkSyncReason>(['TURN_SYNC', 'INITIAL', 'RECOVERY']);
 const RECOVERY_REASONS = new Set<RecoveryReason>(['CHECKSUM_MISMATCH', 'MANUAL', 'STALE_PACKET']);
+const HOST_DECISION_REASON_CODES = new Set<HostDecisionReasonCode>([
+    'AUTHORITY_REJECTED',
+    'CHECKSUM_UNAVAILABLE',
+]);
 
 const isProtocolVersion = (value: unknown): value is typeof NETWORK_PROTOCOL_VERSION =>
     value === NETWORK_PROTOCOL_VERSION;
@@ -140,6 +145,12 @@ export const parseNetworkMessage = (value: unknown): NetworkMessage | null => {
             if (value.reason !== undefined && typeof value.reason !== 'string') {
                 return null;
             }
+            if (
+                value.reasonCode !== undefined &&
+                !HOST_DECISION_REASON_CODES.has(value.reasonCode as HostDecisionReasonCode)
+            ) {
+                return null;
+            }
             if (value.checksum !== undefined && typeof value.checksum !== 'string') return null;
             if (value.command !== undefined) {
                 if (
@@ -158,6 +169,7 @@ export const parseNetworkMessage = (value: unknown): NetworkMessage | null => {
                 requestId: value.requestId,
                 intentKind: value.intentKind,
                 approved: value.approved,
+                reasonCode: value.reasonCode,
                 reason: value.reason,
                 command: value.command,
                 checksum: value.checksum,

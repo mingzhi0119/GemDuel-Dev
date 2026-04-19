@@ -26,6 +26,12 @@ const allowlistDocumentText = fs.readFileSync(
     path.join(repoRoot, 'ELECTRON_IPC_ALLOWLIST.md'),
     'utf8'
 );
+const expectedSnapshot = JSON.parse(
+    fs.readFileSync(
+        path.join(repoRoot, 'electron', 'governance', 'desktop-policy.snapshot.json'),
+        'utf8'
+    )
+);
 const errors = collectDesktopGovernanceErrors({
     windowOptions: createMainWindowOptions({
         preloadPath: path.join(repoRoot, 'electron', 'preload.js'),
@@ -33,6 +39,7 @@ const errors = collectDesktopGovernanceErrors({
     }),
     bridgeApiKeys,
     allowlistDocumentText,
+    expectedSnapshot,
 });
 
 if (errors.length > 0) {

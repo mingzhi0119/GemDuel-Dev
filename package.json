@@ -15,9 +15,11 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "test": "vitest run",
+        "test:security": "vitest run electron/__tests__/desktopGovernance.test.ts src/app/io/__tests__/safeReplayImport.test.ts src/logic/__tests__/fsmPolicyMatrix.test.ts src/logic/__tests__/hostApproval.test.ts src/logic/__tests__/propertyBoundaries.test.ts src/logic/__tests__/protocolRecoveryMatrix.test.ts src/logic/__tests__/securityBoundaries.test.ts src/hooks/__tests__/useConnectionHealth.test.tsx src/hooks/__tests__/useGameNetwork.test.tsx",
         "test:ui": "vitest --ui",
         "test:coverage": "vitest --coverage",
         "desktop:check": "node scripts/check-electron-governance.mjs",
+        "release:check": "node scripts/check-release-health.mjs",
         "prepare": "husky",
         "postinstall": "node scripts/patch-peer.js",
         "prebuild": "node scripts/patch-peer.js"

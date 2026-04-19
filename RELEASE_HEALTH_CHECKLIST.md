@@ -6,7 +6,9 @@ Use this checklist before shipping a desktop release or cutting a release candid
 
 - `npm run lint`
 - `npm test`
+- `npm run test:security`
 - `npm run test:coverage`
+- `npm run release:check`
 - `npm run desktop:check`
 - GitHub release workflow green on the tagged build
 
@@ -49,3 +51,4 @@ Target baseline for a clean release smoke test:
 - Release-health logs are structured JSON lines prefixed with `[RELEASE_HEALTH]`.
 - The desktop process emits a final `[RELEASE_HEALTH_SUMMARY]` snapshot before quit.
 - The renderer can fetch the current sanitized snapshot through `window.electron.getReleaseHealthSnapshot()` for support diagnostics.
+- `npm run release:check` validates the checklist command gates and indicator inventory against the live monitor contract.

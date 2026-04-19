@@ -23,6 +23,20 @@ describe('Protocol recovery matrix', () => {
         ).toBeNull();
     });
 
+    it('rejects host decisions with unknown structured rejection codes', () => {
+        expect(
+            parseNetworkMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'HOST_DECISION',
+                requestId: 'req-invalid-code',
+                intentKind: 'CLOSE_MODAL',
+                approved: false,
+                reasonCode: 'NOT_A_REAL_CODE',
+                reason: 'Unknown',
+            })
+        ).toBeNull();
+    });
+
     it('enforces inbound direction checks for host and guest roles', () => {
         const guestIntent = {
             version: NETWORK_PROTOCOL_VERSION,

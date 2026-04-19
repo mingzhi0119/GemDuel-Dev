@@ -1,7 +1,7 @@
 import type { ChangeEventHandler } from 'react';
 import type { ReplayFile } from '../../types';
-import { MAX_REPLAY_FILE_BYTES, parseReplayFile } from '../../logic/replayImport';
 import type { GameLogicController } from '../types';
+import { importReplayFromFile } from './safeReplayImport';
 
 interface UseReplayIOOptions {
     appVersion: string;
@@ -25,35 +25,21 @@ export const useReplayIO = ({ appVersion, history, importHistory }: UseReplayIOO
         URL.revokeObjectURL(url);
     };
 
-    const handleUploadReplay: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const handleUploadReplay: ChangeEventHandler<HTMLInputElement> = async (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
-        if (file.size > MAX_REPLAY_FILE_BYTES) {
-            console.error('Replay file is too large to import safely.');
+        const replayImport = await importReplayFromFile(file);
+        if (!replayImport.ok) {
+            console.error(
+                `Replay import rejected [${replayImport.code}]: ${replayImport.message}`,
+                replayImport.detail
+            );
+            event.target.value = '';
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (loadEvent) => {
-            try {
-                if (typeof loadEvent.target?.result !== 'string') {
-                    console.error('Replay file could not be read as text.');
-                    return;
-                }
-
-                const parsedJson = JSON.parse(loadEvent.target.result);
-                const replay = parseReplayFile(parsedJson);
-                if (!replay.ok) {
-                    console.error(`Replay import rejected: ${replay.reason}`);
-                    return;
-                }
-
-                importHistory(replay.replay.history);
-            } catch (err) {
-                console.error('Failed to parse replay file', err);
-            }
-        };
-        reader.readAsText(file);
+        importHistory(replayImport.replay.history);
+        event.target.value = '';
     };
 
     return { handleDownloadReplay, handleUploadReplay };

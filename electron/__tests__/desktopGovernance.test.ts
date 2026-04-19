@@ -4,7 +4,9 @@ import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import {
     authorizeIpcSender,
+    buildDesktopGovernanceSnapshot,
     collectDesktopGovernanceErrors,
+    collectSnapshotDriftIssues,
     createMainWindowOptions,
     validateIpcArgs,
     validateMainWindowOptions,
@@ -118,6 +120,13 @@ describe('electron desktop governance', () => {
             on: () => undefined,
             removeListener: () => undefined,
         });
+        const baseSnapshot = buildDesktopGovernanceSnapshot({
+            windowOptions: createMainWindowOptions({
+                preloadPath: 'E:/simonbb/GemDuel-Dev/electron/preload.js',
+                appVersion: '5.2.11',
+            }),
+            bridgeApiKeys: Object.keys(bridge),
+        });
 
         const issues = collectDesktopGovernanceErrors({
             windowOptions: createMainWindowOptions({
@@ -126,9 +135,33 @@ describe('electron desktop governance', () => {
             }),
             bridgeApiKeys: [...Object.keys(bridge), 'dangerousApi'],
             allowlistDocumentText: 'missing channels on purpose',
+            expectedSnapshot: baseSnapshot,
         });
 
         expect(issues).toContainEqual(expect.stringContaining('Bridge API surface drifted'));
         expect(issues).toContainEqual(expect.stringContaining('Missing documented channel'));
+        expect(issues).toContainEqual(expect.stringContaining('audited snapshot'));
+    });
+
+    it('produces a stable machine-readable governance snapshot', () => {
+        const bridge = createElectronBridge({
+            invoke: async () => undefined,
+            send: () => undefined,
+            on: () => undefined,
+            removeListener: () => undefined,
+        });
+        const actualSnapshot = buildDesktopGovernanceSnapshot({
+            windowOptions: createMainWindowOptions({
+                preloadPath: 'E:/simonbb/GemDuel-Dev/electron/preload.js',
+                appVersion: '5.2.11',
+            }),
+            bridgeApiKeys: Object.keys(bridge),
+        });
+
+        expect(
+            collectSnapshotDriftIssues(actualSnapshot, {
+                ...actualSnapshot,
+            })
+        ).toEqual([]);
     });
 });

@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { reviewOnlineIntent } from '../logic/authority';
-import {
-    computeBootstrapChecksum,
-    computeGuestIntentChecksum,
-    verifyApprovedHostDecision,
-} from '../logic/networkChecksums';
+import { computeBootstrapChecksum, verifyApprovedHostDecision } from '../logic/networkChecksums';
 import {
     actionToBootstrapCommand,
     actionToGuestIntentCommand,
@@ -20,6 +15,7 @@ import type {
 } from '../types/network';
 import { useOnlineManager, type OnlineManagerController } from './useOnlineManager';
 import { reportReleaseHealth } from '../observability/releaseHealth';
+import { reviewHostIntent } from '../logic/hostApproval';
 
 const MAX_APPROVAL_LOG_ENTRIES = 25;
 
@@ -85,26 +81,10 @@ export const useGameNetwork = (
                 return;
             }
 
-            const review = reviewOnlineIntent(gameState, command);
-            const logBase = {
-                requestId,
-                intentKind: command.kind,
-                createdAt: Date.now(),
-            } as const;
+            const review = reviewHostIntent(gameState, requestId, command);
+            appendApprovalLog(review.logEntry);
 
-            if (!review.valid) {
-                const rejectionDecision: Omit<HostDecisionMessage, 'type' | 'version'> = {
-                    requestId,
-                    intentKind: command.kind,
-                    approved: false,
-                    reason: review.reason || 'Host rejected the guest intent.',
-                };
-
-                appendApprovalLog({
-                    ...logBase,
-                    approved: false,
-                    reason: rejectionDecision.reason,
-                });
+            if (review.outcomeCode === 'AUTHORITY_REJECTED') {
                 reportReleaseHealth({
                     category: 'network',
                     name: 'HOST_INTENT_REJECTED',
@@ -112,26 +92,14 @@ export const useGameNetwork = (
                     message: 'Host rejected a guest intent during authority review.',
                     context: {
                         intentKind: command.kind,
+                        reasonCode: review.decision.reasonCode || 'AUTHORITY_REJECTED',
                     },
                 });
-                onlineRef.current?.sendHostDecision(rejectionDecision);
+                onlineRef.current?.sendHostDecision(review.decision);
                 return;
             }
 
-            const checksum = computeGuestIntentChecksum(gameState, command);
-            if (!checksum) {
-                const staleDecision: Omit<HostDecisionMessage, 'type' | 'version'> = {
-                    requestId,
-                    intentKind: command.kind,
-                    approved: false,
-                    reason: 'Host could not derive a deterministic checksum for the request.',
-                };
-
-                appendApprovalLog({
-                    ...logBase,
-                    approved: false,
-                    reason: staleDecision.reason,
-                });
+            if (review.outcomeCode === 'CHECKSUM_UNAVAILABLE') {
                 reportReleaseHealth({
                     category: 'recovery',
                     name: 'HOST_CHECKSUM_DERIVATION_FAILED',
@@ -139,27 +107,15 @@ export const useGameNetwork = (
                     message: 'Host could not derive a deterministic checksum for a guest intent.',
                     context: {
                         intentKind: command.kind,
+                        reasonCode: review.decision.reasonCode || 'CHECKSUM_UNAVAILABLE',
                     },
                 });
-                onlineRef.current?.sendHostDecision(staleDecision);
+                onlineRef.current?.sendHostDecision(review.decision);
                 return;
             }
 
-            const approvalDecision: Omit<HostDecisionMessage, 'type' | 'version'> = {
-                requestId,
-                intentKind: command.kind,
-                approved: true,
-                command,
-                checksum,
-            };
-
-            appendApprovalLog({
-                ...logBase,
-                approved: true,
-                checksum: approvalDecision.checksum,
-            });
             localDispatch(guestIntentToAction(command));
-            onlineRef.current?.sendHostDecision(approvalDecision);
+            onlineRef.current?.sendHostDecision(review.decision);
         },
         [appendApprovalLog, gameState, localDispatch]
     );
@@ -215,6 +171,7 @@ export const useGameNetwork = (
                     message: 'Guest received a host rejection for a multiplayer intent.',
                     context: {
                         intentKind: decision.intentKind,
+                        reasonCode: decision.reasonCode || 'AUTHORITY_REJECTED',
                     },
                 });
                 return;

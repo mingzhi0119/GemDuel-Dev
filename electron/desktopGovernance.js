@@ -4,6 +4,7 @@ import { RELEASE_HEALTH_EVENT_SCHEMA } from './releaseHealth.js';
 
 const { ELECTRON_BRIDGE_API_KEYS, IPC_INVOKE_CHANNELS, IPC_SEND_CHANNELS, UPDATE_CHANNELS } =
     preloadContract;
+export const DESKTOP_GOVERNANCE_POLICY_VERSION = 1;
 
 const MAIN_WINDOW_WEB_PREFERENCES_SCHEMA = z.object({
     nodeIntegration: z.literal(false),
@@ -112,24 +113,83 @@ export const getAllowlistedChannelNames = () =>
         ...Object.values(UPDATE_CHANNELS),
     ].sort();
 
+export const buildDesktopGovernanceSnapshot = ({ windowOptions, bridgeApiKeys }) => ({
+    policyVersion: DESKTOP_GOVERNANCE_POLICY_VERSION,
+    mainWindow: {
+        autoHideMenuBar: windowOptions?.autoHideMenuBar ?? null,
+        webPreferences: {
+            nodeIntegration: windowOptions?.webPreferences?.nodeIntegration ?? null,
+            contextIsolation: windowOptions?.webPreferences?.contextIsolation ?? null,
+            webSecurity: windowOptions?.webPreferences?.webSecurity ?? null,
+            allowRunningInsecureContent:
+                windowOptions?.webPreferences?.allowRunningInsecureContent ?? null,
+        },
+    },
+    bridgeApiKeys: [...bridgeApiKeys].sort(),
+    allowlistedChannels: getAllowlistedChannelNames(),
+});
+
+export const collectSnapshotDriftIssues = (expectedSnapshot, actualSnapshot) => {
+    const issues = [];
+
+    if (
+        expectedSnapshot?.policyVersion !== DESKTOP_GOVERNANCE_POLICY_VERSION ||
+        actualSnapshot.policyVersion !== DESKTOP_GOVERNANCE_POLICY_VERSION
+    ) {
+        issues.push(
+            `[Snapshot] Desktop governance policy version must remain ${DESKTOP_GOVERNANCE_POLICY_VERSION}.`
+        );
+    }
+
+    if (
+        JSON.stringify(expectedSnapshot?.mainWindow) !== JSON.stringify(actualSnapshot.mainWindow)
+    ) {
+        issues.push('[Snapshot] BrowserWindow governance snapshot drifted.');
+    }
+
+    if (
+        JSON.stringify(expectedSnapshot?.bridgeApiKeys) !==
+        JSON.stringify(actualSnapshot.bridgeApiKeys)
+    ) {
+        issues.push('[Snapshot] Bridge API surface drifted from the audited snapshot.');
+    }
+
+    if (
+        JSON.stringify(expectedSnapshot?.allowlistedChannels) !==
+        JSON.stringify(actualSnapshot.allowlistedChannels)
+    ) {
+        issues.push('[Snapshot] IPC allowlist drifted from the audited snapshot.');
+    }
+
+    return issues;
+};
+
 export const collectDesktopGovernanceErrors = ({
     windowOptions,
     bridgeApiKeys,
     allowlistDocumentText,
+    expectedSnapshot,
 }) => {
     const issues = [...validateMainWindowOptions(windowOptions)];
-    const sortedBridgeKeys = [...bridgeApiKeys].sort();
+    const snapshot = buildDesktopGovernanceSnapshot({
+        windowOptions,
+        bridgeApiKeys,
+    });
 
-    if (JSON.stringify(sortedBridgeKeys) !== JSON.stringify([...ELECTRON_BRIDGE_API_KEYS])) {
+    if (JSON.stringify(snapshot.bridgeApiKeys) !== JSON.stringify([...ELECTRON_BRIDGE_API_KEYS])) {
         issues.push(
-            `[Preload] Bridge API surface drifted. Expected ${ELECTRON_BRIDGE_API_KEYS.join(', ')} but received ${sortedBridgeKeys.join(', ')}.`
+            `[Preload] Bridge API surface drifted. Expected ${ELECTRON_BRIDGE_API_KEYS.join(', ')} but received ${snapshot.bridgeApiKeys.join(', ')}.`
         );
     }
 
-    for (const channel of getAllowlistedChannelNames()) {
+    for (const channel of snapshot.allowlistedChannels) {
         if (!allowlistDocumentText.includes(`\`${channel}\``)) {
             issues.push(`[Allowlist Doc] Missing documented channel ${channel}.`);
         }
+    }
+
+    if (expectedSnapshot) {
+        issues.push(...collectSnapshotDriftIssues(expectedSnapshot, snapshot));
     }
 
     return issues;
