@@ -5,12 +5,16 @@ import isDev from 'electron-is-dev';
 import log from 'electron-log';
 import pkg from 'electron-updater';
 import { PeerServer } from 'peer';
+import { getAutoUpdaterPolicy, getRuntimeIceServersFromEnv } from './runtimeConfig.js';
 const { autoUpdater } = pkg;
 
 const DEFAULT_LOG_LEVEL = isDev ? 'debug' : 'info';
 const MAX_LOG_FILE_SIZE = 5 * 1024 * 1024;
-const allowPrereleaseUpdates =
-    process.env.GEMDUEL_ALLOW_PRERELEASE === 'true' || app.getVersion().includes('-');
+const autoUpdaterPolicy = getAutoUpdaterPolicy({
+    disableUpdatesEnv: process.env.GEMDUEL_DISABLE_UPDATES,
+    allowPrereleaseEnv: process.env.GEMDUEL_ALLOW_PRERELEASE,
+    appVersion: app.getVersion(),
+});
 
 autoUpdater.logger = log;
 log.transports.file.level = process.env.GEMDUEL_LOG_LEVEL || DEFAULT_LOG_LEVEL;
@@ -25,67 +29,14 @@ let mainWindow;
 let updateFailureCount = 0;
 let peerServer = null; // Keep reference to prevent garbage collection
 
-const normalizeIceServer = (value) => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        return null;
-    }
-
-    const { urls, username, credential } = value;
-    const urlsAreValid =
-        typeof urls === 'string' ||
-        (Array.isArray(urls) && urls.every((entry) => typeof entry === 'string'));
-
-    if (!urlsAreValid) {
-        return null;
-    }
-
-    if (username !== undefined && typeof username !== 'string') {
-        return null;
-    }
-
-    if (credential !== undefined && typeof credential !== 'string') {
-        return null;
-    }
-
-    return { urls, username, credential };
-};
-
-const getRuntimeIceServers = () => {
-    const rawConfig = process.env.GEMDUEL_ICE_SERVERS_JSON;
-    if (!rawConfig) {
-        return [];
-    }
-
-    try {
-        const parsed = JSON.parse(rawConfig);
-        if (!Array.isArray(parsed)) {
-            log.warn('[RTC] GEMDUEL_ICE_SERVERS_JSON must be a JSON array. Falling back to STUN.');
-            return [];
-        }
-
-        const servers = parsed
-            .map((server) => normalizeIceServer(server))
-            .filter((server) => server !== null);
-
-        if (servers.length !== parsed.length) {
-            log.warn('[RTC] Ignored one or more invalid runtime ICE server entries.');
-        }
-
-        return servers;
-    } catch (error) {
-        log.warn('[RTC] Failed to parse GEMDUEL_ICE_SERVERS_JSON. Falling back to STUN.', error);
-        return [];
-    }
-};
-
 const configureAutoUpdater = () => {
-    if (process.env.GEMDUEL_DISABLE_UPDATES === 'true') {
+    if (!autoUpdaterPolicy.enabled) {
         log.info('Auto-updates disabled by environment override.');
         return;
     }
 
-    autoUpdater.autoDownload = true;
-    autoUpdater.allowPrerelease = allowPrereleaseUpdates;
+    autoUpdater.autoDownload = autoUpdaterPolicy.autoDownload;
+    autoUpdater.allowPrerelease = autoUpdaterPolicy.allowPrerelease;
 
     autoUpdater.checkForUpdatesAndNotify().catch((error) => {
         log.error('Failed to start auto-update check.', error);
@@ -169,7 +120,7 @@ ipcMain.handle('get-app-version', () => {
 });
 
 ipcMain.handle('get-runtime-ice-servers', () => {
-    return getRuntimeIceServers();
+    return getRuntimeIceServersFromEnv(process.env.GEMDUEL_ICE_SERVERS_JSON, log);
 });
 
 app.whenReady().then(() => {

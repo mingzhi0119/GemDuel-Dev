@@ -16,18 +16,18 @@ Allowed status values:
 
 ## Scorecard
 
-| Dimension                             | Audit Baseline | Current After Priority 4 | Target | Status        | Main Governance Gap                                                                                                                |
-| ------------------------------------- | -------------: | -----------------------: | -----: | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Correctness                           |           5/10 |                     8/10 |  8/10+ | `In Progress` | Core ingress contracts are stronger now, but some gameplay invariants still live in spread-out reducers instead of one engine.     |
-| Boundary Security                     |           3/10 |                     8/10 |  8/10+ | `In Progress` | Network, replay, and renderer-side runtime config are validated now, but storage and desktop governance still need the same rigor. |
-| State Machine Consistency             |           4/10 |                     8/10 |  8/10+ | `In Progress` | Protocol handlers now depend on the same gate, but the FSM is still not fully declarative for every gameplay subflow.              |
-| Online Authority                      |           3/10 |                     8/10 |  8/10+ | `In Progress` | Host authority is now explicit and logged, but ordering, replay, and broader multiplayer resilience still need more coverage.      |
-| Electron Security                     |           3/10 |                     6/10 |  8/10+ | `In Progress` | The preload surface is narrowed, and renderer runtime config is typed, but IPC governance and contract tests are still missing.    |
-| Architecture Layering                 |           4/10 |                     8/10 |  8/10+ | `In Progress` | Large hooks are smaller and cleaner now, but replay, settings, and some UI-only wiring can still be split more deliberately.       |
-| Type Contracts                        |           4/10 |                     8/10 |  8/10+ | `In Progress` | Most hot-path DTOs are named and validated now, but view-mode typing and some snapshot-heavy contracts still need tightening.      |
-| Test Coverage                         |           5/10 |                     8/10 |  8/10+ | `In Progress` | Replay and runtime-schema regression coverage improved, but property-based and Electron-level failure coverage are still missing.  |
-| Observability / Operations            |           5/10 |                     6/10 |  8/10+ | `Unstarted`   | Logging and updater policy are better, but telemetry, alerting, and release health gates do not exist yet.                         |
-| Dependency / Configuration Governance |           4/10 |                     6/10 |  8/10+ | `In Progress` | Sensitive runtime config is better controlled, but vulnerability automation and config ownership remain weak.                      |
+| Dimension                             | Audit Baseline | Current After Priority 5 | Target | Status        | Main Governance Gap                                                                                                                                                  |
+| ------------------------------------- | -------------: | -----------------------: | -----: | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Correctness                           |           5/10 |                     8/10 |  8/10+ | `In Progress` | Core ingress contracts are stronger now, and regression depth improved, but some gameplay invariants still live in spread-out reducers instead of one engine.        |
+| Boundary Security                     |           3/10 |                     8/10 |  8/10+ | `In Progress` | Network, replay, and renderer-side runtime config are validated and stress-tested now, but storage and broader desktop governance still need the same rigor.         |
+| State Machine Consistency             |           4/10 |                     8/10 |  8/10+ | `In Progress` | Protocol handlers now depend on the same gate, but the FSM is still not fully declarative for every gameplay subflow.                                                |
+| Online Authority                      |           3/10 |                     8/10 |  8/10+ | `In Progress` | Host authority is explicit, logged, and recovery-tested now, but broader multiplayer resilience still needs hook-level failure coverage.                             |
+| Electron Security                     |           3/10 |                     7/10 |  8/10+ | `In Progress` | The preload surface is narrowed and contract-tested now, but full IPC governance and desktop E2E failure coverage are still missing.                                 |
+| Architecture Layering                 |           4/10 |                     8/10 |  8/10+ | `In Progress` | Large hooks are smaller and cleaner now, but replay, settings, and some UI-only wiring can still be split more deliberately.                                         |
+| Type Contracts                        |           4/10 |                     8/10 |  8/10+ | `In Progress` | Most hot-path DTOs are named and validated now, but view-mode typing and some snapshot-heavy contracts still need tightening.                                        |
+| Test Coverage                         |           5/10 |                     9/10 |  8/10+ | `In Progress` | Property-based testing, desktop boundary contracts, and coverage gates are in place now, but hook-level recovery and full Electron E2E are still thinner than ideal. |
+| Observability / Operations            |           5/10 |                     6/10 |  8/10+ | `Unstarted`   | Logging and updater policy are better, but telemetry, alerting, and release health gates do not exist yet.                                                           |
+| Dependency / Configuration Governance |           4/10 |                     6/10 |  8/10+ | `In Progress` | Sensitive runtime config is better controlled, but vulnerability automation and config ownership remain weak.                                                        |
 
 ## Dimension Summaries
 
@@ -266,14 +266,21 @@ Allowed status values:
 
 ### Priority 5. Governance-Owned Negative-Path Test Matrix
 
-- Status: `In Progress`
+- Status: `Completed`
 - Why this comes fifth: The project now needs coverage discipline, not only more tests.
 - Deliverables:
 - Define a matrix for malformed inputs, illegal transitions, protocol violations, recovery paths, and Electron config failures.
 - Add `fast-check` property-based tests for coordinates, payloads, and invalid transition generation.
 - Add preload-surface and runtime-config parsing tests.
-- Add `Playwright for Electron` scenarios for IPC failure, network interruption, and updater edge cases.
 - Track branch coverage on rule-heavy reducers.
+- Completed in this phase:
+- Added a checked-in negative-path matrix that maps trust boundaries and failure cases to concrete test files.
+- Added `fast-check` property-based tests for gem-line legality, out-of-bounds rejection, duplicate-coordinate rejection, and protocol-version rejection.
+- Added Electron contract tests for the preload bridge and runtime configuration parsing plus updater-policy env handling.
+- Made branch coverage executable again with `@vitest/coverage-v8`, focused coverage tracking on critical reducer/protocol/runtime files, and enforced thresholds in `vitest.config.ts`.
+- Follow-up in the next wave:
+- Add hook-level recovery tests for heartbeat timeout, reconnect, and late host decisions.
+- Add full Electron window E2E failure scenarios once the IPC governance pack lands.
 - Raises: `Test Coverage`, `Electron Security`, `Online Authority`
 
 ### Priority 6. Desktop Security and IPC Governance Pack
@@ -320,6 +327,7 @@ These items are already done and should be treated as governance prerequisites, 
 - Status: `Completed` - Replay import now validates envelope shape, action payloads, and bootstrap ordering before replacing local history.
 - Status: `Completed` - Card interaction callbacks now cross the UI-domain seam as typed DTOs instead of JSON strings and `Record<string, unknown>`.
 - Status: `Completed` - The preload bridge now exposes a narrow Electron API instead of raw IPC primitives.
+- Status: `Completed` - Priority 5 added a governance-owned negative-path matrix, property-based stress tests, preload/runtime config contract tests, and active coverage gating for critical logic files.
 - Status: `Completed` - Production updater policy and runtime ICE injection are now safer than the original audit baseline.
 - Status: `Completed` - Setup and draft bootstrap flows now use named DTOs instead of wide untyped payloads.
 

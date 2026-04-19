@@ -6,10 +6,11 @@ This document explains how to write and run tests for the game logic using Vites
 
 Tests are configured using **Vitest** with the following setup:
 
-- **Framework**: Vitest v4
+- **Framework**: Vitest v3
 - **Environment**: happy-dom
 - **UI Dashboard**: Available via `npm run test:ui`
-- **Coverage**: Available via `npm run test:coverage`
+- **Coverage**: Available via `npm run test:coverage` using `@vitest/coverage-v8`
+- **Property Testing**: `fast-check` is used for shrinking-friendly negative-path and invariant tests
 
 ## Running Tests
 
