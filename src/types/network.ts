@@ -15,7 +15,7 @@ import type {
     SelectRoyalPayload,
     StealGemPayload,
     UsePrivilegePayload,
-} from '../types';
+} from './domain';
 
 export const NETWORK_PROTOCOL_VERSION = 2 as const;
 
