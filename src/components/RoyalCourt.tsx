@@ -23,15 +23,15 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
             className={`flex flex-col gap-4 items-center p-5 rounded-[2rem] border backdrop-blur-md shrink-0 w-fit transition-all duration-500
             ${
                 theme === 'dark'
-                    ? 'bg-slate-800/40 border-white/10 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.05)]'
-                    : 'bg-white border-stone-200/60'
+                    ? 'bg-slate-800/70 border-slate-600 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
+                    : 'bg-white border-stone-300/80'
             }
             ${!canInteract ? 'opacity-70 pointer-events-none' : ''}
         `}
         >
             <h2
                 className={`text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 mb-2
-                ${theme === 'dark' ? 'text-yellow-500/70' : 'text-amber-700/80'}`}
+                ${theme === 'dark' ? 'text-yellow-300' : 'text-amber-800'}`}
             >
                 <Crown size={14} /> Royal Court
             </h2>
@@ -56,7 +56,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                 ) : (
                     <div
                         className={`col-span-2 h-64 flex items-center justify-center italic text-xs 
-                        ${theme === 'dark' ? 'text-slate-700' : 'text-stone-400'}`}
+                        ${theme === 'dark' ? 'text-slate-400' : 'text-stone-600'}`}
                     >
                         Court is Empty
                     </div>
