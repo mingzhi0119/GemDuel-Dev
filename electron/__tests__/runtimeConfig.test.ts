@@ -2,6 +2,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import {
+    RUNTIME_CONFIG_POLICY,
     getAutoUpdaterPolicy,
     getRuntimeLogLevel,
     getRuntimeIceServersFromEnv,
@@ -16,13 +17,28 @@ describe('electron runtime config', () => {
             username: undefined,
             credential: undefined,
         });
-        expect(normalizeIceServer({ urls: ['turn:example.org'], username: 'u' })).toEqual({
+        expect(
+            normalizeIceServer({
+                urls: ['turn:example.org'],
+                username: 'u',
+                credential: 'p',
+            })
+        ).toEqual({
             urls: ['turn:example.org'],
             username: 'u',
-            credential: undefined,
+            credential: 'p',
         });
         expect(normalizeIceServer({ urls: 42 })).toBeNull();
         expect(normalizeIceServer({ urls: 'turn:example.org', credential: 1 })).toBeNull();
+        expect(
+            normalizeIceServer({
+                urls: 'stun:example.org',
+                username: 'u',
+                credential: 'p',
+            })
+        ).toBeNull();
+        expect(normalizeIceServer({ urls: 'turn:example.org', username: 'u' })).toBeNull();
+        expect(normalizeIceServer({ urls: 'https://relay.example.org' })).toBeNull();
     });
 
     it('fails closed for malformed runtime ICE config input', () => {
@@ -40,6 +56,7 @@ describe('electron runtime config', () => {
             JSON.stringify([
                 { urls: 'stun:valid.example.org' },
                 { urls: ['turn:valid.example.org'], username: 'user', credential: 'pass' },
+                { urls: 'stun:invalid.example.org', username: 'user', credential: 'pass' },
                 { urls: 99 },
             ]),
             logger
@@ -133,5 +150,17 @@ describe('electron runtime config', () => {
             })
         ).toBe('info');
         expect(logger.warn).toHaveBeenCalled();
+    });
+
+    it('declares ownership and secret handling for every governed env var', () => {
+        expect(Object.keys(RUNTIME_CONFIG_POLICY).sort()).toEqual([
+            'GEMDUEL_ALLOW_PRERELEASE',
+            'GEMDUEL_DISABLE_UPDATES',
+            'GEMDUEL_ICE_SERVERS_JSON',
+            'GEMDUEL_LOG_LEVEL',
+        ]);
+        expect(RUNTIME_CONFIG_POLICY.GEMDUEL_ICE_SERVERS_JSON.secretHandling).toContain(
+            'TURN credentials'
+        );
     });
 });

@@ -16,7 +16,7 @@ Allowed status values:
 
 ## Scorecard
 
-| Dimension                             | Audit Baseline | Current After Priority 7 | Target | Status        | Main Governance Gap                                                                                                                                                  |
+| Dimension                             | Audit Baseline | Current After Priority 8 | Target | Status        | Main Governance Gap                                                                                                                                                  |
 | ------------------------------------- | -------------: | -----------------------: | -----: | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Correctness                           |           5/10 |                     8/10 |  8/10+ | `In Progress` | Core ingress contracts are stronger now, and regression depth improved, but some gameplay invariants still live in spread-out reducers instead of one engine.        |
 | Boundary Security                     |           3/10 |                     8/10 |  8/10+ | `In Progress` | Network, replay, and desktop trust boundaries are much tighter now, but local persistence and broader desktop failure coverage still need the same rigor.            |
@@ -27,7 +27,7 @@ Allowed status values:
 | Type Contracts                        |           4/10 |                     8/10 |  8/10+ | `In Progress` | Most hot-path DTOs are named and validated now, but view-mode typing and some snapshot-heavy contracts still need tightening.                                        |
 | Test Coverage                         |           5/10 |                     9/10 |  8/10+ | `In Progress` | Property-based testing, desktop boundary contracts, and coverage gates are in place now, but hook-level recovery and full Electron E2E are still thinner than ideal. |
 | Observability / Operations            |           5/10 |                     8/10 |  8/10+ | `In Progress` | Structured release-health logging and checklists now exist, but automated alerting and field telemetry sinks still do not.                                           |
-| Dependency / Configuration Governance |           4/10 |                     7/10 |  8/10+ | `In Progress` | Runtime redaction and release-health policy are defined now, but dependency audit automation and config ownership remain weak.                                       |
+| Dependency / Configuration Governance |           4/10 |                     8/10 |  8/10+ | `Completed`   | Production audits, override policy, and runtime config ownership are now governed. The next hardening step is backend-issued short-lived TURN credentials.           |
 
 ## Dimension Summaries
 
@@ -181,10 +181,10 @@ Allowed status values:
 
 ### 10. Dependency / Configuration Governance
 
-- Status: `In Progress`
+- Status: `Completed`
 - Baseline: `4/10`
 - Target: `8/10+`
-- Main issue: Sensitive client configuration improved, but dependency risk review and config ownership are still reactive.
+- Main issue: Production audits and runtime config ownership are now governed, but the strongest TURN-credential end state still depends on backend support.
 - Practical path to 8/10+:
 - Add scheduled dependency audit checks and assign ownership for production vulnerabilities.
 - Create a runtime configuration policy covering defaults, validation, secrets, and environment-specific overrides.
@@ -315,7 +315,7 @@ Allowed status values:
 
 ### Priority 8. Dependency and Runtime Configuration Governance
 
-- Status: `Unstarted`
+- Status: `Completed`
 - Why this matters: Security and stability will regress unless dependency review and config discipline become routine.
 - Deliverables:
 - Add automated production dependency audits.
@@ -323,6 +323,14 @@ Allowed status values:
 - Replace runtime relay configuration with authenticated short-lived TURN credential delivery when backend support exists.
 - Use `npm overrides` or `yarn resolutions` to force critical production security patches when upstream packages lag.
 - Review and reduce production dependency vulnerability exposure.
+- Completed in this phase:
+- Added governed production-security overrides for `path-to-regexp`, `qs`, `yaml`, and the vulnerable `picomatch` branches used by the shipping dependency graph.
+- Added `npm run deps:check`, a dependency-governance gate that fails on live production audit findings, override drift, or unmanaged Electron runtime env usage.
+- Added a dedicated dependency/runtime governance document with explicit ownership, validation, secret handling, and failure behavior for every `process.env.GEMDUEL_*` flag in the main process.
+- Wired dependency governance into the release workflow and a weekly scheduled GitHub audit workflow, and switched the release install path to `npm ci`.
+- Tightened runtime ICE validation so credential-bearing entries require both username and credential and may only target `turn:` or `turns:` URLs.
+- Remaining follow-up outside this repo:
+- Replace host-provided TURN secrets with authenticated short-lived TURN credentials once a backend/auth service exists.
 - Raises: `Dependency / Configuration Governance`, `Observability / Operations`
 
 ## Already Completed Foundations
@@ -353,4 +361,4 @@ The roadmap should be considered successful only when all of the following are t
 - Status: `Unstarted` - Large gameplay hooks are reduced to orchestration-only roles.
 - Status: `Completed` - Electron IPC exposure is contract-tested and allowlisted.
 - Status: `Completed` - Negative-path coverage exists for reducer, protocol, replay, updater, and runtime config boundaries.
-- Status: `Unstarted` - Production dependency and runtime configuration governance run continuously, not manually.
+- Status: `Completed` - Production dependency and runtime configuration governance run continuously, not manually.

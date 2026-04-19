@@ -28,6 +28,8 @@ export default defineConfig({
                 'electron/releaseHealth.js',
                 'electron/runtimeConfig.js',
                 'electron/preloadContract.cjs',
+                'scripts/dependencyGovernance.js',
+                'shared/runtimeIcePolicy.js',
             ],
             exclude: ['node_modules/', 'dist/', '**/*.d.ts', '**/__tests__/**', '**/tests/**'],
             thresholds: {

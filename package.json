@@ -10,7 +10,8 @@
         "dev": "vite",
         "build": "vite build",
         "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-        "electron:build": "npm run desktop:check && npm run build && electron-builder",
+        "electron:build": "npm run deps:check && npm run desktop:check && npm run build && electron-builder",
+        "deps:check": "node scripts/check-dependency-governance.mjs",
         "lint": "eslint .",
         "preview": "vite preview",
         "test": "vitest run",
@@ -104,5 +105,22 @@
         "vite": "^6.2.1",
         "vitest": "^3.0.8",
         "wait-on": "^9.0.3"
+    },
+    "overrides": {
+        "path-to-regexp": "0.1.13",
+        "qs": "6.14.2",
+        "yaml": "2.8.3",
+        "anymatch": {
+            "picomatch": "2.3.2"
+        },
+        "micromatch": {
+            "picomatch": "2.3.2"
+        },
+        "readdirp": {
+            "picomatch": "2.3.2"
+        },
+        "tinyglobby": {
+            "picomatch": "4.0.4"
+        }
     }
 }

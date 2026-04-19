@@ -37,6 +37,7 @@ describe('WebRTC runtime ICE configuration', () => {
         setRuntimeIceServers([
             { urls: 'turn:valid.example.com:80', username: 'user', credential: 'pass' },
             { urls: 42 },
+            { urls: 'stun:invalid.example.com:80', username: 'user', credential: 'pass' },
             null,
         ]);
 

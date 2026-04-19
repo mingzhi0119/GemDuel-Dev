@@ -1,29 +1,53 @@
+import {
+    ALLOWED_ICE_URL_PROTOCOLS,
+    collectIceServerPolicyViolations,
+} from '../shared/runtimeIcePolicy.js';
+
+const VALID_LOG_LEVELS = new Set(['error', 'warn', 'info', 'verbose', 'debug', 'silly']);
+
+export const RUNTIME_CONFIG_POLICY = Object.freeze({
+    GEMDUEL_DISABLE_UPDATES: {
+        owner: 'Desktop Platform',
+        defaultValue: 'false',
+        validation: 'Boolean string: "true" or "false".',
+        secretHandling: 'Operational flag only. Never store secrets here.',
+        failureMode: 'Falls back to false and keeps auto-updates enabled.',
+    },
+    GEMDUEL_ALLOW_PRERELEASE: {
+        owner: 'Release Engineering',
+        defaultValue: 'false',
+        validation: 'Boolean string: "true" or "false".',
+        secretHandling: 'Operational flag only. Never store secrets here.',
+        failureMode: 'Falls back to false unless the app version is already a prerelease.',
+    },
+    GEMDUEL_LOG_LEVEL: {
+        owner: 'Desktop Platform',
+        defaultValue: 'info',
+        validation: `One of ${Array.from(VALID_LOG_LEVELS).join(', ')}.`,
+        secretHandling: 'Operational flag only. Never store secrets here.',
+        failureMode: 'Falls back to the release default log level.',
+    },
+    GEMDUEL_ICE_SERVERS_JSON: {
+        owner: 'Networking',
+        defaultValue: '[]',
+        validation: `JSON array of ICE server objects using ${ALLOWED_ICE_URL_PROTOCOLS.join(', ')} URL schemes. TURN credentials must be injected at runtime and include both username and credential.`,
+        secretHandling:
+            'Treat TURN credentials as sensitive runtime material. Do not commit them to source control, logs, or packaged client assets.',
+        failureMode:
+            'Falls back to the built-in STUN-only baseline if parsing or validation fails.',
+    },
+});
+
 export const normalizeIceServer = (value) => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    const violations = collectIceServerPolicyViolations(value);
+
+    if (violations.length > 0) {
         return null;
     }
 
     const { urls, username, credential } = value;
-    const urlsAreValid =
-        typeof urls === 'string' ||
-        (Array.isArray(urls) && urls.every((entry) => typeof entry === 'string'));
-
-    if (!urlsAreValid) {
-        return null;
-    }
-
-    if (username !== undefined && typeof username !== 'string') {
-        return null;
-    }
-
-    if (credential !== undefined && typeof credential !== 'string') {
-        return null;
-    }
-
     return { urls, username, credential };
 };
-
-const VALID_LOG_LEVELS = new Set(['error', 'warn', 'info', 'verbose', 'debug', 'silly']);
 
 export const normalizeBooleanEnv = ({
     envName,

@@ -29,6 +29,9 @@ npm run test:coverage
 
 # Run desktop release governance checks
 npm run desktop:check
+
+# Run production dependency and runtime governance checks
+npm run deps:check
 ```
 
 ## Test Structure
@@ -247,9 +250,10 @@ Add to your CI pipeline:
 npm test -- --run  # Run once (no watch mode)
 npm run test:coverage  # Generate coverage report
 npm run desktop:check  # Fail if Electron IPC or BrowserWindow security drifts
+npm run deps:check  # Fail if production audit, overrides, or runtime env governance drift
 ```
 
-For desktop releases, pair those commands with the operational review in `RELEASE_HEALTH_CHECKLIST.md`.
+For desktop releases, pair those commands with the operational review in `RELEASE_HEALTH_CHECKLIST.md` and the ownership rules in `DEPENDENCY_RUNTIME_GOVERNANCE.md`.
 
 Both commands will exit with a non-zero code on failure, triggering CI failure.
 

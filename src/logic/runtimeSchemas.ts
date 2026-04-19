@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { MarketCardRef, PlayerInitRandoms, SelectBuffPayload } from '../types';
+import { collectIceServerPolicyViolations } from '../../shared/runtimeIcePolicy.js';
 
 export const levelSchema = z.union([z.literal(1), z.literal(2), z.literal(3)]);
 export const playerKeySchema = z.union([z.literal('p1'), z.literal('p2')]);
@@ -47,11 +48,20 @@ export const selectBuffPayloadSchema: z.ZodType<SelectBuffPayload> = z.object({
         .optional(),
 });
 
-export const runtimeIceServerSchema: z.ZodType<RTCIceServer> = z.object({
-    urls: z.union([z.string(), z.array(z.string())]),
-    username: z.string().optional(),
-    credential: z.string().optional(),
-});
+export const runtimeIceServerSchema: z.ZodType<RTCIceServer> = z
+    .object({
+        urls: z.union([z.string(), z.array(z.string())]),
+        username: z.string().optional(),
+        credential: z.string().optional(),
+    })
+    .superRefine((value, ctx) => {
+        for (const violation of collectIceServerPolicyViolations(value)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: violation,
+            });
+        }
+    });
 
 export const runtimeIceServerListSchema = z.array(runtimeIceServerSchema);
 

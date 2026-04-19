@@ -44,6 +44,8 @@ describe('runtimeSchemas', () => {
             parseRuntimeIceServers([
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: ['turn:example.com'], username: 'user', credential: 'pass' },
+                { urls: 'stun:example.com', username: 'user', credential: 'pass' },
+                { urls: 'https://relay.example.com' },
                 { urls: 123 },
             ])
         ).toEqual([

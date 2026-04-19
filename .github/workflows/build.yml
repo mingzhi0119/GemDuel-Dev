@@ -23,7 +23,10 @@ jobs:
                   cache: 'npm'
 
             - name: Install Dependencies
-              run: npm install
+              run: npm ci
+
+            - name: Dependency Governance Check
+              run: npm run deps:check
 
             - name: Lint
               run: npm run lint
