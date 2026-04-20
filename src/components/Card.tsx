@@ -1,8 +1,10 @@
 import React from 'react';
-import { Crown, Download, RotateCcw, Hand, Scroll, Plus } from 'lucide-react';
-import { GEM_TYPES, ABILITIES } from '../constants';
+import { Crown, Download } from 'lucide-react';
+import { GEM_TYPES } from '../constants';
 import { GemIcon } from './GemIcon';
 import { Card as CardType, CardInteractionContext, GemColor } from '../types';
+import { CardAbilityBadges } from './card/CardAbilityBadges';
+import { CardFacePattern } from './card/CardFacePattern';
 
 interface CardProps {
     card: CardType | null;
@@ -131,145 +133,6 @@ export const Card: React.FC<CardProps> = React.memo(
             }
         };
 
-        // Helper to generate a unique procedural pattern based on ID
-        const renderCardFace = () => {
-            const isGray = card.bonusColor === 'null';
-            const themeColor =
-                !isGray && card.bonusColor
-                    ? GEM_TYPES[card.bonusColor.toUpperCase() as keyof typeof GEM_TYPES].color
-                          .split(' ')[0]
-                          .replace('from-', '')
-                    : 'slate-600';
-
-            // Simple hash-like numeric value from ID for variations
-            const seed = card.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const patternType = seed % 3; // 0: Circles, 1: Lines, 2: Polygon
-
-            return (
-                <div
-                    className={`absolute inset-0 overflow-hidden pointer-events-none opacity-30 mix-blend-overlay ${isGray ? 'brightness-50 grayscale' : ''}`}
-                >
-                    <svg width="100%" height="100%" className="w-full h-full">
-                        <defs>
-                            <pattern
-                                id={`pattern-${card.id}`}
-                                x="0"
-                                y="0"
-                                width="40"
-                                height="40"
-                                patternUnits="userSpaceOnUse"
-                            >
-                                {patternType === 0 && (
-                                    <circle
-                                        cx="20"
-                                        cy="20"
-                                        r={10 + (seed % 10)}
-                                        fill="currentColor"
-                                        className={`text-${themeColor}`}
-                                    />
-                                )}
-                                {patternType === 1 && (
-                                    <rect
-                                        width="2"
-                                        height="40"
-                                        x="19"
-                                        fill="currentColor"
-                                        className={`text-${themeColor}`}
-                                        transform={`rotate(${seed % 90} 20 20)`}
-                                    />
-                                )}
-                                {patternType === 2 && (
-                                    <path
-                                        d="M20 5 L35 35 L5 35 Z"
-                                        fill="currentColor"
-                                        className={`text-${themeColor}`}
-                                        transform={`rotate(${seed % 360} 20 20)`}
-                                    />
-                                )}
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill={`url(#pattern-${card.id})`} />
-                        {/* Decorative inner glow */}
-                        <radialGradient id={`glow-${card.id}`}>
-                            <stop offset="0%" stopColor="white" stopOpacity="0.2" />
-                            <stop offset="100%" stopColor="black" stopOpacity="0" />
-                        </radialGradient>
-                        <rect width="100%" height="100%" fill={`url(#glow-${card.id})`} />
-                    </svg>
-                </div>
-            );
-        };
-
-        // Ability Icons
-        const getAbilityContent = () => {
-            let abilitiesList: string[] = [];
-            if (Array.isArray(card.ability)) {
-                abilitiesList = card.ability;
-            } else if (card.ability && card.ability !== 'none') {
-                abilitiesList = [card.ability as string];
-            }
-
-            if (abilitiesList.length === 0) return null;
-
-            return (
-                <div
-                    className="flex flex-row"
-                    style={{
-                        gap: `${stackedGapPx}px`,
-                        marginTop: `${stackedGapPx}px`,
-                    }}
-                >
-                    {abilitiesList.map((abilId, idx) => {
-                        const iconProps = {
-                            size: abilityIconSizePx,
-                            className: 'text-white drop-shadow-md',
-                        };
-                        let IconComponent: React.ComponentType<{
-                            size?: number;
-                            className?: string;
-                        }> | null = null;
-                        let bgColor = 'bg-slate-600';
-
-                        switch (abilId) {
-                            case ABILITIES.AGAIN.id:
-                                IconComponent = RotateCcw;
-                                bgColor = 'bg-amber-500';
-                                break;
-                            case ABILITIES.STEAL.id:
-                                IconComponent = Hand;
-                                bgColor = 'bg-rose-500';
-                                break;
-                            case ABILITIES.SCROLL.id:
-                                IconComponent = Scroll;
-                                bgColor = 'bg-purple-500';
-                                break;
-                            case ABILITIES.BONUS_GEM.id:
-                                IconComponent = Plus;
-                                bgColor = 'bg-emerald-500';
-                                break;
-                            default:
-                                return null;
-                        }
-                        if (!IconComponent) return null;
-
-                        return (
-                            <div
-                                key={idx}
-                                className={`${bgColor} shadow-md flex items-center justify-center`}
-                                title={abilId}
-                                style={{
-                                    padding: `${abilityBadgePaddingPx}px`,
-                                    borderRadius: `${abilityBadgeRadiusPx}px`,
-                                }}
-                            >
-                                <IconComponent {...iconProps} />
-                            </div>
-                        );
-                    })}
-                </div>
-            );
-        };
-
         const getScoreColor = (color: string | undefined | null) => {
             switch (color) {
                 case 'blue':
@@ -319,7 +182,7 @@ export const Card: React.FC<CardProps> = React.memo(
                     borderRadius: `${cornerRadiusPx}px`,
                 }}
             >
-                {renderCardFace()}
+                <CardFacePattern cardId={card.id} bonusColor={card.bonusColor} />
                 {/* 1. Top Left: Points & Ability */}
                 <div
                     className="absolute flex flex-row items-center pointer-events-none z-10"
@@ -337,7 +200,13 @@ export const Card: React.FC<CardProps> = React.memo(
                             {card.points}
                         </span>
                     )}
-                    {getAbilityContent()}
+                    <CardAbilityBadges
+                        ability={card.ability}
+                        stackedGapPx={stackedGapPx}
+                        abilityIconSizePx={abilityIconSizePx}
+                        abilityBadgePaddingPx={abilityBadgePaddingPx}
+                        abilityBadgeRadiusPx={abilityBadgeRadiusPx}
+                    />
                 </div>
 
                 {/* 2. Top Right: Bonus Gem */}
