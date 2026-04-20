@@ -241,7 +241,8 @@ describe('electron runtime harness', () => {
                 name: 'IPC_REQUEST_REJECTED',
                 context: expect.objectContaining({
                     channel: 'get-app-version',
-                    reason: 'Unexpected renderer sender.',
+                    reasonCode: 'IPC_REQUEST_REJECTED',
+                    reasonDetail: 'Unexpected renderer sender.',
                 }),
             })
         );
@@ -565,7 +566,8 @@ describe('electron runtime harness', () => {
                 name: 'IPC_REQUEST_REJECTED',
                 context: expect.objectContaining({
                     channel: 'restart_app',
-                    reason: 'This channel does not accept payload arguments.',
+                    reasonCode: 'IPC_REQUEST_REJECTED',
+                    reasonDetail: 'This channel does not accept payload arguments.',
                 }),
             })
         );
