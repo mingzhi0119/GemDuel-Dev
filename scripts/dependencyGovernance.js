@@ -10,6 +10,7 @@ export const REQUIRED_OVERRIDE_POLICY = Object.freeze({
     readdirp: Object.freeze({ picomatch: '2.3.2' }),
     tinyglobby: Object.freeze({ picomatch: '4.0.4' }),
 });
+export const RETIRED_DEPENDENCY_WORKAROUNDS = Object.freeze(['scripts/patch-peer.js']);
 
 const REQUIRED_POLICY_FIELDS = Object.freeze([
     'owner',
@@ -162,6 +163,39 @@ const collectOverrideErrors = (packageJson) => {
                     errors.push(`Missing override ${key} -> ${nestedKey}@${nestedValue}.`);
                 }
             }
+        }
+    }
+
+    return errors;
+};
+
+const collectRetiredWorkaroundErrors = ({
+    packageJson,
+    governanceDocumentText,
+    repoRoot = process.cwd(),
+}) => {
+    const errors = [];
+    const scriptEntries = Object.entries(packageJson?.scripts ?? {});
+
+    for (const relativePath of RETIRED_DEPENDENCY_WORKAROUNDS) {
+        for (const [scriptName, scriptCommand] of scriptEntries) {
+            if (typeof scriptCommand === 'string' && scriptCommand.includes(relativePath)) {
+                errors.push(
+                    `Package script ${scriptName} must not reference retired workaround ${relativePath}.`
+                );
+            }
+        }
+
+        if (fs.existsSync(path.join(repoRoot, relativePath))) {
+            errors.push(
+                `Retired dependency workaround ${relativePath} must not exist in the repo.`
+            );
+        }
+
+        if (governanceDocumentText.includes(`\`${relativePath}\` is still a governed workaround`)) {
+            errors.push(
+                `DEPENDENCY_RUNTIME_GOVERNANCE.md must not describe ${relativePath} as an active workaround.`
+            );
         }
     }
 
@@ -403,8 +437,14 @@ export const collectDependencyGovernanceErrors = ({
     runtimeEnvNames,
     governanceDocumentText,
     auditReport,
+    repoRoot = process.cwd(),
 }) => [
     ...collectOverrideErrors(packageJson),
+    ...collectRetiredWorkaroundErrors({
+        packageJson,
+        governanceDocumentText,
+        repoRoot,
+    }),
     ...collectRuntimePolicyErrors({
         runtimeConfigPolicy,
         runtimeEnvNames,

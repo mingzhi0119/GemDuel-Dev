@@ -39,4 +39,5 @@ The machine-readable contract lives in [electron/governance/release-health-opera
 - CI and release workflows upload the retained governance artifact named `governance-evidence`.
 - The retained artifact window is `14` days.
 - The exported artifact bundle must include governed release-health reports, the governance evidence manifest, and the bundle budget report whenever `dist/` exists.
+- The governance evidence manifest must also point at the version-matched dependency, secret, runtime, boundary, and contract assets that were audited in the same release batch.
 - Operators should treat the retained JSON reports as the first audit trail before reading ad hoc logs.

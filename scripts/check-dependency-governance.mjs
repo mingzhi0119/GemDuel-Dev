@@ -49,6 +49,7 @@ const errors = collectDependencyGovernanceErrors({
     runtimeEnvNames,
     governanceDocumentText,
     auditReport,
+    repoRoot,
 });
 errors.push(...collectGovernanceDocumentErrors(governanceDocumentText));
 

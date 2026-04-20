@@ -138,11 +138,12 @@ Allowed status values:
 - `window.electron.refreshRuntimeRelayProfile()` and `window.electron.revokeRuntimeRelayProfile()` now keep refresh/revoke in the privileged main process while preserving a renderer-safe contract.
 - `server/turn/turnCredentialService.js` now defines authenticated issue, refresh, and revoke handlers for short-lived TURN leases.
 
-## Temporary Governance Exceptions
+## Dependency Exception Retirement
 
-- Status: `In Progress`
-- `scripts/patch-peer.js` is still a governed workaround because the `peer` package ships a `binary` field that breaks the Electron build chain.
-- This patch must remain visible during dependency review until the project either replaces `peer` or upgrades to a version that no longer requires mutation in `node_modules`.
+- Status: `Completed`
+- `scripts/patch-peer.js` has been retired from `package.json` and removed from the repository after an Electron packaging smoke check passed with the upstream `peer@1.0.2` manifest intact.
+- Dependency governance now fails closed if any package script or tracked file attempts to reintroduce `patch-peer` or the same `node_modules` mutation path.
+- The remaining dependency governance stance is that release builds may not rewrite third-party package metadata inside `node_modules`.
 
 ## Operator Checklist
 

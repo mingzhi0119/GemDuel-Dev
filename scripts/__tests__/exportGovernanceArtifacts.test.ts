@@ -49,11 +49,55 @@ describe('governance artifact exporter', () => {
                 fs.readFileSync(path.join(outDir, 'bundle-budget.report.json'), 'utf8')
             );
 
-            expect(manifest.releaseHealthReports).toEqual(
+            expect(manifest.manifestVersion).toBe(2);
+            expect(manifest.batch).toMatchObject({
+                releaseVersion: '5.2.11',
+            });
+            expect(manifest.release.releaseHealthReports).toEqual(
                 expect.arrayContaining([
                     expect.objectContaining({
                         id: 'healthy-baseline',
                         status: 'healthy',
+                    }),
+                ])
+            );
+            expect(manifest.dependency).toMatchObject({
+                retiredWorkarounds: [],
+                sbomSnapshot: expect.objectContaining({
+                    path: 'governance/dependency-sbom.snapshot.json',
+                }),
+                licenseAllowlist: expect.objectContaining({
+                    path: 'governance/dependency-license-allowlist.json',
+                }),
+            });
+            expect(manifest.secretGovernance).toMatchObject({
+                policyDocument: expect.objectContaining({
+                    path: 'DEPENDENCY_RUNTIME_GOVERNANCE.md',
+                }),
+                runtimePolicySource: expect.objectContaining({
+                    path: 'electron/runtimeConfig.js',
+                }),
+            });
+            expect(manifest.runtime.turnLifecycleSources).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        path: 'electron/turnCredentialClient.js',
+                    }),
+                    expect.objectContaining({
+                        path: 'server/turn/turnCredentialService.js',
+                    }),
+                    expect.objectContaining({
+                        path: 'src/app/runtime/useRuntimeAppConfig.ts',
+                    }),
+                ])
+            );
+            expect(manifest.governanceAssets).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        id: 'dependency-sbom-snapshot',
+                    }),
+                    expect.objectContaining({
+                        id: 'desktop-policy-snapshot',
                     }),
                 ])
             );
@@ -64,6 +108,11 @@ describe('governance artifact exporter', () => {
                 })
             );
             expect(bundleBudget.status).toBe('warning');
+            expect(manifest.release.bundleBudgetReport).toEqual(
+                expect.objectContaining({
+                    path: expect.stringContaining('bundle-budget.report.json'),
+                })
+            );
         } finally {
             fs.rmSync(tempDir, {
                 force: true,

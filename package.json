@@ -10,7 +10,7 @@
         "dev": "vite",
         "build": "vite build",
         "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-        "electron:build": "npm run boundaries:check && npm run deps:check && npm run licenses:check && npm run sbom:check && npm run secrets:check && npm run desktop:check && npm run build && electron-builder",
+        "electron:build": "npm run boundaries:check && npm run deps:check && npm run licenses:check && npm run sbom:check && npm run secrets:check && npm run desktop:check && npm run build && npm run governance:artifacts && electron-builder",
         "boundaries:check": "node scripts/check-boundary-governance.mjs",
         "deps:check": "node scripts/check-dependency-governance.mjs",
         "governance:artifacts": "node scripts/export-governance-artifacts.mjs",
@@ -27,9 +27,7 @@
         "runtime:drills:check": "node scripts/check-runtime-drill-governance.mjs",
         "sbom:check": "node scripts/check-sbom-governance.mjs",
         "secrets:check": "node scripts/check-secret-governance.mjs",
-        "prepare": "husky",
-        "postinstall": "node scripts/patch-peer.js",
-        "prebuild": "node scripts/patch-peer.js"
+        "prepare": "husky"
     },
     "build": {
         "appId": "com.gemduel.app",

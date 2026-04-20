@@ -9,6 +9,7 @@ import {
     collectGovernanceDocumentErrors,
     collectSecretScanErrorsFromRepo,
     REQUIRED_OVERRIDE_POLICY,
+    RETIRED_DEPENDENCY_WORKAROUNDS,
     collectDependencyGovernanceErrors,
     collectLicenseAllowlistErrors,
     formatAuditSummary,
@@ -73,6 +74,50 @@ describe('dependency governance', () => {
             'Runtime env GEMDUEL_LOG_LEVEL is missing from DEPENDENCY_RUNTIME_GOVERNANCE.md.'
         );
         expect(errors).toContain('Production audit still reports low severity for qs.');
+    });
+
+    it('fails when a retired dependency workaround is reintroduced', () => {
+        const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dependency-workaround-'));
+        try {
+            mkdirSync(path.join(repoRoot, 'scripts'), { recursive: true });
+            writeFileSync(
+                path.join(repoRoot, 'scripts', 'patch-peer.js'),
+                'console.log("legacy");'
+            );
+
+            const errors = collectDependencyGovernanceErrors({
+                packageJson: {
+                    overrides: REQUIRED_OVERRIDE_POLICY,
+                    scripts: {
+                        postinstall: 'node scripts/patch-peer.js',
+                    },
+                },
+                runtimeConfigPolicy: {},
+                runtimeEnvNames: [],
+                governanceDocumentText:
+                    '`scripts/patch-peer.js` is still a governed workaround because packaging needs it.',
+                auditReport: {
+                    metadata: {
+                        vulnerabilities: {
+                            total: 0,
+                        },
+                    },
+                },
+                repoRoot,
+            });
+
+            expect(errors).toContain(
+                `Package script postinstall must not reference retired workaround ${RETIRED_DEPENDENCY_WORKAROUNDS[0]}.`
+            );
+            expect(errors).toContain(
+                `Retired dependency workaround ${RETIRED_DEPENDENCY_WORKAROUNDS[0]} must not exist in the repo.`
+            );
+            expect(errors).toContain(
+                `DEPENDENCY_RUNTIME_GOVERNANCE.md must not describe ${RETIRED_DEPENDENCY_WORKAROUNDS[0]} as an active workaround.`
+            );
+        } finally {
+            rmSync(repoRoot, { recursive: true, force: true });
+        }
     });
 
     it('builds a deterministic SBOM snapshot and detects drift', () => {
