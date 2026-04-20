@@ -77,4 +77,23 @@ describe('network message boundary contracts', () => {
             },
         });
     });
+
+    it('normalizes unknown sync-state reasons back to TURN_SYNC while preserving the snapshot', () => {
+        expect(
+            parseNetworkMessageBoundary({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'SYNC_STATE',
+                snapshot: INITIAL_STATE_SKELETON,
+                reason: 'UNRECOGNIZED_SYNC_REASON',
+            })
+        ).toEqual({
+            ok: true,
+            value: {
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'SYNC_STATE',
+                snapshot: INITIAL_STATE_SKELETON,
+                reason: 'TURN_SYNC',
+            },
+        });
+    });
 });

@@ -1,10 +1,43 @@
+import { z } from 'zod';
 import {
     ALLOWED_ICE_URL_PROTOCOLS,
     collectIceServerPolicyViolations,
 } from '../shared/runtimeIcePolicy.js';
 
-const VALID_LOG_LEVELS = new Set(['error', 'warn', 'info', 'verbose', 'debug', 'silly']);
+const VALID_LOG_LEVELS_LIST = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
+const VALID_LOG_LEVELS = new Set(VALID_LOG_LEVELS_LIST);
 const TURN_CREDENTIAL_BUNDLE_POLICY_VERSION = 1;
+
+const ISO_TIMESTAMP_SCHEMA = z
+    .string()
+    .refine((value) => !Number.isNaN(Date.parse(value)), 'Expected an ISO timestamp.');
+
+export const RUNTIME_ICE_SERVER_SCHEMA = z
+    .object({
+        urls: z.union([z.string(), z.array(z.string())]),
+        username: z.string().optional(),
+        credential: z.string().optional(),
+    })
+    .passthrough()
+    .superRefine((value, ctx) => {
+        for (const violation of collectIceServerPolicyViolations(value)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: violation,
+            });
+        }
+    });
+
+export const RUNTIME_ICE_SERVER_LIST_SCHEMA = z.array(RUNTIME_ICE_SERVER_SCHEMA);
+
+export const TURN_CREDENTIAL_BUNDLE_SCHEMA = z
+    .object({
+        policyVersion: z.literal(TURN_CREDENTIAL_BUNDLE_POLICY_VERSION),
+        iceServers: RUNTIME_ICE_SERVER_LIST_SCHEMA.nonempty(),
+        issuedAt: ISO_TIMESTAMP_SCHEMA,
+        expiresAt: ISO_TIMESTAMP_SCHEMA,
+    })
+    .passthrough();
 
 export const RUNTIME_CONFIG_POLICY = Object.freeze({
     GEMDUEL_DISABLE_UPDATES: {
@@ -24,7 +57,7 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
     GEMDUEL_LOG_LEVEL: {
         owner: 'Desktop Platform',
         defaultValue: 'info',
-        validation: `One of ${Array.from(VALID_LOG_LEVELS).join(', ')}.`,
+        validation: `One of ${VALID_LOG_LEVELS_LIST.join(', ')}.`,
         secretHandling: 'Operational flag only. Never store secrets here.',
         failureMode: 'Falls back to the release default log level.',
     },
@@ -98,8 +131,6 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
     },
 });
 
-const isIsoTimestamp = (value) => typeof value === 'string' && !Number.isNaN(Date.parse(value));
-
 const buildRuntimeRelayProfile = ({ source, iceServers, issuedAt = null, expiresAt = null }) => ({
     policyVersion: TURN_CREDENTIAL_BUNDLE_POLICY_VERSION,
     source,
@@ -153,7 +184,7 @@ export const getRuntimeLogLevel = ({ rawLevel, fallbackLevel, logger = console }
     }
 
     logger.warn?.(
-        `[CONFIG] GEMDUEL_LOG_LEVEL must be one of ${Array.from(VALID_LOG_LEVELS).join(', ')}. Falling back to ${fallbackLevel}.`
+        `[CONFIG] GEMDUEL_LOG_LEVEL must be one of ${VALID_LOG_LEVELS_LIST.join(', ')}. Falling back to ${fallbackLevel}.`
     );
     return fallbackLevel;
 };
@@ -173,7 +204,10 @@ const parseRuntimeIceServersFromEnv = (rawConfig, logger = console) => {
         }
 
         const servers = parsed
-            .map((server) => normalizeIceServer(server))
+            .map((server) => {
+                const result = RUNTIME_ICE_SERVER_SCHEMA.safeParse(server);
+                return result.success ? normalizeIceServer(result.data) : null;
+            })
             .filter((server) => server !== null);
 
         if (servers.length !== parsed.length) {
@@ -202,44 +236,23 @@ export const getRuntimeRelayProfileFromEnv = (
     if (bundleConfig) {
         try {
             const parsed = JSON.parse(bundleConfig);
-            if (
-                typeof parsed !== 'object' ||
-                parsed === null ||
-                Array.isArray(parsed) ||
-                !Array.isArray(parsed.iceServers)
-            ) {
-                logger.warn?.(
-                    '[RTC] GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON must be an object with an iceServers array. Falling back to the next relay source.'
-                );
-            } else if (
-                parsed.policyVersion !== TURN_CREDENTIAL_BUNDLE_POLICY_VERSION ||
-                !isIsoTimestamp(parsed.issuedAt) ||
-                !isIsoTimestamp(parsed.expiresAt)
-            ) {
+            const bundle = TURN_CREDENTIAL_BUNDLE_SCHEMA.safeParse(parsed);
+
+            if (!bundle.success) {
                 logger.warn?.(
                     '[RTC] GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON did not satisfy the governed TURN bundle contract. Falling back to the next relay source.'
                 );
-            } else if (Date.parse(parsed.expiresAt) <= now()) {
+            } else if (Date.parse(bundle.data.expiresAt) <= now()) {
                 logger.warn?.(
                     '[RTC] GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON is already expired. Falling back to the next relay source.'
                 );
             } else {
-                const iceServers = parsed.iceServers
-                    .map((server) => normalizeIceServer(server))
-                    .filter((server) => server !== null);
-
-                if (iceServers.length === parsed.iceServers.length && iceServers.length > 0) {
-                    return buildRuntimeRelayProfile({
-                        source: 'ephemeral-turn-bundle',
-                        iceServers,
-                        issuedAt: parsed.issuedAt,
-                        expiresAt: parsed.expiresAt,
-                    });
-                }
-
-                logger.warn?.(
-                    '[RTC] GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON contained invalid ICE server entries. Falling back to the next relay source.'
-                );
+                return buildRuntimeRelayProfile({
+                    source: 'ephemeral-turn-bundle',
+                    iceServers: bundle.data.iceServers.map((server) => normalizeIceServer(server)),
+                    issuedAt: bundle.data.issuedAt,
+                    expiresAt: bundle.data.expiresAt,
+                });
             }
         } catch (error) {
             logger.warn?.(

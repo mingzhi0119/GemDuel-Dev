@@ -30,6 +30,41 @@ export const RELEASE_HEALTH_EVENT_SCHEMA = z.object({
     context: z.record(z.string(), RELEASE_HEALTH_CONTEXT_VALUE_SCHEMA).optional(),
 });
 
+export const RELEASE_HEALTH_COUNTER_SNAPSHOT_SCHEMA = z.object({
+    count: z.number().int().nonnegative(),
+    severity: z.enum(RELEASE_HEALTH_SEVERITIES),
+    lastAt: z.string().min(1),
+});
+
+export const RELEASE_HEALTH_INDICATOR_SNAPSHOT_SCHEMA = z.object({
+    startupFailures: z.number().int().nonnegative(),
+    runtimeConfigFailures: z.number().int().nonnegative(),
+    updaterFailures: z.number().int().nonnegative(),
+    peerFailures: z.number().int().nonnegative(),
+    recoveryRequests: z.number().int().nonnegative(),
+    ipcRejected: z.number().int().nonnegative(),
+});
+
+export const RELEASE_HEALTH_SNAPSHOT_SCHEMA = z.object({
+    startedAt: z.string().min(1),
+    lastEventAt: z.string().nullable(),
+    totalEvents: z.number().int().nonnegative(),
+    severityCounts: z.object({
+        info: z.number().int().nonnegative(),
+        warn: z.number().int().nonnegative(),
+        error: z.number().int().nonnegative(),
+    }),
+    indicators: RELEASE_HEALTH_INDICATOR_SNAPSHOT_SCHEMA,
+    reasonCodeCounts: z.record(z.string(), z.number().int().nonnegative()),
+    counters: z.record(z.string(), RELEASE_HEALTH_COUNTER_SNAPSHOT_SCHEMA),
+    recentEvents: z.array(
+        RELEASE_HEALTH_EVENT_SCHEMA.extend({
+            source: z.enum(['main', 'renderer']),
+            timestamp: z.string().min(1),
+        })
+    ),
+});
+
 const REDACTED_KEY_PATTERN =
     /(peerid|remotepeerid|requestid|checksum|url|targetip|token|secret|password|credential)/i;
 const MAX_STRING_VALUE_LENGTH = 120;

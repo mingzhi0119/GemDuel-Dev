@@ -148,6 +148,7 @@ const main = () => {
             operationsSnapshot: 'electron/governance/release-health-operations.snapshot.json',
             desktopPolicySnapshot: 'electron/governance/desktop-policy.snapshot.json',
             boundaryRegistry: 'governance/boundary-registry.snapshot.json',
+            contractRegistry: 'governance/contract-registry.snapshot.json',
         },
     };
     const manifestPath = path.join(outputDir, 'governance-evidence.manifest.json');
