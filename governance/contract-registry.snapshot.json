@@ -13536,7 +13536,7 @@
                 "properties": {
                     "layoutMode": {
                         "type": "string",
-                        "enum": ["mobile", "desktop-auto"]
+                        "enum": ["mobile", "desktop-4k"]
                     },
                     "viewportWidth": {
                         "type": "number"
@@ -13545,6 +13545,21 @@
                         "type": "number"
                     },
                     "aspectRatio": {
+                        "type": "number"
+                    },
+                    "stageCanvasWidthPx": {
+                        "type": "number"
+                    },
+                    "stageCanvasHeightPx": {
+                        "type": "number"
+                    },
+                    "stageScale": {
+                        "type": "number"
+                    },
+                    "stageInsetXPx": {
+                        "type": "number"
+                    },
+                    "stageInsetYPx": {
                         "type": "number"
                     },
                     "boardScale": {
@@ -13568,6 +13583,11 @@
                     "viewportWidth",
                     "viewportHeight",
                     "aspectRatio",
+                    "stageCanvasWidthPx",
+                    "stageCanvasHeightPx",
+                    "stageScale",
+                    "stageInsetXPx",
+                    "stageInsetYPx",
                     "boardScale",
                     "deckScale",
                     "zoneScale",

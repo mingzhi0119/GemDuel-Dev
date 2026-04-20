@@ -15,6 +15,27 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
     const content = RULEBOOK_CONTENT[page];
     const totalPages = RULEBOOK_CONTENT.length;
 
+    const renderInlineFormatting = (text: string) => {
+        const segments = text.split(/(\*\*.*?\*\*)/g);
+        return segments.map((segment, index) => {
+            if (segment.startsWith('**') && segment.endsWith('**') && segment.length > 4) {
+                return <strong key={`${segment}-${index}`}>{segment.slice(2, -2)}</strong>;
+            }
+
+            return <React.Fragment key={`${segment}-${index}`}>{segment}</React.Fragment>;
+        });
+    };
+
+    const renderFormattedBody = (body: string) => {
+        const lines = body.split('\n');
+        return lines.map((line, index) => (
+            <React.Fragment key={`line-${index}`}>
+                {renderInlineFormatting(line)}
+                {index < lines.length - 1 && <br />}
+            </React.Fragment>
+        ));
+    };
+
     // Render custom component pages
     const renderContent = () => {
         if (!content) return null;
@@ -27,14 +48,14 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
         return (
             <>
                 <h3
-                    className={`text-2xl font-black uppercase tracking-tight mb-6 pb-3 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
+                    className={`text-3xl font-black uppercase tracking-tight mb-7 pb-4 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
                 >
                     {content.title?.[lang] || 'Untitled'}
                 </h3>
                 <div
-                    className={`leading-relaxed whitespace-pre-wrap text-sm md:text-base ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600 font-medium'}`}
+                    className={`leading-8 whitespace-pre-wrap text-base md:text-[18px] ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600 font-medium'}`}
                 >
-                    {content.body?.[lang] || 'No content available.'}
+                    {renderFormattedBody(content.body?.[lang] || 'No content available.')}
                 </div>
             </>
         );
@@ -42,21 +63,21 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
 
     return (
         <div
-            className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center animate-in fade-in duration-200"
+            className="absolute inset-0 z-[200] bg-black/80 flex items-center justify-center animate-in fade-in duration-200"
             onClick={onClose}
         >
             <div
                 onClick={(e) => e.stopPropagation()}
-                className={`rounded-[2rem] w-[90%] max-w-2xl h-[80vh] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-500
+                className={`rounded-[2rem] w-[94%] max-w-5xl h-[84%] flex flex-col shadow-2xl relative overflow-hidden transition-all duration-500
                 ${theme === 'dark' ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-stone-200'}`}
             >
                 {/* Header */}
                 <div
-                    className={`flex items-center justify-between p-5 border-b transition-colors duration-500 ${theme === 'dark' ? 'border-slate-800 bg-slate-950/50' : 'border-stone-100 bg-[#fdfbf7]'}`}
+                    className={`flex items-center justify-between p-6 border-b transition-colors duration-500 ${theme === 'dark' ? 'border-slate-800 bg-slate-950/50' : 'border-stone-100 bg-[#fdfbf7]'}`}
                 >
                     <div className="flex items-center gap-2 text-emerald-600">
-                        <BookOpen size={20} />
-                        <h2 className="font-black uppercase tracking-wider text-sm">
+                        <BookOpen size={24} />
+                        <h2 className="font-black uppercase tracking-wider text-base">
                             {lang === 'en' ? 'Rulebook' : '游戏说明书'}
                         </h2>
                     </div>
@@ -64,7 +85,7 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setLang((l) => (l === 'en' ? 'zh' : 'en'))}
-                            className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase transition-colors
+                            className={`px-4 py-2 rounded-full border text-xs font-black uppercase transition-colors
                                 ${theme === 'dark' ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700' : 'bg-white border-stone-300 text-stone-600 hover:border-stone-400 shadow-sm'}`}
                         >
                             {lang === 'en' ? '中文' : 'EN'}
@@ -80,13 +101,13 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-8 md:p-10">
+                <div className="flex-1 overflow-y-auto p-10 md:p-12">
                     {content && (
                         <>
                             {/* Title for custom pages */}
                             {content.isCustom && (
                                 <h3
-                                    className={`text-2xl font-black uppercase tracking-tight mb-6 pb-3 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
+                                    className={`text-3xl font-black uppercase tracking-tight mb-7 pb-4 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
                                 >
                                     {content.title?.[lang] || 'Untitled'}
                                 </h3>
@@ -98,30 +119,30 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
 
                 {/* Footer / Pagination */}
                 <div
-                    className={`p-5 border-t flex items-center justify-between transition-colors duration-500 ${theme === 'dark' ? 'border-slate-800 bg-slate-950/50' : 'border-stone-100 bg-[#fdfbf7]'}`}
+                    className={`p-6 border-t flex items-center justify-between transition-colors duration-500 ${theme === 'dark' ? 'border-slate-800 bg-slate-950/50' : 'border-stone-100 bg-[#fdfbf7]'}`}
                 >
                     <button
                         onClick={() => setPage((p) => Math.max(0, p - 1))}
                         disabled={page === 0}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all text-xs font-black uppercase tracking-widest
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-black uppercase tracking-widest
                             ${theme === 'dark' ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-white border border-stone-300 text-stone-700 hover:border-stone-400 shadow-sm active:bg-stone-100'}`}
                     >
-                        <ChevronLeft size={14} />
+                        <ChevronLeft size={16} />
                         {lang === 'en' ? 'Prev' : '上一页'}
                     </button>
 
-                    <span className="text-stone-400 font-mono font-bold text-[10px] tracking-widest">
+                    <span className="text-stone-400 font-mono font-bold text-xs tracking-widest">
                         PAGE {page + 1} / {totalPages}
                     </span>
 
                     <button
                         onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                         disabled={page === totalPages - 1}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all text-xs font-black uppercase tracking-widest
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-black uppercase tracking-widest
                             ${theme === 'dark' ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-white border border-stone-300 text-stone-700 hover:border-stone-400 shadow-sm active:bg-stone-100'}`}
                     >
                         {lang === 'en' ? 'Next' : '下一页'}
-                        <ChevronRight size={14} />
+                        <ChevronRight size={16} />
                     </button>
                 </div>
             </div>

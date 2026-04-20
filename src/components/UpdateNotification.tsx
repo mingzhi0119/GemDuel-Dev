@@ -39,7 +39,7 @@ export function UpdateNotification() {
     if (!updateInfo.available) return null;
 
     return (
-        <div className="fixed bottom-4 left-4 z-[200] bg-slate-900 border border-blue-500/50 p-4 rounded-xl shadow-2xl animate-in slide-in-from-left duration-500 min-w-[240px]">
+        <div className="absolute bottom-4 left-4 z-[200] bg-slate-900 border border-blue-500/50 p-4 rounded-xl shadow-2xl animate-in slide-in-from-left duration-500 min-w-[240px]">
             <h4 className="text-blue-400 font-bold text-sm mb-1 flex items-center gap-2">
                 <Globe size={14} className="animate-pulse" />
                 {updateInfo.downloaded ? 'Update Ready' : 'Downloading Update...'}

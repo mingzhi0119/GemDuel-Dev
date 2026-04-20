@@ -35,6 +35,11 @@ export default function GemDuelBoard() {
         }
     }, [historyControls.historyLength]);
 
+    useEffect(() => {
+        document.documentElement.dataset.theme = theme;
+        document.body.dataset.theme = theme;
+    }, [theme]);
+
     const { handleDownloadReplay, handleUploadReplay } = useReplayIO({
         appVersion,
         history: historyControls.history,

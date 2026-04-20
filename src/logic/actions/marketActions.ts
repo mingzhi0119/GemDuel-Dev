@@ -169,16 +169,16 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     }
 
     // Determine next turn
-    let nextTurn: PlayerKey = player === 'p1' ? 'p2' : 'p1';
+    const nextTurn: PlayerKey = player === 'p1' ? 'p2' : 'p1';
     const abilities = Array.isArray(card.ability)
         ? card.ability
         : card.ability
           ? [card.ability]
           : [];
 
-    // AGAIN ability: repeat turn
+    // AGAIN ability: schedule an extra turn after all mandatory end-of-turn resolutions complete.
     if (abilities.includes(ABILITIES.AGAIN.id as CardAbility)) {
-        nextTurn = player;
+        state.pendingExtraTurn = true;
     }
 
     // STEAL ability: steal gem from opponent
@@ -196,7 +196,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
             if (hasStealable) {
                 state.phase = GAME_PHASES.STEAL_ACTION;
-                // Save the intended next turn (handles AGAIN ability)
+                // Save the default turn handoff; pendingExtraTurn is applied later in finalizeTurn.
                 state.nextPlayerAfterRoyal = nextTurn;
                 return state;
             } else {

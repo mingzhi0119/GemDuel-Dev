@@ -336,18 +336,18 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
             >
                 <div className="flex flex-col items-center gap-2">
                     <div
-                        className={`p-3 rounded-full ${isActive ? (player === 'p1' ? 'bg-emerald-600' : 'bg-blue-600') : theme === 'dark' ? 'bg-slate-700' : 'bg-stone-300'}`}
+                        className={`p-4 rounded-full ${isActive ? (player === 'p1' ? 'bg-emerald-600' : 'bg-blue-600') : theme === 'dark' ? 'bg-slate-700' : 'bg-stone-300'}`}
                     >
                         {player === 'p1' ? (
                             <Shield
-                                size={30}
+                                size={40}
                                 className={
                                     theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
                                 }
                             />
                         ) : (
                             <Swords
-                                size={30}
+                                size={40}
                                 className={
                                     theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
                                 }
@@ -355,7 +355,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                         )}
                     </div>
                     <h3
-                        className={`font-black text-[15px] whitespace-nowrap uppercase tracking-[0.14em] ${
+                        className={`font-black text-[20px] whitespace-nowrap uppercase tracking-[0.16em] ${
                             isActive
                                 ? player === 'p1'
                                     ? 'text-emerald-500'
@@ -731,10 +731,12 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                                                     e.stopPropagation();
                                                     onDiscardReserved(card.id);
                                                 }}
-                                                className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-rose-500 z-50"
+                                                className="absolute -top-2 -right-2 w-8 h-8 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-rose-500 z-50"
                                                 title="Discard Card (Puppet Master)"
                                             >
-                                                <span className="text-[10px] font-black">X</span>
+                                                <span className="text-[15px] font-black leading-none">
+                                                    X
+                                                </span>
                                             </button>
                                         )}
                                     </div>

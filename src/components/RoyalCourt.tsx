@@ -33,10 +33,10 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
         `}
         >
             <h2
-                className={`text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 mb-2
+                className={`text-[13px] font-black uppercase tracking-[0.34em] flex items-center gap-2.5 mb-2
                 ${theme === 'dark' ? 'text-yellow-300' : 'text-amber-800'}`}
             >
-                <Crown size={14} /> Royal Court
+                <Crown size={18} /> Royal Court
             </h2>
             <div className="grid grid-cols-2 gap-3">
                 {royalDeck.length > 0 ? (
@@ -56,7 +56,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                     ))
                 ) : (
                     <div
-                        className={`col-span-2 h-64 flex items-center justify-center italic text-xs 
+                        className={`col-span-2 h-64 flex items-center justify-center italic text-xs
                         ${theme === 'dark' ? 'text-slate-400' : 'text-stone-600'}`}
                     >
                         Court is Empty

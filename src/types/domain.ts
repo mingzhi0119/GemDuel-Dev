@@ -122,6 +122,8 @@ export interface BuffEffects {
         discountRandom?: number;
         revealDeck1?: boolean;
         immuneNegative?: boolean;
+        immuneSteal?: boolean;
+        protectPrivilegeTransfer?: boolean;
         firstReserveBonus?: number;
         pointBonus?: number;
         crownBonusGem?: boolean;
@@ -325,6 +327,7 @@ export interface GameState {
         marketInfo?: MarketCardRef;
     } | null;
     nextPlayerAfterRoyal: PlayerKey | null;
+    pendingExtraTurn: boolean;
 }
 
 // ============================================================================

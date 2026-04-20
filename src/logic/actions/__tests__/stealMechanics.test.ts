@@ -96,10 +96,12 @@ describe('Steal Mechanics', () => {
         const nextState = handleBuyCard(baseState, action);
 
         expect(nextState.phase).toBe(GAME_PHASES.STEAL_ACTION);
-        expect(nextState.nextPlayerAfterRoyal).toBe('p1'); // AGAIN means next is p1
+        expect(nextState.nextPlayerAfterRoyal).toBe('p2'); // default handoff is preserved until the pending extra turn resolves
+        expect(nextState.pendingExtraTurn).toBe(true);
 
         const afterSteal = handleStealGem(nextState, { gemId: 'blue' as unknown as GemColor });
         expect(afterSteal.turn).toBe('p1'); // Stays p1's turn
         expect(afterSteal.phase).toBe(GAME_PHASES.IDLE);
+        expect(afterSteal.pendingExtraTurn).toBe(false);
     });
 });

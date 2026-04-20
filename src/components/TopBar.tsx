@@ -15,6 +15,7 @@ import { motion, AnimatePresence, animate } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '../types';
 import { BUFFS } from '../constants';
 import { BUFF_STYLES } from '../styles/buffs';
+import { getBuffGoalAdjustment } from '../data/buffCopy';
 
 interface AnimatedScoreProps {
     value: number;
@@ -109,6 +110,7 @@ const TopBarBuff = ({
     };
 
     const { Icon, color: iconColor } = getBuffIcon(buff.category);
+    const goalAdjustment = getBuffGoalAdjustment(buff.id, 'en');
 
     // Theme-aware level styles
     const levelStyles: Record<number, string> = {
@@ -136,11 +138,11 @@ const TopBarBuff = ({
         <div className="relative group flex flex-col items-center">
             <div
                 className={`
-                flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest cursor-help transition-all hover:scale-105 shadow-md
+                flex items-center gap-3 px-5 py-2 rounded-full border text-[13px] font-black uppercase tracking-widest cursor-help transition-all hover:scale-105 shadow-md
                 ${levelStyle}
             `}
             >
-                <Icon size={12} className={iconColor} />
+                <Icon size={16} className={iconColor} />
                 <span>{buff.label}</span>
             </div>
 
@@ -153,19 +155,41 @@ const TopBarBuff = ({
             >
                 <div className="flex items-center justify-between mb-1.5">
                     <span
-                        className={`text-[10px] font-bold uppercase tracking-wider ${playerKey === 'p1' ? 'text-emerald-400' : 'text-blue-400'}`}
+                        className={`text-[12px] font-bold uppercase tracking-wider ${playerKey === 'p1' ? 'text-emerald-400' : 'text-blue-400'}`}
                     >
                         {buff.label}
                     </span>
-                    <span className="text-[8px] opacity-70 font-mono">LVL {buff.level}</span>
+                    <span className="text-[10px] opacity-70 font-mono">LVL {buff.level}</span>
                 </div>
-                <p className="text-[10px] leading-relaxed opacity-90">{buff.desc}</p>
+                <p className="text-[12px] leading-relaxed opacity-90">{buff.desc}</p>
+                {goalAdjustment && (
+                    <div
+                        className={`mt-2 pt-2 space-y-1 border-t ${
+                            theme === 'dark' ? 'border-slate-700' : 'border-slate-200'
+                        }`}
+                    >
+                        <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                            {goalAdjustment.title}
+                        </div>
+                        {goalAdjustment.items.map((item) => (
+                            <div
+                                key={`${buff.id}-${item.label}`}
+                                className="flex items-center justify-between gap-3 text-[10px]"
+                            >
+                                <span className="opacity-80">{item.label}</span>
+                                <span className="font-mono font-bold text-amber-400">
+                                    {item.value}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                )}
                 {buff.category && (
                     <div
                         className={`flex justify-end mt-1.5 pt-1.5 border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}
                     >
                         <span
-                            className={`text-[8px] font-black uppercase tracking-widest ${iconColor}`}
+                            className={`text-[10px] font-black uppercase tracking-widest ${iconColor}`}
                         >
                             {buff.category}
                         </span>
@@ -216,7 +240,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
     return (
         <div
-            className={`fixed top-0 left-0 w-full h-16 lg:h-20 backdrop-blur-xl border-b z-[60] transition-colors duration-500
+            className={`absolute top-0 left-0 w-full h-16 lg:h-20 backdrop-blur-xl border-b z-[60] transition-colors duration-500
             ${
                 theme === 'dark'
                     ? 'bg-slate-950/95 border-slate-700 shadow-[0_8px_24px_rgba(0,0,0,0.3)]'

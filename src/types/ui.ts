@@ -13,10 +13,15 @@ export interface UiStatusNotice {
 }
 
 export interface ResponsiveLayout {
-    layoutMode: 'mobile' | 'desktop-auto';
+    layoutMode: 'mobile' | 'desktop-4k';
     viewportWidth: number;
     viewportHeight: number;
     aspectRatio: number;
+    stageCanvasWidthPx: number;
+    stageCanvasHeightPx: number;
+    stageScale: number;
+    stageInsetXPx: number;
+    stageInsetYPx: number;
     boardScale: number;
     deckScale: number;
     zoneScale: number;

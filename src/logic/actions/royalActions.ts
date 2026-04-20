@@ -35,11 +35,11 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
         : card.ability
           ? [card.ability]
           : [];
-    let nextTurn = state.nextPlayerAfterRoyal || (player === 'p1' ? 'p2' : 'p1');
+    const nextTurn = state.nextPlayerAfterRoyal || (player === 'p1' ? 'p2' : 'p1');
 
-    // AGAIN ability: repeat turn
+    // AGAIN ability: schedule an extra turn after the royal and any forced cleanup fully resolve.
     if (abilities.includes(ABILITIES.AGAIN.id as CardAbility)) {
-        nextTurn = player;
+        state.pendingExtraTurn = true;
     }
 
     // BONUS_GEM ability: take a gem

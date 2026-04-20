@@ -25,7 +25,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
 
     return (
         <div
-            className={`flex items-center gap-4 p-3 rounded-2xl border backdrop-blur-md transition-all duration-500
+            className={`flex items-center gap-4 p-4 rounded-2xl border backdrop-blur-md transition-all duration-500
             ${
                 theme === 'dark'
                     ? 'bg-slate-800/70 border-slate-600 shadow-[0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
@@ -37,7 +37,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                 onClick={undo}
                 disabled={!canUndo}
                 aria-label="Step Backward"
-                className={`p-2 rounded-xl border transition-all flex items-center justify-center
+                className={`p-3 rounded-xl border transition-all flex items-center justify-center
                     ${
                         canUndo
                             ? (theme === 'dark'
@@ -51,17 +51,17 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                     }
                 `}
             >
-                <Undo2 size={20} />
+                <Undo2 size={26} />
             </button>
 
-            <div className="flex flex-col items-center min-w-[4rem]">
+            <div className="flex flex-col items-center min-w-[5.25rem]">
                 <span
-                    className={`text-[10px] uppercase font-bold tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
+                    className={`text-[13px] uppercase font-bold tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
                 >
                     Action
                 </span>
                 <span
-                    className={`text-base font-mono font-bold tabular-nums ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}
+                    className={`text-[21px] font-mono font-bold tabular-nums ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}
                 >
                     {currentStep}{' '}
                     <span
@@ -77,7 +77,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                 onClick={redo}
                 disabled={!canRedo}
                 aria-label="Step Forward"
-                className={`p-2 rounded-xl border transition-all flex items-center justify-center
+                className={`p-3 rounded-xl border transition-all flex items-center justify-center
                     ${
                         canRedo
                             ? (theme === 'dark'
@@ -91,7 +91,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                     }
                 `}
             >
-                <Redo2 size={20} />
+                <Redo2 size={26} />
             </button>
         </div>
     );

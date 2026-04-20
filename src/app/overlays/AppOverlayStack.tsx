@@ -60,7 +60,7 @@ export function AppOverlayStack({
 }: AppOverlayStackProps) {
     return (
         <>
-            <Suspense fallback={<div className="fixed inset-0 z-[200] bg-black/50" />}>
+            <Suspense fallback={<div className="absolute inset-0 z-[200] bg-black/50" />}>
                 {showRulebook && <Rulebook onClose={onCloseRulebook} theme={theme} />}
 
                 {activeModal?.type === 'PEEK' &&
@@ -83,7 +83,7 @@ export function AppOverlayStack({
 
             {isBonusColorSelectionPhase(phase) && (
                 <div
-                    className={`fixed inset-0 z-[100] transition-all duration-500 flex flex-col items-center justify-center ${isPeekingBoard ? 'bg-black/20 pointer-events-none' : 'bg-black/80'}`}
+                    className={`absolute inset-0 z-[100] transition-all duration-500 flex flex-col items-center justify-center ${isPeekingBoard ? 'bg-black/20 pointer-events-none' : 'bg-black/80'}`}
                 >
                     {!isPeekingBoard ? (
                         <>
@@ -121,7 +121,7 @@ export function AppOverlayStack({
             )}
 
             {isReviewing && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4">
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4">
                     <button
                         onClick={onStopReview}
                         className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-full font-bold shadow-2xl border border-slate-600 transition-all hover:scale-105"
@@ -132,7 +132,7 @@ export function AppOverlayStack({
             )}
 
             {showRestartConfirm && (
-                <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in">
+                <div className="absolute inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in">
                     <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
                         <h3 className="text-xl font-bold text-white mb-2">Restart Game?</h3>
                         <p className="text-slate-300 mb-8">

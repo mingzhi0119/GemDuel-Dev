@@ -20,6 +20,7 @@ export const INITIAL_STATE_SKELETON: GameState = {
     bonusGemTarget: null,
     pendingBuy: null,
     nextPlayerAfterRoyal: null,
+    pendingExtraTurn: false,
     decks: { 1: [], 2: [], 3: [] },
     market: { 1: [], 2: [], 3: [] },
     inventories: {

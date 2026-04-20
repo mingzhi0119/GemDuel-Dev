@@ -97,6 +97,33 @@ describe('turnManager', () => {
                 expect(state.royalMilestones.p1[6]).toBe(true);
             });
 
+            it('prioritizes royal selection before excess gem discard when both apply', () => {
+                const startState = createMockState({
+                    turn: 'p1',
+                    extraCrowns: { p1: 3, p2: 0 },
+                    inventories: {
+                        p1: {
+                            blue: 11,
+                            white: 0,
+                            green: 0,
+                            black: 0,
+                            red: 0,
+                            gold: 0,
+                            pearl: 0,
+                        },
+                        p2: baseState.inventories.p2,
+                    },
+                    royalDeck: [{ id: 'royal-1' }] as unknown as RoyalCard[],
+                });
+
+                const state = produce(startState, (draft) => {
+                    finalizeTurn(draft, 'p2');
+                });
+
+                expect(state.phase).toBe('SELECT_ROYAL');
+                expect(state.nextPlayerAfterRoyal).toBe('p2');
+            });
+
             it('waits for forced discard resolution before triggering Royal Envoy on turn 5', () => {
                 const startState = createMockState({
                     turn: 'p1',

@@ -41,7 +41,7 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({ winner, onReview }) =>
     if (!winner) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in zoom-in duration-300">
+        <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in zoom-in duration-300">
             <Trophy
                 size={80}
                 className="text-yellow-400 mb-4 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)] animate-bounce"

@@ -111,11 +111,13 @@ export const finalizeTurn = (
         return;
     }
 
+    const transitionTarget: PlayerKey = state.pendingExtraTurn ? state.turn : nextPlayer;
+
     // ========== BUFF EFFECTS: Hoarder ==========
-    const nextBuffEffect = state.playerBuffs?.[nextPlayer]?.effects?.passive;
-    if (nextBuffEffect?.hoarderBonus && state.playerReserved[nextPlayer].length === 3) {
-        grantRandomBasicGems(state, nextPlayer, 1);
-        state.toastMessage = `Hoarder: +1 Gem for ${nextPlayer === 'p1' ? 'Player 1' : 'Player 2'}!`;
+    const nextBuffEffect = state.playerBuffs?.[transitionTarget]?.effects?.passive;
+    if (nextBuffEffect?.hoarderBonus && state.playerReserved[transitionTarget].length === 3) {
+        grantRandomBasicGems(state, transitionTarget, 1);
+        state.toastMessage = `Hoarder: +1 Gem for ${transitionTarget === 'p1' ? 'Player 1' : 'Player 2'}!`;
     }
 
     const currentBuffObj = state.playerBuffs?.[state.turn];
@@ -130,7 +132,7 @@ export const finalizeTurn = (
             const milestoneHit = crowns >= 6 && !milestones[6] ? 6 : 3;
             state.royalMilestones[state.turn][milestoneHit] = true;
             state.phase = GAME_PHASES.SELECT_ROYAL;
-            state.nextPlayerAfterRoyal = nextPlayer;
+            state.nextPlayerAfterRoyal = transitionTarget;
             return;
         }
     }
@@ -146,7 +148,7 @@ export const finalizeTurn = (
         // Enter discard phase, don't switch turn yet
         state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
         if (!state.nextPlayerAfterRoyal) {
-            state.nextPlayerAfterRoyal = nextPlayer;
+            state.nextPlayerAfterRoyal = transitionTarget;
         }
         return;
     }
@@ -162,19 +164,19 @@ export const finalizeTurn = (
         if (!currentBuffObj.state) currentBuffObj.state = {};
         currentBuffObj.state.envoyTriggered = true;
         state.phase = GAME_PHASES.SELECT_ROYAL;
-        state.nextPlayerAfterRoyal = nextPlayer;
+        state.nextPlayerAfterRoyal = transitionTarget;
         state.toastMessage = 'Royal Envoy: Pick a Royal Card!';
         return;
     }
 
     // ========== BUFF EFFECTS: Desperate Gamble (Periodic Privilege) ==========
-    const nextBuffObj = state.playerBuffs?.[nextPlayer];
+    const nextBuffObj = state.playerBuffs?.[transitionTarget];
     if (nextBuffObj?.id === 'desperate_gamble') {
-        const nextTurnNumber = state.playerTurnCounts[nextPlayer] + 1;
+        const nextTurnNumber = state.playerTurnCounts[transitionTarget] + 1;
         if (nextTurnNumber % 2 === 0) {
             if (!state.extraPrivileges) state.extraPrivileges = { p1: 0, p2: 0 };
-            if (state.extraPrivileges[nextPlayer] < 1) {
-                state.extraPrivileges[nextPlayer] = 1;
+            if (state.extraPrivileges[transitionTarget] < 1) {
+                state.extraPrivileges[transitionTarget] = 1;
                 state.toastMessage = `Desperate Gamble: Gained Special Privilege for Turn ${nextTurnNumber}!`;
             }
         }
@@ -182,7 +184,8 @@ export const finalizeTurn = (
 
     // ========== NORMAL TURN TRANSITION ==========
     state.playerTurnCounts[state.turn]++; // Increment completed turn count
-    state.turn = nextPlayer;
+    state.turn = transitionTarget;
     state.phase = GAME_PHASES.IDLE;
     state.nextPlayerAfterRoyal = null;
+    state.pendingExtraTurn = false;
 };

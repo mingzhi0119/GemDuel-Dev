@@ -468,6 +468,10 @@ describe('Comprehensive Buff Tests', () => {
         it('PACIFIST: Immune to stealing', () => {
             let state = createBuffState(BUFFS.PACIFIST.id);
 
+            expect(state.inventories.p1.gold).toBe(1);
+            expect(state.extraAllocation.p1.gold).toBe(1);
+            expect(state.extraPrivileges.p1).toBe(1);
+
             state = produce(state, (draft) => {
                 draft.turn = 'p2';
                 draft.inventories.p1.red = 5;

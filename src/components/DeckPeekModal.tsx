@@ -14,7 +14,7 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
     if (!isOpen || !cards) return null;
 
     return (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+        <div className="absolute inset-0 z-[150] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
@@ -23,7 +23,7 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
 
             {/* Modal */}
             <div
-                className={`relative w-full max-w-4xl max-h-[80vh] rounded-[2rem] shadow-2xl border flex flex-col overflow-hidden animate-in zoom-in-95 duration-300
+                className={`relative w-full max-w-4xl max-h-[80%] rounded-[2rem] shadow-2xl border flex flex-col overflow-hidden animate-in zoom-in-95 duration-300
                 ${theme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-stone-200'}
             `}
             >

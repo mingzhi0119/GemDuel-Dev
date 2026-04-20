@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUFFS, GAME_PHASES, GEM_TYPES } from '../../../constants';
 import { createMockState } from '../../__tests__/testHelpers';
+import { handleDiscardGem } from '../boardActions';
 import {
     handleBuyCard,
     handleCancelReserve,
@@ -11,6 +12,7 @@ import {
     handleReserveCard,
     handleReserveDeck,
 } from '../marketActions';
+import { handleSelectRoyalCard } from '../royalActions';
 import type { Buff, Card, GameState } from '../../../types';
 
 const createCard = (overrides: Partial<Card> = {}): Card => ({
@@ -224,6 +226,55 @@ describe('marketActions phase 3 coverage', () => {
 
         expect(nextState.phase).toBe(GAME_PHASES.IDLE);
         expect(nextState.turn).toBe('p1');
+        expect(nextState.pendingExtraTurn).toBe(false);
+    });
+
+    it('defers AGAIN until royal selection and forced discard fully resolve', () => {
+        const crownAgainCard = createCard({
+            id: 'crown-again-card',
+            ability: 'again',
+            crowns: 3,
+        });
+        const state = createState({
+            inventories: {
+                p1: { blue: 11, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+            royalDeck: [
+                {
+                    id: 'royal-plain',
+                    points: 3,
+                    bonusColor: 'gold',
+                    ability: 'none',
+                    label: 'Royal Plain',
+                },
+            ],
+        });
+
+        const afterBuy = handleBuyCard(state, {
+            card: crownAgainCard,
+            source: 'market',
+            marketInfo: { level: 1, idx: 0 },
+        });
+
+        expect(afterBuy.phase).toBe(GAME_PHASES.SELECT_ROYAL);
+        expect(afterBuy.turn).toBe('p1');
+        expect(afterBuy.nextPlayerAfterRoyal).toBe('p1');
+        expect(afterBuy.pendingExtraTurn).toBe(true);
+
+        const afterRoyal = handleSelectRoyalCard(afterBuy, {
+            card: afterBuy.royalDeck[0],
+        });
+
+        expect(afterRoyal.phase).toBe(GAME_PHASES.DISCARD_EXCESS_GEMS);
+        expect(afterRoyal.turn).toBe('p1');
+        expect(afterRoyal.nextPlayerAfterRoyal).toBe('p1');
+        expect(afterRoyal.pendingExtraTurn).toBe(true);
+
+        const afterDiscard = handleDiscardGem(afterRoyal, 'blue');
+        expect(afterDiscard.phase).toBe(GAME_PHASES.IDLE);
+        expect(afterDiscard.turn).toBe('p1');
+        expect(afterDiscard.pendingExtraTurn).toBe(false);
     });
 
     it('skips bonus-gem cards cleanly when no matching gem exists on the board', () => {
@@ -295,6 +346,30 @@ describe('marketActions phase 3 coverage', () => {
         });
 
         expect(nextState.privileges).toEqual({ p1: 2, p2: 1 });
+        expect(nextState.turn).toBe('p2');
+    });
+
+    it('does not steal a standard privilege from Pacifist when the board supply is empty', () => {
+        const scrollCard = createCard({
+            id: 'scroll-pacifist-safe',
+            ability: 'scroll',
+        });
+        const state = createState({
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+            privileges: { p1: 1, p2: 2 },
+            playerBuffs: { p1: BUFFS.NONE, p2: BUFFS.PACIFIST },
+        });
+
+        const nextState = handleBuyCard(state, {
+            card: scrollCard,
+            source: 'market',
+            marketInfo: { level: 1, idx: 0 },
+        });
+
+        expect(nextState.privileges).toEqual({ p1: 1, p2: 2 });
         expect(nextState.turn).toBe('p2');
     });
 

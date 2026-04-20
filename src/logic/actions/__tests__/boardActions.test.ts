@@ -132,6 +132,33 @@ describe('boardActions', () => {
             expect(updatedState.privileges).toEqual({ p1: 0, p2: 3 });
             expect(updatedState.turn).toBe('p2');
         });
+
+        it('should not transfer a standard privilege away from Pacifist when the board supply is empty', () => {
+            testState.inventories.p1 = {
+                blue: 0,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 0,
+                gold: 0,
+                pearl: 0,
+            };
+            testState.privileges = { p1: 2, p2: 1 };
+            testState.playerBuffs.p1 = BUFFS.PACIFIST;
+            testState.board[0][0] = { type: GEM_TYPES.PEARL, uid: 'pearl-a' };
+            testState.board[0][1] = { type: GEM_TYPES.PEARL, uid: 'pearl-b' };
+
+            const updatedState = handleTakeGems(testState, {
+                coords: [
+                    { r: 0, c: 0 },
+                    { r: 0, c: 1 },
+                ],
+            });
+
+            expect(updatedState.inventories.p1.pearl).toBe(2);
+            expect(updatedState.privileges).toEqual({ p1: 2, p2: 1 });
+            expect(updatedState.turn).toBe('p2');
+        });
     });
 
     describe('handleReplenish', () => {

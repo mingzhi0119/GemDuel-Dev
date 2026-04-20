@@ -93,7 +93,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                 ${!canInteract ? 'opacity-80' : ''}`}
             >
                 <h2
-                    className={`text-[10px] font-black uppercase tracking-[0.3em] mb-1 text-center 
+                    className={`text-[13px] font-black uppercase tracking-[0.34em] mb-1 text-center
                     ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
                 >
                     Market
@@ -234,16 +234,16 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                                     <div className="relative z-10 flex flex-col items-center">
                                         <Layers
-                                            size={18}
+                                            size={24}
                                             className={`mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
                                         />
                                         <div
-                                            className={`font-bold text-[10px] ${theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}`}
+                                            className={`font-bold text-[13px] ${theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}`}
                                         >
                                             Lvl {lvl}
                                         </div>
                                         <div
-                                            className={`text-[9px] font-mono ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}
+                                            className={`text-[12px] font-mono font-bold ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}
                                         >
                                             {decks[lvl].length}
                                         </div>

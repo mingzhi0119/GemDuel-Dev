@@ -57,6 +57,9 @@ export const addPrivilege = (state: GameState, pid: PlayerKey): void => {
     }
 
     if (state.privileges[opponent] > 0) {
+        if (state.playerBuffs?.[opponent]?.effects?.passive?.protectPrivilegeTransfer) {
+            return;
+        }
         state.privileges[opponent]--;
         state.privileges[pid]++;
         addFeedback(state, opponent, 'privilege', -1);

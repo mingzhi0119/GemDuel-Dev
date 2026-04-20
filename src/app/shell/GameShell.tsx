@@ -53,7 +53,7 @@ export function GameShell({
 
     return (
         <div
-            className={`h-screen w-screen font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe 
+            className={`relative h-full w-full font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe
             ${theme === 'dark' ? 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f111a] to-black text-slate-200' : 'text-stone-800'}
         `}
             style={theme === 'light' ? lightShellStyle : undefined}
@@ -61,7 +61,7 @@ export function GameShell({
             <UpdateNotification />
 
             <div
-                className={`fixed bottom-2 right-3 z-[100] pointer-events-none select-none font-mono text-[10px] opacity-60 whitespace-nowrap ${
+                className={`absolute bottom-2 right-3 z-[100] pointer-events-none select-none font-mono text-[10px] opacity-60 whitespace-nowrap ${
                     theme === 'dark' ? 'text-slate-400' : 'text-stone-600'
                 }`}
             >

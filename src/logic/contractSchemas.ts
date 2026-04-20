@@ -619,10 +619,15 @@ export const uiStatusNoticeSchema = z
 
 export const responsiveLayoutSchema = z
     .object({
-        layoutMode: z.enum(['mobile', 'desktop-auto']),
+        layoutMode: z.enum(['mobile', 'desktop-4k']),
         viewportWidth: z.number(),
         viewportHeight: z.number(),
         aspectRatio: z.number(),
+        stageCanvasWidthPx: z.number(),
+        stageCanvasHeightPx: z.number(),
+        stageScale: z.number(),
+        stageInsetXPx: z.number(),
+        stageInsetYPx: z.number(),
         boardScale: z.number(),
         deckScale: z.number(),
         zoneScale: z.number(),

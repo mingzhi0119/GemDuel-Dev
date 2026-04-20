@@ -9,7 +9,11 @@ import { calculateResponsiveLayout, useResponsiveLayout } from '../../hooks/useR
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-const setViewport = (width: number, height: number) => {
+const setViewport = (
+    width: number,
+    height: number,
+    options: { devicePixelRatio?: number; isFinePointer?: boolean } = {}
+) => {
     Object.defineProperty(window, 'innerWidth', {
         configurable: true,
         writable: true,
@@ -20,6 +24,26 @@ const setViewport = (width: number, height: number) => {
         writable: true,
         value: height,
     });
+    Object.defineProperty(window, 'devicePixelRatio', {
+        configurable: true,
+        writable: true,
+        value: options.devicePixelRatio ?? 1,
+    });
+    Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: vi.fn().mockImplementation((query: string) => ({
+            matches:
+                query === '(hover: hover) and (pointer: fine)' && options.isFinePointer === true,
+            media: query,
+            onchange: null,
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+        })),
+    });
 };
 
 const expectLayoutMatch = (
@@ -29,6 +53,11 @@ const expectLayoutMatch = (
     expect(layout.layoutMode).toBe(expected.layoutMode);
     expect(layout.viewportWidth).toBe(expected.viewportWidth);
     expect(layout.viewportHeight).toBe(expected.viewportHeight);
+    expect(layout.stageCanvasWidthPx).toBeCloseTo(expected.stageCanvasWidthPx, 5);
+    expect(layout.stageCanvasHeightPx).toBeCloseTo(expected.stageCanvasHeightPx, 5);
+    expect(layout.stageScale).toBeCloseTo(expected.stageScale, 5);
+    expect(layout.stageInsetXPx).toBe(expected.stageInsetXPx);
+    expect(layout.stageInsetYPx).toBe(expected.stageInsetYPx);
     expect(layout.boardScale).toBeCloseTo(expected.boardScale, 5);
     expect(layout.deckScale).toBeCloseTo(expected.deckScale, 5);
     expect(layout.zoneScale).toBeCloseTo(expected.zoneScale, 5);
@@ -43,65 +72,127 @@ describe('Responsive layout adaptation', () => {
     });
 
     it('computes the expected profile for common desktop and mobile viewports', () => {
-        expectLayoutMatch(calculateResponsiveLayout(1280, 800), {
-            layoutMode: 'desktop-auto',
-            viewportWidth: 1280,
-            viewportHeight: 800,
-            boardScale: 1.007536231884058,
-            deckScale: 1.047536231884058,
-            zoneScale: 0.96,
-            zoneHeightPx: 233,
-            mainGapPx: 24,
-        });
-
-        expectLayoutMatch(calculateResponsiveLayout(1366, 768), {
-            layoutMode: 'desktop-auto',
-            viewportWidth: 1366,
-            viewportHeight: 768,
-            boardScale: 0.9530232558139535,
-            deckScale: 1,
-            zoneScale: 0.9130232558139535,
-            zoneHeightPx: 233,
-            mainGapPx: 24,
-        });
-
-        expectLayoutMatch(calculateResponsiveLayout(1440, 900), {
-            layoutMode: 'desktop-auto',
-            viewportWidth: 1440,
-            viewportHeight: 900,
-            boardScale: 1.1234782608695653,
-            deckScale: 1.08,
-            zoneScale: 0.96,
-            zoneHeightPx: 254,
-            mainGapPx: 24,
-        });
-
-        expectLayoutMatch(calculateResponsiveLayout(1920, 1080), {
-            layoutMode: 'desktop-auto',
-            viewportWidth: 1920,
-            viewportHeight: 1080,
-            boardScale: 1.14,
-            deckScale: 1.08,
-            zoneScale: 0.96,
-            zoneHeightPx: 286,
-            mainGapPx: 31,
-        });
-
-        expectLayoutMatch(calculateResponsiveLayout(1920, 1200), {
-            layoutMode: 'desktop-auto',
-            viewportWidth: 1920,
-            viewportHeight: 1200,
+        expectLayoutMatch(calculateResponsiveLayout(3840, 2160), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 3840,
+            viewportHeight: 2160,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2160,
+            stageScale: 1,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
             boardScale: 1.14,
             deckScale: 1.08,
             zoneScale: 0.96,
             zoneHeightPx: 317,
-            mainGapPx: 31,
+            mainGapPx: 32,
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(3840, 2400), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 3840,
+            viewportHeight: 2400,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2400,
+            stageScale: 1,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
+            boardScale: 1.14,
+            deckScale: 1.08,
+            zoneScale: 0.96,
+            zoneHeightPx: 317,
+            mainGapPx: 32,
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(2560, 1440), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 2560,
+            viewportHeight: 1440,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2160,
+            stageScale: 0.6666666666666666,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
+            boardScale: 1.14,
+            deckScale: 1.08,
+            zoneScale: 0.96,
+            zoneHeightPx: 317,
+            mainGapPx: 32,
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(1920, 1080), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 1920,
+            viewportHeight: 1080,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2160,
+            stageScale: 0.5,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
+            boardScale: 1.14,
+            deckScale: 1.08,
+            zoneScale: 0.96,
+            zoneHeightPx: 317,
+            mainGapPx: 32,
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(1920, 1200), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 1920,
+            viewportHeight: 1200,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2400,
+            stageScale: 0.5,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
+            boardScale: 1.14,
+            deckScale: 1.08,
+            zoneScale: 0.96,
+            zoneHeightPx: 317,
+            mainGapPx: 32,
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(1440, 900), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 1440,
+            viewportHeight: 900,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2400,
+            stageScale: 0.375,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
+            boardScale: 1.14,
+            deckScale: 1.08,
+            zoneScale: 0.96,
+            zoneHeightPx: 317,
+            mainGapPx: 32,
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(3440, 1440), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 3440,
+            viewportHeight: 1440,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 1440 / (3440 / 3840),
+            stageScale: 3440 / 3840,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
+            boardScale: 1.14,
+            deckScale: 1.08,
+            zoneScale: 0.96,
+            zoneHeightPx: 317,
+            mainGapPx: 32,
         });
 
         expectLayoutMatch(calculateResponsiveLayout(375, 812), {
             layoutMode: 'mobile',
             viewportWidth: 375,
             viewportHeight: 812,
+            stageCanvasWidthPx: 375,
+            stageCanvasHeightPx: 812,
+            stageScale: 1,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
             boardScale: 0.45,
             deckScale: 0.55,
             zoneScale: 0.55,
@@ -124,7 +215,7 @@ describe('Responsive layout adaptation', () => {
             return null;
         };
 
-        setViewport(1366, 768);
+        setViewport(1920, 1200);
 
         const container = document.createElement('div');
         document.body.appendChild(container);
@@ -134,8 +225,11 @@ describe('Responsive layout adaptation', () => {
             root.render(React.createElement(Harness));
         });
 
-        expect(observedLayouts.at(-1)?.layoutMode).toBe('desktop-auto');
-        expect(observedLayouts.at(-1)?.boardScale).toBeCloseTo(0.9530232558139535, 5);
+        expect(observedLayouts.at(-1)?.layoutMode).toBe('desktop-4k');
+        expect(observedLayouts.at(-1)?.stageCanvasWidthPx).toBe(3840);
+        expect(observedLayouts.at(-1)?.stageCanvasHeightPx).toBe(2400);
+        expect(observedLayouts.at(-1)?.stageScale).toBeCloseTo(0.5, 5);
+        expect(observedLayouts.at(-1)?.stageInsetYPx).toBe(0);
 
         act(() => {
             setViewport(375, 812);
@@ -143,6 +237,8 @@ describe('Responsive layout adaptation', () => {
         });
 
         expect(observedLayouts.at(-1)?.layoutMode).toBe('mobile');
+        expect(observedLayouts.at(-1)?.stageCanvasWidthPx).toBe(375);
+        expect(observedLayouts.at(-1)?.stageCanvasHeightPx).toBe(812);
         expect(observedLayouts.at(-1)?.boardScale).toBe(0.45);
 
         act(() => {
@@ -182,12 +278,73 @@ describe('Responsive layout adaptation', () => {
         ).toBe(true);
     });
 
-    it('keeps desktop main-gap values clamped between 24 and 32 pixels', () => {
-        [1280, 1366, 1440, 1600, 1920, 2560].forEach((width) => {
-            const layout = calculateResponsiveLayout(width, 1080);
-            expect(layout.layoutMode).toBe('desktop-auto');
-            expect(layout.mainGapPx).toBeGreaterThanOrEqual(24);
-            expect(layout.mainGapPx).toBeLessThanOrEqual(32);
+    it('compensates the desktop canvas for high-density laptop displays', () => {
+        expectLayoutMatch(
+            calculateResponsiveLayout(1707, 1067, {
+                devicePixelRatio: 1.5,
+                isFinePointer: true,
+            }),
+            {
+                layoutMode: 'desktop-4k',
+                viewportWidth: 1707,
+                viewportHeight: 1067,
+                stageCanvasWidthPx: 2560,
+                stageCanvasHeightPx: 1067 / (1707 / 2560),
+                stageScale: 1707 / 2560,
+                stageInsetXPx: 0,
+                stageInsetYPx: 0,
+                boardScale: 1.14,
+                deckScale: 1.08,
+                zoneScale: 0.96,
+                zoneHeightPx: 317,
+                mainGapPx: 32,
+            }
+        );
+    });
+
+    it('promotes fine-pointer high-density laptop viewports to the desktop stage', () => {
+        const layout = calculateResponsiveLayout(960, 600, {
+            devicePixelRatio: 2,
+            isFinePointer: true,
+        });
+
+        expect(layout.layoutMode).toBe('desktop-4k');
+        expect(layout.stageCanvasWidthPx).toBe(1920);
+        expect(layout.stageCanvasHeightPx).toBe(1200);
+        expect(layout.stageScale).toBeCloseTo(0.5, 5);
+        expect(layout.stageInsetYPx).toBe(0);
+    });
+
+    it('keeps coarse-pointer high-density screens on the mobile path', () => {
+        const layout = calculateResponsiveLayout(414, 896, {
+            devicePixelRatio: 3,
+            isFinePointer: false,
+        });
+
+        expect(layout.layoutMode).toBe('mobile');
+        expect(layout.stageCanvasWidthPx).toBe(414);
+        expect(layout.stageCanvasHeightPx).toBe(896);
+        expect(layout.stageScale).toBe(1);
+    });
+
+    it('keeps the desktop 4k constants stable across supported desktop viewports', () => {
+        [
+            [1280, 720],
+            [1366, 768],
+            [1440, 900],
+            [1920, 1080],
+            [1920, 1200],
+            [2560, 1440],
+            [3840, 2160],
+        ].forEach(([width, height]) => {
+            const layout = calculateResponsiveLayout(width, height);
+            expect(layout.layoutMode).toBe('desktop-4k');
+            expect(layout.boardScale).toBe(1.14);
+            expect(layout.deckScale).toBe(1.08);
+            expect(layout.zoneScale).toBe(0.96);
+            expect(layout.zoneHeightPx).toBe(317);
+            expect(layout.mainGapPx).toBe(32);
+            expect(layout.stageScale).toBeGreaterThan(0);
         });
     });
 });
