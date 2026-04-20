@@ -33,6 +33,9 @@ jobs:
             - name: Dependency Governance Check
               run: npm run deps:check
 
+            - name: Boundary Governance Check
+              run: npm run boundaries:check
+
             - name: Lint
               run: npm run lint
 

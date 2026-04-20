@@ -4,6 +4,7 @@ import {
 } from '../shared/runtimeIcePolicy.js';
 
 const VALID_LOG_LEVELS = new Set(['error', 'warn', 'info', 'verbose', 'debug', 'silly']);
+const TURN_CREDENTIAL_BUNDLE_POLICY_VERSION = 1;
 
 export const RUNTIME_CONFIG_POLICY = Object.freeze({
     GEMDUEL_DISABLE_UPDATES: {
@@ -36,6 +37,26 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         failureMode:
             'Falls back to the built-in STUN-only baseline if parsing or validation fails.',
     },
+    GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON: {
+        owner: 'Networking',
+        defaultValue: 'unset',
+        validation:
+            'JSON object with policyVersion, iceServers, issuedAt, and expiresAt. Credential-bearing servers must satisfy the governed ICE policy and expiresAt must be a future ISO timestamp.',
+        secretHandling:
+            'Treat ephemeral TURN bundles as sensitive runtime material. Do not commit them to source control, logs, or packaged client assets.',
+        failureMode:
+            'Falls back to GEMDUEL_ICE_SERVERS_JSON and then the built-in STUN baseline if the ephemeral bundle is missing, expired, or invalid.',
+    },
+});
+
+const isIsoTimestamp = (value) => typeof value === 'string' && !Number.isNaN(Date.parse(value));
+
+const buildRuntimeRelayProfile = ({ source, iceServers, issuedAt = null, expiresAt = null }) => ({
+    policyVersion: TURN_CREDENTIAL_BUNDLE_POLICY_VERSION,
+    source,
+    iceServers,
+    issuedAt,
+    expiresAt,
 });
 
 export const normalizeIceServer = (value) => {
@@ -88,7 +109,7 @@ export const getRuntimeLogLevel = ({ rawLevel, fallbackLevel, logger = console }
     return fallbackLevel;
 };
 
-export const getRuntimeIceServersFromEnv = (rawConfig, logger = console) => {
+const parseRuntimeIceServersFromEnv = (rawConfig, logger = console) => {
     if (!rawConfig) {
         return [];
     }
@@ -118,6 +139,79 @@ export const getRuntimeIceServersFromEnv = (rawConfig, logger = console) => {
         );
         return [];
     }
+};
+
+export const getRuntimeIceServersFromEnv = (rawConfig, logger = console) =>
+    parseRuntimeIceServersFromEnv(rawConfig, logger);
+
+export const getRuntimeRelayProfileFromEnv = (
+    bundleConfig,
+    rawIceConfig,
+    logger = console,
+    now = () => Date.now()
+) => {
+    if (bundleConfig) {
+        try {
+            const parsed = JSON.parse(bundleConfig);
+            if (
+                typeof parsed !== 'object' ||
+                parsed === null ||
+                Array.isArray(parsed) ||
+                !Array.isArray(parsed.iceServers)
+            ) {
+                logger.warn?.(
+                    '[RTC] GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON must be an object with an iceServers array. Falling back to the next relay source.'
+                );
+            } else if (
+                parsed.policyVersion !== TURN_CREDENTIAL_BUNDLE_POLICY_VERSION ||
+                !isIsoTimestamp(parsed.issuedAt) ||
+                !isIsoTimestamp(parsed.expiresAt)
+            ) {
+                logger.warn?.(
+                    '[RTC] GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON did not satisfy the governed TURN bundle contract. Falling back to the next relay source.'
+                );
+            } else if (Date.parse(parsed.expiresAt) <= now()) {
+                logger.warn?.(
+                    '[RTC] GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON is already expired. Falling back to the next relay source.'
+                );
+            } else {
+                const iceServers = parsed.iceServers
+                    .map((server) => normalizeIceServer(server))
+                    .filter((server) => server !== null);
+
+                if (iceServers.length === parsed.iceServers.length && iceServers.length > 0) {
+                    return buildRuntimeRelayProfile({
+                        source: 'ephemeral-turn-bundle',
+                        iceServers,
+                        issuedAt: parsed.issuedAt,
+                        expiresAt: parsed.expiresAt,
+                    });
+                }
+
+                logger.warn?.(
+                    '[RTC] GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON contained invalid ICE server entries. Falling back to the next relay source.'
+                );
+            }
+        } catch (error) {
+            logger.warn?.(
+                '[RTC] Failed to parse GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON. Falling back to the next relay source.',
+                error
+            );
+        }
+    }
+
+    const fallbackIceServers = parseRuntimeIceServersFromEnv(rawIceConfig, logger);
+    if (fallbackIceServers.length > 0) {
+        return buildRuntimeRelayProfile({
+            source: 'runtime-ice-fallback',
+            iceServers: fallbackIceServers,
+        });
+    }
+
+    return buildRuntimeRelayProfile({
+        source: 'default-stun',
+        iceServers: [],
+    });
 };
 
 export const getAutoUpdaterPolicy = ({

@@ -17,6 +17,7 @@ import {
     getAutoUpdaterPolicy,
     getRuntimeIceServersFromEnv,
     getRuntimeLogLevel,
+    getRuntimeRelayProfileFromEnv,
 } from './runtimeConfig.js';
 import { createElectronRuntimeHarness } from './runtimeHarness.js';
 const { autoUpdater } = pkg;
@@ -121,6 +122,12 @@ runtimeHarness.registerGovernedIpcHandlers({
         [IPC_INVOKE_CHANNELS.getAppVersion]: () => app.getVersion(),
         [IPC_INVOKE_CHANNELS.getRuntimeIceServers]: () =>
             getRuntimeIceServersFromEnv(process.env.GEMDUEL_ICE_SERVERS_JSON, log),
+        [IPC_INVOKE_CHANNELS.getRuntimeRelayProfile]: () =>
+            getRuntimeRelayProfileFromEnv(
+                process.env.GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON,
+                process.env.GEMDUEL_ICE_SERVERS_JSON,
+                log
+            ),
         [IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot]: () => releaseHealth.getSnapshot(),
     },
     sendHandlers: {

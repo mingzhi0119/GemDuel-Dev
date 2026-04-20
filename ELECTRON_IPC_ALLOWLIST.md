@@ -12,6 +12,7 @@ Change rules:
 | ---------------------------------------------- | ----------------------------- | ---------------------------------- | ---------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------- | ----------- |
 | `window.electron.getAppVersion()`              | `get-app-version`             | Renderer `invoke` -> Main `handle` | Desktop shell                | None                 | Read-only version metadata. The sender must be the trusted main window.                                       | `Completed` |
 | `window.electron.getRuntimeIceServers()`       | `get-runtime-ice-servers`     | Renderer `invoke` -> Main `handle` | Desktop shell                | None                 | Returns only sanitized runtime relay config. The sender must be the trusted main window.                      | `Completed` |
+| `window.electron.getRuntimeRelayProfile()`     | `get-runtime-relay-profile`   | Renderer `invoke` -> Main `handle` | Desktop shell                | None                 | Returns the governed relay profile and may prefer ephemeral TURN bundles before legacy runtime ICE fallback.  | `Completed` |
 | `window.electron.getReleaseHealthSnapshot()`   | `get-release-health-snapshot` | Renderer `invoke` -> Main `handle` | Release health monitor       | None                 | Returns only sanitized release-health counters and recent events.                                             | `Completed` |
 | `window.electron.restartApp()`                 | `restart_app`                 | Renderer `send` -> Main `on`       | Desktop shell / Auto-updater | None                 | Privileged restart-and-install capability. The sender must be the trusted main window.                        | `Completed` |
 | `window.electron.reportReleaseHealth(event)`   | `report-release-health`       | Renderer `send` -> Main `on`       | Renderer observability       | `ReleaseHealthEvent` | Structured health event only. Payload is schema-validated and sensitive keys are redacted before persistence. | `Completed` |
@@ -26,7 +27,7 @@ Change rules:
 - Development: `http://localhost:5173`
 - Production: `file://...`
 - Payload policy:
-- Zero-argument channels: `get-app-version`, `get-runtime-ice-servers`, `get-release-health-snapshot`, and `restart_app`.
+- Zero-argument channels: `get-app-version`, `get-runtime-ice-servers`, `get-runtime-relay-profile`, `get-release-health-snapshot`, and `restart_app`.
 - Structured-payload channel: `report-release-health` accepts only the governed `ReleaseHealthEvent` schema.
 - Any unexpected payload shape is rejected in the main process and logged as an IPC governance warning.
 

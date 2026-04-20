@@ -1,4 +1,4 @@
-import type { GameAction, GameState } from '../types';
+import type { GameAction, GameState, GuestDispatchBoundaryReasonCode } from '../types';
 import type { BootstrapCommand, PendingGuestIntent } from '../types/network';
 import { computeBootstrapChecksum } from './networkChecksums';
 import { actionToBootstrapCommand, actionToGuestIntentCommand } from './networkProtocol';
@@ -15,7 +15,7 @@ export interface BootstrapSyncPlan {
     checksum?: string;
 }
 
-export type GuestDispatchBlockReason = 'NON_PROTOCOL_ACTION' | 'NOT_GUEST_TURN';
+export type GuestDispatchBlockReason = GuestDispatchBoundaryReasonCode;
 
 export interface NetworkDispatchPlan {
     localAction?: GameAction;

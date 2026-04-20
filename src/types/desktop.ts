@@ -1,4 +1,5 @@
 import type { ReleaseHealthEvent } from '../observability/releaseHealth';
+import type { RuntimeRelayProfile } from './runtime';
 
 export interface ReleaseHealthCounterSnapshot {
     count: number;
@@ -33,6 +34,7 @@ export interface ReleaseHealthSnapshot {
 export interface ElectronBridge {
     getAppVersion: () => Promise<string>;
     getRuntimeIceServers: () => Promise<RTCIceServer[]>;
+    getRuntimeRelayProfile: () => Promise<RuntimeRelayProfile>;
     getReleaseHealthSnapshot: () => Promise<ReleaseHealthSnapshot>;
     restartApp: () => void;
     reportReleaseHealth: (event: ReleaseHealthEvent & { source?: 'renderer' }) => void;

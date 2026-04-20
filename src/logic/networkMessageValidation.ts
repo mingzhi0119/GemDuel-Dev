@@ -6,6 +6,7 @@ import type {
     NetworkSyncReason,
     RecoveryReason,
 } from '../types/network';
+import type { BoundaryFailure, NetworkMessageBoundaryErrorCode } from '../types';
 import { NETWORK_PROTOCOL_VERSION } from '../types/network';
 import { GUEST_INTENT_PERMISSION_TABLE } from './networkProtocol';
 import {
@@ -97,42 +98,91 @@ const isGuestIntentCommand = (value: unknown): value is GuestIntentCommand => {
 };
 
 export const parseNetworkMessage = (value: unknown): NetworkMessage | null => {
+    const result = parseNetworkMessageBoundary(value);
+    return result.ok ? result.value : null;
+};
+
+export const parseNetworkMessageBoundary = (
+    value: unknown
+):
+    | {
+          ok: true;
+          value: NetworkMessage;
+      }
+    | BoundaryFailure<NetworkMessageBoundaryErrorCode> => {
     if (
         !isPlainObject(value) ||
         typeof value.type !== 'string' ||
         !isProtocolVersion(value.version)
     ) {
-        return null;
+        return {
+            ok: false,
+            boundaryId: 'network-message-parsing',
+            code: 'NETWORK_MESSAGE_INVALID_ENVELOPE',
+            message: 'Inbound network payload did not match the protocol envelope.',
+            runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+        };
     }
 
     switch (value.type) {
         case 'HEARTBEAT_PING':
         case 'HEARTBEAT_PONG':
             return typeof value.timestamp === 'number'
-                ? ({
-                      version: NETWORK_PROTOCOL_VERSION,
-                      type: value.type,
-                      timestamp: value.timestamp,
-                  } as NetworkMessage)
-                : null;
+                ? {
+                      ok: true,
+                      value: {
+                          version: NETWORK_PROTOCOL_VERSION,
+                          type: value.type,
+                          timestamp: value.timestamp,
+                      } as NetworkMessage,
+                  }
+                : {
+                      ok: false,
+                      boundaryId: 'network-message-parsing',
+                      code: 'NETWORK_MESSAGE_INVALID_ENVELOPE',
+                      message: `${value.type} requires a numeric timestamp payload.`,
+                      runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                  };
         case 'BOOTSTRAP_STATE':
-            if (!isBootstrapCommand(value.command)) return null;
-            if (value.checksum !== undefined && typeof value.checksum !== 'string') return null;
+            if (
+                !isBootstrapCommand(value.command) ||
+                (value.checksum !== undefined && typeof value.checksum !== 'string')
+            ) {
+                return {
+                    ok: false,
+                    boundaryId: 'network-message-parsing',
+                    code: 'NETWORK_MESSAGE_INVALID_BOOTSTRAP',
+                    message: 'Inbound bootstrap payload failed schema validation.',
+                    runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                };
+            }
             return {
-                version: NETWORK_PROTOCOL_VERSION,
-                type: 'BOOTSTRAP_STATE',
-                command: value.command,
-                checksum: value.checksum,
+                ok: true,
+                value: {
+                    version: NETWORK_PROTOCOL_VERSION,
+                    type: 'BOOTSTRAP_STATE',
+                    command: value.command,
+                    checksum: value.checksum,
+                },
             };
         case 'GUEST_INTENT':
             if (typeof value.requestId !== 'string' || !isGuestIntentCommand(value.command)) {
-                return null;
+                return {
+                    ok: false,
+                    boundaryId: 'network-message-parsing',
+                    code: 'NETWORK_MESSAGE_INVALID_GUEST_INTENT',
+                    message: 'Inbound guest intent failed schema validation.',
+                    runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                };
             }
             return {
-                version: NETWORK_PROTOCOL_VERSION,
-                type: 'GUEST_INTENT',
-                requestId: value.requestId,
-                command: value.command,
+                ok: true,
+                value: {
+                    version: NETWORK_PROTOCOL_VERSION,
+                    type: 'GUEST_INTENT',
+                    requestId: value.requestId,
+                    command: value.command,
+                },
             };
         case 'HOST_DECISION':
             if (
@@ -140,65 +190,132 @@ export const parseNetworkMessage = (value: unknown): NetworkMessage | null => {
                 !isGuestIntentKind(value.intentKind) ||
                 typeof value.approved !== 'boolean'
             ) {
-                return null;
+                return {
+                    ok: false,
+                    boundaryId: 'network-message-parsing',
+                    code: 'NETWORK_MESSAGE_INVALID_HOST_DECISION',
+                    message: 'Inbound host decision did not satisfy the base contract.',
+                    runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                };
             }
             if (value.reason !== undefined && typeof value.reason !== 'string') {
-                return null;
+                return {
+                    ok: false,
+                    boundaryId: 'network-message-parsing',
+                    code: 'NETWORK_MESSAGE_INVALID_HOST_DECISION',
+                    message: 'Inbound host decision carried a non-string rejection reason.',
+                    runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                };
             }
             if (
                 value.reasonCode !== undefined &&
                 !HOST_DECISION_REASON_CODES.has(value.reasonCode as HostDecisionReasonCode)
             ) {
-                return null;
+                return {
+                    ok: false,
+                    boundaryId: 'network-message-parsing',
+                    code: 'NETWORK_MESSAGE_INVALID_HOST_DECISION',
+                    message: 'Inbound host decision carried an unknown structured reason code.',
+                    runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                };
             }
-            if (value.checksum !== undefined && typeof value.checksum !== 'string') return null;
+            if (value.checksum !== undefined && typeof value.checksum !== 'string') {
+                return {
+                    ok: false,
+                    boundaryId: 'network-message-parsing',
+                    code: 'NETWORK_MESSAGE_INVALID_HOST_DECISION',
+                    message: 'Inbound host decision carried a non-string checksum.',
+                    runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                };
+            }
             if (value.command !== undefined) {
                 if (
                     !isGuestIntentCommand(value.command) ||
                     value.command.kind !== value.intentKind
                 ) {
-                    return null;
+                    return {
+                        ok: false,
+                        boundaryId: 'network-message-parsing',
+                        code: 'NETWORK_MESSAGE_INVALID_HOST_DECISION',
+                        message:
+                            'Inbound host decision command payload did not match the declared intent.',
+                        runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                    };
                 }
             }
             if (value.approved && (value.command === undefined || value.checksum === undefined)) {
-                return null;
+                return {
+                    ok: false,
+                    boundaryId: 'network-message-parsing',
+                    code: 'NETWORK_MESSAGE_INVALID_HOST_DECISION',
+                    message:
+                        'Approved host decisions must include both a command payload and checksum.',
+                    runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                };
             }
             return {
-                version: NETWORK_PROTOCOL_VERSION,
-                type: 'HOST_DECISION',
-                requestId: value.requestId,
-                intentKind: value.intentKind,
-                approved: value.approved,
-                reasonCode: value.reasonCode,
-                reason: value.reason,
-                command: value.command,
-                checksum: value.checksum,
+                ok: true,
+                value: {
+                    version: NETWORK_PROTOCOL_VERSION,
+                    type: 'HOST_DECISION',
+                    requestId: value.requestId,
+                    intentKind: value.intentKind,
+                    approved: value.approved,
+                    reasonCode: value.reasonCode,
+                    reason: value.reason,
+                    command: value.command,
+                    checksum: value.checksum,
+                },
             };
         case 'SYNC_STATE':
             return isLikelyGameState(value.snapshot)
                 ? {
-                      version: NETWORK_PROTOCOL_VERSION,
-                      type: 'SYNC_STATE',
-                      snapshot: value.snapshot,
-                      reason: NETWORK_SYNC_REASONS.has(value.reason as NetworkSyncReason)
-                          ? (value.reason as NetworkSyncReason)
-                          : 'TURN_SYNC',
+                      ok: true,
+                      value: {
+                          version: NETWORK_PROTOCOL_VERSION,
+                          type: 'SYNC_STATE',
+                          snapshot: value.snapshot,
+                          reason: NETWORK_SYNC_REASONS.has(value.reason as NetworkSyncReason)
+                              ? (value.reason as NetworkSyncReason)
+                              : 'TURN_SYNC',
+                      },
                   }
-                : null;
+                : {
+                      ok: false,
+                      boundaryId: 'network-message-parsing',
+                      code: 'NETWORK_MESSAGE_INVALID_SYNC_STATE',
+                      message: 'Inbound sync-state payload did not satisfy the GameState boundary.',
+                      runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                  };
         case 'RECOVERY_REQUEST':
             if (
                 !RECOVERY_REASONS.has(value.reason as RecoveryReason) ||
                 (value.requestId !== undefined && typeof value.requestId !== 'string')
             ) {
-                return null;
+                return {
+                    ok: false,
+                    boundaryId: 'network-message-parsing',
+                    code: 'NETWORK_MESSAGE_INVALID_RECOVERY_REQUEST',
+                    message: 'Inbound recovery request failed schema validation.',
+                    runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+                };
             }
             return {
-                version: NETWORK_PROTOCOL_VERSION,
-                type: 'RECOVERY_REQUEST',
-                reason: value.reason as RecoveryReason,
-                requestId: value.requestId,
+                ok: true,
+                value: {
+                    version: NETWORK_PROTOCOL_VERSION,
+                    type: 'RECOVERY_REQUEST',
+                    reason: value.reason as RecoveryReason,
+                    requestId: value.requestId,
+                },
             };
         default:
-            return null;
+            return {
+                ok: false,
+                boundaryId: 'network-message-parsing',
+                code: 'NETWORK_MESSAGE_INVALID_ENVELOPE',
+                message: 'Inbound network payload used an unsupported message type.',
+                runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+            };
     }
 };

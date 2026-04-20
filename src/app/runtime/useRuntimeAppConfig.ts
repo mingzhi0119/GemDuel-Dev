@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { setRuntimeIceServers } from '../../config/webrtc';
+import { setRuntimeIceServers, setRuntimeRelayProfile } from '../../config/webrtc';
 import { reportReleaseHealth } from '../../observability/releaseHealth';
 
 const DEFAULT_APP_VERSION = '5.2.11';
@@ -10,13 +10,39 @@ export const useRuntimeAppConfig = () => {
     useEffect(() => {
         const loadRuntimeAppConfig = async () => {
             try {
-                const [version, iceServers] = await Promise.all([
+                const [version, relayProfile, iceServers] = await Promise.all([
                     window.electron?.getAppVersion?.(),
+                    window.electron?.getRuntimeRelayProfile?.(),
                     window.electron?.getRuntimeIceServers?.(),
                 ]);
 
                 if (version) setAppVersion(version);
-                if (iceServers) setRuntimeIceServers(iceServers);
+                if (relayProfile) {
+                    setRuntimeRelayProfile(relayProfile);
+                    reportReleaseHealth({
+                        category: 'runtime',
+                        name: 'ICE_PROFILE_LOADED',
+                        severity: 'info',
+                        message: 'Renderer loaded the governed runtime relay profile.',
+                        context: {
+                            source: relayProfile.source,
+                            iceServerCount: relayProfile.iceServers.length,
+                            hasExpiry: Boolean(relayProfile.expiresAt),
+                        },
+                    });
+                } else if (iceServers) {
+                    setRuntimeIceServers(iceServers);
+                    reportReleaseHealth({
+                        category: 'runtime',
+                        name: 'ICE_PROFILE_FALLBACK',
+                        severity: 'warn',
+                        message:
+                            'Renderer fell back to the legacy runtime ICE server bridge contract.',
+                        context: {
+                            iceServerCount: Array.isArray(iceServers) ? iceServers.length : 0,
+                        },
+                    });
+                }
                 reportReleaseHealth({
                     category: 'runtime',
                     name: 'APP_RUNTIME_CONFIG_LOADED',
@@ -24,7 +50,11 @@ export const useRuntimeAppConfig = () => {
                     message: 'Renderer loaded runtime app configuration successfully.',
                     context: {
                         hasVersion: Boolean(version),
-                        iceServerCount: Array.isArray(iceServers) ? iceServers.length : 0,
+                        iceServerCount: relayProfile
+                            ? relayProfile.iceServers.length
+                            : Array.isArray(iceServers)
+                              ? iceServers.length
+                              : 0,
                     },
                 });
             } catch {
