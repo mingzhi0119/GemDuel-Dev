@@ -3,7 +3,11 @@ import { INITIAL_STATE_SKELETON } from '../initialState';
 import { parseNetworkMessage } from '../actionValidation';
 import { getInboundMessageCheck } from '../networkProtocol';
 import { computeGuestIntentChecksum, verifyApprovedHostDecision } from '../networkChecksums';
-import { NETWORK_PROTOCOL_VERSION, type HostDecisionMessage } from '../../types/network';
+import {
+    NETWORK_PROTOCOL_VERSION,
+    type HostDecisionMessage,
+    type NetworkMessage,
+} from '../../types/network';
 import type { GameState } from '../../types';
 
 const cloneState = (): GameState => JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
@@ -19,7 +23,7 @@ describe('Protocol recovery matrix', () => {
                 approved: true,
                 command: { kind: 'PEEK_DECK', payload: { level: 1 } },
                 checksum: 'abc',
-            })
+            } as unknown)
         ).toBeNull();
     });
 
@@ -33,7 +37,7 @@ describe('Protocol recovery matrix', () => {
                 approved: false,
                 reasonCode: 'NOT_A_REAL_CODE',
                 reason: 'Unknown',
-            })
+            } as unknown)
         ).toBeNull();
     });
 
@@ -43,13 +47,13 @@ describe('Protocol recovery matrix', () => {
             type: 'GUEST_INTENT',
             requestId: 'guest-1',
             command: { kind: 'CLOSE_MODAL' as const },
-        };
+        } satisfies Extract<NetworkMessage, { type: 'GUEST_INTENT' }>;
         const syncState = {
             version: NETWORK_PROTOCOL_VERSION,
             type: 'SYNC_STATE',
             snapshot: cloneState(),
             reason: 'TURN_SYNC' as const,
-        };
+        } satisfies Extract<NetworkMessage, { type: 'SYNC_STATE' }>;
 
         expect(getInboundMessageCheck('host', guestIntent).accepted).toBe(true);
         expect(getInboundMessageCheck('host', syncState).accepted).toBe(false);

@@ -3,13 +3,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collectReleaseHealthChecklistErrors } from './releaseHealthChecklist.js';
 import { collectReleaseHealthOperationsErrors } from './releaseHealthOperations.js';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
-const checklistPath = path.join(repoRoot, 'RELEASE_HEALTH_CHECKLIST.md');
-const sloPath = path.join(repoRoot, 'OPERATIONS_SLO.md');
-const drillPath = path.join(repoRoot, 'OPERATIONS_FAULT_DRILLS.md');
+const checklistPath = path.join(repoRoot, GOVERNANCE_DOC_PATHS.releaseHealthChecklist);
+const sloPath = path.join(repoRoot, GOVERNANCE_DOC_PATHS.operationsSlo);
+const drillPath = path.join(repoRoot, GOVERNANCE_DOC_PATHS.operationsFaultDrills);
 const operationsSnapshotPath = path.join(
     repoRoot,
     'electron',

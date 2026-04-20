@@ -1,4 +1,5 @@
 import { createReleaseHealthMonitor } from '../electron/releaseHealth.js';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 export const REQUIRED_RELEASE_CHECKLIST_COMMANDS = Object.freeze([
     'npm run lint',
@@ -38,11 +39,11 @@ export const collectReleaseHealthChecklistErrors = (checklistText) => {
         }
     }
 
-    if (!checklistText.includes('`OPERATIONS_SLO.md`')) {
+    if (!checklistText.includes(`\`${GOVERNANCE_DOC_PATHS.operationsSlo}\``)) {
         issues.push('Checklist must link to the release-health SLO document.');
     }
 
-    if (!checklistText.includes('`OPERATIONS_FAULT_DRILLS.md`')) {
+    if (!checklistText.includes(`\`${GOVERNANCE_DOC_PATHS.operationsFaultDrills}\``)) {
         issues.push('Checklist must link to the fault drill runbook.');
     }
 

@@ -6,7 +6,7 @@
 
 import { GEM_TYPES, GAME_PHASES } from '../../constants';
 import { addFeedback } from '../stateHelpers';
-import { GameState, UsePrivilegePayload } from '../../types';
+import { GameState, GemColor, UsePrivilegePayload } from '../../types';
 
 /**
  * Activate privilege action phase
@@ -37,15 +37,17 @@ export const handleUsePrivilege = (state: GameState, payload: UsePrivilegePayloa
     }
     const { r, c } = payload;
     const gem = state.board[r][c];
-    const gemType = gem.type.id as string; // Can be 'gold', 'empty', or GemColor
+    const gemType = gem.type.id;
 
     // Can't take gold or empty spaces
     if (gemType === 'gold' || gemType === 'empty') return state;
+    const collectibleGemType: GemColor = gemType;
 
     // Take the gem
     state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
-    state.inventories[state.turn][gemType] = (state.inventories[state.turn][gemType] || 0) + 1;
-    addFeedback(state, state.turn, gemType, 1);
+    state.inventories[state.turn][collectibleGemType] =
+        (state.inventories[state.turn][collectibleGemType] || 0) + 1;
+    addFeedback(state, state.turn, collectibleGemType, 1);
 
     const buff = state.playerBuffs?.[state.turn];
     const hasDoubleAgent = buff?.effects?.passive?.privilegeBuff === 2;

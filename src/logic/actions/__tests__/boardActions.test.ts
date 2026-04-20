@@ -226,7 +226,7 @@ describe('boardActions', () => {
             testState.board[2][2] = { type: GEM_TYPES.EMPTY, uid: 'empty-center' };
             testState.bag = [{ type: GEM_TYPES.BLACK, uid: 'bag-black' }];
             testState.playerBuffs.p1 = BUFFS.AGGRESSIVE_EXPANSION;
-            testState.extraAllocation = null;
+            Reflect.deleteProperty(testState, 'extraAllocation');
 
             const updatedState = handleReplenish(testState, {
                 randoms: { expansionColor: 'green' },

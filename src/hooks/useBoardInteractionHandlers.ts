@@ -70,7 +70,6 @@ export const useBoardInteractionHandlers = ({
         },
         [
             canLocalInteract,
-            gameState.phase,
             gameState.playerBuffs,
             gameState.turn,
             gameState.winner,
@@ -113,6 +112,7 @@ export const useBoardInteractionHandlers = ({
         canLocalInteract,
         clearSelectedGems,
         gameState.playerBuffs,
+        gameState.phase,
         gameState.turn,
         networkDispatch,
         selectedGems,

@@ -9,9 +9,11 @@ import {
     Card as CardType,
     CardActionSource,
     CardInteractionContext,
+    DeckState,
     GamePhase,
-    PlayerKey,
     GemInventory,
+    MarketState,
+    PlayerKey,
     Buff,
     InitiateBuyJokerPayload,
 } from '../types';
@@ -19,8 +21,8 @@ import {
 const AnimatedCard = withGameAnimation(Card);
 
 interface MarketProps {
-    market: Record<number, (CardType | null)[]>;
-    decks: Record<number, CardType[]>;
+    market: MarketState;
+    decks: DeckState;
     phase: GamePhase | string;
     turn: PlayerKey;
     inventories: Record<PlayerKey, GemInventory>;
@@ -123,7 +125,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                     </div>
                 )}
 
-                {[3, 2, 1].map((lvl) => {
+                {([3, 2, 1] as const).map((lvl) => {
                     // Visibility Logic
                     const visibilitySource = isOnline && localPlayer ? localPlayer : turn;
                     const visibilityBuffs = playerBuffs?.[visibilitySource]?.effects?.passive || {};
@@ -253,7 +255,7 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                             {/* Market Cards */}
                             <div className="flex gap-3">
-                                {market[lvl].map((card, i) => (
+                                {market[lvl].map((card: CardType | null, i: number) => (
                                     <div
                                         key={`slot-${lvl}-${i}`}
                                         className="relative flex items-center justify-center"

@@ -4,9 +4,18 @@ import { createRoot, type Root } from 'react-dom/client';
 import type { DataConnection } from 'peerjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConnectionHealth } from '../useConnectionHealth';
-import { NETWORK_PROTOCOL_VERSION, type NetworkMessage } from '../../types/network';
+import {
+    NETWORK_PROTOCOL_VERSION,
+    type HeartbeatMessage,
+    type NetworkMessage,
+} from '../../types/network';
 
 const reportReleaseHealth = vi.fn();
+type ConnectionHealthResult = {
+    latency: number;
+    isUnstable: boolean;
+    handleHeartbeat: (msg: HeartbeatMessage) => void;
+};
 
 vi.mock('../../observability/releaseHealth', () => ({
     reportReleaseHealth: (...args: unknown[]) => reportReleaseHealth(...args),
@@ -39,7 +48,7 @@ describe('useConnectionHealth', () => {
     it('marks the connection unstable after missed heartbeats and reports restoration on pong', () => {
         const sendMessage = vi.fn<(message: NetworkMessage) => void>();
         const connection = { open: true } as DataConnection;
-        let currentResult: ReturnType<typeof useConnectionHealth> | null = null;
+        let currentResult: ConnectionHealthResult | null = null;
 
         const Harness = () => {
             currentResult = useConnectionHealth(connection, sendMessage);
@@ -64,7 +73,8 @@ describe('useConnectionHealth', () => {
             type: 'HEARTBEAT_PING',
             timestamp: Date.now(),
         });
-        expect(currentResult?.isUnstable).toBe(true);
+        expect(currentResult).not.toBeNull();
+        expect(currentResult!.isUnstable).toBe(true);
         expect(reportReleaseHealth).toHaveBeenCalledWith(
             expect.objectContaining({
                 name: 'HEARTBEAT_TIMEOUT',
@@ -80,8 +90,9 @@ describe('useConnectionHealth', () => {
             });
         });
 
-        expect(currentResult?.isUnstable).toBe(false);
-        expect(currentResult?.latency).toBe(42);
+        expect(currentResult).not.toBeNull();
+        expect(currentResult!.isUnstable).toBe(false);
+        expect(currentResult!.latency).toBe(42);
         expect(reportReleaseHealth).toHaveBeenCalledWith(
             expect.objectContaining({
                 name: 'HEARTBEAT_RESTORED',
@@ -93,7 +104,7 @@ describe('useConnectionHealth', () => {
     it('answers heartbeat pings with a pong message', () => {
         const sendMessage = vi.fn<(message: NetworkMessage) => void>();
         const connection = { open: true } as DataConnection;
-        let currentResult: ReturnType<typeof useConnectionHealth> | null = null;
+        let currentResult: ConnectionHealthResult | null = null;
 
         const Harness = () => {
             currentResult = useConnectionHealth(connection, sendMessage);

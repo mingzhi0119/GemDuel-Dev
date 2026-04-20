@@ -11,7 +11,11 @@ import {
     verifyApprovedHostDecision,
 } from '../networkChecksums';
 import type { GameAction, GameState } from '../../types';
-import type { BootstrapCommand, HostDecisionMessage } from '../../types/network';
+import type {
+    BootstrapCommand,
+    GuestIntentCommand,
+    HostDecisionMessage,
+} from '../../types/network';
 import { NETWORK_PROTOCOL_VERSION } from '../../types/network';
 
 const cloneState = (): GameState => JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
@@ -73,10 +77,10 @@ describe('Network Protocol Helpers', () => {
             uid: 'host-red',
         };
 
-        const command = {
+        const command: GuestIntentCommand = {
             kind: 'TAKE_GEMS',
             payload: { coords: [{ r: 0, c: 0 }] },
-        } as const;
+        };
         const checksum = computeGuestIntentChecksum(hostState, command);
         const decision: HostDecisionMessage = {
             version: NETWORK_PROTOCOL_VERSION,

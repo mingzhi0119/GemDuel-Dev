@@ -6,10 +6,15 @@ import { INITIAL_STATE_SKELETON } from '../../logic/initialState';
 import { createGameSetupPayload } from '../../logic/gameSetup';
 import { computeBootstrapChecksum, computeGuestIntentChecksum } from '../../logic/networkChecksums';
 import { guestIntentToAction } from '../../logic/networkProtocol';
-import type { GameState } from '../../types';
-import type { GuestIntentCommand, HostDecisionMessage } from '../../types/network';
+import type { GameAction, GameState, UiStatusNotice } from '../../types';
+import type {
+    GuestIntentCommand,
+    HostApprovalLogEntry,
+    HostDecisionMessage,
+} from '../../types/network';
 import { NETWORK_PROTOCOL_VERSION } from '../../types/network';
 import type { OnlineManagerHandlers } from '../onlineManager/types';
+import type { OnlineManagerController } from '../onlineManager/types';
 import { useGameNetwork } from '../useGameNetwork';
 
 const reportReleaseHealth = vi.fn();
@@ -26,6 +31,14 @@ const mockOnlineController = {
     requestRecovery: vi.fn(),
     latency: 0,
     isUnstable: false,
+};
+
+type GameNetworkResult = {
+    online: OnlineManagerController & {
+        approvalLog: HostApprovalLogEntry[];
+        statusNotice: UiStatusNotice | null;
+    };
+    networkDispatch: (action: GameAction) => void;
 };
 
 let latestHandlers: OnlineManagerHandlers | null = null;
@@ -173,7 +186,7 @@ describe('useGameNetwork', () => {
         const clearAndInit = vi.fn();
         const gameState = createOnlineState({ isHost: false });
         const command: GuestIntentCommand = { kind: 'CLOSE_MODAL' };
-        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+        let currentResult: GameNetworkResult | null = null;
 
         const Harness = () => {
             currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
@@ -223,7 +236,7 @@ describe('useGameNetwork', () => {
         const clearAndInit = vi.fn();
         const gameState = createOnlineState({ isHost: false });
         const command: GuestIntentCommand = { kind: 'CLOSE_MODAL' };
-        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+        let currentResult: GameNetworkResult | null = null;
 
         const Harness = () => {
             currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
@@ -269,7 +282,7 @@ describe('useGameNetwork', () => {
         const clearAndInit = vi.fn();
         const gameState = createOnlineState({ isHost: false });
         const command: GuestIntentCommand = { kind: 'CLOSE_MODAL' };
-        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+        let currentResult: GameNetworkResult | null = null;
 
         const Harness = () => {
             currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
@@ -316,7 +329,7 @@ describe('useGameNetwork', () => {
         const localDispatch = vi.fn();
         const clearAndInit = vi.fn();
         const gameState = createOnlineState({ isHost: true, turn: 'p1' });
-        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+        let currentResult: GameNetworkResult | null = null;
 
         const Harness = () => {
             currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
@@ -343,7 +356,8 @@ describe('useGameNetwork', () => {
                 reasonCode: 'NOT_GUEST_TURN',
             })
         );
-        expect(currentResult?.online.approvalLog[0]).toMatchObject({
+        expect(currentResult).not.toBeNull();
+        expect(currentResult!.online.approvalLog[0]).toMatchObject({
             requestId: 'req-reject',
             outcomeCode: 'AUTHORITY_REJECTED',
             reasonCode: 'NOT_GUEST_TURN',
@@ -355,7 +369,7 @@ describe('useGameNetwork', () => {
         const localDispatch = vi.fn();
         const clearAndInit = vi.fn();
         const gameState = createOnlineState({ isHost: false, turn: 'p1' });
-        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+        let currentResult: GameNetworkResult | null = null;
 
         const Harness = () => {
             currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
@@ -375,7 +389,8 @@ describe('useGameNetwork', () => {
         });
 
         expect(mockOnlineController.sendGuestIntent).not.toHaveBeenCalled();
-        expect(currentResult?.online.statusNotice).toMatchObject({
+        expect(currentResult).not.toBeNull();
+        expect(currentResult!.online.statusNotice).toMatchObject({
             code: 'NOT_GUEST_TURN',
             message: 'It is not the guest turn yet.',
             severity: 'warn',
@@ -420,7 +435,7 @@ describe('useGameNetwork', () => {
         const localDispatch = vi.fn();
         const clearAndInit = vi.fn();
         const gameState = createOnlineState({ isHost: true, turn: 'p2' });
-        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+        let currentResult: GameNetworkResult | null = null;
 
         const Harness = () => {
             currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
@@ -449,7 +464,8 @@ describe('useGameNetwork', () => {
                 checksum: expect.any(String),
             })
         );
-        expect(currentResult?.online.approvalLog[0]).toMatchObject({
+        expect(currentResult).not.toBeNull();
+        expect(currentResult!.online.approvalLog[0]).toMatchObject({
             requestId: 'req-approve',
             outcomeCode: 'APPROVED',
             approved: true,
@@ -465,7 +481,7 @@ describe('useGameNetwork', () => {
             turn: 'p1',
         });
         const command: GuestIntentCommand = { kind: 'CLOSE_MODAL' };
-        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+        let currentResult: GameNetworkResult | null = null;
 
         const Harness = () => {
             currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);

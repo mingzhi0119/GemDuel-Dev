@@ -72,7 +72,7 @@ describe('governance artifact exporter', () => {
             });
             expect(manifest.secretGovernance).toMatchObject({
                 policyDocument: expect.objectContaining({
-                    path: 'DEPENDENCY_RUNTIME_GOVERNANCE.md',
+                    path: 'docs/governance/dependency-runtime-governance.md',
                 }),
                 runtimePolicySource: expect.objectContaining({
                     path: 'electron/runtimeConfig.js',

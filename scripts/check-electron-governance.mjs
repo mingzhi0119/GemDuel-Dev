@@ -6,6 +6,7 @@ import {
     collectDesktopGovernanceErrors,
     createMainWindowOptions,
 } from '../electron/desktopGovernance.js';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 const require = createRequire(import.meta.url);
 const { createElectronBridge } = require('../electron/preloadContract.cjs');
@@ -23,7 +24,7 @@ const mockIpcRenderer = {
 
 const bridgeApiKeys = Object.keys(createElectronBridge(mockIpcRenderer));
 const allowlistDocumentText = fs.readFileSync(
-    path.join(repoRoot, 'ELECTRON_IPC_ALLOWLIST.md'),
+    path.join(repoRoot, GOVERNANCE_DOC_PATHS.electronIpcAllowlist),
     'utf8'
 );
 const expectedSnapshot = JSON.parse(

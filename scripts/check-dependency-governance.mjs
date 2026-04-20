@@ -9,6 +9,7 @@ import {
     formatAuditSummary,
     collectRuntimeEnvNamesFromRepo,
 } from './dependencyGovernance.js';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,7 +40,7 @@ const readAuditReport = () => {
 };
 
 const packageJson = readJson('package.json');
-const governanceDocumentText = readText('DEPENDENCY_RUNTIME_GOVERNANCE.md');
+const governanceDocumentText = readText(GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance);
 const auditReport = readAuditReport();
 const runtimeEnvNames = collectRuntimeEnvNamesFromRepo(repoRoot);
 

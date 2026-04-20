@@ -84,7 +84,7 @@ export const registerConnectionHandlers = ({
                 severity: 'warn',
                 message: 'Inbound network payload violated the role-direction contract.',
                 context: {
-                    reason: directionCheck.reason,
+                    reason: directionCheck.reason ?? null,
                     type: msg.type,
                 },
             });

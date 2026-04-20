@@ -2,7 +2,8 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AppRouteProps } from '../../../types';
+import { INITIAL_STATE_SKELETON } from '../../../logic/initialState';
+import type { AppRouteProps, GameAction } from '../../../types';
 import { GemDuelRoutes } from '../GemDuelRoutes';
 
 (
@@ -45,32 +46,101 @@ const createLayout = (
     ...overrides,
 });
 
-const createGame = (overrides: Record<string, unknown> = {}): AppRouteProps['game'] =>
-    ({
+const noop = () => {};
+
+const createGame = (
+    overrides: {
+        state?: Partial<AppRouteProps['game']['state']>;
+        handlers?: Partial<AppRouteProps['game']['handlers']>;
+        getters?: Partial<AppRouteProps['game']['getters']>;
+        historyControls?: Partial<AppRouteProps['game']['historyControls']>;
+        online?: Partial<AppRouteProps['game']['online']>;
+    } = {}
+): AppRouteProps['game'] => {
+    const game = {
         state: {
+            ...INITIAL_STATE_SKELETON,
+            selectedGems: [],
+            errorMsg: null,
             phase: 'IDLE',
             turn: 'p1',
             draftPool: [],
             p2DraftPool: [],
             buffLevel: 1,
             mode: 'LOCAL_PVP',
-            ...((overrides.state as Record<string, unknown> | undefined) ?? {}),
+            ...overrides.state,
         },
         handlers: {
             startGame: vi.fn(),
+            handleSelectRoyal: vi.fn(),
             handleSelectBuff: vi.fn(),
+            handleCloseModal: vi.fn(),
+            handlePeekDeck: vi.fn(),
+            handleSelfGemClick: vi.fn(),
+            handleGemClick: vi.fn(),
+            handleGemDragSelection: vi.fn(),
+            handleOpponentGemClick: vi.fn(),
+            handleConfirmTake: vi.fn(),
+            handleReplenish: vi.fn(),
+            activatePrivilegeMode: vi.fn(),
+            handleReserveCard: vi.fn(),
+            handleReserveDeck: vi.fn(),
+            handleDiscardReserved: vi.fn(),
+            initiateBuy: vi.fn(),
+            handleSelectBonusColor: vi.fn(),
+            handleCancelReserve: vi.fn(),
+            handleCancelPrivilege: vi.fn(),
+            checkAndInitiateBuyReserved: vi.fn(),
+            handleDebugAddCrowns: vi.fn(),
+            handleDebugAddPoints: vi.fn(),
+            handleDebugAddPrivilege: vi.fn(),
+            handleForceRoyal: vi.fn(),
             handleRerollBuffs: vi.fn(),
-            ...((overrides.handlers as Record<string, unknown> | undefined) ?? {}),
+            importHistory: vi.fn(),
+            ...overrides.handlers,
+        },
+        getters: {
+            getPlayerScore: vi.fn(() => 0),
+            isSelected: vi.fn(() => false),
+            getCrownCount: vi.fn(() => 0),
+            canAfford: vi.fn(() => false),
+            isMyTurn: false,
+            ...overrides.getters,
         },
         historyControls: {
+            undo: noop,
+            redo: noop,
+            canUndo: false,
+            canRedo: false,
+            jumpToStep: noop,
+            importHistory: noop,
+            clearAndInit: noop,
+            currentIndex: 0,
             historyLength: 0,
-            ...((overrides.historyControls as Record<string, unknown> | undefined) ?? {}),
+            history: [] as GameAction[],
+            ...overrides.historyControls,
         },
         online: {
+            peerId: '',
+            remotePeerId: '',
+            connectionStatus: 'disconnected',
             isHost: true,
-            ...((overrides.online as Record<string, unknown> | undefined) ?? {}),
+            connectToPeer: noop,
+            sendBootstrap: noop,
+            sendGuestIntent: noop,
+            sendHostDecision: noop,
+            sendState: noop,
+            requestRecovery: noop,
+            latency: 0,
+            isUnstable: false,
+            approvalLog: [],
+            statusNotice: null,
+            ...overrides.online,
         },
-    }) as AppRouteProps['game'];
+    } satisfies AppRouteProps['game'];
+
+    return game;
+};
 
 const createProps = (overrides: Partial<AppRouteProps> = {}): AppRouteProps => ({
     appVersion: '1.0.0',

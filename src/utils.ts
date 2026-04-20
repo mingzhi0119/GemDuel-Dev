@@ -1,7 +1,7 @@
 import { GEM_TYPES, INITIAL_COUNTS, BONUS_COLORS } from './constants';
 // 🟢 确保引入了真实数据
 import { CLASSIC_CARDS, ROGUE_CARDS } from './data/realCards';
-import { Card, GemInventory, Buff, BoardCell, GemColor } from './types';
+import { Card, GemInventory, GemInventoryKey, Buff, BoardCell, GemColor } from './types';
 
 // 洗牌算法
 export const shuffleArray = <T>(array: T[]): T[] => {
@@ -118,7 +118,7 @@ export const calculateTransaction = (
     const gemsPaid: Record<string, number> = {};
 
     // 3. Calculate Payment
-    Object.entries(rawCost).forEach(([color, needed]) => {
+    (Object.entries(rawCost) as Array<[GemInventoryKey, number]>).forEach(([color, needed]) => {
         const available = playerInv[color] || 0;
         const paid = Math.min(needed, available);
 

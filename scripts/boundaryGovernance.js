@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 export const BOUNDARY_REGISTRY_SCHEMA_VERSION = 1;
 export const EXPECTED_BOUNDARY_IDS = Object.freeze([
@@ -138,7 +139,7 @@ export const collectBoundaryRegistryErrors = ({
             !boundaryInventoryText.includes(entry.title)
         ) {
             errors.push(
-                `Boundary ${entry.id} is not traceable from BOUNDARY_INVENTORY.md via id or title.`
+                `Boundary ${entry.id} is not traceable from ${GOVERNANCE_DOC_PATHS.boundaryInventory} via id or title.`
             );
         }
     }

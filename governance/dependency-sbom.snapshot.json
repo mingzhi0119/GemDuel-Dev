@@ -5,14 +5,14 @@
         "name": "gem-duel",
         "version": "5.2.11"
     },
-    "componentCount": 891,
+    "componentCount": 883,
     "licenseInventory": {
-        "MIT": 722,
+        "MIT": 712,
         "Apache-2.0": 28,
-        "ISC": 94,
-        "BSD-2-Clause": 12,
+        "BSD-2-Clause": 13,
+        "ISC": 89,
         "BSD-3-Clause": 20,
-        "BlueOak-1.0.0": 7,
+        "BlueOak-1.0.0": 13,
         "Python-2.0": 1,
         "CC-BY-4.0": 1,
         "WTFPL OR ISC": 1,
@@ -193,7 +193,7 @@
         {
             "path": "node_modules/@electron/asar",
             "name": "@electron/asar",
-            "version": "3.2.18",
+            "version": "3.4.1",
             "license": "MIT",
             "dev": true
         },
@@ -240,41 +240,6 @@
             "dev": true
         },
         {
-            "path": "node_modules/@electron/node-gyp",
-            "name": "@electron/node-gyp",
-            "version": "10.2.0-electron.1",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@electron/node-gyp/node_modules/brace-expansion",
-            "name": "brace-expansion",
-            "version": "2.0.2",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@electron/node-gyp/node_modules/glob",
-            "name": "glob",
-            "version": "8.1.0",
-            "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@electron/node-gyp/node_modules/minimatch",
-            "name": "minimatch",
-            "version": "5.1.6",
-            "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@electron/node-gyp/node_modules/semver",
-            "name": "semver",
-            "version": "7.7.3",
-            "license": "ISC",
-            "dev": true
-        },
-        {
             "path": "node_modules/@electron/notarize",
             "name": "@electron/notarize",
             "version": "2.5.0",
@@ -305,7 +270,7 @@
         {
             "path": "node_modules/@electron/osx-sign",
             "name": "@electron/osx-sign",
-            "version": "1.3.1",
+            "version": "1.3.3",
             "license": "BSD-2-Clause",
             "dev": true
         },
@@ -340,56 +305,35 @@
         {
             "path": "node_modules/@electron/rebuild",
             "name": "@electron/rebuild",
-            "version": "3.7.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@electron/rebuild/node_modules/fs-extra",
-            "name": "fs-extra",
-            "version": "10.1.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@electron/rebuild/node_modules/jsonfile",
-            "name": "jsonfile",
-            "version": "6.2.0",
+            "version": "4.0.3",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@electron/rebuild/node_modules/semver",
             "name": "semver",
-            "version": "7.7.3",
+            "version": "7.7.4",
             "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@electron/rebuild/node_modules/universalify",
-            "name": "universalify",
-            "version": "2.0.1",
-            "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@electron/universal",
             "name": "@electron/universal",
-            "version": "2.0.1",
+            "version": "2.0.3",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@electron/universal/node_modules/brace-expansion",
             "name": "brace-expansion",
-            "version": "2.0.2",
+            "version": "2.1.0",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@electron/universal/node_modules/fs-extra",
             "name": "fs-extra",
-            "version": "11.3.3",
+            "version": "11.3.4",
             "license": "MIT",
             "dev": true
         },
@@ -403,7 +347,7 @@
         {
             "path": "node_modules/@electron/universal/node_modules/minimatch",
             "name": "minimatch",
-            "version": "9.0.5",
+            "version": "9.0.9",
             "license": "ISC",
             "dev": true
         },
@@ -424,7 +368,7 @@
         {
             "path": "node_modules/@electron/windows-sign/node_modules/fs-extra",
             "name": "fs-extra",
-            "version": "11.3.3",
+            "version": "11.3.4",
             "license": "MIT",
             "dev": true
         },
@@ -702,13 +646,6 @@
             "dev": true
         },
         {
-            "path": "node_modules/@gar/promisify",
-            "name": "@gar/promisify",
-            "version": "1.1.3",
-            "license": "MIT",
-            "dev": true
-        },
-        {
             "path": "node_modules/@hapi/address",
             "name": "@hapi/address",
             "version": "5.1.1",
@@ -779,20 +716,6 @@
             "dev": true
         },
         {
-            "path": "node_modules/@isaacs/balanced-match",
-            "name": "@isaacs/balanced-match",
-            "version": "4.0.1",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@isaacs/brace-expansion",
-            "name": "@isaacs/brace-expansion",
-            "version": "5.0.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
             "path": "node_modules/@isaacs/cliui",
             "name": "@isaacs/cliui",
             "version": "8.0.2",
@@ -825,6 +748,13 @@
             "name": "wrap-ansi",
             "version": "8.1.0",
             "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/@isaacs/fs-minipass",
+            "name": "@isaacs/fs-minipass",
+            "version": "4.0.1",
+            "license": "ISC",
             "dev": true
         },
         {
@@ -933,24 +863,31 @@
             "dev": false
         },
         {
+            "path": "node_modules/@npmcli/agent",
+            "name": "@npmcli/agent",
+            "version": "3.0.0",
+            "license": "ISC",
+            "dev": true
+        },
+        {
+            "path": "node_modules/@npmcli/agent/node_modules/lru-cache",
+            "name": "lru-cache",
+            "version": "10.4.3",
+            "license": "ISC",
+            "dev": true
+        },
+        {
             "path": "node_modules/@npmcli/fs",
             "name": "@npmcli/fs",
-            "version": "2.1.2",
+            "version": "4.0.0",
             "license": "ISC",
             "dev": true
         },
         {
             "path": "node_modules/@npmcli/fs/node_modules/semver",
             "name": "semver",
-            "version": "7.7.3",
+            "version": "7.7.4",
             "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@npmcli/move-file",
-            "name": "@npmcli/move-file",
-            "version": "2.0.1",
-            "license": "MIT",
             "dev": true
         },
         {
@@ -984,154 +921,175 @@
         {
             "path": "node_modules/@rollup/rollup-android-arm-eabi",
             "name": "@rollup/rollup-android-arm-eabi",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-android-arm64",
             "name": "@rollup/rollup-android-arm64",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-darwin-arm64",
             "name": "@rollup/rollup-darwin-arm64",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-darwin-x64",
             "name": "@rollup/rollup-darwin-x64",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-freebsd-arm64",
             "name": "@rollup/rollup-freebsd-arm64",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-freebsd-x64",
             "name": "@rollup/rollup-freebsd-x64",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-arm-gnueabihf",
             "name": "@rollup/rollup-linux-arm-gnueabihf",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-arm-musleabihf",
             "name": "@rollup/rollup-linux-arm-musleabihf",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-arm64-gnu",
             "name": "@rollup/rollup-linux-arm64-gnu",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-arm64-musl",
             "name": "@rollup/rollup-linux-arm64-musl",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-loong64-gnu",
             "name": "@rollup/rollup-linux-loong64-gnu",
-            "version": "4.54.0",
+            "version": "4.60.2",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/@rollup/rollup-linux-loong64-musl",
+            "name": "@rollup/rollup-linux-loong64-musl",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-ppc64-gnu",
             "name": "@rollup/rollup-linux-ppc64-gnu",
-            "version": "4.54.0",
+            "version": "4.60.2",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/@rollup/rollup-linux-ppc64-musl",
+            "name": "@rollup/rollup-linux-ppc64-musl",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-riscv64-gnu",
             "name": "@rollup/rollup-linux-riscv64-gnu",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-riscv64-musl",
             "name": "@rollup/rollup-linux-riscv64-musl",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-s390x-gnu",
             "name": "@rollup/rollup-linux-s390x-gnu",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-x64-gnu",
             "name": "@rollup/rollup-linux-x64-gnu",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-linux-x64-musl",
             "name": "@rollup/rollup-linux-x64-musl",
-            "version": "4.54.0",
+            "version": "4.60.2",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/@rollup/rollup-openbsd-x64",
+            "name": "@rollup/rollup-openbsd-x64",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-openharmony-arm64",
             "name": "@rollup/rollup-openharmony-arm64",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-win32-arm64-msvc",
             "name": "@rollup/rollup-win32-arm64-msvc",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-win32-ia32-msvc",
             "name": "@rollup/rollup-win32-ia32-msvc",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-win32-x64-gnu",
             "name": "@rollup/rollup-win32-x64-gnu",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@rollup/rollup-win32-x64-msvc",
             "name": "@rollup/rollup-win32-x64-msvc",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
@@ -1153,13 +1111,6 @@
             "path": "node_modules/@szmarczak/http-timer",
             "name": "@szmarczak/http-timer",
             "version": "4.0.6",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/@tootallnate/once",
-            "name": "@tootallnate/once",
-            "version": "2.0.0",
             "license": "MIT",
             "dev": true
         },
@@ -1474,14 +1425,14 @@
         {
             "path": "node_modules/@typescript-eslint/typescript-estree/node_modules/brace-expansion",
             "name": "brace-expansion",
-            "version": "2.0.2",
+            "version": "2.1.0",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch",
             "name": "minimatch",
-            "version": "9.0.5",
+            "version": "9.0.9",
             "license": "ISC",
             "dev": true
         },
@@ -1579,7 +1530,7 @@
         {
             "path": "node_modules/@xmldom/xmldom",
             "name": "@xmldom/xmldom",
-            "version": "0.8.11",
+            "version": "0.8.13",
             "license": "MIT",
             "dev": true
         },
@@ -1593,7 +1544,7 @@
         {
             "path": "node_modules/abbrev",
             "name": "abbrev",
-            "version": "1.1.1",
+            "version": "3.0.1",
             "license": "ISC",
             "dev": true
         },
@@ -1633,23 +1584,9 @@
             "dev": true
         },
         {
-            "path": "node_modules/agentkeepalive",
-            "name": "agentkeepalive",
-            "version": "4.6.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/aggregate-error",
-            "name": "aggregate-error",
-            "version": "3.1.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
             "path": "node_modules/ajv",
             "name": "ajv",
-            "version": "6.12.6",
+            "version": "6.14.0",
             "license": "MIT",
             "dev": true
         },
@@ -1712,7 +1649,56 @@
         {
             "path": "node_modules/app-builder-lib",
             "name": "app-builder-lib",
-            "version": "26.0.12",
+            "version": "26.8.1",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/@electron/get",
+            "name": "@electron/get",
+            "version": "3.1.0",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/@electron/get/node_modules/fs-extra",
+            "name": "fs-extra",
+            "version": "8.1.0",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/@electron/get/node_modules/semver",
+            "name": "semver",
+            "version": "6.3.1",
+            "license": "ISC",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/balanced-match",
+            "name": "balanced-match",
+            "version": "4.0.4",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/brace-expansion",
+            "name": "brace-expansion",
+            "version": "5.0.5",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/builder-util-runtime",
+            "name": "builder-util-runtime",
+            "version": "9.5.1",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/ci-info",
+            "name": "ci-info",
+            "version": "4.3.1",
             "license": "MIT",
             "dev": true
         },
@@ -1724,31 +1710,52 @@
             "dev": true
         },
         {
-            "path": "node_modules/app-builder-lib/node_modules/jsonfile",
+            "path": "node_modules/app-builder-lib/node_modules/fs-extra/node_modules/jsonfile",
             "name": "jsonfile",
             "version": "6.2.0",
             "license": "MIT",
             "dev": true
         },
         {
+            "path": "node_modules/app-builder-lib/node_modules/fs-extra/node_modules/universalify",
+            "name": "universalify",
+            "version": "2.0.1",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/isexe",
+            "name": "isexe",
+            "version": "3.1.5",
+            "license": "BlueOak-1.0.0",
+            "dev": true
+        },
+        {
+            "path": "node_modules/app-builder-lib/node_modules/jiti",
+            "name": "jiti",
+            "version": "2.6.1",
+            "license": "MIT",
+            "dev": true
+        },
+        {
             "path": "node_modules/app-builder-lib/node_modules/minimatch",
             "name": "minimatch",
-            "version": "10.1.1",
+            "version": "10.2.5",
             "license": "BlueOak-1.0.0",
             "dev": true
         },
         {
             "path": "node_modules/app-builder-lib/node_modules/semver",
             "name": "semver",
-            "version": "7.7.3",
+            "version": "7.7.4",
             "license": "ISC",
             "dev": true
         },
         {
-            "path": "node_modules/app-builder-lib/node_modules/universalify",
-            "name": "universalify",
-            "version": "2.0.1",
-            "license": "MIT",
+            "path": "node_modules/app-builder-lib/node_modules/which",
+            "name": "which",
+            "version": "5.0.0",
+            "license": "ISC",
             "dev": true
         },
         {
@@ -1845,7 +1852,7 @@
         {
             "path": "node_modules/axios",
             "name": "axios",
-            "version": "1.13.2",
+            "version": "1.15.1",
             "license": "MIT",
             "dev": true
         },
@@ -1922,7 +1929,7 @@
         {
             "path": "node_modules/brace-expansion",
             "name": "brace-expansion",
-            "version": "1.1.12",
+            "version": "1.1.14",
             "license": "MIT",
             "dev": true
         },
@@ -1964,7 +1971,7 @@
         {
             "path": "node_modules/builder-util",
             "name": "builder-util",
-            "version": "26.0.11",
+            "version": "26.8.1",
             "license": "MIT",
             "dev": true
         },
@@ -1974,6 +1981,13 @@
             "version": "9.3.1",
             "license": "MIT",
             "dev": false
+        },
+        {
+            "path": "node_modules/builder-util/node_modules/builder-util-runtime",
+            "name": "builder-util-runtime",
+            "version": "9.5.1",
+            "license": "MIT",
+            "dev": true
         },
         {
             "path": "node_modules/builder-util/node_modules/fs-extra",
@@ -2013,35 +2027,35 @@
         {
             "path": "node_modules/cacache",
             "name": "cacache",
-            "version": "16.1.3",
+            "version": "19.0.1",
             "license": "ISC",
             "dev": true
         },
         {
             "path": "node_modules/cacache/node_modules/brace-expansion",
             "name": "brace-expansion",
-            "version": "2.0.2",
+            "version": "2.1.0",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/cacache/node_modules/glob",
             "name": "glob",
-            "version": "8.1.0",
+            "version": "10.5.0",
             "license": "ISC",
             "dev": true
         },
         {
             "path": "node_modules/cacache/node_modules/lru-cache",
             "name": "lru-cache",
-            "version": "7.18.3",
+            "version": "10.4.3",
             "license": "ISC",
             "dev": true
         },
         {
             "path": "node_modules/cacache/node_modules/minimatch",
             "name": "minimatch",
-            "version": "5.1.6",
+            "version": "9.0.9",
             "license": "ISC",
             "dev": true
         },
@@ -2146,8 +2160,8 @@
         {
             "path": "node_modules/chownr",
             "name": "chownr",
-            "version": "2.0.0",
-            "license": "ISC",
+            "version": "3.0.0",
+            "license": "BlueOak-1.0.0",
             "dev": true
         },
         {
@@ -2160,7 +2174,7 @@
         {
             "path": "node_modules/ci-info",
             "name": "ci-info",
-            "version": "3.9.0",
+            "version": "4.4.0",
             "license": "MIT",
             "dev": true
         },
@@ -2170,13 +2184,6 @@
             "version": "0.7.1",
             "license": "Apache-2.0",
             "dev": false
-        },
-        {
-            "path": "node_modules/clean-stack",
-            "name": "clean-stack",
-            "version": "2.2.0",
-            "license": "MIT",
-            "dev": true
         },
         {
             "path": "node_modules/cli-cursor",
@@ -2330,41 +2337,6 @@
             "name": "supports-color",
             "version": "8.1.1",
             "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/config-file-ts",
-            "name": "config-file-ts",
-            "version": "0.2.8-rc1",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/config-file-ts/node_modules/brace-expansion",
-            "name": "brace-expansion",
-            "version": "2.0.2",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/config-file-ts/node_modules/glob",
-            "name": "glob",
-            "version": "10.5.0",
-            "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/config-file-ts/node_modules/minimatch",
-            "name": "minimatch",
-            "version": "9.0.5",
-            "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/config-file-ts/node_modules/minipass",
-            "name": "minipass",
-            "version": "7.1.2",
-            "license": "ISC",
             "dev": true
         },
         {
@@ -2580,7 +2552,7 @@
         {
             "path": "node_modules/dmg-builder",
             "name": "dmg-builder",
-            "version": "26.0.12",
+            "version": "26.8.1",
             "license": "MIT",
             "dev": true
         },
@@ -2657,21 +2629,28 @@
         {
             "path": "node_modules/electron",
             "name": "electron",
-            "version": "39.2.7",
+            "version": "39.8.8",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/electron-builder",
             "name": "electron-builder",
-            "version": "26.0.12",
+            "version": "26.8.1",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/electron-builder-squirrel-windows",
             "name": "electron-builder-squirrel-windows",
-            "version": "26.0.12",
+            "version": "26.8.1",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/electron-builder/node_modules/builder-util-runtime",
+            "name": "builder-util-runtime",
+            "version": "9.5.1",
             "license": "MIT",
             "dev": true
         },
@@ -2713,7 +2692,14 @@
         {
             "path": "node_modules/electron-publish",
             "name": "electron-publish",
-            "version": "26.0.11",
+            "version": "26.8.1",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/electron-publish/node_modules/builder-util-runtime",
+            "name": "builder-util-runtime",
+            "version": "9.5.1",
             "license": "MIT",
             "dev": true
         },
@@ -2820,6 +2806,13 @@
             "name": "end-of-stream",
             "version": "1.4.5",
             "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/entities",
+            "name": "entities",
+            "version": "7.0.1",
+            "license": "BSD-2-Clause",
             "dev": true
         },
         {
@@ -3175,21 +3168,21 @@
         {
             "path": "node_modules/filelist",
             "name": "filelist",
-            "version": "1.0.4",
+            "version": "1.0.6",
             "license": "Apache-2.0",
             "dev": true
         },
         {
             "path": "node_modules/filelist/node_modules/brace-expansion",
             "name": "brace-expansion",
-            "version": "2.0.2",
+            "version": "2.1.0",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/filelist/node_modules/minimatch",
             "name": "minimatch",
-            "version": "5.1.6",
+            "version": "5.1.9",
             "license": "ISC",
             "dev": true
         },
@@ -3238,14 +3231,14 @@
         {
             "path": "node_modules/flatted",
             "name": "flatted",
-            "version": "3.3.3",
+            "version": "3.4.2",
             "license": "ISC",
             "dev": true
         },
         {
             "path": "node_modules/follow-redirects",
             "name": "follow-redirects",
-            "version": "1.15.11",
+            "version": "1.16.0",
             "license": "MIT",
             "dev": true
         },
@@ -3308,7 +3301,7 @@
         {
             "path": "node_modules/fs-minipass",
             "name": "fs-minipass",
-            "version": "2.1.0",
+            "version": "3.0.3",
             "license": "ISC",
             "dev": true
         },
@@ -3441,14 +3434,7 @@
         {
             "path": "node_modules/happy-dom",
             "name": "happy-dom",
-            "version": "20.0.11",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/happy-dom/node_modules/@types/node",
-            "name": "@types/node",
-            "version": "20.19.27",
+            "version": "20.9.0",
             "license": "MIT",
             "dev": true
         },
@@ -3558,13 +3544,6 @@
             "dev": true
         },
         {
-            "path": "node_modules/humanize-ms",
-            "name": "humanize-ms",
-            "version": "1.2.1",
-            "license": "MIT",
-            "dev": true
-        },
-        {
             "path": "node_modules/husky",
             "name": "husky",
             "version": "9.1.7",
@@ -3670,20 +3649,6 @@
             "dev": true
         },
         {
-            "path": "node_modules/indent-string",
-            "name": "indent-string",
-            "version": "4.0.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/infer-owner",
-            "name": "infer-owner",
-            "version": "1.0.4",
-            "license": "ISC",
-            "dev": true
-        },
-        {
             "path": "node_modules/inflight",
             "name": "inflight",
             "version": "1.0.6",
@@ -3719,13 +3684,6 @@
             "dev": false
         },
         {
-            "path": "node_modules/is-ci",
-            "name": "is-ci",
-            "version": "3.0.1",
-            "license": "MIT",
-            "dev": true
-        },
-        {
             "path": "node_modules/is-core-module",
             "name": "is-core-module",
             "version": "2.16.1",
@@ -3757,13 +3715,6 @@
             "path": "node_modules/is-interactive",
             "name": "is-interactive",
             "version": "1.0.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/is-lambda",
-            "name": "is-lambda",
-            "version": "1.0.1",
             "license": "MIT",
             "dev": true
         },
@@ -3994,7 +3945,7 @@
         {
             "path": "node_modules/lodash",
             "name": "lodash",
-            "version": "4.17.21",
+            "version": "4.18.1",
             "license": "MIT",
             "dev": true
         },
@@ -4113,35 +4064,7 @@
         {
             "path": "node_modules/make-fetch-happen",
             "name": "make-fetch-happen",
-            "version": "10.2.1",
-            "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/make-fetch-happen/node_modules/agent-base",
-            "name": "agent-base",
-            "version": "6.0.2",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/make-fetch-happen/node_modules/http-proxy-agent",
-            "name": "http-proxy-agent",
-            "version": "5.0.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/make-fetch-happen/node_modules/https-proxy-agent",
-            "name": "https-proxy-agent",
-            "version": "5.0.1",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/make-fetch-happen/node_modules/lru-cache",
-            "name": "lru-cache",
-            "version": "7.18.3",
+            "version": "14.0.3",
             "license": "ISC",
             "dev": true
         },
@@ -4253,7 +4176,7 @@
         {
             "path": "node_modules/minimatch",
             "name": "minimatch",
-            "version": "3.1.2",
+            "version": "3.1.5",
             "license": "ISC",
             "dev": true
         },
@@ -4267,28 +4190,42 @@
         {
             "path": "node_modules/minipass",
             "name": "minipass",
-            "version": "3.3.6",
-            "license": "ISC",
+            "version": "7.1.3",
+            "license": "BlueOak-1.0.0",
             "dev": true
         },
         {
             "path": "node_modules/minipass-collect",
             "name": "minipass-collect",
-            "version": "1.0.2",
+            "version": "2.0.1",
             "license": "ISC",
             "dev": true
         },
         {
             "path": "node_modules/minipass-fetch",
             "name": "minipass-fetch",
-            "version": "2.1.2",
+            "version": "4.0.1",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/minipass-flush",
             "name": "minipass-flush",
-            "version": "1.0.5",
+            "version": "1.0.7",
+            "license": "BlueOak-1.0.0",
+            "dev": true
+        },
+        {
+            "path": "node_modules/minipass-flush/node_modules/minipass",
+            "name": "minipass",
+            "version": "3.3.6",
+            "license": "ISC",
+            "dev": true
+        },
+        {
+            "path": "node_modules/minipass-flush/node_modules/yallist",
+            "name": "yallist",
+            "version": "4.0.0",
             "license": "ISC",
             "dev": true
         },
@@ -4300,6 +4237,20 @@
             "dev": true
         },
         {
+            "path": "node_modules/minipass-pipeline/node_modules/minipass",
+            "name": "minipass",
+            "version": "3.3.6",
+            "license": "ISC",
+            "dev": true
+        },
+        {
+            "path": "node_modules/minipass-pipeline/node_modules/yallist",
+            "name": "yallist",
+            "version": "4.0.0",
+            "license": "ISC",
+            "dev": true
+        },
+        {
             "path": "node_modules/minipass-sized",
             "name": "minipass-sized",
             "version": "1.0.3",
@@ -4307,7 +4258,14 @@
             "dev": true
         },
         {
-            "path": "node_modules/minipass/node_modules/yallist",
+            "path": "node_modules/minipass-sized/node_modules/minipass",
+            "name": "minipass",
+            "version": "3.3.6",
+            "license": "ISC",
+            "dev": true
+        },
+        {
+            "path": "node_modules/minipass-sized/node_modules/yallist",
             "name": "yallist",
             "version": "4.0.0",
             "license": "ISC",
@@ -4316,21 +4274,14 @@
         {
             "path": "node_modules/minizlib",
             "name": "minizlib",
-            "version": "2.1.2",
+            "version": "3.1.0",
             "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/minizlib/node_modules/yallist",
-            "name": "yallist",
-            "version": "4.0.0",
-            "license": "ISC",
             "dev": true
         },
         {
             "path": "node_modules/mkdirp",
             "name": "mkdirp",
-            "version": "1.0.4",
+            "version": "0.5.6",
             "license": "MIT",
             "dev": true
         },
@@ -4386,21 +4337,21 @@
         {
             "path": "node_modules/negotiator",
             "name": "negotiator",
-            "version": "0.6.4",
+            "version": "1.0.0",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/node-abi",
             "name": "node-abi",
-            "version": "3.85.0",
+            "version": "4.28.0",
             "license": "MIT",
             "dev": true
         },
         {
             "path": "node_modules/node-abi/node_modules/semver",
             "name": "semver",
-            "version": "7.7.3",
+            "version": "7.7.4",
             "license": "ISC",
             "dev": true
         },
@@ -4421,7 +4372,7 @@
         {
             "path": "node_modules/node-api-version/node_modules/semver",
             "name": "semver",
-            "version": "7.7.3",
+            "version": "7.7.4",
             "license": "ISC",
             "dev": true
         },
@@ -4440,6 +4391,34 @@
             "dev": false
         },
         {
+            "path": "node_modules/node-gyp",
+            "name": "node-gyp",
+            "version": "11.5.0",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/node-gyp/node_modules/isexe",
+            "name": "isexe",
+            "version": "3.1.5",
+            "license": "BlueOak-1.0.0",
+            "dev": true
+        },
+        {
+            "path": "node_modules/node-gyp/node_modules/semver",
+            "name": "semver",
+            "version": "7.7.4",
+            "license": "ISC",
+            "dev": true
+        },
+        {
+            "path": "node_modules/node-gyp/node_modules/which",
+            "name": "which",
+            "version": "5.0.0",
+            "license": "ISC",
+            "dev": true
+        },
+        {
             "path": "node_modules/node-releases",
             "name": "node-releases",
             "version": "2.0.27",
@@ -4449,7 +4428,7 @@
         {
             "path": "node_modules/nopt",
             "name": "nopt",
-            "version": "6.0.0",
+            "version": "8.1.0",
             "license": "ISC",
             "dev": true
         },
@@ -4617,7 +4596,7 @@
         {
             "path": "node_modules/p-map",
             "name": "p-map",
-            "version": "4.0.0",
+            "version": "7.0.4",
             "license": "MIT",
             "dev": true
         },
@@ -4681,13 +4660,6 @@
             "path": "node_modules/path-scurry/node_modules/lru-cache",
             "name": "lru-cache",
             "version": "10.4.3",
-            "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/path-scurry/node_modules/minipass",
-            "name": "minipass",
-            "version": "7.1.2",
             "license": "ISC",
             "dev": true
         },
@@ -4883,7 +4855,7 @@
         {
             "path": "node_modules/proc-log",
             "name": "proc-log",
-            "version": "2.0.1",
+            "version": "5.0.0",
             "license": "ISC",
             "dev": true
         },
@@ -4895,17 +4867,24 @@
             "dev": true
         },
         {
-            "path": "node_modules/promise-inflight",
-            "name": "promise-inflight",
-            "version": "1.0.1",
-            "license": "ISC",
-            "dev": true
-        },
-        {
             "path": "node_modules/promise-retry",
             "name": "promise-retry",
             "version": "2.0.1",
             "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/proper-lockfile",
+            "name": "proper-lockfile",
+            "version": "4.1.2",
+            "license": "MIT",
+            "dev": true
+        },
+        {
+            "path": "node_modules/proper-lockfile/node_modules/signal-exit",
+            "name": "signal-exit",
+            "version": "3.0.7",
+            "license": "ISC",
             "dev": true
         },
         {
@@ -4918,7 +4897,7 @@
         {
             "path": "node_modules/proxy-from-env",
             "name": "proxy-from-env",
-            "version": "1.1.0",
+            "version": "2.1.0",
             "license": "MIT",
             "dev": true
         },
@@ -5121,7 +5100,7 @@
         {
             "path": "node_modules/rimraf",
             "name": "rimraf",
-            "version": "3.0.2",
+            "version": "2.6.3",
             "license": "ISC",
             "dev": true
         },
@@ -5135,7 +5114,7 @@
         {
             "path": "node_modules/rollup",
             "name": "rollup",
-            "version": "4.54.0",
+            "version": "4.60.2",
             "license": "MIT",
             "dev": true
         },
@@ -5170,7 +5149,7 @@
         {
             "path": "node_modules/sanitize-filename",
             "name": "sanitize-filename",
-            "version": "1.6.3",
+            "version": "1.6.4",
             "license": "WTFPL OR ISC",
             "dev": true
         },
@@ -5373,14 +5352,7 @@
         {
             "path": "node_modules/socks-proxy-agent",
             "name": "socks-proxy-agent",
-            "version": "7.0.0",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/socks-proxy-agent/node_modules/agent-base",
-            "name": "agent-base",
-            "version": "6.0.2",
+            "version": "8.0.5",
             "license": "MIT",
             "dev": true
         },
@@ -5415,7 +5387,7 @@
         {
             "path": "node_modules/ssri",
             "name": "ssri",
-            "version": "9.0.1",
+            "version": "12.0.0",
             "license": "ISC",
             "dev": true
         },
@@ -5611,22 +5583,15 @@
         {
             "path": "node_modules/tar",
             "name": "tar",
-            "version": "6.2.1",
-            "license": "ISC",
-            "dev": true
-        },
-        {
-            "path": "node_modules/tar/node_modules/minipass",
-            "name": "minipass",
-            "version": "5.0.0",
-            "license": "ISC",
+            "version": "7.5.13",
+            "license": "BlueOak-1.0.0",
             "dev": true
         },
         {
             "path": "node_modules/tar/node_modules/yallist",
             "name": "yallist",
-            "version": "4.0.0",
-            "license": "ISC",
+            "version": "5.0.0",
+            "license": "BlueOak-1.0.0",
             "dev": true
         },
         {
@@ -5662,20 +5627,6 @@
             "name": "universalify",
             "version": "2.0.1",
             "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/temp/node_modules/mkdirp",
-            "name": "mkdirp",
-            "version": "0.5.6",
-            "license": "MIT",
-            "dev": true
-        },
-        {
-            "path": "node_modules/temp/node_modules/rimraf",
-            "name": "rimraf",
-            "version": "2.6.3",
-            "license": "ISC",
             "dev": true
         },
         {
@@ -5731,13 +5682,6 @@
             "path": "node_modules/test-exclude/node_modules/minimatch",
             "name": "minimatch",
             "version": "10.2.5",
-            "license": "BlueOak-1.0.0",
-            "dev": true
-        },
-        {
-            "path": "node_modules/test-exclude/node_modules/minipass",
-            "name": "minipass",
-            "version": "7.1.3",
             "license": "BlueOak-1.0.0",
             "dev": true
         },
@@ -5933,14 +5877,14 @@
         {
             "path": "node_modules/unique-filename",
             "name": "unique-filename",
-            "version": "2.0.1",
+            "version": "4.0.0",
             "license": "ISC",
             "dev": true
         },
         {
             "path": "node_modules/unique-slug",
             "name": "unique-slug",
-            "version": "3.0.0",
+            "version": "5.0.0",
             "license": "ISC",
             "dev": true
         },
@@ -6017,7 +5961,7 @@
         {
             "path": "node_modules/vite",
             "name": "vite",
-            "version": "6.4.1",
+            "version": "6.4.2",
             "license": "MIT",
             "dev": true
         },

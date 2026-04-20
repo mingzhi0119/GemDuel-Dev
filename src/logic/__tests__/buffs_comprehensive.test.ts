@@ -9,10 +9,13 @@ import { handleUsePrivilege } from '../actions/privilegeActions';
 import { calculateTransaction } from '../../utils';
 import { getPlayerScore, hasExcessGems } from '../selectors';
 import { finalizeTurn } from '../turnManager';
-import { GameState, Card } from '../../types';
+import type { Card, GameState, PlayerInitRandoms } from '../../types';
 
 // Helper to create state with a specific buff for P1
-const createBuffState = (buffId: string, initRandoms: Record<string, unknown> = {}): GameState => {
+const createBuffState = (
+    buffId: string,
+    initRandoms: Partial<PlayerInitRandoms> = {}
+): GameState => {
     let state = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON));
     const fullBuff = Object.values(BUFFS).find((b) => b.id === buffId);
     if (!fullBuff) throw new Error(`Buff ${buffId} not found`);
@@ -23,7 +26,14 @@ const createBuffState = (buffId: string, initRandoms: Record<string, unknown> = 
 
     // Apply init effects
     state = produce(state, (draft: GameState) => {
-        applyBuffInitEffects(draft, { p1: initRandoms });
+        applyBuffInitEffects(draft, {
+            p1: {
+                randomGems: [],
+                reserveCardLevel: 1,
+                preferenceColor: 'red',
+                ...initRandoms,
+            },
+        });
     });
 
     return state;
@@ -177,7 +187,13 @@ describe('Comprehensive Buff Tests', () => {
             state.decks[1] = [{ id: 'res1', level: 1, cost: {}, points: 0 } as Card];
             state.playerBuffs.p1 = BUFFS.GOLD_RESERVE;
             state = produce(state, (draft: GameState) => {
-                applyBuffInitEffects(draft, { p1: { reserveCardLevel: 1 } });
+                applyBuffInitEffects(draft, {
+                    p1: {
+                        randomGems: [],
+                        reserveCardLevel: 1,
+                        preferenceColor: 'red',
+                    },
+                });
             });
 
             expect(state.inventories.p1.gold).toBe(1);

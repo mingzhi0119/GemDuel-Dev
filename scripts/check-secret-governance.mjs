@@ -9,6 +9,7 @@ import {
     collectTextFileEntries,
 } from './dependencyGovernance.js';
 import { RUNTIME_CONFIG_POLICY } from '../electron/runtimeConfig.js';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,7 +17,7 @@ const repoRoot = path.resolve(__dirname, '..');
 
 const readText = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
-const governanceDocumentText = readText('DEPENDENCY_RUNTIME_GOVERNANCE.md');
+const governanceDocumentText = readText(GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance);
 const textEntries = collectTextFileEntries(repoRoot, { includeTests: false });
 const secretErrors = collectSecretScanErrorsFromEntries(textEntries);
 const runtimeEnvNames = collectRuntimeEnvNamesFromEntries(textEntries);

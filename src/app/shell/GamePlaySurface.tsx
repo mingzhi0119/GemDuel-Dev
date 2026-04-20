@@ -7,7 +7,7 @@ import { ReplayControls } from '../../components/ReplayControls';
 import { RoyalCourt } from '../../components/RoyalCourt';
 import { StatusBar } from '../../components/StatusBar';
 import { SHARED_PRIVILEGE_SUPPLY_SIZE } from '../../logic/stateHelpers';
-import type { AppRouteProps, GamePhase, PlayerKey } from '../../types';
+import type { AppRouteProps, DeckState, GamePhase, MarketState, PlayerKey } from '../../types';
 
 type EffectiveGameMode = GamePhase | 'REVIEW' | 'GAME_OVER';
 
@@ -60,6 +60,8 @@ export function GamePlaySurface({
         handlePeekDeck,
     } = handlers;
     const { isMyTurn } = getters;
+    const marketState: MarketState = market;
+    const deckState: DeckState = decks;
     const remainingPrivilegeSupply = Math.max(
         0,
         SHARED_PRIVILEGE_SUPPLY_SIZE - (privileges.p1 + privileges.p2)
@@ -90,8 +92,8 @@ export function GamePlaySurface({
                         }}
                     >
                         <Market
-                            market={market}
-                            decks={decks}
+                            market={marketState}
+                            decks={deckState}
                             phase={effectiveGameMode}
                             turn={turn}
                             inventories={inventories}

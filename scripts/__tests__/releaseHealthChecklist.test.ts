@@ -6,6 +6,7 @@ import {
     collectReleaseHealthChecklistErrors,
     getReleaseHealthIndicatorKeys,
 } from '../releaseHealthChecklist.js';
+import { GOVERNANCE_DOC_PATHS } from '../governanceDocPaths.js';
 
 describe('release health checklist governance', () => {
     it('exposes the required release commands as a stable contract', () => {
@@ -44,8 +45,8 @@ describe('release health checklist governance', () => {
         const checklistText = [
             ...REQUIRED_RELEASE_CHECKLIST_COMMANDS.map((command) => `- \`${command}\``),
             ...getReleaseHealthIndicatorKeys().map((indicatorKey) => `- \`${indicatorKey}\``),
-            '- `OPERATIONS_SLO.md`',
-            '- `OPERATIONS_FAULT_DRILLS.md`',
+            `- \`${GOVERNANCE_DOC_PATHS.operationsSlo}\``,
+            `- \`${GOVERNANCE_DOC_PATHS.operationsFaultDrills}\``,
             '- `scripts/export-release-health-report.mjs`',
             '- `scripts/export-governance-artifacts.mjs`',
             '- `window.electron.getReleaseHealthSnapshot()`',

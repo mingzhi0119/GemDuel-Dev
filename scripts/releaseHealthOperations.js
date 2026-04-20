@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { getReleaseHealthIndicatorKeys } from './releaseHealthChecklist.js';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 export const RELEASE_HEALTH_OPERATION_SCHEMA_VERSION = 2;
 export const REQUIRED_RELEASE_HEALTH_SOURCE_FORMATS = Object.freeze([
@@ -111,12 +112,14 @@ const collectArtifactPolicyErrors = (sloText, operationsSnapshot, repoRoot) => {
     }
 
     if (!sloText.includes(`\`${artifactPolicy.artifactName}\``)) {
-        issues.push(`OPERATIONS_SLO.md must mention artifact ${artifactPolicy.artifactName}.`);
+        issues.push(
+            `${GOVERNANCE_DOC_PATHS.operationsSlo} must mention artifact ${artifactPolicy.artifactName}.`
+        );
     }
 
     if (!sloText.includes(`\`${artifactPolicy.retentionDays}\``)) {
         issues.push(
-            `OPERATIONS_SLO.md must mention retention window ${artifactPolicy.retentionDays}.`
+            `${GOVERNANCE_DOC_PATHS.operationsSlo} must mention retention window ${artifactPolicy.retentionDays}.`
         );
     }
 
@@ -142,7 +145,9 @@ const collectBundleBudgetErrors = (sloText, operationsSnapshot) => {
     }
 
     if (!sloText.includes('`mainChunkKb`')) {
-        issues.push('OPERATIONS_SLO.md must mention the mainChunkKb bundle budget.');
+        issues.push(
+            `${GOVERNANCE_DOC_PATHS.operationsSlo} must mention the mainChunkKb bundle budget.`
+        );
     }
 
     return issues;
@@ -188,12 +193,14 @@ const collectDrillErrors = (sloText, drillText, snapshot) => {
     const drills = snapshot?.drills ?? [];
 
     if (!hasAllExpectedValues(sloText, getReleaseHealthIndicatorKeys())) {
-        issues.push('OPERATIONS_SLO.md must document every release-health indicator.');
+        issues.push(
+            `${GOVERNANCE_DOC_PATHS.operationsSlo} must document every release-health indicator.`
+        );
     }
 
     if (!hasAllExpectedValues(drillText, REQUIRED_FAULT_DRILL_IDS)) {
         issues.push(
-            'OPERATIONS_FAULT_DRILLS.md must document updater-fail, ipc-reject, and network-recovery drills.'
+            `${GOVERNANCE_DOC_PATHS.operationsFaultDrills} must document updater-fail, ipc-reject, and network-recovery drills.`
         );
     }
 
@@ -254,12 +261,12 @@ export const collectReleaseHealthOperationsErrors = ({
         REQUIRED_SLO_STATE_DESCRIPTIONS
     )) {
         if (!sloText.includes(`\`${indicatorKey}\``)) {
-            issues.push(`OPERATIONS_SLO.md must mention ${indicatorKey}.`);
+            issues.push(`${GOVERNANCE_DOC_PATHS.operationsSlo} must mention ${indicatorKey}.`);
         }
 
         if (!sloText.includes(stateDescription)) {
             issues.push(
-                `OPERATIONS_SLO.md must explain the ${stateDescription} threshold for ${indicatorKey}.`
+                `${GOVERNANCE_DOC_PATHS.operationsSlo} must explain the ${stateDescription} threshold for ${indicatorKey}.`
             );
         }
     }

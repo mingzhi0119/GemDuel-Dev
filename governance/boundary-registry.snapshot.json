@@ -149,7 +149,7 @@
                 "electron/desktopGovernance.js",
                 "scripts/check-electron-governance.mjs"
             ],
-            "contractRefs": ["src/types/desktop.ts", "ELECTRON_IPC_ALLOWLIST.md"],
+            "contractRefs": ["src/types/desktop.ts", "docs/governance/electron-ipc-allowlist.md"],
             "reasonCodes": ["IPC_REQUEST_REJECTED"],
             "runtimeSignals": ["IPC_REQUEST_REJECTED"],
             "testRefs": [
@@ -171,7 +171,7 @@
             "contractRefs": [
                 "electron/governance/desktop-policy.snapshot.json",
                 "electron/governance/runtime-drill.snapshot.json",
-                "ELECTRON_IPC_ALLOWLIST.md"
+                "docs/governance/electron-ipc-allowlist.md"
             ],
             "reasonCodes": ["DESKTOP_POLICY_REJECTED"],
             "runtimeSignals": ["WINDOW_CREATED", "WINDOW_LOAD_FAILED", "WINDOW_UNAVAILABLE"],
@@ -195,7 +195,7 @@
             "contractRefs": [
                 "src/types/runtime.ts",
                 "src/types/boundary.ts",
-                "DEPENDENCY_RUNTIME_GOVERNANCE.md"
+                "docs/governance/dependency-runtime-governance.md"
             ],
             "reasonCodes": [
                 "TURN_CREDENTIAL_BUNDLE_INVALID",
@@ -226,8 +226,8 @@
                 "scripts/releaseHealthOperations.js"
             ],
             "contractRefs": [
-                "RELEASE_HEALTH_CHECKLIST.md",
-                "OPERATIONS_SLO.md",
+                "docs/governance/release-health-checklist.md",
+                "docs/governance/operations-slo.md",
                 "electron/governance/release-health-operations.snapshot.json"
             ],
             "reasonCodes": ["RELEASE_HEALTH_CHECK_FAILED"],
@@ -257,7 +257,7 @@
                 "scripts/check-secret-governance.mjs"
             ],
             "contractRefs": [
-                "DEPENDENCY_RUNTIME_GOVERNANCE.md",
+                "docs/governance/dependency-runtime-governance.md",
                 "governance/dependency-license-allowlist.json",
                 "governance/dependency-sbom.snapshot.json"
             ],

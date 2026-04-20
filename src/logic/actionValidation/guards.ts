@@ -44,7 +44,7 @@ const BASIC_BONUS_COLORS = new Set<GemColor | 'null'>([
     'gold',
     'null',
 ]);
-const GAME_PHASE_VALUES = new Set(Object.values(GAME_PHASES));
+const GAME_PHASE_VALUES = new Set<string>(Object.values(GAME_PHASES));
 const GAME_MODE_VALUES = new Set(['LOCAL_PVP', 'PVE', 'ONLINE_MULTIPLAYER']);
 
 export const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -265,9 +265,9 @@ export const isGameSetupPayload = (value: unknown): value is BuffInitPayload =>
 
 export const isInitDraftPayload = (value: unknown): value is InitDraftPayload =>
     isGameSetupPayload(value) &&
-    Array.isArray(value.draftPool) &&
-    value.draftPool.every((entry) => typeof entry === 'string') &&
-    isLevel(value.buffLevel);
+    Array.isArray((value as InitDraftPayload).draftPool) &&
+    (value as InitDraftPayload).draftPool.every((entry: unknown) => typeof entry === 'string') &&
+    isLevel((value as InitDraftPayload).buffLevel);
 
 export const isLikelyGameState = (value: unknown): value is GameState => {
     if (!isPlainObject(value)) return false;

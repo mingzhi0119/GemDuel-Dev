@@ -8,6 +8,9 @@ import { useRuntimeAppConfig } from '../useRuntimeAppConfig';
 const setRuntimeRelayProfile = vi.fn();
 const setRuntimeIceServers = vi.fn();
 const reportReleaseHealth = vi.fn();
+type RuntimeAppConfigResult = {
+    appVersion: string;
+};
 
 vi.mock('../../../config/webrtc', () => ({
     setRuntimeRelayProfile: (...args: unknown[]) => setRuntimeRelayProfile(...args),
@@ -87,7 +90,7 @@ describe('useRuntimeAppConfig', () => {
         const revokeRuntimeRelayProfile = vi
             .fn<() => Promise<RuntimeRelayProfile>>()
             .mockResolvedValue(DEFAULT_STUN_PROFILE);
-        let latestResult: { appVersion: string } | null = null;
+        let latestResult: RuntimeAppConfigResult | null = null;
 
         window.electron = {
             getAppVersion: vi.fn().mockResolvedValue('5.2.12'),
@@ -118,7 +121,8 @@ describe('useRuntimeAppConfig', () => {
 
         await flushEffects();
 
-        expect(latestResult?.appVersion).toBe('5.2.12');
+        expect(latestResult).not.toBeNull();
+        expect(latestResult!.appVersion).toBe('5.2.12');
         expect(setRuntimeRelayProfile).toHaveBeenCalledWith(initialRelayProfile);
         expect(reportReleaseHealth).toHaveBeenCalledWith(
             expect.objectContaining({

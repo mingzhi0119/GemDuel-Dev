@@ -12,11 +12,15 @@ describe('buffCopy', () => {
     it('keeps gameplay buff labels and descriptions sourced from shared english copy', () => {
         for (const [id, copy] of Object.entries(BUFF_COPY)) {
             const buff = Object.values(BUFFS).find((entry) => entry.id === id);
+            const winCondition =
+                buff?.effects && 'winCondition' in buff.effects
+                    ? buff.effects.winCondition
+                    : undefined;
 
             expect(buff, `missing buff constant for ${id}`).toBeTruthy();
             expect(buff?.label).toBe(copy.en.label);
             expect(buff?.desc).toBe(copy.en.desc);
-            expect(buff?.effects.winCondition).toEqual(getBuffWinCondition(id));
+            expect(winCondition).toEqual(getBuffWinCondition(id));
         }
     });
 

@@ -7,6 +7,7 @@ import {
     serializeReleaseHealthReport,
 } from './releaseHealthReport.js';
 import { buildBundleBudgetReport, serializeBundleBudgetReport } from './buildBudgetReport.js';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -178,7 +179,7 @@ const main = () => {
         createGovernanceAsset({
             id: 'dependency-runtime-governance-doc',
             kind: 'secret-policy',
-            relativePath: 'DEPENDENCY_RUNTIME_GOVERNANCE.md',
+            relativePath: GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance,
             producedBy: 'manual-governance-document',
             checkedBy: [
                 'scripts/check-dependency-governance.mjs',
@@ -195,7 +196,7 @@ const main = () => {
                 'scripts/check-secret-governance.mjs',
                 'scripts/check-dependency-governance.mjs',
             ],
-            sourceRefs: ['DEPENDENCY_RUNTIME_GOVERNANCE.md'],
+            sourceRefs: [GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance],
         }),
         createGovernanceAsset({
             id: 'runtime-drill-snapshot',
@@ -325,7 +326,7 @@ const main = () => {
             contractRegistry: 'governance/contract-registry.snapshot.json',
             dependencySbomSnapshot: 'governance/dependency-sbom.snapshot.json',
             dependencyLicenseAllowlist: 'governance/dependency-license-allowlist.json',
-            dependencyRuntimeGovernance: 'DEPENDENCY_RUNTIME_GOVERNANCE.md',
+            dependencyRuntimeGovernance: GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance,
         },
     };
     const manifestPath = path.join(outputDir, 'governance-evidence.manifest.json');

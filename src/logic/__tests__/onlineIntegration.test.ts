@@ -122,7 +122,7 @@ describe('Online Integration Simulation', () => {
         // 2. P1 (Host) selects Buff
         // Host must provide p2DraftPoolIndices to sync the pool
         const selectedBuffId = h.draftPool[0];
-        const p2Indices = [0, 1, 2, 3]; // Deterministic indices for test
+        const p2Indices: [number, number, number, number] = [0, 1, 2, 3]; // Deterministic indices for test
         const selectBuffAction: GameAction = {
             type: 'SELECT_BUFF',
             payload: {

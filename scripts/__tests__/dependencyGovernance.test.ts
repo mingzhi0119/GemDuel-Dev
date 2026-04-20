@@ -20,6 +20,7 @@ import {
     collectSbomSnapshotErrors,
     collectTextFileEntries,
 } from '../dependencyGovernance.js';
+import { GOVERNANCE_DOC_PATHS } from '../governanceDocPaths.js';
 
 describe('dependency governance', () => {
     it('extracts governed env names from the main process', () => {
@@ -71,7 +72,7 @@ describe('dependency governance', () => {
             'Runtime env GEMDUEL_LOG_LEVEL is used in runtime source files but missing from RUNTIME_CONFIG_POLICY.'
         );
         expect(errors).toContain(
-            'Runtime env GEMDUEL_LOG_LEVEL is missing from DEPENDENCY_RUNTIME_GOVERNANCE.md.'
+            `Runtime env GEMDUEL_LOG_LEVEL is missing from ${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance}.`
         );
         expect(errors).toContain('Production audit still reports low severity for qs.');
     });
@@ -113,7 +114,7 @@ describe('dependency governance', () => {
                 `Retired dependency workaround ${RETIRED_DEPENDENCY_WORKAROUNDS[0]} must not exist in the repo.`
             );
             expect(errors).toContain(
-                `DEPENDENCY_RUNTIME_GOVERNANCE.md must not describe ${RETIRED_DEPENDENCY_WORKAROUNDS[0]} as an active workaround.`
+                `${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance} must not describe ${RETIRED_DEPENDENCY_WORKAROUNDS[0]} as an active workaround.`
             );
         } finally {
             rmSync(repoRoot, { recursive: true, force: true });
@@ -214,7 +215,7 @@ describe('dependency governance', () => {
 
     it('requires the governance document to mention the new dependency policy sections', () => {
         expect(collectGovernanceDocumentErrors('## License Allowlist Policy')).toContain(
-            'DEPENDENCY_RUNTIME_GOVERNANCE.md is missing ## SBOM Policy.'
+            `${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance} is missing ## SBOM Policy.`
         );
     });
 

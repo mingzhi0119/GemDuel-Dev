@@ -3,7 +3,14 @@ import { produce } from 'immer';
 import { applyAction } from '../gameReducer';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { generateGemPool, generateDeck, shuffleArray } from '../../utils';
-import { GameState, PlayerKey, Buff, GameAction } from '../../types';
+import type {
+    BasicGemColor,
+    Buff,
+    GameAction,
+    GameState,
+    PlayerInitRandoms,
+    PlayerKey,
+} from '../../types';
 import { BONUS_COLORS, BUFFS } from '../../constants';
 import { applyBuffInitEffects } from '../actions/buffActions';
 
@@ -43,8 +50,8 @@ describe('Monkey Test - Random Stress Test', () => {
             draft.playerBuffs.p2 = { ...p2Buff };
         });
 
-        const basics = ['red', 'green', 'blue', 'white', 'black'];
-        const randoms = {
+        const basics: BasicGemColor[] = ['red', 'green', 'blue', 'white', 'black'];
+        const randoms: Partial<Record<PlayerKey, PlayerInitRandoms>> = {
             p1: {
                 randomGems: [basics[0], basics[1]],
                 reserveCardLevel: 1,

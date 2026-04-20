@@ -30,6 +30,6 @@
             "@/*": ["src/*"]
         }
     },
-    "include": ["src"],
+    "include": ["src", "shared/**/*.d.ts"],
     "references": [{ "path": "./tsconfig.node.json" }]
 }

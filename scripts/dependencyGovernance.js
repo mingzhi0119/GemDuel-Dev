@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 export const REQUIRED_OVERRIDE_POLICY = Object.freeze({
     'path-to-regexp': '0.1.13',
@@ -194,7 +195,7 @@ const collectRetiredWorkaroundErrors = ({
 
         if (governanceDocumentText.includes(`\`${relativePath}\` is still a governed workaround`)) {
             errors.push(
-                `DEPENDENCY_RUNTIME_GOVERNANCE.md must not describe ${relativePath} as an active workaround.`
+                `${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance} must not describe ${relativePath} as an active workaround.`
             );
         }
     }
@@ -218,7 +219,9 @@ export const collectRuntimePolicyErrors = ({
         }
 
         if (!governanceDocumentText.includes(envName)) {
-            errors.push(`Runtime env ${envName} is missing from DEPENDENCY_RUNTIME_GOVERNANCE.md.`);
+            errors.push(
+                `Runtime env ${envName} is missing from ${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance}.`
+            );
         }
     }
 
@@ -428,7 +431,10 @@ export const collectGovernanceDocumentErrors = (governanceDocumentText) => {
 
     return requiredSections
         .filter((section) => !governanceDocumentText.includes(section))
-        .map((section) => `DEPENDENCY_RUNTIME_GOVERNANCE.md is missing ${section}.`);
+        .map(
+            (section) =>
+                `${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance} is missing ${section}.`
+        );
 };
 
 export const collectDependencyGovernanceErrors = ({

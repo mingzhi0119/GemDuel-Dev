@@ -12,14 +12,15 @@ import {
     serializeReleaseHealthReport,
 } from '../releaseHealthReport.js';
 import { collectReleaseHealthOperationsErrors } from '../releaseHealthOperations.js';
+import { GOVERNANCE_DOC_PATHS } from '../governanceDocPaths.js';
 
 const repoRoot = process.cwd();
 const readFile = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 const readJson = (relativePath) => JSON.parse(readFile(relativePath));
 
 const operationsSnapshot = readJson('electron/governance/release-health-operations.snapshot.json');
-const sloText = readFile('OPERATIONS_SLO.md');
-const drillText = readFile('OPERATIONS_FAULT_DRILLS.md');
+const sloText = readFile(GOVERNANCE_DOC_PATHS.operationsSlo);
+const drillText = readFile(GOVERNANCE_DOC_PATHS.operationsFaultDrills);
 
 describe('release-health operations governance', () => {
     it('accepts aligned SLO, drill, and snapshot assets', () => {
@@ -49,9 +50,9 @@ describe('release-health operations governance', () => {
             operationsSnapshot: brokenSnapshot,
         });
 
-        expect(errors).toContain('OPERATIONS_SLO.md must mention ipcRejected.');
+        expect(errors).toContain(`${GOVERNANCE_DOC_PATHS.operationsSlo} must mention ipcRejected.`);
         expect(errors).toContain(
-            'OPERATIONS_FAULT_DRILLS.md must document updater-fail, ipc-reject, and network-recovery drills.'
+            `${GOVERNANCE_DOC_PATHS.operationsFaultDrills} must document updater-fail, ipc-reject, and network-recovery drills.`
         );
         expect(errors).toContain(
             'Missing alert threshold for release-health indicator peerFailures.'

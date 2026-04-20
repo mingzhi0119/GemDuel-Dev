@@ -18,6 +18,7 @@
         "lint": "eslint .",
         "preview": "vite preview",
         "release:report": "node scripts/export-release-health-report.mjs",
+        "typecheck": "tsc --noEmit",
         "test": "vitest run",
         "test:security": "vitest run electron/__tests__/desktopGovernance.test.ts electron/__tests__/runtimeHarness.test.ts src/app/io/__tests__/safeReplayImport.test.ts src/logic/__tests__/fsmPolicyMatrix.test.ts src/logic/__tests__/hostApproval.test.ts src/logic/__tests__/networkMessageValidationBoundary.test.ts src/logic/__tests__/propertyBoundaries.test.ts src/logic/__tests__/protocolRecoveryMatrix.test.ts src/logic/__tests__/securityBoundaries.test.ts src/hooks/__tests__/useConnectionHealth.test.tsx src/hooks/__tests__/useGameNetwork.test.tsx src/hooks/__tests__/useOnlineManager.test.tsx scripts/__tests__/boundaryGovernance.test.ts scripts/__tests__/runtimeDrillGovernance.test.ts",
         "test:ui": "vitest --ui",

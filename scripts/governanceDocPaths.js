@@ -1,0 +1,15 @@
+export const GOVERNANCE_DOC_PATHS = Object.freeze({
+    docsIndex: 'docs/README.md',
+    quickStart: 'docs/guides/quick-start.md',
+    testing: 'docs/guides/testing.md',
+    frontendLayoutGuide: 'docs/guides/frontend-layout-guide.md',
+    engineeringGovernanceArchive: 'docs/archive/engineering-governance-archive.md',
+    architectureLayerMap: 'docs/governance/architecture-layer-map.md',
+    boundaryInventory: 'docs/governance/boundary-inventory.md',
+    dependencyRuntimeGovernance: 'docs/governance/dependency-runtime-governance.md',
+    electronIpcAllowlist: 'docs/governance/electron-ipc-allowlist.md',
+    operationsFaultDrills: 'docs/governance/operations-fault-drills.md',
+    operationsSlo: 'docs/governance/operations-slo.md',
+    releaseHealthChecklist: 'docs/governance/release-health-checklist.md',
+    testGovernanceMatrix: 'docs/governance/test-governance-matrix.md',
+});

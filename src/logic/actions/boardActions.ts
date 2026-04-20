@@ -14,6 +14,7 @@ import { finalizeTurn } from '../turnManager';
 import {
     GameState,
     GemColor,
+    GemInventoryKey,
     BoardCell,
     TakeGemsPayload,
     BonusGemPayload,
@@ -110,10 +111,9 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
                     }
 
                     if (!stolenColor) {
-                        const stealableColors = Object.keys(state.inventories[opponent]).filter(
-                            (k) =>
-                                k !== 'gold' && k !== 'pearl' && state.inventories[opponent][k] > 0
-                        );
+                        const stealableColors = (
+                            ['blue', 'white', 'green', 'black', 'red'] as GemInventoryKey[]
+                        ).filter((color) => state.inventories[opponent][color] > 0);
                         if (stealableColors.length > 0) {
                             stolenColor = stealableColors[
                                 Math.floor(Math.random() * stealableColors.length)

@@ -6,13 +6,17 @@ import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-    { ignores: ['dist', 'electron'] },
+    { ignores: ['dist'] },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
-        files: ['**/*.{js,jsx,ts,tsx}'],
+        files: ['**/*.{js,jsx,ts,tsx,cjs}'],
         languageOptions: {
             ecmaVersion: 2020,
-            globals: globals.browser,
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+                ...globals.commonjs,
+            },
             parserOptions: {
                 ecmaVersion: 'latest',
                 ecmaFeatures: { jsx: true },
@@ -29,6 +33,12 @@ export default tseslint.config(
             'no-unused-vars': 'off', // Turn off standard rule
             '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }], // Use TS rule
             '@typescript-eslint/no-explicit-any': 'warn',
+        },
+    },
+    {
+        files: ['electron/preload.js', 'electron/preloadContract.cjs'],
+        rules: {
+            '@typescript-eslint/no-require-imports': 'off',
         },
     },
     prettierRecommended

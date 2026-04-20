@@ -39,6 +39,9 @@ jobs:
             - name: Lint
               run: npm run lint
 
+            - name: Type Check
+              run: npm run typecheck
+
             - name: Security Regression Suite
               run: npm run test:security
 
