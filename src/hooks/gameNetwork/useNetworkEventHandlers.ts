@@ -3,7 +3,7 @@ import { reviewHostIntent } from '../../logic/hostApproval';
 import { reviewBootstrapReceipt, reviewGuestHostDecision } from '../../logic/networkRecovery';
 import { guestIntentToAction } from '../../logic/networkProtocol';
 import { createReasonTelemetryContext, createUiStatusNotice } from '../../logic/reasonCatalog';
-import { reportReleaseHealth } from '../../observability/releaseHealth';
+import { logRendererMessage, reportRendererEvent } from '../../observability/rendererLogger';
 import type { GameAction, GameState, UiStatusNotice } from '../../types';
 import type {
     BootstrapCommand,
@@ -35,20 +35,22 @@ export const useNetworkEventHandlers = ({
 }: UseNetworkEventHandlersArgs) => {
     const handleBootstrapReceived = useCallback(
         (command: BootstrapCommand, remoteChecksum?: string) => {
-            console.log(`[NET-RECEIVE] Bootstrap: ${command.kind}`);
+            logRendererMessage('info', `[NET-RECEIVE] Bootstrap: ${command.kind}`);
             const review = reviewBootstrapReceipt(command, remoteChecksum);
 
             if (review.outcome === 'REQUEST_RECOVERY') {
-                console.error(
-                    `[NET] Bootstrap checksum mismatch: local ${review.localChecksum} vs remote ${review.remoteChecksum}`
+                reportRendererEvent(
+                    {
+                        category: 'recovery',
+                        name: 'BOOTSTRAP_CHECKSUM_MISMATCH',
+                        severity: 'error',
+                        message: 'Bootstrap checksum verification failed on the guest.',
+                        context: createReasonTelemetryContext(review.reason),
+                    },
+                    {
+                        consoleMessage: `[NET] Bootstrap checksum mismatch: local ${review.localChecksum} vs remote ${review.remoteChecksum}`,
+                    }
                 );
-                reportReleaseHealth({
-                    category: 'recovery',
-                    name: 'BOOTSTRAP_CHECKSUM_MISMATCH',
-                    severity: 'error',
-                    message: 'Bootstrap checksum verification failed on the guest.',
-                    context: createReasonTelemetryContext(review.reason),
-                });
                 publishStatusNotice(createUiStatusNotice(review.reason));
                 onlineRef.current?.requestRecovery(review.reason);
                 return;
@@ -83,7 +85,7 @@ export const useNetworkEventHandlers = ({
             appendApprovalLog(review.logEntry);
 
             if (review.outcomeCode === 'AUTHORITY_REJECTED') {
-                reportReleaseHealth({
+                reportRendererEvent({
                     category: 'network',
                     name: 'HOST_INTENT_REJECTED',
                     severity: 'warn',
@@ -100,7 +102,7 @@ export const useNetworkEventHandlers = ({
             }
 
             if (review.outcomeCode === 'CHECKSUM_UNAVAILABLE') {
-                reportReleaseHealth({
+                reportRendererEvent({
                     category: 'recovery',
                     name: 'HOST_CHECKSUM_DERIVATION_FAILED',
                     severity: 'error',
@@ -135,47 +137,56 @@ export const useNetworkEventHandlers = ({
             }
 
             if (review.outcome === 'IGNORE_LATE') {
-                console.warn(
-                    '[NET] Ignoring late host decision because no guest intent is pending.'
+                reportRendererEvent(
+                    {
+                        category: 'recovery',
+                        name: 'HOST_DECISION_LATE',
+                        severity: 'warn',
+                        message:
+                            'Guest ignored a late host decision because no intent was pending.',
+                    },
+                    {
+                        consoleMessage:
+                            '[NET] Ignoring late host decision because no guest intent is pending.',
+                    }
                 );
-                reportReleaseHealth({
-                    category: 'recovery',
-                    name: 'HOST_DECISION_LATE',
-                    severity: 'warn',
-                    message: 'Guest ignored a late host decision because no intent was pending.',
-                });
                 return;
             }
 
             if (review.outcome === 'REQUEST_RECOVERY') {
                 if (review.clearPendingIntent) {
-                    console.error(
-                        `[NET] Approved decision for ${decision.intentKind} failed verification (${review.reason}).`
+                    reportRendererEvent(
+                        {
+                            category: 'recovery',
+                            name: 'HOST_DECISION_VERIFICATION_FAILED',
+                            severity: 'error',
+                            message:
+                                'Guest failed to verify an approved host decision and requested recovery.',
+                            context: createReasonTelemetryContext(review.reason, {
+                                intentKind: decision.intentKind,
+                            }),
+                        },
+                        {
+                            consoleMessage: `[NET] Approved decision for ${decision.intentKind} failed verification (${review.reason}).`,
+                        }
                     );
-                    reportReleaseHealth({
-                        category: 'recovery',
-                        name: 'HOST_DECISION_VERIFICATION_FAILED',
-                        severity: 'error',
-                        message:
-                            'Guest failed to verify an approved host decision and requested recovery.',
-                        context: createReasonTelemetryContext(review.reason, {
-                            intentKind: decision.intentKind,
-                        }),
-                    });
                 } else {
-                    console.warn(
-                        '[NET] Guest received an unexpected host decision. Requesting authoritative recovery.'
+                    reportRendererEvent(
+                        {
+                            category: 'recovery',
+                            name: 'HOST_DECISION_STALE',
+                            severity: 'warn',
+                            message:
+                                'Guest received a stale or mismatched host decision and requested recovery.',
+                            context: createReasonTelemetryContext(review.reason, {
+                                intentKind: decision.intentKind,
+                            }),
+                        },
+                        {
+                            consoleMessage:
+                                '[NET] Guest received an unexpected host decision. Requesting authoritative recovery.',
+                        }
                     );
-                    reportReleaseHealth({
-                        category: 'recovery',
-                        name: 'HOST_DECISION_STALE',
-                        severity: 'warn',
-                        message:
-                            'Guest received a stale or mismatched host decision and requested recovery.',
-                        context: createReasonTelemetryContext(review.reason, {
-                            intentKind: decision.intentKind,
-                        }),
-                    });
                 }
                 publishStatusNotice(createUiStatusNotice(review.reason));
                 onlineRef.current?.requestRecovery(review.reason, review.requestId);
@@ -183,35 +194,39 @@ export const useNetworkEventHandlers = ({
             }
 
             if (review.outcome === 'REJECTED') {
-                console.warn(
-                    `[NET] Host rejected guest intent ${decision.intentKind}: ${decision.reason || 'Unknown reason.'}`
+                reportRendererEvent(
+                    {
+                        category: 'network',
+                        name: 'HOST_DECISION_REJECTED',
+                        severity: 'warn',
+                        message: 'Guest received a host rejection for a multiplayer intent.',
+                        context: createReasonTelemetryContext(review.reasonCode, {
+                            intentKind: decision.intentKind,
+                        }),
+                    },
+                    {
+                        consoleMessage: `[NET] Host rejected guest intent ${decision.intentKind}: ${decision.reason || 'Unknown reason.'}`,
+                    }
                 );
-                reportReleaseHealth({
-                    category: 'network',
-                    name: 'HOST_DECISION_REJECTED',
-                    severity: 'warn',
-                    message: 'Guest received a host rejection for a multiplayer intent.',
-                    context: createReasonTelemetryContext(review.reasonCode, {
-                        intentKind: decision.intentKind,
-                    }),
-                });
                 publishStatusNotice(createUiStatusNotice(review.reasonCode));
                 return;
             }
 
-            console.log(
-                `[NET] Guest verified approved ${decision.intentKind} checksum and is waiting for authoritative sync.`
-            );
-            reportReleaseHealth({
-                category: 'network',
-                name: 'HOST_DECISION_VERIFIED',
-                severity: 'info',
-                message:
-                    'Guest verified an approved host decision and is awaiting authoritative sync.',
-                context: {
-                    intentKind: decision.intentKind,
+            reportRendererEvent(
+                {
+                    category: 'network',
+                    name: 'HOST_DECISION_VERIFIED',
+                    severity: 'info',
+                    message:
+                        'Guest verified an approved host decision and is awaiting authoritative sync.',
+                    context: {
+                        intentKind: decision.intentKind,
+                    },
                 },
-            });
+                {
+                    consoleMessage: `[NET] Guest verified approved ${decision.intentKind} checksum and is waiting for authoritative sync.`,
+                }
+            );
         },
         [gameState, onlineRef, pendingGuestIntentRef, publishStatusNotice]
     );

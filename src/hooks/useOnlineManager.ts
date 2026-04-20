@@ -12,7 +12,7 @@ import type {
 import { NETWORK_PROTOCOL_VERSION } from '../types/network';
 import { useConnectionHealth } from './useConnectionHealth';
 import { createReasonTelemetryContext } from '../logic/reasonCatalog';
-import { reportReleaseHealth } from '../observability/releaseHealth';
+import { logRendererMessage, reportRendererEvent } from '../observability/rendererLogger';
 import { registerConnectionHandlers } from './onlineManager/connectionHandlers';
 import { createManagedPeer, destroyManagedPeer } from './onlineManager/peerLifecycle';
 import type { OnlineManagerController, OnlineManagerHandlers } from './onlineManager/types';
@@ -85,7 +85,7 @@ export const useOnlineManager = (
 
     useEffect(() => {
         if (!enabled) {
-            console.log('[NET] Manager disabled, skipping peer init.');
+            logRendererMessage('info', '[NET] Manager disabled, skipping peer init.');
             return;
         }
 
@@ -119,19 +119,23 @@ export const useOnlineManager = (
     const connectToPeer = useCallback(
         (id: string) => {
             if (!peer) {
-                console.error('[NET] Cannot connect: Peer instance not ready.');
-                reportReleaseHealth({
-                    category: 'peer',
-                    name: 'PEER_CONNECT_ATTEMPT_REJECTED',
-                    severity: 'error',
-                    message:
-                        'Outgoing peer connection was attempted before the local peer was ready.',
-                });
+                reportRendererEvent(
+                    {
+                        category: 'peer',
+                        name: 'PEER_CONNECT_ATTEMPT_REJECTED',
+                        severity: 'error',
+                        message:
+                            'Outgoing peer connection was attempted before the local peer was ready.',
+                    },
+                    {
+                        consoleMessage: '[NET] Cannot connect: Peer instance not ready.',
+                    }
+                );
                 return;
             }
             setConnectionStatus('connecting');
             isHostRef.current = false;
-            reportReleaseHealth({
+            reportRendererEvent({
                 category: 'peer',
                 name: 'PEER_CONNECT_REQUESTED',
                 severity: 'info',
@@ -196,7 +200,7 @@ export const useOnlineManager = (
 
     const requestRecovery = useCallback(
         (reason: RecoveryReason, requestId?: string) => {
-            reportReleaseHealth({
+            reportRendererEvent({
                 category: 'recovery',
                 name: 'RECOVERY_REQUEST_SENT',
                 severity: 'warn',

@@ -17,6 +17,7 @@ import { BUFF_STYLES } from '../styles/buffs';
 import { BUFFS } from '../constants'; // Import for reconstruction
 import { Buff, PlayerKey } from '../types';
 import { getBuffGoalAdjustment } from '../data/buffCopy';
+import { logRendererMessage } from '../observability/rendererLogger';
 
 interface DraftScreenProps {
     draftPool: string[]; // IDs only
@@ -44,7 +45,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     isPvE = false,
 }) => {
     const rawPool = (activePlayer === 'p1' ? draftPool : p2DraftPool) || [];
-    console.log('[UI-DRAFT-SCREEN] Raw Pool IDs from State:', rawPool);
+    logRendererMessage('info', '[UI-DRAFT-SCREEN] Raw Pool IDs from State:', rawPool);
 
     const getBuffIcon = (category?: string) => {
         switch (category) {

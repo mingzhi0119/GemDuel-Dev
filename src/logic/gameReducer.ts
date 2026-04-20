@@ -43,6 +43,7 @@ import {
     handleCloseModal,
 } from './actions/miscActions';
 import { GameAction, GameState } from '../types';
+import { reportRendererEvent } from '../observability/rendererLogger';
 import { validateCommand, validatePostActionState, validateStateSnapshot } from './commandGate';
 
 /**
@@ -59,8 +60,19 @@ import { validateCommand, validatePostActionState, validateStateSnapshot } from 
 export const applyAction = (state: GameState | null, action: GameAction): GameState | null => {
     const commandValidation = validateCommand(state, action);
     if (!commandValidation.valid) {
-        console.warn(
-            `[COMMAND_GATE] Rejected action ${action.type}: ${commandValidation.reason || 'Unknown validation error.'}`
+        reportRendererEvent(
+            {
+                category: 'runtime',
+                name: 'COMMAND_GATE_REJECTED',
+                severity: 'warn',
+                message: commandValidation.reason || `Command gate rejected action ${action.type}.`,
+                context: {
+                    actionType: action.type,
+                },
+            },
+            {
+                consoleMessage: `[COMMAND_GATE] Rejected action ${action.type}: ${commandValidation.reason || 'Unknown validation error.'}`,
+            }
         );
         return state;
     }
@@ -70,8 +82,21 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
         const nextState = handleInit(null, action.payload);
         const snapshotValidation = validateStateSnapshot(nextState);
         if (!snapshotValidation.valid) {
-            console.warn(
-                `[FSM] Rejected bootstrap action ${action.type}: ${snapshotValidation.reason || 'Unknown state validation error.'}`
+            reportRendererEvent(
+                {
+                    category: 'runtime',
+                    name: 'BOOTSTRAP_STATE_REJECTED',
+                    severity: 'warn',
+                    message:
+                        snapshotValidation.reason ||
+                        `Bootstrap validation rejected action ${action.type}.`,
+                    context: {
+                        actionType: action.type,
+                    },
+                },
+                {
+                    consoleMessage: `[FSM] Rejected bootstrap action ${action.type}: ${snapshotValidation.reason || 'Unknown state validation error.'}`,
+                }
             );
             return state;
         }
@@ -81,8 +106,21 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
         const nextState = handleInitDraft(null, action.payload);
         const snapshotValidation = validateStateSnapshot(nextState);
         if (!snapshotValidation.valid) {
-            console.warn(
-                `[FSM] Rejected bootstrap action ${action.type}: ${snapshotValidation.reason || 'Unknown state validation error.'}`
+            reportRendererEvent(
+                {
+                    category: 'runtime',
+                    name: 'BOOTSTRAP_STATE_REJECTED',
+                    severity: 'warn',
+                    message:
+                        snapshotValidation.reason ||
+                        `Bootstrap validation rejected action ${action.type}.`,
+                    context: {
+                        actionType: action.type,
+                    },
+                },
+                {
+                    consoleMessage: `[FSM] Rejected bootstrap action ${action.type}: ${snapshotValidation.reason || 'Unknown state validation error.'}`,
+                }
             );
             return state;
         }
@@ -193,7 +231,21 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
             case 'UNDO':
             case 'REDO':
                 if (draft.mode === 'ONLINE_MULTIPLAYER') {
-                    console.warn('Undo/Redo blocked in Online Mode');
+                    reportRendererEvent(
+                        {
+                            category: 'runtime',
+                            name: 'UNDO_REDO_BLOCKED',
+                            severity: 'warn',
+                            message:
+                                'Undo or redo was blocked while online multiplayer was active.',
+                            context: {
+                                actionType: action.type,
+                            },
+                        },
+                        {
+                            consoleMessage: 'Undo/Redo blocked in Online Mode',
+                        }
+                    );
                     return;
                 }
                 break;
@@ -223,7 +275,21 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
             default: {
                 // This block should theoretically be unreachable if all cases are covered
                 const _exhaustiveCheck: never = action;
-                console.warn('Unknown action type:', (action as { type: string }).type);
+                reportRendererEvent(
+                    {
+                        category: 'runtime',
+                        name: 'UNKNOWN_ACTION_TYPE',
+                        severity: 'error',
+                        message: 'Reducer received an unknown action type.',
+                        context: {
+                            actionType: (action as { type: string }).type,
+                        },
+                    },
+                    {
+                        consoleMessage: 'Unknown action type:',
+                        consoleDetails: (action as { type: string }).type,
+                    }
+                );
                 break;
             }
         }
@@ -231,8 +297,21 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
 
     const postActionValidation = validatePostActionState(state, action, nextState);
     if (!postActionValidation.valid) {
-        console.warn(
-            `[FSM] Rolled back action ${action.type}: ${postActionValidation.reason || 'Unknown transition validation error.'}`
+        reportRendererEvent(
+            {
+                category: 'runtime',
+                name: 'POST_ACTION_VALIDATION_ROLLBACK',
+                severity: 'warn',
+                message:
+                    postActionValidation.reason ||
+                    `Post-action validation rolled back ${action.type}.`,
+                context: {
+                    actionType: action.type,
+                },
+            },
+            {
+                consoleMessage: `[FSM] Rolled back action ${action.type}: ${postActionValidation.reason || 'Unknown transition validation error.'}`,
+            }
         );
         return state;
     }

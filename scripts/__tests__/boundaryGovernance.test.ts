@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { buildBoundaryRegistryFromSource } from '../buildBoundaryRegistryFromSource.js';
 import {
     BOUNDARY_REGISTRY_SCHEMA_VERSION,
     EXPECTED_BOUNDARY_IDS,
@@ -26,7 +27,7 @@ describe('boundary governance', () => {
     it('accepts the audited registry snapshot', () => {
         expect(
             collectBoundaryRegistrySnapshotErrors({
-                actualRegistry: expectedRegistry,
+                actualRegistry: buildBoundaryRegistryFromSource(),
                 expectedRegistry,
                 boundaryInventoryText,
                 repoRoot,
@@ -70,5 +71,19 @@ describe('boundary governance', () => {
         expect(expectedRegistry.boundaries.map((entry: { id: string }) => entry.id)).toEqual(
             EXPECTED_BOUNDARY_IDS
         );
+    });
+
+    it('detects drift between the source registry and the committed snapshot', () => {
+        const driftedRegistry = buildBoundaryRegistryFromSource();
+        driftedRegistry.boundaries[0].owner = 'Unexpected Owner';
+
+        expect(
+            collectBoundaryRegistrySnapshotErrors({
+                actualRegistry: driftedRegistry,
+                expectedRegistry,
+                boundaryInventoryText,
+                repoRoot,
+            })
+        ).toContain('Boundary registry snapshot drifted from the audited source of truth.');
     });
 });

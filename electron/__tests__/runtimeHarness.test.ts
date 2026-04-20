@@ -517,6 +517,61 @@ describe('electron runtime harness', () => {
         );
     });
 
+    it('forwards authorized report-release-health payloads to the governed main recorder', () => {
+        const log = createLogger();
+        const recordMainHealth = createRecordMainHealth();
+        const ipcMain = createIpcMainStub();
+        const runtime = createElectronRuntimeHarness({
+            autoUpdater: createAutoUpdaterStub(),
+            autoUpdaterPolicy: {
+                enabled: false,
+                autoDownload: true,
+                allowPrerelease: false,
+            },
+            authorizeIpcSender: vi.fn(({ senderId, mainWindowId }) =>
+                senderId === mainWindowId
+                    ? { ok: true }
+                    : { ok: false, reason: 'Unexpected renderer sender.' }
+            ),
+            isDev: true,
+            ipcMain,
+            log,
+            recordMainHealth,
+            validateIpcArgs: vi.fn(() => ({ ok: true, args: [] })),
+        });
+
+        runtime.attachWindowLifecycle(createWindowStub({ id: 7 }));
+        runtime.registerGovernedIpcHandlers({
+            sendHandlers: {
+                'report-release-health': (_event, payload) => {
+                    recordMainHealth(payload);
+                },
+            },
+        });
+
+        const reportReleaseHealth = ipcMain.listeners.get('report-release-health');
+        const payload = {
+            source: 'renderer',
+            category: 'network',
+            name: 'RECOVERY_REQUEST_SENT',
+            severity: 'warn',
+            message: 'Renderer requested recovery after checksum drift.',
+            context: {
+                reasonCode: 'CHECKSUM_MISMATCH',
+            },
+        };
+
+        reportReleaseHealth?.(
+            createSenderEvent({
+                id: 7,
+                url: 'http://localhost:5173',
+            }),
+            payload
+        );
+
+        expect(recordMainHealth).toHaveBeenCalledWith(payload);
+    });
+
     it('rejects payload-invalid restart_app requests even from the trusted renderer', () => {
         const log = createLogger();
         const recordMainHealth = createRecordMainHealth();

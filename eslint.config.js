@@ -41,5 +41,16 @@ export default tseslint.config(
             '@typescript-eslint/no-require-imports': 'off',
         },
     },
+    {
+        files: ['src/**/*.{ts,tsx}'],
+        ignores: [
+            'src/**/__tests__/**',
+            'src/observability/releaseHealth.ts',
+            'src/observability/rendererLogger.ts',
+        ],
+        rules: {
+            'no-console': 'error',
+        },
+    },
     prettierRecommended
 );

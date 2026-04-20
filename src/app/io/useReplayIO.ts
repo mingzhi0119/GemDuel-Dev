@@ -1,5 +1,6 @@
 import type { ChangeEventHandler } from 'react';
 import type { GameLogicController, ReplayFile } from '../../types';
+import { reportRendererEvent } from '../../observability/rendererLogger';
 import { importReplayFromFile } from './safeReplayImport';
 
 interface UseReplayIOOptions {
@@ -29,9 +30,20 @@ export const useReplayIO = ({ appVersion, history, importHistory }: UseReplayIOO
         if (!file) return;
         const replayImport = await importReplayFromFile(file);
         if (!replayImport.ok) {
-            console.error(
-                `Replay import rejected [${replayImport.code}]: ${replayImport.message}`,
-                replayImport.detail
+            reportRendererEvent(
+                {
+                    category: 'security',
+                    name: 'REPLAY_IMPORT_REJECTED',
+                    severity: 'warn',
+                    message: replayImport.message,
+                    context: {
+                        reasonCode: replayImport.code,
+                    },
+                },
+                {
+                    consoleMessage: `Replay import rejected [${replayImport.code}]: ${replayImport.message}`,
+                    consoleDetails: replayImport.detail,
+                }
             );
             event.target.value = '';
             return;

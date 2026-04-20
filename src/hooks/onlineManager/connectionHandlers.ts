@@ -2,7 +2,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { DataConnection } from 'peerjs';
 import type { GameState } from '../../types';
 import { createReasonTelemetryContext } from '../../logic/reasonCatalog';
-import { reportReleaseHealth } from '../../observability/releaseHealth';
+import { reportRendererEvent } from '../../observability/rendererLogger';
 import { NETWORK_PROTOCOL_VERSION, type NetworkMessage } from '../../types/network';
 import { getInboundMessageCheck } from '../../logic/networkProtocol';
 import { parseNetworkMessageBoundary } from '../../logic/networkMessageValidation';
@@ -40,7 +40,7 @@ export const registerConnectionHandlers = ({
         setConn(connection);
         setRemotePeerId(connection.peer);
         reconnectAttempts.current = 0;
-        reportReleaseHealth({
+        reportRendererEvent({
             category: 'peer',
             name: 'PEER_CONNECTION_OPENED',
             severity: 'info',
@@ -55,16 +55,20 @@ export const registerConnectionHandlers = ({
     connection.on('data', (data: unknown) => {
         const parsed = parseNetworkMessageBoundary(data);
         if (!parsed.ok) {
-            console.warn(`[NET] Rejected malformed network message (${parsed.code}).`);
-            reportReleaseHealth({
-                category: 'network',
-                name: 'NETWORK_MESSAGE_REJECTED',
-                severity: 'warn',
-                message: 'Inbound network payload was rejected by the runtime parser.',
-                context: createReasonTelemetryContext(parsed.code, {
-                    boundaryId: parsed.boundaryId,
-                }),
-            });
+            reportRendererEvent(
+                {
+                    category: 'network',
+                    name: 'NETWORK_MESSAGE_REJECTED',
+                    severity: 'warn',
+                    message: 'Inbound network payload was rejected by the runtime parser.',
+                    context: createReasonTelemetryContext(parsed.code, {
+                        boundaryId: parsed.boundaryId,
+                    }),
+                },
+                {
+                    consoleMessage: `[NET] Rejected malformed network message (${parsed.code}).`,
+                }
+            );
             return;
         }
         const msg = parsed.value;
@@ -77,21 +81,23 @@ export const registerConnectionHandlers = ({
         const role = isHostRef.current ? 'host' : 'guest';
         const directionCheck = getInboundMessageCheck(role, msg);
         if (!directionCheck.accepted) {
-            console.warn(`[NET] ${directionCheck.reason}`);
-            reportReleaseHealth({
-                category: 'network',
-                name: 'NETWORK_DIRECTION_REJECTED',
-                severity: 'warn',
-                message: 'Inbound network payload violated the role-direction contract.',
-                context: {
-                    reason: directionCheck.reason ?? null,
-                    type: msg.type,
+            reportRendererEvent(
+                {
+                    category: 'network',
+                    name: 'NETWORK_DIRECTION_REJECTED',
+                    severity: 'warn',
+                    message: 'Inbound network payload violated the role-direction contract.',
+                    context: {
+                        reason: directionCheck.reason ?? null,
+                        type: msg.type,
+                    },
                 },
-            });
+                {
+                    consoleMessage: `[NET] ${directionCheck.reason}`,
+                }
+            );
             return;
         }
-
-        console.log('Received P2P data:', msg.type);
 
         switch (msg.type) {
             case 'BOOTSTRAP_STATE':
@@ -108,17 +114,19 @@ export const registerConnectionHandlers = ({
                 break;
             case 'RECOVERY_REQUEST':
                 if (isHostRef.current && getCurrentStateRef) {
-                    console.warn(
-                        `[NET] Guest requested recovery (${msg.reason}). Sending authoritative snapshot.`
+                    reportRendererEvent(
+                        {
+                            category: 'recovery',
+                            name: 'RECOVERY_REQUEST_RECEIVED',
+                            severity: 'warn',
+                            message:
+                                'Host received a recovery request and sent an authoritative snapshot.',
+                            context: createReasonTelemetryContext(msg.reason),
+                        },
+                        {
+                            consoleMessage: `[NET] Guest requested recovery (${msg.reason}). Sending authoritative snapshot.`,
+                        }
                     );
-                    reportReleaseHealth({
-                        category: 'recovery',
-                        name: 'RECOVERY_REQUEST_RECEIVED',
-                        severity: 'warn',
-                        message:
-                            'Host received a recovery request and sent an authoritative snapshot.',
-                        context: createReasonTelemetryContext(msg.reason),
-                    });
                     sendMessage({
                         version: NETWORK_PROTOCOL_VERSION,
                         type: 'SYNC_STATE',
@@ -131,7 +139,7 @@ export const registerConnectionHandlers = ({
     });
 
     connection.on('close', () => {
-        reportReleaseHealth({
+        reportRendererEvent({
             category: 'peer',
             name: 'PEER_CONNECTION_CLOSED',
             severity: 'warn',
@@ -151,12 +159,17 @@ export const registerConnectionHandlers = ({
     });
 
     connection.on('error', (err) => {
-        console.error('[NET] Connection Error:', err);
-        reportReleaseHealth({
-            category: 'peer',
-            name: 'PEER_CONNECTION_ERROR',
-            severity: 'error',
-            message: 'Peer data connection emitted an error.',
-        });
+        reportRendererEvent(
+            {
+                category: 'peer',
+                name: 'PEER_CONNECTION_ERROR',
+                severity: 'error',
+                message: 'Peer data connection emitted an error.',
+            },
+            {
+                consoleMessage: '[NET] Connection Error:',
+                consoleDetails: err,
+            }
+        );
     });
 };

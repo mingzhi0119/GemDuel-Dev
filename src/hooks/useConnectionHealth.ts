@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DataConnection } from 'peerjs';
 import { HeartbeatMessage, NETWORK_PROTOCOL_VERSION, NetworkMessage } from '../types/network';
-import { reportReleaseHealth } from '../observability/releaseHealth';
+import { reportRendererEvent } from '../observability/rendererLogger';
 
 const PING_INTERVAL_MS = 2000;
 const TIMEOUT_THRESHOLD_MS = 6000; // Missed 3 pings = trouble
@@ -28,26 +28,30 @@ export const useConnectionHealth = (
 
             // Check for timeout
             if (now - lastPongRef.current > TIMEOUT_THRESHOLD_MS) {
-                console.warn('[NET] Connection unstable: No PONG received.');
                 setIsUnstable(true);
                 if (!unstableReportedRef.current) {
                     unstableReportedRef.current = true;
-                    reportReleaseHealth({
-                        category: 'network',
-                        name: 'HEARTBEAT_TIMEOUT',
-                        severity: 'warn',
-                        message: 'Connection became unstable after missed heartbeat responses.',
-                        context: {
-                            timeoutMs: TIMEOUT_THRESHOLD_MS,
+                    reportRendererEvent(
+                        {
+                            category: 'network',
+                            name: 'HEARTBEAT_TIMEOUT',
+                            severity: 'warn',
+                            message: 'Connection became unstable after missed heartbeat responses.',
+                            context: {
+                                timeoutMs: TIMEOUT_THRESHOLD_MS,
+                            },
                         },
-                    });
+                        {
+                            consoleMessage: '[NET] Connection unstable: No PONG received.',
+                        }
+                    );
                 }
                 // Optional: Trigger active reconnection logic here
             } else {
                 setIsUnstable(false);
                 if (unstableReportedRef.current) {
                     unstableReportedRef.current = false;
-                    reportReleaseHealth({
+                    reportRendererEvent({
                         category: 'network',
                         name: 'HEARTBEAT_RESTORED',
                         severity: 'info',
@@ -85,7 +89,7 @@ export const useConnectionHealth = (
                 setIsUnstable(false);
                 if (unstableReportedRef.current) {
                     unstableReportedRef.current = false;
-                    reportReleaseHealth({
+                    reportRendererEvent({
                         category: 'network',
                         name: 'HEARTBEAT_RESTORED',
                         severity: 'info',

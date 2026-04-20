@@ -9,7 +9,7 @@ import {
 } from '../logic/networkDispatchPolicy';
 import { useHostStateSync } from './gameNetwork/useHostStateSync';
 import { useNetworkEventHandlers } from './gameNetwork/useNetworkEventHandlers';
-import { reportReleaseHealth } from '../observability/releaseHealth';
+import { logRendererMessage, reportRendererEvent } from '../observability/rendererLogger';
 
 const MAX_APPROVAL_LOG_ENTRIES = 25;
 
@@ -80,7 +80,7 @@ export const useGameNetwork = (
 
     const networkDispatch = useCallback(
         (action: GameAction) => {
-            console.log(`[ACTION-RECORD] Type: ${action.type}`, action.payload);
+            logRendererMessage('info', `[ACTION-RECORD] Type: ${action.type}`, action.payload);
             const dispatchPlan = resolveNetworkDispatchPlan(gameState, action, shouldConnect, {
                 nextGuestRequestId: () => {
                     requestCounterRef.current += 1;
@@ -112,32 +112,46 @@ export const useGameNetwork = (
             }
 
             if (dispatchPlan.blockedGuestIntentReason === 'NON_PROTOCOL_ACTION') {
-                console.warn(`[NET] Guest attempted to send non-protocol action ${action.type}.`);
-                reportReleaseHealth({
-                    category: 'network',
-                    name: 'GUEST_INTENT_BLOCKED',
-                    severity: 'warn',
-                    message:
-                        'Renderer blocked a guest action before it left the multiplayer boundary.',
-                    context: createReasonTelemetryContext(dispatchPlan.blockedGuestIntentReason, {
-                        actionType: action.type,
-                    }),
-                });
+                reportRendererEvent(
+                    {
+                        category: 'network',
+                        name: 'GUEST_INTENT_BLOCKED',
+                        severity: 'warn',
+                        message:
+                            'Renderer blocked a guest action before it left the multiplayer boundary.',
+                        context: createReasonTelemetryContext(
+                            dispatchPlan.blockedGuestIntentReason,
+                            {
+                                actionType: action.type,
+                            }
+                        ),
+                    },
+                    {
+                        consoleMessage: `[NET] Guest attempted to send non-protocol action ${action.type}.`,
+                    }
+                );
                 publishStatusNotice(createUiStatusNotice(dispatchPlan.blockedGuestIntentReason));
             }
 
             if (dispatchPlan.blockedGuestIntentReason === 'NOT_GUEST_TURN') {
-                console.warn(`[NET] Guest attempted ${action.type} outside of the guest turn.`);
-                reportReleaseHealth({
-                    category: 'network',
-                    name: 'GUEST_INTENT_BLOCKED',
-                    severity: 'warn',
-                    message:
-                        'Renderer blocked an out-of-turn guest action before network dispatch.',
-                    context: createReasonTelemetryContext(dispatchPlan.blockedGuestIntentReason, {
-                        actionType: action.type,
-                    }),
-                });
+                reportRendererEvent(
+                    {
+                        category: 'network',
+                        name: 'GUEST_INTENT_BLOCKED',
+                        severity: 'warn',
+                        message:
+                            'Renderer blocked an out-of-turn guest action before network dispatch.',
+                        context: createReasonTelemetryContext(
+                            dispatchPlan.blockedGuestIntentReason,
+                            {
+                                actionType: action.type,
+                            }
+                        ),
+                    },
+                    {
+                        consoleMessage: `[NET] Guest attempted ${action.type} outside of the guest turn.`,
+                    }
+                );
                 publishStatusNotice(createUiStatusNotice(dispatchPlan.blockedGuestIntentReason));
             }
         },

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildBoundaryRegistryFromSource } from './buildBoundaryRegistryFromSource.js';
 import { collectBoundaryRegistrySnapshotErrors } from './boundaryGovernance.js';
 import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
@@ -12,12 +13,13 @@ const boundaryInventoryText = fs.readFileSync(
     path.join(repoRoot, GOVERNANCE_DOC_PATHS.boundaryInventory),
     'utf8'
 );
+const actualRegistry = buildBoundaryRegistryFromSource();
 const expectedRegistry = JSON.parse(
     fs.readFileSync(path.join(repoRoot, 'governance', 'boundary-registry.snapshot.json'), 'utf8')
 );
 
 const errors = collectBoundaryRegistrySnapshotErrors({
-    actualRegistry: expectedRegistry,
+    actualRegistry,
     expectedRegistry,
     boundaryInventoryText,
     repoRoot,

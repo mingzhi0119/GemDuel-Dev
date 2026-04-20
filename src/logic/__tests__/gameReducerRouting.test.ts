@@ -40,6 +40,10 @@ const handlerSpies = vi.hoisted(() => ({
     handleCloseModal: vi.fn(),
 }));
 
+const rendererLoggerSpies = vi.hoisted(() => ({
+    reportRendererEvent: vi.fn(),
+}));
+
 vi.mock('../commandGate', () => ({
     validateCommand: vi.fn(() => reducerControls.commandValidation),
     validatePostActionState: vi.fn(() => reducerControls.postValidation),
@@ -91,6 +95,10 @@ vi.mock('../actions/miscActions', () => ({
     handleCloseModal: handlerSpies.handleCloseModal,
 }));
 
+vi.mock('../../observability/rendererLogger', () => ({
+    reportRendererEvent: (...args: unknown[]) => rendererLoggerSpies.reportRendererEvent(...args),
+}));
+
 import { applyAction } from '../gameReducer';
 
 const createState = (overrides: Partial<GameState> = {}) =>
@@ -119,6 +127,7 @@ describe('gameReducer phase 3 routing', () => {
         reducerControls.snapshotValidation = { valid: true };
         reducerControls.postValidation = { valid: true };
         reducerControls.bootstrapState = createState();
+        rendererLoggerSpies.reportRendererEvent.mockReset();
 
         for (const spy of Object.values(handlerSpies)) {
             spy.mockClear();
@@ -127,7 +136,6 @@ describe('gameReducer phase 3 routing', () => {
 
     it('rejects invalid commands before any reducer routing executes', () => {
         const state = createState();
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         reducerControls.commandValidation = {
             valid: false,
             reason: 'Command blocked by policy.',
@@ -140,15 +148,25 @@ describe('gameReducer phase 3 routing', () => {
 
         expect(nextState).toBe(state);
         expect(handlerSpies.handleTakeGems).not.toHaveBeenCalled();
-        expect(warnSpy).toHaveBeenCalledWith(
-            '[COMMAND_GATE] Rejected action TAKE_GEMS: Command blocked by policy.'
+        expect(rendererLoggerSpies.reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'COMMAND_GATE_REJECTED',
+                severity: 'warn',
+                message: 'Command blocked by policy.',
+                context: {
+                    actionType: 'TAKE_GEMS',
+                },
+            }),
+            {
+                consoleMessage:
+                    '[COMMAND_GATE] Rejected action TAKE_GEMS: Command blocked by policy.',
+            }
         );
-        warnSpy.mockRestore();
     });
 
     it('accepts INIT and INIT_DRAFT only when bootstrap snapshots pass validation', () => {
         const state = createState({ turn: 'p2' });
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         reducerControls.bootstrapState = createState({ phase: 'DRAFT_PHASE' });
         expect(applyAction(state, { type: 'INIT', payload: setupPayload })).toBe(
@@ -165,10 +183,20 @@ describe('gameReducer phase 3 routing', () => {
         reducerControls.bootstrapState = createState({ phase: 'SELECT_ROYAL' });
 
         expect(applyAction(state, { type: 'INIT', payload: setupPayload })).toBe(state);
-        expect(warnSpy).toHaveBeenCalledWith(
-            '[FSM] Rejected bootstrap action INIT: Broken snapshot'
+        expect(rendererLoggerSpies.reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'BOOTSTRAP_STATE_REJECTED',
+                severity: 'warn',
+                message: 'Broken snapshot',
+                context: {
+                    actionType: 'INIT',
+                },
+            }),
+            {
+                consoleMessage: '[FSM] Rejected bootstrap action INIT: Broken snapshot',
+            }
         );
-        warnSpy.mockRestore();
     });
 
     it('passes FORCE_SYNC and FLATTEN through as atomic state replacements', () => {
@@ -381,7 +409,6 @@ describe('gameReducer phase 3 routing', () => {
     });
 
     it('blocks undo and redo in online mode but allows offline no-op transitions', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const onlineState = createState({ mode: 'ONLINE_MULTIPLAYER' });
         const offlineState = createState({ mode: 'LOCAL_PVP' });
 
@@ -390,13 +417,23 @@ describe('gameReducer phase 3 routing', () => {
 
         expect(onlineNext?.mode).toBe('ONLINE_MULTIPLAYER');
         expect(offlineNext?.mode).toBe('LOCAL_PVP');
-        expect(warnSpy).toHaveBeenCalledWith('Undo/Redo blocked in Online Mode');
-        warnSpy.mockRestore();
+        expect(rendererLoggerSpies.reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'UNDO_REDO_BLOCKED',
+                severity: 'warn',
+                context: {
+                    actionType: 'UNDO',
+                },
+            }),
+            {
+                consoleMessage: 'Undo/Redo blocked in Online Mode',
+            }
+        );
     });
 
     it('rolls back reducer output when post-action validation fails', () => {
         const state = createState();
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         reducerControls.postValidation = {
             valid: false,
             reason: 'Transition integrity failed',
@@ -408,22 +445,43 @@ describe('gameReducer phase 3 routing', () => {
         });
 
         expect(nextState).toBe(state);
-        expect(warnSpy).toHaveBeenCalledWith(
-            '[FSM] Rolled back action DEBUG_ADD_POINTS: Transition integrity failed'
+        expect(rendererLoggerSpies.reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'POST_ACTION_VALIDATION_ROLLBACK',
+                severity: 'warn',
+                message: 'Transition integrity failed',
+                context: {
+                    actionType: 'DEBUG_ADD_POINTS',
+                },
+            }),
+            {
+                consoleMessage:
+                    '[FSM] Rolled back action DEBUG_ADD_POINTS: Transition integrity failed',
+            }
         );
-        warnSpy.mockRestore();
     });
 
     it('falls back safely for unknown runtime actions', () => {
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
         const nextState = applyAction(createState(), {
             type: 'UNKNOWN_RUNTIME_ACTION',
         } as unknown as GameAction);
 
         expect(nextState?.lastFeedback).toBeNull();
         expect(nextState?.toastMessage).toBeNull();
-        expect(warnSpy).toHaveBeenCalledWith('Unknown action type:', 'UNKNOWN_RUNTIME_ACTION');
-        warnSpy.mockRestore();
+        expect(rendererLoggerSpies.reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'UNKNOWN_ACTION_TYPE',
+                severity: 'error',
+                context: {
+                    actionType: 'UNKNOWN_RUNTIME_ACTION',
+                },
+            }),
+            {
+                consoleMessage: 'Unknown action type:',
+                consoleDetails: 'UNKNOWN_RUNTIME_ACTION',
+            }
+        );
     });
 });

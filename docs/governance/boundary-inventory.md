@@ -1,6 +1,8 @@
 # Boundary Inventory
 
-Machine-readable source of truth: `governance/boundary-registry.snapshot.json`
+Machine-readable source of truth: `scripts/buildBoundaryRegistryFromSource.js`
+
+Audited snapshot: `governance/boundary-registry.snapshot.json`
 
 ## Boundary Matrix
 
@@ -19,4 +21,4 @@ Machine-readable source of truth: `governance/boundary-registry.snapshot.json`
 
 ## Change Rule
 
-Add a new external boundary in both this file and `governance/boundary-registry.snapshot.json` before shipping it.
+Add a new external boundary in this file, `scripts/buildBoundaryRegistryFromSource.js`, and `governance/boundary-registry.snapshot.json` before shipping it.
