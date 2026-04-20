@@ -5,8 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { RUNTIME_CONFIG_POLICY } from '../electron/runtimeConfig.js';
 import {
     collectDependencyGovernanceErrors,
+    collectGovernanceDocumentErrors,
     formatAuditSummary,
-    parseRuntimeEnvNames,
+    collectRuntimeEnvNamesFromRepo,
 } from './dependencyGovernance.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,9 +40,8 @@ const readAuditReport = () => {
 
 const packageJson = readJson('package.json');
 const governanceDocumentText = readText('DEPENDENCY_RUNTIME_GOVERNANCE.md');
-const mainProcessText = readText(path.join('electron', 'main.js'));
 const auditReport = readAuditReport();
-const runtimeEnvNames = parseRuntimeEnvNames(mainProcessText);
+const runtimeEnvNames = collectRuntimeEnvNamesFromRepo(repoRoot);
 
 const errors = collectDependencyGovernanceErrors({
     packageJson,
@@ -50,6 +50,7 @@ const errors = collectDependencyGovernanceErrors({
     governanceDocumentText,
     auditReport,
 });
+errors.push(...collectGovernanceDocumentErrors(governanceDocumentText));
 
 if (errors.length > 0) {
     console.error('Dependency governance check failed:');

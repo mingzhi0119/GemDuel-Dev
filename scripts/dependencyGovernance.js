@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 export const REQUIRED_OVERRIDE_POLICY = Object.freeze({
     'path-to-regexp': '0.1.13',
     qs: '6.14.2',
@@ -16,10 +19,131 @@ const REQUIRED_POLICY_FIELDS = Object.freeze([
     'failureMode',
 ]);
 
-export const parseRuntimeEnvNames = (mainProcessText) => {
-    const matches = mainProcessText.matchAll(/process\.env\.([A-Z0-9_]+)/g);
+const GOVERNANCE_TEXT_EXTENSIONS = new Set([
+    '.js',
+    '.mjs',
+    '.cjs',
+    '.ts',
+    '.tsx',
+    '.json',
+    '.md',
+    '.yml',
+    '.yaml',
+]);
+const GOVERNANCE_SCAN_EXCLUDED_DIRS = new Set([
+    '.git',
+    '.husky',
+    '.vite',
+    'archive',
+    'coverage',
+    'dist',
+    'node_modules',
+]);
+const GOVERNANCE_SCAN_EXCLUDED_FILE_SUFFIXES = [
+    '.test.ts',
+    '.test.tsx',
+    '.test.js',
+    '.test.mjs',
+    '.spec.ts',
+    '.spec.tsx',
+    '.spec.js',
+    '.spec.mjs',
+];
+const SECRET_PLACEHOLDER_VALUES = new Set([
+    'example',
+    'placeholder',
+    'redacted',
+    'sample',
+    'test',
+    'mock',
+    'dummy',
+    'runtime-pass',
+    'runtime-user',
+    'user',
+    'pass',
+]);
+
+const HIGH_CONFIDENCE_SECRET_PATTERNS = [
+    /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+    /\b(?:ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16})\b/,
+    /:\/\/[^/\s:@]+:[^/\s@]+@/,
+];
+
+const SENSITIVE_ASSIGNMENT_PATTERN =
+    /\b(password|secret|token|credential|api[_-]?key|access[_-]?key|private[_-]?key)\b\s*[:=]\s*(['"])([^'"`]+)\2/i;
+
+const normalizeRelativePath = (repoRoot, absolutePath) =>
+    path.relative(repoRoot, absolutePath).split(path.sep).join('/');
+
+const normalizePathLike = (value) => value.split(path.sep).join('/');
+
+const shouldScanFile = (relativePath, includeTests) => {
+    const normalizedPath = normalizePathLike(relativePath);
+
+    if (GOVERNANCE_SCAN_EXCLUDED_FILE_SUFFIXES.some((suffix) => normalizedPath.endsWith(suffix))) {
+        return false;
+    }
+
+    if (!includeTests && /(^|\/)__tests__\//.test(normalizedPath)) {
+        return false;
+    }
+
+    const ext = path.extname(normalizedPath).toLowerCase();
+    return GOVERNANCE_TEXT_EXTENSIONS.has(ext);
+};
+
+const walkTextFiles = (repoRoot, includeTests) => {
+    const files = [];
+    const stack = [''];
+
+    while (stack.length > 0) {
+        const relativeDir = stack.pop();
+        const absoluteDir = path.join(repoRoot, relativeDir);
+        const dirEntries = fs.readdirSync(absoluteDir, { withFileTypes: true });
+
+        for (const entry of dirEntries) {
+            if (entry.isDirectory()) {
+                if (!GOVERNANCE_SCAN_EXCLUDED_DIRS.has(entry.name)) {
+                    stack.push(path.join(relativeDir, entry.name));
+                }
+                continue;
+            }
+
+            const relativePath = path.join(relativeDir, entry.name);
+            if (shouldScanFile(relativePath, includeTests)) {
+                files.push(relativePath);
+            }
+        }
+    }
+
+    return files.sort((a, b) => a.localeCompare(b));
+};
+
+export const collectTextFileEntries = (repoRoot, { includeTests = false } = {}) =>
+    walkTextFiles(repoRoot, includeTests).map((relativePath) => ({
+        relativePath: normalizePathLike(relativePath),
+        text: fs.readFileSync(path.join(repoRoot, relativePath), 'utf8'),
+    }));
+
+export const parseRuntimeEnvNames = (text) => {
+    const matches = text.matchAll(/process\.env\.([A-Z][A-Z0-9_]*[A-Z0-9])\b/g);
     return Array.from(new Set(Array.from(matches, (match) => match[1]).filter(Boolean))).sort();
 };
+
+export const collectRuntimeEnvNamesFromEntries = (entries) => {
+    const names = new Set();
+
+    for (const { text } of entries) {
+        for (const envName of parseRuntimeEnvNames(text)) {
+            names.add(envName);
+        }
+    }
+
+    return Array.from(names).sort();
+};
+
+export const collectRuntimeEnvNamesFromRepo = (repoRoot) =>
+    collectRuntimeEnvNamesFromEntries(collectTextFileEntries(repoRoot, { includeTests: false }));
 
 const collectOverrideErrors = (packageJson) => {
     const overrides = packageJson.overrides ?? {};
@@ -44,7 +168,7 @@ const collectOverrideErrors = (packageJson) => {
     return errors;
 };
 
-const collectRuntimePolicyErrors = ({
+export const collectRuntimePolicyErrors = ({
     runtimeConfigPolicy,
     runtimeEnvNames,
     governanceDocumentText,
@@ -55,7 +179,7 @@ const collectRuntimePolicyErrors = ({
     for (const envName of runtimeEnvNames) {
         if (!policyNames.includes(envName)) {
             errors.push(
-                `Runtime env ${envName} is used in electron/main.js but missing from RUNTIME_CONFIG_POLICY.`
+                `Runtime env ${envName} is used in runtime source files but missing from RUNTIME_CONFIG_POLICY.`
             );
         }
 
@@ -95,6 +219,182 @@ const collectAuditErrors = (auditReport) => {
 export const formatAuditSummary = (auditReport) => {
     const counts = auditReport?.metadata?.vulnerabilities ?? {};
     return `info=${counts.info ?? 0}, low=${counts.low ?? 0}, moderate=${counts.moderate ?? 0}, high=${counts.high ?? 0}, critical=${counts.critical ?? 0}`;
+};
+
+const getPackageNameFromPath = (relativePath, packageJson) => {
+    if (relativePath === '') {
+        return packageJson.name;
+    }
+
+    const parts = relativePath.split('node_modules/').filter(Boolean);
+    return parts.at(-1) ?? relativePath;
+};
+
+const getPackageLicense = (entry) => {
+    if (typeof entry?.license === 'string' && entry.license.trim().length > 0) {
+        return entry.license.trim();
+    }
+
+    return null;
+};
+
+export const buildDependencySbomSnapshot = (packageJson, packageLock) => {
+    const components = Object.entries(packageLock?.packages ?? {})
+        .map(([relativePath, entry]) => ({
+            path: normalizeRelativePath('.', relativePath).replace(/^\.$/, ''),
+            name: getPackageNameFromPath(relativePath, packageJson),
+            version: entry?.version ?? null,
+            license: getPackageLicense(entry),
+            dev: Boolean(entry?.dev),
+        }))
+        .sort((a, b) => a.path.localeCompare(b.path));
+
+    const licenseInventory = {};
+    for (const component of components) {
+        if (!component.license) {
+            continue;
+        }
+
+        licenseInventory[component.license] = (licenseInventory[component.license] ?? 0) + 1;
+    }
+
+    return {
+        schemaVersion: 1,
+        packageManager: 'npm',
+        root: {
+            name: packageJson.name,
+            version: packageJson.version,
+        },
+        componentCount: components.length,
+        licenseInventory,
+        components,
+    };
+};
+
+export const collectLicenseAllowlistErrors = ({ packageJson, packageLock, allowedLicenses }) => {
+    const errors = [];
+    const allowlist = new Set((allowedLicenses ?? []).filter(Boolean));
+
+    if (allowlist.size === 0) {
+        errors.push('License allowlist is empty.');
+        return errors;
+    }
+
+    const snapshot = buildDependencySbomSnapshot(packageJson, packageLock);
+    for (const component of snapshot.components) {
+        if (component.path === '') {
+            continue;
+        }
+
+        if (!component.license) {
+            errors.push(
+                `Package ${component.name}@${component.version} at ${component.path} is missing a license declaration.`
+            );
+            continue;
+        }
+
+        if (!allowlist.has(component.license)) {
+            errors.push(
+                `Package ${component.name}@${component.version} at ${component.path} uses disallowed license ${component.license}.`
+            );
+        }
+    }
+
+    return errors;
+};
+
+export const collectSbomSnapshotErrors = ({ packageJson, packageLock, expectedSnapshot }) => {
+    const actualSnapshot = buildDependencySbomSnapshot(packageJson, packageLock);
+    if (!expectedSnapshot || typeof expectedSnapshot !== 'object') {
+        return ['Missing dependency SBOM snapshot.'];
+    }
+
+    const actualJson = JSON.stringify(actualSnapshot);
+    const expectedJson = JSON.stringify(expectedSnapshot);
+    if (actualJson === expectedJson) {
+        return [];
+    }
+
+    return ['Dependency SBOM snapshot drifted from package-lock.json.'];
+};
+
+const isPlaceholderSecretValue = (value) => {
+    const normalized = value.trim().toLowerCase();
+    if (SECRET_PLACEHOLDER_VALUES.has(normalized)) {
+        return true;
+    }
+
+    return /^<.*>$/.test(normalized) || normalized === '[redacted]' || normalized === 'redacted';
+};
+
+const findSecretLikeLines = ({ relativePath, text }) => {
+    const issues = [];
+    const lines = text.split(/\r?\n/);
+
+    for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        if (line.includes('${{ secrets.')) {
+            continue;
+        }
+
+        for (const pattern of HIGH_CONFIDENCE_SECRET_PATTERNS) {
+            if (pattern.test(line)) {
+                issues.push(
+                    `${relativePath}:${index + 1} contains a high-confidence secret-like literal.`
+                );
+                break;
+            }
+        }
+
+        const assignmentMatch = line.match(SENSITIVE_ASSIGNMENT_PATTERN);
+        if (!assignmentMatch) {
+            continue;
+        }
+
+        const sensitiveValue = assignmentMatch[3];
+        if (isPlaceholderSecretValue(sensitiveValue)) {
+            continue;
+        }
+
+        const looksCredLike =
+            sensitiveValue.length >= 8 &&
+            (/[0-9]/.test(sensitiveValue) ||
+                /[-_/+=]/.test(sensitiveValue) ||
+                /[A-Z]/.test(sensitiveValue));
+
+        if (looksCredLike) {
+            issues.push(
+                `${relativePath}:${index + 1} assigns a credential-like value to ${assignmentMatch[1]}.`
+            );
+        }
+    }
+
+    return issues;
+};
+
+export const collectSecretScanErrorsFromEntries = (entries) =>
+    entries.flatMap((entry) => findSecretLikeLines(entry));
+
+export const collectSecretScanErrorsFromRepo = (repoRoot) =>
+    collectSecretScanErrorsFromEntries(
+        collectTextFileEntries(repoRoot, {
+            includeTests: false,
+        })
+    );
+
+export const collectGovernanceDocumentErrors = (governanceDocumentText) => {
+    const requiredSections = [
+        '## License Allowlist Policy',
+        '## SBOM Policy',
+        '## Secret Scanning and Env Drift Policy',
+        '## CI Coverage',
+        'governance/dependency-license-allowlist.json',
+        'governance/dependency-sbom.snapshot.json',
+    ];
+
+    return requiredSections
+        .filter((section) => !governanceDocumentText.includes(section))
+        .map((section) => `DEPENDENCY_RUNTIME_GOVERNANCE.md is missing ${section}.`);
 };
 
 export const collectDependencyGovernanceErrors = ({

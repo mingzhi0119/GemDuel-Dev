@@ -25,6 +25,15 @@ jobs:
             - name: Install Dependencies
               run: npm ci
 
+            - name: License Allowlist Gate
+              run: npm run licenses:check
+
+            - name: SBOM Gate
+              run: npm run sbom:check
+
+            - name: Secret and Env Drift Gate
+              run: npm run secrets:check
+
             - name: Dependency Governance Check
               run: npm run deps:check
 

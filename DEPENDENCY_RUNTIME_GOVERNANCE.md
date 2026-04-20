@@ -13,6 +13,7 @@ Allowed status values:
 - Status: `Completed`
 - Covered areas:
 - Production dependency audits and release gates.
+- Dependency license allowlists and SBOM snapshots.
 - Runtime Electron environment variables and their ownership.
 - Secret-handling rules for ICE and TURN configuration.
 - Temporary package exceptions that still require follow-up ownership.
@@ -20,14 +21,60 @@ Allowed status values:
 ## Production Dependency Policy
 
 - Status: `Completed`
-- Release gate: `npm run deps:check`
+- Release gates:
+- `node scripts/check-dependency-governance.mjs`
+- `node scripts/check-license-governance.mjs`
+- `node scripts/check-sbom-governance.mjs`
+- `node scripts/check-secret-governance.mjs`
 - CI coverage:
-- The release workflow runs the dependency governance check before lint, test, and build.
-- The scheduled dependency workflow runs the same check on a weekly cadence and on manual dispatch.
+- The dependency governance workflow runs on pull requests, weekly schedule, and manual dispatch.
+- The governance workflow runs on pull requests and manual dispatch.
+- The release workflow runs the dependency gates before lint, test, security, desktop, and build.
 - Enforcement rules:
 - `npm audit --omit=dev --json` must report zero production vulnerabilities.
 - Security overrides in `package.json` are treated as governed policy, not ad hoc local fixes.
 - Release builds must use `npm ci` so the audited lockfile is the shipped lockfile.
+
+## License Allowlist Policy
+
+- Status: `Completed`
+- Source of truth: `governance/dependency-license-allowlist.json`
+- Allowed license expressions:
+- `0BSD`
+- `Apache-2.0`
+- `BlueOak-1.0.0`
+- `BSD-2-Clause`
+- `BSD-3-Clause`
+- `CC-BY-4.0`
+- `ISC`
+- `MIT`
+- `Python-2.0`
+- `WTFPL`
+- `WTFPL OR ISC`
+- `(MIT OR CC0-1.0)`
+- `(WTFPL OR MIT)`
+- Enforcement rules:
+- Every package in `package-lock.json` must resolve to one of the allowlisted license expressions.
+- Any package with a missing license declaration fails the gate.
+
+## SBOM Policy
+
+- Status: `Completed`
+- Source of truth: `governance/dependency-sbom.snapshot.json`
+- The SBOM is generated from `package.json` and `package-lock.json` and captures the root package, component count, license inventory, and every resolved package entry.
+- The snapshot is deterministic and machine-readable so it can be compared in CI or uploaded as an artifact without parsing console logs.
+- Any drift between the regenerated SBOM and the committed snapshot fails the gate.
+
+## CI Coverage
+
+- Status: `Completed`
+- Scheduled coverage:
+- `dependency-governance.yml` runs weekly and on manual dispatch.
+- PR coverage:
+- `dependency-governance.yml` runs on pull requests.
+- `governance.yml` runs the dependency gates, lint, security suite, unit tests, release health check, and desktop governance on pull requests.
+- Release coverage:
+- `build.yml` runs the dependency gates again before the release build and publish step on tagged releases.
 
 ## Approved Security Overrides
 
@@ -56,6 +103,16 @@ Allowed status values:
 - Credential-bearing TURN entries may only be injected at runtime through the governed Electron bridge.
 - Release-health logging must redact peer identifiers, checksums, URLs, tokens, passwords, and TURN credential fields before persistence.
 
+## Secret Scanning and Env Drift Policy
+
+- Status: `Completed`
+- Secret scan gate: `node scripts/check-secret-governance.mjs`
+- The secret scan covers source, workflow, configuration, and documentation files while ignoring test fixtures and generated artifacts.
+- Credential-like literals, embedded auth URLs, private key blocks, and high-confidence token patterns must not be committed to source-controlled files.
+- Every `process.env.GEMDUEL_*` usage in tracked runtime source must map to `RUNTIME_CONFIG_POLICY`.
+- Every governed runtime env must be documented in this file before it is merged.
+- New runtime env usage requires a policy update and a doc update in the same change.
+
 ## Short-Lived TURN Credential Roadmap
 
 - Status: `In Progress`
@@ -74,7 +131,8 @@ Allowed status values:
 ## Operator Checklist
 
 - Status: `Completed`
-- Run `npm run deps:check` before release-tag builds.
+- Run the dependency gates before release-tag builds.
 - Review `package-lock.json` whenever `package.json` overrides change.
 - Re-run `npm audit --omit=dev` after dependency updates, even when the update looked tooling-only.
-- Treat every new `process.env.GEMDUEL_*` usage in `electron/main.js` as a governance event that requires policy and doc updates.
+- Treat every new `process.env.GEMDUEL_*` usage as a governance event that requires policy and doc updates.
+- Keep the SBOM snapshot and license allowlist in sync with `package-lock.json`.
