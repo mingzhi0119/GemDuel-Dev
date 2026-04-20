@@ -66,6 +66,17 @@ const parseArgs = (argv) => {
 
 const readOperationsSnapshot = () => JSON.parse(fs.readFileSync(operationsSnapshotPath, 'utf8'));
 
+const buildProvenance = () => ({
+    repository: process.env.GITHUB_REPOSITORY ?? null,
+    sha: process.env.GITHUB_SHA ?? null,
+    ref: process.env.GITHUB_REF ?? null,
+    workflowName: process.env.GITHUB_WORKFLOW ?? null,
+    runId: process.env.GITHUB_RUN_ID ?? null,
+    runAttempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
+    jobName: process.env.GITHUB_JOB ?? null,
+    generatedBy: 'scripts/export-release-health-report.mjs',
+});
+
 const readInputText = async (inputPath) => {
     if (!inputPath || inputPath === '-') {
         return readStdin();
@@ -81,6 +92,7 @@ const main = async () => {
     const report = buildReleaseHealthReport({
         source,
         operationsSnapshot: readOperationsSnapshot(),
+        provenance: buildProvenance(),
         sourcePath: inputPath === '-' ? null : path.resolve(repoRoot, inputPath),
     });
     const outputText = serializeReleaseHealthReport(report, { pretty });

@@ -30,6 +30,9 @@ describe('release health checklist governance', () => {
             'Checklist must document the release-health report export script.'
         );
         expect(errors).toContain(
+            'Checklist must document the retained governance artifact export script.'
+        );
+        expect(errors).toContain(
             'Checklist must document how operators fetch the sanitized release-health snapshot.'
         );
         expect(errors).toContain(
@@ -44,6 +47,7 @@ describe('release health checklist governance', () => {
             '- `OPERATIONS_SLO.md`',
             '- `OPERATIONS_FAULT_DRILLS.md`',
             '- `scripts/export-release-health-report.mjs`',
+            '- `scripts/export-governance-artifacts.mjs`',
             '- `window.electron.getReleaseHealthSnapshot()`',
         ].join('\n');
 

@@ -1,0 +1,122 @@
+{
+    "schemaVersion": 1,
+    "scenarios": [
+        {
+            "id": "window-unavailable",
+            "title": "Renderer notifications fail closed without a live window",
+            "eventMatrix": [
+                {
+                    "category": "startup",
+                    "name": "WINDOW_UNAVAILABLE",
+                    "severity": "warn"
+                }
+            ],
+            "rendererChannels": [
+                {
+                    "channel": "update_available",
+                    "argCount": 0
+                }
+            ]
+        },
+        {
+            "id": "window-load-failed",
+            "title": "BrowserWindow load failures become structured startup evidence",
+            "eventMatrix": [
+                {
+                    "category": "startup",
+                    "name": "WINDOW_LOAD_FAILED",
+                    "severity": "error"
+                }
+            ],
+            "rendererChannels": []
+        },
+        {
+            "id": "ipc-payload-reject",
+            "title": "Unexpected IPC payloads are rejected before privileged handlers run",
+            "eventMatrix": [
+                {
+                    "category": "security",
+                    "name": "IPC_REQUEST_REJECTED",
+                    "severity": "warn"
+                }
+            ],
+            "rendererChannels": []
+        },
+        {
+            "id": "updater-notifications",
+            "title": "Updater lifecycle emits release-health checkpoints and renderer notifications",
+            "eventMatrix": [
+                {
+                    "category": "updater",
+                    "name": "UPDATER_CHECK_STARTED",
+                    "severity": "info"
+                },
+                {
+                    "category": "updater",
+                    "name": "UPDATER_AVAILABLE",
+                    "severity": "info"
+                },
+                {
+                    "category": "updater",
+                    "name": "UPDATER_NOT_AVAILABLE",
+                    "severity": "info"
+                },
+                {
+                    "category": "updater",
+                    "name": "UPDATER_DOWNLOAD_PROGRESS",
+                    "severity": "info"
+                },
+                {
+                    "category": "updater",
+                    "name": "UPDATER_DOWNLOAD_PROGRESS",
+                    "severity": "info"
+                },
+                {
+                    "category": "updater",
+                    "name": "UPDATER_DOWNLOADED",
+                    "severity": "info"
+                }
+            ],
+            "rendererChannels": []
+        },
+        {
+            "id": "updater-failure-threshold",
+            "title": "Repeated updater failures roll into a governed threshold warning",
+            "eventMatrix": [
+                {
+                    "category": "updater",
+                    "name": "UPDATER_ERROR",
+                    "severity": "error"
+                },
+                {
+                    "category": "updater",
+                    "name": "UPDATER_ERROR",
+                    "severity": "error"
+                },
+                {
+                    "category": "updater",
+                    "name": "UPDATER_ERROR",
+                    "severity": "error"
+                },
+                {
+                    "category": "updater",
+                    "name": "UPDATER_FAILURE_THRESHOLD_REACHED",
+                    "severity": "warn"
+                }
+            ],
+            "rendererChannels": []
+        },
+        {
+            "id": "updater-disabled",
+            "title": "Runtime policy can disable auto-updates without crashing startup",
+            "eventMatrix": [
+                {
+                    "category": "updater",
+                    "name": "UPDATER_DISABLED",
+                    "severity": "info"
+                }
+            ],
+            "rendererChannels": []
+        }
+    ]
+}

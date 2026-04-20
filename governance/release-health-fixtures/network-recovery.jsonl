@@ -1,0 +1,2 @@
+[RELEASE_HEALTH] {"source":"main","category":"startup","name":"WINDOW_LOADED","severity":"info","message":"Renderer loaded.","timestamp":"2026-04-19T10:00:00.000Z"}
+[RELEASE_HEALTH] {"source":"renderer","category":"recovery","name":"RECOVERY_REQUEST_SENT","severity":"warn","message":"Guest requested authoritative recovery.","timestamp":"2026-04-19T10:02:00.000Z"}

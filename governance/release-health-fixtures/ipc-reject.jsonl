@@ -1,0 +1,2 @@
+[RELEASE_HEALTH] {"source":"main","category":"startup","name":"WINDOW_LOADED","severity":"info","message":"Renderer loaded.","timestamp":"2026-04-19T10:00:00.000Z"}
+[RELEASE_HEALTH] {"source":"main","category":"security","name":"IPC_REQUEST_REJECTED","severity":"warn","message":"Rejected unauthorized request.","timestamp":"2026-04-19T10:01:00.000Z"}

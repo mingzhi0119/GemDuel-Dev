@@ -160,6 +160,13 @@ describe('electron runtime config', () => {
             'GEMDUEL_ICE_SERVERS_JSON',
             'GEMDUEL_LOG_LEVEL',
             'GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON',
+            'GITHUB_JOB',
+            'GITHUB_REF',
+            'GITHUB_REPOSITORY',
+            'GITHUB_RUN_ATTEMPT',
+            'GITHUB_RUN_ID',
+            'GITHUB_SHA',
+            'GITHUB_WORKFLOW',
         ]);
         expect(RUNTIME_CONFIG_POLICY.GEMDUEL_ICE_SERVERS_JSON.secretHandling).toContain(
             'TURN credentials'

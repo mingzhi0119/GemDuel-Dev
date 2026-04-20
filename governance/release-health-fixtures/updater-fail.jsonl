@@ -1,0 +1,2 @@
+[RELEASE_HEALTH] {"source":"main","category":"startup","name":"WINDOW_LOADED","severity":"info","message":"Renderer loaded.","timestamp":"2026-04-19T10:00:00.000Z"}
+[RELEASE_HEALTH] {"source":"main","category":"updater","name":"UPDATER_CHECK_FAILED","severity":"error","message":"Failed to start the update check.","timestamp":"2026-04-19T10:03:00.000Z"}

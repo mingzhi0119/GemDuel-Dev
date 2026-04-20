@@ -12,6 +12,7 @@ Use this checklist before shipping a desktop release or cutting a release candid
 - `npm run desktop:check`
 - GitHub release workflow green on the tagged build
 - `scripts/export-release-health-report.mjs` can turn a `window.electron.getReleaseHealthSnapshot()` payload or `[RELEASE_HEALTH]` log stream into a machine-readable report.
+- `scripts/export-governance-artifacts.mjs` can emit the retained `governance-evidence` artifact bundle for CI or release review.
 
 ## Release-Health Indicators
 
@@ -54,3 +55,4 @@ Target baseline for a clean release smoke test:
 - The renderer can fetch the current sanitized snapshot through `window.electron.getReleaseHealthSnapshot()` for support diagnostics.
 - The operational contract lives in `OPERATIONS_SLO.md`, `OPERATIONS_FAULT_DRILLS.md`, and `electron/governance/release-health-operations.snapshot.json`.
 - `npm run release:check` validates the checklist command gates and indicator inventory against the live monitor contract.
+- CI retains the exported `governance-evidence` artifact for `14` days so operators can review healthy baselines and drill reports without rebuilding them locally.

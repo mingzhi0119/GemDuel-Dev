@@ -239,7 +239,10 @@ export const buildReleaseHealthReport = ({
     source,
     operationsSnapshot = {},
     generatedAt = new Date().toISOString(),
+    provenance = {},
+    retention = null,
     sourcePath = null,
+    drillLabel = null,
 }) => {
     const thresholds = cloneThresholdMap(operationsSnapshot.indicatorThresholds);
     const summary = source.summary ?? deriveReleaseHealthSummaryFromEvents(source.events);
@@ -255,6 +258,20 @@ export const buildReleaseHealthReport = ({
                 incidentMax: threshold?.incidentMax ?? null,
                 status,
                 routing: operationsSnapshot.alertRouting?.[indicator] ?? 'manual',
+                budget: {
+                    observed: value,
+                    warningBudget: threshold?.warningMax ?? null,
+                    incidentBudget: threshold?.incidentMax ?? null,
+                    remainingWarningBudget:
+                        typeof threshold?.warningMax === 'number'
+                            ? threshold.warningMax - value
+                            : null,
+                    remainingIncidentBudget:
+                        typeof threshold?.incidentMax === 'number'
+                            ? threshold.incidentMax - value
+                            : null,
+                    breached: status !== 'healthy',
+                },
             };
         }
     );
@@ -268,12 +285,16 @@ export const buildReleaseHealthReport = ({
     return {
         reportVersion: RELEASE_HEALTH_REPORT_VERSION,
         generatedAt,
+        operationsSnapshotVersion: operationsSnapshot?.schemaVersion ?? null,
+        provenance: cloneJson(provenance),
+        retention: retention ? cloneJson(retention) : null,
         source: {
             kind: source.kind,
             path: sourcePath,
             summaryProvided: source.summaryProvided,
             eventCount: source.events.length,
         },
+        drillLabel,
         summary: cloneJson(summary),
         thresholds,
         alerts,

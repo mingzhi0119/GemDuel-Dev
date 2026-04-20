@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { describe, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const { ELECTRON_BRIDGE_API_KEYS, UPDATE_CHANNELS, createElectronBridge } =
+const { ELECTRON_BRIDGE_API_KEYS, UPDATE_CHANNELS, createElectronBridge, subscribe } =
     require('../preloadContract.cjs') as {
         ELECTRON_BRIDGE_API_KEYS: string[];
         UPDATE_CHANNELS: Record<string, string>;
@@ -16,6 +16,15 @@ const { ELECTRON_BRIDGE_API_KEYS, UPDATE_CHANNELS, createElectronBridge } =
         }) => {
             [key: string]: unknown;
         };
+        subscribe: (
+            ipcRenderer: {
+                on: ReturnType<typeof vi.fn>;
+                removeListener: ReturnType<typeof vi.fn>;
+            },
+            api: string,
+            channel: string,
+            callback: (...args: unknown[]) => void
+        ) => () => void;
     };
 
 describe('electron preload contract', () => {
@@ -125,6 +134,41 @@ describe('electron preload contract', () => {
 
         expect(() => bridge.onUpdateAvailable('not-a-function')).toThrow(
             '[IPC] onUpdateAvailable requires a callback function.'
+        );
+    });
+
+    it('wraps raw IPC subscriptions in the governed helper contract', () => {
+        const listeners = new Map<string, (...args: unknown[]) => void>();
+        const ipcRenderer = {
+            on: vi.fn((channel, listener) => {
+                listeners.set(channel, listener);
+            }),
+            removeListener: vi.fn((channel, listener) => {
+                if (listeners.get(channel) === listener) {
+                    listeners.delete(channel);
+                }
+            }),
+        };
+        const callback = vi.fn();
+
+        const unsubscribe = subscribe(
+            ipcRenderer,
+            'onDownloadProgress',
+            UPDATE_CHANNELS.downloadProgress,
+            callback
+        );
+
+        listeners.get(UPDATE_CHANNELS.downloadProgress)?.({}, 73);
+        unsubscribe();
+
+        expect(callback).toHaveBeenCalledWith(73);
+        expect(ipcRenderer.on).toHaveBeenCalledWith(
+            UPDATE_CHANNELS.downloadProgress,
+            expect.any(Function)
+        );
+        expect(ipcRenderer.removeListener).toHaveBeenCalledWith(
+            UPDATE_CHANNELS.downloadProgress,
+            expect.any(Function)
         );
     });
 });

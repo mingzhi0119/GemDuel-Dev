@@ -47,6 +47,55 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         failureMode:
             'Falls back to GEMDUEL_ICE_SERVERS_JSON and then the built-in STUN baseline if the ephemeral bundle is missing, expired, or invalid.',
     },
+    GITHUB_REPOSITORY: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions string metadata or unset outside CI.',
+        secretHandling: 'CI provenance metadata only. Never store secrets here.',
+        failureMode: 'Artifact provenance repository field falls back to null.',
+    },
+    GITHUB_SHA: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions commit SHA string or unset outside CI.',
+        secretHandling: 'CI provenance metadata only. Never store secrets here.',
+        failureMode: 'Artifact provenance sha field falls back to null.',
+    },
+    GITHUB_REF: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions ref string or unset outside CI.',
+        secretHandling: 'CI provenance metadata only. Never store secrets here.',
+        failureMode: 'Artifact provenance ref field falls back to null.',
+    },
+    GITHUB_WORKFLOW: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions workflow name or unset outside CI.',
+        secretHandling: 'CI provenance metadata only. Never store secrets here.',
+        failureMode: 'Artifact provenance workflow field falls back to null.',
+    },
+    GITHUB_RUN_ID: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions numeric run identifier string or unset outside CI.',
+        secretHandling: 'CI provenance metadata only. Never store secrets here.',
+        failureMode: 'Artifact provenance runId field falls back to null.',
+    },
+    GITHUB_RUN_ATTEMPT: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions numeric run attempt string or unset outside CI.',
+        secretHandling: 'CI provenance metadata only. Never store secrets here.',
+        failureMode: 'Artifact provenance runAttempt field falls back to null.',
+    },
+    GITHUB_JOB: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions job name or unset outside CI.',
+        secretHandling: 'CI provenance metadata only. Never store secrets here.',
+        failureMode: 'Artifact provenance jobName field falls back to null.',
+    },
 });
 
 const isIsoTimestamp = (value) => typeof value === 'string' && !Number.isNaN(Date.parse(value));

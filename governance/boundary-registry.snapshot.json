@@ -147,15 +147,21 @@
             "owner": "Desktop Platform",
             "validatorRefs": [
                 "electron/desktopGovernance.js",
-                "scripts/check-electron-governance.mjs"
+                "scripts/check-electron-governance.mjs",
+                "scripts/check-runtime-drill-governance.mjs"
             ],
             "contractRefs": [
                 "electron/governance/desktop-policy.snapshot.json",
+                "electron/governance/runtime-drill.snapshot.json",
                 "ELECTRON_IPC_ALLOWLIST.md"
             ],
             "reasonCodes": ["DESKTOP_POLICY_REJECTED"],
-            "runtimeSignals": ["WINDOW_CREATED"],
-            "testRefs": ["electron/__tests__/desktopGovernance.test.ts"],
+            "runtimeSignals": ["WINDOW_CREATED", "WINDOW_LOAD_FAILED", "WINDOW_UNAVAILABLE"],
+            "testRefs": [
+                "electron/__tests__/desktopGovernance.test.ts",
+                "electron/__tests__/runtimeHarness.test.ts",
+                "scripts/__tests__/runtimeDrillGovernance.test.ts"
+            ],
             "failClosedBehavior": "BrowserWindow policy drift fails desktop governance checks before release or local desktop startup."
         },
         {
@@ -197,6 +203,7 @@
             "owner": "Desktop Platform + Release Engineering",
             "validatorRefs": [
                 "scripts/check-release-health.mjs",
+                "scripts/export-governance-artifacts.mjs",
                 "scripts/releaseHealthChecklist.js",
                 "scripts/releaseHealthOperations.js"
             ],
@@ -206,10 +213,17 @@
                 "electron/governance/release-health-operations.snapshot.json"
             ],
             "reasonCodes": ["RELEASE_HEALTH_CHECK_FAILED"],
-            "runtimeSignals": ["APP_READY", "APP_BOOT", "APP_RUNTIME_CONFIG_FAILED"],
+            "runtimeSignals": [
+                "APP_READY",
+                "APP_BOOT",
+                "APP_RUNTIME_CONFIG_FAILED",
+                "IPC_REQUEST_REJECTED",
+                "RECOVERY_REQUEST_SENT"
+            ],
             "testRefs": [
                 "scripts/__tests__/releaseHealthChecklist.test.ts",
-                "scripts/__tests__/releaseHealthOperations.test.ts"
+                "scripts/__tests__/releaseHealthOperations.test.ts",
+                "scripts/__tests__/exportGovernanceArtifacts.test.ts"
             ],
             "failClosedBehavior": "Checklist or SLO drift blocks release-health gates before build and publish."
         },

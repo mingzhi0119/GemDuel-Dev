@@ -24,6 +24,7 @@ const operationsSnapshot = JSON.parse(fs.readFileSync(operationsSnapshotPath, 'u
 const issues = collectReleaseHealthChecklistErrors(checklistText);
 issues.push(
     ...collectReleaseHealthOperationsErrors({
+        repoRoot,
         sloText,
         drillText,
         operationsSnapshot,

@@ -1,7 +1,42 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "reportVersion": 1,
     "sourceFormats": ["release-health-summary", "release-health-jsonl"],
+    "artifactPolicy": {
+        "artifactName": "governance-evidence",
+        "retentionDays": 14,
+        "outputDirectory": "artifacts/governance",
+        "storageKind": "github-actions-artifact"
+    },
+    "artifactReports": [
+        {
+            "id": "healthy-baseline",
+            "title": "Healthy release baseline",
+            "sourcePath": "governance/release-health-fixtures/healthy-baseline.jsonl",
+            "expectedStatus": "healthy"
+        },
+        {
+            "id": "updater-fail",
+            "title": "Updater failure drill",
+            "sourcePath": "governance/release-health-fixtures/updater-fail.jsonl",
+            "expectedStatus": "incident",
+            "drillId": "updater-fail"
+        },
+        {
+            "id": "ipc-reject",
+            "title": "IPC rejection drill",
+            "sourcePath": "governance/release-health-fixtures/ipc-reject.jsonl",
+            "expectedStatus": "incident",
+            "drillId": "ipc-reject"
+        },
+        {
+            "id": "network-recovery",
+            "title": "Network recovery drill",
+            "sourcePath": "governance/release-health-fixtures/network-recovery.jsonl",
+            "expectedStatus": "warning",
+            "drillId": "network-recovery"
+        }
+    ],
     "indicatorThresholds": {
         "startupFailures": {
             "warningMax": 0,
@@ -35,6 +70,12 @@
         "peerFailures": "pager",
         "recoveryRequests": "warn",
         "ipcRejected": "pager"
+    },
+    "bundleBudgets": {
+        "mainChunkKb": {
+            "warningMax": 700,
+            "incidentMax": 850
+        }
     },
     "drills": [
         {

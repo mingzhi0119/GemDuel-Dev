@@ -74,6 +74,38 @@ const createSenderEvent = ({ id, url }: { id: number; url: string }) => ({
 });
 
 describe('electron runtime harness', () => {
+    it('records WINDOW_UNAVAILABLE when renderer notifications fire without a live window', () => {
+        const log = createLogger();
+        const recordMainHealth = createRecordMainHealth();
+        const runtime = createElectronRuntimeHarness({
+            autoUpdater: createAutoUpdaterStub(),
+            autoUpdaterPolicy: {
+                enabled: false,
+                autoDownload: true,
+                allowPrerelease: false,
+            },
+            authorizeIpcSender: vi.fn(),
+            isDev: true,
+            ipcMain: createIpcMainStub(),
+            log,
+            recordMainHealth,
+            validateIpcArgs: vi.fn(),
+        });
+
+        runtime.sendToRenderer('update_available');
+
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'startup',
+                name: 'WINDOW_UNAVAILABLE',
+                severity: 'warn',
+                context: expect.objectContaining({
+                    channel: 'update_available',
+                }),
+            })
+        );
+    });
+
     it('records WINDOW_LOAD_FAILED when the renderer load fails', () => {
         const log = createLogger();
         const recordMainHealth = createRecordMainHealth();
@@ -109,6 +141,46 @@ describe('electron runtime harness', () => {
                     errorDescription: 'boom',
                     validatedURL: 'http://localhost:5173',
                 }),
+            })
+        );
+    });
+
+    it('records WINDOW_LOADED and WINDOW_CLOSED for normal BrowserWindow lifecycle transitions', () => {
+        const log = createLogger();
+        const recordMainHealth = createRecordMainHealth();
+        const runtime = createElectronRuntimeHarness({
+            autoUpdater: createAutoUpdaterStub(),
+            autoUpdaterPolicy: {
+                enabled: false,
+                autoDownload: true,
+                allowPrerelease: false,
+            },
+            authorizeIpcSender: vi.fn(),
+            isDev: true,
+            ipcMain: createIpcMainStub(),
+            log,
+            recordMainHealth,
+            validateIpcArgs: vi.fn(),
+        });
+
+        const window = createWindowStub();
+        runtime.attachWindowLifecycle(window);
+
+        window.webContents.emit('did-finish-load');
+        window.emit('closed');
+
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'startup',
+                name: 'WINDOW_LOADED',
+                severity: 'info',
+            })
+        );
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'startup',
+                name: 'WINDOW_CLOSED',
+                severity: 'info',
             })
         );
     });
@@ -210,6 +282,35 @@ describe('electron runtime harness', () => {
         );
     });
 
+    it('records UPDATER_DISABLED when runtime policy disables auto-updates', async () => {
+        const log = createLogger();
+        const recordMainHealth = createRecordMainHealth();
+        const runtime = createElectronRuntimeHarness({
+            autoUpdater: createAutoUpdaterStub(),
+            autoUpdaterPolicy: {
+                enabled: false,
+                autoDownload: true,
+                allowPrerelease: false,
+            },
+            authorizeIpcSender: vi.fn(),
+            isDev: false,
+            ipcMain: createIpcMainStub(),
+            log,
+            recordMainHealth,
+            validateIpcArgs: vi.fn(),
+        });
+
+        await runtime.configureAutoUpdater();
+
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_DISABLED',
+                severity: 'info',
+            })
+        );
+    });
+
     it('records UPDATER_FAILURE_THRESHOLD_REACHED after repeated updater errors', () => {
         const log = createLogger();
         const recordMainHealth = createRecordMainHealth();
@@ -247,6 +348,108 @@ describe('electron runtime harness', () => {
                 }),
             })
         );
+    });
+
+    it('records updater availability, progress checkpoints, and download completion', () => {
+        const log = createLogger();
+        const recordMainHealth = createRecordMainHealth();
+        const autoUpdater = createAutoUpdaterStub();
+        const runtime = createElectronRuntimeHarness({
+            autoUpdater,
+            autoUpdaterPolicy: {
+                enabled: false,
+                autoDownload: true,
+                allowPrerelease: false,
+            },
+            authorizeIpcSender: vi.fn(),
+            isDev: false,
+            ipcMain: createIpcMainStub(),
+            log,
+            recordMainHealth,
+            validateIpcArgs: vi.fn(),
+        });
+
+        const window = createWindowStub({ id: 7 });
+        runtime.attachWindowLifecycle(window);
+        runtime.attachAutoUpdaterLifecycle();
+
+        autoUpdater.emit('checking-for-update');
+        autoUpdater.emit('update-available', {
+            version: '5.2.12',
+            currentVersion: '5.2.11',
+        });
+        autoUpdater.emit('update-not-available');
+        autoUpdater.emit('download-progress', { percent: 26 });
+        autoUpdater.emit('download-progress', { percent: 55 });
+        autoUpdater.emit('download-progress', { percent: 100 });
+        autoUpdater.emit('update-downloaded', {
+            version: '5.2.12',
+        });
+
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_CHECK_STARTED',
+                severity: 'info',
+            })
+        );
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_AVAILABLE',
+                context: expect.objectContaining({
+                    version: '5.2.12',
+                }),
+            })
+        );
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_NOT_AVAILABLE',
+                severity: 'info',
+            })
+        );
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_DOWNLOAD_PROGRESS',
+                context: expect.objectContaining({
+                    percent: 25,
+                }),
+            })
+        );
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_DOWNLOAD_PROGRESS',
+                context: expect.objectContaining({
+                    percent: 50,
+                }),
+            })
+        );
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_DOWNLOAD_PROGRESS',
+                context: expect.objectContaining({
+                    percent: 100,
+                }),
+            })
+        );
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_DOWNLOADED',
+                context: expect.objectContaining({
+                    version: '5.2.12',
+                }),
+            })
+        );
+        expect(window.webContents.send).toHaveBeenCalledWith('update_available');
+        expect(window.webContents.send).toHaveBeenCalledWith('download_progress', 26);
+        expect(window.webContents.send).toHaveBeenCalledWith('download_progress', 55);
+        expect(window.webContents.send).toHaveBeenCalledWith('download_progress', 100);
+        expect(window.webContents.send).toHaveBeenCalledWith('update_downloaded');
     });
 
     it('allows restart_app to reach quitAndInstall only for authorized senders', () => {
@@ -309,6 +512,61 @@ describe('electron runtime harness', () => {
                 category: 'updater',
                 name: 'UPDATER_INSTALL_REQUESTED',
                 severity: 'info',
+            })
+        );
+    });
+
+    it('rejects payload-invalid restart_app requests even from the trusted renderer', () => {
+        const log = createLogger();
+        const recordMainHealth = createRecordMainHealth();
+        const ipcMain = createIpcMainStub();
+        const runtime = createElectronRuntimeHarness({
+            autoUpdater: createAutoUpdaterStub(),
+            autoUpdaterPolicy: {
+                enabled: false,
+                autoDownload: true,
+                allowPrerelease: false,
+            },
+            authorizeIpcSender: vi.fn(({ senderId, mainWindowId }) =>
+                senderId === mainWindowId
+                    ? { ok: true }
+                    : { ok: false, reason: 'Unexpected renderer sender.' }
+            ),
+            isDev: true,
+            ipcMain,
+            log,
+            recordMainHealth,
+            validateIpcArgs: vi.fn(() => ({
+                ok: false,
+                reason: 'This channel does not accept payload arguments.',
+            })),
+        });
+
+        runtime.attachWindowLifecycle(createWindowStub({ id: 7 }));
+        const sendHandler = vi.fn();
+        runtime.registerGovernedIpcHandlers({
+            sendHandlers: {
+                restart_app: sendHandler,
+            },
+        });
+
+        const restartApp = ipcMain.listeners.get('restart_app');
+        restartApp?.(
+            createSenderEvent({
+                id: 7,
+                url: 'http://localhost:5173',
+            }),
+            'unexpected'
+        );
+
+        expect(sendHandler).not.toHaveBeenCalled();
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: 'IPC_REQUEST_REJECTED',
+                context: expect.objectContaining({
+                    channel: 'restart_app',
+                    reason: 'This channel does not accept payload arguments.',
+                }),
             })
         );
     });

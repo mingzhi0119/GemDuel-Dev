@@ -8,6 +8,7 @@ import {
     collectDesktopGovernanceErrors,
     collectSnapshotDriftIssues,
     createMainWindowOptions,
+    isAllowedRendererUrl,
     validateIpcArgs,
     validateMainWindowOptions,
 } from '../desktopGovernance.js';
@@ -48,6 +49,36 @@ describe('electron desktop governance', () => {
         expect(validateMainWindowOptions(options)).toContainEqual(
             expect.stringContaining('contextIsolation')
         );
+    });
+
+    it('rejects missing window registration, invalid preload settings, and unknown IPC channels', () => {
+        const options = createMainWindowOptions({
+            preloadPath: 'E:/simonbb/GemDuel-Dev/electron/preload.js',
+            appVersion: '5.2.11',
+        });
+        options.autoHideMenuBar = false;
+        options.webPreferences.preload = '';
+
+        const issues = validateMainWindowOptions(options);
+
+        expect(issues).toContain('[BrowserWindow] autoHideMenuBar must stay enabled.');
+        expect(issues).toContainEqual(expect.stringContaining('preload'));
+        expect(
+            authorizeIpcSender({
+                senderId: 7,
+                senderUrl: 'file:///E:/simonbb/GemDuel-Dev/dist/index.html',
+                mainWindowId: null,
+                isDev: false,
+            })
+        ).toEqual({ ok: false, reason: 'No trusted main window is registered.' });
+        expect(validateIpcArgs('unknown-channel', [])).toEqual({
+            ok: false,
+            reason: 'Unknown IPC channel unknown-channel.',
+        });
+        expect(isAllowedRendererUrl('file:///E:/simonbb/GemDuel-Dev/dist/index.html', false)).toBe(
+            true
+        );
+        expect(isAllowedRendererUrl('http://localhost:5173', false)).toBe(false);
     });
 
     it('authorizes only the trusted renderer sender and origin', () => {
@@ -141,6 +172,41 @@ describe('electron desktop governance', () => {
         expect(issues).toContainEqual(expect.stringContaining('Bridge API surface drifted'));
         expect(issues).toContainEqual(expect.stringContaining('Missing documented channel'));
         expect(issues).toContainEqual(expect.stringContaining('audited snapshot'));
+    });
+
+    it('flags every audited snapshot drift dimension independently', () => {
+        const bridge = createElectronBridge({
+            invoke: async () => undefined,
+            send: () => undefined,
+            on: () => undefined,
+            removeListener: () => undefined,
+        });
+        const baseSnapshot = buildDesktopGovernanceSnapshot({
+            windowOptions: createMainWindowOptions({
+                preloadPath: 'E:/simonbb/GemDuel-Dev/electron/preload.js',
+                appVersion: '5.2.11',
+            }),
+            bridgeApiKeys: Object.keys(bridge),
+        });
+
+        const issues = collectSnapshotDriftIssues(baseSnapshot, {
+            policyVersion: 999,
+            mainWindow: {
+                ...baseSnapshot.mainWindow,
+                autoHideMenuBar: false,
+            },
+            bridgeApiKeys: [...baseSnapshot.bridgeApiKeys, 'dangerousApi'].sort(),
+            allowlistedChannels: [...baseSnapshot.allowlistedChannels, 'dangerous-channel'].sort(),
+        });
+
+        expect(issues).toEqual(
+            expect.arrayContaining([
+                '[Snapshot] Desktop governance policy version must remain 1.',
+                '[Snapshot] BrowserWindow governance snapshot drifted.',
+                '[Snapshot] Bridge API surface drifted from the audited snapshot.',
+                '[Snapshot] IPC allowlist drifted from the audited snapshot.',
+            ])
+        );
     });
 
     it('produces a stable machine-readable governance snapshot', () => {
