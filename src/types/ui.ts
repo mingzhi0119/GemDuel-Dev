@@ -1,10 +1,22 @@
 import type { ChangeEventHandler, Dispatch, SetStateAction } from 'react';
-import type { PlayerKey } from '../types';
 import type { useGameLogic } from '../hooks/useGameLogic';
-import type { ResponsiveLayout } from '../hooks/useResponsiveLayout';
+import type { PlayerKey } from './domain';
+
+export type ThemeName = 'light' | 'dark';
+
+export interface ResponsiveLayout {
+    layoutMode: 'mobile' | 'desktop-auto';
+    viewportWidth: number;
+    viewportHeight: number;
+    aspectRatio: number;
+    boardScale: number;
+    deckScale: number;
+    zoneScale: number;
+    zoneHeightPx: number;
+    mainGapPx: number;
+}
 
 export type GameLogicController = ReturnType<typeof useGameLogic>;
-export type ThemeName = 'light' | 'dark';
 
 export interface AppUiState {
     showDebug: boolean;

@@ -2,11 +2,8 @@ import React, { useEffect } from 'react';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-    calculateResponsiveLayout,
-    ResponsiveLayout,
-    useResponsiveLayout,
-} from '../../hooks/useResponsiveLayout';
+import type { ResponsiveLayout } from '../../types';
+import { calculateResponsiveLayout, useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }

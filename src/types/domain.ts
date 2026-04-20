@@ -46,8 +46,9 @@ export interface GemInventory {
     red: number;
     pearl: number;
     gold: number;
-    [key: string]: number; // Allow dynamic access
 }
+
+export type GemInventoryKey = keyof GemInventory;
 
 // ============================================================================
 // CARDS
@@ -166,7 +167,9 @@ export interface Buff {
 export interface BuffRuntimeState {
     refillCount?: number;
     discountColor?: BasicGemColor;
-    [key: string]: unknown;
+    envoyTriggered?: boolean;
+    hasReserved?: boolean;
+    l3PurchasedCount?: number;
 }
 
 /**

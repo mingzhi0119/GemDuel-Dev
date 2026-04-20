@@ -1,8 +1,8 @@
 import { DraftScreen } from '../../components/DraftScreen';
 import { GameConfigMenu } from '../../components/GameConfigMenu';
 import { OnlineMenu } from '../../components/OnlineMenu';
+import type { AppRouteProps } from '../../types';
 import { GameShell } from '../shell/GameShell';
-import type { AppRouteProps } from '../types';
 
 export function GemDuelRoutes(props: AppRouteProps) {
     const { game, theme, ui, setters } = props;

@@ -3,7 +3,7 @@ import { ArrowLeft, RotateCcw, Users } from 'lucide-react';
 import { WinnerModal } from '../../components/WinnerModal';
 import { GEM_TYPES, BONUS_COLORS } from '../../constants';
 import type { ActiveModal, GameMode, GamePhase, GemColor, PlayerKey } from '../../types';
-import type { ThemeName } from '../types';
+import type { ThemeName } from '../../types';
 
 const Rulebook = React.lazy(() =>
     import('../../components/Rulebook').then((module) => ({ default: module.Rulebook }))

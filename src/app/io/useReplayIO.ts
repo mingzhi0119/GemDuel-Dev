@@ -1,6 +1,5 @@
 import type { ChangeEventHandler } from 'react';
-import type { ReplayFile } from '../../types';
-import type { GameLogicController } from '../types';
+import type { GameLogicController, ReplayFile } from '../../types';
 import { importReplayFromFile } from './safeReplayImport';
 
 interface UseReplayIOOptions {

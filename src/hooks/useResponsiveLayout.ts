@@ -1,16 +1,5 @@
 import { useEffect, useState } from 'react';
-
-export type ResponsiveLayout = {
-    layoutMode: 'mobile' | 'desktop-auto';
-    viewportWidth: number;
-    viewportHeight: number;
-    aspectRatio: number;
-    boardScale: number;
-    deckScale: number;
-    zoneScale: number;
-    zoneHeightPx: number;
-    mainGapPx: number;
-};
+import type { ResponsiveLayout } from '../types';
 
 const DESKTOP_WIDTH = 1380;
 const DESKTOP_HEIGHT = 860;

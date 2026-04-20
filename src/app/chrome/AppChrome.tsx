@@ -1,7 +1,7 @@
 import type { ChangeEventHandler } from 'react';
 import { BookOpen, Download, Moon, RotateCcw, Sun, Upload } from 'lucide-react';
 import { DebugPanel } from '../../components/DebugPanel';
-import type { ThemeName } from '../types';
+import type { ThemeName } from '../../types';
 
 interface AppChromeProps {
     theme: ThemeName;

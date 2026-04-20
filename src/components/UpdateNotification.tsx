@@ -53,7 +53,7 @@ export function UpdateNotification() {
                 </div>
             ) : (
                 <button
-                    onClick={() => window.electron.restartApp()}
+                    onClick={() => window.electron?.restartApp()}
                     className="w-full mt-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors"
                 >
                     Restart Now

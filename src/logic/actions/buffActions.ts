@@ -64,8 +64,8 @@ const applyPlayerInitLogic = (draft: GameState, pid: PlayerKey, randoms?: Player
     }
 
     if (buff.id === 'extortion') {
-        const state = draft.playerBuffs[pid].state as Record<string, number>;
-        state.refillCount = 0;
+        const buffState = draft.playerBuffs[pid].state as BuffRuntimeState;
+        buffState.refillCount = 0;
     }
     if (buff.id === 'pacifist') draft.extraPrivileges[pid] = (draft.extraPrivileges[pid] || 0) + 1;
     if (buff.id === 'color_preference') {
