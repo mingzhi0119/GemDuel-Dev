@@ -1,0 +1,29 @@
+# Frontend / domain
+/src/app/** @mingzhi0119
+/src/components/** @mingzhi0119
+/src/data/** @mingzhi0119
+/src/hooks/** @mingzhi0119
+/src/logic/** @mingzhi0119
+/src/types/** @mingzhi0119
+/src/utils.ts @mingzhi0119
+/shared/** @mingzhi0119
+
+# Networking
+/server/** @mingzhi0119
+/src/hooks/gameNetwork/** @mingzhi0119
+/src/hooks/onlineManager/** @mingzhi0119
+/src/logic/network* @mingzhi0119
+/src/logic/hostApproval.ts @mingzhi0119
+/src/logic/networkRecovery.ts @mingzhi0119
+/src/logic/networkChecksums.ts @mingzhi0119
+
+# Desktop
+/electron/** @mingzhi0119
+
+# Release
+/.github/** @mingzhi0119
+/scripts/** @mingzhi0119
+/governance/** @mingzhi0119
+/docs/governance/** @mingzhi0119
+/package.json @mingzhi0119
+/package-lock.json @mingzhi0119
