@@ -40,6 +40,9 @@ jobs:
             - name: Boundary Governance Check
               run: npm run boundaries:check
 
+            - name: Architecture Budget Gate
+              run: npm run architecture:check
+
             - name: Lint
               run: npm run lint
 

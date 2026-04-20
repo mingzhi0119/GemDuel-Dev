@@ -36,6 +36,9 @@ jobs:
             - name: Boundary Governance Check
               run: npm run boundaries:check
 
+            - name: Architecture Budget Gate
+              run: npm run architecture:check
+
             - name: Lint
               run: npm run lint
 
@@ -57,10 +60,15 @@ jobs:
             - name: Build
               run: npm run build
 
+            - name: Bundle Budget Gate
+              run: npm run bundle:check
+
             - name: Export Governance Artifacts
+              if: always()
               run: npm run governance:artifacts -- --out-dir artifacts/governance
 
             - name: Upload Governance Artifacts
+              if: always()
               uses: actions/upload-artifact@v4
               with:
                   name: governance-evidence

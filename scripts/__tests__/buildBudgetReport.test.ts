@@ -45,9 +45,9 @@ describe('bundle budget report', () => {
         }
     });
 
-    it('classifies the largest chunk against the governed mainChunkKb budget', () => {
+    it('classifies warning-band bundle growth against the governed mainChunkKb budget', () => {
         const distDir = createDistFixture([
-            ['index-main.js', 760 * 1024],
+            ['index-main.js', 650 * 1024],
             ['chunk-a.js', 10 * 1024],
         ]);
 
@@ -57,8 +57,8 @@ describe('bundle budget report', () => {
                 operationsSnapshot: {
                     bundleBudgets: {
                         mainChunkKb: {
-                            warningMax: 700,
-                            incidentMax: 850,
+                            warningMax: 600,
+                            incidentMax: 700,
                         },
                     },
                 },
@@ -73,6 +73,34 @@ describe('bundle budget report', () => {
             expect(
                 JSON.parse(serializeBundleBudgetReport(report, { pretty: false })).budget.metric
             ).toBe('mainChunkKb');
+        } finally {
+            fs.rmSync(distDir, {
+                force: true,
+                recursive: true,
+            });
+        }
+    });
+
+    it('classifies hard-limit bundle growth as an incident', () => {
+        const distDir = createDistFixture([
+            ['index-main.js', 720 * 1024],
+            ['chunk-a.js', 10 * 1024],
+        ]);
+
+        try {
+            const report = buildBundleBudgetReport({
+                distDir,
+                operationsSnapshot: {
+                    bundleBudgets: {
+                        mainChunkKb: {
+                            warningMax: 600,
+                            incidentMax: 700,
+                        },
+                    },
+                },
+            });
+
+            expect(report.status).toBe('incident');
         } finally {
             fs.rmSync(distDir, {
                 force: true,

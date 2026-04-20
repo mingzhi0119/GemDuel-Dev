@@ -19,6 +19,7 @@ Gem Duel is a TypeScript game client with a React renderer, Electron desktop she
 - [`docs/governance/dependency-runtime-governance.md`](docs/governance/dependency-runtime-governance.md)
 - [`docs/governance/release-health-checklist.md`](docs/governance/release-health-checklist.md)
 - [`docs/governance/operations-slo.md`](docs/governance/operations-slo.md)
+- [`docs/adr/README.md`](docs/adr/README.md)
 
 ## Working Rules
 
@@ -29,4 +30,4 @@ Gem Duel is a TypeScript game client with a React renderer, Electron desktop she
 
 ## Audit Context
 
-The 2026-04-20 independent audit called out a P1 closure path around lint, type checking, and SBOM enforcement, then a P2 follow-up around architecture budgets, coverage growth, document hygiene, and renderer observability. This document stays intentionally short so those follow-up items can remain anchored in the dedicated governance docs above.
+The 2026-04-20 independent audit called out a P1 closure path around lint, type checking, and SBOM enforcement, then a P2 follow-up around boundary drift detection and renderer observability. P3 hardening now centers on architecture budgets, bundle-size assertions, and ADR-backed irreversible decisions. This document stays intentionally short so those controls can remain anchored in the dedicated governance docs above.

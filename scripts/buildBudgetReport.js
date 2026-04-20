@@ -4,8 +4,8 @@ import path from 'node:path';
 export const BUNDLE_BUDGET_REPORT_VERSION = 1;
 
 const DEFAULT_MAIN_CHUNK_BUDGET = Object.freeze({
-    warningMax: 700,
-    incidentMax: 850,
+    warningMax: 600,
+    incidentMax: 700,
 });
 
 const toPosixPath = (value) => value.replaceAll(path.sep, '/');
@@ -15,7 +15,7 @@ const assessBudgetStatus = (value, budget) => {
         return 'incident';
     }
 
-    if (value > budget.warningMax) {
+    if (value >= budget.warningMax) {
         return 'warning';
     }
 

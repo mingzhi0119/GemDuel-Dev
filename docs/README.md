@@ -16,6 +16,7 @@
 - [Operations SLO](governance/operations-slo.md)
 - [Operations Fault Drills](governance/operations-fault-drills.md)
 - [Test Governance Matrix](governance/test-governance-matrix.md)
+- [Architecture Decision Records](adr/README.md)
 
 ## Archive
 

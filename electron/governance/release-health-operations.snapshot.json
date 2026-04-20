@@ -73,8 +73,8 @@
     },
     "bundleBudgets": {
         "mainChunkKb": {
-            "warningMax": 700,
-            "incidentMax": 850
+            "warningMax": 600,
+            "incidentMax": 700
         }
     },
     "drills": [

@@ -17,9 +17,9 @@ Each indicator uses the same words in the snapshot and this doc: `warning` and `
 
 ## Bundle Budget
 
-| Metric        | Healthy  | Warning | Incident | Owner             |
-| ------------- | -------- | ------- | -------- | ----------------- |
-| `mainChunkKb` | `<= 700` | `> 700` | `> 850`  | Frontend Platform |
+| Metric        | Healthy | Warning  | Incident | Owner             |
+| ------------- | ------- | -------- | -------- | ----------------- |
+| `mainChunkKb` | `< 600` | `>= 600` | `> 700`  | Frontend Platform |
 
 ## Retained Evidence
 

@@ -18,7 +18,7 @@ describe('governance artifact exporter', () => {
         fs.mkdirSync(assetsDir, {
             recursive: true,
         });
-        fs.writeFileSync(path.join(assetsDir, 'index-main.js'), 'x'.repeat(720 * 1024), 'utf8');
+        fs.writeFileSync(path.join(assetsDir, 'index-main.js'), 'x'.repeat(650 * 1024), 'utf8');
 
         try {
             execFileSync(

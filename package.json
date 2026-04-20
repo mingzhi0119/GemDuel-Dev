@@ -7,10 +7,12 @@
     "main": "electron/main.js",
     "type": "module",
     "scripts": {
+        "architecture:check": "node scripts/check-architecture-budgets.mjs",
+        "bundle:check": "node scripts/check-build-budget.mjs",
         "dev": "vite",
         "build": "vite build",
         "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-        "electron:build": "npm run boundaries:check && npm run deps:check && npm run licenses:check && npm run sbom:check && npm run secrets:check && npm run desktop:check && npm run build && npm run governance:artifacts && electron-builder",
+        "electron:build": "npm run architecture:check && npm run boundaries:check && npm run deps:check && npm run licenses:check && npm run sbom:check && npm run secrets:check && npm run desktop:check && npm run build && npm run bundle:check && npm run governance:artifacts && electron-builder",
         "boundaries:check": "node scripts/check-boundary-governance.mjs",
         "deps:check": "node scripts/check-dependency-governance.mjs",
         "governance:artifacts": "node scripts/export-governance-artifacts.mjs",
