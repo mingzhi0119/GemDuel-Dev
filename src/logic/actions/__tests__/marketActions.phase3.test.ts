@@ -4,9 +4,11 @@ import { createMockState } from '../../__tests__/testHelpers';
 import {
     handleBuyCard,
     handleCancelReserve,
+    handleDiscardReserved,
     handleInitiateBuyJoker,
     handleInitiateReserve,
     handleInitiateReserveDeck,
+    handleReserveCard,
     handleReserveDeck,
 } from '../marketActions';
 import type { Buff, Card, GameState } from '../../../types';
@@ -74,6 +76,32 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.winner).toBe('p1');
         expect(nextState.playerTableau.p1).toHaveLength(1);
         expect(nextState.playerTableau.p1[0].bonusColor).toBe('red');
+    });
+
+    it('auto-buys joker cards when a crown threshold win is available', () => {
+        const state = createState({
+            extraCrowns: { p1: 9, p2: 0 },
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+        });
+        const joker = createCard({
+            id: 'joker-crown-win',
+            level: 2,
+            crowns: 1,
+            bonusColor: undefined,
+        });
+
+        const nextState = handleInitiateBuyJoker(state, {
+            card: joker,
+            source: 'market',
+            marketInfo: { level: 2, idx: 0 },
+        });
+
+        expect(nextState.pendingBuy).toBeNull();
+        expect(nextState.winner).toBe('p1');
+        expect(nextState.playerTableau.p1[0]).toEqual(expect.objectContaining({ id: joker.id }));
     });
 
     it('stores joker purchases as pending when the instant-win shortcut does not apply', () => {
@@ -176,6 +204,28 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.toastMessage).toBe('Steal blocked by Pacifist!');
     });
 
+    it('keeps the turn with the current player when AGAIN resolves without another branch taking over', () => {
+        const againCard = createCard({
+            id: 'again-card',
+            ability: 'again',
+        });
+        const state = createState({
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+        });
+
+        const nextState = handleBuyCard(state, {
+            card: againCard,
+            source: 'market',
+            marketInfo: { level: 1, idx: 0 },
+        });
+
+        expect(nextState.phase).toBe(GAME_PHASES.IDLE);
+        expect(nextState.turn).toBe('p1');
+    });
+
     it('skips bonus-gem cards cleanly when no matching gem exists on the board', () => {
         const bonusCard = createCard({
             id: 'bonus-skip',
@@ -198,6 +248,31 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.phase).toBe(GAME_PHASES.IDLE);
         expect(nextState.bonusGemTarget).toBeNull();
         expect(nextState.toastMessage).toBe('No matching gem available - Skill skipped');
+    });
+
+    it('opens the bonus-action phase when a matching gem exists on the board', () => {
+        const bonusCard = createCard({
+            id: 'bonus-hit',
+            ability: 'bonus_gem',
+            bonusColor: 'red',
+        });
+        const state = createState({
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+        });
+        state.board[0][0] = { type: GEM_TYPES.RED, uid: 'bonus-red' };
+
+        const nextState = handleBuyCard(state, {
+            card: bonusCard,
+            source: 'market',
+            marketInfo: { level: 1, idx: 0 },
+        });
+
+        expect(nextState.phase).toBe(GAME_PHASES.BONUS_ACTION);
+        expect(nextState.turn).toBe('p1');
+        expect(nextState.bonusGemTarget).toBe(GEM_TYPES.RED);
     });
 
     it('steals a privilege from the opponent when scroll resolves against a capped pool', () => {
@@ -278,6 +353,91 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.phase).toBe(GAME_PHASES.IDLE);
         expect(nextState.turn).toBe('p2');
         expect(nextState.pendingReserve).toBeNull();
+    });
+
+    it('steals reserved cards with collector authority and applies reserve bonuses on the first take', () => {
+        vi.spyOn(Math, 'random').mockReturnValue(0);
+
+        const collectorSuite: Buff = {
+            id: 'collector-suite',
+            level: 1,
+            label: 'Collector Suite',
+            desc: 'Combined reserve authority and bonuses for testing.',
+            effects: {
+                passive: {
+                    stealReserved: true,
+                    firstReserveBonus: 1,
+                    reserveBonusGem: true,
+                },
+            },
+        };
+        const reservedCard = createCard({ id: 'opponent-reserved' });
+        const state = createState({
+            playerBuffs: { p1: collectorSuite, p2: BUFFS.NONE },
+            playerReserved: { p1: [], p2: [reservedCard] },
+        });
+        state.board[0][0] = { type: GEM_TYPES.GOLD, uid: 'gold-0-0' };
+
+        const nextState = handleReserveCard(state, {
+            card: reservedCard,
+            level: 1,
+            idx: 0,
+            isSteal: true,
+            goldCoords: { r: 0, c: 0 },
+        });
+
+        expect(nextState.playerReserved.p1).toEqual([reservedCard]);
+        expect(nextState.playerReserved.p2).toEqual([]);
+        expect(nextState.inventories.p1.gold).toBe(2);
+        expect(nextState.extraAllocation.p1.gold).toBe(1);
+        expect(nextState.inventories.p1.red).toBe(1);
+        expect(nextState.toastMessage).toBe('Nimble Fingers: +1 Gem!');
+        expect(nextState.turn).toBe('p2');
+    });
+
+    it('rejects reserve-card steals when the acting player lacks Collector authority', () => {
+        const reservedCard = createCard({ id: 'opponent-reserved-no-collector' });
+        const state = createState({
+            playerReserved: { p1: [], p2: [reservedCard] },
+        });
+
+        const nextState = handleReserveCard(state, {
+            card: reservedCard,
+            level: 1,
+            idx: 0,
+            isSteal: true,
+        });
+
+        expect(nextState.toastMessage).toBe('Requires Collector buff!');
+        expect(nextState.playerReserved.p1).toEqual([]);
+        expect(nextState.playerReserved.p2).toEqual([reservedCard]);
+    });
+
+    it('recycles discarded reserved cards back into their deck when Puppet Master is active', () => {
+        vi.spyOn(Math, 'random').mockReturnValue(0);
+
+        const puppetMaster: Buff = {
+            id: 'puppet_master',
+            level: 1,
+            label: 'Puppet Master',
+            desc: 'Discard a reserved card to recycle it.',
+            effects: {
+                active: 'discard_reserved',
+            },
+        };
+        const reservedCard = createCard({ id: 'reserved-recycle', level: 2 });
+        const state = createState({
+            playerBuffs: { p1: puppetMaster, p2: BUFFS.NONE },
+            playerReserved: { p1: [reservedCard], p2: [] },
+            decks: { 1: [], 2: [], 3: [] },
+        });
+
+        const nextState = handleDiscardReserved(state, { cardId: reservedCard.id });
+
+        expect(nextState.playerReserved.p1).toEqual([]);
+        expect(nextState.decks[2][0]).toEqual(reservedCard);
+        expect(nextState.inventories.p1.red).toBe(1);
+        expect(nextState.toastMessage).toBe('Puppet Master: Card recycled!');
     });
 
     it('refuses reserve-deck requests once the player is already holding three reserved cards', () => {

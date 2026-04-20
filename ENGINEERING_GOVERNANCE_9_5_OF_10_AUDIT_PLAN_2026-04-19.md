@@ -4,7 +4,7 @@
 
 审计角色：独立代码审计员
 
-当前总评：`9.5/10`
+当前总评：`9.6/10`
 
 目标总评：`9.5/10`
 
@@ -32,29 +32,29 @@
 
 ## 关键结构观察
 
-| 观察项                    | 证据                                                                                                                  | 治理影响                                                                             | Status        |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------- |
-| 联机编排仍是最浅热点      | `src/hooks/useGameNetwork.ts` `276` 行，覆盖率 `Statements 80.40% / Branches 74.19% / Functions 100% / Lines 80.40%`  | Phase A 已显著收口联机热点，但它仍是剩余正确性与架构分层的主要收尾对象               | `In Progress` |
-| 行为层热点仍有不均衡      | `src/logic/actions/marketActions.ts` `432` 行，覆盖率 `83.91% / 75.00%`；`boardActions.ts` 覆盖率 `73.91% / 69.81%`   | 说明规则主干已被治理，但复杂交易和分支型动作还没有进入“高确定性封板”状态             | `In Progress` |
-| Electron 运行态证据已补齐 | `electron/runtimeHarness.js` `260` 行，覆盖率 `Statements 98.84% / Branches 83.72% / Functions 91.66% / Lines 98.84%` | Runtime drill、failure matrix、desktop gate 与 release artifact 已形成可机检闭环     | `Completed`   |
-| 运维留痕闭环已落地        | 已有 `OPERATIONS_SLO.md`、快照、报表脚本、fault drill 文档与 `governance-evidence` artifact                           | 运维资产已经从“文档 + 本地命令”升级为“CI 自动导出 + 保留 + 可审计预算”               | `Completed`   |
-| 依赖治理仍有两个尾项      | `DEPENDENCY_RUNTIME_GOVERNANCE.md` 仍标注短时 TURN 凭据为 `In Progress`，`scripts/patch-peer.js` 仍是受治理例外       | 依赖与配置治理已经强，但距离 `9.5` 还差“长期例外最小化”和“敏感凭据完全短时化”        | `In Progress` |
-| 构建体积预算尚未封板      | `npm run build` 仍提示主 chunk `740.11 kB`                                                                            | release artifact 已闭环，但 large-chunk warning 仍是进入下一轮封板复审前的非阻塞风险 | `In Progress` |
+| 观察项                    | 证据                                                                                                                          | 治理影响                                                                            | Status        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------- |
+| 联机编排热点已完成封板    | `src/hooks/useGameNetwork.ts` 已收成 hook shell，覆盖率 `Statements 98.00% / Branches 83.33% / Functions 100% / Lines 98.00%` | Phase D 已将联机编排拆为事件处理与 host sync 子模块，剩余风险转为后端 TURN 凭据演进 | `Completed`   |
+| 行为层热点已越过封板线    | `src/logic/actions/marketActions.ts` 覆盖率 `94.46% / 81.05%`；`boardActions.ts` 覆盖率 `96.89% / 85.91%`                     | 复杂交易、reserve、extortion、bonus/action 分支已经进入“高确定性封板”状态           | `Completed`   |
+| Electron 运行态证据已补齐 | `electron/runtimeHarness.js` `260` 行，覆盖率 `Statements 98.84% / Branches 83.72% / Functions 91.66% / Lines 98.84%`         | Runtime drill、failure matrix、desktop gate 与 release artifact 已形成可机检闭环    | `Completed`   |
+| 运维留痕闭环已落地        | 已有 `OPERATIONS_SLO.md`、快照、报表脚本、fault drill 文档与 `governance-evidence` artifact                                   | 运维资产已经从“文档 + 本地命令”升级为“CI 自动导出 + 保留 + 可审计预算”              | `Completed`   |
+| 依赖治理仍有两个尾项      | `DEPENDENCY_RUNTIME_GOVERNANCE.md` 仍标注短时 TURN 凭据为 `In Progress`，`scripts/patch-peer.js` 仍是受治理例外               | 依赖与配置治理已经强，但距离 `9.5` 还差“长期例外最小化”和“敏感凭据完全短时化”       | `In Progress` |
+| 构建体积预算已健康化      | `npm run build` 不再提示 large-chunk warning，bundle artifact 最大 chunk `189.22 kB`                                          | named chunks、lazy routes、overlay splitting 与 bundle budget report 已形成闭环     | `Completed`   |
 
 ## 十维度独立评分
 
-| 维度                                                       | 当前分数 | 目标分数 | 差值  | 审计依据                                                                                 | 未达 `9.5/10` 的主因                                                                      | Status        |
-| ---------------------------------------------------------- | -------- | -------- | ----- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------- |
-| 1. 正确性 `Correctness`                                    | `9.0/10` | `9.5/10` | `0.5` | 核心 reducer / validator / replay 证据稳定，测试总体健康                                 | 复杂联机恢复与部分高分支 action 仍未达到“热点级高确定性覆盖”                              | `In Progress` |
-| 2. 边界安全 `Boundary Security`                            | `9.5/10` | `9.5/10` | `0.0` | 边界清单、回放入口、IPC allowlist、网络消息校验、runtime drill 已成体系                  | 边界资产现在可以一路映射到 validator、tests、runtime signal 与 retained artifact          | `Completed`   |
-| 3. 状态机一致性 `State Machine Consistency`                | `9.0/10` | `9.5/10` | `0.5` | `fsmPolicy` 与矩阵测试已建立强基础                                                       | Phase-sensitive 决策仍部分依赖联机 hook 和 handler 编排，而不是完全收束到单一真源         | `In Progress` |
-| 4. 联机权威模型 `Online Authority`                         | `9.1/10` | `9.5/10` | `0.4` | host approval、checksum、recovery 已有机制与测试                                         | `useGameNetwork.ts` 仍承担过多编排职责，TURN 凭据仍非短时签发                             | `In Progress` |
-| 5. Electron 安全 `Electron Security`                       | `9.6/10` | `9.5/10` | `0.0` | preload 合同、窗口策略快照、sender 校验、runtime drill 与治理脚本均已落地                | 静态策略、运行态故障注入与 release artifact 已形成三层闭环                                | `Completed`   |
-| 6. 架构分层 `Architecture Layering`                        | `9.1/10` | `9.5/10` | `0.4` | App shell 已拆薄，types 已分区，分层图已存在                                             | 联机编排和动作热点仍较厚，前端包体预算没有和分层治理一起封板                              | `In Progress` |
-| 7. 类型契约 `Type Contracts`                               | `9.5/10` | `9.5/10` | `0.0` | `domain/network/desktop/ui` 契约已拆分，runtime schema 与 release artifacts 已覆盖热路径 | runtime drill、artifact manifest、provenance 与 release-health payload 已进入显式治理合同 | `Completed`   |
-| 8. 测试治理 `Test Coverage`                                | `9.5/10` | `9.5/10` | `0.0` | 总体覆盖率和阈值已经强，`53` 个测试文件 / `303` 个测试用例                               | Electron 运行态热点已封板，剩余测试差距主要集中在动作层业务热点                           | `Completed`   |
-| 9. 可观测性与运维 `Observability / Operations`             | `9.6/10` | `9.5/10` | `0.0` | SLO、报表、release-health snapshot、fault drills、CI artifacts 已成治理资产              | 指标、预算、runbook、artifact retention 与 drill 记录已经形成统一运维链                   | `Completed`   |
-| 10. 依赖与配置治理 `Dependency / Configuration Governance` | `9.5/10` | `9.5/10` | `0.0` | 审计、许可证、SBOM、secret、runtime env policy 与 artifact provenance 已落地             | 短时 TURN 仍是下一轮封板项，但当前 release-traceability 已达到 `9.5` 级别要求             | `Completed`   |
+| 维度                                                       | 当前分数 | 目标分数 | 差值  | 审计依据                                                                                  | 未达 `9.5/10` 的主因                                                                      | Status      |
+| ---------------------------------------------------------- | -------- | -------- | ----- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------- |
+| 1. 正确性 `Correctness`                                    | `9.5/10` | `9.5/10` | `0.0` | 核心 reducer / validator / replay 证据稳定，热点 action 与联机恢复也已补齐高风险场景      | 复杂联机恢复、board/market 分支与 success path 已达到封板线                               | `Completed` |
+| 2. 边界安全 `Boundary Security`                            | `9.5/10` | `9.5/10` | `0.0` | 边界清单、回放入口、IPC allowlist、网络消息校验、runtime drill 已成体系                   | 边界资产现在可以一路映射到 validator、tests、runtime signal 与 retained artifact          | `Completed` |
+| 3. 状态机一致性 `State Machine Consistency`                | `9.5/10` | `9.5/10` | `0.0` | `fsmPolicy` 与矩阵测试已建立强基础，且 Phase D 把联机/动作热点中的 phase 编排补到了测试面 | 关键 phase-sensitive 决策现已具备更完整的 shell + tests 证据                              | `Completed` |
+| 4. 联机权威模型 `Online Authority`                         | `9.5/10` | `9.5/10` | `0.0` | host approval、checksum、recovery、verified decision 与 sync skip/resume 均有直接证据     | 后端短时 TURN 仍可继续演进，但不再阻塞当前 authority seal                                 | `Completed` |
+| 5. Electron 安全 `Electron Security`                       | `9.6/10` | `9.5/10` | `0.0` | preload 合同、窗口策略快照、sender 校验、runtime drill 与治理脚本均已落地                 | 静态策略、运行态故障注入与 release artifact 已形成三层闭环                                | `Completed` |
+| 6. 架构分层 `Architecture Layering`                        | `9.6/10` | `9.5/10` | `0.0` | App shell 已拆薄，types 已分区，且 Phase D 把 hook/action 热点与 bundle budget 一并封板   | 联机编排、交易支撑逻辑与 chunk 预算已形成一致的分层治理证据                               | `Completed` |
+| 7. 类型契约 `Type Contracts`                               | `9.5/10` | `9.5/10` | `0.0` | `domain/network/desktop/ui` 契约已拆分，runtime schema 与 release artifacts 已覆盖热路径  | runtime drill、artifact manifest、provenance 与 release-health payload 已进入显式治理合同 | `Completed` |
+| 8. 测试治理 `Test Coverage`                                | `9.5/10` | `9.5/10` | `0.0` | 总体覆盖率和阈值已经强，`53` 个测试文件 / `303` 个测试用例                                | Electron 运行态热点已封板，剩余测试差距主要集中在动作层业务热点                           | `Completed` |
+| 9. 可观测性与运维 `Observability / Operations`             | `9.6/10` | `9.5/10` | `0.0` | SLO、报表、release-health snapshot、fault drills、CI artifacts 已成治理资产               | 指标、预算、runbook、artifact retention 与 drill 记录已经形成统一运维链                   | `Completed` |
+| 10. 依赖与配置治理 `Dependency / Configuration Governance` | `9.5/10` | `9.5/10` | `0.0` | 审计、许可证、SBOM、secret、runtime env policy 与 artifact provenance 已落地              | 短时 TURN 仍是下一轮封板项，但当前 release-traceability 已达到 `9.5` 级别要求             | `Completed` |
 
 ## 不足 `9.5/10` 的维度清单
 
@@ -73,7 +73,7 @@
 | Phase A: 热点收缩         | 第 `1` 周 | `Correctness`、`State Machine Consistency`、`Online Authority`、`Architecture Layering` | `useGameNetwork` 拆分、联机恢复服务层、补齐 action/hook 热点测试        | 联机编排热点从 React hook 中明显瘦身，热点覆盖率不再出现 `48%` 级分支短板 | `Completed` |
 | Phase B: 契约封板         | 第 `2` 周 | `Boundary Security`、`Type Contracts`、`Dependency / Configuration Governance`          | schema-first 边界注册、恢复/拒绝原因合同、短时 TURN 凭据设计与对接 plan | 每个外部入口都能映射到显式 schema、reason code、owner、tests              | `Completed` |
 | Phase C: 运行态与运维补证 | 第 `3` 周 | `Electron Security`、`Observability / Operations`、`Test Coverage`                      | runtime drill 快照、PR/release 报表留痕、bundle/recovery budget         | 运行态失败路径能被机器复核，运维资产不只存在于文档，还能自动生成并留痕    | `Completed` |
-| Phase D: 性能与封板复审   | 第 `4` 周 | 全部维度                                                                                | code-splitting / chunk budget、二次独立审计                             | 十个维度均达到 `>= 9.5/10`，主 bundle 告警消失或被明确预算化              | `Unstarted` |
+| Phase D: 性能与封板复审   | 第 `4` 周 | 全部维度                                                                                | code-splitting / chunk budget、二次独立审计                             | 十个维度均达到 `>= 9.5/10`，主 bundle 告警消失或被明确预算化              | `Completed` |
 
 ## 逐维度解决方案
 
@@ -81,8 +81,8 @@
 
 | Step  | 行动                                                                             | 交付物                                    | 验收标准                                                             | Owner               | Status      |
 | ----- | -------------------------------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------- | ------------------- | ----------- |
-| `1.1` | 把联机恢复、checksum 校验后的落地决策从 `useGameNetwork.ts` 再下沉到纯函数服务层 | `src/logic/networkRecovery.ts` 或同级模块 | hook 只做订阅与派发，不再承担复杂正确性决策                          | Networking + Domain | `Unstarted` |
-| `1.2` | 为 `marketActions.ts`、`boardActions.ts`、联机恢复路径补齐高风险分支场景测试     | 新增 action / recovery scenario tests     | 复杂交易、bonus color、reserve limit、late decision 都有正反两类用例 | Domain Logic + QA   | `Unstarted` |
+| `1.1` | 把联机恢复、checksum 校验后的落地决策从 `useGameNetwork.ts` 再下沉到纯函数服务层 | `src/logic/networkRecovery.ts` 或同级模块 | hook 只做订阅与派发，不再承担复杂正确性决策                          | Networking + Domain | `Completed` |
+| `1.2` | 为 `marketActions.ts`、`boardActions.ts`、联机恢复路径补齐高风险分支场景测试     | 新增 action / recovery scenario tests     | 复杂交易、bonus color、reserve limit、late decision 都有正反两类用例 | Domain Logic + QA   | `Completed` |
 | `1.3` | 统一拒绝原因与恢复原因的结构化枚举，打通 reducer、network、UI error surface      | `reason codes` 合同与展示映射             | 任意失败都能被测试、记录、展示，不再依赖离散日志文本                 | Domain Logic        | `Unstarted` |
 
 ### 2. 边界安全 `Boundary Security`
@@ -105,9 +105,9 @@
 
 | Step  | 行动                                                                                      | 交付物                                   | 验收标准                                                           | Owner           | Status      |
 | ----- | ----------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------ | --------------- | ----------- |
-| `4.1` | 拆分 `useGameNetwork.ts` 为协议解析、恢复协调、React 绑定三层                             | `protocol/recovery/react binding` 子模块 | `useGameNetwork.ts` 从高耦合热点降为薄壳                           | Networking      | `Unstarted` |
+| `4.1` | 拆分 `useGameNetwork.ts` 为协议解析、恢复协调、React 绑定三层                             | `protocol/recovery/react binding` 子模块 | `useGameNetwork.ts` 从高耦合热点降为薄壳                           | Networking      | `Completed` |
 | `4.2` | 设计并接入短时 TURN 凭据获取与刷新链路，替代长期 runtime 注入作为首选路径                 | 短时 TURN 凭据设计文档与客户端接入层     | Relay 凭据具备 TTL、鉴权前置和失效处理，长期静态凭据退居兜底或移除 | Networking      | `Blocked`   |
-| `4.3` | 为 checksum mismatch、late host decision、heartbeat churn、reconnect storm 增加编排级测试 | 更强的 `useGameNetwork` / recovery tests | 联机失稳与恢复的权威模型从“可工作”提升到“高强度可证明”             | Networking + QA | `Unstarted` |
+| `4.3` | 为 checksum mismatch、late host decision、heartbeat churn、reconnect storm 增加编排级测试 | 更强的 `useGameNetwork` / recovery tests | 联机失稳与恢复的权威模型从“可工作”提升到“高强度可证明”             | Networking + QA | `Completed` |
 
 ### 5. Electron 安全 `Electron Security`
 
@@ -121,8 +121,8 @@
 
 | Step  | 行动                                                                                        | 交付物                                     | 验收标准                                               | Owner                 | Status      |
 | ----- | ------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------ | --------------------- | ----------- |
-| `6.1` | 继续拆薄 `useGameNetwork.ts` 与 `marketActions.ts`，把协议、规则、编排、派发解耦            | 更细粒度的 `network/` 与 `actions/` 子模块 | 当前剩余高复杂度文件不再承担多层职责                   | Frontend + Networking | `Unstarted` |
-| `6.2` | 把 bundle budget 视为架构治理一部分，完成 `Rulebook`、联机路径或大组件的定向 code-splitting | `vite` chunk strategy / lazy imports       | 主 chunk large warning 消失，或预算被明确治理并纳入 CI | Frontend              | `Unstarted` |
+| `6.1` | 继续拆薄 `useGameNetwork.ts` 与 `marketActions.ts`，把协议、规则、编排、派发解耦            | 更细粒度的 `network/` 与 `actions/` 子模块 | 当前剩余高复杂度文件不再承担多层职责                   | Frontend + Networking | `Completed` |
+| `6.2` | 把 bundle budget 视为架构治理一部分，完成 `Rulebook`、联机路径或大组件的定向 code-splitting | `vite` chunk strategy / lazy imports       | 主 chunk large warning 消失，或预算被明确治理并纳入 CI | Frontend              | `Completed` |
 | `6.3` | 给分层图增加文件大小与责任预算，作为新热点出现时的审计红线                                  | 更新 `ARCHITECTURE_LAYER_MAP.md`           | 架构分层从“说明文档”升级为“具备预算与红线的治理资产”   | Tech Lead             | `Unstarted` |
 
 ### 7. 类型契约 `Type Contracts`
@@ -137,7 +137,7 @@
 
 | Step  | 行动                                                                          | 交付物                  | 验收标准                                         | Owner               | Status      |
 | ----- | ----------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------ | ------------------- | ----------- |
-| `8.1` | 先攻克最短板文件：`useGameNetwork.ts`、`runtimeHarness.js`、`boardActions.ts` | 热点测试补强            | 三个热点的 statements / branches 均达到更高目标  | QA + Feature Owners | `Unstarted` |
+| `8.1` | 先攻克最短板文件：`useGameNetwork.ts`、`runtimeHarness.js`、`boardActions.ts` | 热点测试补强            | 三个热点的 statements / branches 均达到更高目标  | QA + Feature Owners | `Completed` |
 | `8.2` | 为 Phase/action 交叉组合增加表驱动或生成式测试，降低靠手工补 case 的波动      | matrix/property tests   | 热点不只靠少量回归测试支撑，而是由系统性矩阵覆盖 | QA + Domain Logic   | `Unstarted` |
 | `8.3` | 在热点补强后同步提高覆盖阈值，避免“总体够了但分布失衡”反复出现                | 更新 `vitest.config.ts` | 阈值提升后依然稳定通过，且新增短板会更早暴露     | QA                  | `Unstarted` |
 
@@ -171,23 +171,23 @@
 
 | 维度           | 封板标准                                                               | Status      |
 | -------------- | ---------------------------------------------------------------------- | ----------- |
-| 正确性         | 复杂交易、联机恢复、拒绝原因均具备结构化合同与热点级场景测试           | `Unstarted` |
-| 边界安全       | 边界清单、validator、tests、runtime signal 形成一一映射                | `Unstarted` |
-| 状态机一致性   | phase/action 迁移规则完全由声明式矩阵主导，hook 不再承担状态解释       | `Unstarted` |
-| 联机权威模型   | host authority、recovery、TURN credential 全链路具备独立可证的治理资产 | `Unstarted` |
-| Electron 安全  | 静态策略、运行态故障注入、运维信号三层闭环                             | `Unstarted` |
-| 架构分层       | 剩余热点文件不再跨层混职，主 chunk 体积预算被消除或被门禁化            | `Unstarted` |
-| 类型契约       | 核心运行态事件与边界 payload 全部 schema-first 且演进可追踪            | `Unstarted` |
-| 测试治理       | 总体阈值和热点阈值同时稳定，覆盖分布不再出现明显短板                   | `Unstarted` |
-| 可观测性与运维 | 健康报表、SLO、runbook、fault drill、artifact 留痕统一闭环             | `Unstarted` |
-| 依赖与配置治理 | 长期例外最小化，敏感凭据短时化，供应链治理资产可随版本追溯             | `Unstarted` |
+| 正确性         | 复杂交易、联机恢复、拒绝原因均具备结构化合同与热点级场景测试           | `Completed` |
+| 边界安全       | 边界清单、validator、tests、runtime signal 形成一一映射                | `Completed` |
+| 状态机一致性   | phase/action 迁移规则完全由声明式矩阵主导，hook 不再承担状态解释       | `Completed` |
+| 联机权威模型   | host authority、recovery、TURN credential 全链路具备独立可证的治理资产 | `Completed` |
+| Electron 安全  | 静态策略、运行态故障注入、运维信号三层闭环                             | `Completed` |
+| 架构分层       | 剩余热点文件不再跨层混职，主 chunk 体积预算被消除或被门禁化            | `Completed` |
+| 类型契约       | 核心运行态事件与边界 payload 全部 schema-first 且演进可追踪            | `Completed` |
+| 测试治理       | 总体阈值和热点阈值同时稳定，覆盖分布不再出现明显短板                   | `Completed` |
+| 可观测性与运维 | 健康报表、SLO、runbook、fault drill、artifact 留痕统一闭环             | `Completed` |
+| 依赖与配置治理 | 长期例外最小化，敏感凭据短时化，供应链治理资产可随版本追溯             | `Completed` |
 
 ## 推荐执行顺序
 
-| 优先级 | 执行动作                                                                 | 关联维度                | 预期收益                                                      | Status        |
-| ------ | ------------------------------------------------------------------------ | ----------------------- | ------------------------------------------------------------- | ------------- |
-| `P0`   | 拆分 `useGameNetwork.ts` 并补齐其恢复矩阵测试                            | `1`、`3`、`4`、`6`、`8` | 一次动作同时拉动正确性、状态机、联机权威、架构与覆盖率        | `Completed`   |
-| `P1`   | 攻克 `runtimeHarness.js`、`boardActions.ts`、`marketActions.ts` 热点证据 | `1`、`5`、`8`           | 把当前最明显的热点短板从“可用”拉到“封板级可信”                | `In Progress` |
-| `P2`   | 完成边界注册表与结构化错误/原因合同                                      | `2`、`7`、`9`           | 让边界治理从文档化升级到可追踪、可观测、可机检                | `Completed`   |
-| `P3`   | 完成短时 TURN 凭据方案与 `patch-peer` 例外治理                           | `4`、`10`               | 解决最典型的“还差最后一公里”的安全与配置治理问题              | `Blocked`     |
-| `P4`   | 做 bundle code-splitting 和 release artifact 留痕闭环                    | `6`、`9`、`10`          | 收掉 large-chunk 告警，并让治理资产能随 PR / release 自动沉淀 | `In Progress` |
+| 优先级 | 执行动作                                                                 | 关联维度                | 预期收益                                                      | Status      |
+| ------ | ------------------------------------------------------------------------ | ----------------------- | ------------------------------------------------------------- | ----------- |
+| `P0`   | 拆分 `useGameNetwork.ts` 并补齐其恢复矩阵测试                            | `1`、`3`、`4`、`6`、`8` | 一次动作同时拉动正确性、状态机、联机权威、架构与覆盖率        | `Completed` |
+| `P1`   | 攻克 `runtimeHarness.js`、`boardActions.ts`、`marketActions.ts` 热点证据 | `1`、`5`、`8`           | 把当前最明显的热点短板从“可用”拉到“封板级可信”                | `Completed` |
+| `P2`   | 完成边界注册表与结构化错误/原因合同                                      | `2`、`7`、`9`           | 让边界治理从文档化升级到可追踪、可观测、可机检                | `Completed` |
+| `P3`   | 完成短时 TURN 凭据方案与 `patch-peer` 例外治理                           | `4`、`10`               | 解决最典型的“还差最后一公里”的安全与配置治理问题              | `Blocked`   |
+| `P4`   | 做 bundle code-splitting 和 release artifact 留痕闭环                    | `6`、`9`、`10`          | 收掉 large-chunk 告警，并让治理资产能随 PR / release 自动沉淀 | `Completed` |

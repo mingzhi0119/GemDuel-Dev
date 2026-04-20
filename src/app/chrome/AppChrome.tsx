@@ -1,7 +1,10 @@
-import type { ChangeEventHandler } from 'react';
+import React, { Suspense, type ChangeEventHandler } from 'react';
 import { BookOpen, Download, Moon, RotateCcw, Sun, Upload } from 'lucide-react';
-import { DebugPanel } from '../../components/DebugPanel';
 import type { ThemeName } from '../../types';
+
+const DebugPanel = React.lazy(() =>
+    import('../../components/DebugPanel').then((module) => ({ default: module.DebugPanel }))
+);
 
 interface AppChromeProps {
     theme: ThemeName;
@@ -112,24 +115,26 @@ export function AppChrome({
             )}
 
             {showDebugPanels && (
-                <div className="fixed left-4 top-36 z-[90] flex flex-col gap-4 animate-in slide-in-from-left duration-300">
-                    <DebugPanel
-                        player="p1"
-                        onAddCrowns={() => onAddCrowns('p1')}
-                        onAddPoints={() => onAddPoints('p1')}
-                        onAddPrivilege={() => onAddPrivilege('p1')}
-                        onForceRoyal={onForceRoyal}
-                        theme={theme}
-                    />
-                    <DebugPanel
-                        player="p2"
-                        onAddCrowns={() => onAddCrowns('p2')}
-                        onAddPoints={() => onAddPoints('p2')}
-                        onAddPrivilege={() => onAddPrivilege('p2')}
-                        onForceRoyal={onForceRoyal}
-                        theme={theme}
-                    />
-                </div>
+                <Suspense fallback={null}>
+                    <div className="fixed left-4 top-36 z-[90] flex flex-col gap-4 animate-in slide-in-from-left duration-300">
+                        <DebugPanel
+                            player="p1"
+                            onAddCrowns={() => onAddCrowns('p1')}
+                            onAddPoints={() => onAddPoints('p1')}
+                            onAddPrivilege={() => onAddPrivilege('p1')}
+                            onForceRoyal={onForceRoyal}
+                            theme={theme}
+                        />
+                        <DebugPanel
+                            player="p2"
+                            onAddCrowns={() => onAddCrowns('p2')}
+                            onAddPoints={() => onAddPoints('p2')}
+                            onAddPrivilege={() => onAddPrivilege('p2')}
+                            onForceRoyal={onForceRoyal}
+                            theme={theme}
+                        />
+                    </div>
+                </Suspense>
             )}
         </>
     );

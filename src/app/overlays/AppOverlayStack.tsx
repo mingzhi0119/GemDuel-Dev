@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import { ArrowLeft, RotateCcw, Users } from 'lucide-react';
-import { WinnerModal } from '../../components/WinnerModal';
 import { GEM_TYPES, BONUS_COLORS } from '../../constants';
 import type { ActiveModal, GameMode, GamePhase, GemColor, PlayerKey } from '../../types';
 import type { ThemeName } from '../../types';
@@ -10,6 +9,9 @@ const Rulebook = React.lazy(() =>
 );
 const DeckPeekModal = React.lazy(() =>
     import('../../components/DeckPeekModal').then((module) => ({ default: module.DeckPeekModal }))
+);
+const WinnerModal = React.lazy(() =>
+    import('../../components/WinnerModal').then((module) => ({ default: module.WinnerModal }))
 );
 
 interface AppOverlayStackProps {
@@ -73,7 +75,9 @@ export function AppOverlayStack({
             </Suspense>
 
             {persistentWinner && !isReviewing && (
-                <WinnerModal winner={persistentWinner} onReview={onStartReview} />
+                <Suspense fallback={null}>
+                    <WinnerModal winner={persistentWinner} onReview={onStartReview} />
+                </Suspense>
             )}
 
             {phase === 'SELECT_CARD_COLOR' && (

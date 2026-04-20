@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { INITIAL_STATE_SKELETON } from '../../logic/initialState';
 import { createGameSetupPayload } from '../../logic/gameSetup';
+import { computeBootstrapChecksum, computeGuestIntentChecksum } from '../../logic/networkChecksums';
 import { guestIntentToAction } from '../../logic/networkProtocol';
 import type { GameState } from '../../types';
 import type { GuestIntentCommand, HostDecisionMessage } from '../../types/network';
@@ -126,6 +127,47 @@ describe('useGameNetwork', () => {
         expect(clearAndInit).not.toHaveBeenCalled();
     });
 
+    it('applies bootstrap actions when the guest checksum matches the host broadcast', () => {
+        const localDispatch = vi.fn();
+        const clearAndInit = vi.fn();
+        const gameState = createOnlineState({ isHost: false });
+        const bootstrapCommand = {
+            kind: 'INIT' as const,
+            setup: createGameSetupPayload('ONLINE_MULTIPLAYER', {
+                useBuffs: false,
+                isHost: true,
+            }),
+        };
+
+        const Harness = () => {
+            useGameNetwork(gameState, localDispatch, clearAndInit, false);
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        act(() => {
+            latestHandlers?.onBootstrapReceived(
+                bootstrapCommand,
+                computeBootstrapChecksum(bootstrapCommand, false) ?? undefined
+            );
+        });
+
+        expect(mockOnlineController.requestRecovery).not.toHaveBeenCalled();
+        expect(clearAndInit).toHaveBeenCalledWith({
+            type: 'INIT',
+            payload: expect.objectContaining({
+                isHost: false,
+            }),
+        });
+    });
+
     it('requests recovery when a stale host decision arrives for a pending guest intent', () => {
         const localDispatch = vi.fn();
         const clearAndInit = vi.fn();
@@ -222,6 +264,54 @@ describe('useGameNetwork', () => {
         );
     });
 
+    it('accepts verified host decisions for the pending guest intent without requesting recovery', () => {
+        const localDispatch = vi.fn();
+        const clearAndInit = vi.fn();
+        const gameState = createOnlineState({ isHost: false });
+        const command: GuestIntentCommand = { kind: 'CLOSE_MODAL' };
+        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+
+        const Harness = () => {
+            currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        act(() => {
+            currentResult?.networkDispatch(guestIntentToAction(command));
+        });
+
+        const [[requestId]] = mockOnlineController.sendGuestIntent.mock.calls as [
+            [string, GuestIntentCommand],
+        ];
+
+        act(() => {
+            latestHandlers?.onHostDecisionReceived({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'HOST_DECISION',
+                requestId,
+                intentKind: command.kind,
+                approved: true,
+                command,
+                checksum: computeGuestIntentChecksum(gameState, command) ?? 'missing-checksum',
+            });
+        });
+
+        expect(mockOnlineController.requestRecovery).not.toHaveBeenCalled();
+        expect(reportReleaseHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: 'HOST_DECISION_VERIFIED',
+            })
+        );
+    });
+
     it('logs structured rejection reasons when the host rejects an out-of-turn guest intent', () => {
         const localDispatch = vi.fn();
         const clearAndInit = vi.fn();
@@ -259,6 +349,32 @@ describe('useGameNetwork', () => {
             reasonCode: 'AUTHORITY_REJECTED',
         });
         expect(localDispatch).not.toHaveBeenCalled();
+    });
+
+    it('ignores guest-intent callbacks when the current renderer is not the host authority', () => {
+        const localDispatch = vi.fn();
+        const clearAndInit = vi.fn();
+        const gameState = createOnlineState({ isHost: false, turn: 'p2' });
+
+        const Harness = () => {
+            useGameNetwork(gameState, localDispatch, clearAndInit, false);
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        act(() => {
+            latestHandlers?.onGuestIntentReceived('req-ignored', { kind: 'CLOSE_MODAL' });
+        });
+
+        expect(localDispatch).not.toHaveBeenCalled();
+        expect(mockOnlineController.sendHostDecision).not.toHaveBeenCalled();
     });
 
     it('applies approved guest intents on the host and records approval entries', () => {
@@ -405,5 +521,73 @@ describe('useGameNetwork', () => {
             expect.any(String)
         );
         expect(mockOnlineController.sendGuestIntent).not.toHaveBeenCalled();
+    });
+
+    it('skips exactly one host sync after bootstrap and resumes on the next state update', () => {
+        const localDispatch = vi.fn();
+        const clearAndInit = vi.fn();
+        let currentGameState = createOnlineState({
+            isHost: true,
+            turn: 'p1',
+        });
+        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+        const initAction = {
+            type: 'INIT' as const,
+            payload: createGameSetupPayload('ONLINE_MULTIPLAYER', {
+                useBuffs: false,
+                isHost: true,
+            }),
+        };
+
+        const Harness = () => {
+            currentResult = useGameNetwork(currentGameState, localDispatch, clearAndInit, false);
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        resetOnlineControllerMocks();
+
+        act(() => {
+            currentResult?.networkDispatch(initAction);
+        });
+
+        expect(mockOnlineController.sendBootstrap).toHaveBeenCalledTimes(1);
+        expect(mockOnlineController.sendState).not.toHaveBeenCalled();
+
+        currentGameState = createOnlineState({
+            isHost: true,
+            turn: 'p2',
+        });
+
+        act(() => {
+            root?.render(React.createElement(Harness));
+        });
+
+        expect(mockOnlineController.sendState).not.toHaveBeenCalled();
+
+        currentGameState = createOnlineState({
+            isHost: true,
+            turn: 'p1',
+            extraPoints: { p1: 1, p2: 0 },
+        });
+
+        act(() => {
+            root?.render(React.createElement(Harness));
+        });
+
+        expect(mockOnlineController.sendState).toHaveBeenCalledWith(
+            expect.objectContaining({
+                isHost: true,
+                turn: 'p1',
+            }),
+            'TURN_SYNC'
+        );
     });
 });

@@ -10,6 +10,16 @@ import { addFeedback, addPrivilege } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
 import { getPlayerScore, getCrownCount } from '../selectors';
 import {
+    applyFirstReserveBonus,
+    applyReserveBonusGem,
+    ensureExtraAllocation,
+    grantRandomBasicGems,
+    refreshMarketCardSlot,
+    returnPaidGemsToBag,
+    returnPaidGoldToBag,
+    takeGoldFromBoardIfPresent,
+} from './marketActionSupport';
+import {
     GameState,
     Card,
     GemColor,
@@ -18,7 +28,6 @@ import {
     ReserveCardPayload,
     ReserveDeckPayload,
     CardAbility,
-    BoardCell,
     InitiateBuyJokerPayload,
     InitiateReservePayload,
     InitiateReserveDeckPayload,
@@ -70,23 +79,6 @@ export const handleInitiateBuyJoker = (
     return state;
 };
 
-// Helper to grant random basic gems
-const grantRandomBasicGems = (state: GameState, player: PlayerKey, count: number) => {
-    const basics: GemColor[] = ['red', 'green', 'blue', 'white', 'black'];
-    for (let i = 0; i < count; i++) {
-        const randColor = basics[Math.floor(Math.random() * basics.length)];
-        state.inventories[player][randColor]++;
-        if (!state.extraAllocation) {
-            state.extraAllocation = {
-                p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-            };
-        }
-        state.extraAllocation[player][randColor]++;
-        addFeedback(state, player, randColor, 1);
-    }
-};
-
 export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameState => {
     const { card, source, marketInfo, randoms } = payload;
     const player = state.turn;
@@ -109,48 +101,8 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         return state;
     }
 
-    // Return gems to bag (handling extra allocation)
-    Object.entries(gemsPaid).forEach(([color, paid]) => {
-        const gemColor = color as GemColor;
-        inv[gemColor] -= paid as number;
-
-        let remainingToReturn = paid as number;
-
-        // Check if player has extra allocation for this color
-        // If so, consume it (vanish) instead of returning to bag
-        if (state.extraAllocation?.[player]?.[gemColor] > 0) {
-            const extraAvailable = state.extraAllocation[player][gemColor];
-            const amountConsumingExtra = Math.min(extraAvailable, remainingToReturn);
-
-            state.extraAllocation[player][gemColor] -= amountConsumingExtra;
-            remainingToReturn -= amountConsumingExtra;
-        }
-
-        for (let k = 0; k < remainingToReturn; k++) {
-            state.bag.push({
-                type: GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES],
-                uid: `returned-${color}-${Date.now()}-${k}`,
-            } as BoardCell);
-        }
-    });
-
-    // Return gold to bag
-    inv.gold -= goldCost;
-    let goldToReturn = goldCost;
-
-    if (state.extraAllocation?.[player]?.gold > 0) {
-        const extraGold = state.extraAllocation[player].gold;
-        const amountConsuming = Math.min(extraGold, goldToReturn);
-        state.extraAllocation[player].gold -= amountConsuming;
-        goldToReturn -= amountConsuming;
-    }
-
-    for (let k = 0; k < goldToReturn; k++) {
-        state.bag.push({
-            type: GEM_TYPES.GOLD,
-            uid: `returned-gold-${Date.now()}-${k}`,
-        } as BoardCell);
-    }
+    returnPaidGemsToBag(state, player, gemsPaid);
+    returnPaidGoldToBag(state, player, goldCost);
 
     // Minimalism: Double Bonus for first 2 cards
     let finalCard = card;
@@ -185,14 +137,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
                 basics[Math.floor(Math.random() * basics.length)]) as GemColor;
             inv[randColor]++;
 
-            // Track as extra allocation
-            if (!state.extraAllocation) {
-                state.extraAllocation = {
-                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                };
-            }
-            state.extraAllocation[player][randColor]++;
+            ensureExtraAllocation(state)[player][randColor]++;
 
             addFeedback(state, player, randColor, 1);
             state.toastMessage = 'Bounty Hunter: +1 Gem!';
@@ -209,14 +154,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         if (refundColor) {
             inv[refundColor]++;
 
-            // Track as extra allocation (vanishes on use)
-            if (!state.extraAllocation) {
-                state.extraAllocation = {
-                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                };
-            }
-            state.extraAllocation[player][refundColor]++;
+            ensureExtraAllocation(state)[player][refundColor]++;
 
             addFeedback(state, player, refundColor, 1);
             state.toastMessage = `Recycled 1 ${refundColor.toUpperCase()}!`;
@@ -225,26 +163,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
     // Refresh market or remove from reserved
     if (source === 'market' && marketInfo) {
-        const { level, idx } = marketInfo;
-        const deck = state.decks[level];
-        const isExtra = marketInfo.isExtra;
-        const extraIdx = marketInfo.extraIdx;
-
-        if (isExtra && level === 3 && extraIdx !== undefined) {
-            // Remove specific card from deck (extra cards are deck.length - 2 and deck.length - 3)
-            // extraIdx 1 -> length-2, extraIdx 2 -> length-3
-            const targetIdx = deck.length - (extraIdx + 1);
-            if (targetIdx >= 0) {
-                deck.splice(targetIdx, 1);
-            }
-        } else {
-            // Normal market behavior
-            if (deck.length > 0) {
-                state.market[level][idx] = deck.pop()!;
-            } else {
-                state.market[level][idx] = null;
-            }
-        }
+        refreshMarketCardSlot(state, marketInfo);
     } else if (source === 'reserved') {
         state.playerReserved[player] = state.playerReserved[player].filter((c) => c.id !== card.id);
     }
@@ -399,45 +318,13 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
         }
     }
 
-    // Take gold gem if available
-    if (goldCoords) {
-        const { r, c } = goldCoords;
-        if (state.board[r][c].type.id === 'gold') {
-            state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
-            state.inventories[player].gold++;
-            addFeedback(state, player, 'gold', 1);
-        }
-    }
-
-    // Patient Investor: +1 gold on first reserve
-    if (buff?.effects?.passive?.firstReserveBonus) {
-        if (!buff.state) buff.state = {};
-        if (!buff.state.hasReserved) {
-            buff.state.hasReserved = true;
-            state.inventories[player].gold += 1;
-
-            // Register as extra allocation so it won't return to bag
-            if (!state.extraAllocation) {
-                state.extraAllocation = {
-                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                };
-            }
-            state.extraAllocation[player].gold = (state.extraAllocation[player].gold || 0) + 1;
-
-            addFeedback(state, player, 'gold', 1);
-            state.toastMessage = 'Patient Investor: +1 Extra Gold!';
-        }
-    }
+    takeGoldFromBoardIfPresent(state, player, goldCoords);
+    applyFirstReserveBonus(state, player, buff);
 
     state.pendingReserve = null;
     state.phase = GAME_PHASES.IDLE;
 
-    // Nimble Fingers: Gain gem on reserve
-    if (buff?.effects?.passive?.reserveBonusGem) {
-        grantRandomBasicGems(state, player, 1);
-        state.toastMessage = 'Nimble Fingers: +1 Gem!';
-    }
+    applyReserveBonusGem(state, player, buff);
 
     finalizeTurn(state, player === 'p1' ? 'p2' : 'p1');
     return state;
@@ -458,45 +345,13 @@ export const handleReserveDeck = (state: GameState, payload: ReserveDeckPayload)
         state.playerReserved[player].push(card);
     }
 
-    // Take gold gem if available
-    if (goldCoords) {
-        const { r, c } = goldCoords;
-        if (state.board[r][c].type.id === 'gold') {
-            state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
-            state.inventories[player].gold++;
-            addFeedback(state, player, 'gold', 1);
-        }
-    }
-
-    // Patient Investor: +1 gold on first reserve
-    if (buff?.effects?.passive?.firstReserveBonus) {
-        if (!buff.state) buff.state = {};
-        if (!buff.state.hasReserved) {
-            buff.state.hasReserved = true;
-            state.inventories[player].gold += 1;
-
-            // Register as extra allocation so it won't return to bag
-            if (!state.extraAllocation) {
-                state.extraAllocation = {
-                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
-                };
-            }
-            state.extraAllocation[player].gold = (state.extraAllocation[player].gold || 0) + 1;
-
-            addFeedback(state, player, 'gold', 1);
-            state.toastMessage = 'Patient Investor: +1 Extra Gold!';
-        }
-    }
+    takeGoldFromBoardIfPresent(state, player, goldCoords);
+    applyFirstReserveBonus(state, player, buff);
 
     state.pendingReserve = null;
     state.phase = GAME_PHASES.IDLE;
 
-    // Nimble Fingers: Gain gem on reserve
-    if (buff?.effects?.passive?.reserveBonusGem) {
-        grantRandomBasicGems(state, player, 1);
-        state.toastMessage = 'Nimble Fingers: +1 Gem!';
-    }
+    applyReserveBonusGem(state, player, buff);
 
     finalizeTurn(state, player === 'p1' ? 'p2' : 'p1');
     return state;

@@ -1,16 +1,29 @@
-import { DraftScreen } from '../../components/DraftScreen';
-import { GameConfigMenu } from '../../components/GameConfigMenu';
-import { OnlineMenu } from '../../components/OnlineMenu';
+import React, { Suspense } from 'react';
 import type { AppRouteProps } from '../../types';
-import { GameShell } from '../shell/GameShell';
+
+const DraftScreen = React.lazy(() =>
+    import('../../components/DraftScreen').then((module) => ({ default: module.DraftScreen }))
+);
+const GameConfigMenu = React.lazy(() =>
+    import('../../components/GameConfigMenu').then((module) => ({
+        default: module.GameConfigMenu,
+    }))
+);
+const OnlineMenu = React.lazy(() =>
+    import('../../components/OnlineMenu').then((module) => ({ default: module.OnlineMenu }))
+);
+const GameShell = React.lazy(() =>
+    import('../shell/GameShell').then((module) => ({ default: module.GameShell }))
+);
 
 export function GemDuelRoutes(props: AppRouteProps) {
     const { game, theme, ui, setters } = props;
     const { state, handlers, historyControls, online } = game;
+    let routeContent: React.ReactNode;
 
     if (historyControls.historyLength === 0) {
         if (ui.onlineSetup) {
-            return (
+            routeContent = (
                 <OnlineMenu
                     onBack={() => setters.setOnlineSetup(false)}
                     online={online}
@@ -18,19 +31,17 @@ export function GemDuelRoutes(props: AppRouteProps) {
                     theme={theme}
                 />
             );
+        } else {
+            routeContent = (
+                <GameConfigMenu
+                    onOnlineSetup={() => setters.setOnlineSetup(true)}
+                    onStartGame={handlers.startGame}
+                    theme={theme}
+                />
+            );
         }
-
-        return (
-            <GameConfigMenu
-                onOnlineSetup={() => setters.setOnlineSetup(true)}
-                onStartGame={handlers.startGame}
-                theme={theme}
-            />
-        );
-    }
-
-    if (state.phase === 'DRAFT_PHASE') {
-        return (
+    } else if (state.phase === 'DRAFT_PHASE') {
+        routeContent = (
             <DraftScreen
                 draftPool={state.draftPool}
                 p2DraftPool={state.p2DraftPool}
@@ -44,7 +55,13 @@ export function GemDuelRoutes(props: AppRouteProps) {
                 isPvE={state.mode === 'PVE'}
             />
         );
+    } else {
+        routeContent = <GameShell {...props} />;
     }
 
-    return <GameShell {...props} />;
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-950/95" />}>
+            {routeContent}
+        </Suspense>
+    );
 }

@@ -5,8 +5,14 @@
  * Each test validates that the action correctly modifies game state
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { handleDiscardGem, handleReplenish, handleStealGem } from '../boardActions';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+    handleDiscardGem,
+    handleReplenish,
+    handleStealGem,
+    handleTakeBonusGem,
+    handleTakeGems,
+} from '../boardActions';
 import { INITIAL_STATE_SKELETON } from '../../initialState';
 import { GEM_TYPES, BUFFS } from '../../../constants';
 import { GameState } from '../../../types';
@@ -29,6 +35,10 @@ describe('boardActions', () => {
             gold: 1,
             pearl: 0,
         };
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe('Delayed Discard Trigger', () => {
@@ -82,6 +92,123 @@ describe('boardActions', () => {
 
             expect(updatedState.inventories.p1.red).toBe(1);
             expect(updatedState.phase).toBe('DISCARD_EXCESS_GEMS');
+        });
+
+        it('handleTakeBonusGem should respect the staged next player from the royal flow', () => {
+            testState.board[0][0] = { type: GEM_TYPES.RED, uid: 'bonus-red' };
+            testState.nextPlayerAfterRoyal = 'p1';
+
+            const updatedState = handleTakeBonusGem(testState, { r: 0, c: 0 });
+
+            expect(updatedState.inventories.p1.red).toBe(3);
+            expect(updatedState.turn).toBe('p1');
+            expect(updatedState.bonusGemTarget).toBeNull();
+        });
+    });
+
+    describe('handleTakeGems', () => {
+        it('should transfer a capped privilege pool to the opponent when taking two pearls', () => {
+            testState.inventories.p1 = {
+                blue: 0,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 0,
+                gold: 0,
+                pearl: 0,
+            };
+            testState.privileges = { p1: 1, p2: 2 };
+            testState.board[0][0] = { type: GEM_TYPES.PEARL, uid: 'pearl-a' };
+            testState.board[0][1] = { type: GEM_TYPES.PEARL, uid: 'pearl-b' };
+
+            const updatedState = handleTakeGems(testState, {
+                coords: [
+                    { r: 0, c: 0 },
+                    { r: 0, c: 1 },
+                ],
+            });
+
+            expect(updatedState.inventories.p1.pearl).toBe(2);
+            expect(updatedState.privileges).toEqual({ p1: 0, p2: 3 });
+            expect(updatedState.turn).toBe('p2');
+        });
+    });
+
+    describe('handleReplenish', () => {
+        it('should fall back to a real stealable color when extortion gets an invalid forced color', () => {
+            vi.spyOn(Math, 'random').mockReturnValue(0);
+
+            testState.board[0][0] = { type: GEM_TYPES.RED, uid: 'occupied' };
+            testState.playerBuffs.p1 = JSON.parse(JSON.stringify(BUFFS.EXTORTION));
+            testState.playerBuffs.p1.state = { refillCount: 1 };
+            testState.inventories.p2 = {
+                blue: 1,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 0,
+                gold: 0,
+                pearl: 0,
+            };
+
+            const updatedState = handleReplenish(testState, {
+                randoms: { extortionColor: 'red' },
+            });
+
+            expect(updatedState.inventories.p1.blue).toBe(6);
+            expect(updatedState.inventories.p2.blue).toBe(0);
+            expect(updatedState.toastMessage).toBe('Extortion! Stole 1 blue!');
+        });
+
+        it('should stop extortion when the opponent is protected by Pacifist', () => {
+            testState.board[0][0] = { type: GEM_TYPES.RED, uid: 'occupied' };
+            testState.playerBuffs.p1 = JSON.parse(JSON.stringify(BUFFS.EXTORTION));
+            testState.playerBuffs.p1.state = { refillCount: 1 };
+            testState.playerBuffs.p2 = BUFFS.PACIFIST;
+            testState.inventories.p2.blue = 2;
+
+            const updatedState = handleReplenish(testState);
+
+            expect(updatedState.inventories.p1.blue).toBe(5);
+            expect(updatedState.inventories.p2.blue).toBe(2);
+            expect(updatedState.toastMessage).toBe('Extortion blocked by Pacifist!');
+        });
+
+        it('should surface the no-basic-gems fallback when extortion has nothing to steal', () => {
+            testState.board[0][0] = { type: GEM_TYPES.RED, uid: 'occupied' };
+            testState.playerBuffs.p1 = JSON.parse(JSON.stringify(BUFFS.EXTORTION));
+            testState.playerBuffs.p1.state = { refillCount: 1 };
+            testState.inventories.p2 = {
+                blue: 0,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 0,
+                gold: 2,
+                pearl: 1,
+            };
+
+            const updatedState = handleReplenish(testState);
+
+            expect(updatedState.toastMessage).toBe(
+                'Extortion triggered but opponent has no basic gems.'
+            );
+        });
+
+        it('should create extra allocation and refill the board for aggressive expansion', () => {
+            testState.board[2][2] = { type: GEM_TYPES.EMPTY, uid: 'empty-center' };
+            testState.bag = [{ type: GEM_TYPES.BLACK, uid: 'bag-black' }];
+            testState.playerBuffs.p1 = BUFFS.AGGRESSIVE_EXPANSION;
+            testState.extraAllocation = null;
+
+            const updatedState = handleReplenish(testState, {
+                randoms: { expansionColor: 'green' },
+            });
+
+            expect(updatedState.inventories.p1.green).toBe(3);
+            expect(updatedState.extraAllocation?.p1.green).toBe(1);
+            expect(updatedState.board[2][2].type.id).toBe('black');
+            expect(updatedState.toastMessage).toBe('Aggressive Expansion: +1 Gem!');
         });
     });
 
@@ -141,6 +268,25 @@ describe('boardActions', () => {
                 expect(updatedState.turn).toBe('p2');
             }
         });
+
+        it('should keep the discard flow on the same player while still above the gem cap', () => {
+            testState.inventories.p1 = {
+                blue: 10,
+                white: 1,
+                green: 0,
+                black: 0,
+                red: 1,
+                gold: 0,
+                pearl: 0,
+            };
+            testState.phase = 'DISCARD_EXCESS_GEMS';
+
+            const updatedState = handleDiscardGem(testState, 'white');
+
+            expect(updatedState.turn).toBe('p1');
+            expect(updatedState.phase).toBe('DISCARD_EXCESS_GEMS');
+            expect(updatedState.inventories.p1.white).toBe(0);
+        });
     });
 
     describe('edge cases', () => {
@@ -168,6 +314,39 @@ describe('boardActions', () => {
 
             // p2 inventory should not change
             expect(updatedState.inventories.p2).toEqual(initialP2Gems);
+        });
+
+        it('should still finalize the turn cleanly when a steal resolves without inventory transfer', () => {
+            testState.inventories.p1 = {
+                blue: 0,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 2,
+                gold: 0,
+                pearl: 0,
+            };
+            testState.inventories.p2.red = 0;
+
+            const updatedState = handleStealGem(testState, { gemId: 'red' });
+
+            expect(updatedState.inventories.p1.red).toBe(2);
+            expect(updatedState.inventories.p2.red).toBe(0);
+            expect(updatedState.turn).toBe('p2');
+        });
+
+        it('should ignore malformed bonus-gem payloads', () => {
+            const updatedState = handleTakeBonusGem(testState, undefined as never);
+
+            expect(updatedState).toBe(testState);
+            expect(updatedState.turn).toBe('p1');
+        });
+
+        it('should ignore malformed steal payloads', () => {
+            const updatedState = handleStealGem(testState, undefined as never);
+
+            expect(updatedState).toBe(testState);
+            expect(updatedState.turn).toBe('p1');
         });
     });
 });
