@@ -108,4 +108,55 @@ describe('bundle budget report', () => {
             });
         }
     });
+
+    it('uses the default mainChunkKb budget and pretty serialization for healthy builds', () => {
+        const distDir = createDistFixture([
+            ['index-main.js', 256 * 1024],
+            ['chunk-a.js', 8 * 1024],
+        ]);
+
+        try {
+            const report = buildBundleBudgetReport({
+                distDir,
+            });
+
+            expect(report.status).toBe('healthy');
+            expect(report.budget.warningMax).toBe(600);
+            expect(report.budget.incidentMax).toBe(700);
+            expect(serializeBundleBudgetReport(report)).toContain('\n  "budget"');
+        } finally {
+            fs.rmSync(distDir, {
+                force: true,
+                recursive: true,
+            });
+        }
+    });
+
+    it('returns no JavaScript assets when assets are missing and rejects non-JavaScript-only builds', () => {
+        const distDirWithoutAssets = fs.mkdtempSync(path.join(os.tmpdir(), 'bundle-budget-empty-'));
+        const distDirWithoutJs = fs.mkdtempSync(path.join(os.tmpdir(), 'bundle-budget-css-'));
+        const assetsDir = path.join(distDirWithoutJs, 'assets');
+        fs.mkdirSync(assetsDir, {
+            recursive: true,
+        });
+        fs.writeFileSync(path.join(assetsDir, 'styles.css'), 'body {}', 'utf8');
+
+        try {
+            expect(collectJavascriptAssets(distDirWithoutAssets)).toEqual([]);
+            expect(() =>
+                buildBundleBudgetReport({
+                    distDir: distDirWithoutJs,
+                })
+            ).toThrow(`No JavaScript assets were found under ${distDirWithoutJs}.`);
+        } finally {
+            fs.rmSync(distDirWithoutAssets, {
+                force: true,
+                recursive: true,
+            });
+            fs.rmSync(distDirWithoutJs, {
+                force: true,
+                recursive: true,
+            });
+        }
+    });
 });

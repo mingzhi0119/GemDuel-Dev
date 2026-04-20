@@ -42,10 +42,19 @@ type GameNetworkResult = {
 };
 
 let latestHandlers: OnlineManagerHandlers | null = null;
+let latestEnabled = false;
+let latestTargetIp = 'localhost';
 
 vi.mock('../useOnlineManager', () => ({
-    useOnlineManager: (handlers: OnlineManagerHandlers) => {
+    useOnlineManager: (
+        handlers: OnlineManagerHandlers,
+        enabled: boolean,
+        _getCurrentStateRef?: () => GameState,
+        targetIP?: string
+    ) => {
         latestHandlers = handlers;
+        latestEnabled = enabled;
+        latestTargetIp = targetIP ?? 'localhost';
         return mockOnlineController;
     },
 }));
@@ -90,6 +99,8 @@ describe('useGameNetwork', () => {
 
     beforeEach(() => {
         latestHandlers = null;
+        latestEnabled = false;
+        latestTargetIp = 'localhost';
         reportReleaseHealth.mockReset();
         resetOnlineControllerMocks();
     });
@@ -576,6 +587,76 @@ describe('useGameNetwork', () => {
             expect.any(String)
         );
         expect(mockOnlineController.sendGuestIntent).not.toHaveBeenCalled();
+    });
+
+    it('disables the online manager when neither multiplayer mode nor explicit connect is requested', () => {
+        const localDispatch = vi.fn();
+        const clearAndInit = vi.fn();
+        const gameState = createOnlineState({
+            mode: 'LOCAL_PVP',
+        });
+
+        const Harness = () => {
+            useGameNetwork(gameState, localDispatch, clearAndInit, false, '10.0.0.42');
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        expect(latestEnabled).toBe(false);
+        expect(latestTargetIp).toBe('10.0.0.42');
+    });
+
+    it('blocks non-protocol guest actions before they leave the multiplayer boundary', () => {
+        const localDispatch = vi.fn();
+        const clearAndInit = vi.fn();
+        const gameState = createOnlineState({ isHost: false, turn: 'p2' });
+        let currentResult: GameNetworkResult | null = null;
+        const initAction = {
+            type: 'INIT' as const,
+            payload: createGameSetupPayload('ONLINE_MULTIPLAYER', {
+                useBuffs: false,
+                isHost: true,
+            }),
+        };
+
+        const Harness = () => {
+            currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        act(() => {
+            currentResult?.networkDispatch(initAction);
+        });
+
+        expect(mockOnlineController.sendGuestIntent).not.toHaveBeenCalled();
+        expect(currentResult).not.toBeNull();
+        expect(currentResult!.online.statusNotice).toMatchObject({
+            code: 'NON_PROTOCOL_ACTION',
+            severity: 'warn',
+        });
+        expect(reportReleaseHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: 'GUEST_INTENT_BLOCKED',
+                context: expect.objectContaining({
+                    reasonCode: 'NON_PROTOCOL_ACTION',
+                }),
+            })
+        );
     });
 
     it('skips exactly one host sync after bootstrap and resumes on the next state update', () => {

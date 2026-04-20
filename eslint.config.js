@@ -43,11 +43,14 @@ export default tseslint.config(
     },
     {
         files: ['src/**/*.{ts,tsx}'],
-        ignores: [
-            'src/**/__tests__/**',
-            'src/observability/releaseHealth.ts',
-            'src/observability/rendererLogger.ts',
-        ],
+        ignores: ['src/**/__tests__/**', 'src/observability/**/*'],
+        rules: {
+            'no-console': 'error',
+        },
+    },
+    {
+        files: ['electron/**/*.{js,cjs}'],
+        ignores: ['electron/**/__tests__/**', 'electron/main.js'],
         rules: {
             'no-console': 'error',
         },

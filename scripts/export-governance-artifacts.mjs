@@ -93,7 +93,7 @@ const main = () => {
     const operationsSnapshot = JSON.parse(fs.readFileSync(operationsSnapshotPath, 'utf8'));
     const artifactPolicy = operationsSnapshot.artifactPolicy ?? {
         artifactName: 'governance-evidence',
-        retentionDays: 14,
+        retentionDays: 30,
         outputDirectory: 'artifacts/governance',
         storageKind: 'github-actions-artifact',
     };

@@ -24,7 +24,7 @@ Each indicator uses the same words in the snapshot and this doc: `warning` and `
 ## Retained Evidence
 
 - CI uploads the retained artifact `governance-evidence`.
-- Retention window: `14` days.
+- Retention window: `30` days.
 - The retained bundle includes release-health reports, a governance manifest, and bundle budget output when `dist/` exists.
 
 ## Alert Handling

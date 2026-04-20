@@ -8,6 +8,7 @@ export const REQUIRED_RELEASE_CHECKLIST_COMMANDS = Object.freeze([
     'npm run test:coverage',
     'npm run desktop:check',
     'npm run release:check',
+    'npm run governance:evidence:check',
 ]);
 
 const noop = () => undefined;

@@ -75,6 +75,8 @@ const collectArtifactPolicyErrors = (sloText, operationsSnapshot, repoRoot) => {
         artifactPolicy.retentionDays <= 0
     ) {
         issues.push('artifactPolicy.retentionDays must be a positive integer.');
+    } else if (artifactPolicy.retentionDays < 30) {
+        issues.push('artifactPolicy.retentionDays must be at least 30 days.');
     }
 
     if (typeof artifactPolicy.storageKind !== 'string' || artifactPolicy.storageKind.length === 0) {

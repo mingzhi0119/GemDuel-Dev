@@ -21,6 +21,7 @@ npm run lint          # ESLint
 ```bash
 npm run test:security
 npm run test:coverage
+npm run test:coverage:seal
 npm run boundaries:check
 npm run deps:check
 npm run desktop:check

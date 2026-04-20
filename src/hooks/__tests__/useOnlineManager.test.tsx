@@ -339,4 +339,33 @@ describe('useOnlineManager', () => {
         expect(currentResult?.remotePeerId).toBe('');
         expect(currentResult?.peerId).toBe('peer-local');
     });
+
+    it('marks the renderer as host when an incoming connection is accepted', () => {
+        renderHarness(true);
+        const peer = harness.peers[0];
+        const incomingConnection = new harness.FakeConnection('peer-guest');
+
+        act(() => {
+            peer.emit('connection', incomingConnection);
+        });
+
+        expect(currentResult?.isHost).toBe(true);
+        expect(reportReleaseHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'peer',
+                name: 'PEER_INCOMING_CONNECTION',
+                severity: 'info',
+                context: expect.objectContaining({
+                    remotePeerId: 'peer-guest',
+                }),
+            })
+        );
+
+        act(() => {
+            incomingConnection.emit('open');
+        });
+
+        expect(currentResult?.remotePeerId).toBe('peer-guest');
+        expect(currentResult?.connectionStatus).toBe('connected');
+    });
 });

@@ -104,7 +104,7 @@ describe('governance artifact exporter', () => {
             expect(healthyBaseline.retention).toEqual(
                 expect.objectContaining({
                     artifactName: 'governance-evidence',
-                    retentionDays: 14,
+                    retentionDays: 30,
                 })
             );
             expect(bundleBudget.status).toBe('warning');

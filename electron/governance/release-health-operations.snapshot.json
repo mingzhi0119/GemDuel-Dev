@@ -4,7 +4,7 @@
     "sourceFormats": ["release-health-summary", "release-health-jsonl"],
     "artifactPolicy": {
         "artifactName": "governance-evidence",
-        "retentionDays": 14,
+        "retentionDays": 30,
         "outputDirectory": "artifacts/governance",
         "storageKind": "github-actions-artifact"
     },

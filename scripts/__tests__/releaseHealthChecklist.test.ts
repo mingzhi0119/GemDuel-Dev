@@ -17,6 +17,7 @@ describe('release health checklist governance', () => {
             'npm run test:coverage',
             'npm run desktop:check',
             'npm run release:check',
+            'npm run governance:evidence:check',
         ]);
     });
 

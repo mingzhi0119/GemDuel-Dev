@@ -103,7 +103,7 @@ describe('release-health operations governance', () => {
             artifactPolicy: {
                 artifactName: '',
                 outputDirectory: '',
-                retentionDays: 0,
+                retentionDays: 14,
                 storageKind: '',
             },
             artifactReports: [
@@ -140,7 +140,7 @@ describe('release-health operations governance', () => {
                 'Drill network-recovery must align to indicator recoveryRequests.',
                 'artifactPolicy.artifactName must be a non-empty string.',
                 'artifactPolicy.outputDirectory must be a non-empty string.',
-                'artifactPolicy.retentionDays must be a positive integer.',
+                'artifactPolicy.retentionDays must be at least 30 days.',
                 'artifactPolicy.storageKind must be a non-empty string.',
                 'Artifact report healthy-baseline references missing source governance/release-health-fixtures/missing.jsonl.',
                 'Artifact report healthy-baseline must define expectedStatus.',
@@ -314,6 +314,43 @@ describe('release-health report exporter', () => {
                 }),
             ])
         );
+    });
+
+    it('covers updater failures, timestamp fallbacks, and release-health parser rejection cases', () => {
+        const source = parseReleaseHealthSourceText(
+            [
+                '[RELEASE_HEALTH] ',
+                '[RELEASE_HEALTH] 1',
+                '[RELEASE_HEALTH_SUMMARY] ',
+                '[RELEASE_HEALTH_SUMMARY] 1',
+                '[RELEASE_HEALTH] {"source":"renderer","category":"updater","name":"UPDATER_CHECK_FAILED","severity":"error","message":"Updater failed."}',
+            ].join('\n')
+        );
+        const report = buildReleaseHealthReport({
+            source,
+            operationsSnapshot,
+            retention: {
+                artifactName: 'governance-evidence',
+                retentionDays: 30,
+                storageKind: 'github-actions-artifact',
+            },
+            generatedAt: '2026-04-19T12:00:00.000Z',
+        });
+
+        expect(source.kind).toBe('jsonl-log');
+        expect(source.events).toHaveLength(1);
+        expect(report.summary.indicators.updaterFailures).toBe(1);
+        expect(report.summary.counters['updater:UPDATER_CHECK_FAILED']).toEqual({
+            count: 1,
+            severity: 'error',
+            lastAt: null,
+        });
+        expect(report.retention).toEqual({
+            artifactName: 'governance-evidence',
+            retentionDays: 30,
+            storageKind: 'github-actions-artifact',
+        });
+        expect(JSON.parse(serializeReleaseHealthReport(report)).retention.retentionDays).toBe(30);
     });
 
     it('exposes the CLI exporter as a runnable machine-readable tool', () => {

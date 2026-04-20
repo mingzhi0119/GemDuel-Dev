@@ -10,6 +10,7 @@ Use this list before packaging a desktop release or cutting a release candidate.
 - `npm run test:coverage`
 - `npm run desktop:check`
 - `npm run release:check`
+- `npm run governance:evidence:check`
 - `scripts/export-release-health-report.mjs`
 - `scripts/export-governance-artifacts.mjs`
 
@@ -26,5 +27,6 @@ Use this list before packaging a desktop release or cutting a release candidate.
 
 - Use `window.electron.getReleaseHealthSnapshot()` to fetch the sanitized runtime snapshot.
 - Keep `docs/governance/operations-slo.md` and `docs/governance/operations-fault-drills.md` aligned with telemetry changes.
+- Keep `docs/governance/repo-settings-checklist.md` aligned with required checks, artifact retention, and release-tag rules.
 - Clean smoke tests should keep all indicators at `0`, except `recoveryRequests`, which must stay explained if non-zero.
 - Export retained evidence when release-health behavior or governance assets change.

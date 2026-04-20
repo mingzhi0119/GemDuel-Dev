@@ -51,6 +51,9 @@ jobs:
             - name: Unit Test Suite
               run: npm test
 
+            - name: Coverage Seal Gate
+              run: npm run test:coverage
+
             - name: Release Health Checklist Gate
               run: npm run release:check
 
@@ -67,10 +70,14 @@ jobs:
               if: always()
               run: npm run governance:artifacts -- --out-dir artifacts/governance
 
+            - name: Governance Evidence Health Gate
+              if: always()
+              run: npm run governance:evidence:check -- --artifacts-dir artifacts/governance
+
             - name: Upload Governance Artifacts
               if: always()
               uses: actions/upload-artifact@v4
               with:
                   name: governance-evidence
                   path: artifacts/governance
-                  retention-days: 14
+                  retention-days: 30

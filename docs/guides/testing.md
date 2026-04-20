@@ -6,6 +6,7 @@
 npm test
 npm run test:security
 npm run test:coverage
+npm run test:coverage:seal
 npm run test:ui
 npm run boundaries:check
 npm run deps:check
@@ -26,7 +27,7 @@ npm run release:check
 ## Default Workflow
 
 1. Run `npm test` while changing gameplay logic.
-2. Run `npm run test:coverage` before merging larger refactors.
+2. Run `npm run test:coverage` before merging larger refactors. This now aliases the seal gate.
 3. Run `npm run boundaries:check`, `npm run deps:check`, and `npm run desktop:check` before release work.
 4. Run `npm run release:check` whenever release-health docs or telemetry change.
 
@@ -35,4 +36,5 @@ npm run release:check
 - Put tests next to the code they govern.
 - Prefer deterministic negative-path cases over prose-only explanations.
 - Add property or matrix coverage when a rule has many combinations.
+- Keep seal-coverage exclusions explicit in `vitest.seal.exclusions.ts`; do not add broad implicit ignores.
 - Update the related governance doc in `docs/governance/` if a new boundary or runtime contract is introduced.
