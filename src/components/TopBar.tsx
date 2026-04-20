@@ -1,70 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
-import {
-    Crown,
-    Trophy,
-    Sparkles,
-    Coins,
-    Tag,
-    Zap,
-    Eye,
-    Search,
-    Hand,
-    ArrowDownCircle,
-} from 'lucide-react';
-import { motion, AnimatePresence, animate } from 'framer-motion';
+import React from 'react';
+import { Crown, Trophy, Sparkles, Coins, Tag, Zap, Eye } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '../types';
 import { BUFFS } from '../constants';
-import { BUFF_STYLES } from '../styles/buffs';
 import { getBuffGoalAdjustment } from '../data/buffCopy';
-
-interface AnimatedScoreProps {
-    value: number;
-    className?: string;
-    theme: 'light' | 'dark';
-}
-
-const AnimatedScore: React.FC<AnimatedScoreProps> = ({ value, className, theme }) => {
-    const [displayValue, setDisplayValue] = useState(value);
-    const [isPulsing, setIsPulsing] = useState(false);
-    const prevValue = useRef(value);
-
-    // Define pulse colors based on theme
-    const pulseColors =
-        theme === 'dark'
-            ? ['#ffffff', '#fbbf24', '#ffffff'] // White -> Amber -> White
-            : ['#0f172a', '#ea580c', '#0f172a']; // Slate-900 -> Orange-600 -> Slate-900
-
-    useEffect(() => {
-        if (value !== prevValue.current) {
-            const delta = Math.abs(value - prevValue.current);
-            const stepDuration = 0.1; // 100ms per point
-
-            // Animate the number rolling
-            const controls = animate(prevValue.current, value, {
-                duration: delta * stepDuration,
-                ease: 'linear',
-                onUpdate: (latest) => setDisplayValue(Math.floor(latest)),
-            });
-
-            if (value > prevValue.current) {
-                setIsPulsing(true);
-                setTimeout(() => setIsPulsing(false), 600);
-            }
-
-            prevValue.current = value;
-            return () => controls.stop();
-        }
-    }, [value]);
-
-    return (
-        <motion.span
-            animate={isPulsing ? { scale: [1, 1.4, 1], color: pulseColors } : {}}
-            className={className}
-        >
-            <motion.span>{displayValue}</motion.span>
-        </motion.span>
-    );
-};
+import { AnimatedScore } from './topBar/AnimatedScore';
 
 interface TopBarProps {
     p1Score: number;

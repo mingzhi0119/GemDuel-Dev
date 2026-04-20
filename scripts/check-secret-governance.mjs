@@ -5,9 +5,9 @@ import {
     collectGovernanceDocumentErrors,
     collectRuntimeEnvNamesFromEntries,
     collectRuntimePolicyErrors,
-    collectSecretScanErrorsFromEntries,
     collectTextFileEntries,
 } from './dependencyGovernance.js';
+import { collectSecretScanErrorsFromEntries } from './dependencySecretGovernance.js';
 import { RUNTIME_CONFIG_POLICY } from '../electron/runtimeConfig.js';
 import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 

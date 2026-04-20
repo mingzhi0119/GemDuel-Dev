@@ -7,7 +7,6 @@ import { describe, expect, it } from 'vitest';
 import {
     buildDependencySbomSnapshot,
     collectGovernanceDocumentErrors,
-    collectSecretScanErrorsFromRepo,
     REQUIRED_OVERRIDE_POLICY,
     RETIRED_DEPENDENCY_WORKAROUNDS,
     collectDependencyGovernanceErrors,
@@ -16,10 +15,13 @@ import {
     parseRuntimeEnvNames,
     collectRuntimeEnvNamesFromRepo,
     collectRuntimeEnvNamesFromEntries,
-    collectSecretScanErrorsFromEntries,
     collectSbomSnapshotErrors,
     collectTextFileEntries,
 } from '../dependencyGovernance.js';
+import {
+    collectSecretScanErrorsFromEntries,
+    collectSecretScanErrorsFromRepo,
+} from '../dependencySecretGovernance.js';
 import { GOVERNANCE_DOC_PATHS } from '../governanceDocPaths.js';
 
 describe('dependency governance', () => {
