@@ -53,6 +53,11 @@ export type GuestIntentCommand =
 
 export type GuestIntentKind = GuestIntentCommand['kind'];
 
+export interface PendingGuestIntent {
+    requestId: string;
+    command: GuestIntentCommand;
+}
+
 export interface BootstrapStateMessage {
     version: NetworkProtocolVersion;
     type: 'BOOTSTRAP_STATE';

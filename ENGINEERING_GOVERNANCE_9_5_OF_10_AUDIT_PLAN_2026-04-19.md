@@ -70,7 +70,7 @@
 
 | 阶段                      | 时间窗口  | 聚焦维度                                                                                | 关键产物                                                                | 阶段验收标准                                                              | Status      |
 | ------------------------- | --------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------- |
-| Phase A: 热点收缩         | 第 `1` 周 | `Correctness`、`State Machine Consistency`、`Online Authority`、`Architecture Layering` | `useGameNetwork` 拆分、联机恢复服务层、补齐 action/hook 热点测试        | 联机编排热点从 React hook 中明显瘦身，热点覆盖率不再出现 `48%` 级分支短板 | `Unstarted` |
+| Phase A: 热点收缩         | 第 `1` 周 | `Correctness`、`State Machine Consistency`、`Online Authority`、`Architecture Layering` | `useGameNetwork` 拆分、联机恢复服务层、补齐 action/hook 热点测试        | 联机编排热点从 React hook 中明显瘦身，热点覆盖率不再出现 `48%` 级分支短板 | `Completed` |
 | Phase B: 契约封板         | 第 `2` 周 | `Boundary Security`、`Type Contracts`、`Dependency / Configuration Governance`          | schema-first 边界注册、恢复/拒绝原因合同、短时 TURN 凭据设计与对接 plan | 每个外部入口都能映射到显式 schema、reason code、owner、tests              | `Unstarted` |
 | Phase C: 运行态与运维补证 | 第 `3` 周 | `Electron Security`、`Observability / Operations`、`Test Coverage`                      | runtime drill 快照、PR/release 报表留痕、bundle/recovery budget         | 运行态失败路径能被机器复核，运维资产不只存在于文档，还能自动生成并留痕    | `Unstarted` |
 | Phase D: 性能与封板复审   | 第 `4` 周 | 全部维度                                                                                | code-splitting / chunk budget、二次独立审计                             | 十个维度均达到 `>= 9.5/10`，主 bundle 告警消失或被明确预算化              | `Unstarted` |
@@ -186,7 +186,7 @@
 
 | 优先级 | 执行动作                                                                 | 关联维度                | 预期收益                                                      | Status      |
 | ------ | ------------------------------------------------------------------------ | ----------------------- | ------------------------------------------------------------- | ----------- |
-| `P0`   | 拆分 `useGameNetwork.ts` 并补齐其恢复矩阵测试                            | `1`、`3`、`4`、`6`、`8` | 一次动作同时拉动正确性、状态机、联机权威、架构与覆盖率        | `Unstarted` |
+| `P0`   | 拆分 `useGameNetwork.ts` 并补齐其恢复矩阵测试                            | `1`、`3`、`4`、`6`、`8` | 一次动作同时拉动正确性、状态机、联机权威、架构与覆盖率        | `Completed` |
 | `P1`   | 攻克 `runtimeHarness.js`、`boardActions.ts`、`marketActions.ts` 热点证据 | `1`、`5`、`8`           | 把当前最明显的热点短板从“可用”拉到“封板级可信”                | `Unstarted` |
 | `P2`   | 完成边界注册表与结构化错误/原因合同                                      | `2`、`7`、`9`           | 让边界治理从文档化升级到可追踪、可观测、可机检                | `Unstarted` |
 | `P3`   | 完成短时 TURN 凭据方案与 `patch-peer` 例外治理                           | `4`、`10`               | 解决最典型的“还差最后一公里”的安全与配置治理问题              | `Blocked`   |
