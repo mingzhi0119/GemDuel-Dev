@@ -17,9 +17,9 @@ import {
     getAutoUpdaterPolicy,
     getRuntimeIceServersFromEnv,
     getRuntimeLogLevel,
-    getRuntimeRelayProfileFromEnv,
 } from './runtimeConfig.js';
 import { createElectronRuntimeHarness } from './runtimeHarness.js';
+import { createTurnCredentialClient } from './turnCredentialClient.js';
 const { autoUpdater } = pkg;
 const { IPC_INVOKE_CHANNELS, IPC_SEND_CHANNELS } = preloadContract;
 
@@ -48,6 +48,15 @@ const recordMainHealth = (event) =>
         source: 'main',
         ...event,
     });
+const turnCredentialClient = createTurnCredentialClient({
+    bundleConfig: process.env.GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON,
+    rawIceConfig: process.env.GEMDUEL_ICE_SERVERS_JSON,
+    serviceUrlEnv: process.env.GEMDUEL_TURN_SERVICE_URL,
+    serviceTokenEnv: process.env.GEMDUEL_TURN_SERVICE_TOKEN,
+    fallbackModeEnv: process.env.GEMDUEL_TURN_SERVICE_FALLBACK_MODE,
+    logger: log,
+    recordMainHealth,
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -123,11 +132,11 @@ runtimeHarness.registerGovernedIpcHandlers({
         [IPC_INVOKE_CHANNELS.getRuntimeIceServers]: () =>
             getRuntimeIceServersFromEnv(process.env.GEMDUEL_ICE_SERVERS_JSON, log),
         [IPC_INVOKE_CHANNELS.getRuntimeRelayProfile]: () =>
-            getRuntimeRelayProfileFromEnv(
-                process.env.GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON,
-                process.env.GEMDUEL_ICE_SERVERS_JSON,
-                log
-            ),
+            turnCredentialClient.getRuntimeRelayProfile(),
+        [IPC_INVOKE_CHANNELS.refreshRuntimeRelayProfile]: () =>
+            turnCredentialClient.refreshRuntimeRelayProfile(),
+        [IPC_INVOKE_CHANNELS.revokeRuntimeRelayProfile]: () =>
+            turnCredentialClient.revokeRuntimeRelayProfile(),
         [IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot]: () => releaseHealth.getSnapshot(),
     },
     sendHandlers: {
@@ -255,5 +264,8 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', () => {
+    void turnCredentialClient.revokeRuntimeRelayProfile({
+        reason: 'app-quit',
+    });
     log.info(`[RELEASE_HEALTH_SUMMARY] ${JSON.stringify(releaseHealth.getSnapshot())}`);
 });

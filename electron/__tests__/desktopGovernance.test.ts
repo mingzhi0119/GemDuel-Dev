@@ -112,6 +112,14 @@ describe('electron desktop governance', () => {
 
     it('validates payload shapes for governed IPC channels', () => {
         expect(validateIpcArgs('restart_app', [])).toEqual({ ok: true, args: [] });
+        expect(validateIpcArgs('refresh-runtime-relay-profile', [])).toEqual({
+            ok: true,
+            args: [],
+        });
+        expect(validateIpcArgs('revoke-runtime-relay-profile', [])).toEqual({
+            ok: true,
+            args: [],
+        });
         expect(validateIpcArgs('restart_app', ['unexpected'])).toEqual({
             ok: false,
             reason: 'This channel does not accept payload arguments.',

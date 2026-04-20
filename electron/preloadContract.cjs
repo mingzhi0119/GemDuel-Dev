@@ -21,6 +21,20 @@ const IPC_ALLOWLIST = Object.freeze({
             payload: 'none',
             threat: 'Read-only governed relay profile that may prefer ephemeral TURN credentials before legacy fallback.',
         }),
+        refreshRuntimeRelayProfile: Object.freeze({
+            api: 'refreshRuntimeRelayProfile',
+            channel: 'refresh-runtime-relay-profile',
+            owner: 'Desktop shell',
+            payload: 'none',
+            threat: 'Refreshes the active short-lived TURN credential lease without exposing secrets to the renderer.',
+        }),
+        revokeRuntimeRelayProfile: Object.freeze({
+            api: 'revokeRuntimeRelayProfile',
+            channel: 'revoke-runtime-relay-profile',
+            owner: 'Desktop shell',
+            payload: 'none',
+            threat: 'Revokes the active short-lived TURN credential lease during renderer cleanup.',
+        }),
         getReleaseHealthSnapshot: Object.freeze({
             api: 'getReleaseHealthSnapshot',
             channel: 'get-release-health-snapshot',
@@ -101,7 +115,12 @@ const createElectronBridge = (ipcRenderer) =>
     Object.freeze({
         getAppVersion: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getAppVersion),
         getRuntimeIceServers: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getRuntimeIceServers),
-        getRuntimeRelayProfile: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getRuntimeRelayProfile),
+        getRuntimeRelayProfile: () =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getRuntimeRelayProfile),
+        refreshRuntimeRelayProfile: () =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.refreshRuntimeRelayProfile),
+        revokeRuntimeRelayProfile: () =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.revokeRuntimeRelayProfile),
         getReleaseHealthSnapshot: () =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot),
         restartApp: () => ipcRenderer.send(IPC_SEND_CHANNELS.restartApp),

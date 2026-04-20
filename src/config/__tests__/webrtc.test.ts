@@ -72,4 +72,31 @@ describe('WebRTC runtime ICE configuration', () => {
         });
         expect(getIceServers()).toHaveLength(3);
     });
+
+    it('clears short-lived relay state when the runtime profile is reset', () => {
+        setRuntimeRelayProfile({
+            policyVersion: 1,
+            source: 'online-turn-service',
+            iceServers: [
+                {
+                    urls: 'turns:relay.example.com:443',
+                    username: 'bundle-user',
+                    credential: 'bundle-pass',
+                },
+            ],
+            issuedAt: '2026-04-20T12:00:00.000Z',
+            expiresAt: '2026-04-20T12:05:00.000Z',
+        });
+
+        resetRuntimeIceServers();
+
+        expect(getRuntimeRelayProfile()).toEqual({
+            policyVersion: 1,
+            source: 'default-stun',
+            iceServers: [],
+            issuedAt: null,
+            expiresAt: null,
+        });
+        expect(getIceServers()).toHaveLength(2);
+    });
 });

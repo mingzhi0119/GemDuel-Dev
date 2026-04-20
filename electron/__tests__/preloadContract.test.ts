@@ -61,6 +61,8 @@ describe('electron preload contract', () => {
             getAppVersion: () => Promise<string>;
             getRuntimeIceServers: () => Promise<string>;
             getRuntimeRelayProfile: () => Promise<string>;
+            refreshRuntimeRelayProfile: () => Promise<string>;
+            revokeRuntimeRelayProfile: () => Promise<string>;
             getReleaseHealthSnapshot: () => Promise<string>;
             restartApp: () => void;
             reportReleaseHealth: (event: { name: string }) => void;
@@ -72,6 +74,12 @@ describe('electron preload contract', () => {
         await expect(bridge.getAppVersion()).resolves.toBe('get-app-version');
         await expect(bridge.getRuntimeIceServers()).resolves.toBe('get-runtime-ice-servers');
         await expect(bridge.getRuntimeRelayProfile()).resolves.toBe('get-runtime-relay-profile');
+        await expect(bridge.refreshRuntimeRelayProfile()).resolves.toBe(
+            'refresh-runtime-relay-profile'
+        );
+        await expect(bridge.revokeRuntimeRelayProfile()).resolves.toBe(
+            'revoke-runtime-relay-profile'
+        );
         await expect(bridge.getReleaseHealthSnapshot()).resolves.toBe(
             'get-release-health-snapshot'
         );
@@ -93,6 +101,8 @@ describe('electron preload contract', () => {
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-app-version');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-runtime-ice-servers');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-runtime-relay-profile');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('refresh-runtime-relay-profile');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('revoke-runtime-relay-profile');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-release-health-snapshot');
         expect(ipcRenderer.send).toHaveBeenCalledWith('restart_app');
         expect(ipcRenderer.send).toHaveBeenCalledWith('report-release-health', {

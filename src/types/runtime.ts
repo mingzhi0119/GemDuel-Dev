@@ -1,4 +1,5 @@
 export type RuntimeRelayProfileSource =
+    | 'online-turn-service'
     | 'ephemeral-turn-bundle'
     | 'runtime-ice-fallback'
     | 'default-stun';

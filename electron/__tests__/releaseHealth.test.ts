@@ -60,12 +60,25 @@ describe('electron release health monitor', () => {
                 requestId: 'guest-123',
             },
         });
+        monitor.record({
+            source: 'main',
+            category: 'runtime',
+            name: 'TURN_CREDENTIAL_REFRESH_FAILED',
+            severity: 'warn',
+            message: 'TURN refresh failed.',
+            context: {
+                reasonCode: 'TURN_CREDENTIAL_REFRESH_FAILED',
+                token: 'turn-token',
+                credential: 'turn-credential',
+                url: 'https://relay.example.com/turn/refresh',
+            },
+        });
 
         const snapshot = monitor.getSnapshot();
-        expect(snapshot.totalEvents).toBe(3);
+        expect(snapshot.totalEvents).toBe(4);
         expect(snapshot.severityCounts).toEqual({
             info: 1,
-            warn: 1,
+            warn: 2,
             error: 1,
         });
         expect(snapshot.indicators).toMatchObject({
@@ -74,11 +87,15 @@ describe('electron release health monitor', () => {
         });
         expect(snapshot.reasonCodeCounts).toEqual({
             CHECKSUM_MISMATCH: 1,
+            TURN_CREDENTIAL_REFRESH_FAILED: 1,
         });
-        expect(snapshot.recentEvents[1]?.context?.targetIp).toBe('[REDACTED]');
-        expect(snapshot.recentEvents[0]?.context?.requestId).toBe('[REDACTED]');
+        expect(snapshot.recentEvents[2]?.context?.targetIp).toBe('[REDACTED]');
+        expect(snapshot.recentEvents[1]?.context?.requestId).toBe('[REDACTED]');
+        expect(snapshot.recentEvents[0]?.context?.token).toBe('[REDACTED]');
+        expect(snapshot.recentEvents[0]?.context?.credential).toBe('[REDACTED]');
+        expect(snapshot.recentEvents[0]?.context?.url).toBe('[REDACTED]');
         expect(logger.error).toHaveBeenCalledTimes(1);
-        expect(logger.warn).toHaveBeenCalledTimes(1);
+        expect(logger.warn).toHaveBeenCalledTimes(2);
         expect(logger.info).toHaveBeenCalledTimes(1);
     });
 });

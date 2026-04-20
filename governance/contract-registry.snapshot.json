@@ -13297,6 +13297,177 @@
             }
         },
         {
+            "id": "network-turn-credential-issue-request",
+            "layer": "network",
+            "sourceRefs": ["src/logic/contractSchemas.ts", "server/turn/turnCredentialService.js"],
+            "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                    "subject": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "client": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": ["subject", "client"],
+                "additionalProperties": {}
+            }
+        },
+        {
+            "id": "network-turn-credential-refresh-request",
+            "layer": "network",
+            "sourceRefs": ["src/logic/contractSchemas.ts", "server/turn/turnCredentialService.js"],
+            "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                    "leaseId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "client": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": ["leaseId", "client"],
+                "additionalProperties": {}
+            }
+        },
+        {
+            "id": "network-turn-credential-revoke-request",
+            "layer": "network",
+            "sourceRefs": ["src/logic/contractSchemas.ts", "server/turn/turnCredentialService.js"],
+            "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                    "leaseId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "client": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                    }
+                },
+                "required": ["leaseId", "client"],
+                "additionalProperties": {}
+            }
+        },
+        {
+            "id": "network-turn-credential-lease",
+            "layer": "network",
+            "sourceRefs": ["src/logic/contractSchemas.ts", "server/turn/turnCredentialService.js"],
+            "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                    "policyVersion": {
+                        "type": "number",
+                        "const": 1
+                    },
+                    "leaseId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "bundle": {
+                        "type": "object",
+                        "properties": {
+                            "policyVersion": {
+                                "type": "number",
+                                "const": 1
+                            },
+                            "iceServers": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "urls": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "username": {
+                                            "type": "string"
+                                        },
+                                        "credential": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": ["urls"],
+                                    "additionalProperties": {}
+                                }
+                            },
+                            "issuedAt": {
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            "expiresAt": {
+                                "type": "string",
+                                "minLength": 1
+                            }
+                        },
+                        "required": ["policyVersion", "iceServers", "issuedAt", "expiresAt"],
+                        "additionalProperties": {}
+                    },
+                    "refreshAfterAt": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": ["policyVersion", "leaseId", "bundle", "refreshAfterAt"],
+                "additionalProperties": {}
+            }
+        },
+        {
+            "id": "network-turn-credential-revoke-result",
+            "layer": "network",
+            "sourceRefs": ["src/logic/contractSchemas.ts", "server/turn/turnCredentialService.js"],
+            "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                    "policyVersion": {
+                        "type": "number",
+                        "const": 1
+                    },
+                    "leaseId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "revoked": {
+                        "type": "boolean",
+                        "const": true
+                    },
+                    "revokedAt": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": ["policyVersion", "leaseId", "revoked", "revokedAt"],
+                "additionalProperties": {}
+            }
+        },
+        {
             "id": "ui-status-notice",
             "layer": "ui",
             "sourceRefs": ["src/logic/contractSchemas.ts", "src/types/ui.ts"],
@@ -13327,6 +13498,11 @@
                             "REPLAY_FILE_INVALID_SCHEMA",
                             "TURN_CREDENTIAL_BUNDLE_INVALID",
                             "TURN_CREDENTIAL_BUNDLE_EXPIRED",
+                            "TURN_CREDENTIAL_FETCH_FAILED",
+                            "TURN_CREDENTIAL_REFRESH_FAILED",
+                            "TURN_CREDENTIAL_REVOKED",
+                            "TURN_CREDENTIAL_REVOKE_FAILED",
+                            "TURN_CREDENTIAL_FALLBACK_DENIED",
                             "RUNTIME_ICE_CONFIG_INVALID",
                             "IPC_REQUEST_REJECTED",
                             "DESKTOP_POLICY_REJECTED",
@@ -13505,7 +13681,12 @@
                     },
                     "source": {
                         "type": "string",
-                        "enum": ["ephemeral-turn-bundle", "runtime-ice-fallback", "default-stun"]
+                        "enum": [
+                            "online-turn-service",
+                            "ephemeral-turn-bundle",
+                            "runtime-ice-fallback",
+                            "default-stun"
+                        ]
                     },
                     "iceServers": {
                         "type": "array",

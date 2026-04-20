@@ -109,6 +109,31 @@ const REASON_DESCRIPTORS: Record<AppReasonCode, ReasonDescriptor> = {
         severity: 'warn',
         message: 'The TURN credential bundle expired before it could be used.',
     },
+    TURN_CREDENTIAL_FETCH_FAILED: {
+        group: 'runtime',
+        severity: 'warn',
+        message: 'The desktop runtime could not fetch short-lived TURN credentials.',
+    },
+    TURN_CREDENTIAL_REFRESH_FAILED: {
+        group: 'runtime',
+        severity: 'warn',
+        message: 'The desktop runtime could not refresh short-lived TURN credentials.',
+    },
+    TURN_CREDENTIAL_REVOKED: {
+        group: 'runtime',
+        severity: 'info',
+        message: 'The short-lived TURN credential lease was revoked.',
+    },
+    TURN_CREDENTIAL_REVOKE_FAILED: {
+        group: 'runtime',
+        severity: 'warn',
+        message: 'The desktop runtime could not confirm TURN credential revocation.',
+    },
+    TURN_CREDENTIAL_FALLBACK_DENIED: {
+        group: 'runtime',
+        severity: 'error',
+        message: 'The runtime denied legacy relay fallback after TURN credential failure.',
+    },
     RUNTIME_ICE_CONFIG_INVALID: {
         group: 'runtime',
         severity: 'warn',

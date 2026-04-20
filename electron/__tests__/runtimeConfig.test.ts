@@ -7,6 +7,7 @@ import {
     getRuntimeLogLevel,
     getRuntimeIceServersFromEnv,
     getRuntimeRelayProfileFromEnv,
+    getTurnCredentialServiceConfig,
     normalizeBooleanEnv,
     normalizeIceServer,
 } from '../runtimeConfig.js';
@@ -160,6 +161,9 @@ describe('electron runtime config', () => {
             'GEMDUEL_ICE_SERVERS_JSON',
             'GEMDUEL_LOG_LEVEL',
             'GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON',
+            'GEMDUEL_TURN_SERVICE_FALLBACK_MODE',
+            'GEMDUEL_TURN_SERVICE_TOKEN',
+            'GEMDUEL_TURN_SERVICE_URL',
             'GITHUB_JOB',
             'GITHUB_REF',
             'GITHUB_REPOSITORY',
@@ -171,6 +175,39 @@ describe('electron runtime config', () => {
         expect(RUNTIME_CONFIG_POLICY.GEMDUEL_ICE_SERVERS_JSON.secretHandling).toContain(
             'TURN credentials'
         );
+    });
+
+    it('normalizes TURN service config and defaults malformed fallback policy', () => {
+        const logger = { warn: vi.fn() };
+
+        expect(
+            getTurnCredentialServiceConfig({
+                serviceUrlEnv: 'https://relay.example.com/turn/',
+                serviceTokenEnv: 'service-token',
+                fallbackModeEnv: 'deny-runtime-ice',
+                logger,
+            })
+        ).toEqual({
+            enabled: true,
+            serviceUrl: 'https://relay.example.com/turn',
+            serviceToken: 'service-token',
+            fallbackMode: 'deny-runtime-ice',
+        });
+
+        expect(
+            getTurnCredentialServiceConfig({
+                serviceUrlEnv: 'not-a-url',
+                serviceTokenEnv: 'service-token',
+                fallbackModeEnv: 'bad-mode',
+                logger,
+            })
+        ).toEqual({
+            enabled: false,
+            serviceUrl: null,
+            serviceToken: null,
+            fallbackMode: 'allow-runtime-ice',
+        });
+        expect(logger.warn).toHaveBeenCalled();
     });
 
     it('prefers a valid ephemeral TURN bundle over the legacy runtime ICE list', () => {

@@ -36,6 +36,8 @@ export interface ElectronBridge {
     getAppVersion: () => Promise<string>;
     getRuntimeIceServers: () => Promise<RTCIceServer[]>;
     getRuntimeRelayProfile: () => Promise<RuntimeRelayProfile>;
+    refreshRuntimeRelayProfile: () => Promise<RuntimeRelayProfile>;
+    revokeRuntimeRelayProfile: () => Promise<RuntimeRelayProfile>;
     getReleaseHealthSnapshot: () => Promise<ReleaseHealthSnapshot>;
     restartApp: () => void;
     reportReleaseHealth: (event: ReleaseHealthEvent & { source?: 'renderer' }) => void;

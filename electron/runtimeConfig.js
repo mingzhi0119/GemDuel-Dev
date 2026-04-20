@@ -7,6 +7,8 @@ import {
 const VALID_LOG_LEVELS_LIST = ['error', 'warn', 'info', 'verbose', 'debug', 'silly'];
 const VALID_LOG_LEVELS = new Set(VALID_LOG_LEVELS_LIST);
 const TURN_CREDENTIAL_BUNDLE_POLICY_VERSION = 1;
+const TURN_CREDENTIAL_SERVICE_POLICY_VERSION = 1;
+const TURN_CREDENTIAL_SERVICE_FALLBACK_MODES = ['allow-runtime-ice', 'deny-runtime-ice'];
 
 const ISO_TIMESTAMP_SCHEMA = z
     .string()
@@ -36,6 +38,24 @@ export const TURN_CREDENTIAL_BUNDLE_SCHEMA = z
         iceServers: RUNTIME_ICE_SERVER_LIST_SCHEMA.nonempty(),
         issuedAt: ISO_TIMESTAMP_SCHEMA,
         expiresAt: ISO_TIMESTAMP_SCHEMA,
+    })
+    .passthrough();
+
+export const TURN_CREDENTIAL_LEASE_SCHEMA = z
+    .object({
+        policyVersion: z.literal(TURN_CREDENTIAL_SERVICE_POLICY_VERSION),
+        leaseId: z.string().min(1),
+        bundle: TURN_CREDENTIAL_BUNDLE_SCHEMA,
+        refreshAfterAt: ISO_TIMESTAMP_SCHEMA,
+    })
+    .passthrough();
+
+export const TURN_CREDENTIAL_REVOKE_RESULT_SCHEMA = z
+    .object({
+        policyVersion: z.literal(TURN_CREDENTIAL_SERVICE_POLICY_VERSION),
+        leaseId: z.string().min(1),
+        revoked: z.literal(true),
+        revokedAt: ISO_TIMESTAMP_SCHEMA,
     })
     .passthrough();
 
@@ -79,6 +99,32 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
             'Treat ephemeral TURN bundles as sensitive runtime material. Do not commit them to source control, logs, or packaged client assets.',
         failureMode:
             'Falls back to GEMDUEL_ICE_SERVERS_JSON and then the built-in STUN baseline if the ephemeral bundle is missing, expired, or invalid.',
+    },
+    GEMDUEL_TURN_SERVICE_URL: {
+        owner: 'Networking',
+        defaultValue: 'unset',
+        validation: 'Absolute http/https URL for the short-lived TURN credential service.',
+        secretHandling:
+            'Service endpoint metadata only. Keep bearer tokens separate and never emit the resolved URL in release-health payloads.',
+        failureMode:
+            'Disables online TURN credential fetch and falls back to governed runtime relay sources.',
+    },
+    GEMDUEL_TURN_SERVICE_TOKEN: {
+        owner: 'Networking',
+        defaultValue: 'unset',
+        validation:
+            'Opaque bearer token used by the desktop runtime to authenticate before TURN credentials are issued.',
+        secretHandling:
+            'Treat as a secret. Do not commit, log, or expose this token to the renderer.',
+        failureMode:
+            'Disables online TURN credential fetch and falls back to governed runtime relay sources unless fallback deny is enabled.',
+    },
+    GEMDUEL_TURN_SERVICE_FALLBACK_MODE: {
+        owner: 'Networking',
+        defaultValue: 'allow-runtime-ice',
+        validation: `One of ${TURN_CREDENTIAL_SERVICE_FALLBACK_MODES.join(', ')}.`,
+        secretHandling: 'Operational policy only. Never store credentials here.',
+        failureMode: 'Falls back to allow-runtime-ice if the policy value is missing or malformed.',
     },
     GITHUB_REPOSITORY: {
         owner: 'Release Engineering',
@@ -131,7 +177,12 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
     },
 });
 
-const buildRuntimeRelayProfile = ({ source, iceServers, issuedAt = null, expiresAt = null }) => ({
+export const buildRuntimeRelayProfile = ({
+    source,
+    iceServers,
+    issuedAt = null,
+    expiresAt = null,
+}) => ({
     policyVersion: TURN_CREDENTIAL_BUNDLE_POLICY_VERSION,
     source,
     iceServers,
@@ -226,6 +277,58 @@ const parseRuntimeIceServersFromEnv = (rawConfig, logger = console) => {
 
 export const getRuntimeIceServersFromEnv = (rawConfig, logger = console) =>
     parseRuntimeIceServersFromEnv(rawConfig, logger);
+
+export const getTurnCredentialServiceConfig = ({
+    serviceUrlEnv,
+    serviceTokenEnv,
+    fallbackModeEnv,
+    logger = console,
+}) => {
+    const fallbackMode = TURN_CREDENTIAL_SERVICE_FALLBACK_MODES.includes(fallbackModeEnv)
+        ? fallbackModeEnv
+        : 'allow-runtime-ice';
+
+    if (fallbackModeEnv && !TURN_CREDENTIAL_SERVICE_FALLBACK_MODES.includes(fallbackModeEnv)) {
+        logger.warn?.(
+            `[RTC] GEMDUEL_TURN_SERVICE_FALLBACK_MODE must be one of ${TURN_CREDENTIAL_SERVICE_FALLBACK_MODES.join(', ')}. Falling back to allow-runtime-ice.`
+        );
+    }
+
+    if (!serviceUrlEnv || !serviceTokenEnv) {
+        return {
+            enabled: false,
+            serviceUrl: null,
+            serviceToken: null,
+            fallbackMode,
+        };
+    }
+
+    try {
+        const url = new URL(serviceUrlEnv);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+            throw new Error('unsupported-protocol');
+        }
+
+        return {
+            enabled: true,
+            serviceUrl: url.toString().replace(/\/+$/, ''),
+            serviceToken: serviceTokenEnv,
+            fallbackMode,
+        };
+    } catch (error) {
+        logger.warn?.(
+            '[RTC] GEMDUEL_TURN_SERVICE_URL must be an absolute http/https URL. Falling back to governed runtime relay sources.',
+            error
+        );
+
+        return {
+            enabled: false,
+            serviceUrl: null,
+            serviceToken: null,
+            fallbackMode,
+        };
+    }
+};
 
 export const getRuntimeRelayProfileFromEnv = (
     bundleConfig,

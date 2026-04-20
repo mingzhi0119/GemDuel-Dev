@@ -20,6 +20,8 @@ const IPC_ARG_SCHEMAS = new Map([
     [IPC_INVOKE_CHANNELS.getAppVersion, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.getRuntimeIceServers, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.getRuntimeRelayProfile, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.refreshRuntimeRelayProfile, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.revokeRuntimeRelayProfile, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot, NO_ARGS_SCHEMA],
     [IPC_SEND_CHANNELS.restartApp, NO_ARGS_SCHEMA],
     [IPC_SEND_CHANNELS.reportReleaseHealth, RELEASE_HEALTH_EVENT_TUPLE_SCHEMA],

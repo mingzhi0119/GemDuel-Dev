@@ -17,8 +17,10 @@
         "onDownloadProgress",
         "onUpdateAvailable",
         "onUpdateDownloaded",
+        "refreshRuntimeRelayProfile",
         "reportReleaseHealth",
-        "restartApp"
+        "restartApp",
+        "revokeRuntimeRelayProfile"
     ],
     "allowlistedChannels": [
         "download_progress",
@@ -26,8 +28,10 @@
         "get-release-health-snapshot",
         "get-runtime-ice-servers",
         "get-runtime-relay-profile",
+        "refresh-runtime-relay-profile",
         "report-release-health",
         "restart_app",
+        "revoke-runtime-relay-profile",
         "update_available",
         "update_downloaded"
     ]

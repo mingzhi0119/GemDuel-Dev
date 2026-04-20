@@ -29,6 +29,7 @@ export const basicGemColorSchema = z.enum(['blue', 'white', 'green', 'black', 'r
 export const bonusColorSchema = z.union([gemColorSchema, z.literal('null')]);
 export const uiNoticeSeveritySchema = z.enum(['info', 'warn', 'error']);
 export const runtimeRelayProfileSourceSchema = z.enum([
+    'online-turn-service',
     'ephemeral-turn-bundle',
     'runtime-ice-fallback',
     'default-stun',
@@ -706,5 +707,45 @@ export const turnCredentialBundleSchema = z
         iceServers: runtimeIceServerListSchema.min(1),
         issuedAt: z.string().min(1),
         expiresAt: z.string().min(1),
+    })
+    .passthrough();
+
+export const turnCredentialIssueRequestSchema = z
+    .object({
+        subject: z.string().min(1),
+        client: z.string().min(1),
+    })
+    .passthrough();
+
+export const turnCredentialRefreshRequestSchema = z
+    .object({
+        leaseId: z.string().min(1),
+        client: z.string().min(1),
+    })
+    .passthrough();
+
+export const turnCredentialRevokeRequestSchema = z
+    .object({
+        leaseId: z.string().min(1),
+        client: z.string().min(1),
+        reason: z.string().min(1).max(120).optional(),
+    })
+    .passthrough();
+
+export const turnCredentialLeaseSchema = z
+    .object({
+        policyVersion: z.literal(1),
+        leaseId: z.string().min(1),
+        bundle: turnCredentialBundleSchema,
+        refreshAfterAt: z.string().min(1),
+    })
+    .passthrough();
+
+export const turnCredentialRevokeResultSchema = z
+    .object({
+        policyVersion: z.literal(1),
+        leaseId: z.string().min(1),
+        revoked: z.literal(true),
+        revokedAt: z.string().min(1),
     })
     .passthrough();

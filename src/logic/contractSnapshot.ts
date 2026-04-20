@@ -10,7 +10,12 @@ import {
     runtimeRelayProfileSchema,
     runtimeIceServerListSchema,
     selectBuffPayloadSchema,
+    turnCredentialIssueRequestSchema,
     turnCredentialBundleSchema,
+    turnCredentialLeaseSchema,
+    turnCredentialRefreshRequestSchema,
+    turnCredentialRevokeRequestSchema,
+    turnCredentialRevokeResultSchema,
     uiStatusNoticeSchema,
 } from './contractSchemas';
 
@@ -71,6 +76,36 @@ export const buildContractSnapshot = () => ({
             layer: 'network',
             schema: networkMessageSchema,
             sourceRefs: ['src/logic/contractSchemas.ts', 'src/types/network.ts'],
+        }),
+        buildContractEntry({
+            id: 'network-turn-credential-issue-request',
+            layer: 'network',
+            schema: turnCredentialIssueRequestSchema,
+            sourceRefs: ['src/logic/contractSchemas.ts', 'server/turn/turnCredentialService.js'],
+        }),
+        buildContractEntry({
+            id: 'network-turn-credential-refresh-request',
+            layer: 'network',
+            schema: turnCredentialRefreshRequestSchema,
+            sourceRefs: ['src/logic/contractSchemas.ts', 'server/turn/turnCredentialService.js'],
+        }),
+        buildContractEntry({
+            id: 'network-turn-credential-revoke-request',
+            layer: 'network',
+            schema: turnCredentialRevokeRequestSchema,
+            sourceRefs: ['src/logic/contractSchemas.ts', 'server/turn/turnCredentialService.js'],
+        }),
+        buildContractEntry({
+            id: 'network-turn-credential-lease',
+            layer: 'network',
+            schema: turnCredentialLeaseSchema,
+            sourceRefs: ['src/logic/contractSchemas.ts', 'server/turn/turnCredentialService.js'],
+        }),
+        buildContractEntry({
+            id: 'network-turn-credential-revoke-result',
+            layer: 'network',
+            schema: turnCredentialRevokeResultSchema,
+            sourceRefs: ['src/logic/contractSchemas.ts', 'server/turn/turnCredentialService.js'],
         }),
         buildContractEntry({
             id: 'ui-status-notice',
