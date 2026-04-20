@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { canActionRunInPhase } from '../logic/fsm';
 import {
     buildGameStartAction,
     buildPeekDeckAction,
@@ -31,15 +32,16 @@ export const useMetaInteractionHandlers = ({
 
     const handleSelectRoyal = useCallback(
         (royalCard: RoyalCard) => {
-            if (!canLocalInteract) return;
+            if (!canLocalInteract || !canActionRunInPhase('SELECT_ROYAL_CARD', gameState.phase))
+                return;
             networkDispatch(buildSelectRoyalAction(royalCard));
         },
-        [canLocalInteract, networkDispatch]
+        [canLocalInteract, gameState.phase, networkDispatch]
     );
 
     const handleSelectBuff = useCallback(
         (buffId: string) => {
-            if (!canLocalInteract) return;
+            if (!canLocalInteract || !canActionRunInPhase('SELECT_BUFF', gameState.phase)) return;
             networkDispatch(
                 buildSelectBuffAction(
                     buffId,
@@ -59,11 +61,11 @@ export const useMetaInteractionHandlers = ({
 
     const handlePeekDeck = useCallback(
         (level: number) => {
-            if (canLocalInteract) {
+            if (canLocalInteract && canActionRunInPhase('PEEK_DECK', gameState.phase)) {
                 networkDispatch(buildPeekDeckAction(level as 1 | 2 | 3));
             }
         },
-        [canLocalInteract, networkDispatch]
+        [canLocalInteract, gameState.phase, networkDispatch]
     );
 
     return useMemo(

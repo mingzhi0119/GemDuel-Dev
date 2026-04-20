@@ -173,7 +173,7 @@ describe('release-health report exporter', () => {
     it('derives a machine-readable report from raw release-health JSONL logs', () => {
         const rawLog = [
             '[RELEASE_HEALTH] {"source":"main","category":"startup","name":"WINDOW_LOADED","severity":"info","message":"Renderer loaded.","timestamp":"2026-04-19T10:00:00.000Z"}',
-            '[RELEASE_HEALTH] {"source":"main","category":"security","name":"IPC_REQUEST_REJECTED","severity":"warn","message":"Rejected.","timestamp":"2026-04-19T10:01:00.000Z"}',
+            '[RELEASE_HEALTH] {"source":"main","category":"security","name":"IPC_REQUEST_REJECTED","severity":"warn","message":"Rejected.","timestamp":"2026-04-19T10:01:00.000Z","context":{"reasonCode":"IPC_REQUEST_REJECTED"}}',
         ].join('\n');
 
         const source = parseReleaseHealthSourceText(rawLog);
@@ -192,6 +192,9 @@ describe('release-health report exporter', () => {
         expect(report.summary.totalEvents).toBe(2);
         expect(report.summary.indicators).toMatchObject({
             ipcRejected: 1,
+        });
+        expect(report.summary.reasonCodeCounts).toEqual({
+            IPC_REQUEST_REJECTED: 1,
         });
         expect(report.status).toBe('incident');
         expect(report.alerts).toEqual(
@@ -234,6 +237,12 @@ describe('release-health report exporter', () => {
                           : `EVENT_${index}`,
                 severity: index === 0 || index === 1 ? 'error' : index === 3 ? 'warn' : 'info',
                 message: `event ${index}`,
+                context:
+                    index === 3
+                        ? {
+                              reasonCode: 'IPC_REQUEST_REJECTED',
+                          }
+                        : undefined,
                 ...(index === 29
                     ? {}
                     : { timestamp: `2026-04-19T10:${String(index).padStart(2, '0')}:00.000Z` }),
@@ -247,6 +256,9 @@ describe('release-health report exporter', () => {
             peerFailures: 1,
             recoveryRequests: 28,
             ipcRejected: 1,
+        });
+        expect(derivedSummary.reasonCodeCounts).toEqual({
+            IPC_REQUEST_REJECTED: 1,
         });
 
         const summaryOnlySource = parseReleaseHealthSourceText(

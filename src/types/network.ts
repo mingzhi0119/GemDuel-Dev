@@ -16,14 +16,13 @@ import type {
     StealGemPayload,
     UsePrivilegePayload,
 } from './domain';
+import type { HostDecisionReasonCode, NetworkSyncReason, RecoveryReason } from './reason';
+export type { HostDecisionReasonCode, NetworkSyncReason, RecoveryReason } from './reason';
 
 export const NETWORK_PROTOCOL_VERSION = 2 as const;
 
 export type NetworkProtocolVersion = typeof NETWORK_PROTOCOL_VERSION;
-export type NetworkSyncReason = 'TURN_SYNC' | 'INITIAL' | 'RECOVERY';
-export type RecoveryReason = 'CHECKSUM_MISMATCH' | 'MANUAL' | 'STALE_PACKET';
 export type HostApprovalOutcomeCode = 'APPROVED' | 'AUTHORITY_REJECTED' | 'CHECKSUM_UNAVAILABLE';
-export type HostDecisionReasonCode = Exclude<HostApprovalOutcomeCode, 'APPROVED'>;
 
 export type BootstrapCommand =
     | { kind: 'INIT'; setup: BuffInitPayload }

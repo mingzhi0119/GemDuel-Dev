@@ -3,6 +3,7 @@ import { Layers } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Card, STANDARD_CARD_SIZE } from './Card';
 import { withGameAnimation } from '../hoc/withGameAnimation';
+import { getFsmPhaseSurfacePolicy } from '../logic/fsm';
 import { calculateTransaction } from '../utils';
 import {
     Card as CardType,
@@ -55,12 +56,15 @@ export const Market: React.FC<MarketProps> = React.memo(
         isOnline,
         localPlayer,
     }) => {
+        const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
         // Validation: Is it my turn and not in review/game over?
         const canInteract =
             (!isOnline || turn === localPlayer) && phase !== 'REVIEW' && phase !== 'GAME_OVER';
         const activeBuff = playerBuffs[turn];
         const hasIntelligence =
-            activeBuff?.effects?.active === 'peek_deck' && phase === 'IDLE' && canInteract;
+            activeBuff?.effects?.active === 'peek_deck' &&
+            surfacePolicy.marketInteraction &&
+            canInteract;
 
         // Optimization: Stable callback for buying cards
         const handleBuy = useCallback(
@@ -171,7 +175,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                 <Card
                                                     card={card}
                                                     canBuy={
-                                                        phase === 'IDLE' &&
+                                                        surfacePolicy.marketInteraction &&
                                                         canInteract &&
                                                         card !== null &&
                                                         calculateTransaction(
@@ -200,10 +204,16 @@ export const Market: React.FC<MarketProps> = React.memo(
                                 )}
 
                                 <div
-                                    onClick={() => canInteract && handleReserveDeck(lvl)}
+                                    onClick={() =>
+                                        surfacePolicy.marketInteraction &&
+                                        canInteract &&
+                                        handleReserveDeck(lvl)
+                                    }
                                     className={`shrink-0 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md relative overflow-hidden group
                             ${
-                                phase === 'IDLE' && canInteract && decks[lvl].length > 0
+                                surfacePolicy.marketInteraction &&
+                                canInteract &&
+                                decks[lvl].length > 0
                                     ? (theme === 'dark'
                                           ? 'border-slate-600 hover:border-emerald-400'
                                           : 'border-slate-400 hover:border-emerald-500') +
@@ -258,7 +268,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                     key={card.id} // Stable Card ID triggers exit/enter on change
                                                     card={card}
                                                     canBuy={
-                                                        phase === 'IDLE' &&
+                                                        surfacePolicy.marketInteraction &&
                                                         canInteract &&
                                                         calculateTransaction(
                                                             card,

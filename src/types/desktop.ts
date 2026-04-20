@@ -22,6 +22,7 @@ export interface ReleaseHealthSnapshot {
     totalEvents: number;
     severityCounts: Record<'info' | 'warn' | 'error', number>;
     indicators: ReleaseHealthIndicatorSnapshot;
+    reasonCodeCounts: Record<string, number>;
     counters: Record<string, ReleaseHealthCounterSnapshot>;
     recentEvents: Array<
         ReleaseHealthEvent & {

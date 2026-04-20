@@ -8,7 +8,7 @@ Last updated: `2026-04-19`
 | ----------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | `UI / App Shell`        | Route selection, layout composition, overlays, desktop-facing shell behavior | `src/App.tsx`, `src/app/**`, `src/components/**`, `src/types/ui.ts`                                                              | `Hooks`, `Domain selectors/types`, `Desktop contract`             |
 | `Hooks / Orchestration` | React state orchestration, multiplayer coordination, runtime side effects    | `src/hooks/**`                                                                                                                   | `Domain logic`, `Network protocol`, `Desktop observability/types` |
-| `Domain Logic`          | Rules, reducer transitions, replay validation, FSM and authority checks      | `src/logic/**`                                                                                                                   | `Domain types`, `runtimeSchemas`, pure utilities                  |
+| `Domain Logic`          | Rules, reducer transitions, replay validation, FSM and authority checks      | `src/logic/**`                                                                                                                   | `Domain types`, `runtimeSchemas`, `pure utilities`                |
 | `Network Contract`      | Protocol DTOs, message parsing, online direction checks, checksums           | `src/types/network.ts`, `src/logic/networkProtocol.ts`, `src/logic/networkMessageValidation.ts`, `src/logic/networkChecksums.ts` | `Domain types`, `Domain validation guards`                        |
 | `Desktop Platform`      | Electron main/preload/runtime config and governance checks                   | `electron/**`, `scripts/check-electron-governance.mjs`, `src/types/desktop.ts`                                                   | Shared runtime policy, observability                              |
 
@@ -28,9 +28,25 @@ Last updated: `2026-04-19`
 3. `src/logic/**` should depend on `src/types/domain.ts` contracts rather than renderer-only concerns.
 4. `src/types/desktop.ts` is the only place that declares the `window.electron` bridge contract.
 5. New multiplayer message shapes should update both `src/types/network.ts` and `src/logic/networkMessageValidation.ts`.
+6. Phase-sensitive action ownership lives in `src/logic/fsmPolicy.ts`; hooks, handlers, routes, overlays, and components may only consume FSM-derived helpers and must not re-interpret phase rules inline.
+
+## Phase Ownership
+
+- `src/logic/fsmPolicy.ts` is the single source of truth for phase-sensitive action gates, state requirements, and UI-facing phase surface policy.
+- `src/logic/actionValidation/rules.ts`, `src/logic/interactionManager.ts`, and `src/hooks/**` may enforce payload or board-state constraints, but any phase predicate must come from the FSM layer.
+- `src/app/**` and `src/components/**` may branch on FSM-derived view models such as board interaction mode, market interaction, draft selection, bonus-color selection, and royal selection; they must not hard-code phase strings as an ownership source.
+- Every new phase/action/recovery rule must update the FSM matrix and its generated evidence rows before UI or hook code consumes it.
+
+## Evidence
+
+- Matrix source: `src/logic/fsmPolicy.ts`
+- Public FSM entry: `src/logic/fsm.ts`
+- Command gate enforcement: `src/logic/commandGate.ts`
+- Matrix/table-driven evidence: `src/logic/__tests__/fsmPolicyMatrix.test.ts`
+- Boundary/property evidence: `src/logic/__tests__/fsmCommandGate.test.ts`, `src/logic/__tests__/propertyBoundaries.test.ts`
 
 ## Follow-on Work
 
 1. Continue shrinking `src/hooks/useGameNetwork.ts` so protocol translation and recovery reporting move further toward helper modules.
-2. Continue moving high-risk action rules from handler-adjacent logic into dedicated domain services.
+2. Keep `fsmPolicy` as the ownership layer for phase transitions and surface modes; new phase logic should land as matrix updates plus table/property evidence before it reaches hooks or UI.
 3. Add hook-level tests for `src/app/io/useReplayIO.ts` and any new shell-level composition helpers.

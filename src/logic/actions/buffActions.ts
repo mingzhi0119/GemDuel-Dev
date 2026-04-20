@@ -1,6 +1,7 @@
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { GAME_PHASES, BUFFS } from '../../constants';
 import { shuffleArray } from '../../utils';
+import { canActionRunInPhase } from '../fsm';
 import {
     GameState,
     PlayerKey,
@@ -218,7 +219,7 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
 };
 
 export const handleRerollBuffs = (state: GameState, payload: { level?: number }): void => {
-    if (state.phase !== GAME_PHASES.DRAFT_PHASE || state.turn !== 'p1') return;
+    if (!canActionRunInPhase('DEBUG_REROLL_BUFFS', state.phase) || state.turn !== 'p1') return;
 
     const level = payload.level ?? state.buffLevel;
     const levelBuffs = Object.values(BUFFS).filter((b) => b.level === level);
@@ -228,7 +229,7 @@ export const handleRerollBuffs = (state: GameState, payload: { level?: number })
     const shuffledPool = shuffleArray([...levelBuffs]);
 
     for (const b of shuffledPool) {
-        if (b.category && !categoriesSeen.has(b.category)) {
+        if ('category' in b && b.category && !categoriesSeen.has(b.category)) {
             p1Pool.push(b);
             categoriesSeen.add(b.category);
             if (p1Pool.length === 3) break;

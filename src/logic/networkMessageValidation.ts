@@ -8,6 +8,11 @@ import type {
 } from '../types/network';
 import type { BoundaryFailure, NetworkMessageBoundaryErrorCode } from '../types';
 import { NETWORK_PROTOCOL_VERSION } from '../types/network';
+import {
+    HOST_DECISION_REASON_CODES,
+    NETWORK_SYNC_REASONS,
+    RECOVERY_REASONS,
+} from '../types/reason';
 import { GUEST_INTENT_PERMISSION_TABLE } from './networkProtocol';
 import {
     isBonusGemPayload,
@@ -31,12 +36,9 @@ import {
     isUsePrivilegePayload,
 } from './actionValidation/guards';
 
-const NETWORK_SYNC_REASONS = new Set<NetworkSyncReason>(['TURN_SYNC', 'INITIAL', 'RECOVERY']);
-const RECOVERY_REASONS = new Set<RecoveryReason>(['CHECKSUM_MISMATCH', 'MANUAL', 'STALE_PACKET']);
-const HOST_DECISION_REASON_CODES = new Set<HostDecisionReasonCode>([
-    'AUTHORITY_REJECTED',
-    'CHECKSUM_UNAVAILABLE',
-]);
+const NETWORK_SYNC_REASON_SET = new Set<NetworkSyncReason>(NETWORK_SYNC_REASONS);
+const RECOVERY_REASON_SET = new Set<RecoveryReason>(RECOVERY_REASONS);
+const HOST_DECISION_REASON_CODE_SET = new Set<HostDecisionReasonCode>(HOST_DECISION_REASON_CODES);
 
 const isProtocolVersion = (value: unknown): value is typeof NETWORK_PROTOCOL_VERSION =>
     value === NETWORK_PROTOCOL_VERSION;
@@ -209,7 +211,7 @@ export const parseNetworkMessageBoundary = (
             }
             if (
                 value.reasonCode !== undefined &&
-                !HOST_DECISION_REASON_CODES.has(value.reasonCode as HostDecisionReasonCode)
+                !HOST_DECISION_REASON_CODE_SET.has(value.reasonCode as HostDecisionReasonCode)
             ) {
                 return {
                     ok: false,
@@ -261,7 +263,7 @@ export const parseNetworkMessageBoundary = (
                     requestId: value.requestId,
                     intentKind: value.intentKind,
                     approved: value.approved,
-                    reasonCode: value.reasonCode,
+                    reasonCode: value.reasonCode as HostDecisionReasonCode | undefined,
                     reason: value.reason,
                     command: value.command,
                     checksum: value.checksum,
@@ -275,7 +277,7 @@ export const parseNetworkMessageBoundary = (
                           version: NETWORK_PROTOCOL_VERSION,
                           type: 'SYNC_STATE',
                           snapshot: value.snapshot,
-                          reason: NETWORK_SYNC_REASONS.has(value.reason as NetworkSyncReason)
+                          reason: NETWORK_SYNC_REASON_SET.has(value.reason as NetworkSyncReason)
                               ? (value.reason as NetworkSyncReason)
                               : 'TURN_SYNC',
                       },
@@ -289,7 +291,7 @@ export const parseNetworkMessageBoundary = (
                   };
         case 'RECOVERY_REQUEST':
             if (
-                !RECOVERY_REASONS.has(value.reason as RecoveryReason) ||
+                !RECOVERY_REASON_SET.has(value.reason as RecoveryReason) ||
                 (value.requestId !== undefined && typeof value.requestId !== 'string')
             ) {
                 return {

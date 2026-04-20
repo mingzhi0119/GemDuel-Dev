@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import {
     ALL_PHASES,
-    FSM_POLICY_BY_ACTION,
     FSM_STATE_REQUIREMENTS,
+    createFsmCommandMatrixRows,
+    createFsmPhaseMatrixRows,
     getCommandPhaseRejectionReason,
+    getFsmPhaseSurfacePolicy,
     getStateIntegrityError,
     getTransitionIntegrityError,
 } from '../fsmPolicy';
@@ -12,7 +14,9 @@ import type { GameAction, GamePhase, GameState } from '../../types';
 
 const cloneState = (): GameState => JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
 
-const buildAction = (type: GameAction['type']): GameAction => {
+type MatrixAction = Exclude<GameAction, { type: 'INIT' | 'INIT_DRAFT' | 'FORCE_SYNC' | 'FLATTEN' }>;
+
+const buildAction = (type: MatrixAction['type']): MatrixAction => {
     switch (type) {
         case 'SELECT_BUFF':
             return { type, payload: { buffId: 'privilege_favor', randomColor: 'red' } };
@@ -157,24 +161,19 @@ const buildAction = (type: GameAction['type']): GameAction => {
             return { type, payload: { level: 1 } };
         case 'DEBUG_REROLL_BUFFS':
             return { type, payload: { level: 1 } };
-        case 'INIT':
-        case 'INIT_DRAFT':
-        case 'FORCE_SYNC':
-        case 'FLATTEN':
-            throw new Error(`Matrix test should not build bootstrap action ${type}.`);
     }
 };
 
 describe('FSM policy matrix', () => {
     it('uses a single policy source for phase-sensitive commands', () => {
-        for (const [type, policy] of Object.entries(FSM_POLICY_BY_ACTION)) {
-            if (!policy.allowedFrom || policy.allowedFrom.length === 0) {
+        for (const row of createFsmCommandMatrixRows()) {
+            if (row.allowedFrom.length === 0) {
                 continue;
             }
 
-            const action = buildAction(type as GameAction['type']);
-            const allowedPhase = policy.allowedFrom[0];
-            const rejectedPhase = ALL_PHASES.find((phase) => !policy.allowedFrom?.includes(phase));
+            const action = buildAction(row.actionType as MatrixAction['type']);
+            const allowedPhase = row.allowedFrom[0];
+            const rejectedPhase = ALL_PHASES.find((phase) => !row.allowedFrom.includes(phase));
             const allowedState = cloneState();
             allowedState.phase = allowedPhase;
 
@@ -183,7 +182,9 @@ describe('FSM policy matrix', () => {
             if (rejectedPhase) {
                 const rejectedState = cloneState();
                 rejectedState.phase = rejectedPhase;
-                expect(getCommandPhaseRejectionReason(rejectedState, action)).toContain(type);
+                expect(getCommandPhaseRejectionReason(rejectedState, action)).toContain(
+                    row.actionType
+                );
             }
         }
     });
@@ -226,20 +227,20 @@ describe('FSM policy matrix', () => {
     });
 
     it('rejects post-action phases that fall outside the transition matrix', () => {
-        for (const [type, policy] of Object.entries(FSM_POLICY_BY_ACTION)) {
-            if (!policy.allowedTo || policy.allowedTo.length === 0) {
+        for (const row of createFsmCommandMatrixRows()) {
+            if (row.allowedTo.length === 0 || row.allowedFrom.length === 0) {
                 continue;
             }
 
-            const actionType = type as Exclude<
+            const actionType = row.actionType as Exclude<
                 GameAction['type'],
                 'INIT' | 'INIT_DRAFT' | 'FORCE_SYNC' | 'FLATTEN'
             >;
             const action = buildAction(actionType);
             const previousState = cloneState();
-            previousState.phase = (policy.allowedFrom?.[0] ?? 'IDLE') as GamePhase;
+            previousState.phase = (row.allowedFrom[0] ?? 'IDLE') as GamePhase;
 
-            const invalidNextPhase = ALL_PHASES.find((phase) => !policy.allowedTo?.includes(phase));
+            const invalidNextPhase = ALL_PHASES.find((phase) => !row.allowedTo.includes(phase));
             if (!invalidNextPhase) {
                 continue;
             }
@@ -250,6 +251,72 @@ describe('FSM policy matrix', () => {
             expect(getTransitionIntegrityError(previousState, action, nextState)).toContain(
                 'unexpected'
             );
+        }
+    });
+
+    it('derives phase ownership rows from the centralized FSM matrix', () => {
+        for (const row of createFsmPhaseMatrixRows()) {
+            const surfacePolicy = getFsmPhaseSurfacePolicy(row.phase);
+
+            expect(row.surfacePolicy).toEqual(surfacePolicy);
+            expect(row.stateRequirements).toEqual(
+                FSM_STATE_REQUIREMENTS.filter((requirement) => requirement.phase === row.phase).map(
+                    (requirement) => requirement.description
+                )
+            );
+
+            if (surfacePolicy.boardInteractionMode === 'selection') {
+                expect(row.allowedActions).toEqual(
+                    expect.arrayContaining(['TAKE_GEMS', 'REPLENISH'])
+                );
+            }
+
+            if (surfacePolicy.boardInteractionMode === 'bonus-target') {
+                expect(row.allowedActions).toContain('TAKE_BONUS_GEM');
+            }
+
+            if (surfacePolicy.boardInteractionMode === 'reserve-gold') {
+                expect(row.allowedActions).toEqual(
+                    expect.arrayContaining(['RESERVE_CARD', 'RESERVE_DECK', 'CANCEL_RESERVE'])
+                );
+            }
+
+            if (surfacePolicy.boardInteractionMode === 'privilege-target') {
+                expect(row.allowedActions).toEqual(
+                    expect.arrayContaining(['USE_PRIVILEGE', 'CANCEL_PRIVILEGE'])
+                );
+            }
+
+            if (surfacePolicy.selfGemRailMode === 'discard-self') {
+                expect(row.allowedActions).toContain('DISCARD_GEM');
+            }
+
+            if (surfacePolicy.opponentGemRailMode === 'steal-target') {
+                expect(row.allowedActions).toContain('STEAL_GEM');
+            }
+
+            if (surfacePolicy.marketInteraction) {
+                expect(row.allowedActions).toEqual(
+                    expect.arrayContaining([
+                        'INITIATE_BUY_JOKER',
+                        'INITIATE_RESERVE',
+                        'INITIATE_RESERVE_DECK',
+                        'PEEK_DECK',
+                    ])
+                );
+            }
+
+            if (surfacePolicy.draftSelection) {
+                expect(row.allowedActions).toContain('SELECT_BUFF');
+            }
+
+            if (surfacePolicy.royalSelection) {
+                expect(row.allowedActions).toContain('SELECT_ROYAL_CARD');
+            }
+
+            if (surfacePolicy.bonusColorSelection) {
+                expect(row.allowedActions).toContain('BUY_CARD');
+            }
         }
     });
 });

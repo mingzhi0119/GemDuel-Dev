@@ -1,6 +1,13 @@
-import { GameState, GameAction, Card, PlayerKey, GemCoord, GemColor } from '../../types';
+import { GameState, GameAction, Card, PlayerKey, GemCoord, BasicGemColor } from '../../types';
 import { calculateTransaction } from '../../utils';
 import { validateGemSelection } from '../validators';
+import {
+    canActionRunInPhase,
+    getFsmPhaseSurfacePolicy,
+    isBonusColorSelectionPhase,
+    isDraftSelectionPhase,
+    isRoyalSelectionPhase,
+} from '../fsm';
 import { ABILITIES } from '../../constants';
 
 /**
@@ -9,13 +16,14 @@ import { ABILITIES } from '../../constants';
 export const computeAiAction = (state: GameState): GameAction | null => {
     const aiPlayer = state.turn;
     const opponent = aiPlayer === 'p1' ? 'p2' : 'p1';
+    const surfacePolicy = getFsmPhaseSurfacePolicy(state.phase);
 
     // Priority 0: Handle Setup/Draft Phase
-    if (state.phase === 'DRAFT_PHASE') {
+    if (isDraftSelectionPhase(state.phase)) {
         const pool = state.p2DraftPool || state.draftPool || [];
         if (pool.length > 0) {
             const chosenId = pool[Math.floor(Math.random() * pool.length)];
-            const basics: GemColor[] = ['red', 'green', 'blue', 'white', 'black'];
+            const basics: BasicGemColor[] = ['red', 'green', 'blue', 'white', 'black'];
             const randomColor = basics[Math.floor(Math.random() * basics.length)];
             const action: GameAction = {
                 type: 'SELECT_BUFF',
@@ -27,7 +35,10 @@ export const computeAiAction = (state: GameState): GameAction | null => {
     }
 
     // Priority 1: Handle mandatory sub-phases first
-    if (state.phase === 'SELECT_ROYAL') {
+    if (
+        isRoyalSelectionPhase(state.phase) &&
+        canActionRunInPhase('SELECT_ROYAL_CARD', state.phase)
+    ) {
         // Just pick the one with most points for now
         const bestRoyal = [...state.royalDeck].sort((a, b) => b.points - a.points)[0];
         if (bestRoyal) {
@@ -36,7 +47,10 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         }
     }
 
-    if (state.phase === 'DISCARD_EXCESS_GEMS') {
+    if (
+        surfacePolicy.selfGemRailMode === 'discard-self' &&
+        canActionRunInPhase('DISCARD_GEM', state.phase)
+    ) {
         // Discard the gem type we have the most of, but keep gold/pearls if possible
         const inv = state.inventories[aiPlayer];
         const discardOrder = (['red', 'green', 'blue', 'white', 'black'] as const)
@@ -58,7 +72,10 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         }
     }
 
-    if (state.phase === 'STEAL_ACTION') {
+    if (
+        surfacePolicy.opponentGemRailMode === 'steal-target' &&
+        canActionRunInPhase('STEAL_GEM', state.phase)
+    ) {
         const oppInv = state.inventories[opponent];
         const stealable = (['pearl', 'red', 'green', 'blue', 'white', 'black'] as const).filter(
             (c) => oppInv[c] > 0
@@ -69,7 +86,10 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         }
     }
 
-    if (state.phase === 'BONUS_ACTION') {
+    if (
+        surfacePolicy.boardInteractionMode === 'bonus-target' &&
+        canActionRunInPhase('TAKE_BONUS_GEM', state.phase)
+    ) {
         // Find the target gem on board
         for (let r = 0; r < 5; r++) {
             for (let c = 0; c < 5; c++) {
@@ -81,7 +101,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         }
     }
 
-    if (state.phase === 'SELECT_CARD_COLOR') {
+    if (isBonusColorSelectionPhase(state.phase) && canActionRunInPhase('BUY_CARD', state.phase)) {
         // Pick red as default for Joker
         const pending = state.pendingBuy!;
         const action: GameAction = {
@@ -90,12 +110,17 @@ export const computeAiAction = (state: GameState): GameAction | null => {
                 card: { ...pending.card, bonusColor: 'red' },
                 source: pending.source,
                 marketInfo: pending.marketInfo
-                    ? {
-                          level: pending.marketInfo.level as 1 | 2 | 3,
-                          idx: pending.marketInfo.idx,
-                          isExtra: pending.marketInfo.isExtra,
-                          extraIdx: pending.marketInfo.extraIdx,
-                      }
+                    ? pending.marketInfo.isExtra
+                        ? {
+                              level: 3,
+                              idx: pending.marketInfo.idx,
+                              isExtra: true,
+                              extraIdx: pending.marketInfo.extraIdx!,
+                          }
+                        : {
+                              level: pending.marketInfo.level as 1 | 2 | 3,
+                              idx: pending.marketInfo.idx,
+                          }
                     : undefined,
                 randoms: { bountyHunterColor: 'red' },
             },
@@ -103,7 +128,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         return action;
     }
 
-    if (state.phase !== 'IDLE') return null;
+    if (!canActionRunInPhase('TAKE_GEMS', state.phase)) return null;
 
     // Priority 2: Buy Cards
     // Check Market

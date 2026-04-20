@@ -48,7 +48,7 @@ export const useGameLogic = (
             state: {
                 ...gameState,
                 selectedGems: interactions.selectedGems,
-                errorMsg: interactions.errorMsg,
+                errorMsg: interactions.errorMsg ?? online.statusNotice?.message ?? null,
             } as Readonly<GameState & { selectedGems: GemCoord[]; errorMsg: string | null }>,
 
             handlers: {

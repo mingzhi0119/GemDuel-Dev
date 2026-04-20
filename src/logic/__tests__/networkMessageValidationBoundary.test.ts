@@ -51,4 +51,30 @@ describe('network message boundary contracts', () => {
             },
         });
     });
+
+    it('accepts host decisions that use shared boundary-level reason codes', () => {
+        expect(
+            parseNetworkMessageBoundary({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'HOST_DECISION',
+                requestId: 'req-turn',
+                intentKind: 'CLOSE_MODAL',
+                approved: false,
+                reasonCode: 'NOT_GUEST_TURN',
+            })
+        ).toEqual({
+            ok: true,
+            value: {
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'HOST_DECISION',
+                requestId: 'req-turn',
+                intentKind: 'CLOSE_MODAL',
+                approved: false,
+                reasonCode: 'NOT_GUEST_TURN',
+                reason: undefined,
+                command: undefined,
+                checksum: undefined,
+            },
+        });
+    });
 });

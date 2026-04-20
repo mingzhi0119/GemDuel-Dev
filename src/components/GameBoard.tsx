@@ -2,6 +2,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { withGameAnimation } from '../hoc/withGameAnimation';
 import { SPIRAL_ORDER } from '../constants';
+import { getFsmPhaseSurfacePolicy } from '../logic/fsm';
+import { validateGemSelection } from '../logic/validators';
 import { BoardCell, GamePhase, GemCoord, GemTypeObject } from '../types';
 
 export const GEM_BOARD_SIZE_PX = 375;
@@ -19,6 +21,8 @@ interface GemButtonProps {
     isInteractive: boolean;
     selectionIndex: number;
     onGemClick: (r: number, c: number) => void;
+    onGemPointerDown: (event: React.PointerEvent<HTMLButtonElement>, r: number, c: number) => void;
+    onGemPointerEnter: (r: number, c: number) => void;
 }
 
 const GemButton: React.FC<GemButtonProps> = React.memo(
@@ -33,14 +37,29 @@ const GemButton: React.FC<GemButtonProps> = React.memo(
         isInteractive,
         selectionIndex,
         onGemClick,
+        onGemPointerDown,
+        onGemPointerEnter,
     }) => {
         const handleClick = React.useCallback(() => {
             onGemClick(r, c);
         }, [r, c, onGemClick]);
 
+        const handlePointerDown = React.useCallback(
+            (event: React.PointerEvent<HTMLButtonElement>) => {
+                onGemPointerDown(event, r, c);
+            },
+            [c, onGemPointerDown, r]
+        );
+
+        const handlePointerEnter = React.useCallback(() => {
+            onGemPointerEnter(r, c);
+        }, [c, onGemPointerEnter, r]);
+
         return (
             <button
                 onClick={handleClick}
+                onPointerDown={handlePointerDown}
+                onPointerEnter={handlePointerEnter}
                 disabled={!isInteractive}
                 className={`w-full h-full rounded-full flex items-center justify-center ${!isInteractive ? 'cursor-default' : 'cursor-pointer'}`}
             >
@@ -81,7 +100,7 @@ const AnimatedGem = withGameAnimation(GemButton);
 interface GameBoardProps {
     board: BoardCell[][];
     handleGemClick: (r: number, c: number) => void;
-    isSelected: (r: number, c: number) => boolean;
+    handleGemDragSelection: (coords: GemCoord[]) => void;
     selectedGems: GemCoord[];
     phase: GamePhase | string;
     bonusGemTarget: GemTypeObject | null;
@@ -89,17 +108,227 @@ interface GameBoardProps {
     canInteract?: boolean;
 }
 
+const areSameCoord = (left: GemCoord, right: GemCoord) => left.r === right.r && left.c === right.c;
+
+const isSelectableDragCell = (cell: BoardCell | undefined) =>
+    Boolean(cell && cell.type.id !== 'empty' && cell.type.id !== 'gold');
+
+const buildDragSelectionCandidate = (
+    currentPath: GemCoord[],
+    nextCoord: GemCoord,
+    board: BoardCell[][]
+): GemCoord[] | null => {
+    if (currentPath.some((coord) => areSameCoord(coord, nextCoord))) {
+        return currentPath;
+    }
+
+    if (currentPath.length >= 3) {
+        return null;
+    }
+
+    if (currentPath.length === 0) {
+        return [nextCoord];
+    }
+
+    const start = currentPath[0];
+    const dr = nextCoord.r - start.r;
+    const dc = nextCoord.c - start.c;
+    const span = Math.max(Math.abs(dr), Math.abs(dc));
+    const isStraight = dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc);
+
+    let candidate = [...currentPath, nextCoord];
+
+    if (currentPath.length === 1 && isStraight && span === 2) {
+        const midpoint: GemCoord = {
+            r: start.r + (dr === 0 ? 0 : dr / 2),
+            c: start.c + (dc === 0 ? 0 : dc / 2),
+        };
+
+        if (!Number.isInteger(midpoint.r) || !Number.isInteger(midpoint.c)) {
+            return null;
+        }
+
+        if (!isSelectableDragCell(board[midpoint.r]?.[midpoint.c])) {
+            return null;
+        }
+
+        candidate = [start, midpoint, nextCoord];
+    }
+
+    const validation = validateGemSelection(candidate);
+    if (!validation.valid || validation.hasGap) {
+        return null;
+    }
+
+    return candidate;
+};
+
 export const GameBoard: React.FC<GameBoardProps> = React.memo(
     ({
         board,
         handleGemClick,
-        isSelected,
+        handleGemDragSelection,
         selectedGems,
         phase,
         bonusGemTarget,
         theme,
         canInteract = true,
     }) => {
+        const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
+        const [dragPreview, setDragPreview] = React.useState<GemCoord[]>([]);
+        const dragPreviewRef = React.useRef<GemCoord[]>([]);
+        const dragStateRef = React.useRef({
+            active: false,
+            moved: false,
+            suppressClick: false,
+            anchor: null as GemCoord | null,
+        });
+        const suppressClickTimeoutRef = React.useRef<number | null>(null);
+
+        const updateDragPreview = React.useCallback((coords: GemCoord[]) => {
+            dragPreviewRef.current = coords;
+            setDragPreview(coords);
+        }, []);
+
+        const clearDragPreview = React.useCallback(() => {
+            dragPreviewRef.current = [];
+            setDragPreview([]);
+        }, []);
+
+        const endDragSelection = React.useCallback(() => {
+            if (!dragStateRef.current.active) {
+                return;
+            }
+
+            const shouldCommit = dragStateRef.current.moved && dragPreviewRef.current.length > 1;
+            dragStateRef.current.active = false;
+            dragStateRef.current.moved = false;
+            dragStateRef.current.anchor = null;
+
+            if (shouldCommit) {
+                handleGemDragSelection(dragPreviewRef.current);
+                dragStateRef.current.suppressClick = true;
+
+                if (suppressClickTimeoutRef.current !== null) {
+                    window.clearTimeout(suppressClickTimeoutRef.current);
+                }
+
+                suppressClickTimeoutRef.current = window.setTimeout(() => {
+                    dragStateRef.current.suppressClick = false;
+                    suppressClickTimeoutRef.current = null;
+                }, 0);
+            }
+
+            clearDragPreview();
+        }, [clearDragPreview, handleGemDragSelection]);
+
+        const cancelDragSelection = React.useCallback(() => {
+            dragStateRef.current.active = false;
+            dragStateRef.current.moved = false;
+            dragStateRef.current.anchor = null;
+            clearDragPreview();
+        }, [clearDragPreview]);
+
+        React.useEffect(() => {
+            const handleWindowPointerUp = () => endDragSelection();
+            const handleWindowPointerCancel = () => cancelDragSelection();
+
+            window.addEventListener('pointerup', handleWindowPointerUp);
+            window.addEventListener('pointercancel', handleWindowPointerCancel);
+
+            return () => {
+                window.removeEventListener('pointerup', handleWindowPointerUp);
+                window.removeEventListener('pointercancel', handleWindowPointerCancel);
+                if (suppressClickTimeoutRef.current !== null) {
+                    window.clearTimeout(suppressClickTimeoutRef.current);
+                }
+            };
+        }, [cancelDragSelection, endDragSelection]);
+
+        React.useEffect(() => {
+            if (surfacePolicy.boardInteractionMode !== 'selection' || !canInteract) {
+                cancelDragSelection();
+            }
+        }, [canInteract, cancelDragSelection, surfacePolicy.boardInteractionMode]);
+
+        const displayedSelection = dragPreview.length > 0 ? dragPreview : selectedGems;
+
+        const handleBoardGemClick = React.useCallback(
+            (r: number, c: number) => {
+                if (dragStateRef.current.suppressClick) {
+                    return;
+                }
+
+                handleGemClick(r, c);
+            },
+            [handleGemClick]
+        );
+
+        const handleBoardGemPointerDown = React.useCallback(
+            (event: React.PointerEvent<HTMLButtonElement>, r: number, c: number) => {
+                if (
+                    event.button !== 0 ||
+                    !canInteract ||
+                    surfacePolicy.boardInteractionMode !== 'selection'
+                ) {
+                    return;
+                }
+
+                if (!isSelectableDragCell(board[r]?.[c])) {
+                    return;
+                }
+
+                dragStateRef.current.active = true;
+                dragStateRef.current.moved = false;
+                dragStateRef.current.anchor = { r, c };
+                clearDragPreview();
+            },
+            [board, canInteract, clearDragPreview, surfacePolicy.boardInteractionMode]
+        );
+
+        const handleBoardGemPointerEnter = React.useCallback(
+            (r: number, c: number) => {
+                if (
+                    !dragStateRef.current.active ||
+                    surfacePolicy.boardInteractionMode !== 'selection'
+                ) {
+                    return;
+                }
+
+                if (!isSelectableDragCell(board[r]?.[c])) {
+                    return;
+                }
+
+                const basePath =
+                    dragPreviewRef.current.length > 0
+                        ? dragPreviewRef.current
+                        : dragStateRef.current.anchor
+                          ? [dragStateRef.current.anchor]
+                          : [];
+
+                if (basePath.length === 0) {
+                    return;
+                }
+
+                const nextSelection = buildDragSelectionCandidate(basePath, { r, c }, board);
+
+                if (!nextSelection) {
+                    return;
+                }
+
+                if (
+                    nextSelection.length !== dragPreviewRef.current.length ||
+                    nextSelection.some(
+                        (coord, index) => !areSameCoord(coord, dragPreviewRef.current[index]!)
+                    )
+                ) {
+                    dragStateRef.current.moved = nextSelection.length > 1;
+                    updateDragPreview(nextSelection);
+                }
+            },
+            [board, surfacePolicy.boardInteractionMode, updateDragPreview]
+        );
+
         return (
             <div
                 className={`p-4 rounded-[2rem] border transition-all duration-500 backdrop-blur-md
@@ -120,22 +349,24 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                 >
                     {board.map((row, r) =>
                         row.map((gem, c) => {
-                            const isSelectedGem = isSelected(r, c);
+                            const isSelectedGem = displayedSelection.some(
+                                (selection) => selection.r === r && selection.c === c
+                            );
                             const isGold = gem?.type?.id === 'gold';
                             const isEmpty = !gem || gem.type.id === 'empty';
 
                             // Target Logic
                             let isTarget = false;
-                            if (phase === 'RESERVE_WAITING_GEM') isTarget = isGold;
-                            else if (phase === 'PRIVILEGE_ACTION') isTarget = !isGold && !isEmpty;
-                            else if (phase === 'BONUS_ACTION')
+                            if (surfacePolicy.boardInteractionMode === 'reserve-gold')
+                                isTarget = isGold;
+                            else if (surfacePolicy.boardInteractionMode === 'privilege-target')
+                                isTarget = !isGold && !isEmpty;
+                            else if (surfacePolicy.boardInteractionMode === 'bonus-target')
                                 isTarget = gem.type.id === bonusGemTarget?.id;
 
-                            const isTargetSelectionMode = [
-                                'RESERVE_WAITING_GEM',
-                                'PRIVILEGE_ACTION',
-                                'BONUS_ACTION',
-                            ].includes(phase);
+                            const isTargetSelectionMode =
+                                surfacePolicy.boardInteractionMode !== 'selection' &&
+                                surfacePolicy.boardInteractionMode !== 'disabled';
                             const shouldDim = isTargetSelectionMode && !isTarget && !isEmpty;
 
                             const isReviewOrOver = phase === 'REVIEW' || phase === 'GAME_OVER';
@@ -163,10 +394,12 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                                                 isTarget={isTarget}
                                                 shouldDim={shouldDim}
                                                 isInteractive={isInteractive}
-                                                selectionIndex={selectedGems.findIndex(
+                                                selectionIndex={displayedSelection.findIndex(
                                                     (s) => s.r === r && s.c === c
                                                 )}
-                                                onGemClick={handleGemClick}
+                                                onGemClick={handleBoardGemClick}
+                                                onGemPointerDown={handleBoardGemPointerDown}
+                                                onGemPointerEnter={handleBoardGemPointerEnter}
                                                 animationConfig={{
                                                     mode: 'scale',
                                                     hoverScale: 1.1,

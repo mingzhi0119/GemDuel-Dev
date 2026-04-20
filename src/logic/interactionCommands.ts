@@ -1,4 +1,5 @@
 import { buildP2DraftPoolIndices, buildStartGameAction } from './gameSetup';
+import { isDraftSelectionPhase } from './fsm';
 import type {
     BasicGemColor,
     BuyCardPayload,
@@ -134,7 +135,7 @@ export const buildSelectBuffAction = (
     buffLevel: number
 ): Extract<GameAction, { type: 'SELECT_BUFF' }> => {
     const p2DraftPoolIndices =
-        turn === 'p1' && phase === 'DRAFT_PHASE'
+        turn === 'p1' && isDraftSelectionPhase(phase)
             ? buildP2DraftPoolIndices(buffLevel, buffId)
             : undefined;
 

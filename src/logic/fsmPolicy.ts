@@ -2,10 +2,43 @@ import { GAME_PHASES } from '../constants';
 import type { GameAction, GamePhase, GameState } from '../types';
 
 export const ALL_PHASES = Object.values(GAME_PHASES) as GamePhase[];
+export const SYNTHETIC_RENDER_PHASES = ['REVIEW', 'GAME_OVER'] as const;
+
+export type FsmRenderPhase = GamePhase | (typeof SYNTHETIC_RENDER_PHASES)[number];
+export type FsmBoardInteractionMode =
+    | 'selection'
+    | 'bonus-target'
+    | 'reserve-gold'
+    | 'privilege-target'
+    | 'disabled';
+export type FsmGemRailMode = 'discard-self' | 'steal-target' | 'disabled';
 
 export interface FsmCommandPolicy {
     allowedFrom?: GamePhase[];
     allowedTo?: GamePhase[];
+}
+
+export interface FsmPhaseSurfacePolicy {
+    boardInteractionMode: FsmBoardInteractionMode;
+    selfGemRailMode: Extract<FsmGemRailMode, 'discard-self' | 'disabled'>;
+    opponentGemRailMode: Extract<FsmGemRailMode, 'steal-target' | 'disabled'>;
+    marketInteraction: boolean;
+    draftSelection: boolean;
+    royalSelection: boolean;
+    bonusColorSelection: boolean;
+}
+
+export interface FsmCommandMatrixRow {
+    actionType: GameAction['type'];
+    allowedFrom: readonly GamePhase[];
+    allowedTo: readonly GamePhase[];
+}
+
+export interface FsmPhaseMatrixRow {
+    phase: GamePhase;
+    surfacePolicy: FsmPhaseSurfacePolicy;
+    stateRequirements: string[];
+    allowedActions: GameAction['type'][];
 }
 
 export const FSM_POLICY_BY_ACTION: Record<GameAction['type'], FsmCommandPolicy> = {
@@ -39,7 +72,14 @@ export const FSM_POLICY_BY_ACTION: Record<GameAction['type'], FsmCommandPolicy> 
     },
     INITIATE_BUY_JOKER: {
         allowedFrom: [GAME_PHASES.IDLE],
-        allowedTo: [GAME_PHASES.SELECT_CARD_COLOR],
+        allowedTo: [
+            GAME_PHASES.SELECT_CARD_COLOR,
+            GAME_PHASES.IDLE,
+            GAME_PHASES.BONUS_ACTION,
+            GAME_PHASES.STEAL_ACTION,
+            GAME_PHASES.DISCARD_EXCESS_GEMS,
+            GAME_PHASES.SELECT_ROYAL,
+        ],
     },
     BUY_CARD: {
         allowedFrom: [GAME_PHASES.IDLE, GAME_PHASES.SELECT_CARD_COLOR],
@@ -139,6 +179,60 @@ export const FSM_POLICY_BY_ACTION: Record<GameAction['type'], FsmCommandPolicy> 
     },
 };
 
+const DISABLED_PHASE_SURFACE_POLICY: FsmPhaseSurfacePolicy = Object.freeze({
+    boardInteractionMode: 'disabled',
+    selfGemRailMode: 'disabled',
+    opponentGemRailMode: 'disabled',
+    marketInteraction: false,
+    draftSelection: false,
+    royalSelection: false,
+    bonusColorSelection: false,
+});
+
+export const FSM_PHASE_SURFACE_POLICY: Record<GamePhase, FsmPhaseSurfacePolicy> = {
+    [GAME_PHASES.IDLE]: {
+        boardInteractionMode: 'selection',
+        selfGemRailMode: 'disabled',
+        opponentGemRailMode: 'disabled',
+        marketInteraction: true,
+        draftSelection: false,
+        royalSelection: false,
+        bonusColorSelection: false,
+    },
+    [GAME_PHASES.DRAFT_PHASE]: {
+        ...DISABLED_PHASE_SURFACE_POLICY,
+        draftSelection: true,
+    },
+    [GAME_PHASES.SELECT_ROYAL]: {
+        ...DISABLED_PHASE_SURFACE_POLICY,
+        royalSelection: true,
+    },
+    [GAME_PHASES.DISCARD_EXCESS_GEMS]: {
+        ...DISABLED_PHASE_SURFACE_POLICY,
+        selfGemRailMode: 'discard-self',
+    },
+    [GAME_PHASES.BONUS_ACTION]: {
+        ...DISABLED_PHASE_SURFACE_POLICY,
+        boardInteractionMode: 'bonus-target',
+    },
+    [GAME_PHASES.STEAL_ACTION]: {
+        ...DISABLED_PHASE_SURFACE_POLICY,
+        opponentGemRailMode: 'steal-target',
+    },
+    [GAME_PHASES.PRIVILEGE_ACTION]: {
+        ...DISABLED_PHASE_SURFACE_POLICY,
+        boardInteractionMode: 'privilege-target',
+    },
+    [GAME_PHASES.RESERVE_WAITING_GEM]: {
+        ...DISABLED_PHASE_SURFACE_POLICY,
+        boardInteractionMode: 'reserve-gold',
+    },
+    [GAME_PHASES.SELECT_CARD_COLOR]: {
+        ...DISABLED_PHASE_SURFACE_POLICY,
+        bonusColorSelection: true,
+    },
+};
+
 export interface FsmStateRequirement {
     phase: GamePhase;
     description: string;
@@ -175,6 +269,49 @@ export const FSM_STATE_REQUIREMENTS: FsmStateRequirement[] = [
 
 export const getFsmPolicy = (actionType: GameAction['type']): FsmCommandPolicy =>
     FSM_POLICY_BY_ACTION[actionType];
+
+export const canActionRunInPhase = (
+    actionType: GameAction['type'],
+    phase: FsmRenderPhase | string
+): boolean =>
+    ALL_PHASES.includes(phase as GamePhase) &&
+    Boolean(getFsmPolicy(actionType).allowedFrom?.includes(phase as GamePhase));
+
+export const getFsmPhaseSurfacePolicy = (phase: FsmRenderPhase | string): FsmPhaseSurfacePolicy =>
+    ALL_PHASES.includes(phase as GamePhase)
+        ? FSM_PHASE_SURFACE_POLICY[phase as GamePhase]
+        : DISABLED_PHASE_SURFACE_POLICY;
+
+export const isDraftSelectionPhase = (phase: FsmRenderPhase | string): boolean =>
+    getFsmPhaseSurfacePolicy(phase).draftSelection;
+
+export const isRoyalSelectionPhase = (phase: FsmRenderPhase | string): boolean =>
+    getFsmPhaseSurfacePolicy(phase).royalSelection;
+
+export const isBonusColorSelectionPhase = (phase: FsmRenderPhase | string): boolean =>
+    getFsmPhaseSurfacePolicy(phase).bonusColorSelection;
+
+export const createFsmCommandMatrixRows = (): FsmCommandMatrixRow[] =>
+    (Object.keys(FSM_POLICY_BY_ACTION) as GameAction['type'][]).map((actionType) => {
+        const policy = getFsmPolicy(actionType);
+        return {
+            actionType,
+            allowedFrom: policy.allowedFrom ?? [],
+            allowedTo: policy.allowedTo ?? [],
+        };
+    });
+
+export const createFsmPhaseMatrixRows = (): FsmPhaseMatrixRow[] =>
+    ALL_PHASES.map((phase) => ({
+        phase,
+        surfacePolicy: getFsmPhaseSurfacePolicy(phase),
+        stateRequirements: FSM_STATE_REQUIREMENTS.filter(
+            (requirement) => requirement.phase === phase
+        ).map((requirement) => requirement.description),
+        allowedActions: createFsmCommandMatrixRows()
+            .filter((row) => row.allowedFrom.includes(phase))
+            .map((row) => row.actionType),
+    }));
 
 export const getCommandPhaseRejectionReason = (
     state: GameState,

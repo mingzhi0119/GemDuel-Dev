@@ -1,14 +1,15 @@
-import { GAME_PHASES } from '../../constants';
 import type {
     Card,
     GameAction,
     GameState,
     GemCoord,
+    GemColor,
     MarketCardRef,
     ReserveCardPayload,
     ReserveDeckPayload,
 } from '../../types';
 import { getCommandPhaseRejectionReason } from '../fsm';
+import { getFsmPhaseSurfacePolicy, isBonusColorSelectionPhase } from '../fsm';
 import { validateGemSelection } from '../validators';
 import { isRuntimeActionShapeValid, isWithinBoard } from './guards';
 
@@ -112,8 +113,7 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
 
     switch (action.type) {
         case 'SELECT_BUFF': {
-            const buffId =
-                typeof action.payload === 'string' ? action.payload : action.payload.buffId;
+            const buffId = action.payload.buffId;
             return getSelectBuffPool(state).includes(buffId)
                 ? null
                 : 'Selected buff is not available to the active player.';
@@ -151,10 +151,12 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
                 ? null
                 : 'Selected bonus gem does not match the required color.';
         }
-        case 'DISCARD_GEM':
-            return state.inventories[state.turn][action.payload] > 0
+        case 'DISCARD_GEM': {
+            const gemId = action.payload as GemColor;
+            return state.inventories[state.turn][gemId] > 0
                 ? null
                 : 'The active player does not own that gem.';
+        }
         case 'STEAL_GEM': {
             if (action.payload.gemId === 'gold') return 'Gold cannot be stolen.';
             const opponent = state.turn === 'p1' ? 'p2' : 'p1';
@@ -180,7 +182,7 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
             );
             if (sourceError) return sourceError;
 
-            if (state.phase === GAME_PHASES.SELECT_CARD_COLOR) {
+            if (isBonusColorSelectionPhase(state.phase)) {
                 if (!state.pendingBuy)
                     return 'No pending card is waiting for a bonus-color selection.';
                 if (
@@ -223,7 +225,7 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
                     : 'The target reserved card does not exist.';
             }
 
-            if (state.phase === GAME_PHASES.RESERVE_WAITING_GEM) {
+            if (getFsmPhaseSurfacePolicy(state.phase).boardInteractionMode === 'reserve-gold') {
                 if (!matchesPendingReserve(state, action.payload)) {
                     return 'Reserve resolution does not match the pending reserve action.';
                 }
@@ -231,12 +233,22 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
                 if (goldError) return goldError;
             }
 
-            const sourceCard = getMarketCard(state, {
-                level: action.payload.level,
-                idx: action.payload.idx,
-                isExtra: action.payload.isExtra,
-                extraIdx: action.payload.extraIdx,
-            });
+            const sourceCard = getMarketCard(
+                state,
+                action.payload.isExtra &&
+                    action.payload.extraIdx !== undefined &&
+                    action.payload.level === 3
+                    ? {
+                          level: 3,
+                          idx: action.payload.idx,
+                          isExtra: true,
+                          extraIdx: action.payload.extraIdx,
+                      }
+                    : {
+                          level: action.payload.level,
+                          idx: action.payload.idx,
+                      }
+            );
             return sourceCard?.id === action.payload.card.id
                 ? null
                 : 'Selected reserve card does not match the current market.';
@@ -244,7 +256,7 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
         case 'RESERVE_DECK':
             if (state.playerReserved[state.turn].length >= 3)
                 return 'The reserve limit has already been reached.';
-            if (state.phase === GAME_PHASES.RESERVE_WAITING_GEM) {
+            if (getFsmPhaseSurfacePolicy(state.phase).boardInteractionMode === 'reserve-gold') {
                 if (!matchesPendingReserve(state, action.payload)) {
                     return 'Deck reserve resolution does not match the pending reserve action.';
                 }

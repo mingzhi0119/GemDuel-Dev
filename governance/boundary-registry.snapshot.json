@@ -11,14 +11,22 @@
                 "src/logic/commandGate.ts",
                 "src/logic/fsmPolicy.ts"
             ],
-            "contractRefs": ["src/types/boundary.ts", "src/types/network.ts"],
+            "contractRefs": [
+                "src/types/boundary.ts",
+                "src/types/network.ts",
+                "src/types/reason.ts"
+            ],
             "reasonCodes": [
                 "NON_PROTOCOL_ACTION",
                 "NOT_GUEST_TURN",
                 "AUTHORITY_REJECTED",
                 "CHECKSUM_UNAVAILABLE"
             ],
-            "runtimeSignals": ["HOST_INTENT_REJECTED", "HOST_CHECKSUM_DERIVATION_FAILED"],
+            "runtimeSignals": [
+                "GUEST_INTENT_BLOCKED",
+                "HOST_INTENT_REJECTED",
+                "HOST_CHECKSUM_DERIVATION_FAILED"
+            ],
             "testRefs": [
                 "src/logic/__tests__/fsmPolicyMatrix.test.ts",
                 "src/logic/__tests__/securityBoundaries.test.ts",
@@ -35,7 +43,11 @@
                 "src/logic/networkMessageValidation.ts",
                 "src/logic/networkProtocol.ts"
             ],
-            "contractRefs": ["src/types/boundary.ts", "src/types/network.ts"],
+            "contractRefs": [
+                "src/types/boundary.ts",
+                "src/types/network.ts",
+                "src/types/reason.ts"
+            ],
             "reasonCodes": [
                 "NETWORK_MESSAGE_INVALID_ENVELOPE",
                 "NETWORK_MESSAGE_INVALID_BOOTSTRAP",
@@ -62,8 +74,14 @@
                 "src/logic/networkRecovery.ts",
                 "src/logic/networkChecksums.ts"
             ],
-            "contractRefs": ["src/types/network.ts", "src/types/boundary.ts"],
+            "contractRefs": [
+                "src/types/network.ts",
+                "src/types/boundary.ts",
+                "src/types/reason.ts"
+            ],
             "reasonCodes": [
+                "NON_PROTOCOL_ACTION",
+                "NOT_GUEST_TURN",
                 "AUTHORITY_REJECTED",
                 "CHECKSUM_UNAVAILABLE",
                 "CHECKSUM_MISMATCH",

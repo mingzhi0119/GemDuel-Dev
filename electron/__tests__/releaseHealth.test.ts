@@ -56,6 +56,7 @@ describe('electron release health monitor', () => {
             severity: 'warn',
             message: 'Requested recovery.',
             context: {
+                reasonCode: 'CHECKSUM_MISMATCH',
                 requestId: 'guest-123',
             },
         });
@@ -70,6 +71,9 @@ describe('electron release health monitor', () => {
         expect(snapshot.indicators).toMatchObject({
             runtimeConfigFailures: 1,
             recoveryRequests: 1,
+        });
+        expect(snapshot.reasonCodeCounts).toEqual({
+            CHECKSUM_MISMATCH: 1,
         });
         expect(snapshot.recentEvents[1]?.context?.targetIp).toBe('[REDACTED]');
         expect(snapshot.recentEvents[0]?.context?.requestId).toBe('[REDACTED]');

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { PlayerZone } from '../../components/PlayerZone';
+import { getFsmPhaseSurfacePolicy } from '../../logic/fsm';
 import type { AppRouteProps, GamePhase } from '../../types';
 
 type EffectiveGameMode = GamePhase | 'REVIEW' | 'GAME_OVER';
@@ -43,6 +44,7 @@ export function PlayerRail({
         checkAndInitiateBuyReserved,
     } = handlers;
     const { getPlayerScore, getCrownCount } = getters;
+    const surfacePolicy = getFsmPhaseSurfacePolicy(effectiveGameMode);
 
     return (
         <div
@@ -79,9 +81,13 @@ export function PlayerRail({
                         onBuyReserved={checkAndInitiateBuyReserved}
                         onDiscardReserved={handleDiscardReserved}
                         onUsePrivilege={activatePrivilegeMode}
-                        isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
-                        isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p1'}
-                        isDiscardMode={effectiveGameMode === 'DISCARD_EXCESS_GEMS' && turn === 'p1'}
+                        isPrivilegeMode={surfacePolicy.boardInteractionMode === 'privilege-target'}
+                        isStealMode={
+                            surfacePolicy.opponentGemRailMode === 'steal-target' && turn !== 'p1'
+                        }
+                        isDiscardMode={
+                            surfacePolicy.selfGemRailMode === 'discard-self' && turn === 'p1'
+                        }
                         onGemClick={turn === 'p1' ? handleSelfGemClick : handleOpponentGemClick}
                         buff={playerBuffs?.p1}
                         theme={theme}
@@ -118,9 +124,13 @@ export function PlayerRail({
                         onBuyReserved={checkAndInitiateBuyReserved}
                         onDiscardReserved={handleDiscardReserved}
                         onUsePrivilege={activatePrivilegeMode}
-                        isPrivilegeMode={effectiveGameMode === 'PRIVILEGE_ACTION'}
-                        isStealMode={effectiveGameMode === 'STEAL_ACTION' && turn !== 'p2'}
-                        isDiscardMode={effectiveGameMode === 'DISCARD_EXCESS_GEMS' && turn === 'p2'}
+                        isPrivilegeMode={surfacePolicy.boardInteractionMode === 'privilege-target'}
+                        isStealMode={
+                            surfacePolicy.opponentGemRailMode === 'steal-target' && turn !== 'p2'
+                        }
+                        isDiscardMode={
+                            surfacePolicy.selfGemRailMode === 'discard-self' && turn === 'p2'
+                        }
                         onGemClick={turn === 'p2' ? handleSelfGemClick : handleOpponentGemClick}
                         buff={playerBuffs?.p2}
                         theme={theme}

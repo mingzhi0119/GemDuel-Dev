@@ -4,6 +4,7 @@ import type {
     HostApprovalLogEntry,
     HostApprovalOutcomeCode,
     HostDecisionMessage,
+    HostDecisionReasonCode,
 } from '../types/network';
 import { validateGuestIntentCommand } from './commandGate';
 import { computeGuestIntentChecksum } from './networkChecksums';
@@ -36,7 +37,7 @@ const createLogEntry = ({
     intentKind: GuestIntentCommand['kind'];
     outcomeCode: HostApprovalOutcomeCode;
     reason?: string;
-    reasonCode?: Exclude<HostApprovalOutcomeCode, 'APPROVED'>;
+    reasonCode?: HostDecisionReasonCode;
     requestId: string;
 }): HostApprovalLogEntry => ({
     requestId,
@@ -62,13 +63,18 @@ export const reviewHostIntent = (
 
     if (!validation.valid) {
         const reason = validation.reason || 'Host rejected the guest intent.';
+        const reasonCode =
+            validation.reasonCode === 'NON_PROTOCOL_ACTION' ||
+            validation.reasonCode === 'NOT_GUEST_TURN'
+                ? validation.reasonCode
+                : 'AUTHORITY_REJECTED';
         return {
             outcomeCode: 'AUTHORITY_REJECTED',
             decision: {
                 requestId,
                 intentKind: command.kind,
                 approved: false,
-                reasonCode: 'AUTHORITY_REJECTED',
+                reasonCode,
                 reason,
             },
             logEntry: createLogEntry({
@@ -76,7 +82,7 @@ export const reviewHostIntent = (
                 createdAt,
                 intentKind: command.kind,
                 outcomeCode: 'AUTHORITY_REJECTED',
-                reasonCode: 'AUTHORITY_REJECTED',
+                reasonCode,
                 reason,
                 requestId,
             }),

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, type Dispatch, type SetStateAction } from 'react';
 import { processGemClick, processOpponentGemClick } from '../logic/interactionManager';
 import { buildReplenishAction } from '../logic/interactionCommands';
+import { canActionRunInPhase, getFsmPhaseSurfacePolicy } from '../logic/fsm';
 import { validateGemSelection } from '../logic/validators';
 import { getRandomBasicGemColor } from '../logic/gameSetup';
 import type { GameAction, GameState, GemColor, GemCoord } from '../types';
@@ -24,12 +25,14 @@ export const useBoardInteractionHandlers = ({
     clearSelectedGems,
     setErrorMsg,
 }: BoardInteractionParams) => {
+    const surfacePolicy = getFsmPhaseSurfacePolicy(gameState.phase);
+
     const handleSelfGemClick = useCallback(
         (gemId: string) => {
-            if (!canLocalInteract || gameState.phase !== 'DISCARD_EXCESS_GEMS') return;
+            if (!canLocalInteract || surfacePolicy.selfGemRailMode !== 'discard-self') return;
             networkDispatch({ type: 'DISCARD_GEM', payload: gemId });
         },
-        [canLocalInteract, gameState.phase, networkDispatch]
+        [canLocalInteract, networkDispatch, surfacePolicy.selfGemRailMode]
     );
 
     const handleGemClick = useCallback(
@@ -43,6 +46,40 @@ export const useBoardInteractionHandlers = ({
         [canLocalInteract, gameState, networkDispatch, selectedGems, setErrorMsg, setSelectedGems]
     );
 
+    const handleGemDragSelection = useCallback(
+        (coords: GemCoord[]) => {
+            if (
+                !canLocalInteract ||
+                gameState.winner ||
+                surfacePolicy.boardInteractionMode !== 'selection'
+            ) {
+                return;
+            }
+            if (coords.length === 0 || coords.length > 3) return;
+
+            const check = validateGemSelection(coords);
+            if (!check.valid || check.hasGap) return;
+
+            const buff = gameState.playerBuffs?.[gameState.turn];
+            if (buff?.effects?.passive?.noTake3 && coords.length === 3) {
+                return setErrorMsg('Cannot take 3 gems!');
+            }
+
+            setErrorMsg(null);
+            setSelectedGems(coords);
+        },
+        [
+            canLocalInteract,
+            gameState.phase,
+            gameState.playerBuffs,
+            gameState.turn,
+            gameState.winner,
+            setErrorMsg,
+            setSelectedGems,
+            surfacePolicy.boardInteractionMode,
+        ]
+    );
+
     const handleOpponentGemClick = useCallback(
         (gemId: string) => {
             if (!canLocalInteract) return;
@@ -54,7 +91,13 @@ export const useBoardInteractionHandlers = ({
     );
 
     const handleConfirmTake = useCallback(() => {
-        if (!canLocalInteract || selectedGems.length === 0) return;
+        if (
+            !canLocalInteract ||
+            selectedGems.length === 0 ||
+            !canActionRunInPhase('TAKE_GEMS', gameState.phase)
+        ) {
+            return;
+        }
         const check = validateGemSelection(selectedGems);
         if (!check.valid) return setErrorMsg(check.error || 'Invalid!');
         if (check.hasGap) return setErrorMsg('Gap detected!');
@@ -79,7 +122,7 @@ export const useBoardInteractionHandlers = ({
     const handleReplenish = useCallback(() => {
         if (!canLocalInteract || gameState.bag.length === 0) return;
         const opponent = gameState.turn === 'p1' ? 'p2' : 'p1';
-        const stealable = Object.keys(gameState.inventories[opponent]).filter(
+        const stealable = (Object.keys(gameState.inventories[opponent]) as GemColor[]).filter(
             (key) => key !== 'gold' && key !== 'pearl' && gameState.inventories[opponent][key] > 0
         );
         const extortionColor =
@@ -97,7 +140,8 @@ export const useBoardInteractionHandlers = ({
     ]);
 
     const activatePrivilegeMode = useCallback(() => {
-        if (!canLocalInteract || gameState.phase !== 'IDLE') return;
+        if (!canLocalInteract || !canActionRunInPhase('ACTIVATE_PRIVILEGE', gameState.phase))
+            return;
 
         const hasPrivilege =
             gameState.privileges[gameState.turn] > 0 ||
@@ -128,6 +172,7 @@ export const useBoardInteractionHandlers = ({
         () => ({
             handleSelfGemClick,
             handleGemClick,
+            handleGemDragSelection,
             handleOpponentGemClick,
             handleConfirmTake,
             handleReplenish,
@@ -137,6 +182,7 @@ export const useBoardInteractionHandlers = ({
             activatePrivilegeMode,
             handleConfirmTake,
             handleGemClick,
+            handleGemDragSelection,
             handleOpponentGemClick,
             handleReplenish,
             handleSelfGemClick,

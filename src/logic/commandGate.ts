@@ -1,4 +1,4 @@
-import type { GameAction, GameState } from '../types';
+import type { GameAction, GameState, GuestDispatchBoundaryReasonCode } from '../types';
 import type { GuestIntentCommand } from '../types/network';
 import { getActionRejectionReason, isRuntimeActionShapeValid } from './actionValidation';
 import { getStateIntegrityError, getTransitionIntegrityError } from './fsm';
@@ -30,6 +30,7 @@ const GUEST_ACTION_ALLOWLIST = new Set<GameAction['type']>([
 export interface CommandValidationResult {
     valid: boolean;
     reason?: string;
+    reasonCode?: GuestDispatchBoundaryReasonCode;
 }
 
 export const validateCommand = (
@@ -66,6 +67,7 @@ export const validateGuestCommand = (
     if (state.turn !== 'p2') {
         return {
             valid: false,
+            reasonCode: 'NOT_GUEST_TURN',
             reason: `Host rejected ${action.type} because it is currently ${state.turn}'s turn.`,
         };
     }
@@ -73,6 +75,7 @@ export const validateGuestCommand = (
     if (!GUEST_ACTION_ALLOWLIST.has(action.type)) {
         return {
             valid: false,
+            reasonCode: 'NON_PROTOCOL_ACTION',
             reason: `Guest action ${action.type} is not permitted by the online protocol.`,
         };
     }
@@ -87,6 +90,7 @@ export const validateGuestIntentCommand = (
     if (state.turn !== 'p2') {
         return {
             valid: false,
+            reasonCode: 'NOT_GUEST_TURN',
             reason: `Host rejected ${command.kind} because it is currently ${state.turn}'s turn.`,
         };
     }
@@ -94,6 +98,7 @@ export const validateGuestIntentCommand = (
     if (!GUEST_INTENT_PERMISSION_TABLE[command.kind]) {
         return {
             valid: false,
+            reasonCode: 'NON_PROTOCOL_ACTION',
             reason: `Guest intent ${command.kind} is not permitted by the online protocol.`,
         };
     }

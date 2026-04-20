@@ -1,6 +1,7 @@
 import React from 'react';
 import { Crown } from 'lucide-react';
 import { Card } from './Card';
+import { isRoyalSelectionPhase } from '../logic/fsm';
 import { RoyalCard, GamePhase, Card as CardType } from '../types';
 
 interface RoyalCourtProps {
@@ -18,6 +19,8 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     theme,
     canInteract = true,
 }) => {
+    const canSelectRoyal = isRoyalSelectionPhase(phase) && canInteract;
+
     return (
         <div
             className={`flex flex-col gap-4 items-center p-5 rounded-[2rem] border backdrop-blur-md shrink-0 w-fit transition-all duration-500
@@ -40,13 +43,11 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                     royalDeck.map((card) => (
                         <div
                             key={card.id}
-                            className={`relative transition-all duration-300 ${phase === 'SELECT_ROYAL' && canInteract ? 'cursor-pointer hover:scale-110 hover:rotate-1 z-50 ring-4 ring-yellow-400/50 rounded-lg shadow-xl' : 'opacity-80 grayscale-[0.2]'}`}
-                            onClick={() =>
-                                canInteract && phase === 'SELECT_ROYAL' && handleSelectRoyal(card)
-                            }
+                            className={`relative transition-all duration-300 ${canSelectRoyal ? 'cursor-pointer hover:scale-110 hover:rotate-1 z-50 ring-4 ring-yellow-400/50 rounded-lg shadow-xl' : 'opacity-80 grayscale-[0.2]'}`}
+                            onClick={() => canSelectRoyal && handleSelectRoyal(card)}
                         >
                             <Card card={card as unknown as CardType} isRoyal={true} />
-                            {phase === 'SELECT_ROYAL' && canInteract && (
+                            {canSelectRoyal && (
                                 <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full animate-bounce shadow-lg">
                                     PICK!
                                 </div>

@@ -11,6 +11,7 @@ import type {
 } from '../types/network';
 import { NETWORK_PROTOCOL_VERSION } from '../types/network';
 import { useConnectionHealth } from './useConnectionHealth';
+import { createReasonTelemetryContext } from '../logic/reasonCatalog';
 import { reportReleaseHealth } from '../observability/releaseHealth';
 import { registerConnectionHandlers } from './onlineManager/connectionHandlers';
 import { createManagedPeer, destroyManagedPeer } from './onlineManager/peerLifecycle';
@@ -200,10 +201,9 @@ export const useOnlineManager = (
                 name: 'RECOVERY_REQUEST_SENT',
                 severity: 'warn',
                 message: 'Client requested an authoritative recovery snapshot.',
-                context: {
-                    reason,
+                context: createReasonTelemetryContext(reason, {
                     requestId,
-                },
+                }),
             });
             sendMessage({
                 version: NETWORK_PROTOCOL_VERSION,

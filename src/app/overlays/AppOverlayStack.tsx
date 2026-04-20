@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { ArrowLeft, RotateCcw, Users } from 'lucide-react';
 import { GEM_TYPES, BONUS_COLORS } from '../../constants';
+import { isBonusColorSelectionPhase } from '../../logic/fsm';
 import type { ActiveModal, GameMode, GamePhase, GemColor, PlayerKey } from '../../types';
 import type { ThemeName } from '../../types';
 
@@ -80,7 +81,7 @@ export function AppOverlayStack({
                 </Suspense>
             )}
 
-            {phase === 'SELECT_CARD_COLOR' && (
+            {isBonusColorSelectionPhase(phase) && (
                 <div
                     className={`fixed inset-0 z-[100] transition-all duration-500 flex flex-col items-center justify-center ${isPeekingBoard ? 'bg-black/20 pointer-events-none' : 'bg-black/80'}`}
                 >

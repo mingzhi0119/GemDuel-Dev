@@ -71,6 +71,34 @@ describe('reviewHostIntent', () => {
         });
     });
 
+    it('preserves boundary-level rejection codes when the host blocks an intent pre-dispatch', () => {
+        const review = reviewHostIntent(
+            createOnlineGuestTurnState(),
+            'req-turn',
+            { kind: 'CLOSE_MODAL' },
+            {
+                validateIntent: () => ({
+                    valid: false,
+                    reasonCode: 'NOT_GUEST_TURN',
+                    reason: "Host rejected CLOSE_MODAL because it is currently p1's turn.",
+                }),
+            }
+        );
+
+        expect(review.outcomeCode).toBe('AUTHORITY_REJECTED');
+        expect(review.decision).toEqual({
+            requestId: 'req-turn',
+            intentKind: 'CLOSE_MODAL',
+            approved: false,
+            reasonCode: 'NOT_GUEST_TURN',
+            reason: "Host rejected CLOSE_MODAL because it is currently p1's turn.",
+        });
+        expect(review.logEntry).toMatchObject({
+            outcomeCode: 'AUTHORITY_REJECTED',
+            reasonCode: 'NOT_GUEST_TURN',
+        });
+    });
+
     it('returns checksum-unavailable codes when deterministic state hashing fails', () => {
         const review = reviewHostIntent(
             createOnlineGuestTurnState(),

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { GameState, GameAction } from '../types';
+import { GameState, GameAction, type UiStatusNotice } from '../types';
 import type { HostApprovalLogEntry, PendingGuestIntent } from '../types/network';
+import { createReasonTelemetryContext, createUiStatusNotice } from '../logic/reasonCatalog';
 import { useOnlineManager, type OnlineManagerController } from './useOnlineManager';
 import {
     createGuestIntentRequestId,
@@ -8,6 +9,7 @@ import {
 } from '../logic/networkDispatchPolicy';
 import { useHostStateSync } from './gameNetwork/useHostStateSync';
 import { useNetworkEventHandlers } from './gameNetwork/useNetworkEventHandlers';
+import { reportReleaseHealth } from '../observability/releaseHealth';
 
 const MAX_APPROVAL_LOG_ENTRIES = 25;
 
@@ -23,10 +25,27 @@ export const useGameNetwork = (
     const skipNextHostSyncRef = useRef(false);
     const pendingGuestIntentRef = useRef<PendingGuestIntent | null>(null);
     const [approvalLog, setApprovalLog] = useState<HostApprovalLogEntry[]>([]);
+    const [statusNotice, setStatusNotice] = useState<UiStatusNotice | null>(null);
 
     const appendApprovalLog = useCallback((entry: HostApprovalLogEntry) => {
         setApprovalLog((previous) => [entry, ...previous].slice(0, MAX_APPROVAL_LOG_ENTRIES));
     }, []);
+
+    const publishStatusNotice = useCallback((notice: UiStatusNotice) => {
+        setStatusNotice(notice);
+    }, []);
+
+    useEffect(() => {
+        if (!statusNotice) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            setStatusNotice(null);
+        }, 3000);
+
+        return () => window.clearTimeout(timer);
+    }, [statusNotice]);
 
     const {
         handleBootstrapReceived,
@@ -38,6 +57,7 @@ export const useGameNetwork = (
         localDispatch,
         clearAndInit,
         appendApprovalLog,
+        publishStatusNotice,
         onlineRef,
         pendingGuestIntentRef,
     });
@@ -93,9 +113,35 @@ export const useGameNetwork = (
 
             if (dispatchPlan.blockedGuestIntentReason === 'NON_PROTOCOL_ACTION') {
                 console.warn(`[NET] Guest attempted to send non-protocol action ${action.type}.`);
+                reportReleaseHealth({
+                    category: 'network',
+                    name: 'GUEST_INTENT_BLOCKED',
+                    severity: 'warn',
+                    message:
+                        'Renderer blocked a guest action before it left the multiplayer boundary.',
+                    context: createReasonTelemetryContext(dispatchPlan.blockedGuestIntentReason, {
+                        actionType: action.type,
+                    }),
+                });
+                publishStatusNotice(createUiStatusNotice(dispatchPlan.blockedGuestIntentReason));
+            }
+
+            if (dispatchPlan.blockedGuestIntentReason === 'NOT_GUEST_TURN') {
+                console.warn(`[NET] Guest attempted ${action.type} outside of the guest turn.`);
+                reportReleaseHealth({
+                    category: 'network',
+                    name: 'GUEST_INTENT_BLOCKED',
+                    severity: 'warn',
+                    message:
+                        'Renderer blocked an out-of-turn guest action before network dispatch.',
+                    context: createReasonTelemetryContext(dispatchPlan.blockedGuestIntentReason, {
+                        actionType: action.type,
+                    }),
+                });
+                publishStatusNotice(createUiStatusNotice(dispatchPlan.blockedGuestIntentReason));
             }
         },
-        [gameState, localDispatch, online, shouldConnect]
+        [gameState, localDispatch, online, publishStatusNotice, shouldConnect]
     );
 
     useHostStateSync({
@@ -108,8 +154,9 @@ export const useGameNetwork = (
         () => ({
             ...online,
             approvalLog,
+            statusNotice,
         }),
-        [approvalLog, online]
+        [approvalLog, online, statusNotice]
     );
 
     return {

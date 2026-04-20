@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { getRandomBasicGemColor } from '../logic/gameSetup';
+import { canActionRunInPhase, isBonusColorSelectionPhase } from '../logic/fsm';
 import {
     buildBuyAction,
     buildReserveCardFlow,
@@ -91,7 +92,7 @@ export const useMarketInteractionHandlers = ({
         (color: string) => {
             if (
                 !canLocalInteract ||
-                gameState.phase !== 'SELECT_CARD_COLOR' ||
+                !isBonusColorSelectionPhase(gameState.phase) ||
                 !gameState.pendingBuy
             ) {
                 return;
@@ -109,16 +110,16 @@ export const useMarketInteractionHandlers = ({
     );
 
     const handleCancelReserve = useCallback(() => {
-        if (canLocalInteract) {
+        if (canLocalInteract && canActionRunInPhase('CANCEL_RESERVE', gameState.phase)) {
             networkDispatch({ type: 'CANCEL_RESERVE' });
         }
-    }, [canLocalInteract, networkDispatch]);
+    }, [canLocalInteract, gameState.phase, networkDispatch]);
 
     const handleCancelPrivilege = useCallback(() => {
-        if (canLocalInteract) {
+        if (canLocalInteract && canActionRunInPhase('CANCEL_PRIVILEGE', gameState.phase)) {
             networkDispatch({ type: 'CANCEL_PRIVILEGE' });
         }
-    }, [canLocalInteract, networkDispatch]);
+    }, [canLocalInteract, gameState.phase, networkDispatch]);
 
     const checkAndInitiateBuyReserved = useCallback(
         (card: Card, execute: boolean = false) => {

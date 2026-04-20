@@ -1,3 +1,9 @@
+import type {
+    GuestDispatchBoundaryReasonCode as SharedGuestDispatchBoundaryReasonCode,
+    NetworkMessageBoundaryErrorCode as SharedNetworkMessageBoundaryErrorCode,
+    ReplayImportErrorCode as SharedReplayImportErrorCode,
+} from './reason';
+
 export type BoundaryId =
     | 'renderer-action-dispatch'
     | 'network-message-parsing'
@@ -10,22 +16,11 @@ export type BoundaryId =
     | 'release-health-checklist'
     | 'dependency-governance';
 
-export type ReplayImportErrorCode =
-    | 'REPLAY_FILE_TOO_LARGE'
-    | 'REPLAY_FILE_UNSUPPORTED_TYPE'
-    | 'REPLAY_FILE_READ_FAILED'
-    | 'REPLAY_FILE_INVALID_JSON'
-    | 'REPLAY_FILE_INVALID_SCHEMA';
+export type ReplayImportErrorCode = SharedReplayImportErrorCode;
 
-export type NetworkMessageBoundaryErrorCode =
-    | 'NETWORK_MESSAGE_INVALID_ENVELOPE'
-    | 'NETWORK_MESSAGE_INVALID_BOOTSTRAP'
-    | 'NETWORK_MESSAGE_INVALID_GUEST_INTENT'
-    | 'NETWORK_MESSAGE_INVALID_HOST_DECISION'
-    | 'NETWORK_MESSAGE_INVALID_SYNC_STATE'
-    | 'NETWORK_MESSAGE_INVALID_RECOVERY_REQUEST';
+export type NetworkMessageBoundaryErrorCode = SharedNetworkMessageBoundaryErrorCode;
 
-export type GuestDispatchBoundaryReasonCode = 'NON_PROTOCOL_ACTION' | 'NOT_GUEST_TURN';
+export type GuestDispatchBoundaryReasonCode = SharedGuestDispatchBoundaryReasonCode;
 
 export interface BoundaryFailure<Code extends string = string> {
     ok: false;

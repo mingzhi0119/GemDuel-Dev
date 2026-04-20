@@ -1,10 +1,11 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { DataConnection } from 'peerjs';
 import type { GameState } from '../../types';
+import { createReasonTelemetryContext } from '../../logic/reasonCatalog';
 import { reportReleaseHealth } from '../../observability/releaseHealth';
 import { NETWORK_PROTOCOL_VERSION, type NetworkMessage } from '../../types/network';
 import { getInboundMessageCheck } from '../../logic/networkProtocol';
-import { parseNetworkMessage } from '../../logic/networkMessageValidation';
+import { parseNetworkMessageBoundary } from '../../logic/networkMessageValidation';
 import type { ConnectionStatus, OnlineManagerHandlers } from './types';
 
 interface ConnectionHandlerDependencies {
@@ -52,17 +53,21 @@ export const registerConnectionHandlers = ({
     });
 
     connection.on('data', (data: unknown) => {
-        const msg = parseNetworkMessage(data);
-        if (!msg) {
-            console.warn('[NET] Rejected malformed network message.');
+        const parsed = parseNetworkMessageBoundary(data);
+        if (!parsed.ok) {
+            console.warn(`[NET] Rejected malformed network message (${parsed.code}).`);
             reportReleaseHealth({
                 category: 'network',
                 name: 'NETWORK_MESSAGE_REJECTED',
                 severity: 'warn',
                 message: 'Inbound network payload was rejected by the runtime parser.',
+                context: createReasonTelemetryContext(parsed.code, {
+                    boundaryId: parsed.boundaryId,
+                }),
             });
             return;
         }
+        const msg = parsed.value;
 
         if (msg.type === 'HEARTBEAT_PING' || msg.type === 'HEARTBEAT_PONG') {
             handleHeartbeat(msg);
@@ -112,9 +117,7 @@ export const registerConnectionHandlers = ({
                         severity: 'warn',
                         message:
                             'Host received a recovery request and sent an authoritative snapshot.',
-                        context: {
-                            reason: msg.reason,
-                        },
+                        context: createReasonTelemetryContext(msg.reason),
                     });
                     sendMessage({
                         version: NETWORK_PROTOCOL_VERSION,

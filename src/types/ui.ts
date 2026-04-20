@@ -1,8 +1,16 @@
 import type { ChangeEventHandler, Dispatch, SetStateAction } from 'react';
 import type { useGameLogic } from '../hooks/useGameLogic';
 import type { PlayerKey } from './domain';
+import type { AppReasonCode } from './reason';
 
 export type ThemeName = 'light' | 'dark';
+export type UiNoticeSeverity = 'info' | 'warn' | 'error';
+
+export interface UiStatusNotice {
+    code: AppReasonCode;
+    message: string;
+    severity: UiNoticeSeverity;
+}
 
 export interface ResponsiveLayout {
     layoutMode: 'mobile' | 'desktop-auto';

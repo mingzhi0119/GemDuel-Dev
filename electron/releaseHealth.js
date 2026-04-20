@@ -44,6 +44,8 @@ const defaultIndicators = () => ({
     ipcRejected: 0,
 });
 
+const createReasonCodeCounts = () => ({});
+
 const sanitizeContextValue = (key, value) => {
     if (REDACTED_KEY_PATTERN.test(key)) {
         return '[REDACTED]';
@@ -87,6 +89,15 @@ const getIndicatorUpdater = (indicators, event) => {
     }
 };
 
+const recordReasonCode = (reasonCodeCounts, event) => {
+    const reasonCode = event?.context?.reasonCode;
+    if (typeof reasonCode !== 'string' || reasonCode.length === 0) {
+        return;
+    }
+
+    reasonCodeCounts[reasonCode] = (reasonCodeCounts[reasonCode] ?? 0) + 1;
+};
+
 export const createReleaseHealthMonitor = ({ logger, now = () => Date.now() }) => {
     const startedAt = new Date(now()).toISOString();
     const severityCounts = {
@@ -95,6 +106,7 @@ export const createReleaseHealthMonitor = ({ logger, now = () => Date.now() }) =
         error: 0,
     };
     const indicators = defaultIndicators();
+    const reasonCodeCounts = createReasonCodeCounts();
     const eventCounts = new Map();
     const recentEvents = [];
     let totalEvents = 0;
@@ -113,6 +125,7 @@ export const createReleaseHealthMonitor = ({ logger, now = () => Date.now() }) =
         lastEventAt = timestamp;
         severityCounts[sanitizedEvent.severity] += 1;
         getIndicatorUpdater(indicators, sanitizedEvent);
+        recordReasonCode(reasonCodeCounts, sanitizedEvent);
 
         const eventKey = `${sanitizedEvent.category}:${sanitizedEvent.name}`;
         const current = eventCounts.get(eventKey) ?? {
@@ -142,6 +155,7 @@ export const createReleaseHealthMonitor = ({ logger, now = () => Date.now() }) =
         totalEvents,
         severityCounts: { ...severityCounts },
         indicators: { ...indicators },
+        reasonCodeCounts: { ...reasonCodeCounts },
         counters: Object.fromEntries(eventCounts.entries()),
         recentEvents: [...recentEvents],
     });

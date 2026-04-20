@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { isDraftSelectionPhase } from '../../logic/fsm';
 import type { AppRouteProps } from '../../types';
 
 const DraftScreen = React.lazy(() =>
@@ -40,7 +41,7 @@ export function GemDuelRoutes(props: AppRouteProps) {
                 />
             );
         }
-    } else if (state.phase === 'DRAFT_PHASE') {
+    } else if (isDraftSelectionPhase(state.phase)) {
         routeContent = (
             <DraftScreen
                 draftPool={state.draftPool}

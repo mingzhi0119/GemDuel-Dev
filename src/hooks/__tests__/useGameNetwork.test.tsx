@@ -340,15 +340,54 @@ describe('useGameNetwork', () => {
                 requestId: 'req-reject',
                 intentKind: 'CLOSE_MODAL',
                 approved: false,
-                reasonCode: 'AUTHORITY_REJECTED',
+                reasonCode: 'NOT_GUEST_TURN',
             })
         );
         expect(currentResult?.online.approvalLog[0]).toMatchObject({
             requestId: 'req-reject',
             outcomeCode: 'AUTHORITY_REJECTED',
-            reasonCode: 'AUTHORITY_REJECTED',
+            reasonCode: 'NOT_GUEST_TURN',
         });
         expect(localDispatch).not.toHaveBeenCalled();
+    });
+
+    it('surfaces a mapped UI notice when the guest renderer blocks an out-of-turn action', () => {
+        const localDispatch = vi.fn();
+        const clearAndInit = vi.fn();
+        const gameState = createOnlineState({ isHost: false, turn: 'p1' });
+        let currentResult: ReturnType<typeof useGameNetwork> | null = null;
+
+        const Harness = () => {
+            currentResult = useGameNetwork(gameState, localDispatch, clearAndInit, false);
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        act(() => {
+            currentResult?.networkDispatch({ type: 'CLOSE_MODAL' });
+        });
+
+        expect(mockOnlineController.sendGuestIntent).not.toHaveBeenCalled();
+        expect(currentResult?.online.statusNotice).toMatchObject({
+            code: 'NOT_GUEST_TURN',
+            message: 'It is not the guest turn yet.',
+            severity: 'warn',
+        });
+        expect(reportReleaseHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: 'GUEST_INTENT_BLOCKED',
+                context: expect.objectContaining({
+                    reasonCode: 'NOT_GUEST_TURN',
+                }),
+            })
+        );
     });
 
     it('ignores guest-intent callbacks when the current renderer is not the host authority', () => {

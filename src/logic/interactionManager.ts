@@ -1,4 +1,5 @@
 import { validateGemSelection } from './validators';
+import { canActionRunInPhase, getFsmPhaseSurfacePolicy } from './fsm';
 import type {
     GameState,
     GemColor,
@@ -41,14 +42,16 @@ export const processGemClick = (
     const gem = gameState.board[r][c];
     if (!gem || !gem.type || gem.type.id === 'empty') return { error: 'Empty cell' };
 
-    switch (gameState.phase) {
-        case 'BONUS_ACTION':
+    const surfacePolicy = getFsmPhaseSurfacePolicy(gameState.phase);
+
+    switch (surfacePolicy.boardInteractionMode) {
+        case 'bonus-target':
             if (gem.type.id !== gameState.bonusGemTarget?.id) {
                 return { error: `Must select a ${gameState.bonusGemTarget?.label} gem!` };
             }
             return { action: { type: 'TAKE_BONUS_GEM', payload: { r, c } } };
 
-        case 'RESERVE_WAITING_GEM':
+        case 'reserve-gold':
             if (gem.type.id !== 'gold') {
                 return { error: 'Must select a Gold gem!' };
             }
@@ -74,13 +77,13 @@ export const processGemClick = (
                 };
             }
 
-        case 'PRIVILEGE_ACTION':
+        case 'privilege-target':
             if (gem.type.id === 'gold') {
                 return { error: 'Cannot use Privilege on Gold.' };
             }
             return { action: { type: 'USE_PRIVILEGE', payload: { r, c } } };
 
-        case 'IDLE': {
+        case 'selection': {
             // Handle Selection Logic
             if (gem.type.id === 'gold') {
                 return { error: 'Cannot take Gold directly!' };
@@ -124,7 +127,7 @@ export const processOpponentGemClick = (
     gemId: GemColor
 ): GemClickResult => {
     if (!gameState || gameState.winner) return { error: 'Game Over' };
-    if (gameState.phase !== 'STEAL_ACTION') return { error: 'Not in Steal Mode' };
+    if (!canActionRunInPhase('STEAL_GEM', gameState.phase)) return { error: 'Not in Steal Mode' };
 
     if (gemId === 'gold') return { error: 'Cannot steal Gold!' };
 

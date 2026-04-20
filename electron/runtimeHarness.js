@@ -34,7 +34,8 @@ export const createElectronRuntimeHarness = ({
             message: severityMessage,
             context: {
                 channel,
-                reason,
+                reasonCode: 'IPC_REQUEST_REJECTED',
+                reasonDetail: reason,
             },
         });
     };

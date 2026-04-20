@@ -2,8 +2,9 @@ import { useCallback, useMemo, type MutableRefObject } from 'react';
 import { reviewHostIntent } from '../../logic/hostApproval';
 import { reviewBootstrapReceipt, reviewGuestHostDecision } from '../../logic/networkRecovery';
 import { guestIntentToAction } from '../../logic/networkProtocol';
+import { createReasonTelemetryContext, createUiStatusNotice } from '../../logic/reasonCatalog';
 import { reportReleaseHealth } from '../../observability/releaseHealth';
-import type { GameAction, GameState } from '../../types';
+import type { GameAction, GameState, UiStatusNotice } from '../../types';
 import type {
     BootstrapCommand,
     GuestIntentCommand,
@@ -18,6 +19,7 @@ interface UseNetworkEventHandlersArgs {
     localDispatch: (action: GameAction) => void;
     clearAndInit: (action: GameAction) => void;
     appendApprovalLog: (entry: HostApprovalLogEntry) => void;
+    publishStatusNotice: (notice: UiStatusNotice) => void;
     onlineRef: MutableRefObject<OnlineManagerController | null>;
     pendingGuestIntentRef: MutableRefObject<PendingGuestIntent | null>;
 }
@@ -27,6 +29,7 @@ export const useNetworkEventHandlers = ({
     localDispatch,
     clearAndInit,
     appendApprovalLog,
+    publishStatusNotice,
     onlineRef,
     pendingGuestIntentRef,
 }: UseNetworkEventHandlersArgs) => {
@@ -44,14 +47,16 @@ export const useNetworkEventHandlers = ({
                     name: 'BOOTSTRAP_CHECKSUM_MISMATCH',
                     severity: 'error',
                     message: 'Bootstrap checksum verification failed on the guest.',
+                    context: createReasonTelemetryContext(review.reason),
                 });
+                publishStatusNotice(createUiStatusNotice(review.reason));
                 onlineRef.current?.requestRecovery(review.reason);
                 return;
             }
 
             clearAndInit(review.action);
         },
-        [clearAndInit, onlineRef]
+        [clearAndInit, onlineRef, publishStatusNotice]
     );
 
     const handleStateReceived = useCallback(
@@ -83,10 +88,12 @@ export const useNetworkEventHandlers = ({
                     name: 'HOST_INTENT_REJECTED',
                     severity: 'warn',
                     message: 'Host rejected a guest intent during authority review.',
-                    context: {
-                        intentKind: command.kind,
-                        reasonCode: review.decision.reasonCode || 'AUTHORITY_REJECTED',
-                    },
+                    context: createReasonTelemetryContext(
+                        review.decision.reasonCode || 'AUTHORITY_REJECTED',
+                        {
+                            intentKind: command.kind,
+                        }
+                    ),
                 });
                 onlineRef.current?.sendHostDecision(review.decision);
                 return;
@@ -98,10 +105,12 @@ export const useNetworkEventHandlers = ({
                     name: 'HOST_CHECKSUM_DERIVATION_FAILED',
                     severity: 'error',
                     message: 'Host could not derive a deterministic checksum for a guest intent.',
-                    context: {
-                        intentKind: command.kind,
-                        reasonCode: review.decision.reasonCode || 'CHECKSUM_UNAVAILABLE',
-                    },
+                    context: createReasonTelemetryContext(
+                        review.decision.reasonCode || 'CHECKSUM_UNAVAILABLE',
+                        {
+                            intentKind: command.kind,
+                        }
+                    ),
                 });
                 onlineRef.current?.sendHostDecision(review.decision);
                 return;
@@ -149,10 +158,9 @@ export const useNetworkEventHandlers = ({
                         severity: 'error',
                         message:
                             'Guest failed to verify an approved host decision and requested recovery.',
-                        context: {
+                        context: createReasonTelemetryContext(review.reason, {
                             intentKind: decision.intentKind,
-                            reason: review.reason,
-                        },
+                        }),
                     });
                 } else {
                     console.warn(
@@ -164,11 +172,12 @@ export const useNetworkEventHandlers = ({
                         severity: 'warn',
                         message:
                             'Guest received a stale or mismatched host decision and requested recovery.',
-                        context: {
+                        context: createReasonTelemetryContext(review.reason, {
                             intentKind: decision.intentKind,
-                        },
+                        }),
                     });
                 }
+                publishStatusNotice(createUiStatusNotice(review.reason));
                 onlineRef.current?.requestRecovery(review.reason, review.requestId);
                 return;
             }
@@ -182,11 +191,11 @@ export const useNetworkEventHandlers = ({
                     name: 'HOST_DECISION_REJECTED',
                     severity: 'warn',
                     message: 'Guest received a host rejection for a multiplayer intent.',
-                    context: {
+                    context: createReasonTelemetryContext(review.reasonCode, {
                         intentKind: decision.intentKind,
-                        reasonCode: review.reasonCode,
-                    },
+                    }),
                 });
+                publishStatusNotice(createUiStatusNotice(review.reasonCode));
                 return;
             }
 
@@ -204,7 +213,7 @@ export const useNetworkEventHandlers = ({
                 },
             });
         },
-        [gameState, onlineRef, pendingGuestIntentRef]
+        [gameState, onlineRef, pendingGuestIntentRef, publishStatusNotice]
     );
 
     return useMemo(

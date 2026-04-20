@@ -30,6 +30,8 @@ const createEmptyIndicators = () => ({
     ipcRejected: 0,
 });
 
+const createEmptyReasonCodeCounts = () => ({});
+
 const createEmptyCounters = () => ({});
 
 const updateIndicatorsFromEvent = (indicators, event) => {
@@ -58,9 +60,19 @@ const updateIndicatorsFromEvent = (indicators, event) => {
     }
 };
 
+const updateReasonCodeCountsFromEvent = (reasonCodeCounts, event) => {
+    const reasonCode = event?.context?.reasonCode;
+    if (typeof reasonCode !== 'string' || reasonCode.length === 0) {
+        return;
+    }
+
+    reasonCodeCounts[reasonCode] = (reasonCodeCounts[reasonCode] ?? 0) + 1;
+};
+
 export const deriveReleaseHealthSummaryFromEvents = (events = []) => {
     const severityCounts = createEmptySeverityCounts();
     const indicators = createEmptyIndicators();
+    const reasonCodeCounts = createEmptyReasonCodeCounts();
     const counters = createEmptyCounters();
     const recentEvents = [];
     let startedAt = null;
@@ -80,6 +92,7 @@ export const deriveReleaseHealthSummaryFromEvents = (events = []) => {
         }
 
         updateIndicatorsFromEvent(indicators, event);
+        updateReasonCodeCountsFromEvent(reasonCodeCounts, event);
 
         const counterKey = `${event.category}:${event.name}`;
         const current = counters[counterKey] ?? {
@@ -106,6 +119,7 @@ export const deriveReleaseHealthSummaryFromEvents = (events = []) => {
         totalEvents: events.length,
         severityCounts,
         indicators,
+        reasonCodeCounts,
         counters,
         recentEvents,
     };
