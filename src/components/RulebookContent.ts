@@ -15,11 +15,13 @@ Gem Duel is a 2-player game where you play as a guild master of jewelers. You wi
 
 Goal of the Game
 
-There are three ways to win the game. The game ends immediately if you meet any of these conditions at the end of your turn:
+There are three default ways to win the game. The game ends immediately if you meet any of these conditions when your turn finishes resolving:
 
 1.  20 Prestige Points total.
 2.  10 Crowns collected.
 3.  10 Prestige Points on cards of a single color.
+
+Note: In Roguelike Mode, some Buffs change one or more of these targets.
 
 Components
 
@@ -38,11 +40,13 @@ Components
 
 游戏目标
 
-有三种获胜方式。如果在你的回合结束时满足以下任一条件，游戏立即结束：
+默认有三种获胜方式。如果在你的回合结算完成时满足以下任一条件，游戏立即结束：
 
 1.  20点声望值。
 2.  收集10个皇冠。
 3.  单一颜色卡牌获得10点声望值。
+
+注意：在肉鸽模式中，部分 Buff 会改动这些目标。
 
 游戏组件
 
@@ -74,12 +78,13 @@ You must perform exactly one of the following Main Actions:
     Select up to 3 consecutive tokens in a contiguous line (row, column, or diagonal).
     You cannot take Gold tokens with this action.
     You cannot take tokens if there is a gap between them.
+    If your opponent takes 3 tokens of the same basic color, or 2 Pearls, you gain 1 Privilege Scroll.
 
-2.  Take 1 Gold Token:
-    Take 1 Gold token from the board.
-    Reserve 1 Card from the Market (or top of a deck) into your hand.
+2.  Reserve a Card:
+    Reserve 1 Card from the Market (or the top of a deck) into your hand.
+    If at least 1 Gold token is on the board, you also take exactly 1 Gold token as part of the Reserve.
     You can hold a maximum of 3 Reserved cards.
-    Note: If no Gold is available, you can still Reserve a card, but you don't get the Gold.
+    If no Gold is available, you may still Reserve a card.
 
 3.  Buy a Card:
     Buy a card from the Market or your Reserved hand.
@@ -91,8 +96,9 @@ Before your Main Action, you may use any number of Privilege Scrolls:
 Return 1 Scroll to the supply to take 1 Non-Gold Gem from the board.
 
 Before your Main Action, you may Replenish the Board:
-If the bag is not empty, you can refill the board spirally.
-Penalty: Your opponent gains 1 Privilege Scroll.
+If the bag contains tokens, you may refill empty spaces in spiral order.
+Replenishing a non-empty board gives your opponent 1 Privilege Scroll.
+Replenishing does not end your turn and does not count as your Main Action.
         `,
             zh: `
 你的回合
@@ -103,12 +109,13 @@ Penalty: Your opponent gains 1 Privilege Scroll.
     选择最多 3 个连续 的代币，它们必须排成一条直线（行、列或对角线）。
     你不能通过此行动拿取黄金代币。
     如果代币之间有空隙，你不能同时拿取它们。
+    如果你的对手一次拿到 3 个相同基础颜色的宝石，或 2 个珍珠，你会获得 1 个特权卷轴。
 
-2.  拿取 1 个黄金代币：
-    从版图上拿取 1 个黄金代币。
+2.  保留 1 张卡牌：
     从市场（或卡组顶端）保留 1 张卡牌到你的手中。
+    如果版图上存在至少 1 个黄金代币，则此次保留还会额外拿取恰好 1 个黄金代币。
     你最多可以持有 3 张保留卡牌。
-    注意：如果没有黄金可用，你仍然可以保留卡牌，但无法获得黄金。
+    如果没有黄金可用，你仍然可以执行保留。
 
 3.  购买卡牌：
     从市场或你的保留卡牌中购买一张卡。
@@ -120,8 +127,9 @@ Penalty: Your opponent gains 1 Privilege Scroll.
 将 1 个卷轴归还至供应堆，从版图上拿取 1 个非黄金宝石。
 
 在执行主要行动之前，你可以补给版图：
-如果袋子不为空，你可以按螺旋顺序填满版图。
-惩罚：你的对手获得 1 个特权卷轴。
+如果袋子中还有代币，你可以按螺旋顺序补满空位。
+补给一个非空版图时，你的对手会获得 1 个特权卷轴。
+补给不会结束你的回合，也不算作主要行动。
 `,
         },
     },
@@ -135,8 +143,8 @@ Each card shows its cost in Gems (bottom left).
 Bonuses: Cards you have already bought provide Bonuses (top right gem icon).
     1 Bonus reduces the cost of future cards of that color by 1.
     Example: If a card costs 3 Blue and you have 2 Blue Bonuses, you only pay 1 Blue Gem.
-Gold (Joker): Gold tokens can replace any basic color Gem.
-Pearls: Pearls cannot be discounted by Bonuses. You must pay with actual Pearl tokens (or Gold).
+Gold (Joker): Gold tokens can replace any missing Gem cost, including Pearls.
+Pearls: Pearls cannot be discounted by Bonuses.
 
 Abilities
 
@@ -154,8 +162,8 @@ Privilege: Take 1 Privilege Scroll from the supply (or opponent if supply is emp
 奖励 (Bonuses)：你已经购买的卡牌会提供奖励（右上角的宝石图标）。
     1 个奖励可以使未来购买该颜色卡牌的成本减少 1。
     例如：如果一张卡需要 3 个蓝色，而你有 2 个蓝色奖励，你只需支付 1 个蓝色宝石。
-黄金 (百搭)：黄金代币可以替代任何基础颜色的宝石。
-珍珠：珍珠不能被奖励抵扣。你必须支付实际的珍珠代币（或黄金）。
+黄金 (百搭)：黄金代币可以替代任何缺失的费用，包括珍珠。
+珍珠：珍珠不能被奖励抵扣。
 
 能力
 
@@ -183,12 +191,12 @@ Royal Cards count towards your total score and Crown count, but do not provide c
 
 Winning Condition Check
 
-At the end of your turn, check if you have met any of the 3 victory conditions:
+At the end of your turn, check if you have met any of the 3 default victory conditions:
 1.  20 Points
 2.  10 Crowns
 3.  10 Points in one color
 
-If so, you win immediately!
+Some Roguelike Buffs replace one of these targets. If your active target is met, you win immediately.
         `,
             zh: `
 皇冠与皇室卡
@@ -202,12 +210,12 @@ If so, you win immediately!
 
 获胜条件检查
 
-在你的回合结束时，检查是否满足以下 3 个获胜条件之一：
+在你的回合结束时，检查是否满足以下 3 个默认获胜条件之一：
 1.  20 分
 2.  10 个皇冠
 3.  单一颜色获得 10 分
 
-如果满足，你立即获胜！
+部分肉鸽 Buff 会替换其中的某个目标。只要你满足当前生效的目标，就会立即获胜。
 `,
         },
     },
@@ -217,34 +225,36 @@ If so, you win immediately!
             en: `
 Token Limits
 
-10 Gems Max: At the end of your turn, if you have more than 10 tokens (including Gold and Pearls), you must discard down to 10.
+Default Gem Cap: 10. At the end of your turn, if you still have more than your Gem Cap (including Gold and Pearls), you must discard down to that limit.
+Some Roguelike Buffs raise or lower your Gem Cap.
 
 Privilege Scrolls
 
-Used to take 1 Gem from the board (optional free action).
-If you need to take a Scroll and the supply is empty, you take one from your opponent!
-If you and your opponent both have 0 Scrolls, taking a gem or refilling the board might give one to your opponent.
+Used before your Main Action to take 1 non-Gold Gem from the board.
+You also gain 1 Privilege Scroll when your opponent takes 3 tokens of the same basic color, or 2 Pearls, in a single Take Gems action.
+If either player would gain a standard Privilege Scroll while the shared supply is empty, that scroll is taken from the opponent instead.
 
 Extra Resources (Roguelike Only)
 
 Extra Gems: Some buffs provide "Extra" gems. These do NOT return to the bag when spent—they vanish from the game. The system automatically spends these first.
-Special Privileges: Some buffs grant golden "Special" scrolls. These are Protected and cannot be stolen by the opponent. The system uses these first.
+Special Privileges: Some buffs grant golden "Special" scrolls. These are Protected, cannot be stolen by the opponent, and are spent before normal scrolls.
         `,
             zh: `
 代币限制
 
-最多 10 个宝石：在你的回合结束时，如果你持有的代币（包括黄金和珍珠）超过 10 个，你必须弃掉多余的，直到剩下 10 个。
+默认宝石上限为 10：在你的回合结束时，如果你持有的代币（包括黄金和珍珠）仍然超过你的宝石上限，就必须弃到该上限为止。
+部分肉鸽 Buff 会提高或降低这个上限。
 
 特权卷轴
 
-用于从版图拿取 1 个宝石（可选的免费行动）。
-如果你需要拿取卷轴而供应堆已空，则从对手处拿取。
-如果你和对手都没有卷轴，拿取特定宝石或补给版图可能会给对手一个卷轴。
+用于在主要行动前从版图上拿取 1 个非黄金宝石。
+如果你的对手在一次“拿取宝石”行动中拿到 3 个相同基础颜色的宝石，或 2 个珍珠，你也会获得 1 个特权卷轴。
+如果任意一方要获得标准特权卷轴，但共享供应已空，则会改为从对手处拿取。
 
 额外资源（仅限肉鸽模式）
 
 额外宝石 (Extra Gems)：某些增益提供“额外”宝石。这些宝石在花费后不会回到布袋中，而是直接从游戏中消失。系统会自动优先消耗此类宝石。
-特殊特权 (Special Privileges)：某些增益提供金色的“特殊”卷轴。这些卷轴是受保护的，无法被对手抢夺。系统会优先消耗特殊卷轴。
+特殊特权 (Special Privileges)：某些增益提供金色的“特殊”卷轴。这些卷轴受保护、无法被对手夺走，并且会优先于普通卷轴被消耗。
 `,
         },
     },
@@ -256,7 +266,8 @@ Roguelike Mode: Unique Starting Buffs
 
 In this mode, players start with asymmetric abilities ("Buffs") that alter their strategy.
 Before the game starts, a random **Buff Level (1-3)** is chosen.
-Players draft a Buff from a pool of 3. Player 2 picks first.
+Player 1 drafts 1 Buff from a pool of 3.
+Player 2 then drafts 1 Buff from a fresh pool of 4.
 
 Buff Levels
 
@@ -272,7 +283,8 @@ Buffs that grant initial gems or mid-game bonuses use the **Extra Resource** sys
 
 在此模式下，玩家开始时拥有不对称的能力（“Buff”），这些能力会改变他们的策略。
 游戏开始前，会随机选择一个 **Buff 等级 (1-3)**。
-玩家从 3 个 Buff 的池中轮流挑选。玩家 2 先选。
+玩家 1 会先从 3 个 Buff 中选择 1 个。
+随后玩家 2 会从一个新的 4 选 1 池中选择自己的 Buff。
 
 Buff 等级
 
@@ -291,14 +303,14 @@ Buff 等级
             en: `
 Level 1: Minor Tweaks
 
-Privilege Favor: Start with 1 Special Privilege (Protected) and 1 Extra Gold.
+Privilege Favor: Start with 1 Special Privilege (Protected).
 Head Start: Start with 1 random Extra Gem. Win Condition: 18 Points.
 Royal Blood: Start with 1 Crown.
-Intelligence: Action: Peek at top 3 cards of any deck.
+Intelligence: Special action: Peek at the top 3 cards of any deck.
 Deep Pockets: Gem holding limit increased to 12.
 Backup Supply: Start with 2 random Extra Gems.
-Patient Investor: Gain 2 Extra Gold on your first Reserve action.
-Insight: You can always see the top card of the Level 1 Deck.
+Patient Investor: Gain 1 Extra Gold on your first Reserve action.
+Insight: You can always see the top card of the Level 1 Deck. Win Condition: 18 Points.
 Down Payment: Reserved cards cost 1 less (basic gems only).
 Nimble Fingers: Gain 1 random basic gem when you Reserve a card.
 
@@ -310,7 +322,7 @@ Color Preference: Random color costs -1 for you (assigned at start).
 Extortion: Every 2nd time you Replenish the board, steal 1 basic gem from opponent.
 Flexible Discount: Reduce cost of Level 2 and 3 cards by 1 (basic gems only).
 Bounty Hunter: Gain 1 random Extra Gem when you buy a card with Crowns.
-Recycler: Get 1 Extra Gem back when buying Level 2 or 3 cards.
+Recycler: Start with 1 random Extra Gem. Refund 1 basic gem when buying a Level 2 or 3 card.
 Aggressive Expansion: Gain 1 random Extra Gem when you Replenish the board.
 Speculator: Gain 2 random basic gems after buying a reserved card.
 Hoarder: If holding 3 reserved cards, gain 1 random basic gem at start of turn.
@@ -318,27 +330,27 @@ Hoarder: If holding 3 reserved cards, gain 1 random basic gem at start of turn.
 Level 3: Game Changers
 
 King of Greed: All cards give +1 Point. Win Condition: 25 Points.
-Royal Envoy: Can pick remaining Royal Card at Turn 5. No Single Color Win.
-Double Agent: Privileges take 2 gems. Gem Cap: 8.
-All-Seeing Eye: Reveal 2 extra L3 cards. Pay L3 cards with Gold at half value. Win Condition: Single Color 13.
-Wonder Architect: First 3 Level 3 cards cost 3 less (basic gems only). Win Condition: 13 Crowns (No Single Color Win).
-Minimalist: First 5 cards purchased provide Double Bonuses. Max Gems: 6.
-Pacifist: Immune to negative effects (Theft). Start with 1 Special Privilege (Protected).
-Desperate Gamble: Start with 2 Extra Gold. Cannot "Take 3 Gems". Gain a Special Privilege (Protected) every 2 turns.
-The Puppet Master: Destroy reserved card (back to deck) to gain 1 random gem. Special Action.
-The Collector: You can reserve opponent's reserved cards. Win Condition: 22 Points.
+Royal Envoy: After your 5th turn fully resolves, pick 1 remaining Royal Card. No Single Color Win.
+Double Agent: Each Privilege Scroll takes 2 gems instead of 1. Gem Cap: 8.
+All-Seeing Eye: Reveal 2 extra L3 cards. Gold pays double toward missing L3 costs. Win Condition: 13 Points in one color.
+Wonder Architect: Your first 3 Level 3 cards cost 3 less (basic gems only). Win Condition: 13 Crowns. No Single Color Win.
+Minimalist: Your first 2 purchased cards provide Double Bonuses. Gem Cap: 6.
+Pacifist: Immune to negative effects such as theft. Start with 1 Special Privilege (Protected).
+Desperate Gamble: Start with 2 Extra Gold. You cannot take 3 Gems with the Take Gems action. Gain 1 Special Privilege (Protected) every 2 turns.
+The Puppet Master: Discard a reserved card at any time to return it to its deck and gain 1 random basic gem.
+The Collector: You may reserve cards from your opponent's reserved area. Win Condition: 22 Points.
         `,
             zh: `
 1 级：微调 (Minor Tweaks)
 
-特权眷顾 (Privilege Favor)：开始时获得 1 个特殊特权（受保护）和 1 个额外黄金。
+特权眷顾 (Privilege Favor)：开始时获得 1 个特殊特权（受保护）。
 先行一步 (Head Start)：开始时获得 1 个随机额外宝石。获胜条件：18 分。
 皇室血统 (Royal Blood)：开始时拥有 1 个皇冠。
-情报员 (Intelligence)：行动：查看任何卡组顶部的 3 张牌。
+情报员 (Intelligence)：特殊行动：查看任意卡组顶部的 3 张牌。
 深口袋 (Deep Pockets)：宝石持有上限增加至 12 个。
 后备补给 (Backup Supply)：开始时获得 2 个随机额外宝石。
-耐心投资者 (Patient Investor)：在你的第一次保留行动中获得 2 个额外黄金。
-洞察力 (Insight)：你始终可以看到 1 级卡组顶部的牌。
+耐心投资者 (Patient Investor)：在你的第一次保留行动中获得 1 个额外黄金。
+洞察力 (Insight)：你始终可以看到 1 级卡组顶部的牌。获胜条件：18 分。
 预付定金 (Down Payment)：保留的卡牌成本减少 1（仅限基础宝石）。
 快手窃贼 (Nimble Fingers)：当你执行保留行动时，获得一个随机基础宝石。
 
@@ -350,7 +362,7 @@ The Collector: You can reserve opponent's reserved cards. Win Condition: 22 Poin
 巧取豪夺 (Extortion)：你每执行 2 次补给版图，就从对手那里偷取 1 个基础宝石。
 灵活折扣 (Flexible Discount)：购买 2 级和 3 级卡牌时，基础宝石成本减少 1。
 赏金猎人 (Bounty Hunter)：当你购买带有皇冠的卡牌时，获得 1 个额外随机宝石。
-回收者 (Recycler)：购买 2 级或 3 级卡牌时，随机退回 1 个基础宝石。
+回收者 (Recycler)：开始时获得 1 个随机额外宝石。购买 2 级或 3 级卡牌时，返还 1 个基础宝石。
 激进扩张 (Aggressive Expansion)：当你补给版图时，获得 1 个额外随机宝石。
 投机商 (Speculator)：购买一张保留卡后，获得 2 个随机基础宝石。
 资源囤积者 (Hoarder)：如果你手中持有 3 张保留卡，回合开始自动获得 1 个随机基础宝石。
@@ -358,15 +370,15 @@ The Collector: You can reserve opponent's reserved cards. Win Condition: 22 Poin
 3 级：规则改变 (Game Changers)
 
 贪婪之王 (King of Greed)：所有卡牌额外提供 +1 分。获胜条件：25 分。
-皇家特使 (Royal Envoy)：可以在第 5 回合直接拿取剩余的皇室卡。取消单色获胜。
-双重间谍 (Double Agent)：特权可以拿取 2 个宝石。宝石上限：8。
-全知之眼 (All-Seeing Eye)：展示 2 张额外 L3 卡。用黄金支付 3 级卡时价值翻倍。获胜条件：单色 13 分。
-奇迹建筑师 (Wonder Architect)：前 3 张 3 级卡基础宝石成本减少 3。获胜条件：13 个皇冠（取消单色获胜）。
-极简主义 (Minimalist)：购买的前 5 张卡提供双倍奖励。宝石上限：6。
-和平主义者 (Pacifist)：免疫负面效果（偷取）。开始时获得 1 个特殊特权（受保护）。
-孤注一掷 (Desperate Gamble)：开始时获得 2 个额外黄金。无法执行“拿取 3 个宝石”。每 2 回合获得一个特殊的保护特权。
-幕后推手 (The Puppet Master)：随时销毁保留区的卡（回到牌库底）以获得 1 个随机宝石。特殊行动。
-收藏狂人 (The Collector)：你可以直接保留对手已保留的卡。获胜条件：22 分。
+皇家特使 (Royal Envoy)：在你的第 5 个回合完整结算后，拿取 1 张剩余皇室卡。取消单色获胜。
+双重间谍 (Double Agent)：每个特权卷轴改为拿取 2 个宝石。宝石上限：8。
+全知之眼 (All-Seeing Eye)：展示 2 张额外 L3 卡。用黄金补足 3 级卡缺失费用时价值翻倍。获胜条件：单色 13 分。
+奇迹建筑师 (Wonder Architect)：你的前 3 张 3 级卡基础宝石成本减少 3。获胜条件：13 个皇冠。取消单色获胜。
+极简主义 (Minimalist)：你购买的前 2 张卡提供双倍奖励。宝石上限：6。
+和平主义者 (Pacifist)：免疫偷取等负面效果。开始时获得 1 个特殊特权（受保护）。
+孤注一掷 (Desperate Gamble)：开始时获得 2 个额外黄金。无法通过“拿取宝石”行动一次拿 3 个宝石。每 2 回合获得 1 个特殊保护特权。
+幕后推手 (The Puppet Master)：你可以随时弃掉 1 张保留卡，将其放回对应牌库，并获得 1 个随机基础宝石。
+收藏狂人 (The Collector)：你可以从对手的保留区直接保留卡牌。获胜条件：22 分。
 `,
         },
     },

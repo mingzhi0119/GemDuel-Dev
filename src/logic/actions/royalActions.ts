@@ -81,14 +81,7 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
 
     // SCROLL ability: gain privilege
     if (abilities.includes(ABILITIES.SCROLL.id as CardAbility)) {
-        const opponent = player === 'p1' ? 'p2' : 'p1';
-        if (state.privileges.p1 + state.privileges.p2 < 3) {
-            addPrivilege(state, player);
-        } else if (state.privileges[opponent] > 0) {
-            state.privileges[opponent]--;
-            addFeedback(state, opponent, 'privilege', -1);
-            addPrivilege(state, player);
-        }
+        addPrivilege(state, player);
     }
 
     finalizeTurn(state, nextTurn);

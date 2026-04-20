@@ -50,7 +50,7 @@ describe('Responsive layout adaptation', () => {
             boardScale: 1.007536231884058,
             deckScale: 1.047536231884058,
             zoneScale: 0.96,
-            zoneHeightPx: 212,
+            zoneHeightPx: 233,
             mainGapPx: 24,
         });
 
@@ -61,7 +61,7 @@ describe('Responsive layout adaptation', () => {
             boardScale: 0.9530232558139535,
             deckScale: 1,
             zoneScale: 0.9130232558139535,
-            zoneHeightPx: 212,
+            zoneHeightPx: 233,
             mainGapPx: 24,
         });
 
@@ -72,7 +72,7 @@ describe('Responsive layout adaptation', () => {
             boardScale: 1.1234782608695653,
             deckScale: 1.08,
             zoneScale: 0.96,
-            zoneHeightPx: 231,
+            zoneHeightPx: 254,
             mainGapPx: 24,
         });
 
@@ -83,7 +83,7 @@ describe('Responsive layout adaptation', () => {
             boardScale: 1.14,
             deckScale: 1.08,
             zoneScale: 0.96,
-            zoneHeightPx: 260,
+            zoneHeightPx: 286,
             mainGapPx: 31,
         });
 
@@ -94,7 +94,7 @@ describe('Responsive layout adaptation', () => {
             boardScale: 1.14,
             deckScale: 1.08,
             zoneScale: 0.96,
-            zoneHeightPx: 288,
+            zoneHeightPx: 317,
             mainGapPx: 31,
         });
 
@@ -105,7 +105,7 @@ describe('Responsive layout adaptation', () => {
             boardScale: 0.45,
             deckScale: 0.55,
             zoneScale: 0.55,
-            zoneHeightPx: 260,
+            zoneHeightPx: 286,
             mainGapPx: 16,
         });
     });

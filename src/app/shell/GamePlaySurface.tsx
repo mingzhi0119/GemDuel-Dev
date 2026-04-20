@@ -1,3 +1,4 @@
+import { Scroll } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { GameActions } from '../../components/GameActions';
 import { GameBoard } from '../../components/GameBoard';
@@ -5,6 +6,7 @@ import { Market } from '../../components/Market';
 import { ReplayControls } from '../../components/ReplayControls';
 import { RoyalCourt } from '../../components/RoyalCourt';
 import { StatusBar } from '../../components/StatusBar';
+import { SHARED_PRIVILEGE_SUPPLY_SIZE } from '../../logic/stateHelpers';
 import type { AppRouteProps, GamePhase, PlayerKey } from '../../types';
 
 type EffectiveGameMode = GamePhase | 'REVIEW' | 'GAME_OVER';
@@ -39,12 +41,14 @@ export function GamePlaySurface({
         decks,
         market,
         inventories,
+        privileges,
         playerTableau,
         playerBuffs,
         royalDeck,
     } = state;
     const {
         handleGemClick,
+        handleGemDragSelection,
         handleConfirmTake,
         handleReplenish,
         handleReserveCard,
@@ -55,7 +59,11 @@ export function GamePlaySurface({
         handleCancelPrivilege,
         handlePeekDeck,
     } = handlers;
-    const { isSelected, isMyTurn } = getters;
+    const { isMyTurn } = getters;
+    const remainingPrivilegeSupply = Math.max(
+        0,
+        SHARED_PRIVILEGE_SUPPLY_SIZE - (privileges.p1 + privileges.p2)
+    );
 
     return (
         <div className="flex-1 flex items-center justify-center min-h-0 relative z-30 px-4 pt-20 lg:pt-24 pb-6 lg:pb-8 transition-all duration-500">
@@ -105,7 +113,7 @@ export function GamePlaySurface({
                     />
 
                     <div className="relative z-10 flex flex-col items-center shrink-0">
-                        <div className="h-12 w-full flex items-center justify-center">
+                        <div className="h-5 w-full flex items-center justify-center">
                             <StatusBar
                                 errorMsg={errorMsg}
                                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
@@ -113,10 +121,28 @@ export function GamePlaySurface({
                             />
                         </div>
 
+                        <div
+                            className="mb-1 w-full min-h-[42px] flex items-center justify-center gap-2.5"
+                            title="Shared Privilege Scroll supply"
+                        >
+                            {Array.from({ length: remainingPrivilegeSupply }).map((_, index) => (
+                                <Scroll
+                                    key={`supply-scroll-${index}`}
+                                    size={36}
+                                    fill="#fcd34d"
+                                    className={
+                                        theme === 'dark'
+                                            ? 'text-amber-200 drop-shadow-[0_0_8px_rgba(252,211,77,0.2)]'
+                                            : 'text-amber-500 drop-shadow-sm'
+                                    }
+                                />
+                            ))}
+                        </div>
+
                         <GameBoard
                             board={board}
                             handleGemClick={handleGemClick}
-                            isSelected={isSelected}
+                            handleGemDragSelection={handleGemDragSelection}
                             selectedGems={selectedGems}
                             phase={effectiveGameMode}
                             bonusGemTarget={bonusGemTarget}

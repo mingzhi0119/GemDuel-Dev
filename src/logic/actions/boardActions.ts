@@ -26,7 +26,7 @@ import {
  *
  * Rules:
  * - Gems must form a valid line (checked by UI)
- * - Taking 2+ gems of same color or 2+ pearls grants opponent privilege
+ * - Taking 3 gems of the same color or 2 pearls grants opponent privilege
  * - Update inventory and finalize turn
  *
  * @param state - Game state (modified by Immer)
@@ -56,16 +56,10 @@ export const handleTakeGems = (state: GameState, payload: TakeGemsPayload): Game
     const specialGems = collectedTypes.filter((t) => t === 'pearl' || t === 'gold');
     specialGems.forEach((t) => addFeedback(state, state.turn, t, 1));
 
-    // Check if opponent should get privilege
+    // Check if opponent should gain a privilege.
     if (pearlCount >= 2 || Object.values(colorCounts).some((c) => c >= 3)) {
         const opponent = state.turn === 'p1' ? 'p2' : 'p1';
-        if (state.privileges.p1 + state.privileges.p2 < 3) {
-            addPrivilege(state, opponent);
-        } else if (state.privileges[state.turn] > 0) {
-            state.privileges[state.turn]--;
-            addFeedback(state, state.turn, 'privilege', -1);
-            addPrivilege(state, opponent);
-        }
+        addPrivilege(state, opponent);
     }
 
     state.inventories[state.turn] = newInv;
@@ -89,14 +83,8 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
 
     // Check if board is already full (no refill needed)
     if (!state.board.every((row) => row.every((g) => g.type.id === 'empty'))) {
-        // Give opponent privilege for non-empty board refill
-        if (state.privileges.p1 + state.privileges.p2 < 3) {
-            addPrivilege(state, opponent);
-        } else if (state.privileges[state.turn] > 0) {
-            state.privileges[state.turn]--;
-            addFeedback(state, state.turn, 'privilege', -1);
-            addPrivilege(state, opponent);
-        }
+        // Give opponent a privilege for refilling a non-empty board.
+        addPrivilege(state, opponent);
 
         // Handle Extortion buff effect
         const hasExtortion = buff?.effects?.active === 'replenish_steal';

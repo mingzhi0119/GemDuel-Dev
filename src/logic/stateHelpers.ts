@@ -7,6 +7,8 @@
 
 import { GameState, PlayerKey } from '../types';
 
+export const SHARED_PRIVILEGE_SUPPLY_SIZE = 3;
+
 /**
  * Add feedback for a player action to the state
  *
@@ -36,14 +38,28 @@ export const addFeedback = (
 };
 
 /**
- * Add a privilege scroll to a player (capped at 3)
+ * Add a standard privilege scroll to a player.
+ *
+ * The shared supply only holds 3 standard scrolls total. If the supply is empty,
+ * the gaining player takes one from the opponent instead.
  *
  * @param state - Current game state
  * @param pid - Player ID ('p1' or 'p2')
  */
 export const addPrivilege = (state: GameState, pid: PlayerKey): void => {
-    if (state.privileges[pid] < 3) {
+    const opponent: PlayerKey = pid === 'p1' ? 'p2' : 'p1';
+    const total = state.privileges.p1 + state.privileges.p2;
+
+    if (total < SHARED_PRIVILEGE_SUPPLY_SIZE) {
         state.privileges[pid]++;
+        addFeedback(state, pid, 'privilege', 1);
+        return;
+    }
+
+    if (state.privileges[opponent] > 0) {
+        state.privileges[opponent]--;
+        state.privileges[pid]++;
+        addFeedback(state, opponent, 'privilege', -1);
         addFeedback(state, pid, 'privilege', 1);
     }
 };

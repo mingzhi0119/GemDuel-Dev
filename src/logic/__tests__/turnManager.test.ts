@@ -96,6 +96,56 @@ describe('turnManager', () => {
                 expect(state.phase).toBe('SELECT_ROYAL');
                 expect(state.royalMilestones.p1[6]).toBe(true);
             });
+
+            it('waits for forced discard resolution before triggering Royal Envoy on turn 5', () => {
+                const startState = createMockState({
+                    turn: 'p1',
+                    playerTurnCounts: { p1: 4, p2: 0 },
+                    royalDeck: [{ id: 'royal1' }] as unknown as RoyalCard[],
+                    playerBuffs: {
+                        p1: {
+                            id: 'royal_envoy',
+                            level: 3,
+                            label: 'Royal Envoy',
+                            desc: '',
+                            effects: {
+                                active: 'turn5_royal',
+                                winCondition: { disableSingleColor: true },
+                            },
+                        } as unknown as Buff,
+                        p2: baseState.playerBuffs.p2,
+                    },
+                    inventories: {
+                        p1: {
+                            blue: 11,
+                            white: 0,
+                            green: 0,
+                            black: 0,
+                            red: 0,
+                            gold: 0,
+                            pearl: 0,
+                        },
+                        p2: baseState.inventories.p2,
+                    },
+                });
+
+                const discardState = produce(startState, (draft) => {
+                    finalizeTurn(draft, 'p2');
+                });
+
+                expect(discardState.phase).toBe('DISCARD_EXCESS_GEMS');
+                expect(discardState.nextPlayerAfterRoyal).toBe('p2');
+                expect(discardState.playerBuffs.p1.state?.envoyTriggered).not.toBe(true);
+
+                const postDiscardState = produce(discardState, (draft) => {
+                    draft.inventories.p1.blue = 10;
+                    finalizeTurn(draft, 'p2', draft.inventories.p1);
+                });
+
+                expect(postDiscardState.phase).toBe('SELECT_ROYAL');
+                expect(postDiscardState.nextPlayerAfterRoyal).toBe('p2');
+                expect(postDiscardState.playerBuffs.p1.state?.envoyTriggered).toBe(true);
+            });
         });
 
         describe('Gem Capacity', () => {

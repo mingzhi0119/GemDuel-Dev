@@ -52,6 +52,56 @@ interface StackOverlayProps {
     theme: 'light' | 'dark';
 }
 
+interface ScaledCardFrameProps {
+    scale: number;
+    children: React.ReactNode;
+}
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const TABLEAU_STACK_FALLBACK_SCALE = 0.72;
+const TABLEAU_STACK_MIN_SCALE = 0.46;
+const TABLEAU_STACK_GAP_PX = 6;
+const RESERVED_CARD_FALLBACK_SCALE = 0.88;
+const RESERVED_CARD_MIN_SCALE = 0.42;
+const RESERVED_CARD_GAP_PX = 8;
+const SUMMARY_TEXT_COLORS: Record<string, string> = {
+    blue: '#60a5fa',
+    white: '#f8fafc',
+    green: '#34d399',
+    black: '#94a3b8',
+    red: '#f87171',
+    pearl: '#f472b6',
+    gold: '#fbbf24',
+};
+
+const ScaledCardFrame: React.FC<ScaledCardFrameProps> = ({ scale, children }) => {
+    const safeScale = Number.isFinite(scale) ? scale : 1;
+    const scaledWidth = STANDARD_CARD_SIZE.width * safeScale;
+    const scaledHeight = STANDARD_CARD_SIZE.height * safeScale;
+
+    return (
+        <div
+            className="relative shrink-0"
+            style={{
+                width: `${scaledWidth}px`,
+                height: `${scaledHeight}px`,
+            }}
+        >
+            <div
+                style={{
+                    width: `${STANDARD_CARD_SIZE.width}px`,
+                    height: `${STANDARD_CARD_SIZE.height}px`,
+                    transform: `scale(${safeScale})`,
+                    transformOrigin: 'top left',
+                }}
+            >
+                {children}
+            </div>
+        </div>
+    );
+};
+
 const StackOverlay: React.FC<StackOverlayProps> = ({ isOpen, color, cards, onClose, theme }) => {
     if (!isOpen) return null;
     const type = GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES] || GEM_TYPES.NULL;
@@ -138,6 +188,10 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     const [selectedStack, setSelectedStack] = useState<{ color: string; cards: CardType[] } | null>(
         null
     );
+    const tableauRowRef = useRef<HTMLDivElement | null>(null);
+    const reservedRowRef = useRef<HTMLDivElement | null>(null);
+    const [tableauRowWidth, setTableauRowWidth] = useState(0);
+    const [reservedRowWidth, setReservedRowWidth] = useState(0);
 
     const hasPuppetMaster =
         buff?.effects?.active === 'discard_reserved' || buff?.id === 'puppet_master';
@@ -179,6 +233,37 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
         }
     }, [lastFeedback, player]);
 
+    useEffect(() => {
+        const updateRowWidths = () => {
+            const nextTableauWidth = tableauRowRef.current?.clientWidth ?? 0;
+            const nextReservedWidth = reservedRowRef.current?.clientWidth ?? 0;
+
+            setTableauRowWidth((current) =>
+                current === nextTableauWidth ? current : nextTableauWidth
+            );
+            setReservedRowWidth((current) =>
+                current === nextReservedWidth ? current : nextReservedWidth
+            );
+        };
+
+        updateRowWidths();
+
+        if (typeof ResizeObserver === 'undefined') {
+            window.addEventListener('resize', updateRowWidths);
+            return () => window.removeEventListener('resize', updateRowWidths);
+        }
+
+        const observer = new ResizeObserver(updateRowWidths);
+        if (tableauRowRef.current) observer.observe(tableauRowRef.current);
+        if (reservedRowRef.current) observer.observe(reservedRowRef.current);
+        window.addEventListener('resize', updateRowWidths);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', updateRowWidths);
+        };
+    }, []);
+
     const colorStats = displayColors.reduce(
         (acc: Record<string, { cards: CardType[]; bonusCount: number; points: number }>, color) => {
             const colorCards = safeCards.filter((c) => c.bonusColor === color);
@@ -191,6 +276,28 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
         },
         {}
     );
+    const tableauSummaryGapTotalPx = Math.max(displayColors.length - 1, 0) * TABLEAU_STACK_GAP_PX;
+    const tableauSummaryScale =
+        tableauRowWidth > 0
+            ? Math.max(
+                  TABLEAU_STACK_MIN_SCALE,
+                  (tableauRowWidth - tableauSummaryGapTotalPx) /
+                      (displayColors.length * STANDARD_CARD_SIZE.width)
+              )
+            : TABLEAU_STACK_FALLBACK_SCALE;
+    const summaryDisplayScale = clamp(tableauSummaryScale, TABLEAU_STACK_MIN_SCALE, 1);
+    const summaryBadgeFontPx = Math.round(inventoryGemCountFontPx / summaryDisplayScale);
+    const summaryBadgeSizePx = Math.round(inventoryGemBadgeSizePx / summaryDisplayScale);
+    const reservedGapTotalPx = Math.max(reserved.length - 1, 0) * RESERVED_CARD_GAP_PX;
+    const reservedCardScale =
+        reserved.length > 0 && reservedRowWidth > 0
+            ? clamp(
+                  (reservedRowWidth - reservedGapTotalPx) /
+                      (reserved.length * STANDARD_CARD_SIZE.width),
+                  RESERVED_CARD_MIN_SCALE,
+                  1
+              )
+            : RESERVED_CARD_FALLBACK_SCALE;
 
     return (
         <div
@@ -414,134 +521,166 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                 </div>
 
                 {/* Card Stacks & Bonuses */}
-                <div className="flex gap-3 items-start justify-center mt-1 overflow-x-auto py-2 pr-2 max-w-full">
+                <div
+                    ref={tableauRowRef}
+                    className="flex w-full items-start justify-start mt-1 overflow-hidden py-2 max-w-full min-w-0"
+                    style={{ gap: `${TABLEAU_STACK_GAP_PX}px` }}
+                >
                     {displayColors.map((color) => {
                         const stats = colorStats[color];
                         const type = GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES];
+                        const summaryPointColor =
+                            SUMMARY_TEXT_COLORS[type.id] ?? SUMMARY_TEXT_COLORS.black;
 
                         return (
                             <div
                                 key={color}
-                                className="flex flex-col items-center gap-1 min-w-[32px]"
+                                className="flex shrink-0 flex-col items-center gap-1 min-w-[32px]"
                                 onClick={() =>
                                     stats.cards.length > 0 &&
                                     setSelectedStack({ color, cards: stats.cards })
                                 }
                             >
-                                <motion.div
-                                    animate={stats.cards.length > 0 ? { scale: [1, 1.1, 1] } : {}}
-                                    key={stats.cards.length}
-                                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                                    className="relative group/stack cursor-pointer transition-transform hover:scale-105 active:scale-95"
-                                    style={{
-                                        width: `${STANDARD_CARD_SIZE.width}px`,
-                                        height: `${STANDARD_CARD_SIZE.height}px`,
-                                    }}
-                                >
-                                    {stats.cards.length > 0 ? (
-                                        stats.cards.map((card: CardType, idx: number) => (
-                                            <div
-                                                key={idx}
-                                                className="absolute inset-0 z-10"
-                                                style={{
-                                                    top: `${idx * stackOffsetY}px`,
-                                                    left: `${idx * stackOffsetX}px`,
-                                                }}
-                                            >
-                                                {/* Only the top card is fully rendered, but we keep the structure for stacking */}
-                                                {idx === stats.cards.length - 1 ? (
-                                                    <Card
-                                                        card={card}
-                                                        canBuy={false}
-                                                        theme={theme}
-                                                        className="shadow-md"
-                                                    />
-                                                ) : (
-                                                    <div
-                                                        className={`rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm transition-all duration-200 opacity-40`}
-                                                        style={{
-                                                            width: `${STANDARD_CARD_SIZE.width}px`,
-                                                            height: `${STANDARD_CARD_SIZE.height}px`,
-                                                        }}
-                                                    />
-                                                )}
+                                <ScaledCardFrame scale={tableauSummaryScale}>
+                                    <motion.div
+                                        animate={
+                                            stats.cards.length > 0 ? { scale: [1, 1.1, 1] } : {}
+                                        }
+                                        key={stats.cards.length}
+                                        transition={{ duration: 0.4, ease: 'easeOut' }}
+                                        className="relative group/stack cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                        style={{
+                                            width: `${STANDARD_CARD_SIZE.width}px`,
+                                            height: `${STANDARD_CARD_SIZE.height}px`,
+                                        }}
+                                    >
+                                        {stats.cards.length > 0 ? (
+                                            stats.cards.map((card: CardType, idx: number) => (
+                                                <div
+                                                    key={idx}
+                                                    className="absolute inset-0 z-10"
+                                                    style={{
+                                                        top: `${idx * stackOffsetY}px`,
+                                                        left: `${idx * stackOffsetX}px`,
+                                                    }}
+                                                >
+                                                    {/* Only the top card is fully rendered, but we keep the structure for stacking */}
+                                                    {idx === stats.cards.length - 1 ? (
+                                                        <Card
+                                                            card={card}
+                                                            canBuy={false}
+                                                            theme={theme}
+                                                            className="shadow-md"
+                                                        />
+                                                    ) : (
+                                                        <div
+                                                            className={`rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm transition-all duration-200 opacity-40`}
+                                                            style={{
+                                                                width: `${STANDARD_CARD_SIZE.width}px`,
+                                                                height: `${STANDARD_CARD_SIZE.height}px`,
+                                                            }}
+                                                        />
+                                                    )}
 
-                                                {/* Global Score Indicator (Center of the top card) */}
-                                                {idx === stats.cards.length - 1 &&
-                                                    stats.points > 0 && (
-                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                                                            <motion.div
-                                                                animate={
-                                                                    stats.points >= 7
-                                                                        ? {
-                                                                              scale: [1, 1.1, 1],
-                                                                              filter: [
-                                                                                  'drop-shadow(0 0 2px #fbbf24)',
-                                                                                  'drop-shadow(0 0 8px #f59e0b)',
-                                                                                  'drop-shadow(0 0 2px #fbbf24)',
-                                                                              ],
-                                                                          }
-                                                                        : {}
-                                                                }
-                                                                transition={{
-                                                                    duration: 2,
-                                                                    repeat: Infinity,
-                                                                    ease: 'easeInOut',
-                                                                }}
-                                                                className={cn(
-                                                                    'px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-[2px] border shadow-xl transition-colors',
-                                                                    stats.points >= 7
-                                                                        ? 'border-amber-400 shadow-amber-500/20'
-                                                                        : 'border-white/20'
-                                                                )}
-                                                            >
-                                                                <span
-                                                                    className={cn(
-                                                                        'text-sm font-black drop-shadow-md',
+                                                    {/* Global Score Indicator (Center of the top card) */}
+                                                    {idx === stats.cards.length - 1 &&
+                                                        stats.points > 0 && (
+                                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                                                                <motion.div
+                                                                    animate={
                                                                         stats.points >= 7
-                                                                            ? 'text-amber-400'
-                                                                            : 'text-amber-200/90'
+                                                                            ? {
+                                                                                  scale: [
+                                                                                      1, 1.1, 1,
+                                                                                  ],
+                                                                                  filter: [
+                                                                                      'drop-shadow(0 0 2px #fbbf24)',
+                                                                                      'drop-shadow(0 0 8px #f59e0b)',
+                                                                                      'drop-shadow(0 0 2px #fbbf24)',
+                                                                                  ],
+                                                                              }
+                                                                            : {}
+                                                                    }
+                                                                    transition={{
+                                                                        duration: 2,
+                                                                        repeat: Infinity,
+                                                                        ease: 'easeInOut',
+                                                                    }}
+                                                                    className={cn(
+                                                                        'px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-[2px] border shadow-xl transition-colors',
+                                                                        stats.points >= 7
+                                                                            ? 'border-amber-400 shadow-amber-500/20'
+                                                                            : 'border-white/20'
                                                                     )}
                                                                 >
-                                                                    {stats.points}
-                                                                </span>
-                                                            </motion.div>
-                                                        </div>
-                                                    )}
-
-                                                {/* Global Bonus Indicator (Bottom Right of the top card) */}
-                                                {idx === stats.cards.length - 1 &&
-                                                    stats.bonusCount > 0 && (
-                                                        <div className="absolute -bottom-2 -right-2 z-40">
-                                                            <div
-                                                                className={`px-1.5 py-0.5 rounded-full border shadow-lg flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-stone-800 border-stone-300'}`}
-                                                            >
-                                                                <span className="text-[10px] font-black">
-                                                                    {stats.bonusCount}
-                                                                </span>
+                                                                    <span
+                                                                        className={cn(
+                                                                            'text-sm font-black drop-shadow-md',
+                                                                            stats.points >= 7 &&
+                                                                                'drop-shadow-[0_0_8px_rgba(255,255,255,0.28)]'
+                                                                        )}
+                                                                        style={{
+                                                                            color: summaryPointColor,
+                                                                            textShadow:
+                                                                                type.id === 'white'
+                                                                                    ? '0 1px 3px rgba(15,23,42,0.95)'
+                                                                                    : '0 1px 3px rgba(15,23,42,0.75)',
+                                                                        }}
+                                                                    >
+                                                                        {stats.points}
+                                                                    </span>
+                                                                </motion.div>
                                                             </div>
-                                                        </div>
-                                                    )}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div
-                                            className={`rounded border border-dashed flex items-center justify-center ${
-                                                theme === 'dark'
-                                                    ? 'border-slate-600 bg-slate-800/35'
-                                                    : 'border-stone-300 bg-stone-100/70'
-                                            }`}
-                                            style={{
-                                                width: `${STANDARD_CARD_SIZE.width}px`,
-                                                height: `${STANDARD_CARD_SIZE.height}px`,
-                                            }}
-                                        >
+                                                        )}
+
+                                                    {/* Global Bonus Indicator (Bottom Right of the top card) */}
+                                                    {idx === stats.cards.length - 1 &&
+                                                        stats.bonusCount > 0 && (
+                                                            <div className="absolute -bottom-2 -right-2 z-40">
+                                                                <div
+                                                                    className={`px-1.5 py-0.5 rounded-full border shadow-lg flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-stone-800 border-stone-300'}`}
+                                                                    style={{
+                                                                        minWidth: `${summaryBadgeSizePx}px`,
+                                                                        minHeight: `${summaryBadgeSizePx}px`,
+                                                                        lineHeight: 1,
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                    }}
+                                                                >
+                                                                    <span
+                                                                        className="font-black"
+                                                                        style={{
+                                                                            fontSize: `${summaryBadgeFontPx}px`,
+                                                                            lineHeight: 1,
+                                                                        }}
+                                                                    >
+                                                                        {stats.bonusCount}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                </div>
+                                            ))
+                                        ) : (
                                             <div
-                                                className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} opacity-20`}
-                                            />
-                                        </div>
-                                    )}
-                                </motion.div>
+                                                className={`rounded border border-dashed flex items-center justify-center ${
+                                                    theme === 'dark'
+                                                        ? 'border-slate-600 bg-slate-800/35'
+                                                        : 'border-stone-300 bg-stone-100/70'
+                                                }`}
+                                                style={{
+                                                    width: `${STANDARD_CARD_SIZE.width}px`,
+                                                    height: `${STANDARD_CARD_SIZE.height}px`,
+                                                }}
+                                            >
+                                                <div
+                                                    className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} opacity-20`}
+                                                />
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                </ScaledCardFrame>
                             </div>
                         );
                     })}
@@ -555,7 +694,10 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
       `}
                 style={{ flex: 35 }}
             >
-                <div className="w-full flex items-center justify-start gap-3 overflow-x-auto py-2 pr-2">
+                <div
+                    ref={reservedRowRef}
+                    className="w-full flex items-center justify-center overflow-hidden py-2 min-w-0"
+                >
                     {reserved.length === 0 && (
                         <span
                             className={`text-[10px] italic w-full text-center ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
@@ -563,34 +705,43 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
                             No Reserved Cards
                         </span>
                     )}
-                    {reserved.map((card, i) => (
+                    {reserved.length > 0 && (
                         <div
-                            key={i}
-                            className="transition-transform duration-200 ease-in-out shrink-0 relative group/card"
+                            className="flex items-center justify-center min-w-0 max-w-full"
+                            style={{ gap: `${RESERVED_CARD_GAP_PX}px` }}
                         >
-                            <Card
-                                card={card}
-                                canBuy={isActive && onBuyReserved(card)}
-                                onClick={() =>
-                                    isActive && onBuyReserved(card) && onBuyReserved(card, true)
-                                }
-                                isReservedView={true}
-                                theme={theme}
-                            />
-                            {hasPuppetMaster && isActive && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDiscardReserved(card.id);
-                                    }}
-                                    className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-rose-500 z-50"
-                                    title="Discard Card (Puppet Master)"
-                                >
-                                    <span className="text-[10px] font-black">X</span>
-                                </button>
-                            )}
+                            {reserved.map((card, i) => (
+                                <ScaledCardFrame key={card.id || i} scale={reservedCardScale}>
+                                    <div className="relative group/card">
+                                        <Card
+                                            card={card}
+                                            canBuy={isActive && onBuyReserved(card)}
+                                            onClick={() =>
+                                                isActive &&
+                                                onBuyReserved(card) &&
+                                                onBuyReserved(card, true)
+                                            }
+                                            isReservedView={true}
+                                            theme={theme}
+                                            className="transition-transform duration-200 ease-in-out"
+                                        />
+                                        {hasPuppetMaster && isActive && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDiscardReserved(card.id);
+                                                }}
+                                                className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-rose-500 z-50"
+                                                title="Discard Card (Puppet Master)"
+                                            >
+                                                <span className="text-[10px] font-black">X</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                </ScaledCardFrame>
+                            ))}
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
         </div>

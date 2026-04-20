@@ -5,8 +5,11 @@ const DESKTOP_WIDTH = 1380;
 const DESKTOP_HEIGHT = 860;
 const MOBILE_BREAKPOINT = 1024;
 const FALLBACK_VIEWPORT = { width: 1280, height: 800 };
+const PLAYER_RAIL_HEIGHT_MULTIPLIER = 1.1;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const scalePlayerRailHeight = (height: number) =>
+    Math.max(1, Math.round(height * PLAYER_RAIL_HEIGHT_MULTIPLIER));
 
 const getViewport = () => {
     if (typeof window === 'undefined') {
@@ -36,7 +39,7 @@ export const calculateResponsiveLayout = (
             boardScale: 0.45,
             deckScale: 0.55,
             zoneScale: 0.55,
-            zoneHeightPx: 260,
+            zoneHeightPx: scalePlayerRailHeight(260),
             mainGapPx: 16,
         };
     }
@@ -44,6 +47,11 @@ export const calculateResponsiveLayout = (
     const aspectBonus = aspectRatio <= 1.68 ? 0.08 : 0.06;
     const baseBoardScale = Math.min(safeWidth / DESKTOP_WIDTH, safeHeight / DESKTOP_HEIGHT);
     const boardScale = clamp(baseBoardScale + aspectBonus, 0.94, 1.14);
+    const baseZoneHeightPx = clamp(
+        Math.round(safeHeight * 0.23 + (aspectRatio <= 1.68 ? 24 : 12)),
+        212,
+        288
+    );
 
     return {
         layoutMode: 'desktop-auto',
@@ -53,11 +61,7 @@ export const calculateResponsiveLayout = (
         boardScale,
         deckScale: clamp(boardScale + 0.04, 1.0, 1.08),
         zoneScale: clamp(boardScale - 0.04, 0.82, 0.96),
-        zoneHeightPx: clamp(
-            Math.round(safeHeight * 0.23 + (aspectRatio <= 1.68 ? 24 : 12)),
-            212,
-            288
-        ),
+        zoneHeightPx: scalePlayerRailHeight(baseZoneHeightPx),
         mainGapPx: clamp(Math.round(safeWidth * 0.016), 24, 32),
     };
 };

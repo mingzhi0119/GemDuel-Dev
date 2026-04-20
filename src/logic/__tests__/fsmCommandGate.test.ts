@@ -80,4 +80,44 @@ describe('FSM and Command Gate', () => {
 
         expect(nextState).toEqual(state);
     });
+
+    it('allows joker instant-win purchases to resolve directly to an IDLE winner state', () => {
+        const state = cloneState();
+        const jokerCard = {
+            id: 'joker-win-card',
+            level: 1 as const,
+            cost: {
+                blue: 0,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 0,
+                pearl: 0,
+                gold: 0,
+            },
+            points: 1,
+            bonusColor: 'gold' as const,
+            crowns: 0,
+            ability: 'none' as const,
+        };
+
+        state.extraPoints.p1 = 19;
+        state.market = { 1: [jokerCard], 2: [], 3: [] };
+
+        const nextState = applyAction(state, {
+            type: 'INITIATE_BUY_JOKER',
+            payload: {
+                card: jokerCard,
+                source: 'market',
+                marketInfo: { level: 1, idx: 0 },
+            },
+        });
+
+        expect(nextState).not.toBe(state);
+        expect(nextState?.winner).toBe('p1');
+        expect(nextState?.phase).toBe('IDLE');
+        expect(nextState?.playerTableau.p1).toContainEqual(
+            expect.objectContaining({ id: 'joker-win-card' })
+        );
+    });
 });

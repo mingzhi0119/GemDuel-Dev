@@ -74,3 +74,18 @@ Conclusion: P0-P4 have been delivered and re-verified. The project advances from
 1. Add a dedicated architecture-governance checker that enforces the budgets and ownership lines documented in `ARCHITECTURE_LAYER_MAP.md`.
 2. Raise global and hotspot coverage gates toward the stricter `10.0/10` target so the observed coverage posture becomes an irreversible requirement instead of a favorable snapshot.
 3. Once those two hard gates are in place, run one more independent seal review and only then promote the project from `9.9/10` to a no-residual-uncertainty `10.0/10`.
+
+## Workspace Reconciliation Rescore
+
+After the final audit was written, the remaining local gameplay/UI/test edits were reviewed before push rather than discarded as drift. They were retained because they close real product gaps: the shared privilege supply is now surfaced in the board shell, privilege-transfer behavior is centralized behind `addPrivilege`, Royal Envoy waits until mandatory discard resolution completes, the rulebook now matches the implemented privilege/reserve/win-condition rules, and the related regression tests were extended accordingly.
+
+Those retained changes improve confidence in the current seal reading, but they do not remove the two outstanding governance gaps called out above. The rescored dimensions therefore remain:
+
+| Dimension                 | Reconciled score | Rationale                                                                                                                                                                                            |
+| ------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Correctness               | `9.9/10`         | Turn-resolution and privilege-transfer behavior are stronger and better tested, but the audit still stops short of a `10.0/10` seal while the final hard gates remain softer than the roadmap target |
+| State Machine Consistency | `9.9/10`         | Royal Envoy timing now aligns better with forced-discard sequencing, yet phase ownership is still documented more strongly than it is mechanically enforced                                          |
+| Architecture Layering     | `9.8/10`         | The retained UI changes are coherent and useful, but the repo still lacks an automated architecture-budget gate                                                                                      |
+| Test Coverage             | `9.8/10`         | Targeted regressions improved confidence, but enforced coverage thresholds are still below the stricter `10.0/10` bar                                                                                |
+
+Overall score after workspace reconciliation: `9.9/10` unchanged.

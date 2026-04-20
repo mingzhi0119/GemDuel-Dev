@@ -118,25 +118,7 @@ export const finalizeTurn = (
         state.toastMessage = `Hoarder: +1 Gem for ${nextPlayer === 'p1' ? 'Player 1' : 'Player 2'}!`;
     }
 
-    // ========== BUFF EFFECTS: Royal Envoy ==========
-    // Trigger royal card selection on the 5th major action of the player
     const currentBuffObj = state.playerBuffs?.[state.turn];
-    // Check for 4 because we haven't incremented yet (it's the end of their 5th turn)
-    if (currentBuffObj?.id === 'royal_envoy' && state.playerTurnCounts[state.turn] === 4) {
-        if (state.royalDeck.length > 0) {
-            state.phase = GAME_PHASES.SELECT_ROYAL;
-            state.nextPlayerAfterRoyal = nextPlayer;
-            state.toastMessage = 'Royal Envoy: Pick a Royal Card!';
-            // Ensure we don't trigger this again if they enter discard phase later?
-            // Actually playerTurnCounts will still be 4.
-            // We should probably mark this buff as used.
-            if (!currentBuffObj.state) currentBuffObj.state = {};
-            if (!currentBuffObj.state.envoyTriggered) {
-                currentBuffObj.state.envoyTriggered = true;
-                return;
-            }
-        }
-    }
 
     // ========== ROYAL MILESTONE CHECKS ==========
     const crowns = getCrowns(state.turn);
@@ -166,6 +148,22 @@ export const finalizeTurn = (
         if (!state.nextPlayerAfterRoyal) {
             state.nextPlayerAfterRoyal = nextPlayer;
         }
+        return;
+    }
+
+    // ========== BUFF EFFECTS: Royal Envoy ==========
+    // Trigger royal card selection only after mandatory end-of-turn actions have resolved.
+    if (
+        currentBuffObj?.id === 'royal_envoy' &&
+        state.playerTurnCounts[state.turn] === 4 &&
+        state.royalDeck.length > 0 &&
+        !currentBuffObj.state?.envoyTriggered
+    ) {
+        if (!currentBuffObj.state) currentBuffObj.state = {};
+        currentBuffObj.state.envoyTriggered = true;
+        state.phase = GAME_PHASES.SELECT_ROYAL;
+        state.nextPlayerAfterRoyal = nextPlayer;
+        state.toastMessage = 'Royal Envoy: Pick a Royal Card!';
         return;
     }
 

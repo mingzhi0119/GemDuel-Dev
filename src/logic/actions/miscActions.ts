@@ -4,7 +4,7 @@
  * Debug utilities, modals, and special actions
  */
 
-import { addFeedback } from '../stateHelpers';
+import { addFeedback, addPrivilege } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
 import { GameState, PlayerKey, PeekDeckPayload } from '../../types';
 
@@ -35,20 +35,7 @@ export const handleDebugAddPoints = (state: GameState, payload: PlayerKey): Game
  * Debug: Add privilege scroll to a player
  */
 export const handleDebugAddPrivilege = (state: GameState, payload: PlayerKey): GameState => {
-    const pid = payload;
-    const total = state.privileges.p1 + state.privileges.p2;
-    if (total < 3) {
-        state.privileges[pid]++;
-        addFeedback(state, pid, 'privilege', 1);
-    } else {
-        const opponent = pid === 'p1' ? 'p2' : 'p1';
-        if (state.privileges[opponent] > 0) {
-            state.privileges[opponent]--;
-            state.privileges[pid]++;
-            addFeedback(state, pid, 'privilege', 1);
-            addFeedback(state, opponent, 'privilege', -1);
-        }
-    }
+    addPrivilege(state, payload);
     return state;
 };
 
