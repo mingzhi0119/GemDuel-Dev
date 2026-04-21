@@ -353,6 +353,13 @@ describe('dependency governance', () => {
                     'node_modules/.pnpm/@rollup+rollup-linux-x64-gnu@4.60.2/node_modules/@rollup/rollup-linux-x64-gnu',
             },
             {
+                name: '@turbo/linux-64',
+                version: '2.9.6',
+                license: 'MIT',
+                packagePath:
+                    'node_modules/.pnpm/@turbo+linux-64@2.9.6/node_modules/@turbo/linux-64',
+            },
+            {
                 name: 'zod',
                 version: '4.3.6',
                 license: 'MIT',
@@ -364,8 +371,10 @@ describe('dependency governance', () => {
             excludePlatformScopedBinaries: true,
         });
 
-        expect(snapshot.normalization).toEqual({
-            excludePlatformScopedBinaries: true,
+        expect(snapshot).toMatchObject({
+            normalization: {
+                excludePlatformScopedBinaries: true,
+            },
         });
         expect(snapshot.componentCount).toBe(1);
         expect(snapshot.licenseInventory).toEqual({ MIT: 1 });
@@ -383,6 +392,40 @@ describe('dependency governance', () => {
                 },
             })
         ).toEqual([]);
+    });
+
+    it('can replace platform-specific install paths with stable governed component ids', () => {
+        const packageJson = { name: 'gem-duel', version: '1.0.0' };
+        const licenseReport = createLicenseReport([
+            {
+                name: '@babel/plugin-transform-react-jsx-self',
+                version: '7.27.1',
+                license: 'MIT',
+                packagePath:
+                    'node_modules/.pnpm/@babel+plugin-transform-rea_21aa63fdd6a659f9279249d9e2de2743/node_modules/@babel/plugin-transform-react-jsx-self',
+            },
+            {
+                name: '@babel/plugin-transform-react-jsx-self',
+                version: '7.27.1',
+                license: 'MIT',
+                packagePath:
+                    'node_modules/.pnpm/@babel+plugin-transform-react-jsx-self@7.27.1_@babel+core@7.29.0/node_modules/@babel/plugin-transform-react-jsx-self',
+            },
+        ]);
+
+        const snapshot = buildDependencySbomSnapshot(packageJson, licenseReport, repoRoot, {
+            normalizeInstallPaths: true,
+        });
+
+        expect(snapshot).toMatchObject({
+            normalization: {
+                normalizeInstallPaths: true,
+            },
+        });
+        expect(snapshot.components.map((component: { path: string }) => component.path)).toEqual([
+            'inventory/@babel/plugin-transform-react-jsx-self@7.27.1/1',
+            'inventory/@babel/plugin-transform-react-jsx-self@7.27.1/2',
+        ]);
     });
 
     it('enforces the license allowlist and flags missing package licenses', () => {

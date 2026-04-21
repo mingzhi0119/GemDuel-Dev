@@ -52,6 +52,7 @@ const GOVERNANCE_SCAN_EXCLUDED_FILE_SUFFIXES = [
 const PLATFORM_SCOPED_BINARY_PATTERNS = Object.freeze([
     /^@esbuild\//,
     /^@rollup\/rollup-(android|darwin|freebsd|linux|openbsd|win32)-/i,
+    /^@turbo\/(darwin|linux|windows)-/i,
 ]);
 const normalizeRelativePath = (repoRoot, absolutePath) =>
     path.relative(repoRoot, absolutePath).split(path.sep).join('/');
@@ -277,7 +278,30 @@ const flattenLicenseReportComponents = (licenseReport, repoRoot) =>
         })
         .sort((a, b) => a.path.localeCompare(b.path));
 
-const normalizeSbomComponents = (components, { excludePlatformScopedBinaries = false } = {}) => {
+const sortSbomComponents = (components) =>
+    [...components].sort((a, b) => {
+        const nameDiff = String(a.name).localeCompare(String(b.name));
+        if (nameDiff !== 0) {
+            return nameDiff;
+        }
+
+        const versionDiff = String(a.version).localeCompare(String(b.version));
+        if (versionDiff !== 0) {
+            return versionDiff;
+        }
+
+        const licenseDiff = String(a.license).localeCompare(String(b.license));
+        if (licenseDiff !== 0) {
+            return licenseDiff;
+        }
+
+        return String(a.path).localeCompare(String(b.path));
+    });
+
+const normalizeSbomComponents = (
+    components,
+    { excludePlatformScopedBinaries = false, normalizeInstallPaths = false } = {}
+) => {
     const filteredComponents = excludePlatformScopedBinaries
         ? components.filter(
               (component) =>
@@ -286,19 +310,35 @@ const normalizeSbomComponents = (components, { excludePlatformScopedBinaries = f
           )
         : components;
 
-    return filteredComponents.sort((a, b) => a.path.localeCompare(b.path));
+    const sortedComponents = sortSbomComponents(filteredComponents);
+    if (!normalizeInstallPaths) {
+        return sortedComponents;
+    }
+
+    const occurrenceCounts = new Map();
+    return sortedComponents.map((component) => {
+        const occurrenceKey = `${component.name}\u0000${component.version}\u0000${component.license}`;
+        const occurrence = (occurrenceCounts.get(occurrenceKey) ?? 0) + 1;
+        occurrenceCounts.set(occurrenceKey, occurrence);
+
+        return {
+            ...component,
+            path: `inventory/${component.name}@${component.version}/${occurrence}`,
+        };
+    });
 };
 
 export const buildDependencySbomSnapshot = (
     packageJson,
     licenseReport,
     repoRoot = process.cwd(),
-    { excludePlatformScopedBinaries = false } = {}
+    { excludePlatformScopedBinaries = false, normalizeInstallPaths = false } = {}
 ) => {
     const components = normalizeSbomComponents(
         flattenLicenseReportComponents(licenseReport, repoRoot),
         {
             excludePlatformScopedBinaries,
+            normalizeInstallPaths,
         }
     );
 
@@ -322,9 +362,20 @@ export const buildDependencySbomSnapshot = (
             ? {
                   normalization: {
                       excludePlatformScopedBinaries: true,
+                      ...(normalizeInstallPaths
+                          ? {
+                                normalizeInstallPaths: true,
+                            }
+                          : {}),
                   },
               }
-            : {}),
+            : normalizeInstallPaths
+              ? {
+                    normalization: {
+                        normalizeInstallPaths: true,
+                    },
+                }
+              : {}),
         componentCount: components.length,
         licenseInventory,
         components,

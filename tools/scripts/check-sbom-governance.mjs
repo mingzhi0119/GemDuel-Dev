@@ -22,6 +22,7 @@ const readLicenseReport = () =>
     );
 const SBOM_SNAPSHOT_OPTIONS = Object.freeze({
     excludePlatformScopedBinaries: true,
+    normalizeInstallPaths: true,
 });
 
 const packageJson = readJson('package.json');
