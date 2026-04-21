@@ -283,4 +283,24 @@ describe('electron runtime config', () => {
         });
         expect(logger.warn).toHaveBeenCalled();
     });
+
+    it('falls back to the default STUN profile when bundle parsing fails and no runtime ICE list remains', () => {
+        const logger = { warn: vi.fn() };
+
+        expect(
+            getRuntimeRelayProfileFromEnv('{not-valid-json', '', logger, () =>
+                Date.parse('2026-04-19T00:10:00.000Z')
+            )
+        ).toEqual({
+            policyVersion: 1,
+            source: 'default-stun',
+            iceServers: [],
+            issuedAt: null,
+            expiresAt: null,
+        });
+        expect(logger.warn).toHaveBeenCalledWith(
+            '[RTC] Failed to parse GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON. Falling back to the next relay source.',
+            expect.any(SyntaxError)
+        );
+    });
 });

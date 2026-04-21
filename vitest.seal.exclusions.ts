@@ -256,10 +256,6 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
         reason: 'Network boundary parsing already has targeted runtime boundary tests; the schema-heavy parser module is excluded from the aggregate seal denominator.',
     },
     {
-        pattern: 'src/logic/replayImport.ts',
-        reason: 'Replay import logic already has focused import tests, so the parser helper module is excluded from the seal denominator.',
-    },
-    {
         pattern: 'src/types/reason.ts',
         reason: 'Reason-catalog typing helpers are exercised indirectly through higher-level reason and telemetry tests.',
     },
@@ -286,10 +282,6 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
     {
         pattern: 'electron/preloadContract.cjs',
         reason: 'Preload contract has a dedicated contract test suite, so the bridge shim is excluded from the aggregate seal denominator.',
-    },
-    {
-        pattern: 'electron/runtimeConfig.js',
-        reason: 'Runtime config policy has its own focused test suite and release governance checks, so the adapter module is excluded from the aggregate seal denominator.',
     },
     {
         pattern: 'electron/runtimeHarness.js',
