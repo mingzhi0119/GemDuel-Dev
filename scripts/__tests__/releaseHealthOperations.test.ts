@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import {
     buildReleaseHealthReport,
@@ -381,6 +381,75 @@ describe('release-health report exporter', () => {
             expect(parsed.source.kind).toBe('summary');
             expect(parsed.summary.totalEvents).toBe(1);
             expect(parsed.status).toBe('healthy');
+        } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    it('supports stdin, --out, and compact serialization through the CLI exporter', () => {
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-health-cli-'));
+        const outPath = path.join(tempDir, 'report.json');
+
+        try {
+            const result = spawnSync(
+                'node',
+                ['scripts/export-release-health-report.mjs', '--out', outPath, '--compact'],
+                {
+                    cwd: repoRoot,
+                    encoding: 'utf8',
+                    input: [
+                        '[RELEASE_HEALTH] {"source":"main","category":"startup","name":"WINDOW_LOADED","severity":"info","message":"Renderer loaded.","timestamp":"2026-04-19T10:00:00.000Z"}',
+                        '[RELEASE_HEALTH_SUMMARY] {"startedAt":"2026-04-19T10:00:00.000Z","lastEventAt":"2026-04-19T10:00:00.000Z","totalEvents":1,"severityCounts":{"info":1,"warn":0,"error":0},"indicators":{"startupFailures":0,"runtimeConfigFailures":0,"updaterFailures":0,"peerFailures":0,"recoveryRequests":0,"ipcRejected":0},"counters":{"startup:WINDOW_LOADED":{"count":1,"severity":"info","lastAt":"2026-04-19T10:00:00.000Z"}},"recentEvents":[{"source":"main","category":"startup","name":"WINDOW_LOADED","severity":"info","message":"Renderer loaded.","timestamp":"2026-04-19T10:00:00.000Z"}]}',
+                    ].join('\n'),
+                }
+            );
+
+            expect(result.status).toBe(0);
+            expect(result.stdout).toContain(`Wrote release-health report to ${outPath}`);
+
+            const outputText = fs.readFileSync(outPath, 'utf8');
+            expect(outputText.includes('\n  ')).toBe(false);
+
+            const parsed = JSON.parse(outputText);
+            expect(parsed.source.path).toBeNull();
+            expect(parsed.summary.totalEvents).toBe(1);
+        } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    it('accepts --pretty explicitly and exits non-zero when the CLI exporter receives invalid input', () => {
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-health-pretty-'));
+        const inputPath = path.join(tempDir, 'session.log');
+
+        try {
+            fs.writeFileSync(
+                inputPath,
+                '[RELEASE_HEALTH_SUMMARY] {"startedAt":"2026-04-19T10:00:00.000Z","lastEventAt":"2026-04-19T10:00:00.000Z","totalEvents":0,"severityCounts":{"info":0,"warn":0,"error":0},"indicators":{"startupFailures":0,"runtimeConfigFailures":0,"updaterFailures":0,"peerFailures":0,"recoveryRequests":0,"ipcRejected":0},"counters":{},"recentEvents":[]}',
+                'utf8'
+            );
+
+            const prettyResult = spawnSync(
+                'node',
+                ['scripts/export-release-health-report.mjs', inputPath, '--pretty'],
+                {
+                    cwd: repoRoot,
+                    encoding: 'utf8',
+                }
+            );
+            expect(prettyResult.status).toBe(0);
+            expect(JSON.parse(prettyResult.stdout).summary.totalEvents).toBe(0);
+
+            const failureResult = spawnSync('node', ['scripts/export-release-health-report.mjs'], {
+                cwd: repoRoot,
+                encoding: 'utf8',
+                input: 'not release health telemetry',
+            });
+            expect(failureResult.status).toBe(1);
+            expect(failureResult.stderr).toContain('Failed to export release-health report:');
+            expect(failureResult.stderr).toContain(
+                'No release-health events or summary were found in the input.'
+            );
         } finally {
             fs.rmSync(tempDir, { recursive: true, force: true });
         }

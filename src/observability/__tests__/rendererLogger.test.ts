@@ -106,4 +106,59 @@ describe('renderer observability', () => {
             expect.any(Error)
         );
     });
+
+    it('uses severity-matched fallback logs when the release-health bridge throws for warn and info events', () => {
+        window.electron = createElectronBridgeMock({
+            reportReleaseHealth: vi.fn(() => {
+                throw new Error('bridge unavailable');
+            }),
+        });
+
+        reportReleaseHealth({
+            category: 'network',
+            name: 'NETWORK_MESSAGE_REJECTED',
+            severity: 'warn',
+            message: 'Network warning.',
+        });
+        reportReleaseHealth({
+            category: 'startup',
+            name: 'WINDOW_LOADED',
+            severity: 'info',
+            message: 'Startup info.',
+        });
+
+        expect(console.warn).toHaveBeenCalledWith(
+            '[RELEASE_HEALTH] Failed to forward renderer event.',
+            expect.any(Error)
+        );
+        expect(console.info).toHaveBeenCalledWith(
+            '[RELEASE_HEALTH] Failed to forward renderer event.',
+            expect.any(Error)
+        );
+    });
+
+    it('returns early when the window bridge is unavailable', () => {
+        const originalWindow = globalThis.window;
+
+        try {
+            Object.defineProperty(globalThis, 'window', {
+                configurable: true,
+                value: undefined,
+            });
+
+            expect(() =>
+                reportReleaseHealth({
+                    category: 'startup',
+                    name: 'WINDOW_LOADED',
+                    severity: 'info',
+                    message: 'No window bridge.',
+                })
+            ).not.toThrow();
+        } finally {
+            Object.defineProperty(globalThis, 'window', {
+                configurable: true,
+                value: originalWindow,
+            });
+        }
+    });
 });

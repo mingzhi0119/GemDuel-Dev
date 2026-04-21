@@ -260,10 +260,6 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
         reason: 'Replay import logic already has focused import tests, so the parser helper module is excluded from the seal denominator.',
     },
     {
-        pattern: 'src/observability/releaseHealth.ts',
-        reason: 'Renderer release-health forwarding already has a focused smoke suite, so the browser bridge shim is excluded from aggregate seal weighting.',
-    },
-    {
         pattern: 'src/types/reason.ts',
         reason: 'Reason-catalog typing helpers are exercised indirectly through higher-level reason and telemetry tests.',
     },
@@ -374,10 +370,6 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
     {
         pattern: 'scripts/governanceEvidenceHealth.js',
         reason: 'Governance evidence policy logic already has a focused evidence suite, so the contract module is excluded from aggregate seal weighting.',
-    },
-    {
-        pattern: 'scripts/releaseHealthChecklist.js',
-        reason: 'Release checklist policy logic already has a focused checklist suite, so the contract module is excluded from aggregate seal weighting.',
     },
     {
         pattern: 'scripts/releaseHealthOperations.js',
