@@ -4,20 +4,20 @@ This file is the human-readable contract for dependency risk, runtime environmen
 
 ## Production Dependency Policy
 
-- `npm audit --omit=dev --json` must report zero production vulnerabilities.
+- `pnpm audit --prod --json` must report zero production vulnerabilities.
 - Release builds use the lockfile that passed governance checks.
 - Security overrides in `package.json` are governed policy, not ad hoc local fixes.
 
 ## License Allowlist Policy
 
-- Source of truth: `governance/dependency-license-allowlist.json`
+- Source of truth: `tools/governance/dependency-license-allowlist.json`
 - Every resolved package license must be allowlisted.
 - Missing license metadata fails the gate.
 
 ## SBOM Policy
 
-- Source of truth: `governance/dependency-sbom.snapshot.json`
-- The SBOM snapshot is generated from `package.json` and `package-lock.json`.
+- Source of truth: `tools/governance/dependency-sbom.snapshot.json`
+- The SBOM snapshot is generated from `package.json` and `pnpm-lock.yaml`.
 - Snapshot drift fails the gate.
 
 ## CI Coverage
@@ -59,7 +59,7 @@ This file is the human-readable contract for dependency risk, runtime environmen
 
 ## Secret Scanning and Env Drift Policy
 
-- Gate: `node scripts/check-secret-governance.mjs`
+- Gate: `pnpm run secrets:check`
 - Credential-like literals, embedded auth URLs, and private keys must not be committed.
 - Every `process.env.*` usage in governed source must map to `RUNTIME_CONFIG_POLICY`.
 - Every governed env name must be documented here before merge.
@@ -68,10 +68,10 @@ This file is the human-readable contract for dependency risk, runtime environmen
 
 - The desktop runtime now supports issue, refresh, and revoke for short-lived TURN credentials.
 - Runtime ICE and STUN remain governed fallback paths.
-- `scripts/patch-peer.js` is retired and must not return.
+- `tools/scripts/patch-peer.js` is retired and must not return.
 
 ## Operator Checklist
 
 1. Run dependency gates before release builds.
-2. Review `package-lock.json` when overrides change.
+2. Review `pnpm-lock.yaml` when overrides change.
 3. Keep the allowlist and SBOM snapshots aligned with dependency updates.

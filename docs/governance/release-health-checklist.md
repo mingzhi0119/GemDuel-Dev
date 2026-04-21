@@ -4,16 +4,16 @@ Use this list before packaging a desktop release or cutting a release candidate.
 
 ## Required Gates
 
-- `npm run lint`
-- `npm test`
-- `npm run test:security`
-- `npm run test:coverage`
-- `npm run desktop:check`
-- `npm run release:check`
-- `npm run release:provenance:check`
-- `npm run governance:evidence:check`
-- `scripts/export-release-health-report.mjs`
-- `scripts/export-governance-artifacts.mjs`
+- `pnpm lint`
+- `pnpm test`
+- `pnpm test:security`
+- `pnpm test:coverage`
+- `pnpm desktop:check`
+- `pnpm release:check`
+- `pnpm release:provenance:check`
+- `pnpm governance:evidence:check`
+- `tools/scripts/export-release-health-report.mjs`
+- `tools/scripts/export-governance-artifacts.mjs`
 
 ## Required Indicators
 

@@ -1,97 +1,52 @@
 {
-    "name": "gem-duel",
+    "name": "gem-duel-workspace",
     "private": true,
     "version": "5.2.11",
-    "description": "A competitive strategy gem-collecting game built with React and Electron.",
-    "author": "Mingzhi",
-    "main": "electron/main.js",
-    "type": "module",
-    "scripts": {
-        "architecture:check": "node scripts/check-architecture-budgets.mjs",
-        "bundle:check": "node scripts/check-build-budget.mjs",
-        "dev": "vite",
-        "build": "vite build",
-        "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-        "electron:build": "npm run architecture:check && npm run boundaries:check && npm run deps:check && npm run licenses:check && npm run sbom:check && npm run secrets:check && npm run seal-exclusions:check && npm run desktop:check && npm run build && npm run bundle:check && npm run governance:artifacts && electron-builder",
-        "boundaries:check": "node scripts/check-boundary-governance.mjs",
-        "deps:check": "node scripts/check-dependency-governance.mjs",
-        "governance:artifacts": "node scripts/export-governance-artifacts.mjs",
-        "governance:evidence:check": "node scripts/check-governance-evidence-health.mjs",
-        "licenses:check": "node scripts/check-license-governance.mjs",
-        "lint": "eslint .",
-        "preview": "vite preview",
-        "release:report": "node scripts/export-release-health-report.mjs",
-        "seal-exclusions:check": "node scripts/check-seal-exclusion-governance.mjs",
-        "typecheck": "tsc --noEmit",
-        "test": "vitest run",
-        "test:security": "vitest run electron/__tests__/desktopGovernance.test.ts electron/__tests__/runtimeHarness.test.ts src/app/io/__tests__/safeReplayImport.test.ts src/logic/__tests__/fsmPolicyMatrix.test.ts src/logic/__tests__/hostApproval.test.ts src/logic/__tests__/networkMessageValidationBoundary.test.ts src/logic/__tests__/propertyBoundaries.test.ts src/logic/__tests__/protocolRecoveryMatrix.test.ts src/logic/__tests__/securityBoundaries.test.ts src/hooks/__tests__/useConnectionHealth.test.tsx src/hooks/__tests__/useGameNetwork.test.tsx src/hooks/__tests__/useOnlineManager.test.tsx scripts/__tests__/boundaryGovernance.test.ts scripts/__tests__/runtimeDrillGovernance.test.ts",
-        "test:ui": "vitest --ui",
-        "test:coverage": "npm run test:coverage:seal",
-        "test:coverage:seal": "vitest --coverage --config vitest.config.ts",
-        "desktop:check": "node scripts/check-electron-governance.mjs && node scripts/check-runtime-drill-governance.mjs",
-        "release:check": "node scripts/check-release-health.mjs",
-        "release:provenance:check": "node scripts/check-release-tag-provenance.mjs",
-        "runtime:drills:check": "node scripts/check-runtime-drill-governance.mjs",
-        "sbom:check": "node scripts/check-sbom-governance.mjs",
-        "secrets:check": "node scripts/check-secret-governance.mjs",
-        "prepare": "husky"
+    "description": "GemDuel monorepo controller for the desktop app, shared packages, and governance tooling.",
+    "packageManager": "pnpm@10.33.0",
+    "engines": {
+        "node": ">=24.12.0 <25",
+        "pnpm": ">=10 <11"
     },
-    "build": {
-        "appId": "com.gemduel.app",
-        "productName": "GemDuel",
-        "directories": {
-            "output": "dist_electron"
-        },
-        "files": [
-            "dist/**/*",
-            "electron/**/*",
-            "package.json"
-        ],
-        "publish": {
-            "provider": "github"
-        },
-        "win": {
-            "target": [
-                "nsis"
-            ]
-        },
-        "nsis": {
-            "oneClick": false,
-            "allowToChangeInstallationDirectory": true,
-            "createDesktopShortcut": true
-        }
+    "scripts": {
+        "architecture:check": "turbo run architecture:check --filter=@gemduel/tools-scripts",
+        "boundaries:check": "turbo run boundaries:check --filter=@gemduel/tools-scripts",
+        "build": "turbo run build --filter=@gemduel/desktop...",
+        "bundle:check": "turbo run bundle:check --filter=@gemduel/tools-scripts",
+        "deps:check": "turbo run deps:check --filter=@gemduel/tools-scripts",
+        "desktop:check": "turbo run desktop:check --filter=@gemduel/tools-scripts",
+        "dev": "turbo run dev --filter=@gemduel/desktop",
+        "electron:build": "pnpm run architecture:check && pnpm run boundaries:check && pnpm run deps:check && pnpm run licenses:check && pnpm run sbom:check && pnpm run secrets:check && pnpm run seal-exclusions:check && pnpm run desktop:check && pnpm run build && pnpm run bundle:check && pnpm run governance:artifacts && turbo run electron:build --filter=@gemduel/desktop",
+        "electron:dev": "turbo run electron:dev --filter=@gemduel/desktop",
+        "governance:artifacts": "turbo run governance:artifacts --filter=@gemduel/tools-scripts --",
+        "governance:evidence:check": "turbo run governance:evidence:check --filter=@gemduel/tools-scripts --",
+        "licenses:check": "turbo run licenses:check --filter=@gemduel/tools-scripts",
+        "lint": "turbo run lint",
+        "preview": "pnpm --dir apps/desktop preview",
+        "release:check": "turbo run release:check --filter=@gemduel/tools-scripts",
+        "release:provenance:check": "turbo run release:provenance:check --filter=@gemduel/tools-scripts --",
+        "runtime:drills:check": "turbo run runtime:drills:check --filter=@gemduel/tools-scripts",
+        "sbom:check": "turbo run sbom:check --filter=@gemduel/tools-scripts",
+        "seal-exclusions:check": "turbo run seal-exclusions:check --filter=@gemduel/tools-scripts",
+        "secrets:check": "turbo run secrets:check --filter=@gemduel/tools-scripts",
+        "test": "turbo run test --filter=@gemduel/desktop",
+        "test:coverage": "turbo run test:coverage --filter=@gemduel/desktop",
+        "test:security": "turbo run test:security --filter=@gemduel/desktop",
+        "test:ui": "pnpm --dir apps/desktop test:ui",
+        "typecheck": "turbo run typecheck",
+        "prepare": "husky"
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": [
             "prettier --write",
             "eslint --fix"
         ],
-        "*.{json,css,md}": [
+        "*.{json,css,md,yml,yaml}": [
             "prettier --write"
         ]
     },
-    "dependencies": {
-        "@types/canvas-confetti": "^1.9.0",
-        "canvas-confetti": "^1.9.4",
-        "class-variance-authority": "^0.7.1",
-        "clsx": "^2.1.1",
-        "electron-is-dev": "^3.0.1",
-        "electron-log": "^5.4.3",
-        "electron-updater": "^6.6.2",
-        "framer-motion": "^12.23.26",
-        "immer": "^11.1.0",
-        "lucide-react": "^0.479.0",
-        "peer": "^1.0.2",
-        "peerjs": "^1.5.5",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
-        "tailwind-merge": "^3.4.0",
-        "tailwindcss-animate": "^1.0.7",
-        "use-immer": "^0.11.0",
-        "zod": "^4.3.6"
-    },
     "devDependencies": {
-        "@eslint/js": "^9.21.0",
+        "@types/canvas-confetti": "^1.9.0",
         "@types/react": "^19.0.10",
         "@types/react-dom": "^19.0.4",
         "@vitejs/plugin-react": "^4.3.4",
@@ -102,44 +57,30 @@
         "electron": "^39.2.7",
         "electron-builder": "^26.0.12",
         "eslint": "^9.21.0",
-        "eslint-config-prettier": "^10.1.1",
-        "eslint-plugin-prettier": "^5.2.3",
-        "eslint-plugin-react-hooks": "^5.2.0",
-        "eslint-plugin-react-refresh": "^0.4.19",
         "fast-check": "^4.7.0",
-        "globals": "^16.0.0",
         "happy-dom": "^20.0.11",
         "husky": "^9.1.7",
         "lint-staged": "^15.4.3",
         "postcss": "^8.5.3",
         "prettier": "^3.5.3",
         "tailwindcss": "^3.4.17",
+        "turbo": "^2.5.5",
         "typescript": "^5.8.2",
-        "typescript-eslint": "^8.26.0",
         "vite": "^6.2.1",
         "vitest": "^3.0.8",
         "wait-on": "^9.0.3"
     },
-    "engines": {
-        "node": ">=24.12.0 <25",
-        "npm": ">=11 <12"
-    },
-    "overrides": {
-        "brace-expansion": "^5.0.5",
-        "path-to-regexp": "0.1.13",
-        "qs": "6.14.2",
-        "yaml": "2.8.3",
-        "anymatch": {
-            "picomatch": "2.3.2"
-        },
-        "micromatch": {
-            "picomatch": "2.3.2"
-        },
-        "readdirp": {
-            "picomatch": "2.3.2"
-        },
-        "tinyglobby": {
-            "picomatch": "4.0.4"
+    "pnpm": {
+        "overrides": {
+            "fs-extra": "10.1.0",
+            "jsonfile": "6.2.1",
+            "path-to-regexp": "0.1.13",
+            "qs": "6.14.2",
+            "yaml": "2.8.3",
+            "anymatch>picomatch": "2.3.2",
+            "micromatch>picomatch": "2.3.2",
+            "readdirp>picomatch": "2.3.2",
+            "tinyglobby>picomatch": "4.0.4"
         }
     }
 }

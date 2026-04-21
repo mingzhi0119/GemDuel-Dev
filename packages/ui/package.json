@@ -1,0 +1,28 @@
+{
+    "name": "@gemduel/ui",
+    "version": "5.2.11",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./*": "./src/*"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@gemduel/shared": "workspace:*",
+        "canvas-confetti": "^1.9.4",
+        "class-variance-authority": "^0.7.1",
+        "framer-motion": "^12.23.26",
+        "lucide-react": "^0.479.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
+    },
+    "devDependencies": {
+        "@gemduel/config-eslint": "workspace:*",
+        "@gemduel/config-typescript": "workspace:*",
+        "vitest": "^3.2.4"
+    }
+}

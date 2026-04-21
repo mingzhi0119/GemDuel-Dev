@@ -13,6 +13,6 @@ Treat oversized renderer surfaces as temporary technical debt and require explic
 
 ## Consequences
 
-- `src/components/PlayerZone.tsx` and `src/components/CardAnatomyPage.tsx` have both been decomposed back under the baseline budget, so this ADR no longer grants any active exception.
+- `packages/ui/src/components/PlayerZone.tsx` and `packages/ui/src/components/CardAnatomyPage.tsx` have both been decomposed back under the baseline budget, so this ADR no longer grants any active exception.
 - The architecture budget contract now carries zero approved exceptions, and future hard-limit breaches must be re-approved explicitly instead of reusing this historical allowance.
-- Warning-level components such as `Card.tsx`, `GameBoard.tsx`, and `TopBar.tsx` remain ordinary refactor candidates even though they are below the hard stop.
+- Warning-level components such as `packages/ui/src/components/Card.tsx`, `packages/ui/src/components/GameBoard.tsx`, and `packages/ui/src/components/TopBar.tsx` remain ordinary refactor candidates even though they are below the hard stop.

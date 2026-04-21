@@ -3,41 +3,43 @@
 ## Setup
 
 ```bash
-npm install
+pnpm install
 ```
 
-Desktop release packaging is currently supported for Windows NSIS only. Web development commands are cross-platform, but `npm run electron:build` is not a supported macOS/Linux release path yet.
+Desktop release packaging is currently supported for Windows NSIS only. Web development commands are cross-platform, but `pnpm electron:build` is not a supported macOS/Linux release path.
 
 ## Core Commands
 
 ```bash
-npm run dev           # Vite web app
-npm run electron:dev  # Vite + Electron
-npm run build         # Web build
-npm test              # Test suite
-npm run lint          # ESLint
-npm run seal-exclusions:check
+pnpm dev              # Vite web app
+pnpm electron:dev     # Vite + Electron
+pnpm build            # Workspace build
+pnpm test             # Test suite
+pnpm lint             # ESLint
+pnpm run seal-exclusions:check
 ```
 
 ## Release-Gate Commands
 
 ```bash
-npm run test:security
-npm run test:coverage
-npm run test:coverage:seal
-npm run boundaries:check
-npm run deps:check
-npm run desktop:check
-npm run release:check
+pnpm test:security
+pnpm test:coverage
+pnpm test:coverage:seal
+pnpm boundaries:check
+pnpm deps:check
+pnpm desktop:check
+pnpm release:check
 ```
 
 ## Where To Look
 
-- App shell: `src/App.tsx`, `src/app/**`
-- Game logic: `src/logic/**`
-- Network and hooks: `src/hooks/**`
-- Electron shell: `electron/**`
+- App shell: `apps/desktop/src/App.tsx`, `apps/desktop/src/app/**`
+- Game logic: `packages/shared/src/logic/**`
+- Network and hooks: `apps/desktop/src/hooks/**`, `packages/shared/src/logic/network**`
+- Electron shell: `apps/desktop/electron/**`
+- Reusable UI: `packages/ui/src/**`
 - Governance docs: [`docs/governance/`](../governance/)
+- Governance snapshots and retained evidence: `tools/governance/**`
 
 ## Suggested Reading Order
 

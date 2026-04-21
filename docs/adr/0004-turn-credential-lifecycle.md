@@ -13,5 +13,5 @@ Resolve TURN credentials as ephemeral runtime bundles, refresh them through gove
 
 ## Consequences
 
-- TURN bundle validation stays shared between desktop runtime and server helpers.
+- TURN bundle validation stays shared between `apps/desktop/electron` runtime and `packages/turn-service`.
 - Relay lifecycle changes must update both runtime governance and the credential service path together.

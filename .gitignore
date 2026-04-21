@@ -27,6 +27,9 @@ pnpm-debug.log*
 coverage/
 artifacts/
 tmp-release-health-*/
+.turbo/
+.vite/
+*.tsbuildinfo
 
 # Documentation & Reports
 GEMINI.md

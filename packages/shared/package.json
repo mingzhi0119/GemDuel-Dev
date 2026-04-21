@@ -1,0 +1,27 @@
+{
+    "name": "@gemduel/shared",
+    "version": "5.2.11",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts",
+        "./*": "./src/*"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "clsx": "^2.1.1",
+        "immer": "^11.1.0",
+        "lucide-react": "^0.479.0",
+        "tailwind-merge": "^3.4.0",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@gemduel/config-eslint": "workspace:*",
+        "@gemduel/config-typescript": "workspace:*",
+        "fast-check": "^4.7.0",
+        "vitest": "^3.2.4"
+    }
+}

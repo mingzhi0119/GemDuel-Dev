@@ -1,6 +1,6 @@
 # Operations SLO
 
-Machine-readable contract: `electron/governance/release-health-operations.snapshot.json`
+Machine-readable contract: `tools/governance/release-health-operations.snapshot.json`
 
 ## Indicators
 
@@ -25,7 +25,7 @@ Each indicator uses the same words in the snapshot and this doc: `warning` and `
 
 - CI uploads the retained artifact `governance-evidence`.
 - Retention window: `30` days.
-- The retained bundle includes release-health reports, a governance manifest, and bundle budget output when `dist/` exists.
+- The retained bundle includes release-health reports, a governance manifest, and bundle budget output when `apps/desktop/dist/` exists.
 
 ## Alert Handling
 

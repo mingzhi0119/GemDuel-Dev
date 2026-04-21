@@ -1,0 +1,10 @@
+{
+    "name": "@gemduel/config-vitest",
+    "version": "5.2.11",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./desktop": "./desktop.js",
+        "./seal-exclusions": "./sealExclusions.js"
+    }
+}

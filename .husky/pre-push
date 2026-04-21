@@ -3,6 +3,6 @@ if [ "$SKIP_GIT_GATES" = "1" ]; then
   exit 0
 fi
 
-npm run typecheck
-npm run lint
-npm test -- --run
+pnpm run typecheck
+pnpm run lint
+pnpm test

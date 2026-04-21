@@ -10,21 +10,21 @@
 
 - [ ] No governance or process changes
 - [ ] Updated `docs/governance/`
-- [ ] Updated `governance/` snapshots
+- [ ] Updated `tools/governance/` snapshots
 - [ ] Updated `.github/workflows/`
 - [ ] Updated `electron/` or IPC / desktop policy
 
 ## Checks
 
-- [ ] `npm run lint`
-- [ ] `npm run typecheck`
-- [ ] `npm test`
-- [ ] `npm run test:security`
-- [ ] `npm run desktop:check`
-- [ ] `npm run release:check`
-- [ ] `npm run sbom:check`
-- [ ] `npm run deps:check`
-- [ ] `npm run boundaries:check`
+- [ ] `pnpm lint`
+- [ ] `pnpm typecheck`
+- [ ] `pnpm test`
+- [ ] `pnpm test:security`
+- [ ] `pnpm desktop:check`
+- [ ] `pnpm release:check`
+- [ ] `pnpm sbom:check`
+- [ ] `pnpm deps:check`
+- [ ] `pnpm boundaries:check`
 
 ## Risks or follow-up
 

@@ -1,0 +1,88 @@
+{
+    "name": "@gemduel/desktop",
+    "version": "5.2.11",
+    "private": true,
+    "description": "GemDuel desktop application package.",
+    "author": "GemDuel",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mingzhi0119/GemDuel-Dev.git"
+    },
+    "type": "module",
+    "main": "electron/main.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "electron:dev": "concurrently \"pnpm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+        "electron:build": "electron-builder",
+        "lint": "eslint .",
+        "preview": "vite preview",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run",
+        "test:coverage": "vitest --coverage",
+        "test:security": "vitest run src/app/io/__tests__/safeReplayImport.test.ts ../../packages/shared/src/logic/__tests__/fsmPolicyMatrix.test.ts ../../packages/shared/src/logic/__tests__/hostApproval.test.ts ../../packages/shared/src/logic/__tests__/networkMessageValidationBoundary.test.ts ../../packages/shared/src/logic/__tests__/propertyBoundaries.test.ts ../../packages/shared/src/logic/__tests__/protocolRecoveryMatrix.test.ts ../../packages/shared/src/logic/__tests__/securityBoundaries.test.ts src/hooks/__tests__/useConnectionHealth.test.tsx src/hooks/__tests__/useGameNetwork.test.tsx src/hooks/__tests__/useOnlineManager.test.tsx ../../tools/scripts/__tests__/boundaryGovernance.test.ts ../../tools/scripts/__tests__/runtimeDrillGovernance.test.ts",
+        "test:ui": "vitest --ui"
+    },
+    "dependencies": {
+        "@gemduel/shared": "workspace:*",
+        "@gemduel/turn-service": "workspace:*",
+        "@gemduel/ui": "workspace:*",
+        "electron-is-dev": "^3.0.1",
+        "electron-log": "^5.4.3",
+        "electron-updater": "^6.6.2",
+        "lucide-react": "^0.479.0",
+        "peer": "^1.0.2",
+        "peerjs": "^1.5.5",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "use-immer": "^0.11.0",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@gemduel/config-eslint": "workspace:*",
+        "@gemduel/config-typescript": "workspace:*",
+        "@gemduel/config-vitest": "workspace:*",
+        "@gemduel/config-web": "workspace:*",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
+        "@vitejs/plugin-react": "^4.7.0",
+        "@vitest/coverage-v8": "^3.2.4",
+        "@vitest/ui": "^3.2.4",
+        "autoprefixer": "^10.5.0",
+        "concurrently": "^9.2.1",
+        "electron": "^39.8.8",
+        "electron-builder": "^26.8.1",
+        "happy-dom": "^20.9.0",
+        "postcss": "^8.5.10",
+        "tailwindcss": "^3.4.19",
+        "vite": "^6.4.2",
+        "vitest": "^3.2.4",
+        "wait-on": "^9.0.5"
+    },
+    "build": {
+        "appId": "com.gemduel.app",
+        "productName": "GemDuel",
+        "electronVersion": "39.8.8",
+        "directories": {
+            "output": "dist_electron"
+        },
+        "files": [
+            "dist/**/*",
+            "electron/**/*",
+            "package.json"
+        ],
+        "publish": {
+            "provider": "github"
+        },
+        "win": {
+            "target": [
+                "nsis"
+            ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true
+        }
+    }
+}

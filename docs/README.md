@@ -1,5 +1,7 @@
 # Gem Duel Docs
 
+This folder holds the human-readable docs for the monorepo. The root workspace is now a control tower, while app code, shared logic, UI, TURN service, scripts, and governance snapshots live in `apps/`, `packages/`, and `tools/`.
+
 ## Guides
 
 - [Quick Start](guides/quick-start.md)

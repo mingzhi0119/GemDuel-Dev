@@ -1,29 +1,35 @@
-# Frontend / domain
-/src/app/** @mingzhi0119
-/src/components/** @mingzhi0119
-/src/data/** @mingzhi0119
-/src/hooks/** @mingzhi0119
-/src/logic/** @mingzhi0119
-/src/types/** @mingzhi0119
-/src/utils.ts @mingzhi0119
-/shared/** @mingzhi0119
+# Desktop app
+/apps/desktop/src/app/** @mingzhi0119
+/apps/desktop/src/components/** @mingzhi0119
+/apps/desktop/src/hooks/** @mingzhi0119
+/apps/desktop/src/observability/** @mingzhi0119
+/apps/desktop/src/App.tsx @mingzhi0119
+/apps/desktop/src/main.tsx @mingzhi0119
+/apps/desktop/src/index.css @mingzhi0119
+/apps/desktop/electron/** @mingzhi0119
 
-# Networking
-/server/** @mingzhi0119
-/src/hooks/gameNetwork/** @mingzhi0119
-/src/hooks/onlineManager/** @mingzhi0119
-/src/logic/network* @mingzhi0119
-/src/logic/hostApproval.ts @mingzhi0119
-/src/logic/networkRecovery.ts @mingzhi0119
-/src/logic/networkChecksums.ts @mingzhi0119
+# Shared domain and UI
+/packages/shared/src/logic/** @mingzhi0119
+/packages/shared/src/data/** @mingzhi0119
+/packages/shared/src/types/** @mingzhi0119
+/packages/shared/src/config/** @mingzhi0119
+/packages/shared/src/constants.ts @mingzhi0119
+/packages/shared/src/utils.ts @mingzhi0119
+/packages/ui/src/** @mingzhi0119
+/packages/turn-service/src/** @mingzhi0119
 
-# Desktop
-/electron/** @mingzhi0119
-
-# Release
-/.github/** @mingzhi0119
-/scripts/** @mingzhi0119
-/governance/** @mingzhi0119
+# Governance and tooling
+/tools/scripts/** @mingzhi0119
+/tools/governance/** @mingzhi0119
 /docs/governance/** @mingzhi0119
+
+# Repo control plane
+/.github/** @mingzhi0119
+/README.md @mingzhi0119
+/ARCHITECTURE.md @mingzhi0119
+/CONTRIBUTING.md @mingzhi0119
+/SECURITY.md @mingzhi0119
+/CODEOWNERS @mingzhi0119
 /package.json @mingzhi0119
-/package-lock.json @mingzhi0119
+/pnpm-workspace.yaml @mingzhi0119
+/turbo.json @mingzhi0119

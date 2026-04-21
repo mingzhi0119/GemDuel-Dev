@@ -13,5 +13,5 @@ Keep Zod schemas as the runtime contract source of truth and continue deriving v
 
 ## Consequences
 
-- `src/logic/contractSchemas.ts` remains the consolidated contract registry until the schema catalog is split by concern.
-- The architecture budget gate permits `src/logic/contractSchemas.ts` up to `800` lines while that extraction is planned.
+- `packages/shared/src/logic/contractSchemas.ts` remains the consolidated contract registry until the schema catalog is split by concern.
+- The architecture budget gate permits `packages/shared/src/logic/contractSchemas.ts` up to `800` lines while that extraction is planned.

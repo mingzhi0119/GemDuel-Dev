@@ -1,0 +1,11 @@
+{
+    "extends": "@gemduel/config-typescript/app.json",
+    "compilerOptions": {
+        "allowImportingTsExtensions": true,
+        "baseUrl": ".",
+        "paths": {
+            "@gemduel/shared/*": ["../shared/src/*"]
+        }
+    },
+    "include": ["src"]
+}

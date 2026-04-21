@@ -26,4 +26,4 @@ Only the following renderer-visible capabilities may cross the Electron boundary
 
 ## Release Gate
 
-`npm run desktop:check` verifies BrowserWindow security flags, preload API drift, and this allowlist.
+`pnpm desktop:check` verifies BrowserWindow security flags, preload API drift, and this allowlist.

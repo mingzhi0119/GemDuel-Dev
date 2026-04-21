@@ -1,0 +1,12 @@
+{
+    "name": "@gemduel/config-typescript",
+    "version": "5.2.11",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./base.json": "./base.json",
+        "./app.json": "./app.json",
+        "./library.json": "./library.json",
+        "./node.json": "./node.json"
+    }
+}

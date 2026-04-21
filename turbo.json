@@ -1,0 +1,82 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "tasks": {
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "electron:dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist/**", "dist_electron/**"]
+        },
+        "electron:build": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist_electron/**"]
+        },
+        "lint": {
+            "dependsOn": ["^lint"]
+        },
+        "typecheck": {
+            "dependsOn": ["^typecheck"]
+        },
+        "test": {
+            "dependsOn": ["^test"],
+            "cache": false
+        },
+        "test:coverage": {
+            "dependsOn": ["^build"],
+            "cache": false,
+            "outputs": ["coverage/**"]
+        },
+        "test:security": {
+            "cache": false
+        },
+        "architecture:check": {
+            "cache": false
+        },
+        "bundle:check": {
+            "cache": false
+        },
+        "boundaries:check": {
+            "cache": false
+        },
+        "deps:check": {
+            "cache": false
+        },
+        "desktop:check": {
+            "cache": false
+        },
+        "governance:artifacts": {
+            "cache": false,
+            "outputs": ["artifacts/**"]
+        },
+        "governance:evidence:check": {
+            "cache": false
+        },
+        "licenses:check": {
+            "cache": false
+        },
+        "release:check": {
+            "cache": false
+        },
+        "release:provenance:check": {
+            "cache": false
+        },
+        "runtime:drills:check": {
+            "cache": false
+        },
+        "sbom:check": {
+            "cache": false
+        },
+        "seal-exclusions:check": {
+            "cache": false
+        },
+        "secrets:check": {
+            "cache": false
+        }
+    }
+}

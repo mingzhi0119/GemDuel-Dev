@@ -1,6 +1,6 @@
 # Operations Fault Drills
 
-Machine-readable drill contract: `electron/governance/release-health-operations.snapshot.json`
+Machine-readable drill contract: `tools/governance/release-health-operations.snapshot.json`
 
 ## Required Drills
 

@@ -20,72 +20,84 @@ jobs:
               with:
                   fetch-depth: 0
 
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.33.0
+
             - name: Install Node.js
               uses: actions/setup-node@v4
               with:
                   node-version: 24.12.0
-                  cache: 'npm'
+                  cache: pnpm
+                  cache-dependency-path: pnpm-lock.yaml
 
             - name: Install Dependencies
-              run: npm ci
+              run: pnpm install --frozen-lockfile
+
+            - name: Restore Turborepo Cache
+              uses: actions/cache@v4
+              with:
+                  path: .turbo
+                  key: ${{ runner.os }}-turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'package.json') }}
 
             - name: License Allowlist Gate
-              run: npm run licenses:check
+              run: pnpm run licenses:check
 
             - name: SBOM Gate
-              run: npm run sbom:check
+              run: pnpm run sbom:check
 
             - name: Secret and Env Drift Gate
-              run: npm run secrets:check
+              run: pnpm run secrets:check
 
             - name: Dependency Governance Check
-              run: npm run deps:check
+              run: pnpm run deps:check
 
             - name: Boundary Governance Check
-              run: npm run boundaries:check
+              run: pnpm run boundaries:check
 
             - name: Architecture Budget Gate
-              run: npm run architecture:check
+              run: pnpm run architecture:check
 
             - name: Lint
-              run: npm run lint
+              run: pnpm run lint
 
             - name: Type Check
-              run: npm run typecheck
+              run: pnpm run typecheck
 
             - name: Test
-              run: npm test
+              run: pnpm test
 
             - name: Coverage Seal Gate
-              run: npm run test:coverage
+              run: pnpm run test:coverage
 
             - name: Seal Exclusion Governance Gate
-              run: npm run seal-exclusions:check
+              run: pnpm run seal-exclusions:check
 
             - name: Security Regression Suite
-              run: npm run test:security
+              run: pnpm run test:security
 
             - name: Desktop Governance Check
-              run: npm run desktop:check
+              run: pnpm run desktop:check
 
             - name: Release Health Checklist Gate
-              run: npm run release:check
+              run: pnpm run release:check
 
             - name: Release Tag Provenance Gate
-              run: npm run release:provenance:check
+              run: pnpm run release:provenance:check
 
             - name: Build and Publish
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: npm run electron:build -- -p always
+              run: pnpm run electron:build -- -p always
 
             - name: Export Governance Artifacts
               if: always()
-              run: npm run governance:artifacts -- --out-dir artifacts/governance
+              run: pnpm run governance:artifacts -- --out-dir artifacts/governance
 
             - name: Governance Evidence Health Gate
               if: always()
-              run: npm run governance:evidence:check -- --artifacts-dir artifacts/governance
+              run: pnpm run governance:evidence:check -- --artifacts-dir artifacts/governance
 
             - name: Upload Governance Artifacts
               if: always()

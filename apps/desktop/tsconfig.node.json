@@ -1,0 +1,14 @@
+{
+    "extends": "@gemduel/config-typescript/node.json",
+    "compilerOptions": {
+        "allowImportingTsExtensions": true,
+        "baseUrl": ".",
+        "paths": {
+            "@app/*": ["src/*"],
+            "@gemduel/shared/*": ["../../packages/shared/src/*"],
+            "@gemduel/ui/*": ["../../packages/ui/src/*"],
+            "@gemduel/turn-service/*": ["../../packages/turn-service/src/*"]
+        }
+    },
+    "include": ["vite.config.ts", "vitest.config.ts", "tailwind.config.ts"]
+}

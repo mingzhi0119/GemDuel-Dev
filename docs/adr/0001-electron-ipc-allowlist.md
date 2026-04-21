@@ -13,5 +13,5 @@ Keep the renderer-visible API surface constrained to the governed preload allowl
 
 ## Consequences
 
-- Renderer code depends on `src/types/desktop.ts` instead of `electron/**`.
+- Renderer code depends on `packages/shared/src/types/desktop.ts` instead of `apps/desktop/electron/**`.
 - New IPC capabilities require allowlist, preload, and governance updates in the same change.

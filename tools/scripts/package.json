@@ -1,0 +1,34 @@
+{
+    "name": "@gemduel/tools-scripts",
+    "version": "5.2.11",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "architecture:check": "node check-architecture-budgets.mjs",
+        "bundle:check": "node check-build-budget.mjs",
+        "boundaries:check": "node check-boundary-governance.mjs",
+        "deps:check": "node check-dependency-governance.mjs",
+        "desktop:check": "node check-electron-governance.mjs && node check-runtime-drill-governance.mjs",
+        "governance:artifacts": "node export-governance-artifacts.mjs",
+        "governance:evidence:check": "node check-governance-evidence-health.mjs",
+        "licenses:check": "node check-license-governance.mjs",
+        "lint": "eslint .",
+        "release:check": "node check-release-health.mjs",
+        "release:provenance:check": "node check-release-tag-provenance.mjs",
+        "runtime:drills:check": "node check-runtime-drill-governance.mjs",
+        "sbom:check": "node check-sbom-governance.mjs",
+        "seal-exclusions:check": "node check-seal-exclusion-governance.mjs",
+        "secrets:check": "node check-secret-governance.mjs",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@gemduel/config-vitest": "workspace:*",
+        "@gemduel/shared": "workspace:*",
+        "@gemduel/turn-service": "workspace:*"
+    },
+    "devDependencies": {
+        "@gemduel/config-eslint": "workspace:*",
+        "@gemduel/config-typescript": "workspace:*",
+        "vitest": "^3.2.4"
+    }
+}

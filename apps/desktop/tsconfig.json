@@ -1,0 +1,28 @@
+{
+    "extends": "@gemduel/config-typescript/app.json",
+    "compilerOptions": {
+        "allowJs": true,
+        "allowImportingTsExtensions": true,
+        "baseUrl": ".",
+        "checkJs": false,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "noFallthroughCasesInSwitch": true,
+        "paths": {
+            "@app/*": ["src/*"],
+            "@gemduel/shared/*": ["../../packages/shared/src/*"],
+            "@gemduel/ui/*": ["../../packages/ui/src/*"],
+            "@gemduel/turn-service/*": ["../../packages/turn-service/src/*"]
+        }
+    },
+    "include": [
+        "src",
+        "electron",
+        "../../packages/shared/src/**/*.ts",
+        "../../packages/shared/src/**/*.tsx",
+        "../../packages/ui/src/**/*.ts",
+        "../../packages/ui/src/**/*.tsx",
+        "../../packages/turn-service/src/**/*.js"
+    ],
+    "references": [{ "path": "./tsconfig.node.json" }]
+}

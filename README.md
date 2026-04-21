@@ -1,29 +1,40 @@
 # Gem Duel
 
-Gem Duel is a React + TypeScript + Electron strategy game with local play, online play, and a governed desktop release workflow.
+Gem Duel is a pnpm + Turborepo monorepo for a React + TypeScript + Electron strategy game. The root now acts as a control tower while the app, shared logic, UI, TURN service, scripts, and governance assets live in dedicated workspaces.
 
-Desktop release packaging is currently governed for Windows only. `electron-builder` publishes a Windows NSIS installer; web and Vite development stay cross-platform, but non-Windows desktop packaging is not a supported release target yet.
+Desktop release packaging is governed for Windows only. `electron-builder` publishes a Windows NSIS installer; web and Vite development stay cross-platform, but non-Windows desktop packaging is not a supported release target.
 
 ## Start
 
 ```bash
-npm install
-npm run dev
-npm run electron:dev
+pnpm install
+pnpm dev
+pnpm electron:dev
 ```
 
 ## Core Commands
 
+The command names stay the same, but they are now executed through pnpm and dispatched by Turborepo.
+
 ```bash
-npm run build
-npm test
-npm run lint
-npm run seal-exclusions:check
-npm run boundaries:check
-npm run deps:check
-npm run desktop:check
-npm run release:check
+pnpm build
+pnpm test
+pnpm lint
+pnpm run seal-exclusions:check
+pnpm boundaries:check
+pnpm deps:check
+pnpm desktop:check
+pnpm release:check
 ```
+
+## Workspace Layout
+
+- `apps/desktop` - Electron main process, preload bridge, renderer shell, and app runtime
+- `packages/shared` - domain logic, contracts, runtime policy, and pure utilities
+- `packages/ui` - reusable UI components, styles, and view helpers
+- `packages/turn-service` - TURN credential service and related tests
+- `tools/scripts` - governance, export, and maintenance scripts
+- `tools/governance` - machine-readable snapshots and retained evidence
 
 ## Docs
 

@@ -6,11 +6,11 @@ Accepted
 
 ## Context
 
-The seal coverage gate now uses the default `vitest.config.ts` and whole-repo coverage, but a reviewed exclusion list still exists for visual leaves, static data, and thin CLI/bootstrap wrappers. The 2026-04-21 independent audit called out that these exclusions remained process debt because they had no periodic review cadence and no shell-specific exception rule.
+The seal coverage gate now uses `apps/desktop/vitest.config.ts` and whole-repo coverage, but a reviewed exclusion list still exists for visual leaves, static data, and thin CLI/bootstrap wrappers. The 2026-04-21 independent audit called out that these exclusions remained process debt because they had no periodic review cadence and no shell-specific exception rule.
 
 ## Decision
 
-Treat `vitest.seal.exclusions.ts` as a governed asset with these rules:
+Treat `packages/config-vitest/sealExclusions.ts` as a governed asset with these rules:
 
 - Every exclusion entry must stay explicit and machine-readable.
 - Every exclusion entry must record `category`, `lastReviewedOn`, and `reviewCadenceDays`.

@@ -1,0 +1,8 @@
+{
+    "extends": "@gemduel/config-typescript/library.json",
+    "compilerOptions": {
+        "allowImportingTsExtensions": true,
+        "baseUrl": "."
+    },
+    "include": ["src"]
+}

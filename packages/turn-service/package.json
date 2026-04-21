@@ -1,0 +1,22 @@
+{
+    "name": "@gemduel/turn-service",
+    "version": "5.2.11",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/turnCredentialService.js",
+        "./*": "./src/*"
+    },
+    "scripts": {
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "@gemduel/config-eslint": "workspace:*",
+        "@gemduel/config-typescript": "workspace:*",
+        "vitest": "^3.2.4"
+    }
+}

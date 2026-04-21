@@ -1,0 +1,16 @@
+{
+    "name": "@gemduel/config-web",
+    "version": "5.2.11",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./tailwind-preset": "./tailwind-preset.js",
+        "./postcss-config": "./postcss-config.js"
+    },
+    "dependencies": {
+        "autoprefixer": "^10.4.20",
+        "postcss": "^8.5.3",
+        "tailwindcss": "^3.4.17",
+        "tailwindcss-animate": "^1.0.7"
+    }
+}

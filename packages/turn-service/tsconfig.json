@@ -1,0 +1,9 @@
+{
+    "extends": "@gemduel/config-typescript/node.json",
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": false,
+        "noEmit": true
+    },
+    "include": ["src"]
+}
