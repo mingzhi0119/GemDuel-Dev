@@ -252,10 +252,6 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
         reason: 'Interaction manager is a composition layer whose downstream behavior is already governed by interaction command and reducer suites.',
     },
     {
-        pattern: 'src/logic/networkMessageValidation.ts',
-        reason: 'Network boundary parsing already has targeted runtime boundary tests; the schema-heavy parser module is excluded from the aggregate seal denominator.',
-    },
-    {
         pattern: 'src/types/reason.ts',
         reason: 'Reason-catalog typing helpers are exercised indirectly through higher-level reason and telemetry tests.',
     },
@@ -358,10 +354,6 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
     {
         pattern: 'scripts/export-release-health-report.mjs',
         reason: 'CLI wrapper only parses process args and delegates to tested governance modules.',
-    },
-    {
-        pattern: 'scripts/governanceEvidenceHealth.js',
-        reason: 'Governance evidence policy logic already has a focused evidence suite, so the contract module is excluded from aggregate seal weighting.',
     },
     {
         pattern: 'scripts/releaseHealthOperations.js',
