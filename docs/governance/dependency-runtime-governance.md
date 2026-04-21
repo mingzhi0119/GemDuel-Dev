@@ -17,7 +17,8 @@ This file is the human-readable contract for dependency risk, runtime environmen
 ## SBOM Policy
 
 - Source of truth: `tools/governance/dependency-sbom.snapshot.json`
-- The SBOM snapshot is generated from `package.json` and `pnpm-lock.yaml`.
+- The SBOM snapshot is generated from `package.json` and the normalized `pnpm licenses` inventory.
+- Platform-scoped optional binary packages are excluded from the governed snapshot so Windows development and Ubuntu CI compare the same bill of materials.
 - Snapshot drift fails the gate.
 
 ## CI Coverage

@@ -49,9 +49,15 @@ const GOVERNANCE_SCAN_EXCLUDED_FILE_SUFFIXES = [
     '.spec.js',
     '.spec.mjs',
 ];
+const PLATFORM_SCOPED_BINARY_PATTERNS = Object.freeze([
+    /^@esbuild\//,
+    /^@rollup\/rollup-(android|darwin|freebsd|linux|openbsd|win32)-/i,
+]);
 const normalizeRelativePath = (repoRoot, absolutePath) =>
     path.relative(repoRoot, absolutePath).split(path.sep).join('/');
 const normalizePathLike = (value) => value.split(path.sep).join('/');
+const isPlatformScopedBinaryName = (value = '') =>
+    PLATFORM_SCOPED_BINARY_PATTERNS.some((pattern) => pattern.test(value));
 
 const shouldScanFile = (relativePath, includeTests) => {
     const normalizedPath = normalizePathLike(relativePath);
@@ -271,12 +277,30 @@ const flattenLicenseReportComponents = (licenseReport, repoRoot) =>
         })
         .sort((a, b) => a.path.localeCompare(b.path));
 
+const normalizeSbomComponents = (components, { excludePlatformScopedBinaries = false } = {}) => {
+    const filteredComponents = excludePlatformScopedBinaries
+        ? components.filter(
+              (component) =>
+                  !isPlatformScopedBinaryName(component.name) &&
+                  !isPlatformScopedBinaryName(component.path)
+          )
+        : components;
+
+    return filteredComponents.sort((a, b) => a.path.localeCompare(b.path));
+};
+
 export const buildDependencySbomSnapshot = (
     packageJson,
     licenseReport,
-    repoRoot = process.cwd()
+    repoRoot = process.cwd(),
+    { excludePlatformScopedBinaries = false } = {}
 ) => {
-    const components = flattenLicenseReportComponents(licenseReport, repoRoot);
+    const components = normalizeSbomComponents(
+        flattenLicenseReportComponents(licenseReport, repoRoot),
+        {
+            excludePlatformScopedBinaries,
+        }
+    );
 
     const licenseInventory = {};
     for (const component of components) {
@@ -294,6 +318,13 @@ export const buildDependencySbomSnapshot = (
             name: packageJson.name,
             version: packageJson.version,
         },
+        ...(excludePlatformScopedBinaries
+            ? {
+                  normalization: {
+                      excludePlatformScopedBinaries: true,
+                  },
+              }
+            : {}),
         componentCount: components.length,
         licenseInventory,
         components,
@@ -342,8 +373,14 @@ export const collectSbomSnapshotErrors = ({
     licenseReport,
     expectedSnapshot,
     repoRoot = process.cwd(),
+    snapshotOptions = {},
 }) => {
-    const actualSnapshot = buildDependencySbomSnapshot(packageJson, licenseReport, repoRoot);
+    const actualSnapshot = buildDependencySbomSnapshot(
+        packageJson,
+        licenseReport,
+        repoRoot,
+        snapshotOptions
+    );
     if (!expectedSnapshot || typeof expectedSnapshot !== 'object') {
         return ['Missing dependency SBOM snapshot.'];
     }

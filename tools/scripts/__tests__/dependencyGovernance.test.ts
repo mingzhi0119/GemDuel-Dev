@@ -335,6 +335,56 @@ describe('dependency governance', () => {
         ).toEqual(['Dependency SBOM snapshot drifted from pnpm licenses inventory.']);
     });
 
+    it('can normalize platform-scoped optional binaries out of the governed SBOM snapshot', () => {
+        const packageJson = { name: 'gem-duel', version: '1.0.0' };
+        const licenseReport = createLicenseReport([
+            {
+                name: '@esbuild/win32-x64',
+                version: '0.25.12',
+                license: 'MIT',
+                packagePath:
+                    'node_modules/.pnpm/@esbuild+win32-x64@0.25.12/node_modules/@esbuild/win32-x64',
+            },
+            {
+                name: '@rollup/rollup-linux-x64-gnu',
+                version: '4.60.2',
+                license: 'MIT',
+                packagePath:
+                    'node_modules/.pnpm/@rollup+rollup-linux-x64-gnu@4.60.2/node_modules/@rollup/rollup-linux-x64-gnu',
+            },
+            {
+                name: 'zod',
+                version: '4.3.6',
+                license: 'MIT',
+                packagePath: 'node_modules/.pnpm/zod@4.3.6/node_modules/zod',
+            },
+        ]);
+
+        const snapshot = buildDependencySbomSnapshot(packageJson, licenseReport, repoRoot, {
+            excludePlatformScopedBinaries: true,
+        });
+
+        expect(snapshot.normalization).toEqual({
+            excludePlatformScopedBinaries: true,
+        });
+        expect(snapshot.componentCount).toBe(1);
+        expect(snapshot.licenseInventory).toEqual({ MIT: 1 });
+        expect(snapshot.components.map((component: { name: string }) => component.name)).toEqual([
+            'zod',
+        ]);
+        expect(
+            collectSbomSnapshotErrors({
+                packageJson,
+                licenseReport,
+                expectedSnapshot: snapshot,
+                repoRoot,
+                snapshotOptions: {
+                    excludePlatformScopedBinaries: true,
+                },
+            })
+        ).toEqual([]);
+    });
+
     it('enforces the license allowlist and flags missing package licenses', () => {
         const errors = collectLicenseAllowlistErrors({
             packageJson: { name: 'gem-duel', version: '1.0.0' },

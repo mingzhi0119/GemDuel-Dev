@@ -20,6 +20,9 @@ const readLicenseReport = () =>
             shell: true,
         })
     );
+const SBOM_SNAPSHOT_OPTIONS = Object.freeze({
+    excludePlatformScopedBinaries: true,
+});
 
 const packageJson = readJson('package.json');
 const licenseReport = readLicenseReport();
@@ -32,6 +35,7 @@ const errors = collectSbomSnapshotErrors({
     licenseReport,
     expectedSnapshot,
     repoRoot,
+    snapshotOptions: SBOM_SNAPSHOT_OPTIONS,
 });
 
 if (errors.length > 0) {
@@ -45,7 +49,12 @@ if (errors.length > 0) {
     process.exit(1);
 }
 
-const snapshot = buildDependencySbomSnapshot(packageJson, licenseReport, repoRoot);
+const snapshot = buildDependencySbomSnapshot(
+    packageJson,
+    licenseReport,
+    repoRoot,
+    SBOM_SNAPSHOT_OPTIONS
+);
 console.log(
     `Dependency SBOM gate passed. Components=${snapshot.componentCount}, licenses=${Object.keys(snapshot.licenseInventory).length}.`
 );

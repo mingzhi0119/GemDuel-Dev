@@ -5,9 +5,12 @@
         "name": "gem-duel-workspace",
         "version": "5.2.11"
     },
-    "componentCount": 708,
+    "normalization": {
+        "excludePlatformScopedBinaries": true
+    },
+    "componentCount": 705,
     "licenseInventory": {
-        "MIT": 564,
+        "MIT": 561,
         "Apache-2.0": 30,
         "BSD-2-Clause": 13,
         "BSD-3-Clause": 20,
@@ -244,13 +247,6 @@
             "name": "@electron/windows-sign",
             "version": "1.2.2",
             "license": "BSD-2-Clause",
-            "dev": false
-        },
-        {
-            "path": "node_modules/.pnpm/@esbuild+win32-x64@0.25.12/node_modules/@esbuild/win32-x64",
-            "name": "@esbuild/win32-x64",
-            "version": "0.25.12",
-            "license": "MIT",
             "dev": false
         },
         {
@@ -530,20 +526,6 @@
             "path": "node_modules/.pnpm/@rolldown+pluginutils@1.0.0-beta.27/node_modules/@rolldown/pluginutils",
             "name": "@rolldown/pluginutils",
             "version": "1.0.0-beta.27",
-            "license": "MIT",
-            "dev": false
-        },
-        {
-            "path": "node_modules/.pnpm/@rollup+rollup-win32-x64-gnu@4.60.2/node_modules/@rollup/rollup-win32-x64-gnu",
-            "name": "@rollup/rollup-win32-x64-gnu",
-            "version": "4.60.2",
-            "license": "MIT",
-            "dev": false
-        },
-        {
-            "path": "node_modules/.pnpm/@rollup+rollup-win32-x64-msvc@4.60.2/node_modules/@rollup/rollup-win32-x64-msvc",
-            "name": "@rollup/rollup-win32-x64-msvc",
-            "version": "4.60.2",
             "license": "MIT",
             "dev": false
         },
