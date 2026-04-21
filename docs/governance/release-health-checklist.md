@@ -10,6 +10,7 @@ Use this list before packaging a desktop release or cutting a release candidate.
 - `npm run test:coverage`
 - `npm run desktop:check`
 - `npm run release:check`
+- `npm run release:provenance:check`
 - `npm run governance:evidence:check`
 - `scripts/export-release-health-report.mjs`
 - `scripts/export-governance-artifacts.mjs`

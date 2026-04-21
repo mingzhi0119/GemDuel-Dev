@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { reviewOnlineIntent, validateOnlineAction } from '../authority';
+import { reviewOnlineIntent, validateOnlineAction, validateOnlineIntent } from '../authority';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { GameState, GameAction } from '../../types';
 import type { GuestIntentCommand } from '../../types/network';
@@ -86,5 +86,20 @@ describe('Authority Validator', () => {
 
         expect(review.valid).toBe(false);
         expect(review.reason).toContain('Reserved card');
+    });
+
+    it('returns the boolean review result through validateOnlineIntent', () => {
+        const command: GuestIntentCommand = {
+            kind: 'TAKE_GEMS',
+            payload: { coords: [{ r: 0, c: 0 }] },
+        };
+        const state = {
+            ...mockState,
+            phase: 'IDLE',
+            board: JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON.board)),
+        } as GameState;
+        state.board[0][0] = { type: { id: 'red', color: '', border: '', label: '' }, uid: 'r1' };
+
+        expect(validateOnlineIntent(state, command)).toBe(true);
     });
 });

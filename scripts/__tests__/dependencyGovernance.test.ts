@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -24,6 +24,11 @@ import {
 } from '../dependencySecretGovernance.js';
 import { GOVERNANCE_DOC_PATHS } from '../governanceDocPaths.js';
 
+const dependencyRuntimeGovernanceText = readFileSync(
+    path.join(process.cwd(), GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance),
+    'utf8'
+);
+
 describe('dependency governance', () => {
     it('extracts governed env names from the main process', () => {
         expect(
@@ -34,6 +39,26 @@ describe('dependency governance', () => {
                 const d = process.env.GEMDUEL_LOG_LEVEL;
             `)
         ).toEqual(['GEMDUEL_DISABLE_UPDATES', 'GEMDUEL_LOG_LEVEL', 'UNRELATED']);
+    });
+
+    it('returns clean dependency governance errors when the audit is clean', () => {
+        expect(
+            collectDependencyGovernanceErrors({
+                packageJson: {
+                    overrides: REQUIRED_OVERRIDE_POLICY,
+                },
+                runtimeConfigPolicy: {},
+                runtimeEnvNames: [],
+                governanceDocumentText: dependencyRuntimeGovernanceText,
+                auditReport: {
+                    metadata: {
+                        vulnerabilities: {
+                            total: 0,
+                        },
+                    },
+                },
+            })
+        ).toEqual([]);
     });
 
     it('reports missing overrides, missing policy coverage, and live audit findings', () => {
@@ -71,12 +96,96 @@ describe('dependency governance', () => {
             `Missing override path-to-regexp@${REQUIRED_OVERRIDE_POLICY['path-to-regexp']}.`
         );
         expect(errors).toContain(
-            'Runtime env GEMDUEL_LOG_LEVEL is used in runtime source files but missing from RUNTIME_CONFIG_POLICY.'
+            'Governed env GEMDUEL_LOG_LEVEL is used in governed source files but missing from RUNTIME_CONFIG_POLICY.'
         );
         expect(errors).toContain(
-            `Runtime env GEMDUEL_LOG_LEVEL is missing from ${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance}.`
+            `Governed env GEMDUEL_LOG_LEVEL is missing from ${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance}.`
         );
         expect(errors).toContain('Production audit still reports low severity for qs.');
+    });
+
+    it('reports nested override policy drift when a nested override is missing', () => {
+        const errors = collectDependencyGovernanceErrors({
+            packageJson: {
+                overrides: {
+                    ...REQUIRED_OVERRIDE_POLICY,
+                    anymatch: {},
+                },
+            },
+            runtimeConfigPolicy: {},
+            runtimeEnvNames: [],
+            governanceDocumentText: dependencyRuntimeGovernanceText,
+            auditReport: {
+                metadata: {
+                    vulnerabilities: {
+                        total: 0,
+                    },
+                },
+            },
+        });
+
+        expect(errors).toContain('Missing override anymatch -> picomatch@2.3.2.');
+    });
+
+    it('requires CI provenance env names to be documented and governed when scripts use them', () => {
+        const errors = collectDependencyGovernanceErrors({
+            packageJson: { overrides: REQUIRED_OVERRIDE_POLICY },
+            runtimeConfigPolicy: {
+                GITHUB_SHA: {
+                    owner: 'Release Engineering',
+                    defaultValue: 'unset',
+                    validation: 'CI metadata.',
+                    secretHandling: 'CI metadata only.',
+                    failureMode: 'Falls back to null.',
+                },
+            },
+            runtimeEnvNames: ['GITHUB_SHA', 'GITHUB_DEFAULT_BRANCH'],
+            governanceDocumentText: 'GITHUB_SHA only',
+            auditReport: {
+                metadata: {
+                    vulnerabilities: {
+                        total: 0,
+                    },
+                },
+            },
+        });
+
+        expect(errors).toContain(
+            'Governed env GITHUB_DEFAULT_BRANCH is used in governed source files but missing from RUNTIME_CONFIG_POLICY.'
+        );
+        expect(errors).toContain(
+            `Governed env GITHUB_DEFAULT_BRANCH is missing from ${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance}.`
+        );
+    });
+
+    it('flags an empty license allowlist before building the snapshot', () => {
+        expect(
+            collectLicenseAllowlistErrors({
+                packageJson: { name: 'gem-duel', version: '1.0.0' },
+                packageLock: {
+                    packages: {
+                        '': { version: '1.0.0' },
+                        'node_modules/foo': { version: '2.0.0', license: 'MIT' },
+                    },
+                },
+                allowedLicenses: [],
+            })
+        ).toEqual(['License allowlist is empty.']);
+    });
+
+    it('requires an expected SBOM snapshot to compare against', () => {
+        expect(
+            collectSbomSnapshotErrors({
+                packageJson: { name: 'gem-duel', version: '1.0.0' },
+                packageLock: {
+                    packages: {
+                        '': { version: '1.0.0' },
+                        'node_modules/foo': { version: '2.0.0', license: 'MIT' },
+                    },
+                },
+                expectedSnapshot: null,
+            })
+        ).toEqual(['Missing dependency SBOM snapshot.']);
     });
 
     it('fails when a retired dependency workaround is reintroduced', () => {
@@ -118,6 +227,33 @@ describe('dependency governance', () => {
             expect(errors).toContain(
                 `${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance} must not describe ${RETIRED_DEPENDENCY_WORKAROUNDS[0]} as an active workaround.`
             );
+        } finally {
+            rmSync(repoRoot, { recursive: true, force: true });
+        }
+    });
+
+    it('includes test files when explicitly requested', () => {
+        const repoRoot = mkdtempSync(path.join(os.tmpdir(), 'dependency-text-files-'));
+        try {
+            mkdirSync(path.join(repoRoot, 'src', '__tests__'), { recursive: true });
+            writeFileSync(
+                path.join(repoRoot, 'src', 'main.ts'),
+                'const env = process.env.GEMDUEL_ALPHA;'
+            );
+            writeFileSync(
+                path.join(repoRoot, 'src', '__tests__', 'kept.ts'),
+                'const env = process.env.GEMDUEL_BETA;'
+            );
+            writeFileSync(
+                path.join(repoRoot, 'src', 'ignored.test.ts'),
+                'const env = process.env.GEMDUEL_IGNORED;'
+            );
+
+            expect(
+                collectTextFileEntries(repoRoot, { includeTests: true }).map(
+                    ({ relativePath }) => relativePath
+                )
+            ).toEqual(['src/__tests__/kept.ts', 'src/main.ts']);
         } finally {
             rmSync(repoRoot, { recursive: true, force: true });
         }

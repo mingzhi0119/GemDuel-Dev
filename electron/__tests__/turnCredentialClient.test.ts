@@ -153,6 +153,95 @@ describe('turn credential client', () => {
         );
     });
 
+    it('reuses a pending issue request and trims trailing service slashes', async () => {
+        let resolveLease: ((value: ReturnType<typeof createJsonResponse>) => void) | null = null;
+        const fetchImpl = vi.fn(
+            () =>
+                new Promise((resolve) => {
+                    resolveLease = resolve;
+                })
+        );
+        const client = createTurnCredentialClient({
+            bundleConfig: '',
+            rawIceConfig: JSON.stringify([{ urls: 'stun:legacy.example.com' }]),
+            serviceUrlEnv: 'https://relay.example.com/turn///',
+            serviceTokenEnv: 'service-token',
+            fallbackModeEnv: 'allow-runtime-ice',
+            fetchImpl,
+            now: () => Date.parse('2026-04-20T12:00:00.000Z'),
+            setTimeoutImpl: vi.fn(() => 7),
+            clearTimeoutImpl: vi.fn(),
+            recordMainHealth: vi.fn(),
+        });
+
+        const first = client.getRuntimeRelayProfile();
+        const second = client.getRuntimeRelayProfile();
+        resolveLease?.(createJsonResponse(200, createLeasePayload()));
+
+        await expect(first).resolves.toMatchObject({ source: 'online-turn-service' });
+        await expect(second).resolves.toMatchObject({ source: 'online-turn-service' });
+        expect(fetchImpl).toHaveBeenCalledTimes(1);
+        expect(fetchImpl.mock.calls[0][0]).toBe('https://relay.example.com/turn/issue');
+    });
+
+    it('falls back when the service returns invalid JSON or an invalid governed schema', async () => {
+        const recordMainHealth = vi.fn();
+        const invalidJsonClient = createTurnCredentialClient({
+            bundleConfig: '',
+            rawIceConfig: JSON.stringify([{ urls: 'stun:legacy.example.com' }]),
+            serviceUrlEnv: 'https://relay.example.com/turn',
+            serviceTokenEnv: 'service-token',
+            fallbackModeEnv: 'allow-runtime-ice',
+            fetchImpl: vi.fn(async () => ({
+                ok: true,
+                status: 200,
+                json: async () => {
+                    throw new Error('not-json');
+                },
+            })),
+            now: () => Date.parse('2026-04-20T12:00:00.000Z'),
+            setTimeoutImpl: vi.fn(),
+            clearTimeoutImpl: vi.fn(),
+            recordMainHealth,
+        });
+
+        await expect(invalidJsonClient.getRuntimeRelayProfile()).resolves.toMatchObject({
+            source: 'runtime-ice-fallback',
+        });
+
+        const invalidSchemaClient = createTurnCredentialClient({
+            bundleConfig: '',
+            rawIceConfig: JSON.stringify([{ urls: 'stun:legacy.example.com' }]),
+            serviceUrlEnv: 'https://relay.example.com/turn',
+            serviceTokenEnv: 'service-token',
+            fallbackModeEnv: 'allow-runtime-ice',
+            fetchImpl: vi.fn(async () =>
+                createJsonResponse(200, {
+                    leaseId: 'lease-1',
+                    bundle: {
+                        policyVersion: 1,
+                        iceServers: [],
+                        issuedAt: '2026-04-20T12:00:00.000Z',
+                        expiresAt: '2026-04-20T12:05:00.000Z',
+                    },
+                })
+            ),
+            now: () => Date.parse('2026-04-20T12:00:00.000Z'),
+            setTimeoutImpl: vi.fn(),
+            clearTimeoutImpl: vi.fn(),
+            recordMainHealth,
+        });
+
+        await expect(invalidSchemaClient.getRuntimeRelayProfile()).resolves.toMatchObject({
+            source: 'runtime-ice-fallback',
+        });
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: 'TURN_CREDENTIAL_FETCH_FAILED',
+            })
+        );
+    });
+
     it('returns the fail-closed STUN baseline when fallback deny is enabled', async () => {
         const recordMainHealth = vi.fn();
         const client = createTurnCredentialClient({
@@ -197,6 +286,49 @@ describe('turn credential client', () => {
                 }),
             })
         );
+    });
+
+    it('uses fallback behavior when refresh is invoked before any lease exists or the service is disabled', async () => {
+        const allowRuntimeIceClient = createTurnCredentialClient({
+            bundleConfig: '',
+            rawIceConfig: JSON.stringify([{ urls: 'stun:legacy.example.com' }]),
+            serviceUrlEnv: 'https://relay.example.com/turn',
+            serviceTokenEnv: 'service-token',
+            fallbackModeEnv: 'allow-runtime-ice',
+            fetchImpl: vi.fn(async () => createJsonResponse(200, createLeasePayload())),
+            now: () => Date.parse('2026-04-20T12:00:00.000Z'),
+            setTimeoutImpl: vi.fn(() => 7),
+            clearTimeoutImpl: vi.fn(),
+            recordMainHealth: vi.fn(),
+        });
+
+        await expect(allowRuntimeIceClient.refreshRuntimeRelayProfile()).resolves.toMatchObject({
+            source: 'online-turn-service',
+        });
+
+        const disabledClient = createTurnCredentialClient({
+            bundleConfig: '',
+            rawIceConfig: JSON.stringify([{ urls: 'stun:legacy.example.com' }]),
+            serviceUrlEnv: '',
+            serviceTokenEnv: '',
+            fallbackModeEnv: 'allow-runtime-ice',
+            fetchImpl: vi.fn(),
+            now: () => Date.parse('2026-04-20T12:00:00.000Z'),
+            setTimeoutImpl: vi.fn(),
+            clearTimeoutImpl: vi.fn(),
+            recordMainHealth: vi.fn(),
+        });
+
+        await expect(disabledClient.refreshRuntimeRelayProfile()).resolves.toMatchObject({
+            source: 'runtime-ice-fallback',
+        });
+        await expect(disabledClient.revokeRuntimeRelayProfile()).resolves.toEqual({
+            policyVersion: 1,
+            source: 'default-stun',
+            iceServers: [],
+            issuedAt: null,
+            expiresAt: null,
+        });
     });
 
     it('revokes the active lease and clears the runtime relay profile', async () => {

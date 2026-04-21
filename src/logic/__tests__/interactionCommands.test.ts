@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { BUFFS } from '../../constants';
 import {
+    buildDebugAction,
+    buildGameStartAction,
+    buildPeekDeckAction,
     buildBuyAction,
+    buildReplenishAction,
     buildReserveCardFlow,
     buildReserveDeckFlow,
+    buildSelectRoyalAction,
     buildSelectBonusColorAction,
     buildSelectBuffAction,
 } from '../interactionCommands';
@@ -76,5 +81,62 @@ describe('Interaction Commands', () => {
         expect(selectBuffOutsideDraft.payload).not.toHaveProperty('p2DraftPoolIndices');
         expect(bonusColorAction.payload.card.bonusColor).toBe('green');
         expect(bonusColorAction.payload.randoms?.bountyHunterColor).toBe('black');
+    });
+
+    it('builds top-level interaction commands without relying on UI state', () => {
+        expect(buildGameStartAction('PVE', { useBuffs: false, isHost: true })).toMatchObject({
+            type: 'INIT',
+        });
+        expect(buildReplenishAction('red', 'blue')).toEqual({
+            type: 'REPLENISH',
+            payload: {
+                randoms: {
+                    expansionColor: 'red',
+                    extortionColor: 'blue',
+                },
+            },
+        });
+        expect(
+            buildSelectRoyalAction({
+                id: 'royal-1',
+                points: 3,
+                bonusColor: 'red',
+                label: 'Royal One',
+                ability: [],
+            })
+        ).toEqual({
+            type: 'SELECT_ROYAL_CARD',
+            payload: {
+                card: {
+                    id: 'royal-1',
+                    points: 3,
+                    bonusColor: 'red',
+                    label: 'Royal One',
+                    ability: [],
+                },
+            },
+        });
+        expect(buildPeekDeckAction(3)).toEqual({
+            type: 'PEEK_DECK',
+            payload: { level: 3 },
+        });
+    });
+
+    it('builds each debug action variant with the expected payload shape', () => {
+        expect(buildDebugAction('FORCE_ROYAL_SELECTION')).toEqual({
+            type: 'FORCE_ROYAL_SELECTION',
+        });
+        expect(buildDebugAction('DEBUG_ADD_CROWNS', 'p2')).toEqual({
+            type: 'DEBUG_ADD_CROWNS',
+            payload: 'p2',
+        });
+        expect(buildDebugAction('DEBUG_ADD_POINTS')).toEqual({
+            type: 'DEBUG_ADD_POINTS',
+            payload: 'p1',
+        });
+        expect(buildDebugAction('DEBUG_ADD_PRIVILEGE', 'p1')).toEqual({
+            type: 'DEBUG_ADD_PRIVILEGE',
+            payload: 'p1',
+        });
     });
 });

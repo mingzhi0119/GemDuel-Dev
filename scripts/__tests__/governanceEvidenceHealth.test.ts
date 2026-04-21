@@ -5,12 +5,69 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
+import { buildReleaseHealthReport } from '../releaseHealthReport.js';
 import {
     collectGovernanceEvidenceHealthErrors,
     loadGovernanceEvidence,
 } from '../governanceEvidenceHealth.js';
 
 const repoRoot = process.cwd();
+const OPERATIONS_SNAPSHOT = {
+    indicatorThresholds: {
+        startupFailures: { warningMax: 0, incidentMax: 0 },
+        runtimeConfigFailures: { warningMax: 0, incidentMax: 0 },
+        updaterFailures: { warningMax: 0, incidentMax: 0 },
+        peerFailures: { warningMax: 0, incidentMax: 0 },
+        recoveryRequests: { warningMax: 0, incidentMax: 1 },
+        ipcRejected: { warningMax: 0, incidentMax: 0 },
+    },
+    alertRouting: {
+        startupFailures: 'pager',
+        runtimeConfigFailures: 'pager',
+        updaterFailures: 'pager',
+        peerFailures: 'pager',
+        recoveryRequests: 'warn',
+        ipcRejected: 'pager',
+    },
+    drills: [],
+};
+const createSummary = (indicators: Partial<Record<string, number>> = {}) => ({
+    startedAt: null,
+    lastEventAt: null,
+    totalEvents: 0,
+    severityCounts: {
+        info: 0,
+        warn: 0,
+        error: 0,
+    },
+    indicators: {
+        startupFailures: 0,
+        runtimeConfigFailures: 0,
+        updaterFailures: 0,
+        peerFailures: 0,
+        recoveryRequests: 0,
+        ipcRejected: 0,
+        ...indicators,
+    },
+    reasonCodeCounts: {},
+    counters: {},
+    recentEvents: [],
+});
+const createReport = (indicators: Partial<Record<string, number>> = {}) =>
+    buildReleaseHealthReport({
+        source: {
+            kind: 'summary',
+            summaryProvided: true,
+            events: [],
+            summary: createSummary(indicators),
+        },
+        operationsSnapshot: OPERATIONS_SNAPSHOT,
+        generatedAt: '2026-04-20T00:00:00.000Z',
+        provenance: {},
+        retention: null,
+        sourcePath: null,
+        drillLabel: null,
+    });
 
 const writeJson = (filePath: string, value: unknown) => {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -54,6 +111,7 @@ describe('governance evidence health', () => {
                 collectGovernanceEvidenceHealthErrors({
                     manifest,
                     reports,
+                    operationsSnapshot: OPERATIONS_SNAPSHOT,
                 })
             ).toEqual([]);
         } finally {
@@ -85,17 +143,10 @@ describe('governance evidence health', () => {
             collectGovernanceEvidenceHealthErrors({
                 manifest,
                 reports: {
-                    'artifacts/governance/healthy-baseline.release-health.report.json': {
-                        status: 'incident',
-                        alerts: [
-                            {
-                                indicator: 'startupFailures',
-                                status: 'incident',
-                                value: 1,
-                            },
-                        ],
-                    },
+                    'artifacts/governance/healthy-baseline.release-health.report.json':
+                        createReport({ startupFailures: 1 }),
                 },
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toEqual(
             expect.arrayContaining([
@@ -108,6 +159,7 @@ describe('governance evidence health', () => {
             collectGovernanceEvidenceHealthErrors({
                 manifest,
                 reports: {},
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toContain('Governance evidence report healthy-baseline is missing from the artifact.');
     });
@@ -143,17 +195,10 @@ describe('governance evidence health', () => {
                         },
                     },
                     reports: {
-                        'artifacts/governance/healthy-baseline.release-health.report.json': {
-                            status: 'healthy',
-                            alerts: [
-                                {
-                                    indicator: 'startupFailures',
-                                    status: 'healthy',
-                                    value: 0,
-                                },
-                            ],
-                        },
+                        'artifacts/governance/healthy-baseline.release-health.report.json':
+                            createReport(),
                     },
+                    operationsSnapshot: OPERATIONS_SNAPSHOT,
                 })
             ).toContain('Governance evidence retention must be at least 30 days.');
         } finally {
@@ -243,6 +288,7 @@ describe('governance evidence health', () => {
             collectGovernanceEvidenceHealthErrors({
                 manifest: null,
                 reports: {},
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toEqual(['Governance evidence manifest must be a JSON object.']);
 
@@ -259,11 +305,9 @@ describe('governance evidence health', () => {
                     },
                 },
                 reports: {
-                    'artifacts/governance/healthy.release-health.report.json': {
-                        status: 'healthy',
-                        alerts: [{ indicator: 'startupFailures', status: 'healthy', value: 0 }],
-                    },
+                    'artifacts/governance/healthy.release-health.report.json': createReport(),
                 },
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toContain('Governance evidence manifest must define artifactPolicy.');
 
@@ -284,11 +328,9 @@ describe('governance evidence health', () => {
                     },
                 },
                 reports: {
-                    'artifacts/governance/healthy.release-health.report.json': {
-                        status: 'healthy',
-                        alerts: [{ indicator: 'startupFailures', status: 'healthy', value: 0 }],
-                    },
+                    'artifacts/governance/healthy.release-health.report.json': createReport(),
                 },
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toEqual(
             expect.arrayContaining([
@@ -307,6 +349,7 @@ describe('governance evidence health', () => {
                     release: {},
                 },
                 reports: {},
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toContain('Governance evidence manifest must enumerate releaseHealthReports.');
 
@@ -322,6 +365,7 @@ describe('governance evidence health', () => {
                     },
                 },
                 reports: {},
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toContain(
             'Governance evidence manifest must include at least one governed healthy release-health report.'
@@ -351,9 +395,11 @@ describe('governance evidence health', () => {
                 reports: {
                     'artifacts/governance/empty-alerts.release-health.report.json': {
                         status: 'healthy',
+                        summary: createSummary(),
                         alerts: [],
                     },
                 },
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toEqual(
             expect.arrayContaining([
@@ -379,40 +425,79 @@ describe('governance evidence health', () => {
             },
         };
         const reports = {
-            'artifacts/governance/default-governed.release-health.report.json': {
-                status: 'healthy',
-                alerts: [
-                    {
-                        indicator: 'recoveryRequests',
-                        status: 'warning',
-                        value: 1,
-                    },
-                    {
-                        indicator: 'startupFailures',
-                        status: 'warning',
-                        value: 1,
-                    },
-                ],
-            },
+            'artifacts/governance/default-governed.release-health.report.json': createReport({
+                recoveryRequests: 1,
+                startupFailures: 1,
+            }),
         };
 
         expect(
             collectGovernanceEvidenceHealthErrors({
                 manifest,
                 reports,
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
             })
         ).toEqual([
-            'Governance evidence report default-governed contains non-healthy indicators: startupFailures:warning:1.',
+            'Governance evidence report default-governed contains non-healthy indicators: startupFailures:incident:1.',
+            'Governance evidence report default-governed is in incident state.',
         ]);
 
         expect(
             collectGovernanceEvidenceHealthErrors({
                 manifest,
                 reports,
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
                 allowedWarningIndicators: [],
             })
         ).toEqual([
-            'Governance evidence report default-governed contains non-healthy indicators: recoveryRequests:warning:1, startupFailures:warning:1.',
+            'Governance evidence report default-governed contains non-healthy indicators: startupFailures:incident:1, recoveryRequests:warning:1.',
+            'Governance evidence report default-governed is in incident state.',
         ]);
+    });
+
+    it('fails when a retained report drifts from recomputed thresholds or drill expectations', () => {
+        const manifest = {
+            artifactPolicy: {
+                artifactName: 'governance-evidence',
+                retentionDays: 30,
+            },
+            release: {
+                releaseHealthReports: [
+                    {
+                        id: 'healthy-baseline',
+                        path: 'artifacts/governance/healthy.release-health.report.json',
+                        expectedStatus: 'healthy',
+                    },
+                    {
+                        id: 'network-recovery',
+                        path: 'artifacts/governance/network-recovery.release-health.report.json',
+                        expectedStatus: 'warning',
+                    },
+                ],
+            },
+        };
+        const driftedHealthy = createReport();
+        driftedHealthy.alerts = driftedHealthy.alerts.map((alert) =>
+            alert.indicator === 'startupFailures' ? { ...alert, warningMax: 1 } : alert
+        );
+        driftedHealthy.status = 'warning';
+
+        expect(
+            collectGovernanceEvidenceHealthErrors({
+                manifest,
+                reports: {
+                    'artifacts/governance/healthy.release-health.report.json': driftedHealthy,
+                    'artifacts/governance/network-recovery.release-health.report.json':
+                        createReport(),
+                },
+                operationsSnapshot: OPERATIONS_SNAPSHOT,
+            })
+        ).toEqual(
+            expect.arrayContaining([
+                'Governance evidence report healthy-baseline declared status warning but recomputed as healthy.',
+                'Governance evidence report healthy-baseline drifted on alert startupFailures.',
+                'Governance evidence report network-recovery expected status warning but recomputed as healthy.',
+            ])
+        );
     });
 });

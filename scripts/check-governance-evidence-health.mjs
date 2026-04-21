@@ -43,9 +43,11 @@ const main = () => {
         artifactsDir,
         repoRoot,
     });
+    const operationsSnapshot = JSON.parse(fs.readFileSync(operationsSnapshotPath, 'utf8'));
     const issues = collectGovernanceEvidenceHealthErrors({
         manifest,
         reports,
+        operationsSnapshot,
     });
 
     if (issues.length > 0) {

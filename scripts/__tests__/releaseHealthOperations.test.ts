@@ -33,6 +33,32 @@ describe('release-health operations governance', () => {
         ).toEqual([]);
     });
 
+    it('allows artifact report source paths to remain unresolved when no repoRoot is supplied', () => {
+        expect(
+            collectReleaseHealthOperationsErrors({
+                sloText,
+                drillText,
+                operationsSnapshot,
+                repoRoot: '',
+            })
+        ).toEqual([]);
+    });
+
+    it('reports unsupported source format shapes before validating the rest of the snapshot', () => {
+        const errors = collectReleaseHealthOperationsErrors({
+            sloText,
+            drillText,
+            operationsSnapshot: {
+                ...operationsSnapshot,
+                sourceFormats: null,
+            },
+        });
+
+        expect(errors).toContain(
+            'Release-health operations snapshot must expose supported source formats.'
+        );
+    });
+
     it('reports drift when the operational snapshot or drill docs lose required entries', () => {
         const brokenSnapshot = {
             ...operationsSnapshot,

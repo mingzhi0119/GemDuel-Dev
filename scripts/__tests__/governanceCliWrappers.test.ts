@@ -125,6 +125,27 @@ const writeUnhealthyGovernanceArtifacts = (outDir: string) => {
         JSON.stringify(
             {
                 status: 'incident',
+                summary: {
+                    startedAt: null,
+                    lastEventAt: null,
+                    totalEvents: 0,
+                    severityCounts: {
+                        info: 0,
+                        warn: 0,
+                        error: 1,
+                    },
+                    indicators: {
+                        startupFailures: 1,
+                        runtimeConfigFailures: 0,
+                        updaterFailures: 0,
+                        peerFailures: 0,
+                        recoveryRequests: 0,
+                        ipcRejected: 0,
+                    },
+                    reasonCodeCounts: {},
+                    counters: {},
+                    recentEvents: [],
+                },
                 alerts: [
                     {
                         indicator: 'startupFailures',

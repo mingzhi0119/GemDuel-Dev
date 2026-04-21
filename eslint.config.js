@@ -9,7 +9,7 @@ export default tseslint.config(
     { ignores: ['dist'] },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
-        files: ['**/*.{js,jsx,ts,tsx,cjs}'],
+        files: ['**/*.{js,jsx,ts,tsx,cjs,mjs}'],
         languageOptions: {
             ecmaVersion: 2020,
             globals: {
@@ -51,6 +51,13 @@ export default tseslint.config(
     {
         files: ['electron/**/*.{js,cjs}'],
         ignores: ['electron/**/__tests__/**', 'electron/main.js'],
+        rules: {
+            'no-console': 'error',
+        },
+    },
+    {
+        files: ['scripts/**/*.{js,cjs,mjs}'],
+        ignores: ['scripts/**/__tests__/**', 'scripts/check-*.mjs', 'scripts/export-*.mjs'],
         rules: {
             'no-console': 'error',
         },

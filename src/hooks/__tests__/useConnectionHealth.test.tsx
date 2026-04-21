@@ -133,4 +133,32 @@ describe('useConnectionHealth', () => {
             timestamp: 123,
         });
     });
+
+    it('does not start the heartbeat loop until an open connection is available', () => {
+        const sendMessage = vi.fn<(message: NetworkMessage) => void>();
+        const connection = { open: false } as DataConnection;
+        let currentResult: ConnectionHealthResult | null = null;
+
+        const Harness = () => {
+            currentResult = useConnectionHealth(connection, sendMessage);
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(10_000);
+        });
+
+        expect(sendMessage).not.toHaveBeenCalled();
+        expect(currentResult).not.toBeNull();
+        expect(currentResult!.isUnstable).toBe(false);
+        expect(reportReleaseHealth).not.toHaveBeenCalled();
+    });
 });

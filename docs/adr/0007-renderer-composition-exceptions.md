@@ -1,18 +1,18 @@
 # ADR-0007: Allow a Temporary Oversized Renderer Composition Surface
 
-Status: Accepted  
+Status: Accepted (Historical Record)  
 Date: 2026-04-20
 
 ## Context
 
-Some renderer components still carry too much orchestration and presentation in one file, especially the main player surface.
+This ADR recorded a temporary period where a small set of renderer files exceeded the normal hard architecture budget while staged decomposition work was in progress.
 
 ## Decision
 
-Treat the current oversized renderer surface as temporary technical debt and require explicit ADR-backed exceptions for any file that crosses the hard architecture budget before it is decomposed.
+Treat oversized renderer surfaces as temporary technical debt and require explicit ADR-backed exceptions for any file that crosses the hard architecture budget before it is decomposed. Those exceptions must be removed once the decomposition work lands.
 
 ## Consequences
 
-- The architecture budget gate permits `src/components/PlayerZone.tsx` up to `800` lines during the staged UI split.
-- The architecture budget gate permits `src/components/CardAnatomyPage.tsx` up to `600` lines while its anatomy and documentation surface is extracted.
-- Warning-level components such as `Card.tsx`, `CardAnatomyPage.tsx`, `GameBoard.tsx`, and `TopBar.tsx` remain on the refactor backlog even when they are below the hard stop.
+- `src/components/PlayerZone.tsx` and `src/components/CardAnatomyPage.tsx` have both been decomposed back under the baseline budget, so this ADR no longer grants any active exception.
+- The architecture budget contract now carries zero approved exceptions, and future hard-limit breaches must be re-approved explicitly instead of reusing this historical allowance.
+- Warning-level components such as `Card.tsx`, `GameBoard.tsx`, and `TopBar.tsx` remain ordinary refactor candidates even though they are below the hard stop.

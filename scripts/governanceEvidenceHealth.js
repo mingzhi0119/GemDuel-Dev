@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { buildReleaseHealthReport } from './releaseHealthReport.js';
 
 export const MIN_GOVERNANCE_EVIDENCE_RETENTION_DAYS = 30;
 export const DEFAULT_ALLOWED_WARNING_INDICATORS = Object.freeze(['recoveryRequests']);
@@ -56,9 +57,63 @@ const isAllowedWarningAlert = (alert, allowedWarningIndicators) =>
 
 const describeAlert = (alert) => `${alert.indicator}:${alert.status}:${alert.value}`;
 
+const buildComparableAlertMap = (alerts) =>
+    new Map(
+        (Array.isArray(alerts) ? alerts : []).map((alert) => [
+            alert.indicator,
+            {
+                value: alert.value ?? null,
+                status: alert.status ?? null,
+                warningMax: alert.warningMax ?? null,
+                incidentMax: alert.incidentMax ?? null,
+            },
+        ])
+    );
+
+const collectReleaseHealthReportDriftErrors = ({ report, expectedReport, reportLabel }) => {
+    const issues = [];
+
+    if (report.status !== expectedReport.status) {
+        issues.push(
+            `Governance evidence report ${reportLabel} declared status ${report.status} but recomputed as ${expectedReport.status}.`
+        );
+    }
+
+    const actualAlerts = buildComparableAlertMap(report.alerts);
+    const expectedAlerts = buildComparableAlertMap(expectedReport.alerts);
+
+    for (const [indicator, expectedAlert] of expectedAlerts) {
+        const actualAlert = actualAlerts.get(indicator);
+        if (!actualAlert) {
+            issues.push(`Governance evidence report ${reportLabel} is missing alert ${indicator}.`);
+            continue;
+        }
+
+        if (
+            actualAlert.value !== expectedAlert.value ||
+            actualAlert.status !== expectedAlert.status ||
+            actualAlert.warningMax !== expectedAlert.warningMax ||
+            actualAlert.incidentMax !== expectedAlert.incidentMax
+        ) {
+            issues.push(`Governance evidence report ${reportLabel} drifted on alert ${indicator}.`);
+        }
+    }
+
+    for (const indicator of actualAlerts.keys()) {
+        if (!expectedAlerts.has(indicator)) {
+            issues.push(
+                `Governance evidence report ${reportLabel} declared unexpected alert ${indicator}.`
+            );
+        }
+    }
+
+    return issues;
+};
+
 export const collectGovernanceEvidenceHealthErrors = ({
     manifest,
     reports,
+    operationsSnapshot = {},
     minimumRetentionDays = MIN_GOVERNANCE_EVIDENCE_RETENTION_DAYS,
     allowedWarningIndicators = DEFAULT_ALLOWED_WARNING_INDICATORS,
 }) => {
@@ -94,22 +149,21 @@ export const collectGovernanceEvidenceHealthErrors = ({
         return issues;
     }
 
-    const governedReports = releaseHealthReports.filter(
-        (entry) => (entry?.expectedStatus ?? null) === 'healthy' || entry?.expectedStatus == null
-    );
+    const allowedWarningIndicatorSet = new Set(allowedWarningIndicators);
 
+    const governedReports = releaseHealthReports.filter(
+        (entry) => entry?.expectedStatus == null || entry?.expectedStatus === 'healthy'
+    );
     if (governedReports.length === 0) {
         issues.push(
             'Governance evidence manifest must include at least one governed healthy release-health report.'
         );
-        return issues;
     }
 
-    const allowedWarningIndicatorSet = new Set(allowedWarningIndicators);
-
-    for (const reportEntry of governedReports) {
+    for (const reportEntry of releaseHealthReports) {
         const reportPath = reportEntry?.path;
         const reportLabel = reportEntry?.id ?? reportPath ?? '<unknown-report>';
+        const expectedStatus = reportEntry?.expectedStatus ?? 'healthy';
 
         if (typeof reportPath !== 'string' || reportPath.length === 0) {
             issues.push(`Governance evidence report ${reportLabel} must define a path.`);
@@ -127,21 +181,61 @@ export const collectGovernanceEvidenceHealthErrors = ({
             continue;
         }
 
-        const breachedAlerts = report.alerts.filter(
-            (alert) =>
-                alert?.status !== 'healthy' &&
-                !isAllowedWarningAlert(alert, allowedWarningIndicatorSet)
-        );
-        if (breachedAlerts.length > 0) {
-            issues.push(
-                `Governance evidence report ${reportLabel} contains non-healthy indicators: ${breachedAlerts
-                    .map(describeAlert)
-                    .join(', ')}.`
-            );
+        if (!isPlainObject(report.summary)) {
+            issues.push(`Governance evidence report ${reportLabel} must expose a summary object.`);
+            continue;
         }
 
-        if (report.status === 'incident') {
-            issues.push(`Governance evidence report ${reportLabel} is in incident state.`);
+        const expectedReport = buildReleaseHealthReport({
+            source: {
+                kind: report.source?.kind ?? 'summary',
+                summaryProvided: true,
+                events: [],
+                summary: report.summary,
+            },
+            operationsSnapshot,
+            generatedAt: report.generatedAt ?? new Date().toISOString(),
+            provenance: report.provenance ?? {},
+            retention: report.retention ?? null,
+            sourcePath: report.source?.path ?? null,
+            drillLabel: report.drillLabel ?? null,
+        });
+
+        issues.push(
+            ...collectReleaseHealthReportDriftErrors({
+                report,
+                expectedReport,
+                reportLabel,
+            })
+        );
+
+        const breachedAlerts = expectedReport.alerts.filter(
+            (alert) =>
+                alert.status !== 'healthy' &&
+                !isAllowedWarningAlert(alert, allowedWarningIndicatorSet)
+        );
+
+        if (expectedStatus === 'healthy') {
+            if (breachedAlerts.length > 0) {
+                issues.push(
+                    `Governance evidence report ${reportLabel} contains non-healthy indicators: ${breachedAlerts
+                        .map(describeAlert)
+                        .join(', ')}.`
+                );
+            }
+
+            if (expectedReport.status === 'incident') {
+                issues.push(`Governance evidence report ${reportLabel} is in incident state.`);
+            }
+            continue;
+        }
+
+        if (expectedStatus === 'warning' || expectedStatus === 'incident') {
+            if (expectedReport.status !== expectedStatus) {
+                issues.push(
+                    `Governance evidence report ${reportLabel} expected status ${expectedStatus} but recomputed as ${expectedReport.status}.`
+                );
+            }
         }
     }
 

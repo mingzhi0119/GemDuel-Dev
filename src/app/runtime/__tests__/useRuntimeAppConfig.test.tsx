@@ -233,4 +233,104 @@ describe('useRuntimeAppConfig', () => {
             })
         );
     });
+
+    it('does not schedule a relay refresh when the governed profile expiry is missing or invalid', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-04-20T12:00:00.000Z'));
+
+        window.electron = {
+            getAppVersion: vi.fn().mockResolvedValue('5.2.12'),
+            getRuntimeIceServers: vi.fn().mockResolvedValue([]),
+            getRuntimeRelayProfile: vi.fn().mockResolvedValue({
+                policyVersion: 1,
+                source: 'online-turn-service',
+                iceServers: [],
+                issuedAt: '2026-04-20T12:00:00.000Z',
+                expiresAt: 'not-a-date',
+            }),
+            refreshRuntimeRelayProfile: vi.fn().mockResolvedValue(DEFAULT_STUN_PROFILE),
+            revokeRuntimeRelayProfile: vi.fn().mockResolvedValue(DEFAULT_STUN_PROFILE),
+            getReleaseHealthSnapshot: vi.fn(),
+            restartApp: vi.fn(),
+            reportReleaseHealth: vi.fn(),
+            onUpdateAvailable: vi.fn(),
+            onDownloadProgress: vi.fn(),
+            onUpdateDownloaded: vi.fn(),
+        };
+
+        const Harness = () => {
+            useRuntimeAppConfig();
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        await flushEffects();
+
+        await act(async () => {
+            vi.advanceTimersByTime(60_000);
+            await Promise.resolve();
+        });
+
+        expect(window.electron.refreshRuntimeRelayProfile).not.toHaveBeenCalled();
+    });
+
+    it('reports refresh failure when the scheduled governed relay refresh rejects', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-04-20T12:00:00.000Z'));
+
+        window.electron = {
+            getAppVersion: vi.fn().mockResolvedValue('5.2.12'),
+            getRuntimeIceServers: vi.fn().mockResolvedValue([]),
+            getRuntimeRelayProfile: vi.fn().mockResolvedValue({
+                policyVersion: 1,
+                source: 'online-turn-service',
+                iceServers: [],
+                issuedAt: '2026-04-20T12:00:00.000Z',
+                expiresAt: '2026-04-20T12:00:31.000Z',
+            }),
+            refreshRuntimeRelayProfile: vi.fn().mockRejectedValue(new Error('refresh failed')),
+            revokeRuntimeRelayProfile: vi.fn().mockResolvedValue(DEFAULT_STUN_PROFILE),
+            getReleaseHealthSnapshot: vi.fn(),
+            restartApp: vi.fn(),
+            reportReleaseHealth: vi.fn(),
+            onUpdateAvailable: vi.fn(),
+            onDownloadProgress: vi.fn(),
+            onUpdateDownloaded: vi.fn(),
+        };
+
+        const Harness = () => {
+            useRuntimeAppConfig();
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        act(() => {
+            root = createRoot(container!);
+            root.render(React.createElement(Harness));
+        });
+
+        await flushEffects();
+
+        await act(async () => {
+            vi.advanceTimersByTime(2_000);
+            await Promise.resolve();
+        });
+
+        expect(window.electron.refreshRuntimeRelayProfile).toHaveBeenCalledTimes(1);
+        expect(reportReleaseHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: 'ICE_PROFILE_REFRESH_FAILED',
+                severity: 'error',
+            })
+        );
+    });
 });

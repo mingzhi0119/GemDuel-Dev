@@ -2,11 +2,38 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+    collectReleaseChecklistProvenanceErrors,
     REQUIRED_RELEASE_CHECKLIST_COMMANDS,
     collectReleaseHealthChecklistErrors,
     getReleaseHealthIndicatorKeys,
 } from '../releaseHealthChecklist.js';
 import { GOVERNANCE_DOC_PATHS } from '../governanceDocPaths.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const createTempGitRepo = () => {
+    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'release-health-checklist-'));
+    const git = (args: string[]) =>
+        execFileSync('git', args, {
+            cwd: repoDir,
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'pipe'],
+        }).trim();
+
+    git(['init']);
+    git(['checkout', '-b', 'main']);
+    git(['config', 'user.email', 'codex@example.com']);
+    git(['config', 'user.name', 'Codex']);
+    fs.writeFileSync(path.join(repoDir, 'README.md'), '# release checklist\n', 'utf8');
+    git(['add', 'README.md']);
+    git(['commit', '-m', 'initial']);
+    const mainSha = git(['rev-parse', 'HEAD']);
+    git(['update-ref', 'refs/remotes/origin/main', mainSha]);
+
+    return { repoDir, mainSha, git };
+};
 
 describe('release health checklist governance', () => {
     it('exposes the required release commands as a stable contract', () => {
@@ -17,6 +44,7 @@ describe('release health checklist governance', () => {
             'npm run test:coverage',
             'npm run desktop:check',
             'npm run release:check',
+            'npm run release:provenance:check',
             'npm run governance:evidence:check',
         ]);
     });
@@ -55,4 +83,35 @@ describe('release health checklist governance', () => {
 
         expect(collectReleaseHealthChecklistErrors(checklistText)).toEqual([]);
     });
+
+    it('skips provenance enforcement outside tag context and enforces it for tag releases', () => {
+        expect(
+            collectReleaseChecklistProvenanceErrors({
+                commitSha: '',
+                defaultBranch: '',
+                releaseRef: 'refs/heads/main',
+                git: () => '',
+            })
+        ).toEqual([]);
+
+        const { repoDir, mainSha } = createTempGitRepo();
+
+        try {
+            expect(
+                collectReleaseChecklistProvenanceErrors({
+                    commitSha: mainSha,
+                    defaultBranch: 'main',
+                    releaseRef: 'refs/tags/v5.2.11',
+                    git: (args) =>
+                        execFileSync('git', args, {
+                            cwd: repoDir,
+                            encoding: 'utf8',
+                            stdio: ['ignore', 'pipe', 'pipe'],
+                        }).trim(),
+                })
+            ).toEqual([]);
+        } finally {
+            fs.rmSync(repoDir, { recursive: true, force: true });
+        }
+    }, 15000);
 });

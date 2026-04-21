@@ -1,5 +1,6 @@
 import { createReleaseHealthMonitor } from '../electron/releaseHealth.js';
 import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
+import { collectReleaseTagProvenanceErrors } from './releaseTagProvenance.js';
 
 export const REQUIRED_RELEASE_CHECKLIST_COMMANDS = Object.freeze([
     'npm run lint',
@@ -8,6 +9,7 @@ export const REQUIRED_RELEASE_CHECKLIST_COMMANDS = Object.freeze([
     'npm run test:coverage',
     'npm run desktop:check',
     'npm run release:check',
+    'npm run release:provenance:check',
     'npm run governance:evidence:check',
 ]);
 
@@ -63,4 +65,22 @@ export const collectReleaseHealthChecklistErrors = (checklistText) => {
     }
 
     return issues;
+};
+
+export const collectReleaseChecklistProvenanceErrors = ({
+    commitSha,
+    defaultBranch,
+    releaseRef,
+    git,
+}) => {
+    if (typeof releaseRef !== 'string' || !releaseRef.startsWith('refs/tags/')) {
+        return [];
+    }
+
+    return collectReleaseTagProvenanceErrors({
+        commitSha,
+        defaultBranch,
+        releaseRef,
+        git,
+    });
 };

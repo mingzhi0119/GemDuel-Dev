@@ -25,14 +25,7 @@ Machine-readable budget contract: this document (`architecture-budget-contract`)
 
 ## Temporary ADR-backed Hard-limit Exceptions
 
-| File                                 | Approved Ceiling | ADR                                                                                         |
-| ------------------------------------ | ---------------- | ------------------------------------------------------------------------------------------- |
-| `src/logic/contractSchemas.ts`       | `800`            | [`0002-zod-contract-boundary-strategy.md`](../adr/0002-zod-contract-boundary-strategy.md)   |
-| `src/data/realCards.ts`              | `900`            | [`0006-canonical-card-catalog.md`](../adr/0006-canonical-card-catalog.md)                   |
-| `src/components/PlayerZone.tsx`      | `800`            | [`0007-renderer-composition-exceptions.md`](../adr/0007-renderer-composition-exceptions.md) |
-| `src/components/CardAnatomyPage.tsx` | `600`            | [`0007-renderer-composition-exceptions.md`](../adr/0007-renderer-composition-exceptions.md) |
-
-Warnings between the review budget and the hard limit are expected refactor candidates. Hard-limit breaches must be backed by an ADR entry or the governance gate fails.
+No active temporary hard-limit exceptions remain. Warnings between the review budget and the hard limit are expected refactor candidates. Hard-limit breaches must be backed by an ADR entry or the governance gate fails.
 
 ## Machine-readable Budget Contract
 
@@ -118,28 +111,7 @@ Warnings between the review budget and the hard limit are expected refactor cand
             "forbiddenImportPaths": []
         }
     ],
-    "approvedExceptions": [
-        {
-            "path": "src/logic/contractSchemas.ts",
-            "approvedMaxLines": 800,
-            "adrPath": "docs/adr/0002-zod-contract-boundary-strategy.md"
-        },
-        {
-            "path": "src/data/realCards.ts",
-            "approvedMaxLines": 900,
-            "adrPath": "docs/adr/0006-canonical-card-catalog.md"
-        },
-        {
-            "path": "src/components/PlayerZone.tsx",
-            "approvedMaxLines": 800,
-            "adrPath": "docs/adr/0007-renderer-composition-exceptions.md"
-        },
-        {
-            "path": "src/components/CardAnatomyPage.tsx",
-            "approvedMaxLines": 600,
-            "adrPath": "docs/adr/0007-renderer-composition-exceptions.md"
-        }
-    ]
+    "approvedExceptions": []
 }
 ```
 

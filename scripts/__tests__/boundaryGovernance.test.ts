@@ -35,6 +35,22 @@ describe('boundary governance', () => {
         ).toEqual([]);
     });
 
+    it('rejects schema drift and empty boundary registries', () => {
+        const errors = collectBoundaryRegistryErrors({
+            boundaryRegistry: {
+                schemaVersion: BOUNDARY_REGISTRY_SCHEMA_VERSION + 1,
+                boundaries: [],
+            },
+            boundaryInventoryText,
+            repoRoot,
+        });
+
+        expect(errors).toContain(
+            `Boundary registry schemaVersion must remain ${BOUNDARY_REGISTRY_SCHEMA_VERSION}.`
+        );
+        expect(errors).toContain('Boundary registry must declare a non-empty boundaries array.');
+    });
+
     it('rejects duplicate ids and missing file references', () => {
         const malformedRegistry = {
             schemaVersion: BOUNDARY_REGISTRY_SCHEMA_VERSION,
@@ -67,6 +83,53 @@ describe('boundary governance', () => {
         );
     });
 
+    it('rejects malformed boundary entries and traces unexpected ids', () => {
+        const malformedRegistry = {
+            schemaVersion: BOUNDARY_REGISTRY_SCHEMA_VERSION,
+            boundaries: [
+                null,
+                {
+                    id: 'custom-boundary',
+                    title: 'Custom Boundary',
+                    entrySurface: '',
+                    owner: '',
+                    failClosedBehavior: '',
+                    validatorRefs: ['src/logic/does-not-exist.ts'],
+                    contractRefs: [''],
+                    reasonCodes: ['bad code'],
+                    runtimeSignals: ['bad-signal'],
+                    testRefs: ['src/logic/also-missing.ts'],
+                },
+            ],
+        };
+
+        const errors = collectBoundaryRegistryErrors({
+            boundaryRegistry: malformedRegistry,
+            boundaryInventoryText,
+            repoRoot,
+        });
+
+        expect(errors).toContain('Boundary registry entries must be objects.');
+        expect(errors).toContain('Boundary custom-boundary is missing string field entrySurface.');
+        expect(errors).toContain('Boundary custom-boundary is missing string field owner.');
+        expect(errors).toContain(
+            'Boundary custom-boundary is missing string field failClosedBehavior.'
+        );
+        expect(errors).toContain(
+            'Boundary custom-boundary contains a non-string contractRefs entry.'
+        );
+        expect(errors).toContain(
+            'Boundary custom-boundary references missing file src/logic/does-not-exist.ts.'
+        );
+        expect(errors).toContain('Boundary custom-boundary uses invalid reason code bad code.');
+        expect(errors).toContain(
+            'Boundary custom-boundary uses invalid runtime signal bad-signal.'
+        );
+        expect(errors).toContain(
+            `Boundary custom-boundary is not traceable from ${GOVERNANCE_DOC_PATHS.boundaryInventory} via id or title.`
+        );
+    });
+
     it('guards the exact expected boundary set', () => {
         expect(expectedRegistry.boundaries.map((entry: { id: string }) => entry.id)).toEqual(
             EXPECTED_BOUNDARY_IDS
@@ -85,5 +148,16 @@ describe('boundary governance', () => {
                 repoRoot,
             })
         ).toContain('Boundary registry snapshot drifted from the audited source of truth.');
+    });
+
+    it('reports a missing boundary registry snapshot before comparing drift', () => {
+        expect(
+            collectBoundaryRegistrySnapshotErrors({
+                actualRegistry: expectedRegistry,
+                expectedRegistry: null,
+                boundaryInventoryText,
+                repoRoot,
+            })
+        ).toEqual(['Missing boundary registry snapshot.']);
     });
 });

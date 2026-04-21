@@ -1,8 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collectReleaseHealthChecklistErrors } from './releaseHealthChecklist.js';
+import {
+    collectReleaseChecklistProvenanceErrors,
+    collectReleaseHealthChecklistErrors,
+} from './releaseHealthChecklist.js';
 import { collectReleaseHealthOperationsErrors } from './releaseHealthOperations.js';
+import { createGitRunner } from './releaseTagProvenance.js';
 import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +33,14 @@ issues.push(
         sloText,
         drillText,
         operationsSnapshot,
+    })
+);
+issues.push(
+    ...collectReleaseChecklistProvenanceErrors({
+        commitSha: process.env.GITHUB_SHA ?? null,
+        defaultBranch: process.env.GITHUB_DEFAULT_BRANCH ?? null,
+        releaseRef: process.env.GITHUB_REF ?? null,
+        git: createGitRunner(repoRoot),
     })
 );
 

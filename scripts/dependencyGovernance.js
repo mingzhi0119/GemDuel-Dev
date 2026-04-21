@@ -192,13 +192,13 @@ export const collectRuntimePolicyErrors = ({
     for (const envName of runtimeEnvNames) {
         if (!policyNames.includes(envName)) {
             errors.push(
-                `Runtime env ${envName} is used in runtime source files but missing from RUNTIME_CONFIG_POLICY.`
+                `Governed env ${envName} is used in governed source files but missing from RUNTIME_CONFIG_POLICY.`
             );
         }
 
         if (!governanceDocumentText.includes(envName)) {
             errors.push(
-                `Runtime env ${envName} is missing from ${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance}.`
+                `Governed env ${envName} is missing from ${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance}.`
             );
         }
     }
@@ -206,7 +206,7 @@ export const collectRuntimePolicyErrors = ({
     for (const [envName, entry] of Object.entries(runtimeConfigPolicy)) {
         for (const field of REQUIRED_POLICY_FIELDS) {
             if (typeof entry?.[field] !== 'string' || entry[field].trim().length === 0) {
-                errors.push(`Runtime policy ${envName} is missing the ${field} field.`);
+                errors.push(`Governed env policy ${envName} is missing the ${field} field.`);
             }
         }
     }

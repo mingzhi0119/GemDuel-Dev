@@ -46,6 +46,62 @@ describe('architecture budgets', () => {
         ).toEqual([]);
     });
 
+    it('rejects contract schema drift before scanning files', () => {
+        expect(() =>
+            extractArchitectureBudgetContract(
+                createArchitectureLayerMap({
+                    schemaVersion: ARCHITECTURE_BUDGET_SCHEMA_VERSION + 1,
+                    layers: [
+                        {
+                            id: 'ui-app-shell',
+                            label: 'UI / App Shell',
+                            paths: ['src/components/'],
+                            warningMaxLines: 400,
+                            incidentMaxLines: 500,
+                            forbiddenImportPaths: [],
+                        },
+                    ],
+                    approvedExceptions: [],
+                })
+            )
+        ).toThrow(
+            `Architecture budget contract must stay at schema version ${ARCHITECTURE_BUDGET_SCHEMA_VERSION}.`
+        );
+    });
+
+    it('rejects contracts with an empty layer list', () => {
+        expect(() =>
+            extractArchitectureBudgetContract(
+                createArchitectureLayerMap({
+                    schemaVersion: ARCHITECTURE_BUDGET_SCHEMA_VERSION,
+                    layers: [],
+                    approvedExceptions: [],
+                })
+            )
+        ).toThrow('Architecture budget contract must define at least one layer.');
+    });
+
+    it('rejects contracts with a non-array approved exception list', () => {
+        expect(() =>
+            extractArchitectureBudgetContract(
+                createArchitectureLayerMap({
+                    schemaVersion: ARCHITECTURE_BUDGET_SCHEMA_VERSION,
+                    layers: [
+                        {
+                            id: 'ui-app-shell',
+                            label: 'UI / App Shell',
+                            paths: ['src/components/'],
+                            warningMaxLines: 400,
+                            incidentMaxLines: 500,
+                            forbiddenImportPaths: [],
+                        },
+                    ],
+                    approvedExceptions: {},
+                })
+            )
+        ).toThrow('Architecture budget contract must define an approvedExceptions array.');
+    });
+
     it('rejects files that exceed a hard layer ceiling without an approved ADR exception', () => {
         const tempRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'architecture-budget-'));
         const architectureLayerMapText = createArchitectureLayerMap({
@@ -78,6 +134,141 @@ describe('architecture budgets', () => {
             ).toContain(
                 'src/components/Oversized.tsx exceeds the hard UI / App Shell budget (521 > 500).'
             );
+        } finally {
+            fs.rmSync(tempRepo, { force: true, recursive: true });
+        }
+    });
+
+    it('warns on review-budget files without an approved exception', () => {
+        const tempRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'architecture-review-'));
+        const architectureLayerMapText = createArchitectureLayerMap({
+            schemaVersion: ARCHITECTURE_BUDGET_SCHEMA_VERSION,
+            layers: [
+                {
+                    id: 'ui-app-shell',
+                    label: 'UI / App Shell',
+                    paths: ['src/components/'],
+                    warningMaxLines: 400,
+                    incidentMaxLines: 500,
+                    forbiddenImportPaths: [],
+                },
+            ],
+            approvedExceptions: [],
+        });
+
+        try {
+            writeFile(
+                tempRepo,
+                'src/components/ReviewBudget.tsx',
+                `${'const value = 1;\n'.repeat(430)}`
+            );
+
+            expect(
+                collectArchitectureBudgetResults({
+                    architectureLayerMapText,
+                    repoRoot: tempRepo,
+                })
+            ).toMatchObject({
+                errors: [],
+                warnings: [
+                    'src/components/ReviewBudget.tsx exceeds the review budget for UI / App Shell (431 > 400).',
+                ],
+            });
+        } finally {
+            fs.rmSync(tempRepo, { force: true, recursive: true });
+        }
+    });
+
+    it('accepts approved exceptions below their ADR ceiling', () => {
+        const tempRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'architecture-approved-'));
+        const architectureLayerMapText = createArchitectureLayerMap({
+            schemaVersion: ARCHITECTURE_BUDGET_SCHEMA_VERSION,
+            layers: [
+                {
+                    id: 'ui-app-shell',
+                    label: 'UI / App Shell',
+                    paths: ['src/components/'],
+                    warningMaxLines: 400,
+                    incidentMaxLines: 500,
+                    forbiddenImportPaths: [],
+                },
+            ],
+            approvedExceptions: [
+                {
+                    path: 'src/components/Approved.tsx',
+                    approvedMaxLines: 460,
+                    adrPath: 'docs/adr/0001-approved-ui-budget.md',
+                },
+            ],
+        });
+
+        try {
+            writeFile(
+                tempRepo,
+                'src/components/Approved.tsx',
+                `${'const value = 1;\n'.repeat(450)}`
+            );
+            writeFile(
+                tempRepo,
+                'docs/adr/0001-approved-ui-budget.md',
+                '# Approved UI budget exception\n'
+            );
+
+            expect(
+                collectArchitectureBudgetResults({
+                    architectureLayerMapText,
+                    repoRoot: tempRepo,
+                })
+            ).toMatchObject({
+                errors: [],
+                warnings: [],
+            });
+        } finally {
+            fs.rmSync(tempRepo, { force: true, recursive: true });
+        }
+    });
+
+    it('rejects approved exceptions that still exceed their ADR ceiling', () => {
+        const tempRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'architecture-approved-ceiling-'));
+        const architectureLayerMapText = createArchitectureLayerMap({
+            schemaVersion: ARCHITECTURE_BUDGET_SCHEMA_VERSION,
+            layers: [
+                {
+                    id: 'ui-app-shell',
+                    label: 'UI / App Shell',
+                    paths: ['src/components/'],
+                    warningMaxLines: 400,
+                    incidentMaxLines: 500,
+                    forbiddenImportPaths: [],
+                },
+            ],
+            approvedExceptions: [
+                {
+                    path: 'src/components/Approved.tsx',
+                    approvedMaxLines: 600,
+                    adrPath: 'docs/adr/0001-approved-ui-budget.md',
+                },
+            ],
+        });
+
+        try {
+            writeFile(
+                tempRepo,
+                'src/components/Approved.tsx',
+                `${'const value = 1;\n'.repeat(620)}`
+            );
+            writeFile(
+                tempRepo,
+                'docs/adr/0001-approved-ui-budget.md',
+                '# Approved UI budget exception\n'
+            );
+
+            expect(
+                collectArchitectureBudgetResults({
+                    architectureLayerMapText,
+                    repoRoot: tempRepo,
+                }).errors
+            ).toContain('src/components/Approved.tsx exceeds its ADR-backed ceiling (621 > 600).');
         } finally {
             fs.rmSync(tempRepo, { force: true, recursive: true });
         }

@@ -94,6 +94,13 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         secretHandling: 'CI provenance metadata only. Never store secrets here.',
         failureMode: 'Artifact provenance ref field falls back to null.',
     },
+    GITHUB_DEFAULT_BRANCH: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions default branch name or unset outside CI.',
+        secretHandling: 'CI provenance metadata only. Never store secrets here.',
+        failureMode: 'Release provenance falls back to local non-tag mode when absent.',
+    },
     GITHUB_WORKFLOW: {
         owner: 'Release Engineering',
         defaultValue: 'unset',

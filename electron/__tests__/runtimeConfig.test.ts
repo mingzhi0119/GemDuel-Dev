@@ -164,6 +164,7 @@ describe('electron runtime config', () => {
             'GEMDUEL_TURN_SERVICE_FALLBACK_MODE',
             'GEMDUEL_TURN_SERVICE_TOKEN',
             'GEMDUEL_TURN_SERVICE_URL',
+            'GITHUB_DEFAULT_BRANCH',
             'GITHUB_JOB',
             'GITHUB_REF',
             'GITHUB_REPOSITORY',
