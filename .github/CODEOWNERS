@@ -25,11 +25,11 @@
 
 # Repo control plane
 /.github/** @mingzhi0119
+/AGENTS.md @mingzhi0119
 /README.md @mingzhi0119
-/ARCHITECTURE.md @mingzhi0119
+/CHANGELOG.md @mingzhi0119
 /CONTRIBUTING.md @mingzhi0119
 /SECURITY.md @mingzhi0119
-/CODEOWNERS @mingzhi0119
 /package.json @mingzhi0119
 /pnpm-workspace.yaml @mingzhi0119
 /turbo.json @mingzhi0119

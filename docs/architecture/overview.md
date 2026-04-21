@@ -1,4 +1,4 @@
-# Architecture
+# Architecture Overview
 
 Gem Duel is now organized as a production monorepo. The root owns the control plane, while the app, shared contracts, UI, TURN service, scripts, and retained governance evidence live in workspaces.
 

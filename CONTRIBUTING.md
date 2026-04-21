@@ -1,6 +1,6 @@
 # Contributing
 
-Start with [`README.md`](README.md) and [`docs/README.md`](docs/README.md). This repository is governed by the current CI gates, so keep changes small and make sure the affected checks stay green.
+Start with [`README.md`](README.md), [`docs/README.md`](docs/README.md), and [`docs/architecture/overview.md`](docs/architecture/overview.md). This repository is governed by the current CI gates, so keep changes small and make sure the affected checks stay green.
 
 ## Local Setup
 

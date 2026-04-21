@@ -8,6 +8,10 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 - [Testing](guides/testing.md)
 - [Frontend Layout](guides/frontend-layout-guide.md)
 
+## Architecture
+
+- [Monorepo Overview](architecture/overview.md)
+
 ## Governance
 
 - [Architecture Layer Map](governance/architecture-layer-map.md)

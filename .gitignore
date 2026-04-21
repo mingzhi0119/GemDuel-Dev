@@ -46,3 +46,4 @@ NEXT_STEPS.md
 .env.*
 !.env.example
 
+.vercel/

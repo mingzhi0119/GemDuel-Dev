@@ -39,6 +39,7 @@ pnpm release:check
 ## Docs
 
 - Project docs index: [`docs/README.md`](docs/README.md)
+- Architecture overview: [`docs/architecture/overview.md`](docs/architecture/overview.md)
 - Quick start: [`docs/guides/quick-start.md`](docs/guides/quick-start.md)
 - Testing: [`docs/guides/testing.md`](docs/guides/testing.md)
 - Governance: [`docs/governance/`](docs/governance/)
