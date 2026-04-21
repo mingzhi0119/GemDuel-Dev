@@ -2,6 +2,8 @@
 
 Gem Duel is a React + TypeScript + Electron strategy game with local play, online play, and a governed desktop release workflow.
 
+Desktop release packaging is currently governed for Windows only. `electron-builder` publishes a Windows NSIS installer; web and Vite development stay cross-platform, but non-Windows desktop packaging is not a supported release target yet.
+
 ## Start
 
 ```bash
@@ -16,6 +18,7 @@ npm run electron:dev
 npm run build
 npm test
 npm run lint
+npm run seal-exclusions:check
 npm run boundaries:check
 npm run deps:check
 npm run desktop:check

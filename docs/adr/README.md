@@ -11,3 +11,4 @@ The ADR index tracks the irreversible architecture decisions that P3 governance 
 - [ADR-0005: Use Structured Release-health Events Across Main and Renderer](0005-release-health-event-schema.md)
 - [ADR-0006: Keep the Canonical Card Catalog as a Generated-in-repo Data File](0006-canonical-card-catalog.md)
 - [ADR-0007: Allow a Temporary Oversized Renderer Composition Surface](0007-renderer-composition-exceptions.md)
+- [ADR-0008: Govern Seal Coverage Exclusions as Reviewed Assets](0008-seal-coverage-exclusion-governance.md)

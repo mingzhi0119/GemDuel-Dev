@@ -271,4 +271,25 @@ describe('governance CLI wrappers', () => {
             });
         }
     });
+
+    it('passes the seal exclusion wrapper with the current reviewed exclusion set', () => {
+        const result = runNode(['scripts/check-seal-exclusion-governance.mjs']);
+
+        expect(result.status).toBe(0);
+        expect(result.stdout).toContain(
+            'Seal coverage exclusion governance check passed for 73 reviewed exclusions.'
+        );
+    });
+
+    it('fails the seal exclusion wrapper when review timestamps have expired', () => {
+        const result = runNode([
+            'scripts/check-seal-exclusion-governance.mjs',
+            '--today',
+            '2026-05-22',
+        ]);
+
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain('Seal coverage exclusion governance check failed:');
+        expect(result.stderr).toContain('is overdue for review');
+    });
 });

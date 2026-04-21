@@ -236,14 +236,6 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         if (safeLines.length > 0) {
             const action: GameAction = { type: 'TAKE_GEMS', payload: { coords: safeLines[0] } };
             return action;
-        } else if (remainingSpace > 0) {
-            // If no "perfect" line fits, take the longest line that fits the remaining space
-            // (findValidGemLines already returns 1 and 2 gem lines too)
-            const bestFitting = sortedLines.find((l) => l.length <= remainingSpace);
-            if (bestFitting) {
-                const action: GameAction = { type: 'TAKE_GEMS', payload: { coords: bestFitting } };
-                return action;
-            }
         }
 
         // If remainingSpace is 0 or no lines fit, we might be forced to skip or replenish

@@ -59,6 +59,9 @@ jobs:
             - name: Coverage Seal Gate
               run: npm run test:coverage
 
+            - name: Seal Exclusion Governance Gate
+              run: npm run seal-exclusions:check
+
             - name: Security Regression Suite
               run: npm run test:security
 

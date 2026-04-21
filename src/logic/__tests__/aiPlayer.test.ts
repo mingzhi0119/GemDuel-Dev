@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ABILITIES, GEM_TYPES } from '../../constants';
+import type { Card } from '../../types';
 import { computeAiAction } from '../ai/aiPlayer';
 import { createMockState } from './testHelpers';
 
@@ -368,6 +369,387 @@ describe('AI player phase routing', () => {
                 level: 2,
                 idx: 0,
                 goldCoords: { r: 1, c: 1 },
+            },
+        });
+    });
+
+    it('returns null when the draft selection surface has no buff pool to choose from', () => {
+        const action = computeAiAction(
+            createMockState({
+                phase: 'DRAFT_PHASE',
+                turn: 'p2',
+                draftPool: [],
+                p2DraftPool: [],
+            })
+        );
+
+        expect(action).toBeNull();
+    });
+
+    it('falls back to gold discard and returns null when steal or bonus targets are unavailable', () => {
+        const discardGold = computeAiAction(
+            createMockState({
+                phase: 'DISCARD_EXCESS_GEMS',
+                turn: 'p2',
+                inventories: {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 1, pearl: 0 },
+                },
+            })
+        );
+
+        const stealMissingTarget = computeAiAction(
+            createMockState({
+                phase: 'STEAL_ACTION',
+                turn: 'p1',
+                inventories: {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                },
+                market: { 1: [], 2: [], 3: [] },
+                playerReserved: { p1: [], p2: [] },
+                bag: [],
+            })
+        );
+
+        const bonusMissingTarget = computeAiAction(
+            createMockState({
+                phase: 'BONUS_ACTION',
+                bonusGemTarget: GEM_TYPES.BLUE,
+                board: Array.from({ length: 5 }, (_, r) =>
+                    Array.from({ length: 5 }, (_, c) => ({
+                        type: GEM_TYPES.EMPTY,
+                        uid: `${r}-${c}-empty`,
+                    }))
+                ),
+                market: { 1: [], 2: [], 3: [] },
+                playerReserved: { p1: [], p2: [] },
+                bag: [],
+            })
+        );
+
+        expect(discardGold).toEqual({ type: 'DISCARD_GEM', payload: 'gold' });
+        expect(stealMissingTarget).toBeNull();
+        expect(bonusMissingTarget).toBeNull();
+    });
+
+    it('normalizes joker color selection payloads for regular market cards and reserved cards', () => {
+        const regularMarketAction = computeAiAction(
+            createMockState({
+                phase: 'SELECT_CARD_COLOR',
+                pendingBuy: {
+                    card: {
+                        id: 'joker-market',
+                        level: 2,
+                        points: 2,
+                        cost: { blue: 0, white: 0, green: 0, black: 0, red: 0, pearl: 0, gold: 0 },
+                        bonusColor: 'gold',
+                        ability: ABILITIES.STEAL.id,
+                    },
+                    source: 'market',
+                    marketInfo: { level: 2, idx: 0 },
+                },
+            })
+        );
+
+        const reservedAction = computeAiAction(
+            createMockState({
+                phase: 'SELECT_CARD_COLOR',
+                pendingBuy: {
+                    card: {
+                        id: 'joker-reserved',
+                        level: 3,
+                        points: 3,
+                        cost: { blue: 0, white: 0, green: 0, black: 0, red: 0, pearl: 0, gold: 0 },
+                        bonusColor: 'gold',
+                        ability: ABILITIES.STEAL.id,
+                    },
+                    source: 'reserved',
+                    marketInfo: undefined,
+                },
+            })
+        );
+
+        expect(regularMarketAction).toEqual({
+            type: 'BUY_CARD',
+            payload: {
+                card: expect.objectContaining({ id: 'joker-market', bonusColor: 'red' }),
+                source: 'market',
+                marketInfo: { level: 2, idx: 0 },
+                randoms: { bountyHunterColor: 'red' },
+            },
+        });
+        expect(reservedAction).toEqual({
+            type: 'BUY_CARD',
+            payload: {
+                card: expect.objectContaining({ id: 'joker-reserved', bonusColor: 'red' }),
+                source: 'reserved',
+                marketInfo: undefined,
+                randoms: { bountyHunterColor: 'red' },
+            },
+        });
+    });
+
+    it('prefers higher-level cards on tied points and initiates joker purchases for gold bonus cards', () => {
+        const tiedPointAction = computeAiAction(
+            createMockState({
+                turn: 'p2',
+                inventories: {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 5, white: 5, green: 5, black: 5, red: 5, gold: 0, pearl: 0 },
+                },
+                market: {
+                    1: [
+                        {
+                            id: 'market-low',
+                            level: 1,
+                            cost: {
+                                blue: 0,
+                                white: 0,
+                                green: 0,
+                                black: 0,
+                                red: 0,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 2,
+                            bonusColor: 'blue',
+                        },
+                    ],
+                    2: [],
+                    3: [
+                        {
+                            id: 'market-high',
+                            level: 3,
+                            cost: {
+                                blue: 0,
+                                white: 0,
+                                green: 0,
+                                black: 0,
+                                red: 0,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 2,
+                            bonusColor: 'green',
+                        },
+                    ],
+                },
+                playerReserved: { p1: [], p2: [] },
+            })
+        );
+
+        const jokerInitiation = computeAiAction(
+            createMockState({
+                turn: 'p2',
+                inventories: {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 5, white: 5, green: 5, black: 5, red: 5, gold: 0, pearl: 0 },
+                },
+                market: { 1: [], 2: [], 3: [] },
+                playerReserved: {
+                    p1: [],
+                    p2: [
+                        {
+                            id: 'reserved-joker',
+                            level: 3,
+                            cost: {
+                                blue: 0,
+                                white: 0,
+                                green: 0,
+                                black: 0,
+                                red: 0,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 5,
+                            bonusColor: 'gold',
+                            ability: ABILITIES.STEAL.id,
+                        },
+                    ],
+                },
+            })
+        );
+
+        expect(tiedPointAction).toEqual({
+            type: 'BUY_CARD',
+            payload: {
+                card: expect.objectContaining({ id: 'market-high' }),
+                source: 'market',
+                marketInfo: { level: 3, idx: 0 },
+                randoms: { bountyHunterColor: 'red' },
+            },
+        });
+        expect(jokerInitiation).toEqual({
+            type: 'INITIATE_BUY_JOKER',
+            payload: {
+                card: expect.objectContaining({ id: 'reserved-joker' }),
+                source: 'reserved',
+                marketInfo: undefined,
+            },
+        });
+    });
+
+    it('covers reserve without gold, final replenish, and the no-action fallback null path', () => {
+        const fullReservedSlots: Card[] = [
+            {
+                id: 'reserved-slot-1',
+                level: 1,
+                cost: { blue: 1, white: 1, green: 1, black: 1, red: 1, pearl: 0, gold: 0 },
+                points: 0,
+                bonusColor: 'blue',
+            },
+            {
+                id: 'reserved-slot-2',
+                level: 1,
+                cost: { blue: 1, white: 1, green: 1, black: 1, red: 1, pearl: 0, gold: 0 },
+                points: 0,
+                bonusColor: 'green',
+            },
+            {
+                id: 'reserved-slot-3',
+                level: 1,
+                cost: { blue: 1, white: 1, green: 1, black: 1, red: 1, pearl: 0, gold: 0 },
+                points: 0,
+                bonusColor: 'red',
+            },
+        ];
+
+        const reserveWithoutGold = computeAiAction(
+            createMockState({
+                bag: [],
+                market: {
+                    1: [],
+                    2: [],
+                    3: [
+                        {
+                            id: 'market-three',
+                            level: 3,
+                            cost: {
+                                blue: 9,
+                                white: 9,
+                                green: 9,
+                                black: 9,
+                                red: 9,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 4,
+                            bonusColor: 'blue',
+                        },
+                    ],
+                },
+                board: Array.from({ length: 5 }, (_, r) =>
+                    Array.from({ length: 5 }, (_, c) => ({
+                        type: GEM_TYPES.EMPTY,
+                        uid: `${r}-${c}-empty`,
+                    }))
+                ),
+            })
+        );
+
+        const replenishFallback = computeAiAction(
+            createMockState({
+                bag: [{ type: GEM_TYPES.GREEN, uid: 'bag-green' }],
+                market: { 1: [], 2: [], 3: [] },
+                playerReserved: { p1: fullReservedSlots, p2: [] },
+                board: Array.from({ length: 5 }, (_, r) =>
+                    Array.from({ length: 5 }, (_, c) => ({
+                        type: GEM_TYPES.EMPTY,
+                        uid: `${r}-${c}-empty`,
+                    }))
+                ),
+            })
+        );
+
+        const noAction = computeAiAction(
+            createMockState({
+                bag: [],
+                market: { 1: [], 2: [], 3: [] },
+                playerReserved: { p1: fullReservedSlots, p2: [] },
+                board: Array.from({ length: 5 }, (_, r) =>
+                    Array.from({ length: 5 }, (_, c) => ({
+                        type: GEM_TYPES.EMPTY,
+                        uid: `${r}-${c}-empty`,
+                    }))
+                ),
+            })
+        );
+
+        expect(reserveWithoutGold).toEqual({
+            type: 'RESERVE_CARD',
+            payload: {
+                card: expect.objectContaining({ id: 'market-three' }),
+                level: 3,
+                idx: 0,
+            },
+        });
+        expect(replenishFallback).toEqual({
+            type: 'REPLENISH',
+            payload: { randoms: { expansionColor: 'red', extortionColor: 'blue' } },
+        });
+        expect(noAction).toBeNull();
+    });
+
+    it('finds diagonal gem lines while filtering out gold cells and board-edge overflows', () => {
+        const action = computeAiAction(
+            createMockState({
+                turn: 'p2',
+                inventories: {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                },
+                board: [
+                    [
+                        GEM_TYPES.RED,
+                        GEM_TYPES.GOLD,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                    ],
+                    [
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.GREEN,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                    ],
+                    [
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.BLUE,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                    ],
+                    [
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                    ],
+                    [
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                        GEM_TYPES.EMPTY,
+                    ],
+                ].map((row, r) => row.map((type, c) => ({ type, uid: `${r}-${c}-${type.id}` }))),
+                bag: [],
+                market: { 1: [], 2: [], 3: [] },
+                playerReserved: { p1: [], p2: [] },
+            })
+        );
+
+        expect(action).toEqual({
+            type: 'TAKE_GEMS',
+            payload: {
+                coords: [
+                    { r: 0, c: 0 },
+                    { r: 1, c: 1 },
+                    { r: 2, c: 2 },
+                ],
             },
         });
     });

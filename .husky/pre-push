@@ -1,0 +1,8 @@
+if [ "$SKIP_GIT_GATES" = "1" ]; then
+  echo "Skipping pre-push gates because SKIP_GIT_GATES=1"
+  exit 0
+fi
+
+npm run typecheck
+npm run lint
+npm test -- --run

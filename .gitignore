@@ -26,6 +26,7 @@ pnpm-debug.log*
 # Testing
 coverage/
 artifacts/
+tmp-release-health-*/
 
 # Documentation & Reports
 GEMINI.md

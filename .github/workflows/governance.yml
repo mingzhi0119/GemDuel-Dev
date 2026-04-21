@@ -54,6 +54,9 @@ jobs:
             - name: Coverage Seal Gate
               run: npm run test:coverage
 
+            - name: Seal Exclusion Governance Gate
+              run: npm run seal-exclusions:check
+
             - name: Release Health Checklist Gate
               run: npm run release:check
 
