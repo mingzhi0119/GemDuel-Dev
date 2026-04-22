@@ -4,17 +4,24 @@
  * Handles royal card selection and related abilities
  */
 
-import { ABILITIES, GAME_PHASES, GEM_TYPES } from '../../constants';
-import { addFeedback, addPrivilege } from '../stateHelpers';
+import { GAME_PHASES } from '../../constants';
+import { addFeedback } from '../stateHelpers';
+import {
+    clearAbilityResolution,
+    continueAbilityResolution,
+    getAbilityResolutionNextPlayer,
+    getCardAbilitySnapshot,
+    startRoyalAbilityResolution,
+} from './abilityResolution';
 import { finalizeTurn } from '../turnManager';
-import { GameState, SelectRoyalPayload, CardAbility } from '../../types';
+import { GameState, SelectRoyalPayload } from '../../types';
 
 export const handleForceRoyalSelection = (state: GameState): GameState => {
     state.phase = GAME_PHASES.SELECT_ROYAL;
     state.nextPlayerAfterRoyal = state.turn === 'p1' ? 'p2' : 'p1';
     state.pendingReserve = null;
     state.pendingBuy = null;
-    state.bonusGemTarget = null;
+    clearAbilityResolution(state);
     return state;
 };
 
@@ -29,61 +36,13 @@ export const handleSelectRoyalCard = (state: GameState, payload: SelectRoyalPayl
     // Add crown feedback
     if (card.crowns && card.crowns > 0) addFeedback(state, player, 'crown', card.crowns);
 
-    // Determine next turn based on abilities
-    const abilities = Array.isArray(card.ability)
-        ? card.ability
-        : card.ability
-          ? [card.ability]
-          : [];
     const nextTurn = state.nextPlayerAfterRoyal || (player === 'p1' ? 'p2' : 'p1');
+    startRoyalAbilityResolution(state, nextTurn, getCardAbilitySnapshot(card));
 
-    // AGAIN ability: schedule an extra turn after the royal and any forced cleanup fully resolve.
-    if (abilities.includes(ABILITIES.AGAIN.id as CardAbility)) {
-        state.pendingExtraTurn = true;
+    if (continueAbilityResolution(state) === 'waiting') {
+        return state;
     }
 
-    // BONUS_GEM ability: take a gem
-    if (abilities.includes(ABILITIES.BONUS_GEM.id as CardAbility)) {
-        const hasGem = state.board.some((row) => row.some((g) => g.type.id === card.bonusColor));
-        if (hasGem) {
-            state.phase = GAME_PHASES.BONUS_ACTION;
-            state.bonusGemTarget =
-                GEM_TYPES[card.bonusColor.toUpperCase() as keyof typeof GEM_TYPES];
-            if (!state.nextPlayerAfterRoyal) state.nextPlayerAfterRoyal = nextTurn;
-            return state;
-        } else {
-            state.toastMessage = 'No matching gem available - Skill skipped';
-        }
-    }
-
-    // STEAL ability: steal gem from opponent
-    if (abilities.includes(ABILITIES.STEAL.id as CardAbility)) {
-        const opponent = player === 'p1' ? 'p2' : 'p1';
-        const oppBuff = state.playerBuffs?.[opponent];
-
-        // Check if opponent has Pacifist buff
-        if (oppBuff?.effects?.passive?.immuneNegative) {
-            state.toastMessage = 'Steal blocked by Pacifist!';
-        } else {
-            const hasStealable = Object.entries(state.inventories[opponent]).some(
-                ([key, count]) => key !== 'gold' && count > 0
-            );
-
-            if (hasStealable) {
-                state.phase = GAME_PHASES.STEAL_ACTION;
-                if (!state.nextPlayerAfterRoyal) state.nextPlayerAfterRoyal = nextTurn;
-                return state;
-            } else {
-                state.toastMessage = 'No stealable gem from opponent - Skill skipped';
-            }
-        }
-    }
-
-    // SCROLL ability: gain privilege
-    if (abilities.includes(ABILITIES.SCROLL.id as CardAbility)) {
-        addPrivilege(state, player);
-    }
-
-    finalizeTurn(state, nextTurn);
+    finalizeTurn(state, getAbilityResolutionNextPlayer(state, nextTurn));
     return state;
 };

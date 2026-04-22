@@ -58,6 +58,8 @@ export type GemInventoryKey = keyof GemInventory;
  * Card ability types
  */
 export type CardAbility = 'again' | 'steal' | 'scroll' | 'bonus_gem' | 'none';
+export type EffectiveCardAbility = Exclude<CardAbility, 'none'>;
+export type PendingAbilityResolution = Exclude<CardAbility, 'again' | 'none'>;
 
 /**
  * Standard development card
@@ -142,6 +144,7 @@ export interface BuffEffects {
         buyReservedBonus?: number;
         hoarderBonus?: boolean;
         stealReserved?: boolean;
+        echoReservoir?: boolean;
     };
     active?: string;
     winCondition?: {
@@ -172,6 +175,22 @@ export interface BuffRuntimeState {
     envoyTriggered?: boolean;
     hasReserved?: boolean;
     l3PurchasedCount?: number;
+    echoReservoirStoredAbilities?: EffectiveCardAbility[];
+    echoReservoirStoredBonusColor?: BounsColor;
+}
+
+export interface DeferredEchoReservoirWrite {
+    holder: PlayerKey;
+    abilities: EffectiveCardAbility[];
+    bonusColor?: BounsColor;
+}
+
+export interface AbilityResolutionState {
+    nextPlayer: PlayerKey;
+    pending: PendingAbilityResolution[];
+    resolved: EffectiveCardAbility[];
+    bonusGemColor?: BounsColor;
+    deferredEchoWrite?: DeferredEchoReservoirWrite;
 }
 
 /**
@@ -331,6 +350,7 @@ export interface GameState {
     } | null;
     nextPlayerAfterRoyal: PlayerKey | null;
     pendingExtraTurn: boolean;
+    abilityResolution: AbilityResolutionState | null;
 }
 
 // ============================================================================

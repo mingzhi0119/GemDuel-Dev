@@ -29,12 +29,22 @@ export const generateGameStateHash = (state: GameState | null): string => {
             2: state.market[2].map((c) => c?.id || 'null'),
             3: state.market[3].map((c) => c?.id || 'null'),
         },
+        bonusGemTarget: state.bonusGemTarget?.id || null,
+        nextPlayerAfterRoyal: state.nextPlayerAfterRoyal,
+        pendingExtraTurn: state.pendingExtraTurn,
+        abilityResolution: state.abilityResolution,
         royalMilestones: state.royalMilestones,
         extraPoints: state.extraPoints,
         extraCrowns: state.extraCrowns,
         playerBuffs: {
-            p1: state.playerBuffs.p1?.id,
-            p2: state.playerBuffs.p2?.id,
+            p1: {
+                id: state.playerBuffs.p1?.id,
+                state: state.playerBuffs.p1?.state || null,
+            },
+            p2: {
+                id: state.playerBuffs.p2?.id,
+                state: state.playerBuffs.p2?.state || null,
+            },
         },
         playerTurnCounts: state.playerTurnCounts,
     };

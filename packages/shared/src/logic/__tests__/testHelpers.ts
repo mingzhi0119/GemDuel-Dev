@@ -28,6 +28,7 @@ export const createMockState = (overrides: Partial<GameState> = {}): GameState =
         }
         if (!draft.extraPoints) draft.extraPoints = { p1: 0, p2: 0 };
         if (!draft.extraCrowns) draft.extraCrowns = { p1: 0, p2: 0 };
+        if (draft.abilityResolution === undefined) draft.abilityResolution = null;
 
         // Apply overrides
         Object.assign(draft, overrides);

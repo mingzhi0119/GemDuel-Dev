@@ -210,6 +210,16 @@ export const BUFFS = {
             winCondition: getBuffWinCondition('all_seeing_eye'),
         },
     },
+    ECHO_RESERVOIR: {
+        id: 'echo_reservoir',
+        level: 3,
+        category: 'intel',
+        label: getBuffText('echo_reservoir', 'en').label,
+        desc: getBuffText('echo_reservoir', 'en').desc,
+        effects: {
+            passive: { echoReservoir: true },
+        },
+    },
     WONDER_ARCHITECT: {
         id: 'wonder_architect',
         level: 3,

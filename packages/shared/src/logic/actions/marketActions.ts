@@ -4,11 +4,19 @@
  * Handles card purchase and reservation mechanics
  */
 
-import { GEM_TYPES, ABILITIES, GAME_PHASES } from '../../constants';
+import { GAME_PHASES } from '../../constants';
 import { calculateTransaction } from '../../utils';
-import { addFeedback, addPrivilege } from '../stateHelpers';
+import { addFeedback } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
 import { getPlayerScore, getCrownCount } from '../selectors';
+import {
+    continueAbilityResolution,
+    createDeferredEchoReservoirWrite,
+    getAbilityResolutionNextPlayer,
+    getCardAbilitySnapshot,
+    getStoredEchoReservoirSnapshot,
+    startPurchaseAbilityResolution,
+} from './abilityResolution';
 import {
     applyFirstReserveBonus,
     applyReserveBonusGem,
@@ -27,7 +35,6 @@ import {
     BuyCardPayload,
     ReserveCardPayload,
     ReserveDeckPayload,
-    CardAbility,
     InitiateBuyJokerPayload,
     InitiateReservePayload,
     InitiateReserveDeckPayload,
@@ -170,60 +177,17 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
     // Determine next turn
     const nextTurn: PlayerKey = player === 'p1' ? 'p2' : 'p1';
-    const abilities = Array.isArray(card.ability)
-        ? card.ability
-        : card.ability
-          ? [card.ability]
-          : [];
+    const cardSnapshot = getCardAbilitySnapshot(card);
+    const echoSnapshot = getStoredEchoReservoirSnapshot(buff);
+    const deferredEchoWrite = createDeferredEchoReservoirWrite(state, player, card);
 
-    // AGAIN ability: schedule an extra turn after all mandatory end-of-turn resolutions complete.
-    if (abilities.includes(ABILITIES.AGAIN.id as CardAbility)) {
-        state.pendingExtraTurn = true;
+    startPurchaseAbilityResolution(state, nextTurn, cardSnapshot, echoSnapshot, deferredEchoWrite);
+
+    if (continueAbilityResolution(state) === 'waiting') {
+        return state;
     }
 
-    // STEAL ability: steal gem from opponent
-    if (abilities.includes(ABILITIES.STEAL.id as CardAbility)) {
-        const opponent = player === 'p1' ? 'p2' : 'p1';
-        const oppBuff = state.playerBuffs?.[opponent];
-
-        // Check if opponent has Pacifist buff
-        if (oppBuff?.effects?.passive?.immuneNegative) {
-            state.toastMessage = 'Steal blocked by Pacifist!';
-        } else {
-            const hasStealable = Object.entries(state.inventories[opponent]).some(
-                ([key, count]) => key !== 'gold' && count > 0
-            );
-
-            if (hasStealable) {
-                state.phase = GAME_PHASES.STEAL_ACTION;
-                // Save the default turn handoff; pendingExtraTurn is applied later in finalizeTurn.
-                state.nextPlayerAfterRoyal = nextTurn;
-                return state;
-            } else {
-                state.toastMessage = 'No stealable gem from opponent - Skill skipped';
-            }
-        }
-    }
-
-    // BONUS_GEM ability: take a gem
-    if (abilities.includes(ABILITIES.BONUS_GEM.id as CardAbility)) {
-        const targetColor = String(card.bonusColor).toUpperCase();
-        const hasGem = state.board.some((row) => row.some((g) => g.type.id === card.bonusColor));
-        if (hasGem) {
-            state.phase = GAME_PHASES.BONUS_ACTION;
-            state.bonusGemTarget = GEM_TYPES[targetColor as keyof typeof GEM_TYPES];
-            return state;
-        } else {
-            state.toastMessage = 'No matching gem available - Skill skipped';
-        }
-    }
-
-    // SCROLL ability: gain privilege
-    if (abilities.includes(ABILITIES.SCROLL.id)) {
-        addPrivilege(state, player);
-    }
-
-    finalizeTurn(state, nextTurn);
+    finalizeTurn(state, getAbilityResolutionNextPlayer(state, nextTurn));
     return state;
 };
 

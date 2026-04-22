@@ -11,6 +11,7 @@
 import { GEM_TYPES, SPIRAL_ORDER, GAME_PHASES } from '../../constants';
 import { addFeedback, addPrivilege } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
+import { continueAbilityResolution, getAbilityResolutionNextPlayer } from './abilityResolution';
 import {
     GameState,
     GemColor,
@@ -191,7 +192,17 @@ export const handleTakeBonusGem = (state: GameState, payload: BonusGemPayload): 
     state.inventories[state.turn][gemType] = (state.inventories[state.turn][gemType] || 0) + 1;
     state.bonusGemTarget = null;
 
-    finalizeTurn(state, state.nextPlayerAfterRoyal || (state.turn === 'p1' ? 'p2' : 'p1'));
+    if (continueAbilityResolution(state) === 'waiting') {
+        return state;
+    }
+
+    finalizeTurn(
+        state,
+        getAbilityResolutionNextPlayer(
+            state,
+            state.nextPlayerAfterRoyal || (state.turn === 'p1' ? 'p2' : 'p1')
+        )
+    );
     return state;
 };
 
@@ -219,7 +230,10 @@ export const handleDiscardGem = (state: GameState, payload: string): GameState =
         const totalGems = Object.values(currentInv).reduce((a, b) => a + b, 0);
         const gemCap = state.playerBuffs?.[state.turn]?.effects?.passive?.gemCap || 10;
         if (totalGems <= gemCap) {
-            const nextP = state.nextPlayerAfterRoyal || (state.turn === 'p1' ? 'p2' : 'p1');
+            const nextP = getAbilityResolutionNextPlayer(
+                state,
+                state.nextPlayerAfterRoyal || (state.turn === 'p1' ? 'p2' : 'p1')
+            );
             finalizeTurn(state, nextP, currentInv);
         }
     }
@@ -251,6 +265,13 @@ export const handleStealGem = (state: GameState, payload: StealGemPayload): Game
     addFeedback(state, player, gemId, 1);
     addFeedback(state, opponent, gemId, -1);
 
-    finalizeTurn(state, state.nextPlayerAfterRoyal || opponent);
+    if (continueAbilityResolution(state) === 'waiting') {
+        return state;
+    }
+
+    finalizeTurn(
+        state,
+        getAbilityResolutionNextPlayer(state, state.nextPlayerAfterRoyal || opponent)
+    );
     return state;
 };

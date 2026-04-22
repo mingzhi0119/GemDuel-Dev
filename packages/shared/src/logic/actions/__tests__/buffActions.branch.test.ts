@@ -37,6 +37,14 @@ describe('buffActions branch coverage', () => {
 
         expect(state.p1SelectedBuff?.id).toBe(BUFFS.COLOR_PREFERENCE.id);
         expect(state.playerBuffs.p1.state?.discountColor).toBe('blue');
+        expect(state.playerTableau.p1).toEqual([
+            expect.objectContaining({
+                id: 'buff-color-pref-p1-blue',
+                bonusColor: 'blue',
+                bonusCount: 1,
+                isBuff: true,
+            }),
+        ]);
         expect(state.turn).toBe('p2');
         expect(state.p2DraftPool).toEqual([
             BUFFS.COLOR_PREFERENCE.id,
@@ -46,8 +54,13 @@ describe('buffActions branch coverage', () => {
         ]);
     });
 
-    it('finalizes draft setup and applies p2 init buffs when the last pick resolves', () => {
+    it('finalizes draft setup and applies p1/p2 init buffs when the last pick resolves', () => {
         const pendingSetup = createGameSetupPayload('LOCAL_PVP');
+        pendingSetup.initRandoms.p1 = {
+            randomGems: [],
+            reserveCardLevel: 1,
+            preferenceColor: 'green',
+        };
         pendingSetup.initRandoms.p2 = {
             randomGems: ['red', 'blue', 'green', 'white', 'black'],
             reserveCardLevel: 1,
@@ -63,14 +76,24 @@ describe('buffActions branch coverage', () => {
         state.playerBuffs.p2 = JSON.parse(JSON.stringify(BUFFS.BACKUP_SUPPLY));
 
         handleSelectBuff(state, {
-            buffId: BUFFS.PRIVILEGE_FAVOR.id,
+            buffId: BUFFS.COLOR_PREFERENCE.id,
+            randomColor: 'green',
         });
 
         expect(state.phase).toBe(GAME_PHASES.IDLE);
         expect(state.turn).toBe('p1');
         expect(state.pendingSetup).toBeNull();
         expect(state.draftOrder).toEqual([]);
-        expect(state.p1SelectedBuff?.id).toBe(BUFFS.PRIVILEGE_FAVOR.id);
+        expect(state.p1SelectedBuff?.id).toBe(BUFFS.COLOR_PREFERENCE.id);
+        expect(state.playerBuffs.p1.state?.discountColor).toBe('green');
+        expect(state.playerTableau.p1).toEqual([
+            expect.objectContaining({
+                id: 'buff-color-pref-p1-green',
+                bonusColor: 'green',
+                bonusCount: 1,
+                isBuff: true,
+            }),
+        ]);
         expect(state.inventories.p2.red).toBe(1);
         expect(state.inventories.p2.blue).toBe(1);
         expect(state.extraAllocation.p2.red).toBe(1);

@@ -185,6 +185,17 @@ export const BUFF_COPY: BuffCopyMap = {
             desc: '展示 2 张额外 L3 卡。用黄金补足 3 级卡缺失费用时价值翻倍。',
         },
     },
+    echo_reservoir: {
+        level: 3,
+        en: {
+            label: 'Echo Reservoir',
+            desc: "Remember your opponent's last purchased card abilities. Each development-card purchase echoes that memory once, then clears it.",
+        },
+        zh: {
+            label: '蓄能回响',
+            desc: '记住对手上一张已购买发展卡的特殊能力。你每次购买发展卡时都会结算一次回响，并在结算后清空记忆。',
+        },
+    },
     wonder_architect: {
         level: 3,
         goal: { crowns: 13, disableSingleColor: true },
@@ -276,6 +287,7 @@ export const BUFF_ORDER_BY_LEVEL: Record<1 | 2 | 3, string[]> = {
         'royal_envoy',
         'double_agent',
         'all_seeing_eye',
+        'echo_reservoir',
         'wonder_architect',
         'minimalist',
         'pacifist',
