@@ -131,21 +131,22 @@ const BOUNDARY_SOURCE_ENTRIES = Object.freeze([
         owner: 'Domain Logic',
         validatorRefs: [
             'apps/desktop/src/app/io/safeReplayImport.ts',
-            'packages/shared/src/logic/replayImport.ts',
-            'packages/shared/src/logic/commandGate.ts',
+            'packages/shared/src/replay/reader.ts',
+            'packages/shared/src/replay/loader.ts',
+            'packages/shared/src/replay/schema.ts',
         ],
         contractRefs: [
             'packages/shared/src/types/boundary.ts',
-            'packages/shared/src/types/domain.ts',
+            'packages/shared/src/replay/types.ts',
         ],
-        reasonCodes: ['REPLAY_FILE_INVALID_SCHEMA'],
+        reasonCodes: ['REPLAY_FILE_INVALID_SCHEMA', 'UNSUPPORTED_REPLAY_VERSION'],
         runtimeSignals: ['REPLAY_BOUNDARY_REJECTED'],
         testRefs: [
             'apps/desktop/src/app/io/__tests__/safeReplayImport.test.ts',
-            'packages/shared/src/logic/__tests__/replayImport.test.ts',
+            'packages/shared/src/replay/__tests__/replayVNext.test.ts',
         ],
         failClosedBehavior:
-            'Schema-invalid or nondeterministic replay histories fail closed and are never imported.',
+            'Schema-invalid, legacy, or nondeterministic Replay vNext payloads fail closed and are never imported.',
     },
     {
         id: 'ipc-bridge',

@@ -5,6 +5,7 @@ import type {
     BoardCell,
     Buff,
     BuffInitPayload,
+    BuffLevel,
     GameAction,
     GameMode,
     InitDraftPayload,
@@ -23,6 +24,9 @@ export const BASIC_GEM_COLORS: BasicGemColor[] = ['red', 'green', 'blue', 'white
 
 export const getRandomBasicGemColor = (): BasicGemColor =>
     BASIC_GEM_COLORS[Math.floor(Math.random() * BASIC_GEM_COLORS.length)];
+
+export const isBuffLevel = (value: unknown): value is BuffLevel =>
+    value === 1 || value === 2 || value === 3;
 
 const buildBoard = (initialBoardFlat: BoardCell[]): BoardCell[][] => {
     const board: BoardCell[][] = [];
@@ -44,60 +48,104 @@ const createPlayerInitRandoms = (): PlayerInitRandoms => ({
     preferenceColor: getRandomBasicGemColor(),
 });
 
-const getLevelBuffs = (level: 1 | 2 | 3): Buff[] =>
+const getLevelBuffs = (level: BuffLevel): Buff[] =>
     (Object.values(BUFFS) as Buff[]).filter((buff) => buff.level === level);
 
-export const buildDraftPoolForLevel = (level: 1 | 2 | 3): string[] => {
+interface DraftCandidateOptions {
+    excludeBuffIds?: Set<string>;
+    excludeCategories?: Set<NonNullable<Buff['category']>>;
+    targetCount: number;
+}
+
+const buildCategoryDiverseDraftCandidates = (
+    level: BuffLevel,
+    {
+        excludeBuffIds = new Set<string>(),
+        excludeCategories = new Set<NonNullable<Buff['category']>>(),
+        targetCount,
+    }: DraftCandidateOptions
+): Buff[] => {
     const categoriesSeen = new Set<string>();
     const selectedBuffs: Buff[] = [];
     const shuffledPool = shuffleArray([...getLevelBuffs(level)]);
 
     for (const buff of shuffledPool) {
+        if (excludeBuffIds.has(buff.id)) continue;
+        if (buff.category && excludeCategories.has(buff.category)) continue;
         if (!buff.category || categoriesSeen.has(buff.category)) continue;
         categoriesSeen.add(buff.category);
         selectedBuffs.push(buff);
-        if (selectedBuffs.length === 3) break;
+        if (selectedBuffs.length === targetCount) {
+            return selectedBuffs;
+        }
     }
 
+    for (const buff of shuffledPool) {
+        if (excludeBuffIds.has(buff.id)) continue;
+        if (buff.category && excludeCategories.has(buff.category)) continue;
+        if (selectedBuffs.some((candidate) => candidate.id === buff.id)) continue;
+        selectedBuffs.push(buff);
+        if (selectedBuffs.length === targetCount) {
+            break;
+        }
+    }
+
+    return selectedBuffs;
+};
+
+export const buildDraftPoolForLevel = (level: BuffLevel): string[] => {
+    const selectedBuffs = buildCategoryDiverseDraftCandidates(level, { targetCount: 3 });
     return selectedBuffs.map((buff) => buff.id);
+};
+
+export const buildP2AsymmetricDraftPool = (
+    level: BuffLevel,
+    p1SelectedBuffId: string
+): string[] | undefined => {
+    const p1SelectedBuff = (Object.values(BUFFS) as Buff[]).find(
+        (buff) => buff.id === p1SelectedBuffId
+    );
+    if (!p1SelectedBuff) {
+        return undefined;
+    }
+
+    const excludeCategories = new Set<NonNullable<Buff['category']>>();
+    if (p1SelectedBuff.category) {
+        excludeCategories.add(p1SelectedBuff.category);
+    }
+
+    const generatedPool = buildCategoryDiverseDraftCandidates(level, {
+        excludeBuffIds: new Set([p1SelectedBuffId]),
+        excludeCategories,
+        targetCount: 3,
+    });
+
+    return [p1SelectedBuffId, ...generatedPool.map((buff) => buff.id)];
 };
 
 export const buildP2DraftPoolIndices = (
     buffLevel: number,
     selectedBuffId: string
 ): P2DraftPoolIndices | undefined => {
-    if (buffLevel !== 1 && buffLevel !== 2 && buffLevel !== 3) {
+    if (!isBuffLevel(buffLevel)) {
         return undefined;
     }
 
     const levelBuffs = getLevelBuffs(buffLevel);
-    const selectedBuff = levelBuffs.find((buff) => buff.id === selectedBuffId);
-    if (!selectedBuff?.category) {
+    const p2DraftPool = buildP2AsymmetricDraftPool(buffLevel, selectedBuffId);
+    if (!p2DraftPool || p2DraftPool.length !== 4) {
         return undefined;
     }
 
-    const selectedIndex = levelBuffs.findIndex((buff) => buff.id === selectedBuffId);
-    if (selectedIndex === -1) {
-        return undefined;
-    }
-
-    const finalIndices: number[] = [selectedIndex];
-    const categoriesSeen = new Set<string>();
-    const poolForP2 = levelBuffs.filter(
-        (buff) => buff.id !== selectedBuffId && buff.category !== selectedBuff.category
+    const finalIndices = p2DraftPool.map((buffId) =>
+        levelBuffs.findIndex((candidate) => candidate.id === buffId)
     );
-    const shuffledPool = shuffleArray([...poolForP2]);
 
-    for (const buff of shuffledPool) {
-        if (!buff.category || categoriesSeen.has(buff.category)) continue;
-        const idx = levelBuffs.findIndex((candidate) => candidate.id === buff.id);
-        if (idx === -1) continue;
-        categoriesSeen.add(buff.category);
-        finalIndices.push(idx);
-        if (finalIndices.length === 4) break;
+    if (finalIndices.some((idx) => idx === -1)) {
+        return undefined;
     }
 
-    return finalIndices.length === 4 ? (finalIndices as P2DraftPoolIndices) : undefined;
+    return finalIndices as P2DraftPoolIndices;
 };
 
 export const createGameSetupPayload = (

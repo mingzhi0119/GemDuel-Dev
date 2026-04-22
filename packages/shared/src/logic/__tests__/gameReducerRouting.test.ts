@@ -32,7 +32,7 @@ const handlerSpies = vi.hoisted(() => ({
     handleSelectBuff: vi.fn(),
     handleInit: vi.fn(() => reducerControls.bootstrapState),
     handleInitDraft: vi.fn(() => reducerControls.bootstrapState),
-    handleRerollBuffs: vi.fn(),
+    handleRerollDraftPool: vi.fn(),
     handleDebugAddCrowns: vi.fn(),
     handleDebugAddPoints: vi.fn(),
     handleDebugAddPrivilege: vi.fn(),
@@ -84,7 +84,7 @@ vi.mock('../actions/buffActions', () => ({
     handleSelectBuff: handlerSpies.handleSelectBuff,
     handleInit: handlerSpies.handleInit,
     handleInitDraft: handlerSpies.handleInitDraft,
-    handleRerollBuffs: handlerSpies.handleRerollBuffs,
+    handleRerollDraftPool: handlerSpies.handleRerollDraftPool,
 }));
 
 vi.mock('../actions/miscActions', () => ({
@@ -389,8 +389,8 @@ describe('gameReducer phase 3 routing', () => {
                 spy: 'handleDebugAddPrivilege',
             },
             {
-                action: { type: 'DEBUG_REROLL_BUFFS', payload: { level: 3 } },
-                spy: 'handleRerollBuffs',
+                action: { type: 'REROLL_DRAFT_POOL', payload: { level: 3 } },
+                spy: 'handleRerollDraftPool',
             },
             { action: { type: 'PEEK_DECK', payload: { level: 1 } }, spy: 'handlePeekDeck' },
             { action: { type: 'CLOSE_MODAL' }, spy: 'handleCloseModal' },

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { GameState, GemCoord, GameAction } from '@gemduel/shared/types';
+import { buildReplayFullSync, buildReplayRecorderFromHistory } from '@gemduel/shared/replay';
 import { useAIController } from './useAIController';
 import { useGameState } from './useGameState';
 import { useGameNetwork } from './useGameNetwork';
@@ -11,10 +12,15 @@ export const useGameLogic = (
     shouldConnect: boolean = false,
     targetIP: string = 'localhost',
     isReviewing: boolean = false,
-    targetPort: number = 9000
+    targetPort: number = 9000,
+    appVersion: string = 'dev'
 ) => {
     // 1. Core State Management
     const { gameState, dispatch, historyControls } = useGameState();
+    const localReplayRecorder = useMemo(
+        () => buildReplayRecorderFromHistory(historyControls.history, appVersion),
+        [appVersion, historyControls.history]
+    );
 
     // 2. Network & Authority Layer
     const { online, networkDispatch } = useGameNetwork(
@@ -23,7 +29,8 @@ export const useGameLogic = (
         historyControls.clearAndInit,
         shouldConnect,
         targetIP,
-        targetPort
+        targetPort,
+        localReplayRecorder
     );
 
     // 3. User Interaction Handlers
@@ -42,8 +49,15 @@ export const useGameLogic = (
     useAIController(gameState, networkDispatch, isViewingHistory);
 
     // 5. History Flattening
-    useHistoryFlattening(gameState, historyControls);
+    useHistoryFlattening(gameState, historyControls, historyControls.historySource === 'live');
     const playableHistoryControls = usePlayableHistoryControls(gameState.mode, historyControls);
+    const currentReplay = useMemo(() => {
+        const recorder =
+            gameState.mode === 'ONLINE_MULTIPLAYER' && !gameState.isHost
+                ? online.authoritativeReplayRecorder ?? null
+                : localReplayRecorder;
+        return recorder?.init ? buildReplayFullSync(recorder, gameState).replay : null;
+    }, [gameState, localReplayRecorder, online.authoritativeReplayRecorder]);
 
     const result = useMemo(
         () => ({
@@ -63,8 +77,19 @@ export const useGameLogic = (
             historyControls: playableHistoryControls,
 
             online,
+
+            replay: {
+                currentReplay,
+            },
         }),
-        [gameState, historyControls.importHistory, interactions, online, playableHistoryControls]
+        [
+            currentReplay,
+            gameState,
+            historyControls.importHistory,
+            interactions,
+            online,
+            playableHistoryControls,
+        ]
     );
 
     return result;

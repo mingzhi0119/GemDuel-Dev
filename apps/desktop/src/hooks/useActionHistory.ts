@@ -4,9 +4,11 @@ import { GameAction } from '@gemduel/shared/types';
 export const useActionHistory = () => {
     const [history, setHistory] = useState<GameAction[]>([]);
     const [currentIndex, setCurrentIndex] = useState(-1); // -1 represents the initial state
+    const [historySource, setHistorySource] = useState<'live' | 'replay-import'>('live');
 
     const recordAction = useCallback(
         (action: GameAction) => {
+            setHistorySource('live');
             setHistory((prev) => {
                 // If we are in the past, branch off by discarding the future
                 const newHistory = prev.slice(0, currentIndex + 1);
@@ -41,17 +43,20 @@ export const useActionHistory = () => {
     );
 
     const importHistory = useCallback((newHistory: GameAction[]) => {
+        setHistorySource('replay-import');
         setHistory(newHistory);
         setCurrentIndex(newHistory.length - 1);
     }, []);
 
     const clearAndInit = useCallback((action: GameAction) => {
+        setHistorySource('live');
         setHistory([action]);
         setCurrentIndex(0);
     }, []);
 
     return {
         history,
+        historySource,
         currentIndex,
         recordAction,
         undo,

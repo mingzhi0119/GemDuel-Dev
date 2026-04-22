@@ -6,6 +6,7 @@ import {
     isBootstrapAction,
     isBuyCardPayload,
     isCoord,
+    isDraftLevel,
     isGameSetupPayload,
     isGemColor,
     isInteger,
@@ -46,6 +47,9 @@ describe('actionValidation guards', () => {
         expect(isInteger(3.5)).toBe(false);
         expect(isLevel(2)).toBe(true);
         expect(isLevel(4)).toBe(false);
+        expect(isDraftLevel(0)).toBe(true);
+        expect(isDraftLevel(3)).toBe(true);
+        expect(isDraftLevel(4)).toBe(false);
         expect(isPlayerKey('p1')).toBe(true);
         expect(isPlayerKey('p3')).toBe(false);
         expect(isGemColor('gold')).toBe(true);
@@ -143,10 +147,13 @@ describe('actionValidation guards', () => {
             buffLevel: 1 as const,
         };
         const state = createMockState();
+        const legacyReplayState = { ...state };
+        delete (legacyReplayState as Partial<typeof legacyReplayState>).p2DraftLevel;
 
         expect(isGameSetupPayload(setup)).toBe(true);
         expect(isInitDraftPayload(draft)).toBe(true);
         expect(isLikelyGameState(state)).toBe(true);
+        expect(isLikelyGameState(legacyReplayState)).toBe(true);
         expect(
             isBootstrapAction({
                 type: 'INIT',
@@ -243,7 +250,7 @@ describe('actionValidation guards', () => {
         ).toBe(false);
         expect(
             isRuntimeActionShapeValid({
-                type: 'DEBUG_REROLL_BUFFS',
+                type: 'REROLL_DRAFT_POOL',
                 payload: { level: 7 },
             })
         ).toBe(false);
@@ -338,7 +345,7 @@ describe('actionValidation guards', () => {
         ).toBe(true);
         expect(
             isRuntimeActionShapeValid({
-                type: 'DEBUG_REROLL_BUFFS',
+                type: 'REROLL_DRAFT_POOL',
                 payload: {},
             })
         ).toBe(true);

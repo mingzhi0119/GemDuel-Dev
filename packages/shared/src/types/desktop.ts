@@ -39,6 +39,15 @@ export interface ReleaseHealthSnapshot {
     >;
 }
 
+export interface SaveReplayToFolderPayload {
+    fileName: string;
+    contents: string;
+}
+
+export interface SaveReplayToFolderResult {
+    path: string;
+}
+
 export interface ElectronBridge {
     getAppVersion: () => Promise<string>;
     getRuntimeIceServers: () => Promise<RTCIceServer[]>;
@@ -49,6 +58,9 @@ export interface ElectronBridge {
     getLanMatchmakingState: () => Promise<LanMatchmakingState>;
     startLanMatchmaking: () => Promise<LanMatchmakingState>;
     cancelLanMatchmaking: () => Promise<LanMatchmakingState>;
+    saveReplayToFolder?: (
+        payload: SaveReplayToFolderPayload
+    ) => Promise<SaveReplayToFolderResult>;
     selectLanPregameMode: (payload: SelectLanPregameModePayload) => Promise<LanMatchmakingState>;
     confirmLanPregameStart: (
         payload: ConfirmLanPregameStartPayload

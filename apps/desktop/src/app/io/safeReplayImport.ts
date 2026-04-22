@@ -1,7 +1,15 @@
-import type { BoundaryFailure, ReplayFile, ReplayImportErrorCode } from '@gemduel/shared/types';
-import { MAX_REPLAY_FILE_BYTES, parseReplayFile } from '@gemduel/shared/logic/replayImport';
+import {
+    ReplayFormatError,
+    loadReplaySession,
+    readReplayVNext,
+    type LoadedReplaySession,
+    type ReplayReadDiagnostics,
+    type ReplayVNext,
+} from '@gemduel/shared/replay';
+import type { BoundaryFailure, ReplayImportErrorCode } from '@gemduel/shared/types';
 
 const ALLOWED_REPLAY_MIME_TYPES = new Set(['application/json', 'text/json']);
+export const MAX_REPLAY_FILE_BYTES = 512 * 1024;
 
 export interface ReplayImportFile {
     name: string;
@@ -13,7 +21,9 @@ export interface ReplayImportFile {
 export type ReplayImportResult =
     | {
           ok: true;
-          replay: ReplayFile;
+          replay: ReplayVNext;
+          session: LoadedReplaySession;
+          diagnostics: ReplayReadDiagnostics;
       }
     | BoundaryFailure<ReplayImportErrorCode>;
 
@@ -53,24 +63,32 @@ export const validateReplayFileBoundary = (
 
 export const parseReplayTextBoundary = (rawText: string): ReplayImportResult => {
     try {
-        const parsedJson = JSON.parse(rawText);
-        const replay = parseReplayFile(parsedJson);
-        if (!replay.ok) {
+        const { replay, diagnostics } = readReplayVNext(rawText, {
+            verifySummary: 'sample',
+        });
+        const session = loadReplaySession(replay);
+
+        return {
+            ok: true,
+            replay,
+            session,
+            diagnostics,
+        };
+    } catch (error) {
+        if (error instanceof ReplayFormatError) {
             return {
                 ok: false,
                 boundaryId: 'replay-schema-deterministic-replay',
-                code: 'REPLAY_FILE_INVALID_SCHEMA',
-                message: 'Replay JSON did not satisfy the expected replay contract.',
-                detail: replay.reason,
+                code: error.code,
+                message: error.message,
+                detail:
+                    error.detectedVersion !== undefined
+                        ? `detectedVersion=${error.detectedVersion}`
+                        : undefined,
                 runtimeSignal: 'REPLAY_BOUNDARY_REJECTED',
             };
         }
 
-        return {
-            ok: true,
-            replay: replay.replay,
-        };
-    } catch (error) {
         return {
             ok: false,
             boundaryId: 'replay-local-file-read',

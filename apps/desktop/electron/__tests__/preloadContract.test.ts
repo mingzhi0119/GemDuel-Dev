@@ -65,6 +65,10 @@ describe('electron preload contract', () => {
             revokeRuntimeRelayProfile: () => Promise<string>;
             getReleaseHealthSnapshot: () => Promise<string>;
             getLanMatchmakingState: () => Promise<string>;
+            saveReplayToFolder: (payload: {
+                fileName: string;
+                contents: string;
+            }) => Promise<string>;
             startLanMatchmaking: () => Promise<string>;
             cancelLanMatchmaking: () => Promise<string>;
             selectLanPregameMode: (payload: {
@@ -94,6 +98,12 @@ describe('electron preload contract', () => {
             'get-release-health-snapshot'
         );
         await expect(bridge.getLanMatchmakingState()).resolves.toBe('get-lan-matchmaking-state');
+        await expect(
+            bridge.saveReplayToFolder({
+                fileName: 'GemDuel_Replay_v1_test.json',
+                contents: '{"schemaVersion":"1.0"}',
+            })
+        ).resolves.toBe('save-replay-to-folder');
         await expect(bridge.startLanMatchmaking()).resolves.toBe('start-lan-matchmaking');
         await expect(bridge.cancelLanMatchmaking()).resolves.toBe('cancel-lan-matchmaking');
         await expect(
@@ -137,6 +147,10 @@ describe('electron preload contract', () => {
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('revoke-runtime-relay-profile');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-release-health-snapshot');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-lan-matchmaking-state');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('save-replay-to-folder', {
+            fileName: 'GemDuel_Replay_v1_test.json',
+            contents: '{"schemaVersion":"1.0"}',
+        });
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('start-lan-matchmaking');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('cancel-lan-matchmaking');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('select-lan-pregame-mode', {

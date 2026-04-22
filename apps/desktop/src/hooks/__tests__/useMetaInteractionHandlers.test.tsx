@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
     canActionRunInPhase: vi.fn(),
     buildGameStartAction: vi.fn(),
     buildPeekDeckAction: vi.fn(),
+    buildRerollDraftPoolAction: vi.fn(),
     buildSelectBuffAction: vi.fn(),
     buildSelectRoyalAction: vi.fn(),
     getRandomBasicGemColor: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock('@gemduel/shared/logic/fsm', () => ({
 vi.mock('@gemduel/shared/logic/interactionCommands', () => ({
     buildGameStartAction: (...args: unknown[]) => mocks.buildGameStartAction(...args),
     buildPeekDeckAction: (...args: unknown[]) => mocks.buildPeekDeckAction(...args),
+    buildRerollDraftPoolAction: (...args: unknown[]) => mocks.buildRerollDraftPoolAction(...args),
     buildSelectBuffAction: (...args: unknown[]) => mocks.buildSelectBuffAction(...args),
     buildSelectRoyalAction: (...args: unknown[]) => mocks.buildSelectRoyalAction(...args),
 }));
@@ -66,6 +68,7 @@ describe('useMetaInteractionHandlers', () => {
         mocks.canActionRunInPhase.mockReset();
         mocks.buildGameStartAction.mockReset();
         mocks.buildPeekDeckAction.mockReset();
+        mocks.buildRerollDraftPoolAction.mockReset();
         mocks.buildSelectBuffAction.mockReset();
         mocks.buildSelectRoyalAction.mockReset();
         mocks.getRandomBasicGemColor.mockReset();
@@ -86,6 +89,7 @@ describe('useMetaInteractionHandlers', () => {
             phase: 'MAIN_PHASE',
             turn: 'p1',
             buffLevel: 2,
+            mode: 'LOCAL_PVP',
         } as unknown as GameState;
         const royalCard = { id: 'royal-1' } as RoyalCard;
 
@@ -94,6 +98,9 @@ describe('useMetaInteractionHandlers', () => {
         mocks.buildSelectRoyalAction.mockReturnValue({ type: 'SELECT_ROYAL_CARD' } as GameAction);
         mocks.buildSelectBuffAction.mockReturnValue({ type: 'SELECT_BUFF' } as GameAction);
         mocks.buildPeekDeckAction.mockReturnValue({ type: 'PEEK_DECK' } as GameAction);
+        mocks.buildRerollDraftPoolAction.mockReturnValue({
+            type: 'REROLL_DRAFT_POOL',
+        } as GameAction);
 
         renderHarness(gameState);
 
@@ -101,6 +108,7 @@ describe('useMetaInteractionHandlers', () => {
         currentResult?.handleSelectRoyal(royalCard);
         currentResult?.handleSelectBuff('buff-1');
         currentResult?.handleCloseModal();
+        currentResult?.handleRerollBuffs(3);
         currentResult?.handlePeekDeck(3);
 
         expect(mocks.buildGameStartAction).toHaveBeenCalledWith('PVE', {
@@ -111,6 +119,7 @@ describe('useMetaInteractionHandlers', () => {
         expect(networkDispatch).toHaveBeenCalledWith({ type: 'SELECT_ROYAL_CARD' });
         expect(networkDispatch).toHaveBeenCalledWith({ type: 'SELECT_BUFF' });
         expect(networkDispatch).toHaveBeenCalledWith({ type: 'CLOSE_MODAL' });
+        expect(networkDispatch).toHaveBeenCalledWith({ type: 'REROLL_DRAFT_POOL' });
         expect(networkDispatch).toHaveBeenCalledWith({ type: 'PEEK_DECK' });
     });
 
@@ -119,6 +128,7 @@ describe('useMetaInteractionHandlers', () => {
             phase: 'IDLE',
             turn: 'p2',
             buffLevel: 1,
+            mode: 'ONLINE_MULTIPLAYER',
         } as unknown as GameState;
 
         mocks.canActionRunInPhase.mockReturnValue(false);
@@ -128,6 +138,7 @@ describe('useMetaInteractionHandlers', () => {
 
         currentResult?.handleSelectRoyal({ id: 'royal-2' } as RoyalCard);
         currentResult?.handleSelectBuff('buff-2');
+        currentResult?.handleRerollBuffs(1);
         currentResult?.handlePeekDeck(1);
 
         expect(networkDispatch).not.toHaveBeenCalledWith(
@@ -135,6 +146,9 @@ describe('useMetaInteractionHandlers', () => {
         );
         expect(networkDispatch).not.toHaveBeenCalledWith(
             expect.objectContaining({ type: 'SELECT_BUFF' })
+        );
+        expect(networkDispatch).not.toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'REROLL_DRAFT_POOL' })
         );
         expect(networkDispatch).not.toHaveBeenCalledWith(
             expect.objectContaining({ type: 'PEEK_DECK' })

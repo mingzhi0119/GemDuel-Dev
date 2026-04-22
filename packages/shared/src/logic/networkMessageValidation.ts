@@ -159,6 +159,7 @@ export const parseNetworkMessageBoundary = (
                     reason: NETWORK_SYNC_REASON_SET.has(parsed.data.reason as NetworkSyncReason)
                         ? (parsed.data.reason as NetworkSyncReason)
                         : 'TURN_SYNC',
+                    replaySync: parsed.data.replaySync,
                 },
             };
         }

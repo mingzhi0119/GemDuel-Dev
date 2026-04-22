@@ -3,6 +3,7 @@ import type { CardInteractionContext, SelectBuffPayload } from '../../types';
 import {
     marketCardRefSchema,
     parseRuntimeIceServers,
+    rerollDraftPoolPayloadSchema,
     selectBuffPayloadSchema,
 } from '../runtimeSchemas';
 
@@ -40,6 +41,8 @@ describe('runtimeSchemas', () => {
         } satisfies SelectBuffPayload;
 
         expect(selectBuffPayloadSchema.safeParse(payload).success).toBe(true);
+        expect(rerollDraftPoolPayloadSchema.safeParse({ level: 2 }).success).toBe(true);
+        expect(rerollDraftPoolPayloadSchema.safeParse({ level: 0 }).success).toBe(false);
         expect(
             parseRuntimeIceServers([
                 { urls: 'stun:stun.l.google.com:19302' },

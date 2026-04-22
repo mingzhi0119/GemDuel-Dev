@@ -159,7 +159,7 @@ const buildAction = (type: MatrixAction['type']): MatrixAction => {
             return { type, payload: 'p1' };
         case 'PEEK_DECK':
             return { type, payload: { level: 1 } };
-        case 'DEBUG_REROLL_BUFFS':
+        case 'REROLL_DRAFT_POOL':
             return { type, payload: { level: 1 } };
     }
 };
@@ -307,7 +307,9 @@ describe('FSM policy matrix', () => {
             }
 
             if (surfacePolicy.draftSelection) {
-                expect(row.allowedActions).toContain('SELECT_BUFF');
+                expect(row.allowedActions).toEqual(
+                    expect.arrayContaining(['SELECT_BUFF', 'REROLL_DRAFT_POOL'])
+                );
             }
 
             if (surfacePolicy.royalSelection) {

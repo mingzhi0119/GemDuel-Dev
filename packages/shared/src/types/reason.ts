@@ -33,6 +33,7 @@ export const REPLAY_IMPORT_ERROR_CODES = [
     'REPLAY_FILE_READ_FAILED',
     'REPLAY_FILE_INVALID_JSON',
     'REPLAY_FILE_INVALID_SCHEMA',
+    'UNSUPPORTED_REPLAY_VERSION',
 ] as const;
 export type ReplayImportErrorCode = (typeof REPLAY_IMPORT_ERROR_CODES)[number];
 

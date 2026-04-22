@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
+import { applyAction } from '@gemduel/shared/logic/gameReducer';
 import { createGameSetupPayload } from '@gemduel/shared/logic/gameSetup';
+import { buildReplayInitSnapshot, saveReplayVNext } from '@gemduel/shared/replay';
 import {
     importReplayFromFile,
     parseReplayTextBoundary,
@@ -7,18 +10,33 @@ import {
     type ReplayImportFile,
 } from '../safeReplayImport';
 
+const createReplayJson = () => {
+    const setup = createGameSetupPayload('LOCAL_PVP');
+    const initAction = { type: 'INIT', payload: setup } as const;
+    const nextState = applyAction(INITIAL_STATE_SKELETON, initAction);
+    if (!nextState) {
+        throw new Error('Failed to create replay fixture.');
+    }
+
+    const { init, runtimeToInstance } = buildReplayInitSnapshot(initAction, nextState);
+    return JSON.stringify(
+        saveReplayVNext({
+            replayRevision: 0,
+            gameVersion: '5.2.11',
+            createdAt: '2026-04-19T00:00:00.000Z',
+            init,
+            events: [],
+            currentState: nextState,
+            runtimeToInstance,
+        })
+    );
+};
+
 const createReplayFileStub = (overrides: Partial<ReplayImportFile> = {}): ReplayImportFile => ({
     name: 'replay.json',
     size: 128,
     type: 'application/json',
-    text: () =>
-        Promise.resolve(
-            JSON.stringify({
-                version: '5.2.11',
-                timestamp: '2026-04-19T00:00:00.000Z',
-                history: [{ type: 'INIT', payload: createGameSetupPayload('LOCAL_PVP') }],
-            })
-        ),
+    text: () => Promise.resolve(createReplayJson()),
     ...overrides,
 });
 
@@ -58,7 +76,7 @@ describe('safe replay import boundary', () => {
         });
     });
 
-    it('rejects schema-invalid replay envelopes', () => {
+    it('rejects unsupported legacy replay envelopes', () => {
         const result = parseReplayTextBoundary(
             JSON.stringify({
                 version: '5.2.11',
@@ -69,16 +87,18 @@ describe('safe replay import boundary', () => {
 
         expect(result).toMatchObject({
             ok: false,
-            code: 'REPLAY_FILE_INVALID_SCHEMA',
+            code: 'UNSUPPORTED_REPLAY_VERSION',
+            detail: 'detectedVersion=legacy-history',
         });
     });
 
-    it('returns a validated replay for well-formed JSON input', async () => {
+    it('returns a validated replay session for Replay vNext input', async () => {
         const result = await importReplayFromFile(createReplayFileStub());
 
         expect(result.ok).toBe(true);
         if (result.ok) {
-            expect(result.replay.history).toHaveLength(1);
+            expect(result.session.history).toHaveLength(1);
+            expect(result.replay.schemaVersion).toBe('1.0');
         }
     });
 

@@ -9,6 +9,7 @@ import {
     computeGuestIntentChecksum,
 } from '@gemduel/shared/logic/networkChecksums';
 import { guestIntentToAction } from '@gemduel/shared/logic/networkProtocol';
+import { buildReplayRecorderFromHistory } from '@gemduel/shared/replay';
 import type { GameAction, GameState, UiStatusNotice } from '@gemduel/shared/types';
 import type {
     GuestIntentCommand,
@@ -53,6 +54,7 @@ vi.mock('../useOnlineManager', () => ({
         handlers: OnlineManagerHandlers,
         enabled: boolean,
         _getCurrentStateRef?: () => GameState,
+        _getCurrentReplayFullSyncRef?: () => unknown,
         targetIP?: string
     ) => {
         latestHandlers = handlers;
@@ -697,9 +699,18 @@ describe('useGameNetwork', () => {
                 isHost: true,
             }),
         };
+        const replayRecorder = buildReplayRecorderFromHistory([initAction], '5.2.11');
 
         const Harness = () => {
-            currentResult = useGameNetwork(currentGameState, localDispatch, clearAndInit, false);
+            currentResult = useGameNetwork(
+                currentGameState,
+                localDispatch,
+                clearAndInit,
+                false,
+                'localhost',
+                9000,
+                replayRecorder
+            );
             return null;
         };
 
@@ -746,7 +757,10 @@ describe('useGameNetwork', () => {
                 isHost: true,
                 turn: 'p1',
             }),
-            'TURN_SYNC'
+            'INITIAL',
+            expect.objectContaining({
+                kind: 'full',
+            })
         );
     });
 });

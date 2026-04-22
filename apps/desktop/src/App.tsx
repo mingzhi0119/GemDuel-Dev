@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { GemDuelRoutes } from './app/routes/GemDuelRoutes';
+import { useReplayAutoSave } from './app/io/useReplayAutoSave';
 import { useReplayIO } from './app/io/useReplayIO';
 import { useRuntimeAppConfig } from './app/runtime/useRuntimeAppConfig';
 import { useGameLogic } from './hooks/useGameLogic';
@@ -41,7 +42,8 @@ export default function GemDuelBoard() {
         matchmakingRoute === 'online' || lanShouldConnect,
         targetIp,
         isReviewing,
-        targetPort
+        targetPort,
+        appVersion
     );
     const { state, handlers, historyControls } = game;
 
@@ -78,10 +80,16 @@ export default function GemDuelBoard() {
         document.body.dataset.lang = locale;
     }, [locale]);
 
-    const { handleDownloadReplay, handleUploadReplay } = useReplayIO({
-        appVersion,
-        history: historyControls.history,
+    const { handleDownloadReplay, handleUploadReplay, persistReplayToProjectFolder } = useReplayIO({
+        replay: game.replay.currentReplay,
         importHistory: handlers.importHistory,
+    });
+
+    useReplayAutoSave({
+        replay: game.replay.currentReplay,
+        historyLength: historyControls.historyLength,
+        historySource: historyControls.historySource,
+        persistReplayToProjectFolder,
     });
 
     const handleRestart = () => {

@@ -28,6 +28,7 @@ import type {
 import {
     cardActionSourceSchema,
     marketCardRefSchema,
+    rerollDraftPoolPayloadSchema,
     selectBuffPayloadSchema,
 } from '../runtimeSchemas';
 
@@ -55,6 +56,9 @@ export const isInteger = (value: unknown): value is number =>
 
 export const isLevel = (value: unknown): value is 1 | 2 | 3 =>
     value === 1 || value === 2 || value === 3;
+
+export const isDraftLevel = (value: unknown): value is 0 | 1 | 2 | 3 =>
+    value === 0 || isLevel(value);
 
 export const isPlayerKey = (value: unknown): value is PlayerKey =>
     typeof value === 'string' && PLAYER_KEYS.has(value as PlayerKey);
@@ -252,6 +256,10 @@ export const isPeekDeckPayload = (value: unknown): value is PeekDeckPayload =>
 export const isSelectBuffPayload = (value: unknown): value is SelectBuffPayload =>
     selectBuffPayloadSchema.safeParse(value).success;
 
+export const isRerollDraftPoolPayload = (
+    value: unknown
+): value is { level?: 1 | 2 | 3 } => rerollDraftPoolPayloadSchema.safeParse(value).success;
+
 export const isGameSetupPayload = (value: unknown): value is BuffInitPayload =>
     isPlainObject(value) &&
     typeof value.mode === 'string' &&
@@ -297,6 +305,8 @@ export const isLikelyGameState = (value: unknown): value is GameState => {
         return false;
     }
     return (
+        (value.buffLevel === undefined || isDraftLevel(value.buffLevel)) &&
+        (value.p2DraftLevel === undefined || isDraftLevel(value.p2DraftLevel)) &&
         isGemInventoryLike(value.inventories.p1) &&
         isGemInventoryLike(value.inventories.p2) &&
         typeof value.privileges.p1 === 'number' &&
@@ -368,11 +378,8 @@ export const isRuntimeActionShapeValid = (action: unknown): action is GameAction
             return isPlayerKey(action.payload);
         case 'PEEK_DECK':
             return isPeekDeckPayload(action.payload);
-        case 'DEBUG_REROLL_BUFFS':
-            return (
-                isPlainObject(action.payload) &&
-                (action.payload.level === undefined || isLevel(action.payload.level))
-            );
+        case 'REROLL_DRAFT_POOL':
+            return isRerollDraftPoolPayload(action.payload);
         default:
             return false;
     }

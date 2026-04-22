@@ -69,7 +69,6 @@ describe('useDebugInteractionHandlers', () => {
         currentResult?.handleDebugAddPoints('p2');
         currentResult?.handleDebugAddPrivilege('p1');
         currentResult?.handleForceRoyal();
-        currentResult?.handleRerollBuffs(2);
 
         expect(networkDispatch).toHaveBeenCalledWith({
             type: 'DEBUG_ADD_CROWNS',
@@ -86,10 +85,6 @@ describe('useDebugInteractionHandlers', () => {
         expect(networkDispatch).toHaveBeenCalledWith({
             type: 'FORCE_ROYAL_SELECTION',
         });
-        expect(networkDispatch).toHaveBeenCalledWith({
-            type: 'DEBUG_REROLL_BUFFS',
-            payload: { level: 2 },
-        });
     });
 
     it('blocks debug dispatches after a winner exists or when local interaction is disabled', () => {
@@ -97,7 +92,6 @@ describe('useDebugInteractionHandlers', () => {
 
         currentResult?.handleDebugAddCrowns('p1');
         currentResult?.handleForceRoyal();
-        currentResult?.handleRerollBuffs(3);
 
         expect(networkDispatch).not.toHaveBeenCalled();
     });

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DataConnection, Peer } from 'peerjs';
 import type { GameState } from '@gemduel/shared/types';
+import type { ReplayFullSync, ReplaySync } from '@gemduel/shared/replay';
 import type {
     BootstrapCommand,
     GuestIntentCommand,
@@ -25,6 +26,7 @@ export const useOnlineManager = (
     handlers: OnlineManagerHandlers,
     enabled: boolean = false,
     getCurrentStateRef?: () => GameState,
+    getCurrentReplayFullSyncRef?: () => ReplayFullSync | null,
     targetIP: string = 'localhost',
     targetPort: number = 9000
 ): OnlineManagerController => {
@@ -69,6 +71,7 @@ export const useOnlineManager = (
                 isHostRef,
                 reconnectAttempts,
                 getCurrentStateRef,
+                getCurrentReplayFullSyncRef,
                 handleHeartbeat,
                 sendMessage,
                 setConn,
@@ -154,12 +157,13 @@ export const useOnlineManager = (
     );
 
     const sendBootstrap = useCallback(
-        (command: BootstrapCommand, checksum?: string) => {
+        (command: BootstrapCommand, checksum?: string, replayFull?: ReplayFullSync) => {
             sendMessage({
                 version: NETWORK_PROTOCOL_VERSION,
                 type: 'BOOTSTRAP_STATE',
                 command,
                 checksum,
+                replayFull,
             });
         },
         [sendMessage]
@@ -189,12 +193,13 @@ export const useOnlineManager = (
     );
 
     const sendState = useCallback(
-        (state: GameState, reason: NetworkSyncReason = 'TURN_SYNC') => {
+        (state: GameState, reason: NetworkSyncReason = 'TURN_SYNC', replaySync?: ReplaySync) => {
             sendMessage({
                 version: NETWORK_PROTOCOL_VERSION,
                 type: 'SYNC_STATE',
                 snapshot: state,
                 reason,
+                replaySync,
             });
         },
         [sendMessage]

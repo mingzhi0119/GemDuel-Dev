@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
     useAIController: vi.fn(),
     useHistoryFlattening: vi.fn(),
     usePlayableHistoryControls: vi.fn(),
+    buildReplayRecorderFromHistory: vi.fn(),
+    buildReplayFullSync: vi.fn(),
 }));
 
 vi.mock('../useGameState', () => ({
@@ -36,6 +38,12 @@ vi.mock('../useHistoryFlattening', () => ({
 
 vi.mock('../usePlayableHistoryControls', () => ({
     usePlayableHistoryControls: (...args: unknown[]) => mocks.usePlayableHistoryControls(...args),
+}));
+
+vi.mock('@gemduel/shared/replay', () => ({
+    buildReplayRecorderFromHistory: (...args: unknown[]) =>
+        mocks.buildReplayRecorderFromHistory(...args),
+    buildReplayFullSync: (...args: unknown[]) => mocks.buildReplayFullSync(...args),
 }));
 
 (
@@ -88,6 +96,7 @@ describe('useGameLogic', () => {
             mode: 'ONLINE_MULTIPLAYER',
             phase: 'MAIN_PHASE',
             turn: 'p1',
+            isHost: true,
         } as unknown as GameState;
         const dispatch = vi.fn<(action: GameAction) => void>();
         const clearAndInit = vi.fn();
@@ -98,6 +107,7 @@ describe('useGameLogic', () => {
             currentIndex: 0,
             historyLength: 2,
             history: [{ type: 'INIT' } as GameAction, { type: 'CLOSE_MODAL' } as GameAction],
+            historySource: 'live' as const,
         };
         const networkDispatch = vi.fn<(action: GameAction) => void>();
         const online = {
@@ -105,6 +115,7 @@ describe('useGameLogic', () => {
                 level: 'info',
                 message: 'network status',
             },
+            authoritativeReplayRecorder: null,
         };
         const selectedGems = [{ r: 0, c: 1 }] as GemCoord[];
         const interactions = {
@@ -127,6 +138,8 @@ describe('useGameLogic', () => {
             dispatch,
             historyControls,
         });
+        mocks.buildReplayRecorderFromHistory.mockReturnValue({ init: { actionType: 'INIT' } });
+        mocks.buildReplayFullSync.mockReturnValue({ replay: { schemaVersion: '1.0' } });
         mocks.useGameNetwork.mockReturnValue({
             online,
             networkDispatch,
@@ -142,11 +155,12 @@ describe('useGameLogic', () => {
             clearAndInit,
             true,
             'peer.example',
-            9100
+            9100,
+            { init: { actionType: 'INIT' } }
         );
         expect(mocks.useGameInteractions).toHaveBeenCalledWith(gameState, networkDispatch, 0, true);
         expect(mocks.useAIController).toHaveBeenCalledWith(gameState, networkDispatch, true);
-        expect(mocks.useHistoryFlattening).toHaveBeenCalledWith(gameState, historyControls);
+        expect(mocks.useHistoryFlattening).toHaveBeenCalledWith(gameState, historyControls, true);
         expect(mocks.usePlayableHistoryControls).toHaveBeenCalledWith(
             gameState.mode,
             historyControls
@@ -164,6 +178,7 @@ describe('useGameLogic', () => {
         expect(currentResult?.getters).toBe(interactions.getters);
         expect(currentResult?.historyControls).toBe(playableHistoryControls);
         expect(currentResult?.online).toBe(online);
+        expect(currentResult?.replay.currentReplay).toEqual({ schemaVersion: '1.0' });
     });
 
     it('falls back to the online status notice when interactions do not expose an error', () => {
@@ -179,6 +194,7 @@ describe('useGameLogic', () => {
             currentIndex: 1,
             historyLength: 2,
             history: [{ type: 'INIT' } as GameAction, { type: 'CLOSE_MODAL' } as GameAction],
+            historySource: 'live' as const,
         };
         const networkDispatch = vi.fn<(action: GameAction) => void>();
 
@@ -187,12 +203,15 @@ describe('useGameLogic', () => {
             dispatch,
             historyControls,
         });
+        mocks.buildReplayRecorderFromHistory.mockReturnValue({ init: { actionType: 'INIT' } });
+        mocks.buildReplayFullSync.mockReturnValue({ replay: { schemaVersion: '1.0' } });
         mocks.useGameNetwork.mockReturnValue({
             online: {
                 statusNotice: {
                     level: 'warn',
                     message: 'peer lagging',
                 },
+                authoritativeReplayRecorder: null,
             },
             networkDispatch,
         });

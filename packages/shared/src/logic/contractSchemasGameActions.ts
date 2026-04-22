@@ -2,7 +2,6 @@ import { z } from 'zod';
 import {
     bonusGemPayloadSchema,
     buyCardPayloadSchema,
-    debugRerollBuffsPayloadSchema,
     discardReservedPayloadSchema,
     gameStateBoundarySchema,
     gameSetupPayloadSchema,
@@ -12,6 +11,7 @@ import {
     initiateReservePayloadSchema,
     peekDeckPayloadSchema,
     replenishPayloadSchema,
+    rerollDraftPoolPayloadSchema,
     reserveCardPayloadSchema,
     reserveDeckPayloadSchema,
     selectBuffPayloadSchema,
@@ -99,8 +99,8 @@ export const gameActionSchema = z.discriminatedUnion('type', [
     z.object({ type: z.literal('PEEK_DECK'), payload: peekDeckPayloadSchema }).passthrough(),
     z
         .object({
-            type: z.literal('DEBUG_REROLL_BUFFS'),
-            payload: debugRerollBuffsPayloadSchema,
+            type: z.literal('REROLL_DRAFT_POOL'),
+            payload: rerollDraftPoolPayloadSchema,
         })
         .passthrough(),
     noPayloadActionSchema('CLOSE_MODAL'),

@@ -10,9 +10,14 @@ interface HistoryFlatteningControls {
 
 export const useHistoryFlattening = (
     gameState: GameState,
-    historyControls: HistoryFlatteningControls
+    historyControls: HistoryFlatteningControls,
+    enabled: boolean = true
 ) => {
     useEffect(() => {
+        if (!enabled) {
+            return;
+        }
+
         if (
             shouldFlattenHistory(
                 gameState.phase,
@@ -33,5 +38,6 @@ export const useHistoryFlattening = (
         historyControls.clearAndInit,
         historyControls.history,
         historyControls.historyLength,
+        enabled,
     ]);
 };

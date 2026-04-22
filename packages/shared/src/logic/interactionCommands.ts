@@ -158,6 +158,13 @@ export const buildPeekDeckAction = (
     payload: { level },
 });
 
+export const buildRerollDraftPoolAction = (
+    level?: 1 | 2 | 3
+): Extract<GameAction, { type: 'REROLL_DRAFT_POOL' }> => ({
+    type: 'REROLL_DRAFT_POOL',
+    payload: { level },
+});
+
 export const buildDebugAction = (
     type: 'DEBUG_ADD_CROWNS' | 'DEBUG_ADD_POINTS' | 'DEBUG_ADD_PRIVILEGE' | 'FORCE_ROYAL_SELECTION',
     player?: PlayerKey

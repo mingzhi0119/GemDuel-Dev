@@ -136,6 +136,22 @@ describe('electron desktop governance', () => {
     it('validates payload shapes for governed IPC channels', () => {
         expect(validateIpcArgs('restart_app', [])).toEqual({ ok: true, args: [] });
         expect(validateIpcArgs('get-lan-matchmaking-state', [])).toEqual({ ok: true, args: [] });
+        expect(
+            validateIpcArgs('save-replay-to-folder', [
+                {
+                    fileName: 'GemDuel_Replay_v1_test.json',
+                    contents: '{"schemaVersion":"1.0"}',
+                },
+            ])
+        ).toEqual({
+            ok: true,
+            args: [
+                {
+                    fileName: 'GemDuel_Replay_v1_test.json',
+                    contents: '{"schemaVersion":"1.0"}',
+                },
+            ],
+        });
         expect(validateIpcArgs('start-lan-matchmaking', [])).toEqual({ ok: true, args: [] });
         expect(validateIpcArgs('cancel-lan-matchmaking', [])).toEqual({ ok: true, args: [] });
         expect(validateIpcArgs('refresh-runtime-relay-profile', [])).toEqual({
@@ -175,6 +191,10 @@ describe('electron desktop governance', () => {
         expect(validateIpcArgs('report-release-health', ['invalid'])).toEqual({
             ok: false,
             reason: 'Release-health payload did not match the allowlisted schema.',
+        });
+        expect(validateIpcArgs('save-replay-to-folder', ['invalid'])).toEqual({
+            ok: false,
+            reason: 'Replay export payload did not match the allowlisted schema.',
         });
         expect(
             validateIpcArgs('select-lan-pregame-mode', [

@@ -1,6 +1,10 @@
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { GAME_PHASES, BUFFS } from '../../constants';
-import { shuffleArray } from '../../utils';
+import {
+    buildDraftPoolForLevel,
+    buildP2AsymmetricDraftPool,
+    isBuffLevel,
+} from '../gameSetup';
 import { canActionRunInPhase } from '../fsm';
 import {
     BasicGemColor,
@@ -175,12 +179,27 @@ export const handleInit = (state: GameState | null, payload: BuffInitPayload): G
     return initializedState;
 };
 
+const resolveP2DraftLevel = (
+    state: Pick<GameState, 'p2DraftLevel' | 'buffLevel'>
+): 1 | 2 | 3 | null => {
+    if (isBuffLevel(state.p2DraftLevel)) {
+        return state.p2DraftLevel;
+    }
+
+    if (isBuffLevel(state.buffLevel)) {
+        return state.buffLevel;
+    }
+
+    return null;
+};
+
 export const handleInitDraft = (state: GameState | null, payload: InitDraftPayload): GameState => {
     const { draftPool, buffLevel, ...gameSetup } = payload;
     const newState = JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
 
     newState.draftPool = draftPool;
     newState.buffLevel = buffLevel;
+    newState.p2DraftLevel = buffLevel;
     newState.pendingSetup = gameSetup;
     newState.playerTurnCounts = { p1: 0, p2: 0 };
     newState.draftOrder = ['p1', 'p2'];
@@ -216,13 +235,28 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
 
         if (nextPlayer) {
             state.turn = nextPlayer;
-            if (nextPlayer === 'p2') {
-                const levelBuffs = Object.values(BUFFS).filter((b) => b.level === state.buffLevel);
-                if (p2Indices && p2Indices.length === 4) {
-                    state.p2DraftPool = p2Indices.map((i) => (levelBuffs[i] as Buff).id);
+            const currentBuffLevel = isBuffLevel(state.buffLevel) ? state.buffLevel : null;
+            if (nextPlayer === 'p2' && currentBuffLevel) {
+                state.p2DraftLevel = currentBuffLevel;
+
+                if (state.mode === 'LOCAL_PVP' && state.p1SelectedBuff?.id) {
+                    const p2DraftPool = buildP2AsymmetricDraftPool(
+                        currentBuffLevel,
+                        state.p1SelectedBuff.id
+                    );
+                    if (p2DraftPool) {
+                        state.p2DraftPool = p2DraftPool;
+                    }
                 } else {
-                    const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
-                    state.p2DraftPool = shuffled.slice(0, 4).map((b) => (b as Buff).id);
+                    const levelBuffs = Object.values(BUFFS).filter(
+                        (b) => b.level === currentBuffLevel
+                    );
+                    if (p2Indices && p2Indices.length === 4) {
+                        state.p2DraftPool = p2Indices.map((i) => (levelBuffs[i] as Buff).id);
+                    } else {
+                        const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
+                        state.p2DraftPool = shuffled.slice(0, 4).map((b) => (b as Buff).id);
+                    }
                 }
             }
         } else {
@@ -243,24 +277,39 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
     }
 };
 
-export const handleRerollBuffs = (state: GameState, payload: { level?: number }): void => {
-    if (!canActionRunInPhase('DEBUG_REROLL_BUFFS', state.phase) || state.turn !== 'p1') return;
-
-    const level = payload.level ?? state.buffLevel;
-    const levelBuffs = Object.values(BUFFS).filter((b) => b.level === level);
-
-    const categoriesSeen = new Set<string>();
-    const p1Pool: typeof levelBuffs = [];
-    const shuffledPool = shuffleArray([...levelBuffs]);
-
-    for (const b of shuffledPool) {
-        if ('category' in b && b.category && !categoriesSeen.has(b.category)) {
-            p1Pool.push(b);
-            categoriesSeen.add(b.category);
-            if (p1Pool.length === 3) break;
-        }
+export const handleRerollDraftPool = (
+    state: GameState,
+    payload: { level?: 1 | 2 | 3 }
+): void => {
+    if (state.mode !== 'LOCAL_PVP' || !canActionRunInPhase('REROLL_DRAFT_POOL', state.phase)) {
+        return;
     }
 
-    state.buffLevel = level;
-    state.draftPool = p1Pool.map((b) => b.id);
+    if (state.turn === 'p1') {
+        const level = payload.level ?? (isBuffLevel(state.buffLevel) ? state.buffLevel : null);
+        if (!level) {
+            return;
+        }
+
+        state.buffLevel = level;
+        state.draftPool = buildDraftPoolForLevel(level);
+        return;
+    }
+
+    if (state.turn !== 'p2' || !state.p1SelectedBuff?.id) {
+        return;
+    }
+
+    const level = payload.level ?? resolveP2DraftLevel(state);
+    if (!level) {
+        return;
+    }
+
+    const p2DraftPool = buildP2AsymmetricDraftPool(level, state.p1SelectedBuff.id);
+    if (!p2DraftPool) {
+        return;
+    }
+
+    state.p2DraftLevel = level;
+    state.p2DraftPool = p2DraftPool;
 };

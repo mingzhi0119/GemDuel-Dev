@@ -8,6 +8,7 @@ const IPC_INVOKE_CHANNELS = Object.freeze({
     revokeRuntimeRelayProfile: 'revoke-runtime-relay-profile',
     getReleaseHealthSnapshot: 'get-release-health-snapshot',
     getLanMatchmakingState: 'get-lan-matchmaking-state',
+    saveReplayToFolder: 'save-replay-to-folder',
     startLanMatchmaking: 'start-lan-matchmaking',
     cancelLanMatchmaking: 'cancel-lan-matchmaking',
     selectLanPregameMode: 'select-lan-pregame-mode',
@@ -52,6 +53,8 @@ contextBridge.exposeInMainWorld(
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot),
         getLanMatchmakingState: () =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getLanMatchmakingState),
+        saveReplayToFolder: (payload) =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.saveReplayToFolder, payload),
         startLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.startLanMatchmaking),
         cancelLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.cancelLanMatchmaking),
         selectLanPregameMode: (payload) =>

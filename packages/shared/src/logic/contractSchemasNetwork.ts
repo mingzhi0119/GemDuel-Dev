@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { NETWORK_PROTOCOL_VERSION } from '../types/network';
+import { replaySyncSchema, replayVNextSchema } from '../replay/schema';
 import { hostDecisionReasonCodeSchema, recoveryReasonSchema } from './contractSchemasCore';
 import {
     bootstrapCommandSchema,
@@ -30,6 +31,14 @@ export const bootstrapStateMessageSchema = z
         type: z.literal('BOOTSTRAP_STATE'),
         command: bootstrapCommandSchema,
         checksum: z.string().optional(),
+        replayFull: z
+            .object({
+                kind: z.literal('full'),
+                replayRevision: z.number().int().min(0),
+                replay: replayVNextSchema,
+            })
+            .strict()
+            .optional(),
     })
     .passthrough();
 
@@ -79,6 +88,7 @@ export const syncStateMessageSchema = z
         type: z.literal('SYNC_STATE'),
         snapshot: gameStateBoundarySchema,
         reason: z.string().min(1),
+        replaySync: replaySyncSchema.optional(),
     })
     .passthrough();
 

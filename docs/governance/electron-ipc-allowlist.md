@@ -11,6 +11,7 @@ Only the following renderer-visible capabilities may cross the Electron boundary
 | `window.electron.revokeRuntimeRelayProfile()`  | `revoke-runtime-relay-profile`  | `invoke`  | Desktop shell                | None                  | Revoke active lease during cleanup                  |
 | `window.electron.getReleaseHealthSnapshot()`   | `get-release-health-snapshot`   | `invoke`  | Release health monitor       | None                  | Sanitized release-health snapshot                   |
 | `window.electron.getLanMatchmakingState()`     | `get-lan-matchmaking-state`     | `invoke`  | LAN discovery service        | None                  | Read-only LAN matchmaking state                     |
+| `window.electron.saveReplayToFolder(...)`      | `save-replay-to-folder`         | `invoke`  | Replay export                | `{ fileName, contents }` | Writes Replay vNext JSON into the governed replay folder |
 | `window.electron.startLanMatchmaking()`        | `start-lan-matchmaking`         | `invoke`  | LAN discovery service        | None                  | Opt in to LAN broadcast/search participation        |
 | `window.electron.cancelLanMatchmaking()`       | `cancel-lan-matchmaking`        | `invoke`  | LAN discovery service        | None                  | Leave LAN search and clear any active room          |
 | `window.electron.selectLanPregameMode(...)`    | `select-lan-pregame-mode`       | `invoke`  | LAN discovery service        | `{ roomId, mode }`    | P1-only LAN pregame mode selection                  |
@@ -32,6 +33,7 @@ Only the following renderer-visible capabilities may cross the Electron boundary
 - Structured payload channels are fixed to their allowlisted schemas:
     - `report-release-health`
     - `report-lan-peer-ready`
+    - `save-replay-to-folder`
     - `select-lan-pregame-mode`
     - `confirm-lan-pregame-start`
 

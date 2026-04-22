@@ -133,18 +133,19 @@ export function GemDuelRoutes(props: AppRouteProps) {
         }
     } else if (isDraftSelectionPhase(state.phase)) {
         routeKind = 'draft';
+        const activeDraftLevel =
+            state.turn === 'p2' ? state.p2DraftLevel || state.buffLevel : state.buffLevel;
         routeContent = (
             <DraftScreen
                 draftPool={state.draftPool}
                 p2DraftPool={state.p2DraftPool}
-                buffLevel={state.buffLevel}
+                activeDraftLevel={activeDraftLevel}
+                mode={state.mode}
                 activePlayer={state.turn}
                 onSelectBuff={handlers.handleSelectBuff}
-                onReroll={handlers.handleRerollBuffs}
+                onReroll={state.mode === 'LOCAL_PVP' ? handlers.handleRerollBuffs : undefined}
                 theme={theme}
                 localPlayer={state.localPlayer}
-                isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
-                isPvE={state.mode === 'PVE'}
             />
         );
     } else {

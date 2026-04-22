@@ -1,5 +1,6 @@
 import type {
     BasicGemColor,
+    BuffLevel,
     Card,
     CardActionSource,
     GameSetupPayload,
@@ -97,6 +98,10 @@ export interface PeekDeckPayload {
     level: 1 | 2 | 3;
 }
 
+export interface RerollDraftPoolPayload {
+    level?: BuffLevel;
+}
+
 /**
  * Discriminated Union for all possible Game Actions
  */
@@ -130,11 +135,5 @@ export type GameAction =
     | { type: 'UNDO'; payload?: undefined }
     | { type: 'REDO'; payload?: undefined }
     | { type: 'PEEK_DECK'; payload: PeekDeckPayload }
-    | { type: 'DEBUG_REROLL_BUFFS'; payload: { level?: number } }
+    | { type: 'REROLL_DRAFT_POOL'; payload: RerollDraftPoolPayload }
     | { type: 'CLOSE_MODAL'; payload?: undefined };
-
-export interface ReplayFile {
-    version: string;
-    timestamp: string;
-    history: GameAction[];
-}

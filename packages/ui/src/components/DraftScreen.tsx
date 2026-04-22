@@ -1,7 +1,6 @@
 import React from 'react';
 import {
     Sparkles,
-    Crown,
     Shield,
     Swords,
     ArrowRight,
@@ -16,37 +15,37 @@ import {
 import { BUFF_STYLES } from '../styles/buffs';
 import { BUFFS } from '@gemduel/shared/constants'; // Import for reconstruction
 import { getBuffCategoryLabel } from '@gemduel/shared';
-import { Buff, PlayerKey } from '@gemduel/shared/types';
+import { Buff, GameMode, PlayerKey } from '@gemduel/shared/types';
 import { getBuffGoalAdjustment, getBuffText } from '@gemduel/shared/data/buffCopy';
 import { useLocale, useT } from '../i18n/LocaleProvider';
 
 interface DraftScreenProps {
     draftPool: string[]; // IDs only
     p2DraftPool?: string[]; // IDs only
-    buffLevel: number;
+    activeDraftLevel: number;
+    mode: GameMode;
     activePlayer: PlayerKey;
     onSelectBuff: (buffId: string) => void;
     onReroll?: (level?: number) => void;
     theme: 'light' | 'dark';
     localPlayer?: PlayerKey;
-    isOnline?: boolean;
-    isPvE?: boolean;
 }
 
 export const DraftScreen: React.FC<DraftScreenProps> = ({
     draftPool,
     p2DraftPool = [],
-    buffLevel,
+    activeDraftLevel,
+    mode,
     activePlayer,
     onSelectBuff,
     onReroll,
     theme,
     localPlayer,
-    isOnline = false,
 }) => {
     const { locale } = useLocale();
     const t = useT();
     const rawPool = (activePlayer === 'p1' ? draftPool : p2DraftPool) || [];
+    const isOnline = mode === 'ONLINE_MULTIPLAYER';
 
     const getBuffIcon = (category?: string) => {
         switch (category) {
@@ -85,7 +84,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     });
 
     const canInteract = !isOnline || activePlayer === localPlayer;
-    const showDraftCustomization = !isOnline && activePlayer === 'p1' && Boolean(onReroll);
+    const showDraftCustomization = mode === 'LOCAL_PVP' && Boolean(onReroll);
 
     return (
         <div
@@ -104,7 +103,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
             `}
             />
 
-            {/* Offline Draft Customize Panel (P1 Only) */}
+            {/* Local PvP Draft Customize Panel */}
             {showDraftCustomization && onReroll && (
                 <div className="absolute top-8 right-8 z-[100] flex flex-col items-end gap-2 animate-in fade-in slide-in-from-right-4 duration-500 lg:scale-[1.5] lg:transform-gpu lg:origin-top-right">
                     <div className="flex items-center gap-2 mb-1">
@@ -140,7 +139,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                     className={`
                                         text-[10px] font-black w-8 h-8 flex items-center justify-center rounded-lg transition-all active:scale-95
                                         ${
-                                            buffLevel === lvl
+                                            activeDraftLevel === lvl
                                                 ? 'bg-amber-400 text-amber-950 shadow-inner'
                                                 : theme === 'dark'
                                                   ? 'text-slate-400 hover:bg-white/5 hover:text-white'
@@ -167,7 +166,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                         <Sparkles className="text-amber-400" size={32} />
                     </div>
                     <p className={`text-lg font-black uppercase tracking-widest opacity-60`}>
-                        {getDraftTitle(buffLevel)}
+                        {getDraftTitle(activeDraftLevel)}
                     </p>
                 </div>
 

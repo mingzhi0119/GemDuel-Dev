@@ -251,6 +251,9 @@ export interface PlayerInitRandoms {
     preferenceColor: BasicGemColor;
 }
 
+export type BuffLevel = 1 | 2 | 3;
+export type DraftLevel = 0 | BuffLevel;
+
 export interface GameSetupPayload {
     mode: GameMode;
     board: BoardCell[][];
@@ -264,7 +267,7 @@ export interface GameSetupPayload {
 
 export interface InitDraftPayload extends GameSetupPayload {
     draftPool: string[];
-    buffLevel: 1 | 2 | 3;
+    buffLevel: BuffLevel;
 }
 
 export type CardActionSource = 'market' | 'reserved';
@@ -333,7 +336,8 @@ export interface GameState {
     p2DraftPool?: string[];
     p1SelectedBuff?: Buff | null;
     draftOrder: PlayerKey[];
-    buffLevel: number;
+    buffLevel: DraftLevel;
+    p2DraftLevel: DraftLevel;
     pendingSetup: GameSetupPayload | null;
     privilegeGemCount: number;
     pendingReserve: {

@@ -33,7 +33,7 @@ import {
     handleSelectBuff,
     handleInit,
     handleInitDraft,
-    handleRerollBuffs,
+    handleRerollDraftPool,
 } from './actions/buffActions';
 import {
     handleDebugAddCrowns,
@@ -258,8 +258,8 @@ export const applyAction = (state: GameState | null, action: GameAction): GameSt
                 handleDebugAddPrivilege(draft, action.payload);
                 break;
 
-            case 'DEBUG_REROLL_BUFFS':
-                handleRerollBuffs(draft, action.payload);
+            case 'REROLL_DRAFT_POOL':
+                handleRerollDraftPool(draft, action.payload);
                 break;
 
             // ========== MODAL ACTIONS ==========

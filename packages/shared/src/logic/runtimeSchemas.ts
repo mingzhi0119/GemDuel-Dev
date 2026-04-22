@@ -1,8 +1,14 @@
 import { z } from 'zod';
-import type { MarketCardRef, PlayerInitRandoms, SelectBuffPayload } from '../types';
+import type {
+    MarketCardRef,
+    PlayerInitRandoms,
+    RerollDraftPoolPayload,
+    SelectBuffPayload,
+} from '../types';
 import { collectIceServerPolicyViolations } from '../runtimeIcePolicy.js';
 
 export const levelSchema = z.union([z.literal(1), z.literal(2), z.literal(3)]);
+export const draftLevelSchema = z.union([z.literal(0), levelSchema]);
 export const playerKeySchema = z.union([z.literal('p1'), z.literal('p2')]);
 export const basicGemColorSchema = z.union([
     z.literal('blue'),
@@ -46,6 +52,10 @@ export const selectBuffPayloadSchema: z.ZodType<SelectBuffPayload> = z.object({
     p2DraftPoolIndices: z
         .tuple([z.number().int(), z.number().int(), z.number().int(), z.number().int()])
         .optional(),
+});
+
+export const rerollDraftPoolPayloadSchema: z.ZodType<RerollDraftPoolPayload> = z.object({
+    level: levelSchema.optional(),
 });
 
 export const runtimeIceServerSchema: z.ZodType<RTCIceServer> = z

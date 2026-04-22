@@ -49,6 +49,13 @@ const IPC_ALLOWLIST = Object.freeze({
             payload: 'none',
             threat: 'Read-only LAN matchmaking state for the current renderer session.',
         }),
+        saveReplayToFolder: Object.freeze({
+            api: 'saveReplayToFolder',
+            channel: 'save-replay-to-folder',
+            owner: 'Replay export',
+            payload: 'SaveReplayToFolderPayload',
+            threat: 'Writes a governed Replay vNext JSON export into the desktop replay folder.',
+        }),
         startLanMatchmaking: Object.freeze({
             api: 'startLanMatchmaking',
             channel: 'start-lan-matchmaking',
@@ -174,6 +181,8 @@ const createElectronBridge = (ipcRenderer) =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot),
         getLanMatchmakingState: () =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getLanMatchmakingState),
+        saveReplayToFolder: (payload) =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.saveReplayToFolder, payload),
         startLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.startLanMatchmaking),
         cancelLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.cancelLanMatchmaking),
         selectLanPregameMode: (payload) =>

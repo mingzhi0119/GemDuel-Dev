@@ -218,9 +218,14 @@ describe('registerConnectionHandlers', () => {
 
         expect(handlersRef.current.onBootstrapReceived).toHaveBeenCalledWith(
             bootstrapCommand,
-            'bootstrap-checksum'
+            'bootstrap-checksum',
+            undefined
         );
-        expect(handlersRef.current.onStateReceived).toHaveBeenCalledWith(state, 'RECOVERY');
+        expect(handlersRef.current.onStateReceived).toHaveBeenCalledWith(
+            state,
+            'RECOVERY',
+            undefined
+        );
         expect(handlersRef.current.onHostDecisionReceived).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: 'HOST_DECISION',
@@ -271,6 +276,7 @@ describe('registerConnectionHandlers', () => {
             type: 'SYNC_STATE',
             snapshot: state,
             reason: 'RECOVERY',
+            replaySync: undefined,
         });
         expect(reportRendererEvent).toHaveBeenCalledWith(
             expect.objectContaining({

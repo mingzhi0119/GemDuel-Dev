@@ -10,6 +10,7 @@ import {
     createUiStatusNotice,
 } from '@gemduel/shared/logic/reasonCatalog';
 import { logRendererMessage, reportRendererEvent } from '../../observability/rendererLogger';
+import type { ReplayFullSync, ReplaySync } from '@gemduel/shared/replay';
 import type { GameAction, GameState, UiStatusNotice } from '@gemduel/shared/types';
 import type {
     BootstrapCommand,
@@ -17,6 +18,7 @@ import type {
     HostApprovalLogEntry,
     HostDecisionMessage,
     PendingGuestIntent,
+    RecoveryReason,
 } from '@gemduel/shared/types/network';
 import type { OnlineManagerController } from '../useOnlineManager';
 
@@ -28,6 +30,11 @@ interface UseNetworkEventHandlersArgs {
     publishStatusNotice: (notice: UiStatusNotice) => void;
     onlineRef: MutableRefObject<OnlineManagerController | null>;
     pendingGuestIntentRef: MutableRefObject<PendingGuestIntent | null>;
+    replaceAuthoritativeReplay: (replayFull: ReplayFullSync) => void;
+    syncAuthoritativeReplay: (
+        replaySync: ReplaySync,
+        authoritativeState: GameState
+    ) => RecoveryReason | null;
 }
 
 export const useNetworkEventHandlers = ({
@@ -38,9 +45,11 @@ export const useNetworkEventHandlers = ({
     publishStatusNotice,
     onlineRef,
     pendingGuestIntentRef,
+    replaceAuthoritativeReplay,
+    syncAuthoritativeReplay,
 }: UseNetworkEventHandlersArgs) => {
     const handleBootstrapReceived = useCallback(
-        (command: BootstrapCommand, remoteChecksum?: string) => {
+        (command: BootstrapCommand, remoteChecksum?: string, replayFull?: ReplayFullSync) => {
             logRendererMessage('info', `[NET-RECEIVE] Bootstrap: ${command.kind}`);
             const review = reviewBootstrapReceipt(command, remoteChecksum);
 
@@ -63,12 +72,15 @@ export const useNetworkEventHandlers = ({
             }
 
             clearAndInit(review.action);
+            if (replayFull) {
+                replaceAuthoritativeReplay(replayFull);
+            }
         },
-        [clearAndInit, onlineRef, publishStatusNotice]
+        [clearAndInit, onlineRef, publishStatusNotice, replaceAuthoritativeReplay]
     );
 
     const handleStateReceived = useCallback(
-        (authoritativeState: GameState) => {
+        (authoritativeState: GameState, _reason: string, replaySync?: ReplaySync) => {
             pendingGuestIntentRef.current = null;
             const localPlayer = authoritativeState.hostPlayer === 'p1' ? 'p2' : 'p1';
             localDispatch({
@@ -79,8 +91,33 @@ export const useNetworkEventHandlers = ({
                     localPlayer,
                 },
             });
+
+            if (!replaySync) {
+                return;
+            }
+
+            const recoveryReason = syncAuthoritativeReplay(replaySync, authoritativeState);
+            if (!recoveryReason) {
+                return;
+            }
+
+            reportRendererEvent(
+                {
+                    category: 'recovery',
+                    name: 'REPLAY_SYNC_REJECTED',
+                    severity: 'warn',
+                    message:
+                        'Guest rejected an authoritative replay sync and requested recovery.',
+                    context: createReasonTelemetryContext(recoveryReason),
+                },
+                {
+                    consoleMessage: `[NET] Replay sync rejected (${recoveryReason}). Requesting recovery.`,
+                }
+            );
+            publishStatusNotice(createUiStatusNotice(recoveryReason));
+            onlineRef.current?.requestRecovery(recoveryReason);
         },
-        [localDispatch, pendingGuestIntentRef]
+        [localDispatch, onlineRef, pendingGuestIntentRef, publishStatusNotice, syncAuthoritativeReplay]
     );
 
     const handleGuestIntentReceived = useCallback(

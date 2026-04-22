@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import fs from 'node:fs/promises';
 import net from 'node:net';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -27,6 +28,7 @@ const { IPC_INVOKE_CHANNELS, IPC_SEND_CHANNELS, UPDATE_CHANNELS } = preloadContr
 
 const DEFAULT_LOG_LEVEL = isDev ? 'debug' : 'info';
 const MAX_LOG_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_REPLAY_EXPORT_BYTES = 512 * 1024;
 const DEFAULT_DEV_SERVER_URL = process.env.GEMDUEL_DEV_SERVER_URL ?? 'http://localhost:5173';
 const DEFAULT_PEER_SERVER_PORT = Number(process.env.GEMDUEL_PEER_SERVER_PORT ?? 9000);
 const MAX_PEER_SERVER_PORT_CANDIDATES = 25;
@@ -71,6 +73,41 @@ const turnCredentialClient = createTurnCredentialClient({
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const getReplayExportDirectory = () =>
+    isDev ? path.resolve(__dirname, '../../..', 'Replay') : path.join(app.getPath('userData'), 'Replay');
+
+const saveReplayToFolder = async (payload) => {
+    const safeFileName = path.basename(payload.fileName);
+    if (safeFileName !== payload.fileName || !safeFileName.endsWith('.json')) {
+        throw new Error('Replay export filename must stay within the governed replay folder.');
+    }
+
+    const replayBytes = Buffer.byteLength(payload.contents, 'utf8');
+    if (replayBytes > MAX_REPLAY_EXPORT_BYTES) {
+        throw new Error('Replay export payload exceeded the governed size limit.');
+    }
+
+    const replayDirectory = getReplayExportDirectory();
+    const outputPath = path.join(replayDirectory, safeFileName);
+    await fs.mkdir(replayDirectory, { recursive: true });
+    await fs.writeFile(outputPath, payload.contents, 'utf8');
+
+    recordMainHealth({
+        category: 'runtime',
+        name: 'REPLAY_AUTO_SAVED',
+        severity: 'info',
+        message: 'Replay export was written to the governed replay folder.',
+        context: {
+            outputPath,
+            replayBytes,
+        },
+    });
+
+    return {
+        path: outputPath,
+    };
+};
 
 let mainWindow;
 let peerServer = null; // Keep reference to prevent garbage collection
@@ -227,6 +264,7 @@ runtimeHarness.registerGovernedIpcHandlers({
             turnCredentialClient.revokeRuntimeRelayProfile(),
         [IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot]: () => releaseHealth.getSnapshot(),
         [IPC_INVOKE_CHANNELS.getLanMatchmakingState]: () => lanDiscoveryService?.getState(),
+        [IPC_INVOKE_CHANNELS.saveReplayToFolder]: (_event, payload) => saveReplayToFolder(payload),
         [IPC_INVOKE_CHANNELS.startLanMatchmaking]: () => lanDiscoveryService?.startMatchmaking(),
         [IPC_INVOKE_CHANNELS.cancelLanMatchmaking]: () => lanDiscoveryService?.cancelMatchmaking(),
         [IPC_INVOKE_CHANNELS.selectLanPregameMode]: (_event, payload) =>

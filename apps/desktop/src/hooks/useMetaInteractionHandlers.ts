@@ -3,6 +3,7 @@ import { canActionRunInPhase } from '@gemduel/shared/logic/fsm';
 import {
     buildGameStartAction,
     buildPeekDeckAction,
+    buildRerollDraftPoolAction,
     buildSelectBuffAction,
     buildSelectRoyalAction,
 } from '@gemduel/shared/logic/interactionCommands';
@@ -61,6 +62,23 @@ export const useMetaInteractionHandlers = ({
         networkDispatch({ type: 'CLOSE_MODAL' });
     }, [networkDispatch]);
 
+    const handleRerollBuffs = useCallback(
+        (level?: number) => {
+            if (
+                !canLocalInteract ||
+                gameState.mode !== 'LOCAL_PVP' ||
+                !canActionRunInPhase('REROLL_DRAFT_POOL', gameState.phase)
+            ) {
+                return;
+            }
+
+            networkDispatch(
+                buildRerollDraftPoolAction(level === undefined ? undefined : (level as 1 | 2 | 3))
+            );
+        },
+        [canLocalInteract, gameState.mode, gameState.phase, networkDispatch]
+    );
+
     const handlePeekDeck = useCallback(
         (level: number) => {
             if (canLocalInteract && canActionRunInPhase('PEEK_DECK', gameState.phase)) {
@@ -76,8 +94,16 @@ export const useMetaInteractionHandlers = ({
             handleSelectRoyal,
             handleSelectBuff,
             handleCloseModal,
+            handleRerollBuffs,
             handlePeekDeck,
         }),
-        [handleCloseModal, handlePeekDeck, handleSelectBuff, handleSelectRoyal, startGame]
+        [
+            handleCloseModal,
+            handlePeekDeck,
+            handleRerollBuffs,
+            handleSelectBuff,
+            handleSelectRoyal,
+            startGame,
+        ]
     );
 };

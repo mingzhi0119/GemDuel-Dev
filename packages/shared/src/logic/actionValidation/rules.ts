@@ -305,6 +305,14 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
                 return 'The active player does not have a deck-peek ability.';
             }
             return null;
+        case 'REROLL_DRAFT_POOL':
+            if (state.mode !== 'LOCAL_PVP') {
+                return 'Draft rerolls are only available in local PvP.';
+            }
+            if (state.turn === 'p2' && !state.p1SelectedBuff?.id) {
+                return 'P2 draft rerolls require a locked-in P1 buff selection.';
+            }
+            return null;
         case 'CLOSE_MODAL':
             return state.activeModal && isWinningModalCloseAllowed(state)
                 ? null

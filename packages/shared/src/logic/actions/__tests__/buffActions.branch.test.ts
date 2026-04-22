@@ -1,8 +1,8 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BUFFS, GAME_PHASES } from '../../../constants';
 import { createGameSetupPayload } from '../../gameSetup';
 import { createMockState } from '../../__tests__/testHelpers';
-import { handleRerollBuffs, handleSelectBuff } from '../buffActions';
+import { handleRerollDraftPool, handleSelectBuff } from '../buffActions';
 import type { GameState } from '../../../types';
 
 vi.mock('../../../utils', async () => {
@@ -21,18 +21,19 @@ describe('buffActions branch coverage', () => {
         vi.clearAllMocks();
     });
 
-    it('selects a buff, fills the p2 draft pool from explicit indices, and records color preference', () => {
+    it('builds the local p2 asymmetric draft pool after p1 selects a buff and records color preference', () => {
         const state = createState({
+            mode: 'LOCAL_PVP',
             phase: GAME_PHASES.DRAFT_PHASE,
             turn: 'p1',
             buffLevel: 2,
+            p2DraftLevel: 2,
             draftOrder: ['p1', 'p2'],
         });
 
         handleSelectBuff(state, {
             buffId: BUFFS.COLOR_PREFERENCE.id,
             randomColor: 'blue',
-            p2DraftPoolIndices: [2, 3, 5, 8],
         });
 
         expect(state.p1SelectedBuff?.id).toBe(BUFFS.COLOR_PREFERENCE.id);
@@ -46,6 +47,33 @@ describe('buffActions branch coverage', () => {
             }),
         ]);
         expect(state.turn).toBe('p2');
+        expect(state.p2DraftLevel).toBe(2);
+        expect(state.p2DraftPool).toEqual([
+            BUFFS.COLOR_PREFERENCE.id,
+            BUFFS.PEARL_TRADER.id,
+            BUFFS.EXTORTION.id,
+            BUFFS.SPECULATOR.id,
+        ]);
+    });
+
+    it('keeps the online sync path on explicit p2 draft indices', () => {
+        const state = createState({
+            mode: 'ONLINE_MULTIPLAYER',
+            phase: GAME_PHASES.DRAFT_PHASE,
+            turn: 'p1',
+            buffLevel: 2,
+            p2DraftLevel: 2,
+            draftOrder: ['p1', 'p2'],
+        });
+
+        handleSelectBuff(state, {
+            buffId: BUFFS.COLOR_PREFERENCE.id,
+            randomColor: 'blue',
+            p2DraftPoolIndices: [2, 3, 5, 8],
+        });
+
+        expect(state.turn).toBe('p2');
+        expect(state.p2DraftLevel).toBe(2);
         expect(state.p2DraftPool).toEqual([
             BUFFS.COLOR_PREFERENCE.id,
             BUFFS.EXTORTION.id,
@@ -100,31 +128,72 @@ describe('buffActions branch coverage', () => {
         expect(state.extraAllocation.p2.blue).toBe(1);
     });
 
-    it('rerolls only during the p1 draft turn and keeps the first three unique categories', () => {
+    it('rerolls only in local pvp draft and keeps p1/p2 level ownership separate', () => {
         const blockedState = createState({
-            phase: GAME_PHASES.IDLE,
-            turn: 'p2',
+            mode: 'ONLINE_MULTIPLAYER',
+            phase: GAME_PHASES.DRAFT_PHASE,
+            turn: 'p1',
             buffLevel: 2,
+            p2DraftLevel: 2,
             draftPool: ['old-a', 'old-b'],
         });
         const blockedSnapshot = JSON.parse(JSON.stringify(blockedState)) as GameState;
 
-        handleRerollBuffs(blockedState, { level: 3 });
+        handleRerollDraftPool(blockedState, { level: 3 });
         expect(blockedState).toEqual(blockedSnapshot);
 
         const rerollState = createState({
+            mode: 'LOCAL_PVP',
             phase: GAME_PHASES.DRAFT_PHASE,
             turn: 'p1',
             buffLevel: 1,
+            p2DraftLevel: 1,
+            draftPool: ['stale-a', 'stale-b'],
+            p2DraftPool: ['keep-me'],
         });
 
-        handleRerollBuffs(rerollState, { level: 1 });
+        handleRerollDraftPool(rerollState, { level: 1 });
 
         expect(rerollState.buffLevel).toBe(1);
+        expect(rerollState.p2DraftLevel).toBe(1);
+        expect(rerollState.p2DraftPool).toEqual(['keep-me']);
         expect(rerollState.draftPool).toEqual([
             BUFFS.PRIVILEGE_FAVOR.id,
             BUFFS.INTELLIGENCE.id,
             BUFFS.DEEP_POCKETS.id,
         ]);
+    });
+
+    it('uses p2DraftLevel for refresh defaults and lets p2 choose the p1 card without changing buffLevel', () => {
+        const rerollState = createState({
+            mode: 'LOCAL_PVP',
+            phase: GAME_PHASES.DRAFT_PHASE,
+            turn: 'p2',
+            buffLevel: 2,
+            p2DraftLevel: 3,
+            p1SelectedBuff: JSON.parse(JSON.stringify(BUFFS.COLOR_PREFERENCE)),
+            p2DraftPool: [BUFFS.COLOR_PREFERENCE.id, 'old-a', 'old-b', 'old-c'],
+            draftOrder: ['p1', 'p2'],
+            pendingSetup: createGameSetupPayload('LOCAL_PVP'),
+        });
+
+        handleRerollDraftPool(rerollState, {});
+
+        expect(rerollState.buffLevel).toBe(2);
+        expect(rerollState.p2DraftLevel).toBe(3);
+        expect(rerollState.p2DraftPool).toEqual([
+            BUFFS.COLOR_PREFERENCE.id,
+            BUFFS.GREED_KING.id,
+            BUFFS.DOUBLE_AGENT.id,
+            BUFFS.ECHO_RESERVOIR.id,
+        ]);
+
+        handleSelectBuff(rerollState, {
+            buffId: BUFFS.COLOR_PREFERENCE.id,
+        });
+
+        expect(rerollState.phase).toBe(GAME_PHASES.IDLE);
+        expect(rerollState.playerBuffs.p2.id).toBe(BUFFS.COLOR_PREFERENCE.id);
+        expect(rerollState.buffLevel).toBe(2);
     });
 });

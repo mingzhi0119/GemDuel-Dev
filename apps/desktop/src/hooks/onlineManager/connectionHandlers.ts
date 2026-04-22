@@ -1,6 +1,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { DataConnection } from 'peerjs';
 import type { GameState } from '@gemduel/shared/types';
+import type { ReplayFullSync } from '@gemduel/shared/replay';
 import { createReasonTelemetryContext } from '@gemduel/shared/logic/reasonCatalog';
 import { reportRendererEvent } from '../../observability/rendererLogger';
 import { NETWORK_PROTOCOL_VERSION, type NetworkMessage } from '@gemduel/shared/types/network';
@@ -14,6 +15,7 @@ interface ConnectionHandlerDependencies {
     isHostRef: MutableRefObject<boolean>;
     reconnectAttempts: MutableRefObject<number>;
     getCurrentStateRef?: () => GameState;
+    getCurrentReplayFullSyncRef?: () => ReplayFullSync | null;
     handleHeartbeat: (
         msg: Extract<NetworkMessage, { type: 'HEARTBEAT_PING' | 'HEARTBEAT_PONG' }>
     ) => void;
@@ -29,6 +31,7 @@ export const registerConnectionHandlers = ({
     isHostRef,
     reconnectAttempts,
     getCurrentStateRef,
+    getCurrentReplayFullSyncRef,
     handleHeartbeat,
     sendMessage,
     setConn,
@@ -99,12 +102,12 @@ export const registerConnectionHandlers = ({
             return;
         }
 
-        switch (msg.type) {
+            switch (msg.type) {
             case 'BOOTSTRAP_STATE':
-                handlersRef.current.onBootstrapReceived(msg.command, msg.checksum);
+                handlersRef.current.onBootstrapReceived(msg.command, msg.checksum, msg.replayFull);
                 break;
             case 'SYNC_STATE':
-                handlersRef.current.onStateReceived(msg.snapshot, msg.reason);
+                handlersRef.current.onStateReceived(msg.snapshot, msg.reason, msg.replaySync);
                 break;
             case 'GUEST_INTENT':
                 handlersRef.current.onGuestIntentReceived(msg.requestId, msg.command);
@@ -132,6 +135,7 @@ export const registerConnectionHandlers = ({
                         type: 'SYNC_STATE',
                         snapshot: getCurrentStateRef(),
                         reason: 'RECOVERY',
+                        replaySync: getCurrentReplayFullSyncRef?.() ?? undefined,
                     });
                 }
                 break;

@@ -28,5 +28,6 @@ describe('Game Initialization Direct', () => {
         expect(result.turn).toBe('p1');
         expect(result.draftPool.length).toBe(3);
         expect(result.buffLevel).toBeGreaterThanOrEqual(1);
+        expect(result.p2DraftLevel).toBe(result.buffLevel);
     });
 });

@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ReplayFile } from '@gemduel/shared/types';
+import type { ElectronBridge } from '@gemduel/shared/types/desktop';
+import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
+import { applyAction } from '@gemduel/shared/logic/gameReducer';
+import { createGameSetupPayload } from '@gemduel/shared/logic/gameSetup';
+import {
+    buildReplayInitSnapshot,
+    loadReplaySession,
+    saveReplayVNext,
+    type ReplayVNext,
+} from '@gemduel/shared/replay';
 import { useReplayIO } from '../useReplayIO';
 
 const reportRendererEvent = vi.fn();
@@ -13,14 +22,36 @@ vi.mock('../safeReplayImport', () => ({
     importReplayFromFile: (...args: unknown[]) => importReplayFromFile(...args),
 }));
 
+const createReplayFixture = (): ReplayVNext => {
+    const setup = createGameSetupPayload('LOCAL_PVP');
+    const initAction = { type: 'INIT', payload: setup } as const;
+    const nextState = applyAction(INITIAL_STATE_SKELETON, initAction);
+    if (!nextState) {
+        throw new Error('Failed to build replay test fixture.');
+    }
+
+    const { init, runtimeToInstance } = buildReplayInitSnapshot(initAction, nextState);
+    return saveReplayVNext({
+        replayRevision: 0,
+        gameVersion: '5.2.11',
+        createdAt: '2026-04-20T12:34:56.000Z',
+        init,
+        events: [],
+        currentState: nextState,
+        runtimeToInstance,
+    });
+};
+
 describe('useReplayIO', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-04-20T12:34:56.000Z'));
+        delete window.electron;
     });
 
-    it('downloads the current replay history as a JSON blob', () => {
+    it('downloads the current Replay vNext payload as compact JSON', () => {
+        const replay = createReplayFixture();
         const importHistory = vi.fn();
         const originalCreateElement = document.createElement.bind(document);
         const click = vi.fn();
@@ -44,10 +75,8 @@ describe('useReplayIO', () => {
             value: revokeObjectURL,
         });
 
-        const history = [{ type: 'INIT' }] as ReplayFile['history'];
         const { handleDownloadReplay } = useReplayIO({
-            appVersion: '5.2.11',
-            history,
+            replay,
             importHistory,
         });
 
@@ -55,14 +84,72 @@ describe('useReplayIO', () => {
 
         expect(createObjectURL).toHaveBeenCalledTimes(1);
         expect(anchor.href).toBe('blob:replay');
-        expect(anchor.download).toBe('GemDuel_Replay_1776688496000.json');
+        expect(anchor.download).toMatch(/^GemDuel_Replay_v1_1776688496000_[a-z0-9]+\.json$/);
         expect(click).toHaveBeenCalledTimes(1);
         expect(revokeObjectURL).toHaveBeenCalledWith('blob:replay');
     });
 
-    it('imports a valid replay and clears the file input afterwards', async () => {
+    it('persists the replay into the governed desktop replay folder when the Electron bridge is available', async () => {
+        const replay = createReplayFixture();
         const importHistory = vi.fn();
-        const history = [{ type: 'INIT' }] as ReplayFile['history'];
+        const saveReplayToFolder = vi.fn().mockResolvedValue({
+            path: 'E:\\GemDuel-Dev\\Replay\\GemDuel_Replay_v1_1776688496000_test.json',
+        });
+
+        window.electron = {
+            saveReplayToFolder,
+        } as Partial<ElectronBridge> as ElectronBridge;
+
+        const { handleDownloadReplay, persistReplayToProjectFolder } = useReplayIO({
+            replay,
+            importHistory,
+        });
+
+        handleDownloadReplay();
+        await persistReplayToProjectFolder(replay);
+
+        expect(saveReplayToFolder).toHaveBeenCalledTimes(2);
+        expect(saveReplayToFolder).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                fileName: expect.stringMatching(/^GemDuel_Replay_v1_1776688496000_[a-z0-9]+\.json$/),
+                contents: JSON.stringify(replay),
+            })
+        );
+    });
+
+    it('reports replay export failures from the Electron bridge', async () => {
+        const replay = createReplayFixture();
+        const importHistory = vi.fn();
+        const saveReplayToFolder = vi.fn().mockRejectedValue(new Error('disk full'));
+
+        window.electron = {
+            saveReplayToFolder,
+        } as Partial<ElectronBridge> as ElectronBridge;
+
+        const { persistReplayToProjectFolder } = useReplayIO({
+            replay,
+            importHistory,
+        });
+
+        await expect(persistReplayToProjectFolder(replay)).resolves.toBeNull();
+
+        expect(reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'REPLAY_EXPORT_FAILED',
+                severity: 'warn',
+            }),
+            expect.objectContaining({
+                consoleMessage: expect.stringContaining('Replay export failed: GemDuel_Replay_v1_1776688496000_'),
+                consoleDetails: expect.any(Error),
+            })
+        );
+    });
+
+    it('imports a valid replay session and clears the file input afterwards', async () => {
+        const replay = createReplayFixture();
+        const session = loadReplaySession(replay);
+        const importHistory = vi.fn();
         const file = new File(['{}'], 'replay.json', { type: 'application/json' });
         const input = document.createElement('input');
         input.value = 'fake-path';
@@ -72,16 +159,16 @@ describe('useReplayIO', () => {
         });
         importReplayFromFile.mockResolvedValue({
             ok: true,
-            replay: {
-                version: '5.2.11',
-                timestamp: '2026-04-20T12:34:56.000Z',
-                history,
+            replay,
+            session,
+            diagnostics: {
+                detectedVersion: '1.0',
+                summaryIntegrity: 'ok',
             },
         });
 
         const { handleUploadReplay } = useReplayIO({
-            appVersion: '5.2.11',
-            history: [],
+            replay,
             importHistory,
         });
 
@@ -90,12 +177,13 @@ describe('useReplayIO', () => {
         } as Parameters<typeof handleUploadReplay>[0]);
 
         expect(importReplayFromFile).toHaveBeenCalledWith(file);
-        expect(importHistory).toHaveBeenCalledWith(history);
+        expect(importHistory).toHaveBeenCalledWith(session.history);
         expect(input.value).toBe('');
         expect(reportRendererEvent).not.toHaveBeenCalled();
     });
 
     it('reports rejected replay imports and clears the file input', async () => {
+        const replay = createReplayFixture();
         const importHistory = vi.fn();
         const file = new File(['{}'], 'replay.json', { type: 'application/json' });
         const input = document.createElement('input');
@@ -114,8 +202,7 @@ describe('useReplayIO', () => {
         });
 
         const { handleUploadReplay } = useReplayIO({
-            appVersion: '5.2.11',
-            history: [],
+            replay,
             importHistory,
         });
 
@@ -140,6 +227,7 @@ describe('useReplayIO', () => {
     });
 
     it('returns early when no file was selected', async () => {
+        const replay = createReplayFixture();
         const importHistory = vi.fn();
         const input = document.createElement('input');
         Object.defineProperty(input, 'files', {
@@ -148,8 +236,7 @@ describe('useReplayIO', () => {
         });
 
         const { handleUploadReplay } = useReplayIO({
-            appVersion: '5.2.11',
-            history: [],
+            replay,
             importHistory,
         });
 

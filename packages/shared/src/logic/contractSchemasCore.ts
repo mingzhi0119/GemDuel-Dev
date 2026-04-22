@@ -22,6 +22,7 @@ export const gamePhaseSchema = z.enum([
     'SELECT_CARD_COLOR',
 ]);
 export const levelSchema = z.union([z.literal(1), z.literal(2), z.literal(3)]);
+export const draftLevelSchema = z.union([z.literal(0), levelSchema]);
 export const playerKeySchema = z.enum(['p1', 'p2']);
 export const gemColorSchema = z.enum(['blue', 'white', 'green', 'black', 'red', 'pearl', 'gold']);
 export const basicGemColorSchema = z.enum(['blue', 'white', 'green', 'black', 'red']);

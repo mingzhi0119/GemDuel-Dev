@@ -29,6 +29,17 @@ const LAN_START_TUPLE_SCHEMA = z.tuple([
         roomId: LAN_ROOM_ID_SCHEMA,
     }),
 ]);
+const SAFE_REPLAY_FILE_NAME_SCHEMA = z
+    .string()
+    .min(1)
+    .max(128)
+    .regex(/^[A-Za-z0-9._-]+\.json$/);
+const SAVE_REPLAY_TO_FOLDER_TUPLE_SCHEMA = z.tuple([
+    z.object({
+        fileName: SAFE_REPLAY_FILE_NAME_SCHEMA,
+        contents: z.string().min(2).max(512 * 1024),
+    }),
+]);
 const LAN_PEER_READY_TUPLE_SCHEMA = z.tuple([
     z.object({
         roomId: LAN_ROOM_ID_SCHEMA,
@@ -43,6 +54,7 @@ const IPC_ARG_SCHEMAS = new Map([
     [IPC_INVOKE_CHANNELS.revokeRuntimeRelayProfile, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.getLanMatchmakingState, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.saveReplayToFolder, SAVE_REPLAY_TO_FOLDER_TUPLE_SCHEMA],
     [IPC_INVOKE_CHANNELS.startLanMatchmaking, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.cancelLanMatchmaking, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.selectLanPregameMode, LAN_MODE_SELECTION_TUPLE_SCHEMA],
@@ -104,6 +116,8 @@ export const validateIpcArgs = (channel, args) => {
             reason:
                 channel === IPC_SEND_CHANNELS.reportReleaseHealth
                     ? 'Release-health payload did not match the allowlisted schema.'
+                    : channel === IPC_INVOKE_CHANNELS.saveReplayToFolder
+                      ? 'Replay export payload did not match the allowlisted schema.'
                     : 'This channel does not accept payload arguments.',
         };
     }

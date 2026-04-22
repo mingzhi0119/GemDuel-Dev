@@ -5,6 +5,7 @@ import {
     buildGameStartAction,
     buildPeekDeckAction,
     buildBuyAction,
+    buildRerollDraftPoolAction,
     buildReplenishAction,
     buildReserveCardFlow,
     buildReserveDeckFlow,
@@ -119,6 +120,10 @@ describe('Interaction Commands', () => {
         expect(buildPeekDeckAction(3)).toEqual({
             type: 'PEEK_DECK',
             payload: { level: 3 },
+        });
+        expect(buildRerollDraftPoolAction(2)).toEqual({
+            type: 'REROLL_DRAFT_POOL',
+            payload: { level: 2 },
         });
     });
 

@@ -26,6 +26,7 @@
         "reportReleaseHealth",
         "restartApp",
         "revokeRuntimeRelayProfile",
+        "saveReplayToFolder",
         "selectLanPregameMode",
         "startLanMatchmaking"
     ],
@@ -44,6 +45,7 @@
         "report-release-health",
         "restart_app",
         "revoke-runtime-relay-profile",
+        "save-replay-to-folder",
         "select-lan-pregame-mode",
         "start-lan-matchmaking",
         "update_available",

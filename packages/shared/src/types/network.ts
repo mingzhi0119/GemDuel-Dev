@@ -16,10 +16,11 @@ import type {
     StealGemPayload,
     UsePrivilegePayload,
 } from './domain';
+import type { ReplayFullSync, ReplaySync } from '../replay/types';
 import type { HostDecisionReasonCode, NetworkSyncReason, RecoveryReason } from './reason';
 export type { HostDecisionReasonCode, NetworkSyncReason, RecoveryReason } from './reason';
 
-export const NETWORK_PROTOCOL_VERSION = 2 as const;
+export const NETWORK_PROTOCOL_VERSION = 3 as const;
 
 export type NetworkProtocolVersion = typeof NETWORK_PROTOCOL_VERSION;
 export type HostApprovalOutcomeCode = 'APPROVED' | 'AUTHORITY_REJECTED' | 'CHECKSUM_UNAVAILABLE';
@@ -62,6 +63,7 @@ export interface BootstrapStateMessage {
     type: 'BOOTSTRAP_STATE';
     command: BootstrapCommand;
     checksum?: string;
+    replayFull?: ReplayFullSync;
 }
 
 export interface GuestIntentMessage {
@@ -88,6 +90,7 @@ export interface SyncStateMessage {
     type: 'SYNC_STATE';
     snapshot: GameState;
     reason: NetworkSyncReason;
+    replaySync?: ReplaySync;
 }
 
 export interface RecoveryRequestMessage {

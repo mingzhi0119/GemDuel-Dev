@@ -99,6 +99,11 @@ const REASON_DESCRIPTORS: Record<AppReasonCode, ReasonDescriptor> = {
         severity: 'warn',
         message: 'The replay file did not match the governed replay contract.',
     },
+    UNSUPPORTED_REPLAY_VERSION: {
+        group: 'boundary',
+        severity: 'warn',
+        message: 'This replay was recorded with an unsupported legacy format.',
+    },
     TURN_CREDENTIAL_BUNDLE_INVALID: {
         group: 'runtime',
         severity: 'error',

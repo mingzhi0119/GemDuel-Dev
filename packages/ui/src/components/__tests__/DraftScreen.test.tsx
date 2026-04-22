@@ -15,14 +15,13 @@ describe('DraftScreen', () => {
                         BUFFS.INTELLIGENCE.id,
                         BUFFS.DEEP_POCKETS.id,
                     ]}
-                    buffLevel={1}
+                    activeDraftLevel={1}
+                    mode="LOCAL_PVP"
                     activePlayer="p1"
                     onSelectBuff={vi.fn()}
                     onReroll={vi.fn()}
                     theme="dark"
                     localPlayer="p1"
-                    isOnline={false}
-                    isPvE={false}
                     {...overrides}
                 />
             </LocaleProvider>
@@ -38,9 +37,25 @@ describe('DraftScreen', () => {
         expect(html).toContain('L3');
     });
 
+    it('keeps reroll controls visible for the local p2 asymmetric pick', () => {
+        const html = renderDraftScreen({
+            activePlayer: 'p2',
+            p2DraftPool: [
+                BUFFS.PRIVILEGE_FAVOR.id,
+                BUFFS.GREED_KING.id,
+                BUFFS.DOUBLE_AGENT.id,
+                BUFFS.ECHO_RESERVOIR.id,
+            ],
+            activeDraftLevel: 3,
+        });
+
+        expect(html).toContain('DRAFT CUSTOMIZE');
+        expect(html).toContain('Lvl 3');
+    });
+
     it('hides reroll controls for online drafts', () => {
         const html = renderDraftScreen({
-            isOnline: true,
+            mode: 'ONLINE_MULTIPLAYER',
             localPlayer: 'p1',
         });
 

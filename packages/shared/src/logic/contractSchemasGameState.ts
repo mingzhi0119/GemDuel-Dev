@@ -3,6 +3,7 @@ import {
     basicGemColorSchema,
     bonusColorSchema,
     cardActionSourceSchema,
+    draftLevelSchema,
     gemColorSchema,
     gameModeSchema,
     gamePhaseSchema,
@@ -255,7 +256,7 @@ export const discardReservedPayloadSchema = z
     })
     .passthrough();
 
-export const debugRerollBuffsPayloadSchema = z
+export const rerollDraftPoolPayloadSchema = z
     .object({
         level: levelSchema.optional(),
     })
@@ -271,6 +272,8 @@ export const gameStateBoundarySchema = z
         isHost: z.boolean(),
         hostPlayer: playerKeySchema,
         localPlayer: playerKeySchema,
+        buffLevel: draftLevelSchema,
+        p2DraftLevel: draftLevelSchema.optional(),
         inventories: z
             .object({
                 p1: gemInventorySchema,

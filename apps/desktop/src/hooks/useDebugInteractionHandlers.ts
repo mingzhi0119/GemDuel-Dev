@@ -10,7 +10,6 @@ interface DebugInteractionParams {
 
 export const useDebugInteractionHandlers = ({
     gameState,
-    canLocalInteract,
     networkDispatch,
 }: DebugInteractionParams) => {
     const handleDebugAddCrowns = useCallback(
@@ -46,32 +45,13 @@ export const useDebugInteractionHandlers = ({
         }
     }, [gameState.winner, networkDispatch]);
 
-    const handleRerollBuffs = useCallback(
-        (level?: number) => {
-            if (canLocalInteract) {
-                networkDispatch({
-                    type: 'DEBUG_REROLL_BUFFS',
-                    payload: { level },
-                });
-            }
-        },
-        [canLocalInteract, networkDispatch]
-    );
-
     return useMemo(
         () => ({
             handleDebugAddCrowns,
             handleDebugAddPoints,
             handleDebugAddPrivilege,
             handleForceRoyal,
-            handleRerollBuffs,
         }),
-        [
-            handleDebugAddCrowns,
-            handleDebugAddPoints,
-            handleDebugAddPrivilege,
-            handleForceRoyal,
-            handleRerollBuffs,
-        ]
+        [handleDebugAddCrowns, handleDebugAddPoints, handleDebugAddPrivilege, handleForceRoyal]
     );
 };

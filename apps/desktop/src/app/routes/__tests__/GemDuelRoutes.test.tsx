@@ -11,6 +11,10 @@ import { GemDuelRoutes } from '../GemDuelRoutes';
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
+const routeSpies = vi.hoisted(() => ({
+    draftScreenProps: vi.fn(),
+}));
+
 vi.mock('@gemduel/ui/components/GameConfigMenu', () => ({
     GameConfigMenu: () => <div data-testid="config-route">config</div>,
 }));
@@ -24,7 +28,10 @@ vi.mock('@gemduel/ui/components/LanMenu', () => ({
 }));
 
 vi.mock('@gemduel/ui/components/DraftScreen', () => ({
-    DraftScreen: () => <div data-testid="draft-route">draft</div>,
+    DraftScreen: (props: unknown) => {
+        routeSpies.draftScreenProps(props);
+        return <div data-testid="draft-route">draft</div>;
+    },
 }));
 
 vi.mock('../../shell/GameShell', () => ({
@@ -123,6 +130,7 @@ const createGame = (
             currentIndex: 0,
             historyLength: 0,
             history: [] as GameAction[],
+            historySource: 'live',
             ...overrides.historyControls,
         },
         online: {
@@ -140,7 +148,11 @@ const createGame = (
             isUnstable: false,
             approvalLog: [],
             statusNotice: null,
+            authoritativeReplayRecorder: null,
             ...overrides.online,
+        },
+        replay: {
+            currentReplay: null,
         },
     } satisfies AppRouteProps['game'];
 
@@ -225,6 +237,7 @@ const renderRoutes = async (props: AppRouteProps) => {
 describe('GemDuelRoutes desktop stage rendering', () => {
     afterEach(() => {
         document.body.innerHTML = '';
+        routeSpies.draftScreenProps.mockReset();
         vi.restoreAllMocks();
     });
 
@@ -368,6 +381,68 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         expect(Number.parseFloat(canvas?.style.height ?? '0')).toBeCloseTo(1067 / (1707 / 2560), 5);
         expect(canvas?.style.transform).toBe(`scale(${1707 / 2560})`);
         expect(canvas?.style.top).toBe('0px');
+
+        act(() => {
+            root.unmount();
+        });
+    });
+
+    it('passes local-only reroll controls and the p2 draft level into DraftScreen', async () => {
+        const { root } = await renderRoutes(
+            createProps({
+                game: createGame({
+                    state: {
+                        phase: 'DRAFT_PHASE',
+                        mode: 'LOCAL_PVP',
+                        turn: 'p2',
+                        buffLevel: 2,
+                        p2DraftLevel: 3,
+                    },
+                    historyControls: {
+                        historyLength: 1,
+                    },
+                }),
+            })
+        );
+
+        expect(routeSpies.draftScreenProps).toHaveBeenCalledWith(
+            expect.objectContaining({
+                mode: 'LOCAL_PVP',
+                activeDraftLevel: 3,
+                onReroll: expect.any(Function),
+            })
+        );
+
+        act(() => {
+            root.unmount();
+        });
+    });
+
+    it('falls back to buffLevel for legacy draft snapshots and withholds rerolls outside local pvp', async () => {
+        const { root } = await renderRoutes(
+            createProps({
+                game: createGame({
+                    state: {
+                        phase: 'DRAFT_PHASE',
+                        mode: 'ONLINE_MULTIPLAYER',
+                        turn: 'p2',
+                        buffLevel: 2,
+                        p2DraftLevel: undefined as unknown as 0 | 1 | 2 | 3,
+                    },
+                    historyControls: {
+                        historyLength: 1,
+                    },
+                }),
+            })
+        );
+
+        expect(routeSpies.draftScreenProps).toHaveBeenCalledWith(
+            expect.objectContaining({
+                mode: 'ONLINE_MULTIPLAYER',
+                activeDraftLevel: 2,
+                onReroll: undefined,
+            })
+        );
 
         act(() => {
             root.unmount();

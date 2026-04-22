@@ -211,6 +211,8 @@ export const localizeLooseUiMessage = (message: string | null | undefined, local
         'The replay file did not match the governed replay contract.':
             'reason.REPLAY_FILE_INVALID_SCHEMA',
         'The replay file exceeded the governed size limit.': 'reason.REPLAY_FILE_TOO_LARGE',
+        'This replay was recorded with an unsupported legacy format.':
+            'reason.UNSUPPORTED_REPLAY_VERSION',
     };
 
     const fixedKey = fixedMap[message];

@@ -169,7 +169,7 @@ export const FSM_POLICY_BY_ACTION: Record<GameAction['type'], FsmCommandPolicy> 
         allowedFrom: [GAME_PHASES.IDLE],
         allowedTo: [GAME_PHASES.IDLE],
     },
-    DEBUG_REROLL_BUFFS: {
+    REROLL_DRAFT_POOL: {
         allowedFrom: [GAME_PHASES.DRAFT_PHASE],
         allowedTo: [GAME_PHASES.DRAFT_PHASE],
     },

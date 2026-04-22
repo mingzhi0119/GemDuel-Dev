@@ -8,6 +8,7 @@ export const useGameState = () => {
     // 1. Core State & History
     const {
         history,
+        historySource,
         currentIndex,
         recordAction: recordLocalAction,
         undo,
@@ -95,6 +96,7 @@ export const useGameState = () => {
             currentIndex,
             historyLength: history.length,
             history,
+            historySource,
         },
     };
 };

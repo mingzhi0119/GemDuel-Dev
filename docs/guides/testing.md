@@ -21,7 +21,7 @@ pnpm release:check
 | ------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Domain logic        | Reject invalid actions before mutation               | `packages/shared/src/logic/__tests__/**`                                                             |
 | Network / authority | Fail closed on malformed packets and stale decisions | `packages/shared/src/logic/__tests__/**`, `apps/desktop/src/hooks/__tests__/useGameNetwork.test.tsx` |
-| Replay import       | Reject bad files and invalid history                 | `apps/desktop/src/app/io/__tests__/**`, `packages/shared/src/logic/__tests__/replayImport.test.ts`   |
+| Replay import       | Reject legacy files, validate Replay vNext, preserve deterministic replays | `apps/desktop/src/app/io/__tests__/**`, `packages/shared/src/replay/__tests__/replayVNext.test.ts` |
 | Desktop shell       | Freeze BrowserWindow, preload, and IPC policy        | `apps/desktop/electron/__tests__/**`, `tools/scripts/check-electron-governance.mjs`                  |
 | Release governance  | Keep docs, thresholds, artifacts, and drills aligned | `tools/scripts/__tests__/**`, `pnpm release:check`                                                   |
 

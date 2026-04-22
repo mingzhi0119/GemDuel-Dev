@@ -1,29 +1,77 @@
 import type { ChangeEventHandler } from 'react';
 import type { GameLogicController } from '@app/types/ui';
-import type { ReplayFile } from '@gemduel/shared/types';
+import type { ReplayVNext } from '@gemduel/shared/replay';
 import { reportRendererEvent } from '../../observability/rendererLogger';
 import { importReplayFromFile } from './safeReplayImport';
 
 interface UseReplayIOOptions {
-    appVersion: string;
-    history: GameLogicController['historyControls']['history'];
+    replay: ReplayVNext | null;
     importHistory: GameLogicController['handlers']['importHistory'];
 }
 
-export const useReplayIO = ({ appVersion, history, importHistory }: UseReplayIOOptions) => {
+const buildReplayExportFileName = (
+    replay: ReplayVNext,
+    fallbackTimestamp = new Date().getTime()
+) => {
+    const createdAtTimestamp = Number.parseInt(String(Date.parse(replay.createdAt)), 10);
+    const timestamp = Number.isFinite(createdAtTimestamp) ? createdAtTimestamp : fallbackTimestamp;
+    return `GemDuel_Replay_v1_${timestamp}_${replay.summary.finalStateHash}.json`;
+};
+
+const triggerBrowserDownload = (replay: ReplayVNext, fileName: string) => {
+    const blob = new Blob([JSON.stringify(replay)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+};
+
+export const useReplayIO = ({ replay, importHistory }: UseReplayIOOptions) => {
+    const persistReplayToProjectFolder = async (targetReplay: ReplayVNext | null = replay) => {
+        if (!targetReplay || !window.electron?.saveReplayToFolder) {
+            return null;
+        }
+
+        const fileName = buildReplayExportFileName(targetReplay);
+        try {
+            const result = await window.electron.saveReplayToFolder({
+                fileName,
+                contents: JSON.stringify(targetReplay),
+            });
+            return result.path;
+        } catch (error) {
+            reportRendererEvent(
+                {
+                    category: 'runtime',
+                    name: 'REPLAY_EXPORT_FAILED',
+                    severity: 'warn',
+                    message: 'Replay export failed.',
+                    context: {
+                        fileName,
+                    },
+                },
+                {
+                    consoleMessage: `Replay export failed: ${fileName}`,
+                    consoleDetails: error,
+                }
+            );
+            return null;
+        }
+    };
+
     const handleDownloadReplay = () => {
-        const data: ReplayFile = {
-            version: appVersion,
-            timestamp: new Date().toISOString(),
-            history,
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `GemDuel_Replay_${new Date().getTime()}.json`;
-        anchor.click();
-        URL.revokeObjectURL(url);
+        if (!replay) {
+            return;
+        }
+
+        if (window.electron?.saveReplayToFolder) {
+            void persistReplayToProjectFolder(replay);
+            return;
+        }
+
+        triggerBrowserDownload(replay, buildReplayExportFileName(replay));
     };
 
     const handleUploadReplay: ChangeEventHandler<HTMLInputElement> = async (event) => {
@@ -50,9 +98,9 @@ export const useReplayIO = ({ appVersion, history, importHistory }: UseReplayIOO
             return;
         }
 
-        importHistory(replayImport.replay.history);
+        importHistory(replayImport.session.history);
         event.target.value = '';
     };
 
-    return { handleDownloadReplay, handleUploadReplay };
+    return { handleDownloadReplay, handleUploadReplay, persistReplayToProjectFolder };
 };

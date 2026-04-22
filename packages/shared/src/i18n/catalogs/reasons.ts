@@ -19,6 +19,7 @@ export const REASON_UI_KEYS: Record<AppReasonCode, `reason.${AppReasonCode}`> = 
     REPLAY_FILE_READ_FAILED: 'reason.REPLAY_FILE_READ_FAILED',
     REPLAY_FILE_INVALID_JSON: 'reason.REPLAY_FILE_INVALID_JSON',
     REPLAY_FILE_INVALID_SCHEMA: 'reason.REPLAY_FILE_INVALID_SCHEMA',
+    UNSUPPORTED_REPLAY_VERSION: 'reason.UNSUPPORTED_REPLAY_VERSION',
     TURN_CREDENTIAL_BUNDLE_INVALID: 'reason.TURN_CREDENTIAL_BUNDLE_INVALID',
     TURN_CREDENTIAL_BUNDLE_EXPIRED: 'reason.TURN_CREDENTIAL_BUNDLE_EXPIRED',
     TURN_CREDENTIAL_FETCH_FAILED: 'reason.TURN_CREDENTIAL_FETCH_FAILED',
@@ -63,6 +64,8 @@ export const enReasonMessages = {
     'reason.REPLAY_FILE_INVALID_JSON': 'The replay file could not be parsed as JSON.',
     'reason.REPLAY_FILE_INVALID_SCHEMA':
         'The replay file did not match the governed replay contract.',
+    'reason.UNSUPPORTED_REPLAY_VERSION':
+        'This replay was recorded with an unsupported legacy format.',
     'reason.TURN_CREDENTIAL_BUNDLE_INVALID':
         'The TURN credential bundle failed runtime validation.',
     'reason.TURN_CREDENTIAL_BUNDLE_EXPIRED':
@@ -107,6 +110,7 @@ export const zhReasonMessages: ReasonMessageShape = {
     'reason.REPLAY_FILE_READ_FAILED': '回放文件无法被安全读取。',
     'reason.REPLAY_FILE_INVALID_JSON': '回放文件无法解析为 JSON。',
     'reason.REPLAY_FILE_INVALID_SCHEMA': '回放文件不符合受治理的回放契约。',
+    'reason.UNSUPPORTED_REPLAY_VERSION': '该回放来自已废弃的旧格式，当前版本不再支持。',
     'reason.TURN_CREDENTIAL_BUNDLE_INVALID': 'TURN 凭证包未通过运行时校验。',
     'reason.TURN_CREDENTIAL_BUNDLE_EXPIRED': 'TURN 凭证包在使用前已经过期。',
     'reason.TURN_CREDENTIAL_FETCH_FAILED': '桌面运行时无法获取短时 TURN 凭证。',

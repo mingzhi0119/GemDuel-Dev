@@ -56,7 +56,9 @@
                 "NETWORK_MESSAGE_INVALID_SYNC_STATE",
                 "NETWORK_MESSAGE_INVALID_RECOVERY_REQUEST"
             ],
-            "runtimeSignals": ["NETWORK_MESSAGE_REJECTED"],
+            "runtimeSignals": [
+                "NETWORK_MESSAGE_REJECTED"
+            ],
             "testRefs": [
                 "packages/shared/src/logic/__tests__/propertyBoundaries.test.ts",
                 "packages/shared/src/logic/__tests__/protocolRecoveryMatrix.test.ts",
@@ -108,16 +110,24 @@
             "title": "Replay local file read",
             "entrySurface": "Renderer file input",
             "owner": "Frontend + Domain Logic",
-            "validatorRefs": ["apps/desktop/src/app/io/safeReplayImport.ts"],
-            "contractRefs": ["packages/shared/src/types/boundary.ts"],
+            "validatorRefs": [
+                "apps/desktop/src/app/io/safeReplayImport.ts"
+            ],
+            "contractRefs": [
+                "packages/shared/src/types/boundary.ts"
+            ],
             "reasonCodes": [
                 "REPLAY_FILE_TOO_LARGE",
                 "REPLAY_FILE_UNSUPPORTED_TYPE",
                 "REPLAY_FILE_READ_FAILED",
                 "REPLAY_FILE_INVALID_JSON"
             ],
-            "runtimeSignals": ["REPLAY_BOUNDARY_REJECTED"],
-            "testRefs": ["apps/desktop/src/app/io/__tests__/safeReplayImport.test.ts"],
+            "runtimeSignals": [
+                "REPLAY_BOUNDARY_REJECTED"
+            ],
+            "testRefs": [
+                "apps/desktop/src/app/io/__tests__/safeReplayImport.test.ts"
+            ],
             "failClosedBehavior": "Oversized, unreadable, or non-JSON local files are rejected before replay schema parsing."
         },
         {
@@ -127,20 +137,26 @@
             "owner": "Domain Logic",
             "validatorRefs": [
                 "apps/desktop/src/app/io/safeReplayImport.ts",
-                "packages/shared/src/logic/replayImport.ts",
-                "packages/shared/src/logic/commandGate.ts"
+                "packages/shared/src/replay/reader.ts",
+                "packages/shared/src/replay/loader.ts",
+                "packages/shared/src/replay/schema.ts"
             ],
             "contractRefs": [
                 "packages/shared/src/types/boundary.ts",
-                "packages/shared/src/types/domain.ts"
+                "packages/shared/src/replay/types.ts"
             ],
-            "reasonCodes": ["REPLAY_FILE_INVALID_SCHEMA"],
-            "runtimeSignals": ["REPLAY_BOUNDARY_REJECTED"],
+            "reasonCodes": [
+                "REPLAY_FILE_INVALID_SCHEMA",
+                "UNSUPPORTED_REPLAY_VERSION"
+            ],
+            "runtimeSignals": [
+                "REPLAY_BOUNDARY_REJECTED"
+            ],
             "testRefs": [
                 "apps/desktop/src/app/io/__tests__/safeReplayImport.test.ts",
-                "packages/shared/src/logic/__tests__/replayImport.test.ts"
+                "packages/shared/src/replay/__tests__/replayVNext.test.ts"
             ],
-            "failClosedBehavior": "Schema-invalid or nondeterministic replay histories fail closed and are never imported."
+            "failClosedBehavior": "Schema-invalid, legacy, or nondeterministic Replay vNext payloads fail closed and are never imported."
         },
         {
             "id": "ipc-bridge",
@@ -156,8 +172,12 @@
                 "packages/shared/src/types/desktop.ts",
                 "docs/governance/electron-ipc-allowlist.md"
             ],
-            "reasonCodes": ["IPC_REQUEST_REJECTED"],
-            "runtimeSignals": ["IPC_REQUEST_REJECTED"],
+            "reasonCodes": [
+                "IPC_REQUEST_REJECTED"
+            ],
+            "runtimeSignals": [
+                "IPC_REQUEST_REJECTED"
+            ],
             "testRefs": [
                 "apps/desktop/electron/__tests__/desktopGovernance.test.ts",
                 "apps/desktop/electron/__tests__/preloadContract.test.ts"
@@ -179,8 +199,14 @@
                 "tools/governance/runtime-drill.snapshot.json",
                 "docs/governance/electron-ipc-allowlist.md"
             ],
-            "reasonCodes": ["DESKTOP_POLICY_REJECTED"],
-            "runtimeSignals": ["WINDOW_CREATED", "WINDOW_LOAD_FAILED", "WINDOW_UNAVAILABLE"],
+            "reasonCodes": [
+                "DESKTOP_POLICY_REJECTED"
+            ],
+            "runtimeSignals": [
+                "WINDOW_CREATED",
+                "WINDOW_LOAD_FAILED",
+                "WINDOW_UNAVAILABLE"
+            ],
             "testRefs": [
                 "apps/desktop/electron/__tests__/desktopGovernance.test.ts",
                 "apps/desktop/electron/__tests__/runtimeHarness.test.ts",
@@ -236,7 +262,9 @@
                 "docs/governance/operations-slo.md",
                 "tools/governance/release-health-operations.snapshot.json"
             ],
-            "reasonCodes": ["RELEASE_HEALTH_CHECK_FAILED"],
+            "reasonCodes": [
+                "RELEASE_HEALTH_CHECK_FAILED"
+            ],
             "runtimeSignals": [
                 "APP_READY",
                 "APP_BOOT",
