@@ -42,6 +42,41 @@ const IPC_ALLOWLIST = Object.freeze({
             payload: 'none',
             threat: 'Read-only snapshot of sanitized release-health indicators and recent events.',
         }),
+        getLanMatchmakingState: Object.freeze({
+            api: 'getLanMatchmakingState',
+            channel: 'get-lan-matchmaking-state',
+            owner: 'LAN discovery service',
+            payload: 'none',
+            threat: 'Read-only LAN matchmaking state for the current renderer session.',
+        }),
+        startLanMatchmaking: Object.freeze({
+            api: 'startLanMatchmaking',
+            channel: 'start-lan-matchmaking',
+            owner: 'LAN discovery service',
+            payload: 'none',
+            threat: 'Requests that the main process opt the renderer into local-network matchmaking broadcasts.',
+        }),
+        cancelLanMatchmaking: Object.freeze({
+            api: 'cancelLanMatchmaking',
+            channel: 'cancel-lan-matchmaking',
+            owner: 'LAN discovery service',
+            payload: 'none',
+            threat: 'Requests that the main process leave LAN matchmaking and tear down the active room session.',
+        }),
+        selectLanPregameMode: Object.freeze({
+            api: 'selectLanPregameMode',
+            channel: 'select-lan-pregame-mode',
+            owner: 'LAN discovery service',
+            payload: 'LanPregameModeSelection',
+            threat: 'P1-only pregame mode selection, validated and synchronized by the main process.',
+        }),
+        confirmLanPregameStart: Object.freeze({
+            api: 'confirmLanPregameStart',
+            channel: 'confirm-lan-pregame-start',
+            owner: 'LAN discovery service',
+            payload: 'LanPregameStart',
+            threat: 'P1-only start request for an already matched LAN duel.',
+        }),
     }),
     sends: Object.freeze({
         restartApp: Object.freeze({
@@ -57,6 +92,13 @@ const IPC_ALLOWLIST = Object.freeze({
             owner: 'Renderer observability',
             payload: 'ReleaseHealthEvent',
             threat: 'Structured renderer health event, validated and redacted before persistence.',
+        }),
+        reportLanPeerReady: Object.freeze({
+            api: 'reportLanPeerReady',
+            channel: 'report-lan-peer-ready',
+            owner: 'LAN discovery service',
+            payload: 'LanPeerReady',
+            threat: 'Renderer reports the transport host peer identifier for LAN pregame launch coordination.',
         }),
     }),
     events: Object.freeze({
@@ -80,6 +122,13 @@ const IPC_ALLOWLIST = Object.freeze({
             owner: 'Auto-updater',
             payload: 'none',
             threat: 'Renderer notification that a restart may be offered.',
+        }),
+        lanMatchmakingEvent: Object.freeze({
+            api: 'onLanMatchmakingEvent',
+            channel: 'lan-matchmaking-event',
+            owner: 'LAN discovery service',
+            payload: 'LanMatchmakingEvent',
+            threat: 'Renderer notification for LAN search, match, and launch state.',
         }),
     }),
 });
@@ -123,9 +172,19 @@ const createElectronBridge = (ipcRenderer) =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.revokeRuntimeRelayProfile),
         getReleaseHealthSnapshot: () =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot),
+        getLanMatchmakingState: () =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.getLanMatchmakingState),
+        startLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.startLanMatchmaking),
+        cancelLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.cancelLanMatchmaking),
+        selectLanPregameMode: (payload) =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.selectLanPregameMode, payload),
+        confirmLanPregameStart: (payload) =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.confirmLanPregameStart, payload),
         restartApp: () => ipcRenderer.send(IPC_SEND_CHANNELS.restartApp),
         reportReleaseHealth: (event) =>
             ipcRenderer.send(IPC_SEND_CHANNELS.reportReleaseHealth, event),
+        reportLanPeerReady: (payload) =>
+            ipcRenderer.send(IPC_SEND_CHANNELS.reportLanPeerReady, payload),
         onUpdateAvailable: (callback) =>
             subscribe(
                 ipcRenderer,
@@ -145,6 +204,13 @@ const createElectronBridge = (ipcRenderer) =>
                 ipcRenderer,
                 IPC_ALLOWLIST.events.updateDownloaded.api,
                 UPDATE_CHANNELS.updateDownloaded,
+                callback
+            ),
+        onLanMatchmakingEvent: (callback) =>
+            subscribe(
+                ipcRenderer,
+                IPC_ALLOWLIST.events.lanMatchmakingEvent.api,
+                UPDATE_CHANNELS.lanMatchmakingEvent,
                 callback
             ),
     });

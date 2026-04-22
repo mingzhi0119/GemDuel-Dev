@@ -1,5 +1,6 @@
 import { Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useT } from '../i18n/LocaleProvider';
 
 export interface UpdateInfo {
     available: boolean;
@@ -13,6 +14,7 @@ export function UpdateNotification() {
         progress: 0,
         downloaded: false,
     });
+    const t = useT();
 
     useEffect(() => {
         if (!window.electron) return;
@@ -42,7 +44,7 @@ export function UpdateNotification() {
         <div className="absolute bottom-4 left-4 z-[200] bg-slate-900 border border-blue-500/50 p-4 rounded-xl shadow-2xl animate-in slide-in-from-left duration-500 min-w-[240px]">
             <h4 className="text-blue-400 font-bold text-sm mb-1 flex items-center gap-2">
                 <Globe size={14} className="animate-pulse" />
-                {updateInfo.downloaded ? 'Update Ready' : 'Downloading Update...'}
+                {updateInfo.downloaded ? t('update.ready') : t('update.downloading')}
             </h4>
             {!updateInfo.downloaded ? (
                 <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
@@ -56,7 +58,7 @@ export function UpdateNotification() {
                     onClick={() => window.electron?.restartApp()}
                     className="w-full mt-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors"
                 >
-                    Restart Now
+                    {t('update.restartNow')}
                 </button>
             )}
         </div>

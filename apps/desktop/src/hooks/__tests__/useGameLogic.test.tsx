@@ -47,9 +47,14 @@ describe('useGameLogic', () => {
     let container: HTMLDivElement | null = null;
     let currentResult: ReturnType<typeof useGameLogic> | null = null;
 
-    const renderHarness = (shouldConnect = false, targetIP = 'localhost', isReviewing = false) => {
+    const renderHarness = (
+        shouldConnect = false,
+        targetIP = 'localhost',
+        isReviewing = false,
+        targetPort = 9000
+    ) => {
         const Harness = () => {
-            currentResult = useGameLogic(shouldConnect, targetIP, isReviewing);
+            currentResult = useGameLogic(shouldConnect, targetIP, isReviewing, targetPort);
             return null;
         };
 
@@ -129,14 +134,15 @@ describe('useGameLogic', () => {
         mocks.useGameInteractions.mockReturnValue(interactions);
         mocks.usePlayableHistoryControls.mockReturnValue(playableHistoryControls);
 
-        renderHarness(true, 'peer.example', true);
+        renderHarness(true, 'peer.example', true, 9100);
 
         expect(mocks.useGameNetwork).toHaveBeenCalledWith(
             gameState,
             dispatch,
             clearAndInit,
             true,
-            'peer.example'
+            'peer.example',
+            9100
         );
         expect(mocks.useGameInteractions).toHaveBeenCalledWith(gameState, networkDispatch, 0, true);
         expect(mocks.useAIController).toHaveBeenCalledWith(gameState, networkDispatch, true);

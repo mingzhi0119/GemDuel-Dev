@@ -64,11 +64,21 @@ describe('electron preload contract', () => {
             refreshRuntimeRelayProfile: () => Promise<string>;
             revokeRuntimeRelayProfile: () => Promise<string>;
             getReleaseHealthSnapshot: () => Promise<string>;
+            getLanMatchmakingState: () => Promise<string>;
+            startLanMatchmaking: () => Promise<string>;
+            cancelLanMatchmaking: () => Promise<string>;
+            selectLanPregameMode: (payload: {
+                roomId: string;
+                mode: 'classic' | 'roguelike';
+            }) => Promise<string>;
+            confirmLanPregameStart: (payload: { roomId: string }) => Promise<string>;
             restartApp: () => void;
             reportReleaseHealth: (event: { name: string }) => void;
+            reportLanPeerReady: (payload: { roomId: string; peerId: string }) => void;
             onUpdateAvailable: (callback: () => void) => () => void;
             onDownloadProgress: (callback: (value: number) => void) => () => void;
             onUpdateDownloaded: (callback: () => void) => () => void;
+            onLanMatchmakingEvent: (callback: (event: { type: string }) => void) => () => void;
         };
 
         await expect(bridge.getAppVersion()).resolves.toBe('get-app-version');
@@ -83,20 +93,42 @@ describe('electron preload contract', () => {
         await expect(bridge.getReleaseHealthSnapshot()).resolves.toBe(
             'get-release-health-snapshot'
         );
+        await expect(bridge.getLanMatchmakingState()).resolves.toBe('get-lan-matchmaking-state');
+        await expect(bridge.startLanMatchmaking()).resolves.toBe('start-lan-matchmaking');
+        await expect(bridge.cancelLanMatchmaking()).resolves.toBe('cancel-lan-matchmaking');
+        await expect(
+            bridge.selectLanPregameMode({
+                roomId: 'room-1',
+                mode: 'classic',
+            })
+        ).resolves.toBe('select-lan-pregame-mode');
+        await expect(bridge.confirmLanPregameStart({ roomId: 'room-1' })).resolves.toBe(
+            'confirm-lan-pregame-start'
+        );
         bridge.restartApp();
         bridge.reportReleaseHealth({ name: 'APP_RUNTIME_CONFIG_LOADED' });
+        bridge.reportLanPeerReady({ roomId: 'room-1', peerId: 'peer-1' });
 
         const onAvailable = vi.fn();
         const onProgress = vi.fn();
         const onDownloaded = vi.fn();
+        const onLanEvent = vi.fn();
 
         const unsubscribeAvailable = bridge.onUpdateAvailable(onAvailable);
         const unsubscribeProgress = bridge.onDownloadProgress(onProgress);
         const unsubscribeDownloaded = bridge.onUpdateDownloaded(onDownloaded);
+        const unsubscribeLan = bridge.onLanMatchmakingEvent(onLanEvent);
 
         listeners.get(UPDATE_CHANNELS.updateAvailable)?.({}, undefined);
         listeners.get(UPDATE_CHANNELS.downloadProgress)?.({}, 42);
         listeners.get(UPDATE_CHANNELS.updateDownloaded)?.({}, undefined);
+        listeners.get(UPDATE_CHANNELS.lanMatchmakingEvent)?.(
+            {},
+            {
+                type: 'state',
+                state: { phase: 'searching' },
+            }
+        );
 
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-app-version');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-runtime-ice-servers');
@@ -104,17 +136,36 @@ describe('electron preload contract', () => {
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('refresh-runtime-relay-profile');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('revoke-runtime-relay-profile');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-release-health-snapshot');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('get-lan-matchmaking-state');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('start-lan-matchmaking');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('cancel-lan-matchmaking');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('select-lan-pregame-mode', {
+            roomId: 'room-1',
+            mode: 'classic',
+        });
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('confirm-lan-pregame-start', {
+            roomId: 'room-1',
+        });
         expect(ipcRenderer.send).toHaveBeenCalledWith('restart_app');
         expect(ipcRenderer.send).toHaveBeenCalledWith('report-release-health', {
             name: 'APP_RUNTIME_CONFIG_LOADED',
         });
+        expect(ipcRenderer.send).toHaveBeenCalledWith('report-lan-peer-ready', {
+            roomId: 'room-1',
+            peerId: 'peer-1',
+        });
         expect(onAvailable).toHaveBeenCalledTimes(1);
         expect(onProgress).toHaveBeenCalledWith(42);
         expect(onDownloaded).toHaveBeenCalledTimes(1);
+        expect(onLanEvent).toHaveBeenCalledWith({
+            type: 'state',
+            state: { phase: 'searching' },
+        });
 
         unsubscribeAvailable();
         unsubscribeProgress();
         unsubscribeDownloaded();
+        unsubscribeLan();
 
         expect(ipcRenderer.on).toHaveBeenCalledWith(
             UPDATE_CHANNELS.updateAvailable,
@@ -128,7 +179,11 @@ describe('electron preload contract', () => {
             UPDATE_CHANNELS.updateDownloaded,
             expect.any(Function)
         );
-        expect(ipcRenderer.removeListener).toHaveBeenCalledTimes(3);
+        expect(ipcRenderer.on).toHaveBeenCalledWith(
+            UPDATE_CHANNELS.lanMatchmakingEvent,
+            expect.any(Function)
+        );
+        expect(ipcRenderer.removeListener).toHaveBeenCalledTimes(4);
     });
 
     it('rejects non-function callbacks for event subscriptions', () => {

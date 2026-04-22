@@ -1,17 +1,16 @@
 import React from 'react';
 import { Crown } from 'lucide-react';
+import { translate, type AppLocale } from '@gemduel/shared';
 import { Card as CardComponent, STANDARD_CARD_SIZE } from '../Card';
 import { SAMPLE_CARD } from './cardAnatomyData';
 
 type Theme = 'light' | 'dark';
-type Lang = 'en' | 'zh';
+type Lang = AppLocale;
 
 interface CardAnatomyDiagramProps {
     theme: Theme;
     lang: Lang;
 }
-
-type TextPair = Record<Lang, string>;
 
 interface ConnectorTarget {
     startX: number;
@@ -28,10 +27,22 @@ interface LabelConfig {
     bottom?: number;
     left: number;
     width: number;
-    title: TextPair;
+    titleKey:
+        | 'anatomy.prestige.title'
+        | 'anatomy.bonus.title'
+        | 'anatomy.ability.title'
+        | 'anatomy.cost.title'
+        | 'anatomy.crowns.title';
     titleClassName: string;
-    descLines: TextPair[];
-    strongDesc?: TextPair;
+    descKeys: ReadonlyArray<
+        | 'anatomy.prestige.desc1'
+        | 'anatomy.prestige.desc2'
+        | 'anatomy.bonus.desc'
+        | 'anatomy.ability.desc'
+        | 'anatomy.cost.desc'
+        | 'anatomy.crowns.desc'
+    >;
+    strongDescKey?: 'anatomy.crowns.strong';
     crown?: boolean;
 }
 
@@ -62,21 +73,25 @@ const LabelBlock: React.FC<{ theme: Theme; lang: Lang; label: LabelConfig }> = (
                     className={theme === 'dark' ? 'text-yellow-400' : 'text-yellow-500'}
                     fill="currentColor"
                 />
-                <span className={labelTitleClass(label.titleClassName)}>{label.title[lang]}</span>
+                <span className={labelTitleClass(label.titleClassName)}>
+                    {translate(lang, label.titleKey)}
+                </span>
             </div>
         ) : (
-            <span className={labelTitleClass(label.titleClassName)}>{label.title[lang]}</span>
+            <span className={labelTitleClass(label.titleClassName)}>
+                {translate(lang, label.titleKey)}
+            </span>
         )}
-        {label.descLines.map((line) => (
-            <span key={line[lang]} className={labelDescClass(theme)}>
-                {line[lang]}
+        {label.descKeys.map((key) => (
+            <span key={key} className={labelDescClass(theme)}>
+                {translate(lang, key)}
             </span>
         ))}
-        {label.strongDesc && (
+        {label.strongDescKey && (
             <span
                 className={`block text-sm md:text-base font-bold leading-6 ${label.crown ? (theme === 'dark' ? 'text-yellow-500' : 'text-yellow-700') : theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`}
             >
-                {label.strongDesc[lang]}
+                {translate(lang, label.strongDescKey)}
             </span>
         )}
     </div>
@@ -190,12 +205,9 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             top: topLabelTopPx,
             left: cardLeftPx - sideGapPx - labelWidthPx,
             width: labelWidthPx,
-            title: { en: 'Prestige Points', zh: '声望值' },
+            titleKey: 'anatomy.prestige.title',
             titleClassName: isDark ? 'text-amber-400' : 'text-amber-600',
-            descLines: [
-                { en: '20 Total Points to Win!', zh: '20个总分数即可获胜！' },
-                { en: '10 Single Color Points to Win!', zh: '10个同色分数即可获胜！' },
-            ],
+            descKeys: ['anatomy.prestige.desc1', 'anatomy.prestige.desc2'],
         },
         {
             key: 'bonus',
@@ -203,9 +215,9 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             top: topLabelTopPx,
             left: cardLeftPx + cardWidthPx + sideGapPx,
             width: labelWidthPx,
-            title: { en: 'Gem Bonus', zh: '宝石奖励' },
+            titleKey: 'anatomy.bonus.title',
             titleClassName: isDark ? 'text-blue-400' : 'text-blue-600',
-            descLines: [{ en: 'Discount on future buys', zh: '未来购买折扣' }],
+            descKeys: ['anatomy.bonus.desc'],
         },
         {
             key: 'ability',
@@ -213,9 +225,9 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             top: abilityLabelTopPx,
             left: cardLeftPx - sideGapPx - labelWidthPx - 14,
             width: labelWidthPx + 14,
-            title: { en: 'Special Ability', zh: '特殊能力' },
+            titleKey: 'anatomy.ability.title',
             titleClassName: isDark ? 'text-purple-400' : 'text-purple-600',
-            descLines: [{ en: 'Icon triggers on buy', zh: '购买时触发效果' }],
+            descKeys: ['anatomy.ability.desc'],
         },
         {
             key: 'cost',
@@ -223,9 +235,9 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             bottom: bottomLabelBottomPx,
             left: cardLeftPx - sideGapPx - labelWidthPx,
             width: labelWidthPx,
-            title: { en: 'Gem Cost', zh: '宝石成本' },
+            titleKey: 'anatomy.cost.title',
             titleClassName: isDark ? 'text-emerald-400' : 'text-emerald-600',
-            descLines: [{ en: 'Price to purchase', zh: '购买价格' }],
+            descKeys: ['anatomy.cost.desc'],
         },
         {
             key: 'crowns',
@@ -233,10 +245,10 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             bottom: bottomLabelBottomPx,
             left: cardLeftPx + cardWidthPx + sideGapPx,
             width: labelWidthPx,
-            title: { en: 'Crowns', zh: '皇冠' },
+            titleKey: 'anatomy.crowns.title',
             titleClassName: isDark ? 'text-yellow-400' : 'text-yellow-600',
-            descLines: [{ en: 'Collect for Royals.', zh: '收集以解锁皇室卡。' }],
-            strongDesc: { en: '10 Crowns to Win!', zh: '10个即可获胜！' },
+            descKeys: ['anatomy.crowns.desc'],
+            strongDescKey: 'anatomy.crowns.strong',
             crown: true,
         },
     ];
@@ -247,14 +259,12 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
         return `M ${startX} ${startY} Q ${controlX} ${controlY}, ${endX} ${endY}`;
     };
 
-    const heading = lang === 'en' ? 'Card Layout' : '卡牌结构';
-
     return (
         <section>
             <h4
                 className={`text-xl font-black uppercase tracking-wider mb-3 ${isDark ? 'text-slate-200' : 'text-stone-700'}`}
             >
-                {heading}
+                {translate(lang, 'anatomy.heading')}
             </h4>
             <div
                 ref={containerRef}

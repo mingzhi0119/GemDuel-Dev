@@ -240,6 +240,7 @@ export interface GameSetupPayload {
     decks: DeckState;
     initRandoms: Record<PlayerKey, PlayerInitRandoms>;
     isHost: boolean;
+    hostPlayer: PlayerKey;
 }
 
 export interface InitDraftPayload extends GameSetupPayload {
@@ -285,6 +286,8 @@ export interface GameState {
     phase: GamePhase;
     mode: GameMode;
     isHost: boolean;
+    hostPlayer: PlayerKey;
+    localPlayer: PlayerKey;
     activeModal: ActiveModal | null;
     lastFeedback: {
         uid: string;

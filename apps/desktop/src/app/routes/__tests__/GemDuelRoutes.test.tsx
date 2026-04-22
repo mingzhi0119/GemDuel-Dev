@@ -19,6 +19,10 @@ vi.mock('@gemduel/ui/components/OnlineMenu', () => ({
     OnlineMenu: () => <div data-testid="online-route">online</div>,
 }));
 
+vi.mock('@gemduel/ui/components/LanMenu', () => ({
+    LanMenu: () => <div data-testid="lan-route">lan</div>,
+}));
+
 vi.mock('@gemduel/ui/components/DraftScreen', () => ({
     DraftScreen: () => <div data-testid="draft-route">draft</div>,
 }));
@@ -146,13 +150,36 @@ const createGame = (
 const createProps = (overrides: Partial<AppRouteProps> = {}): AppRouteProps => ({
     appVersion: '1.0.0',
     game: createGame(),
+    lan: {
+        state: {
+            phase: 'idle',
+            roomId: null,
+            remoteInstanceId: null,
+            remoteAddress: null,
+            hostPort: null,
+            transportHost: false,
+            localSeat: null,
+            selectedMode: null,
+            hostPeerId: null,
+            errorMessage: null,
+            statusMessage: 'LAN duel is ready.',
+        },
+        launch: null,
+        refresh: vi.fn(),
+        startSearch: vi.fn(),
+        cancelSearch: vi.fn(),
+        selectMode: vi.fn(),
+        confirmStart: vi.fn(),
+        reportPeerReady: vi.fn(),
+        clearLaunch: vi.fn(),
+    },
     layout: createLayout(),
     theme: 'dark',
     ui: {
         showDebug: false,
         isReviewing: false,
         showRulebook: false,
-        onlineSetup: false,
+        matchmakingRoute: 'none',
         isPeekingBoard: false,
         persistentWinner: null,
         showRestartConfirm: false,
@@ -162,7 +189,7 @@ const createProps = (overrides: Partial<AppRouteProps> = {}): AppRouteProps => (
         setShowDebug: vi.fn(),
         setIsReviewing: vi.fn(),
         setShowRulebook: vi.fn(),
-        setOnlineSetup: vi.fn(),
+        setMatchmakingRoute: vi.fn(),
         setIsPeekingBoard: vi.fn(),
         setShowRestartConfirm: vi.fn(),
         ...(overrides.setters ?? {}),
@@ -215,7 +242,22 @@ describe('GemDuelRoutes desktop stage rendering', () => {
                     showDebug: false,
                     isReviewing: false,
                     showRulebook: false,
-                    onlineSetup: true,
+                    matchmakingRoute: 'online',
+                    isPeekingBoard: false,
+                    persistentWinner: null,
+                    showRestartConfirm: false,
+                },
+            }),
+        },
+        {
+            name: 'lan route',
+            routeTestId: 'lan-route',
+            props: createProps({
+                ui: {
+                    showDebug: false,
+                    isReviewing: false,
+                    showRulebook: false,
+                    matchmakingRoute: 'lan',
                     isPeekingBoard: false,
                     persistentWinner: null,
                     showRestartConfirm: false,

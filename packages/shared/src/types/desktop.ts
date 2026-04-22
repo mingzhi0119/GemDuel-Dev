@@ -1,4 +1,11 @@
 import type { ReleaseHealthEvent } from '../observability/releaseHealth';
+import type {
+    ConfirmLanPregameStartPayload,
+    LanMatchmakingEvent,
+    LanMatchmakingState,
+    ReportLanPeerReadyPayload,
+    SelectLanPregameModePayload,
+} from './lan';
 import type { RuntimeRelayProfile } from './runtime';
 
 export interface ReleaseHealthCounterSnapshot {
@@ -39,8 +46,17 @@ export interface ElectronBridge {
     refreshRuntimeRelayProfile: () => Promise<RuntimeRelayProfile>;
     revokeRuntimeRelayProfile: () => Promise<RuntimeRelayProfile>;
     getReleaseHealthSnapshot: () => Promise<ReleaseHealthSnapshot>;
+    getLanMatchmakingState: () => Promise<LanMatchmakingState>;
+    startLanMatchmaking: () => Promise<LanMatchmakingState>;
+    cancelLanMatchmaking: () => Promise<LanMatchmakingState>;
+    selectLanPregameMode: (payload: SelectLanPregameModePayload) => Promise<LanMatchmakingState>;
+    confirmLanPregameStart: (
+        payload: ConfirmLanPregameStartPayload
+    ) => Promise<LanMatchmakingState>;
     restartApp: () => void;
     reportReleaseHealth: (event: ReleaseHealthEvent & { source?: 'renderer' }) => void;
+    reportLanPeerReady: (payload: ReportLanPeerReadyPayload) => void;
+    onLanMatchmakingEvent: (callback: (event: LanMatchmakingEvent) => void) => () => void;
     onUpdateAvailable: (callback: () => void) => () => void;
     onDownloadProgress: (callback: (percent: number) => void) => () => void;
     onUpdateDownloaded: (callback: () => void) => () => void;

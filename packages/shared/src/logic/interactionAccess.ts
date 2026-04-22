@@ -1,7 +1,18 @@
 import type { GameMode, GameState, PlayerKey } from '../types';
 
-export const getLocalPlayerKey = (gameState: Pick<GameState, 'isHost'>): PlayerKey =>
-    gameState.isHost ? 'p1' : 'p2';
+const getOpposingPlayer = (player: PlayerKey): PlayerKey => (player === 'p1' ? 'p2' : 'p1');
+
+export const getLocalPlayerKey = (
+    gameState: Pick<GameState, 'isHost'> & Partial<Pick<GameState, 'hostPlayer' | 'localPlayer'>>
+): PlayerKey =>
+    gameState.localPlayer ??
+    (gameState.isHost
+        ? (gameState.hostPlayer ?? 'p1')
+        : getOpposingPlayer(gameState.hostPlayer ?? 'p1'));
+
+export const getRemotePlayerKey = (
+    gameState: Partial<Pick<GameState, 'hostPlayer' | 'localPlayer'>> & Pick<GameState, 'isHost'>
+): PlayerKey => getOpposingPlayer(getLocalPlayerKey(gameState));
 
 export const canPlayerInteract = (gameState: GameState, isReviewing: boolean = false): boolean => {
     if (isReviewing || gameState.winner) return false;

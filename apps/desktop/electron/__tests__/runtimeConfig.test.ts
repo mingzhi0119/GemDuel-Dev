@@ -162,13 +162,16 @@ describe('electron runtime config', () => {
     it('declares ownership and secret handling for every governed env var', () => {
         expect(Object.keys(RUNTIME_CONFIG_POLICY).sort()).toEqual([
             'GEMDUEL_ALLOW_PRERELEASE',
+            'GEMDUEL_DEV_SERVER_URL',
             'GEMDUEL_DISABLE_UPDATES',
             'GEMDUEL_ICE_SERVERS_JSON',
             'GEMDUEL_LOG_LEVEL',
+            'GEMDUEL_PEER_SERVER_PORT',
             'GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON',
             'GEMDUEL_TURN_SERVICE_FALLBACK_MODE',
             'GEMDUEL_TURN_SERVICE_TOKEN',
             'GEMDUEL_TURN_SERVICE_URL',
+            'GEMDUEL_USER_DATA_SUFFIX',
             'GITHUB_DEFAULT_BRANCH',
             'GITHUB_JOB',
             'GITHUB_REF',

@@ -70,11 +70,13 @@ export const useNetworkEventHandlers = ({
     const handleStateReceived = useCallback(
         (authoritativeState: GameState) => {
             pendingGuestIntentRef.current = null;
+            const localPlayer = authoritativeState.hostPlayer === 'p1' ? 'p2' : 'p1';
             localDispatch({
                 type: 'FORCE_SYNC',
                 payload: {
                     ...authoritativeState,
                     isHost: false,
+                    localPlayer,
                 },
             });
         },

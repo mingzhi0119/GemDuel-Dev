@@ -16,6 +16,25 @@ const MAIN_WINDOW_WEB_PREFERENCES_SCHEMA = z.object({
 
 const NO_ARGS_SCHEMA = z.tuple([]);
 const RELEASE_HEALTH_EVENT_TUPLE_SCHEMA = z.tuple([RELEASE_HEALTH_EVENT_SCHEMA]);
+const LAN_PREGAME_MODE_SCHEMA = z.enum(['classic', 'roguelike']);
+const LAN_ROOM_ID_SCHEMA = z.string().min(1);
+const LAN_MODE_SELECTION_TUPLE_SCHEMA = z.tuple([
+    z.object({
+        roomId: LAN_ROOM_ID_SCHEMA,
+        mode: LAN_PREGAME_MODE_SCHEMA,
+    }),
+]);
+const LAN_START_TUPLE_SCHEMA = z.tuple([
+    z.object({
+        roomId: LAN_ROOM_ID_SCHEMA,
+    }),
+]);
+const LAN_PEER_READY_TUPLE_SCHEMA = z.tuple([
+    z.object({
+        roomId: LAN_ROOM_ID_SCHEMA,
+        peerId: z.string().min(1),
+    }),
+]);
 const IPC_ARG_SCHEMAS = new Map([
     [IPC_INVOKE_CHANNELS.getAppVersion, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.getRuntimeIceServers, NO_ARGS_SCHEMA],
@@ -23,8 +42,14 @@ const IPC_ARG_SCHEMAS = new Map([
     [IPC_INVOKE_CHANNELS.refreshRuntimeRelayProfile, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.revokeRuntimeRelayProfile, NO_ARGS_SCHEMA],
     [IPC_INVOKE_CHANNELS.getReleaseHealthSnapshot, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.getLanMatchmakingState, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.startLanMatchmaking, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.cancelLanMatchmaking, NO_ARGS_SCHEMA],
+    [IPC_INVOKE_CHANNELS.selectLanPregameMode, LAN_MODE_SELECTION_TUPLE_SCHEMA],
+    [IPC_INVOKE_CHANNELS.confirmLanPregameStart, LAN_START_TUPLE_SCHEMA],
     [IPC_SEND_CHANNELS.restartApp, NO_ARGS_SCHEMA],
     [IPC_SEND_CHANNELS.reportReleaseHealth, RELEASE_HEALTH_EVENT_TUPLE_SCHEMA],
+    [IPC_SEND_CHANNELS.reportLanPeerReady, LAN_PEER_READY_TUPLE_SCHEMA],
 ]);
 
 export const createMainWindowOptions = ({ preloadPath, appVersion }) => ({
@@ -89,9 +114,22 @@ export const validateIpcArgs = (channel, args) => {
     };
 };
 
+const getAllowedDevRendererPrefix = () => {
+    try {
+        const configuredUrl = new URL(
+            process.env.GEMDUEL_DEV_SERVER_URL ?? 'http://localhost:5173'
+        );
+        return configuredUrl.pathname === '/'
+            ? configuredUrl.origin
+            : `${configuredUrl.origin}${configuredUrl.pathname}`;
+    } catch {
+        return 'http://localhost:5173';
+    }
+};
+
 export const isAllowedRendererUrl = (url, isDev) =>
     typeof url === 'string' &&
-    (isDev ? url.startsWith('http://localhost:5173') : url.startsWith('file://'));
+    (isDev ? url.startsWith(getAllowedDevRendererPrefix()) : url.startsWith('file://'));
 
 export const authorizeIpcSender = ({ senderId, senderUrl, mainWindowId, isDev }) => {
     if (!mainWindowId) {

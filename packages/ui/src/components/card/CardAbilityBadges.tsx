@@ -1,7 +1,9 @@
 import React from 'react';
 import { RotateCcw, Hand, Scroll, Plus } from 'lucide-react';
+import { getAbilityLabel } from '@gemduel/shared';
 import { ABILITIES } from '@gemduel/shared/constants';
-import { Card as CardType } from '@gemduel/shared/types';
+import { Card as CardType, CardAbility } from '@gemduel/shared/types';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 interface CardAbilityBadgesProps {
     ability?: CardType['ability'];
@@ -18,9 +20,12 @@ export const CardAbilityBadges: React.FC<CardAbilityBadgesProps> = ({
     abilityBadgePaddingPx,
     abilityBadgeRadiusPx,
 }) => {
-    let abilitiesList: string[] = [];
+    const { locale } = useLocale();
+    let abilitiesList: CardAbility[] = [];
     if (Array.isArray(ability)) {
-        abilitiesList = ability;
+        abilitiesList = ability.filter(
+            (value): value is Exclude<CardAbility, 'none'> => value !== 'none'
+        );
     } else if (ability && ability !== 'none') {
         abilitiesList = [ability];
     }
@@ -73,7 +78,7 @@ export const CardAbilityBadges: React.FC<CardAbilityBadgesProps> = ({
                     <div
                         key={idx}
                         className={`${bgColor} shadow-md flex items-center justify-center`}
-                        title={abilId}
+                        title={getAbilityLabel(abilId, locale)}
                         style={{
                             padding: `${abilityBadgePaddingPx}px`,
                             borderRadius: `${abilityBadgeRadiusPx}px`,

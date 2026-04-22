@@ -54,13 +54,37 @@ export const getIceServers = (): RTCIceServer[] => [
     ...DEFAULT_ICE_SERVERS,
 ];
 
+export const isPrivateLanTarget = (targetIP?: string) => {
+    if (!targetIP) {
+        return false;
+    }
+
+    if (targetIP === 'localhost' || targetIP === '127.0.0.1') {
+        return true;
+    }
+
+    if (targetIP.startsWith('192.168.') || targetIP.startsWith('10.')) {
+        return true;
+    }
+
+    const octets = targetIP.split('.');
+    if (octets.length !== 4) {
+        return false;
+    }
+
+    return octets[0] === '172' && Number(octets[1]) >= 16 && Number(octets[1]) <= 31;
+};
+
 /**
  * Creates PeerJS configuration.
  * Defaults to PeerJS public cloud if targetIP is not specified or is 'cloud'.
  */
-export const createPeerConfig = (_isHost: boolean, targetIP?: string) => {
-    const isLocal =
-        targetIP === 'localhost' || targetIP?.startsWith('192') || targetIP?.startsWith('10.');
+export const createPeerConfig = (
+    _isHost: boolean,
+    targetIP?: string,
+    targetPort: number = 9000
+) => {
+    const isLocal = isPrivateLanTarget(targetIP);
     const isDevRuntime =
         typeof import.meta !== 'undefined' &&
         Boolean((import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
@@ -76,7 +100,7 @@ export const createPeerConfig = (_isHost: boolean, targetIP?: string) => {
         return {
             ...baseConfig,
             host: targetIP,
-            port: 9000,
+            port: targetPort,
             path: '/gemduel',
             secure: false,
         };

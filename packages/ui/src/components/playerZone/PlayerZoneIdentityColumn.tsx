@@ -1,6 +1,8 @@
 import { Scroll, Shield, Swords } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { getPlayerDisplayName } from '@gemduel/shared';
 import { cn } from '@gemduel/shared/utils';
+import { useLocale, useT } from '../../i18n/LocaleProvider';
 
 interface PlayerZoneIdentityColumnProps {
     player: 'p1' | 'p2';
@@ -21,6 +23,8 @@ export function PlayerZoneIdentityColumn({
     theme,
     onUsePrivilege,
 }: PlayerZoneIdentityColumnProps) {
+    const { locale } = useLocale();
+    const t = useT();
     const total = privileges + extraPrivileges;
     const items: ReactElement[] = [];
     let currentIndex = 0;
@@ -63,7 +67,7 @@ export function PlayerZoneIdentityColumn({
                         : 'opacity-80 cursor-default',
                     (total === 1 || (total === 3 && idx === 2)) && 'col-span-2 justify-self-center'
                 )}
-                title="Special Privilege (Protected)"
+                title={t('player.specialPrivilegeProtected')}
             >
                 <Scroll size={30} fill="#fbbf24" className="text-yellow-500" />
             </button>
@@ -107,7 +111,7 @@ export function PlayerZoneIdentityColumn({
                               : 'text-stone-600'
                     }`}
                 >
-                    {player === 'p1' ? 'Player 1' : 'Player 2'}
+                    {getPlayerDisplayName(player, locale)}
                 </h3>
             </div>
             <div className="grid grid-cols-2 gap-2 justify-items-start h-[72px] items-start">

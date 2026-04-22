@@ -10,7 +10,8 @@ import { usePlayableHistoryControls } from './usePlayableHistoryControls';
 export const useGameLogic = (
     shouldConnect: boolean = false,
     targetIP: string = 'localhost',
-    isReviewing: boolean = false
+    isReviewing: boolean = false,
+    targetPort: number = 9000
 ) => {
     // 1. Core State Management
     const { gameState, dispatch, historyControls } = useGameState();
@@ -21,7 +22,8 @@ export const useGameLogic = (
         dispatch,
         historyControls.clearAndInit,
         shouldConnect,
-        targetIP
+        targetIP,
+        targetPort
     );
 
     // 3. User Interaction Handlers

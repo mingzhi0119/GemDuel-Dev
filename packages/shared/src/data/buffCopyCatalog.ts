@@ -1,6 +1,7 @@
 import type { BuffEffects } from '../types';
+import type { AppLocale } from '../i18n';
 
-export type BuffLocale = 'en' | 'zh';
+export type BuffLocale = AppLocale;
 
 export interface LocalizedBuffText {
     label: string;

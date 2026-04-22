@@ -2,6 +2,7 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { Card } from './Card';
 import { Card as CardType } from '@gemduel/shared/types';
+import { useT } from '../i18n/LocaleProvider';
 
 interface DeckPeekModalProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface DeckPeekModalProps {
 }
 
 export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onClose, theme }) => {
+    const t = useT();
     if (!isOpen || !cards) return null;
 
     return (
@@ -36,11 +38,11 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
                     <h2
                         className={`text-xl font-black uppercase tracking-wider ${theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
                     >
-                        Deck Intelligence
+                        {t('deckPeek.title')}
                     </h2>
                     <button
                         onClick={onClose}
-                        aria-label="Close Modal"
+                        aria-label={t('deckPeek.close')}
                         className={`p-2 rounded-full transition-colors ${theme === 'dark' ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-stone-100 text-stone-400'}`}
                     >
                         <X size={20} />
@@ -63,7 +65,7 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
                         <div
                             className={`h-48 flex items-center justify-center italic ${theme === 'dark' ? 'text-slate-500' : 'text-stone-400'}`}
                         >
-                            No cards left in this deck.
+                            {t('deckPeek.empty')}
                         </div>
                     )}
                 </div>
@@ -77,7 +79,7 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
                         onClick={onClose}
                         className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-lg shadow-purple-900/20"
                     >
-                        Done
+                        {t('deckPeek.done')}
                     </button>
                 </div>
             </div>

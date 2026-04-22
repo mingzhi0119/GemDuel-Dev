@@ -1,5 +1,6 @@
 import React from 'react';
 import { PlayerKey } from '@gemduel/shared/types';
+import { useT } from '../i18n/LocaleProvider';
 
 interface DebugPanelProps {
     player: PlayerKey;
@@ -18,6 +19,8 @@ export function DebugPanel({
     onForceRoyal,
     theme,
 }: DebugPanelProps) {
+    const t = useT();
+
     return (
         <div
             className={`p-3 rounded-lg backdrop-blur-md shadow-2xl w-48 transition-colors duration-500
@@ -33,7 +36,7 @@ export function DebugPanel({
         ${theme === 'dark' ? 'text-red-500 border-red-900/30' : 'text-red-600 border-red-200'}
       `}
             >
-                Bug Modifier: {player}
+                {t('debug.title', { player: player.toUpperCase() })}
             </div>
             <div className="flex flex-col gap-2">
                 <button
@@ -42,7 +45,7 @@ export function DebugPanel({
           ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'}
         `}
                 >
-                    +1 Crown
+                    {t('debug.addCrown')}
                 </button>
                 <button
                     onClick={onAddPoints}
@@ -50,7 +53,7 @@ export function DebugPanel({
           ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'}
         `}
                 >
-                    +1 Point
+                    {t('debug.addPoint')}
                 </button>
                 <button
                     onClick={onAddPrivilege}
@@ -58,7 +61,7 @@ export function DebugPanel({
           ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'}
         `}
                 >
-                    +1 Privilege
+                    {t('debug.addPrivilege')}
                 </button>
                 <button
                     onClick={onForceRoyal}
@@ -66,7 +69,7 @@ export function DebugPanel({
           ${theme === 'dark' ? 'bg-red-900/40 hover:bg-red-800/60 text-red-200 border-red-700' : 'bg-red-100 hover:bg-red-200 text-red-700 border-red-300'}
         `}
                 >
-                    FORCE ROYAL SELECTION
+                    {t('debug.forceRoyal')}
                 </button>
             </div>
         </div>

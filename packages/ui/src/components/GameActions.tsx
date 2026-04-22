@@ -3,6 +3,7 @@ import { Check, RefreshCw, X, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { canActionRunInPhase } from '@gemduel/shared/logic/fsm';
 import { GamePhase, BagItem, Buff, GemCoord } from '@gemduel/shared/types';
+import { useT } from '../i18n/LocaleProvider';
 
 interface GameActionsProps {
     handleReplenish: () => void;
@@ -27,6 +28,7 @@ export const GameActions: React.FC<GameActionsProps> = ({
     theme,
     canInteract = true,
 }) => {
+    const t = useT();
     const bagCount = bag ? bag.length : 0;
     const selectedCount = selectedGems ? selectedGems.length : 0;
     const showReserveCancel = canActionRunInPhase('CANCEL_RESERVE', phase);
@@ -54,7 +56,7 @@ export const GameActions: React.FC<GameActionsProps> = ({
                             }
                             className="flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white px-6 py-3 rounded-full font-bold shadow-lg shadow-rose-900/20 transition-colors"
                         >
-                            <X size={18} /> Cancel
+                            <X size={18} /> {t('actions.cancel')}
                         </motion.button>
                     ) : showConfirm ? (
                         <motion.button
@@ -67,7 +69,7 @@ export const GameActions: React.FC<GameActionsProps> = ({
                             onClick={handleConfirmTake}
                             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-colors"
                         >
-                            <Check size={18} /> Confirm
+                            <Check size={18} /> {t('actions.confirm')}
                         </motion.button>
                     ) : showRefill ? (
                         <motion.button
@@ -91,7 +93,7 @@ export const GameActions: React.FC<GameActionsProps> = ({
                             }`}
                         >
                             <RefreshCw size={18} />
-                            Refill ({bagCount})
+                            {t('actions.refill', { count: bagCount })}
                         </motion.button>
                     ) : null}
                 </AnimatePresence>

@@ -14,6 +14,7 @@
         "dev": "vite",
         "build": "vite build",
         "electron:dev": "concurrently \"pnpm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+        "electron:open": "wait-on http://localhost:5173 && electron .",
         "electron:build": "electron-builder",
         "lint": "eslint .",
         "preview": "vite preview",

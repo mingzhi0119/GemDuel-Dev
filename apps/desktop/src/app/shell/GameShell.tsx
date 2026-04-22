@@ -16,7 +16,7 @@ export function GameShell({
     setters,
     callbacks,
 }: AppRouteProps) {
-    const { state, handlers, getters, historyControls, online } = game;
+    const { state, handlers, getters, historyControls } = game;
     const {
         turn,
         winner,
@@ -38,7 +38,7 @@ export function GameShell({
     const isP1ZoneActive = turn === 'p1' && !ui.isReviewing && !winner;
     const isP2ZoneActive = turn === 'p2' && !ui.isReviewing && !winner;
     const effectiveGameMode = ui.isReviewing ? 'REVIEW' : winner ? 'GAME_OVER' : phase;
-    const localPlayer = online.isHost ? 'p1' : 'p2';
+    const localPlayer = state.localPlayer;
     const canShowDebug =
         state.mode !== 'ONLINE_MULTIPLAYER' &&
         (state.mode === 'PVE' || historyControls.historyLength === 0 || ui.showDebug);

@@ -3,6 +3,7 @@ import { Crown } from 'lucide-react';
 import { Card } from './Card';
 import { isRoyalSelectionPhase } from '@gemduel/shared/logic/fsm';
 import { RoyalCard, GamePhase, Card as CardType } from '@gemduel/shared/types';
+import { useT } from '../i18n/LocaleProvider';
 
 interface RoyalCourtProps {
     royalDeck: RoyalCard[];
@@ -19,6 +20,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     theme,
     canInteract = true,
 }) => {
+    const t = useT();
     const canSelectRoyal = isRoyalSelectionPhase(phase) && canInteract;
 
     return (
@@ -36,7 +38,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                 className={`text-[13px] font-black uppercase tracking-[0.34em] flex items-center gap-2.5 mb-2
                 ${theme === 'dark' ? 'text-yellow-300' : 'text-amber-800'}`}
             >
-                <Crown size={18} /> Royal Court
+                <Crown size={18} /> {t('royalCourt.title')}
             </h2>
             <div className="grid grid-cols-2 gap-3">
                 {royalDeck.length > 0 ? (
@@ -49,7 +51,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                             <Card card={card as unknown as CardType} isRoyal={true} />
                             {canSelectRoyal && (
                                 <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full animate-bounce shadow-lg">
-                                    PICK!
+                                    {t('royalCourt.pick')}
                                 </div>
                             )}
                         </div>
@@ -59,7 +61,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                         className={`col-span-2 h-64 flex items-center justify-center italic text-xs
                         ${theme === 'dark' ? 'text-slate-400' : 'text-stone-600'}`}
                     >
-                        Court is Empty
+                        {t('royalCourt.empty')}
                     </div>
                 )}
             </div>

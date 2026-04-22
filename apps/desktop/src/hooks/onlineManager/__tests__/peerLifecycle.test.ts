@@ -76,6 +76,7 @@ describe('peer lifecycle helpers', () => {
         const setIsHost = vi.fn();
         const peer = createManagedPeer({
             targetIP: '127.0.0.1',
+            targetPort: 9001,
             maxReconnectAttempts: 3,
             isHostRef: createRef(false),
             reconnectAttempts: createRef(0),
@@ -87,15 +88,19 @@ describe('peer lifecycle helpers', () => {
             setRemotePeerId: createDispatch<string>(),
         }) as unknown as InstanceType<typeof harness.FakePeer>;
 
-        expect(createPeerConfig).toHaveBeenCalledWith(true, '127.0.0.1');
+        expect(createPeerConfig).toHaveBeenCalledWith(true, '127.0.0.1', 9001);
         expect(peer.config).toEqual({ host: '127.0.0.1', secure: true });
         expect(logRendererMessage).toHaveBeenCalledWith('info', '[NET] Initializing Peer...');
         expect(logRendererMessage).toHaveBeenCalledWith('info', '[NET] Target IP: 127.0.0.1');
+        expect(logRendererMessage).toHaveBeenCalledWith('info', '[NET] Target Port: 9001');
         expect(reportRendererEvent).toHaveBeenCalledWith(
             expect.objectContaining({
                 category: 'peer',
                 name: 'PEER_INITIALIZING',
                 severity: 'info',
+                context: expect.objectContaining({
+                    targetPort: 9001,
+                }),
             })
         );
 
@@ -138,6 +143,7 @@ describe('peer lifecycle helpers', () => {
         );
         const peer = createManagedPeer({
             targetIP: '127.0.0.1',
+            targetPort: 9000,
             maxReconnectAttempts: 2,
             isHostRef: createRef(false),
             reconnectAttempts,
@@ -198,6 +204,7 @@ describe('peer lifecycle helpers', () => {
     it('reports peer errors and destroys managed peers during cleanup', () => {
         const peer = createManagedPeer({
             targetIP: '127.0.0.1',
+            targetPort: 9000,
             maxReconnectAttempts: 1,
             isHostRef: createRef(false),
             reconnectAttempts: createRef(0),

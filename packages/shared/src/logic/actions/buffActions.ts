@@ -16,6 +16,10 @@ import {
     PlayerInitRandoms,
 } from '../../types';
 
+const getLocalPlayerFromSetup = (
+    setup: Pick<GameSetupPayload, 'isHost' | 'hostPlayer'>
+): PlayerKey => (setup.isHost ? setup.hostPlayer : setup.hostPlayer === 'p1' ? 'p2' : 'p1');
+
 /**
  * Internal Helper: Apply initialization logic for a single player
  */
@@ -123,6 +127,8 @@ const ensureStructures = (draft: GameState) => {
 const applySetupFields = (draft: GameState, setup: GameSetupPayload) => {
     draft.mode = setup.mode;
     draft.isHost = setup.isHost;
+    draft.hostPlayer = setup.hostPlayer;
+    draft.localPlayer = getLocalPlayerFromSetup(setup);
     draft.board = setup.board;
     draft.bag = setup.bag;
     draft.market = setup.market;

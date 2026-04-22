@@ -1,6 +1,7 @@
 import { ArrowLeft, Globe, Copy, CheckCircle2, Play, Users, Sparkles } from 'lucide-react';
 import { useState } from 'react';
-import { GameMode } from '@gemduel/shared/types';
+import { GameMode, PlayerKey } from '@gemduel/shared/types';
+import { useT } from '../i18n/LocaleProvider';
 
 interface OnlineMenuProps {
     onBack: () => void;
@@ -10,13 +11,17 @@ interface OnlineMenuProps {
         isHost: boolean;
         connectToPeer: (id: string) => void;
     };
-    startGame: (mode: GameMode, config: { useBuffs: boolean; isHost?: boolean }) => void;
+    startGame: (
+        mode: GameMode,
+        config: { useBuffs: boolean; isHost?: boolean; hostPlayer?: PlayerKey }
+    ) => void;
     theme: string;
 }
 
 export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps) {
     const [roomInput, setRoomInput] = useState('');
     const [copySuccess, setCopySuccess] = useState(false);
+    const t = useT();
 
     const isConnected = online.connectionStatus === 'connected';
 
@@ -31,7 +36,7 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                     onClick={onBack}
                     className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity font-bold uppercase tracking-wider text-xs"
                 >
-                    <ArrowLeft size={18} /> Return to Title
+                    <ArrowLeft size={18} /> {t('online.back')}
                 </button>
             </div>
 
@@ -43,10 +48,10 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                     </div>
                     <div className="text-center">
                         <h2 className="text-4xl font-black uppercase tracking-tighter mb-1">
-                            Online Arena
+                            {t('online.title')}
                         </h2>
                         <p className="text-sm font-medium opacity-50 tracking-widest uppercase">
-                            Global Peer-to-Peer Network
+                            {t('online.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -70,16 +75,18 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold uppercase tracking-tight">
-                                        Host Game
+                                        {t('online.host.title')}
                                     </h3>
-                                    <p className="text-xs opacity-60">Wait for a challenger</p>
+                                    <p className="text-xs opacity-60">
+                                        {t('online.host.subtitle')}
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="flex-1 flex flex-col justify-center gap-4">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs font-bold opacity-50 uppercase tracking-wider">
-                                        Your Match ID
+                                        {t('online.matchId')}
                                     </label>
                                     <div
                                         className={`w-full p-4 rounded-xl flex items-center justify-between gap-4 border transition-colors
@@ -91,7 +98,7 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                             </code>
                                         ) : (
                                             <span className="text-sm italic opacity-50">
-                                                Connecting to cloud...
+                                                {t('online.connectingCloud')}
                                             </span>
                                         )}
                                         <button
@@ -120,13 +127,14 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                     <div className="flex items-center justify-center gap-3 py-4 opacity-50">
                                         <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
                                         <span className="text-xs font-bold uppercase tracking-widest">
-                                            Waiting for Opponent...
+                                            {t('online.waitingOpponent')}
                                         </span>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col gap-3 animate-in slide-in-from-bottom-4">
                                         <div className="text-emerald-500 flex items-center justify-center gap-2 text-sm font-bold uppercase mb-2">
-                                            <CheckCircle2 size={16} /> Opponent Connected
+                                            <CheckCircle2 size={16} />{' '}
+                                            {t('online.opponentConnected')}
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <button
@@ -139,7 +147,7 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                                 className="py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black uppercase text-xs transition-transform active:scale-95 shadow-lg shadow-blue-900/20 flex flex-col items-center gap-1"
                                             >
                                                 <Play size={16} />
-                                                Classic Duel
+                                                {t('online.classicDuel')}
                                             </button>
                                             <button
                                                 onClick={() =>
@@ -151,7 +159,7 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                                 className="py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black uppercase text-xs transition-transform active:scale-95 shadow-lg shadow-purple-900/20 flex flex-col items-center gap-1"
                                             >
                                                 <Sparkles size={16} />
-                                                Roguelike
+                                                {t('online.roguelikeDuel')}
                                             </button>
                                         </div>
                                     </div>
@@ -177,20 +185,22 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold uppercase tracking-tight">
-                                        Join Game
+                                        {t('online.join.title')}
                                     </h3>
-                                    <p className="text-xs opacity-60">Enter an ID to duel</p>
+                                    <p className="text-xs opacity-60">
+                                        {t('online.join.subtitle')}
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="flex-1 flex flex-col justify-center gap-4">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs font-bold opacity-50 uppercase tracking-wider">
-                                        Opponent&apos;s Match ID
+                                        {t('online.opponentMatchId')}
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Paste ID here (e.g. 5f3d-2a1c...)"
+                                        placeholder={t('online.pasteId')}
                                         value={roomInput}
                                         onChange={(e) => setRoomInput(e.target.value)}
                                         disabled={isConnected}
@@ -224,19 +234,19 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                         {online.connectionStatus === 'connecting' ? (
                                             <span className="flex items-center justify-center gap-2">
                                                 <span className="w-3 h-3 rounded-full border-2 border-white/50 border-t-white animate-spin" />
-                                                Connecting...
+                                                {t('online.connecting')}
                                             </span>
                                         ) : (
-                                            'Connect '
+                                            t('online.connect')
                                         )}
                                     </button>
                                 ) : (
                                     <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex flex-col items-center gap-2 animate-in zoom-in">
                                         <CheckCircle2 size={32} />
                                         <div className="font-bold text-center">
-                                            <div>Connected Successfully!</div>
+                                            <div>{t('online.connected')}</div>
                                             <div className="text-xs opacity-60 font-medium mt-1">
-                                                Waiting for host to start...
+                                                {t('online.waitingHost')}
                                             </div>
                                         </div>
                                     </div>
@@ -251,7 +261,8 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
             <div
                 className={`absolute bottom-0 left-0 w-full py-2 text-center text-[10px] font-mono opacity-30 lg:text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
             >
-                STATUS: {online.connectionStatus.toUpperCase()} • SERVER: CLOUD (SECURE)
+                {t('online.statusPrefix')}: {online.connectionStatus.toUpperCase()} •{' '}
+                {t('online.serverCloud')}
             </div>
         </div>
     );

@@ -3,8 +3,10 @@ import { Crown, Trophy, Sparkles, Coins, Tag, Zap, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '@gemduel/shared/types';
 import { BUFFS } from '@gemduel/shared/constants';
-import { getBuffGoalAdjustment } from '@gemduel/shared/data/buffCopy';
+import { getBuffGoalAdjustment, getBuffText } from '@gemduel/shared/data/buffCopy';
+import { getBuffCategoryLabel } from '@gemduel/shared';
 import { AnimatedScore } from './topBar/AnimatedScore';
+import { useLocale, useT } from '../i18n/LocaleProvider';
 
 interface TopBarProps {
     p1Score: number;
@@ -23,10 +25,12 @@ const TopBarBuff = ({
     buff: rawBuff,
     playerKey,
     theme,
+    locale,
 }: {
     buff: Buff;
     playerKey: PlayerKey;
     theme: 'light' | 'dark';
+    locale: 'en' | 'zh';
 }) => {
     if (!rawBuff || rawBuff.id === 'none') return null;
 
@@ -50,7 +54,8 @@ const TopBarBuff = ({
     };
 
     const { Icon, color: iconColor } = getBuffIcon(buff.category);
-    const goalAdjustment = getBuffGoalAdjustment(buff.id, 'en');
+    const goalAdjustment = getBuffGoalAdjustment(buff.id, locale);
+    const buffCopy = getBuffText(buff.id, locale);
 
     // Theme-aware level styles
     const levelStyles: Record<number, string> = {
@@ -83,7 +88,7 @@ const TopBarBuff = ({
             `}
             >
                 <Icon size={16} className={iconColor} />
-                <span>{buff.label}</span>
+                <span>{buffCopy.label}</span>
             </div>
 
             {/* Tooltip */}
@@ -97,11 +102,11 @@ const TopBarBuff = ({
                     <span
                         className={`text-[12px] font-bold uppercase tracking-wider ${playerKey === 'p1' ? 'text-emerald-400' : 'text-blue-400'}`}
                     >
-                        {buff.label}
+                        {buffCopy.label}
                     </span>
                     <span className="text-[10px] opacity-70 font-mono">LVL {buff.level}</span>
                 </div>
-                <p className="text-[12px] leading-relaxed opacity-90">{buff.desc}</p>
+                <p className="text-[12px] leading-relaxed opacity-90">{buffCopy.desc}</p>
                 {goalAdjustment && (
                     <div
                         className={`mt-2 pt-2 space-y-1 border-t ${
@@ -131,7 +136,7 @@ const TopBarBuff = ({
                         <span
                             className={`text-[10px] font-black uppercase tracking-widest ${iconColor}`}
                         >
-                            {buff.category}
+                            {getBuffCategoryLabel(buff.category, locale)}
                         </span>
                     </div>
                 )}
@@ -152,6 +157,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     localPlayer,
     isOnline,
 }) => {
+    const { locale } = useLocale();
+    const t = useT();
     const getVictoryGoals = (pid: PlayerKey) => {
         const rawBuff = playerBuffs[pid];
         // Reconstruct to get effects
@@ -191,10 +198,20 @@ export const TopBar: React.FC<TopBarProps> = ({
             <div className="relative flex h-full w-full items-center justify-between px-2 lg:px-8">
                 {/* 1/4 and 3/4 Positioned Buffs (Absolute) */}
                 <div className="absolute left-1/4 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                    <TopBarBuff buff={playerBuffs['p1']} playerKey="p1" theme={theme} />
+                    <TopBarBuff
+                        buff={playerBuffs['p1']}
+                        playerKey="p1"
+                        theme={theme}
+                        locale={locale}
+                    />
                 </div>
                 <div className="absolute left-3/4 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
-                    <TopBarBuff buff={playerBuffs['p2']} playerKey="p2" theme={theme} />
+                    <TopBarBuff
+                        buff={playerBuffs['p2']}
+                        playerKey="p2"
+                        theme={theme}
+                        locale={locale}
+                    />
                 </div>
 
                 {/* Turn Indicator (Online Only) */}
@@ -208,7 +225,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                             className="absolute top-full left-1/2 -mt-3 px-6 py-1.5 rounded-b-xl shadow-lg border-x border-b bg-emerald-500 border-emerald-600 z-50 flex items-center gap-2"
                         >
                             <span className="text-[10px] font-black uppercase tracking-widest text-white animate-pulse">
-                                Your Turn
+                                {t('topBar.yourTurn')}
                             </span>
                         </motion.div>
                     )}
@@ -275,7 +292,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                             <span
                                 className={`text-[8px] lg:text-[10px] font-black uppercase tracking-tighter ${theme === 'dark' ? 'text-slate-300/80' : 'text-stone-600'}`}
                             >
-                                turn
+                                {t('topBar.turn')}
                             </span>
                         </div>
                         <div
@@ -290,7 +307,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                             <span
                                 className={`text-[8px] lg:text-[10px] font-black uppercase tracking-tighter ${theme === 'dark' ? 'text-slate-300/80' : 'text-stone-600'}`}
                             >
-                                turn
+                                {t('topBar.turn')}
                             </span>
                         </div>
                     </div>

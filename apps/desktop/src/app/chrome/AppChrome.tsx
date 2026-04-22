@@ -1,6 +1,8 @@
 import React, { Suspense, useEffect, useRef, useState, type ChangeEventHandler } from 'react';
 import { BookOpen, Download, Moon, RotateCcw, Settings, Sun, Upload } from 'lucide-react';
 import type { ThemeName } from '@gemduel/shared/types';
+import { LocaleSwitch } from '@gemduel/ui/components/LocaleSwitch';
+import { useT } from '@gemduel/ui/i18n/LocaleProvider';
 
 const DebugPanel = React.lazy(() =>
     import('@gemduel/ui/components/DebugPanel').then((module) => ({ default: module.DebugPanel }))
@@ -39,6 +41,7 @@ export function AppChrome({
     onForceRoyal,
     showDebugPanels,
 }: AppChromeProps) {
+    const t = useT();
     const sideButtonLabelClass =
         'text-[13px] font-black uppercase tracking-[0.14em] hidden md:inline';
     const settingsMenuRef = useRef<HTMLDivElement | null>(null);
@@ -88,31 +91,31 @@ export function AppChrome({
                     onClick={onRequestRestart}
                     className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none
                     ${dangerButtonClass}`}
-                    aria-label="Restart Game"
+                    aria-label={t('settings.restart')}
                 >
                     <RotateCcw size={21} />
-                    <span className={sideButtonLabelClass}>Restart</span>
+                    <span className={sideButtonLabelClass}>{t('settings.restart')}</span>
                 </button>
 
                 <button
                     onClick={onShowRulebook}
                     className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none
                     ${neutralButtonClass}`}
-                    aria-label="Open Rules"
+                    aria-label={t('settings.rules')}
                 >
                     <BookOpen size={21} />
-                    <span className={sideButtonLabelClass}>Rules</span>
+                    <span className={sideButtonLabelClass}>{t('settings.rules')}</span>
                 </button>
 
                 <button
                     onClick={onToggleTheme}
                     className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none
                     ${neutralButtonClass}`}
-                    aria-label="Toggle Theme"
+                    aria-label={t('settings.toggleTheme')}
                 >
                     {theme === 'dark' ? <Moon size={21} /> : <Sun size={21} />}
                     <span className={sideButtonLabelClass}>
-                        {theme === 'dark' ? 'Dark' : 'Light'}
+                        {theme === 'dark' ? t('settings.dark') : t('settings.light')}
                     </span>
                 </button>
 
@@ -121,11 +124,11 @@ export function AppChrome({
                         onClick={() => setShowSettingsMenu((value) => !value)}
                         className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none
                         ${neutralButtonClass}`}
-                        aria-label="Open Settings"
+                        aria-label={t('settings.title')}
                         aria-expanded={showSettingsMenu}
                     >
                         <Settings size={21} />
-                        <span className={sideButtonLabelClass}>Settings</span>
+                        <span className={sideButtonLabelClass}>{t('settings.title')}</span>
                     </button>
 
                     {showSettingsMenu && (
@@ -141,32 +144,42 @@ export function AppChrome({
                                     theme === 'dark' ? 'text-slate-400' : 'text-stone-500'
                                 }`}
                             >
-                                Settings
+                                {t('settings.title')}
                             </div>
                             <div className="flex flex-col gap-2">
+                                <div className="px-1 pb-1">
+                                    <div
+                                        className={`mb-2 text-[10px] font-black uppercase tracking-[0.18em] ${
+                                            theme === 'dark' ? 'text-slate-500' : 'text-stone-500'
+                                        }`}
+                                    >
+                                        {t('settings.language')}
+                                    </div>
+                                    <LocaleSwitch theme={theme} className="w-full justify-center" />
+                                </div>
                                 <button
                                     onClick={() => {
                                         onDownloadReplay();
                                         setShowSettingsMenu(false);
                                     }}
                                     className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
-                                    title="Download Replay"
-                                    aria-label="Download Replay"
+                                    title={t('settings.save')}
+                                    aria-label={t('settings.save')}
                                 >
                                     <Download size={20} />
                                     <span className="text-[13px] font-black uppercase tracking-[0.14em]">
-                                        Save
+                                        {t('settings.save')}
                                     </span>
                                 </button>
 
                                 <label
                                     className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start cursor-pointer shadow-none ${neutralMutedButtonClass}`}
-                                    title="Upload Replay"
-                                    aria-label="Upload Replay"
+                                    title={t('settings.load')}
+                                    aria-label={t('settings.load')}
                                 >
                                     <Upload size={20} />
                                     <span className="text-[13px] font-black uppercase tracking-[0.14em]">
-                                        Load
+                                        {t('settings.load')}
                                     </span>
                                     <input
                                         type="file"
@@ -186,11 +199,17 @@ export function AppChrome({
                                             setShowSettingsMenu(false);
                                         }}
                                         className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
-                                        aria-label={showDebug ? 'Close Debug' : 'Open Debug'}
+                                        aria-label={
+                                            showDebug
+                                                ? t('settings.closeDebug')
+                                                : t('settings.openDebug')
+                                        }
                                     >
                                         <Settings size={20} />
                                         <span className="text-[13px] font-black uppercase tracking-[0.14em]">
-                                            {showDebug ? 'Close Debug' : 'Open Debug'}
+                                            {showDebug
+                                                ? t('settings.closeDebug')
+                                                : t('settings.openDebug')}
                                         </span>
                                     </button>
                                 )}

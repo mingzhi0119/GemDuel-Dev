@@ -17,6 +17,7 @@ import {
     Buff,
     InitiateBuyJokerPayload,
 } from '@gemduel/shared/types';
+import { useT } from '../i18n/LocaleProvider';
 
 const AnimatedCard = withGameAnimation(Card);
 
@@ -58,6 +59,7 @@ export const Market: React.FC<MarketProps> = React.memo(
         isOnline,
         localPlayer,
     }) => {
+        const t = useT();
         const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
         // Validation: Is it my turn and not in review/game over?
         const canInteract =
@@ -98,7 +100,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                     className={`text-[13px] font-black uppercase tracking-[0.34em] mb-1 text-center
                     ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
                 >
-                    Market
+                    {t('market.title')}
                 </h2>
 
                 {/* Intelligence Network Floating Action (Positioned Left) */}
@@ -109,7 +111,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                     `}
                     >
                         <div className="text-purple-400 text-[8px] font-black uppercase tracking-widest text-center whitespace-nowrap">
-                            Intelligence
+                            {t('market.intelligence')}
                         </div>
                         <div className="flex flex-col gap-1.5">
                             {[3, 2, 1].map((lvl) => (
@@ -118,7 +120,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                                     onClick={() => onPeekDeck && onPeekDeck(lvl)}
                                     className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold transition-all hover:scale-105 active:scale-95 shadow-md"
                                 >
-                                    Peek L{lvl}
+                                    {t('market.peek', { level: lvl })}
                                 </button>
                             ))}
                         </div>
@@ -161,7 +163,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                                             <div className="absolute inset-0 bg-black/20 rounded-lg pointer-events-none" />
                                         </div>
                                         <div className="text-[8px] font-black text-purple-400 uppercase tracking-widest text-center mt-1">
-                                            Insight
+                                            {t('market.insight')}
                                         </div>
                                     </div>
                                 )}
@@ -242,7 +244,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                                         <div
                                             className={`font-bold text-[13px] ${theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}`}
                                         >
-                                            Lvl {lvl}
+                                            {t('market.level', { level: lvl })}
                                         </div>
                                         <div
                                             className={`text-[12px] font-mono font-bold ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}

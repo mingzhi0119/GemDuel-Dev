@@ -72,20 +72,29 @@ vi.mock('@gemduel/shared/observability/releaseHealth', () => ({
 
 const cloneState = (): GameState => JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
 
-const createOnlineState = (overrides: Partial<GameState> = {}): GameState => ({
-    ...cloneState(),
-    mode: 'ONLINE_MULTIPLAYER',
-    turn: 'p2',
-    isHost: false,
-    activeModal: {
-        type: 'PEEK',
-        data: {
-            cards: [],
-            initiator: 'p2',
+const createOnlineState = (overrides: Partial<GameState> = {}): GameState => {
+    const isHost = overrides.isHost ?? false;
+    const hostPlayer = overrides.hostPlayer ?? 'p1';
+    const localPlayer =
+        overrides.localPlayer ?? (isHost ? hostPlayer : hostPlayer === 'p1' ? 'p2' : 'p1');
+
+    return {
+        ...cloneState(),
+        mode: 'ONLINE_MULTIPLAYER',
+        isHost,
+        hostPlayer,
+        localPlayer,
+        turn: overrides.turn ?? localPlayer,
+        activeModal: {
+            type: 'PEEK',
+            data: {
+                cards: [],
+                initiator: localPlayer,
+            },
         },
-    },
-    ...overrides,
-});
+        ...overrides,
+    };
+};
 
 const resetOnlineControllerMocks = () => {
     mockOnlineController.connectToPeer.mockReset();
@@ -448,7 +457,17 @@ describe('useGameNetwork', () => {
     it('applies approved guest intents on the host and records approval entries', () => {
         const localDispatch = vi.fn();
         const clearAndInit = vi.fn();
-        const gameState = createOnlineState({ isHost: true, turn: 'p2' });
+        const gameState = createOnlineState({
+            isHost: true,
+            turn: 'p2',
+            activeModal: {
+                type: 'PEEK',
+                data: {
+                    cards: [],
+                    initiator: 'p2',
+                },
+            },
+        });
         let currentResult: GameNetworkResult | null = null;
 
         const Harness = () => {
@@ -527,6 +546,7 @@ describe('useGameNetwork', () => {
             payload: {
                 ...authoritativeState,
                 isHost: false,
+                localPlayer: 'p2',
             },
         });
 

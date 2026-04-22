@@ -6,6 +6,7 @@ import type { ConnectionStatus } from './types';
 
 interface PeerLifecycleDependencies {
     targetIP: string;
+    targetPort: number;
     maxReconnectAttempts: number;
     isHostRef: MutableRefObject<boolean>;
     reconnectAttempts: MutableRefObject<number>;
@@ -19,6 +20,7 @@ interface PeerLifecycleDependencies {
 
 export const createManagedPeer = ({
     targetIP,
+    targetPort,
     maxReconnectAttempts,
     isHostRef,
     reconnectAttempts,
@@ -29,6 +31,7 @@ export const createManagedPeer = ({
 }: PeerLifecycleDependencies): Peer => {
     logRendererMessage('info', '[NET] Initializing Peer...');
     logRendererMessage('info', `[NET] Target IP: ${targetIP}`);
+    logRendererMessage('info', `[NET] Target Port: ${targetPort}`);
     reportRendererEvent({
         category: 'peer',
         name: 'PEER_INITIALIZING',
@@ -36,10 +39,11 @@ export const createManagedPeer = ({
         message: 'Peer manager started initializing the local peer instance.',
         context: {
             targetIp: targetIP,
+            targetPort,
         },
     });
 
-    const peerConfig = createPeerConfig(true, targetIP);
+    const peerConfig = createPeerConfig(true, targetIP, targetPort);
     const peer = new Peer(peerConfig);
 
     peer.on('open', (id) => {

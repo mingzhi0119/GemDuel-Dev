@@ -57,6 +57,7 @@ describe('Network Protocol Helpers', () => {
                     },
                 },
                 isHost: true,
+                hostPlayer: 'p1',
             },
         };
 

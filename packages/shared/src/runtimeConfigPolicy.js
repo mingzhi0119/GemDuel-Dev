@@ -14,6 +14,14 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         secretHandling: 'Operational flag only. Never store secrets here.',
         failureMode: 'Falls back to false and keeps auto-updates enabled.',
     },
+    GEMDUEL_DEV_SERVER_URL: {
+        owner: 'Desktop Platform',
+        defaultValue: 'http://localhost:5173',
+        validation:
+            'Absolute http/https URL for the trusted development renderer origin, including optional query parameters.',
+        secretHandling: 'Development-only endpoint metadata. Never store secrets here.',
+        failureMode: 'Falls back to http://localhost:5173 when the dev renderer URL is absent.',
+    },
     GEMDUEL_ALLOW_PRERELEASE: {
         owner: 'Release Engineering',
         defaultValue: 'false',
@@ -27,6 +35,14 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         validation: `One of ${VALID_LOG_LEVELS_LIST.join(', ')}.`,
         secretHandling: 'Operational flag only. Never store secrets here.',
         failureMode: 'Falls back to the release default log level.',
+    },
+    GEMDUEL_PEER_SERVER_PORT: {
+        owner: 'Networking',
+        defaultValue: '9000',
+        validation:
+            'Integer TCP port from 1 to 65535. The desktop runtime may probe the next available local port when the preferred port is occupied.',
+        secretHandling: 'Operational local-network setting only. Never store secrets here.',
+        failureMode: 'Falls back to the governed default port probe window that starts at 9000.',
     },
     GEMDUEL_ICE_SERVERS_JSON: {
         owner: 'Networking',
@@ -72,6 +88,14 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         validation: `One of ${TURN_CREDENTIAL_SERVICE_FALLBACK_MODES.join(', ')}.`,
         secretHandling: 'Operational policy only. Never store credentials here.',
         failureMode: 'Falls back to allow-runtime-ice if the policy value is missing or malformed.',
+    },
+    GEMDUEL_USER_DATA_SUFFIX: {
+        owner: 'Desktop Platform',
+        defaultValue: 'unset',
+        validation:
+            'Optional non-empty filesystem-safe suffix used to isolate the desktop userData directory for local dev or verification sessions.',
+        secretHandling: 'Operational local profile routing only. Never store secrets here.',
+        failureMode: 'Falls back to the default Electron userData directory when absent.',
     },
     GITHUB_REPOSITORY: {
         owner: 'Release Engineering',

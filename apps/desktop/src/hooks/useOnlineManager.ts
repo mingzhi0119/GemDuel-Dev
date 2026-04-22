@@ -25,7 +25,8 @@ export const useOnlineManager = (
     handlers: OnlineManagerHandlers,
     enabled: boolean = false,
     getCurrentStateRef?: () => GameState,
-    targetIP: string = 'localhost'
+    targetIP: string = 'localhost',
+    targetPort: number = 9000
 ): OnlineManagerController => {
     const [peer, setPeer] = useState<Peer | null>(null);
     const [conn, setConn] = useState<DataConnection | null>(null);
@@ -91,6 +92,7 @@ export const useOnlineManager = (
 
         const managedPeer = createManagedPeer({
             targetIP,
+            targetPort,
             maxReconnectAttempts: MAX_RECONNECT_ATTEMPTS,
             isHostRef,
             reconnectAttempts,
@@ -114,7 +116,7 @@ export const useOnlineManager = (
                 setRemotePeerId
             );
         };
-    }, [enabled, targetIP]);
+    }, [enabled, targetIP, targetPort]);
 
     const connectToPeer = useCallback(
         (id: string) => {

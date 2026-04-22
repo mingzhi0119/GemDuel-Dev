@@ -7,7 +7,7 @@ import {
     buildSelectRoyalAction,
 } from '@gemduel/shared/logic/interactionCommands';
 import { getRandomBasicGemColor } from '@gemduel/shared/logic/gameSetup';
-import type { GameAction, GameMode, GameState, RoyalCard } from '@gemduel/shared/types';
+import type { GameAction, GameMode, GameState, PlayerKey, RoyalCard } from '@gemduel/shared/types';
 
 interface MetaInteractionParams {
     gameState: GameState;
@@ -23,7 +23,9 @@ export const useMetaInteractionHandlers = ({
     const startGame = useCallback(
         (
             mode: GameMode,
-            options: { useBuffs: boolean; isHost?: boolean } = { useBuffs: false }
+            options: { useBuffs: boolean; isHost?: boolean; hostPlayer?: PlayerKey } = {
+                useBuffs: false,
+            }
         ) => {
             networkDispatch(buildGameStartAction(mode, options));
         },

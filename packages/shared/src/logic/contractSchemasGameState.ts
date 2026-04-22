@@ -115,6 +115,7 @@ export const gameSetupPayloadSchema = z
         decks: deckStateSchema,
         initRandoms: initRandomsSchema,
         isHost: z.boolean(),
+        hostPlayer: playerKeySchema,
     })
     .passthrough();
 
@@ -268,6 +269,8 @@ export const gameStateBoundarySchema = z
         phase: gamePhaseSchema,
         mode: gameModeSchema,
         isHost: z.boolean(),
+        hostPlayer: playerKeySchema,
+        localPlayer: playerKeySchema,
         inventories: z
             .object({
                 p1: gemInventorySchema,

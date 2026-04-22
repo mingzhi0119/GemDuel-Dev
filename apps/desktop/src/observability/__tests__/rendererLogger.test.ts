@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ElectronBridge } from '@gemduel/shared/types/desktop';
+import type { LanMatchmakingState } from '@gemduel/shared/types/lan';
 import type { RuntimeRelayProfile } from '@gemduel/shared/types/runtime';
 import { reportReleaseHealth } from '../releaseHealth';
 import { logRendererMessage, reportRendererEvent } from '../rendererLogger';
@@ -10,6 +11,20 @@ const createRuntimeRelayProfile = (expiresAt: string | null): RuntimeRelayProfil
     iceServers: [],
     issuedAt: '2026-04-20T00:00:00.000Z',
     expiresAt,
+});
+
+const createLanMatchmakingState = (): LanMatchmakingState => ({
+    phase: 'idle',
+    roomId: null,
+    remoteInstanceId: null,
+    remoteAddress: null,
+    hostPort: null,
+    transportHost: false,
+    localSeat: null,
+    selectedMode: null,
+    hostPeerId: null,
+    errorMessage: null,
+    statusMessage: 'LAN duel is ready.',
 });
 
 const createElectronBridgeMock = (overrides: Partial<ElectronBridge> = {}): ElectronBridge => ({
@@ -39,8 +54,40 @@ const createElectronBridgeMock = (overrides: Partial<ElectronBridge> = {}): Elec
         counters: {},
         recentEvents: [],
     })),
+    getLanMatchmakingState: vi.fn(async () => createLanMatchmakingState()),
+    startLanMatchmaking: vi.fn(
+        async () =>
+            ({
+                ...createLanMatchmakingState(),
+                phase: 'searching',
+            }) satisfies LanMatchmakingState
+    ),
+    cancelLanMatchmaking: vi.fn(async () => createLanMatchmakingState()),
+    selectLanPregameMode: vi.fn(
+        async () =>
+            ({
+                ...createLanMatchmakingState(),
+                phase: 'matched',
+                roomId: 'room',
+                localSeat: 'p1',
+                selectedMode: 'classic',
+            }) satisfies LanMatchmakingState
+    ),
+    confirmLanPregameStart: vi.fn(
+        async () =>
+            ({
+                ...createLanMatchmakingState(),
+                phase: 'starting',
+                roomId: 'room',
+                localSeat: 'p1',
+                selectedMode: 'classic',
+                hostPeerId: 'peer-host',
+            }) satisfies LanMatchmakingState
+    ),
     restartApp: vi.fn(),
     reportReleaseHealth: vi.fn(),
+    reportLanPeerReady: vi.fn(),
+    onLanMatchmakingEvent: vi.fn(() => () => undefined),
     onUpdateAvailable: vi.fn(() => () => undefined),
     onDownloadProgress: vi.fn(() => () => undefined),
     onUpdateDownloaded: vi.fn(() => () => undefined),

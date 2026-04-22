@@ -10,13 +10,22 @@ import type { GameState } from '../../types';
 
 const cloneState = (): GameState => JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
 
-const createOnlineState = (overrides: Partial<GameState> = {}): GameState => ({
-    ...cloneState(),
-    mode: 'ONLINE_MULTIPLAYER',
-    turn: 'p2',
-    isHost: false,
-    ...overrides,
-});
+const createOnlineState = (overrides: Partial<GameState> = {}): GameState => {
+    const isHost = overrides.isHost ?? false;
+    const hostPlayer = overrides.hostPlayer ?? 'p1';
+    const localPlayer =
+        overrides.localPlayer ?? (isHost ? hostPlayer : hostPlayer === 'p1' ? 'p2' : 'p1');
+
+    return {
+        ...cloneState(),
+        mode: 'ONLINE_MULTIPLAYER',
+        isHost,
+        hostPlayer,
+        localPlayer,
+        turn: overrides.turn ?? localPlayer,
+        ...overrides,
+    };
+};
 
 describe('networkDispatchPolicy', () => {
     it('builds deterministic guest request ids from the clock and counter', () => {

@@ -110,8 +110,34 @@ describe('electron desktop governance', () => {
         ).toEqual({ ok: false, reason: 'Untrusted renderer origin.' });
     });
 
+    it('allows a governed dev-server origin override for local verification flows', () => {
+        const previousDevServerUrl = process.env.GEMDUEL_DEV_SERVER_URL;
+        process.env.GEMDUEL_DEV_SERVER_URL = 'http://localhost:5199/?lanHarness=1';
+
+        try {
+            expect(isAllowedRendererUrl('http://localhost:5199/?lanHarness=1', true)).toBe(true);
+            expect(
+                authorizeIpcSender({
+                    senderId: 7,
+                    senderUrl: 'http://localhost:5199/?lanHarness=1',
+                    mainWindowId: 7,
+                    isDev: true,
+                })
+            ).toEqual({ ok: true });
+        } finally {
+            if (previousDevServerUrl === undefined) {
+                delete process.env.GEMDUEL_DEV_SERVER_URL;
+            } else {
+                process.env.GEMDUEL_DEV_SERVER_URL = previousDevServerUrl;
+            }
+        }
+    });
+
     it('validates payload shapes for governed IPC channels', () => {
         expect(validateIpcArgs('restart_app', [])).toEqual({ ok: true, args: [] });
+        expect(validateIpcArgs('get-lan-matchmaking-state', [])).toEqual({ ok: true, args: [] });
+        expect(validateIpcArgs('start-lan-matchmaking', [])).toEqual({ ok: true, args: [] });
+        expect(validateIpcArgs('cancel-lan-matchmaking', [])).toEqual({ ok: true, args: [] });
         expect(validateIpcArgs('refresh-runtime-relay-profile', [])).toEqual({
             ok: true,
             args: [],
@@ -149,6 +175,52 @@ describe('electron desktop governance', () => {
         expect(validateIpcArgs('report-release-health', ['invalid'])).toEqual({
             ok: false,
             reason: 'Release-health payload did not match the allowlisted schema.',
+        });
+        expect(
+            validateIpcArgs('select-lan-pregame-mode', [
+                {
+                    roomId: 'room-1',
+                    mode: 'classic',
+                },
+            ])
+        ).toEqual({
+            ok: true,
+            args: [
+                {
+                    roomId: 'room-1',
+                    mode: 'classic',
+                },
+            ],
+        });
+        expect(
+            validateIpcArgs('confirm-lan-pregame-start', [
+                {
+                    roomId: 'room-1',
+                },
+            ])
+        ).toEqual({
+            ok: true,
+            args: [
+                {
+                    roomId: 'room-1',
+                },
+            ],
+        });
+        expect(
+            validateIpcArgs('report-lan-peer-ready', [
+                {
+                    roomId: 'room-1',
+                    peerId: 'peer-1',
+                },
+            ])
+        ).toEqual({
+            ok: true,
+            args: [
+                {
+                    roomId: 'room-1',
+                    peerId: 'peer-1',
+                },
+            ],
         });
     });
 

@@ -13,6 +13,8 @@ describe('Interaction Access', () => {
     it('derives the local player key from host identity', () => {
         expect(getLocalPlayerKey({ isHost: true })).toBe('p1');
         expect(getLocalPlayerKey({ isHost: false })).toBe('p2');
+        expect(getLocalPlayerKey({ isHost: true, hostPlayer: 'p2' })).toBe('p2');
+        expect(getLocalPlayerKey({ isHost: false, hostPlayer: 'p2' })).toBe('p1');
     });
 
     it('blocks interaction while reviewing or after a winner exists', () => {
@@ -31,11 +33,15 @@ describe('Interaction Access', () => {
         const onlineGuestState = cloneState();
         onlineGuestState.mode = 'ONLINE_MULTIPLAYER';
         onlineGuestState.isHost = false;
+        onlineGuestState.hostPlayer = 'p1';
+        onlineGuestState.localPlayer = 'p2';
         onlineGuestState.turn = 'p2';
 
         const onlineHostState = cloneState();
         onlineHostState.mode = 'ONLINE_MULTIPLAYER';
         onlineHostState.isHost = true;
+        onlineHostState.hostPlayer = 'p1';
+        onlineHostState.localPlayer = 'p1';
         onlineHostState.turn = 'p2';
 
         expect(canPlayerInteract(pveState)).toBe(true);

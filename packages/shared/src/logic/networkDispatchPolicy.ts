@@ -2,6 +2,7 @@ import type { GameAction, GameState, GuestDispatchBoundaryReasonCode } from '../
 import type { BootstrapCommand, PendingGuestIntent } from '../types/network';
 import { computeBootstrapChecksum } from './networkChecksums';
 import { actionToBootstrapCommand, actionToGuestIntentCommand } from './networkProtocol';
+import { getLocalPlayerKey } from './interactionAccess';
 
 export interface NetworkDispatchPlanningDependencies {
     computeChecksum?: typeof computeBootstrapChecksum;
@@ -71,7 +72,7 @@ export const resolveNetworkDispatchPlan = (
             };
         }
 
-        if (gameState.turn !== 'p2') {
+        if (gameState.turn !== getLocalPlayerKey(gameState)) {
             return {
                 blockedGuestIntentReason: 'NOT_GUEST_TURN',
                 shouldSkipNextHostSync: false,

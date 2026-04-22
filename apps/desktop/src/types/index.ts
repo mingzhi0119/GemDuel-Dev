@@ -1,1 +1,8 @@
-export type { AppRouteProps, GameLogicController, ResponsiveLayout, ThemeName } from './ui';
+export type {
+    AppRouteProps,
+    GameLogicController,
+    LanMatchmakingController,
+    MatchmakingRoute,
+    ResponsiveLayout,
+    ThemeName,
+} from './ui';

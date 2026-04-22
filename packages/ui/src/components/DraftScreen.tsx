@@ -15,8 +15,10 @@ import {
 } from 'lucide-react';
 import { BUFF_STYLES } from '../styles/buffs';
 import { BUFFS } from '@gemduel/shared/constants'; // Import for reconstruction
+import { getBuffCategoryLabel } from '@gemduel/shared';
 import { Buff, PlayerKey } from '@gemduel/shared/types';
-import { getBuffGoalAdjustment } from '@gemduel/shared/data/buffCopy';
+import { getBuffGoalAdjustment, getBuffText } from '@gemduel/shared/data/buffCopy';
+import { useLocale, useT } from '../i18n/LocaleProvider';
 
 interface DraftScreenProps {
     draftPool: string[]; // IDs only
@@ -43,6 +45,8 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     isOnline = false,
     isPvE = false,
 }) => {
+    const { locale } = useLocale();
+    const t = useT();
     const rawPool = (activePlayer === 'p1' ? draftPool : p2DraftPool) || [];
 
     const getBuffIcon = (category?: string) => {
@@ -65,13 +69,13 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     const getDraftTitle = (level: number) => {
         switch (level) {
             case 1:
-                return 'Minor Tactic Draft';
+                return t('draft.level1');
             case 2:
-                return 'Tactical Shift Draft';
+                return t('draft.level2');
             case 3:
-                return 'Expert Game-Changer Draft';
+                return t('draft.level3');
             default:
-                return `Level ${level} Buff Selection`;
+                return t('draft.levelFallback', { level });
         }
     };
 
@@ -106,7 +110,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                     <div className="flex items-center gap-2 mb-1">
                         <Layers size={12} className="text-yellow-500" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500/80">
-                            PVE CUSTOMIZE
+                            {t('draft.pveCustomize')}
                         </span>
                     </div>
                     <div
@@ -121,7 +125,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                 size={14}
                                 className="transition-transform group-active:rotate-180 duration-500"
                             />
-                            Refresh Pool
+                            {t('draft.refreshPool')}
                         </button>
                         <div
                             className={`h-6 w-px mx-1 ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-300'}`}
@@ -158,7 +162,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                     <div className="flex items-center justify-center gap-3 mb-2">
                         <Sparkles className="text-amber-400" size={32} />
                         <h1 className="text-4xl font-black uppercase tracking-wider">
-                            Roguelike Draft
+                            {t('draft.title')}
                         </h1>
                         <Sparkles className="text-amber-400" size={32} />
                     </div>
@@ -179,9 +183,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                 >
                     {activePlayer === 'p1' ? <Shield size={24} /> : <Swords size={24} />}
                     <span className="text-xl font-bold uppercase">
-                        {activePlayer === 'p1'
-                            ? 'Player 1: Pick 1 from 3'
-                            : 'Player 2: Pick 1 from 4'}
+                        {activePlayer === 'p1' ? t('draft.prompt.p1') : t('draft.prompt.p2')}
                     </span>
                 </div>
 
@@ -190,7 +192,8 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                     {currentPool.map((buff, idx) => {
                         const { Icon, color: iconColor } = getBuffIcon(buff.category);
                         const isP1ChoiceSlot = activePlayer === 'p2' && idx === 0;
-                        const goalAdjustment = getBuffGoalAdjustment(buff.id, 'en');
+                        const goalAdjustment = getBuffGoalAdjustment(buff.id, locale);
+                        const buffCopy = getBuffText(buff.id, locale);
 
                         return (
                             <button
@@ -226,7 +229,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                                 className={`text-[8px] font-black uppercase tracking-tighter px-2
                                             ${theme === 'dark' ? 'opacity-40' : 'text-slate-400 opacity-100'}`}
                                             >
-                                                {buff.category}
+                                                {getBuffCategoryLabel(buff.category, locale)}
                                             </span>
                                         )}
                                     </div>
@@ -235,7 +238,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                 {/* P1 Choice Badge */}
                                 {isP1ChoiceSlot && (
                                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-amber-400 text-amber-950 text-[8px] font-black uppercase px-3 py-1 rounded-full shadow-lg z-20">
-                                        Player 1&apos;s Choice
+                                        {t('draft.p1Choice')}
                                     </div>
                                 )}
 
@@ -244,7 +247,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                     className={`text-xl font-black mb-3 leading-tight transition-colors
                                 ${theme === 'dark' ? 'group-hover:text-white' : 'text-slate-900 group-hover:text-amber-600'}`}
                                 >
-                                    {buff.label}
+                                    {buffCopy.label}
                                 </h3>
 
                                 {/* Description */}
@@ -252,7 +255,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                     className={`text-xs font-medium leading-relaxed mb-4 flex-grow
                                 ${theme === 'dark' ? 'opacity-80' : 'text-slate-600'}`}
                                 >
-                                    {buff.desc}
+                                    {buffCopy.desc}
                                 </p>
 
                                 {/* Win Condition Changes (if any) */}
@@ -294,7 +297,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                     ${theme === 'dark' ? 'text-white' : 'text-slate-900'}
                                 `}
                                 >
-                                    Select <ArrowRight size={14} />
+                                    {t('draft.select')} <ArrowRight size={14} />
                                 </div>
                             </button>
                         );
@@ -303,8 +306,8 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
             </div>
 
             <div className="absolute bottom-8 text-[10px] uppercase font-black tracking-tighter opacity-30 z-10 flex gap-12 lg:text-[15px] lg:gap-16">
-                <span>P1 takes initiative but has fewer options</span>
-                <span>P2 acts in response with a larger pool</span>
+                <span>{t('draft.footer.p1')}</span>
+                <span>{t('draft.footer.p2')}</span>
             </div>
         </div>
     );

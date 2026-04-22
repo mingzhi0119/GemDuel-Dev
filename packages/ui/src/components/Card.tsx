@@ -5,6 +5,7 @@ import { GemIcon } from './GemIcon';
 import { Card as CardType, CardInteractionContext, GemColor } from '@gemduel/shared/types';
 import { CardAbilityBadges } from './card/CardAbilityBadges';
 import { CardFacePattern } from './card/CardFacePattern';
+import { useT } from '../i18n/LocaleProvider';
 
 interface CardProps {
     card: CardType | null;
@@ -43,7 +44,15 @@ const getCardDimensions = (size: CardProps['size']) =>
 const scaleCardMetric = (value: number, cardScale: number) =>
     Math.max(1, Math.round(value * cardScale));
 
-const WildBonusDisc = ({ diameter, theme }: { diameter: number; theme: 'light' | 'dark' }) => (
+const WildBonusDisc = ({
+    diameter,
+    theme,
+    title,
+}: {
+    diameter: number;
+    theme: 'light' | 'dark';
+    title: string;
+}) => (
     <div
         className={`relative overflow-hidden rounded-full border ${
             theme === 'dark'
@@ -56,7 +65,7 @@ const WildBonusDisc = ({ diameter, theme }: { diameter: number; theme: 'light' |
             background:
                 'conic-gradient(from -90deg, #2563eb 0deg 72deg, #f8fafc 72deg 144deg, #10b981 144deg 216deg, #0f172a 216deg 288deg, #ef4444 288deg 360deg)',
         }}
-        title="Wild bonus"
+        title={title}
     >
         <div
             className={`absolute inset-[22%] rounded-full ${
@@ -81,6 +90,7 @@ export const Card: React.FC<CardProps> = React.memo(
         size = 'default',
         theme = 'dark',
     }) => {
+        const t = useT();
         const dimensions = getCardDimensions(size);
         const cardScale = dimensions.width / BASE_CARD_SIZE.width;
         const cornerRadiusPx = scaleCardMetric(8, cardScale);
@@ -113,7 +123,7 @@ export const Card: React.FC<CardProps> = React.memo(
                         borderRadius: `${cornerRadiusPx}px`,
                     }}
                 >
-                    Empty
+                    {t('card.empty')}
                 </div>
             );
 
@@ -228,6 +238,7 @@ export const Card: React.FC<CardProps> = React.memo(
                                     key={`wild-${i}`}
                                     diameter={bonusGemSizePx}
                                     theme={theme}
+                                    title={t('card.wildBonus')}
                                 />
                             ) : (
                                 <div
@@ -337,7 +348,7 @@ export const Card: React.FC<CardProps> = React.memo(
                                 onReserve(card, context);
                             }}
                             className="bg-yellow-500 hover:bg-yellow-400 rounded-full text-white shadow-lg transition-transform hover:scale-110 active:scale-90"
-                            title="Reserve"
+                            title={t('card.reserve')}
                             style={{ padding: `${reserveButtonPaddingPx}px` }}
                         >
                             <Download size={reserveButtonIconSizePx} />

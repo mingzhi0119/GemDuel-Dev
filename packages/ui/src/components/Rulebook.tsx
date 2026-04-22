@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { RULEBOOK_CONTENT } from './RulebookContent';
 import { CardAnatomyPage } from './CardAnatomyPage';
+import { useLocale, useT } from '../i18n/LocaleProvider';
 
 interface RulebookProps {
     onClose: () => void;
@@ -10,7 +11,8 @@ interface RulebookProps {
 
 export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
     const [page, setPage] = useState(0);
-    const [lang, setLang] = useState<'en' | 'zh'>('zh');
+    const { locale } = useLocale();
+    const t = useT();
 
     const content = RULEBOOK_CONTENT[page];
     const totalPages = RULEBOOK_CONTENT.length;
@@ -41,7 +43,7 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
         if (!content) return null;
 
         if (content.isCustom === 'card_anatomy') {
-            return <CardAnatomyPage theme={theme} lang={lang} />;
+            return <CardAnatomyPage theme={theme} lang={locale} />;
         }
 
         // Default text-based page
@@ -50,12 +52,12 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                 <h3
                     className={`text-3xl font-black uppercase tracking-tight mb-7 pb-4 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
                 >
-                    {content.title?.[lang] || 'Untitled'}
+                    {content.title?.[locale] || t('rulebook.untitled')}
                 </h3>
                 <div
                     className={`leading-8 whitespace-pre-wrap text-base md:text-[18px] ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600 font-medium'}`}
                 >
-                    {renderFormattedBody(content.body?.[lang] || 'No content available.')}
+                    {renderFormattedBody(content.body?.[locale] || t('rulebook.noContent'))}
                 </div>
             </>
         );
@@ -78,21 +80,14 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                     <div className="flex items-center gap-2 text-emerald-600">
                         <BookOpen size={24} />
                         <h2 className="font-black uppercase tracking-wider text-base">
-                            {lang === 'en' ? 'Rulebook' : '游戏说明书'}
+                            {t('rulebook.title')}
                         </h2>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => setLang((l) => (l === 'en' ? 'zh' : 'en'))}
-                            className={`px-4 py-2 rounded-full border text-xs font-black uppercase transition-colors
-                                ${theme === 'dark' ? 'bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700' : 'bg-white border-stone-300 text-stone-600 hover:border-stone-400 shadow-sm'}`}
-                        >
-                            {lang === 'en' ? '中文' : 'EN'}
-                        </button>
-                        <button
                             onClick={onClose}
-                            aria-label="Close Rules"
+                            aria-label={t('rulebook.close')}
                             className={`${theme === 'dark' ? 'text-slate-400 hover:text-white' : 'text-stone-400 hover:text-stone-800'} transition-colors`}
                         >
                             <X size={24} />
@@ -109,7 +104,7 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                                 <h3
                                     className={`text-3xl font-black uppercase tracking-tight mb-7 pb-4 border-b transition-colors duration-500 ${theme === 'dark' ? 'text-white border-slate-800' : 'text-stone-800 border-stone-100'}`}
                                 >
-                                    {content.title?.[lang] || 'Untitled'}
+                                    {content.title?.[locale] || t('rulebook.untitled')}
                                 </h3>
                             )}
                             {renderContent()}
@@ -128,11 +123,11 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                             ${theme === 'dark' ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-white border border-stone-300 text-stone-700 hover:border-stone-400 shadow-sm active:bg-stone-100'}`}
                     >
                         <ChevronLeft size={16} />
-                        {lang === 'en' ? 'Prev' : '上一页'}
+                        {t('rulebook.prev')}
                     </button>
 
                     <span className="text-stone-400 font-mono font-bold text-xs tracking-widest">
-                        PAGE {page + 1} / {totalPages}
+                        {t('rulebook.page')} {page + 1} / {totalPages}
                     </span>
 
                     <button
@@ -141,7 +136,7 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm font-black uppercase tracking-widest
                             ${theme === 'dark' ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-white border border-stone-300 text-stone-700 hover:border-stone-400 shadow-sm active:bg-stone-100'}`}
                     >
-                        {lang === 'en' ? 'Next' : '下一页'}
+                        {t('rulebook.next')}
                         <ChevronRight size={16} />
                     </button>
                 </div>

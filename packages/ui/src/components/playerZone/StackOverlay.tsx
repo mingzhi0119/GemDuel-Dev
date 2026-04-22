@@ -1,8 +1,10 @@
 import { Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GEM_TYPES } from '@gemduel/shared/constants';
+import { getGemLabel } from '@gemduel/shared';
 import { Card } from '../Card';
 import type { Card as CardType } from '@gemduel/shared/types';
+import { useLocale, useT } from '../../i18n/LocaleProvider';
 
 interface StackOverlayProps {
     isOpen: boolean;
@@ -13,6 +15,8 @@ interface StackOverlayProps {
 }
 
 export function StackOverlay({ isOpen, color, cards, onClose, theme }: StackOverlayProps) {
+    const { locale } = useLocale();
+    const t = useT();
     if (!isOpen) return null;
     const type = GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES] || GEM_TYPES.NULL;
 
@@ -40,7 +44,8 @@ export function StackOverlay({ isOpen, color, cards, onClose, theme }: StackOver
                     className="text-sm font-black uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm"
                     style={{ color: textColor }}
                 >
-                    Color: {type.label}
+                    {t('labels.color')}:{' '}
+                    {getGemLabel(type.id === 'empty' ? 'empty' : type.id, locale)}
                 </span>
             </div>
 

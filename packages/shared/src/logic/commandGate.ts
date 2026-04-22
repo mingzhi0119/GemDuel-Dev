@@ -3,6 +3,7 @@ import type { GuestIntentCommand } from '../types/network';
 import { getActionRejectionReason, isRuntimeActionShapeValid } from './actionValidation';
 import { getStateIntegrityError, getTransitionIntegrityError } from './fsm';
 import { GUEST_INTENT_PERMISSION_TABLE, guestIntentToAction } from './networkProtocol';
+import { getRemotePlayerKey } from './interactionAccess';
 
 const GUEST_ACTION_ALLOWLIST = new Set<GameAction['type']>([
     'SELECT_BUFF',
@@ -64,7 +65,8 @@ export const validateGuestCommand = (
     state: GameState,
     action: GameAction
 ): CommandValidationResult => {
-    if (state.turn !== 'p2') {
+    const guestPlayer = getRemotePlayerKey(state);
+    if (state.turn !== guestPlayer) {
         return {
             valid: false,
             reasonCode: 'NOT_GUEST_TURN',
@@ -87,7 +89,8 @@ export const validateGuestIntentCommand = (
     state: GameState,
     command: GuestIntentCommand
 ): CommandValidationResult => {
-    if (state.turn !== 'p2') {
+    const guestPlayer = getRemotePlayerKey(state);
+    if (state.turn !== guestPlayer) {
         return {
             valid: false,
             reasonCode: 'NOT_GUEST_TURN',

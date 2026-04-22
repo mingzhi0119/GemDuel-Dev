@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GemIcon } from './GemIcon';
+import { getFeedbackLabel } from '@gemduel/shared';
 import { GEM_TYPES } from '@gemduel/shared/constants';
 import { GemColor, GemTypeObject } from '@gemduel/shared/types';
+import { GemIcon } from './GemIcon';
+import { useLocale } from '../i18n/LocaleProvider';
 
 interface FloatingTextProps {
     quantity: string;
@@ -10,6 +12,8 @@ interface FloatingTextProps {
 }
 
 export const FloatingText: React.FC<FloatingTextProps> = ({ quantity, label }) => {
+    const { locale } = useLocale();
+    const localizedLabel = getFeedbackLabel(label, locale);
     const colorClass =
         label.toLowerCase() === 'gold'
             ? 'text-yellow-400'
@@ -33,7 +37,7 @@ export const FloatingText: React.FC<FloatingTextProps> = ({ quantity, label }) =
                 {quantity}
             </span>
             <span className={`${colorClass} font-bold text-sm uppercase tracking-wider`}>
-                {label}
+                {localizedLabel}
             </span>
         </motion.div>
     );

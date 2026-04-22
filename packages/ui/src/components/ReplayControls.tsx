@@ -1,5 +1,6 @@
 import React from 'react';
 import { Undo2, Redo2 } from 'lucide-react';
+import { useT } from '../i18n/LocaleProvider';
 
 interface ReplayControlsProps {
     undo: () => void;
@@ -20,6 +21,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
     historyLength,
     theme,
 }) => {
+    const t = useT();
     const safeIndex = Math.min(currentIndex, historyLength - 1);
     const currentStep = historyLength === 0 ? 0 : safeIndex + 1;
 
@@ -36,7 +38,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
             <button
                 onClick={undo}
                 disabled={!canUndo}
-                aria-label="Step Backward"
+                aria-label={t('replay.stepBackward')}
                 className={`p-3 rounded-xl border transition-all flex items-center justify-center
                     ${
                         canUndo
@@ -58,7 +60,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                 <span
                     className={`text-[13px] uppercase font-bold tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
                 >
-                    Action
+                    {t('replay.action')}
                 </span>
                 <span
                     className={`text-[21px] font-mono font-bold tabular-nums ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}
@@ -76,7 +78,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
             <button
                 onClick={redo}
                 disabled={!canRedo}
-                aria-label="Step Forward"
+                aria-label={t('replay.stepForward')}
                 className={`p-3 rounded-xl border transition-all flex items-center justify-center
                     ${
                         canRedo

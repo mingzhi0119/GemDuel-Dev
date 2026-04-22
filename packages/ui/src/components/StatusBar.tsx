@@ -1,6 +1,8 @@
 import React from 'react';
 import { Info, Wifi, WifiOff } from 'lucide-react';
+import { localizeLooseUiMessage } from '@gemduel/shared';
 import { cn } from '@gemduel/shared/utils';
+import { useLocale, useT } from '../i18n/LocaleProvider';
 
 interface StatusBarProps {
     errorMsg: string | null;
@@ -9,18 +11,22 @@ interface StatusBarProps {
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({ errorMsg, isOnline, connectionStatus }) => {
+    const { locale } = useLocale();
+    const t = useT();
+    const localizedError = localizeLooseUiMessage(errorMsg, locale);
+
     return (
         <div className="relative flex flex-col items-center gap-2">
             <div
-                key={errorMsg}
+                key={localizedError}
                 className={cn(
                     'absolute -top-9 bg-red-500/90 text-white px-4 py-1.5 rounded-full shadow-xl text-sm font-semibold transition-all duration-300 z-50 flex items-center gap-2 whitespace-nowrap',
-                    errorMsg
+                    localizedError
                         ? 'opacity-100 translate-y-0 animate-shake'
                         : 'opacity-0 translate-y-4 pointer-events-none'
                 )}
             >
-                <Info size={14} /> {errorMsg}
+                <Info size={14} /> {localizedError}
             </div>
 
             {isOnline && (
@@ -31,11 +37,11 @@ export const StatusBar: React.FC<StatusBarProps> = ({ errorMsg, isOnline, connec
                 >
                     {connectionStatus === 'connected' ? (
                         <>
-                            <Wifi size={12} /> Live Link
+                            <Wifi size={12} /> {t('status.liveLink')}
                         </>
                     ) : (
                         <>
-                            <WifiOff size={12} /> Sync Lost
+                            <WifiOff size={12} /> {t('status.syncLost')}
                         </>
                     )}
                 </div>

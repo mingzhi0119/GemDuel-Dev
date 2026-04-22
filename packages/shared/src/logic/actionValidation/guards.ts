@@ -257,6 +257,7 @@ export const isGameSetupPayload = (value: unknown): value is BuffInitPayload =>
     typeof value.mode === 'string' &&
     GAME_MODE_VALUES.has(value.mode) &&
     typeof value.isHost === 'boolean' &&
+    isPlayerKey(value.hostPlayer) &&
     isBoardLike(value.board) &&
     isBagLike(value.bag) &&
     isMarketStateLike(value.market) &&
@@ -272,7 +273,13 @@ export const isInitDraftPayload = (value: unknown): value is InitDraftPayload =>
 export const isLikelyGameState = (value: unknown): value is GameState => {
     if (!isPlainObject(value)) return false;
     if (!isBoardLike(value.board) || !isBagLike(value.bag)) return false;
-    if (!isPlayerKey(value.turn) || typeof value.isHost !== 'boolean') return false;
+    if (
+        !isPlayerKey(value.turn) ||
+        typeof value.isHost !== 'boolean' ||
+        !isPlayerKey(value.hostPlayer) ||
+        !isPlayerKey(value.localPlayer)
+    )
+        return false;
     if (
         typeof value.phase !== 'string' ||
         !GAME_PHASE_VALUES.has(value.phase) ||

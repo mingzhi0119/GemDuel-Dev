@@ -1,5 +1,6 @@
 import type { ChangeEventHandler, Dispatch, SetStateAction } from 'react';
 import type { useGameLogic } from '../hooks/useGameLogic';
+import type { useLanMatchmaking } from '../hooks/useLanMatchmaking';
 import type { PlayerKey } from '@gemduel/shared/types';
 import type { AppReasonCode } from '@gemduel/shared/types/reason';
 
@@ -30,12 +31,14 @@ export interface ResponsiveLayout {
 }
 
 export type GameLogicController = ReturnType<typeof useGameLogic>;
+export type LanMatchmakingController = ReturnType<typeof useLanMatchmaking>;
+export type MatchmakingRoute = 'none' | 'online' | 'lan';
 
 export interface AppUiState {
     showDebug: boolean;
     isReviewing: boolean;
     showRulebook: boolean;
-    onlineSetup: boolean;
+    matchmakingRoute: MatchmakingRoute;
     isPeekingBoard: boolean;
     persistentWinner: PlayerKey | null;
     showRestartConfirm: boolean;
@@ -45,7 +48,7 @@ export interface AppUiSetters {
     setShowDebug: Dispatch<SetStateAction<boolean>>;
     setIsReviewing: Dispatch<SetStateAction<boolean>>;
     setShowRulebook: Dispatch<SetStateAction<boolean>>;
-    setOnlineSetup: Dispatch<SetStateAction<boolean>>;
+    setMatchmakingRoute: Dispatch<SetStateAction<MatchmakingRoute>>;
     setIsPeekingBoard: Dispatch<SetStateAction<boolean>>;
     setShowRestartConfirm: Dispatch<SetStateAction<boolean>>;
 }
@@ -60,6 +63,7 @@ export interface AppUiCallbacks {
 export interface AppRouteProps {
     appVersion: string;
     game: GameLogicController;
+    lan: LanMatchmakingController;
     layout: ResponsiveLayout;
     theme: ThemeName;
     ui: AppUiState;

@@ -1039,6 +1039,10 @@
                                     },
                                     "isHost": {
                                         "type": "boolean"
+                                    },
+                                    "hostPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
                                     }
                                 },
                                 "required": [
@@ -1048,7 +1052,8 @@
                                     "market",
                                     "decks",
                                     "initRandoms",
-                                    "isHost"
+                                    "isHost",
+                                    "hostPlayer"
                                 ],
                                 "additionalProperties": {}
                             }
@@ -1892,6 +1897,10 @@
                                     "isHost": {
                                         "type": "boolean"
                                     },
+                                    "hostPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
+                                    },
                                     "draftPool": {
                                         "type": "array",
                                         "items": {
@@ -1923,6 +1932,7 @@
                                     "decks",
                                     "initRandoms",
                                     "isHost",
+                                    "hostPlayer",
                                     "draftPool",
                                     "buffLevel"
                                 ],
@@ -2090,6 +2100,14 @@
                                     },
                                     "isHost": {
                                         "type": "boolean"
+                                    },
+                                    "hostPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
+                                    },
+                                    "localPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
                                     },
                                     "inventories": {
                                         "type": "object",
@@ -2775,6 +2793,8 @@
                                     "phase",
                                     "mode",
                                     "isHost",
+                                    "hostPlayer",
+                                    "localPlayer",
                                     "inventories",
                                     "privileges",
                                     "decks",
@@ -2945,6 +2965,14 @@
                                     "isHost": {
                                         "type": "boolean"
                                     },
+                                    "hostPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
+                                    },
+                                    "localPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
+                                    },
                                     "inventories": {
                                         "type": "object",
                                         "properties": {
@@ -3629,6 +3657,8 @@
                                     "phase",
                                     "mode",
                                     "isHost",
+                                    "hostPlayer",
+                                    "localPlayer",
                                     "inventories",
                                     "privileges",
                                     "decks",
@@ -5826,6 +5856,10 @@
                                     },
                                     "isHost": {
                                         "type": "boolean"
+                                    },
+                                    "hostPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
                                     }
                                 },
                                 "required": [
@@ -5835,7 +5869,8 @@
                                     "market",
                                     "decks",
                                     "initRandoms",
-                                    "isHost"
+                                    "isHost",
+                                    "hostPlayer"
                                 ],
                                 "additionalProperties": {}
                             }
@@ -6679,6 +6714,10 @@
                                     "isHost": {
                                         "type": "boolean"
                                     },
+                                    "hostPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
+                                    },
                                     "draftPool": {
                                         "type": "array",
                                         "items": {
@@ -6710,6 +6749,7 @@
                                     "decks",
                                     "initRandoms",
                                     "isHost",
+                                    "hostPlayer",
                                     "draftPool",
                                     "buffLevel"
                                 ],
@@ -8839,6 +8879,10 @@
                                                     },
                                                     "isHost": {
                                                         "type": "boolean"
+                                                    },
+                                                    "hostPlayer": {
+                                                        "type": "string",
+                                                        "enum": ["p1", "p2"]
                                                     }
                                                 },
                                                 "required": [
@@ -8848,7 +8892,8 @@
                                                     "market",
                                                     "decks",
                                                     "initRandoms",
-                                                    "isHost"
+                                                    "isHost",
+                                                    "hostPlayer"
                                                 ],
                                                 "additionalProperties": {}
                                             }
@@ -9711,6 +9756,10 @@
                                                     "isHost": {
                                                         "type": "boolean"
                                                     },
+                                                    "hostPlayer": {
+                                                        "type": "string",
+                                                        "enum": ["p1", "p2"]
+                                                    },
                                                     "draftPool": {
                                                         "type": "array",
                                                         "items": {
@@ -9742,6 +9791,7 @@
                                                     "decks",
                                                     "initRandoms",
                                                     "isHost",
+                                                    "hostPlayer",
                                                     "draftPool",
                                                     "buffLevel"
                                                 ],
@@ -12554,6 +12604,14 @@
                                     "isHost": {
                                         "type": "boolean"
                                     },
+                                    "hostPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
+                                    },
+                                    "localPlayer": {
+                                        "type": "string",
+                                        "enum": ["p1", "p2"]
+                                    },
                                     "inventories": {
                                         "type": "object",
                                         "properties": {
@@ -13238,6 +13296,8 @@
                                     "phase",
                                     "mode",
                                     "isHost",
+                                    "hostPlayer",
+                                    "localPlayer",
                                     "inventories",
                                     "privileges",
                                     "decks",

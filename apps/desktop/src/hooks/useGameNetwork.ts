@@ -21,7 +21,8 @@ export const useGameNetwork = (
     localDispatch: (action: GameAction) => void,
     clearAndInit: (action: GameAction) => void,
     shouldConnect: boolean,
-    targetIP: string = 'localhost'
+    targetIP: string = 'localhost',
+    targetPort: number = 9000
 ) => {
     const onlineRef = useRef<OnlineManagerController | null>(null);
     const requestCounterRef = useRef(0);
@@ -74,7 +75,8 @@ export const useGameNetwork = (
         },
         gameState.mode === 'ONLINE_MULTIPLAYER' || shouldConnect,
         () => gameState,
-        targetIP
+        targetIP,
+        targetPort
     );
 
     useEffect(() => {

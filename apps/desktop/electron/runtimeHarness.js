@@ -124,6 +124,16 @@ export const createElectronRuntimeHarness = ({
             });
         });
 
+        mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+            const write =
+                level >= 2
+                    ? log.error.bind(log)
+                    : level === 1
+                      ? log.warn.bind(log)
+                      : log.info.bind(log);
+            write(`[RENDERER] ${message} (${sourceId}:${line})`);
+        });
+
         mainWindow.webContents.on(
             'did-fail-load',
             (_event, errorCode, errorDescription, validatedURL) => {
@@ -140,6 +150,32 @@ export const createElectronRuntimeHarness = ({
                 });
             }
         );
+
+        mainWindow.webContents.on('render-process-gone', (_event, details) => {
+            recordMainHealth({
+                category: 'startup',
+                name: 'WINDOW_RENDERER_GONE',
+                severity: 'error',
+                message: 'Renderer process exited unexpectedly.',
+                context: {
+                    reason: details.reason,
+                    exitCode: details.exitCode,
+                },
+            });
+        });
+
+        mainWindow.webContents.on('preload-error', (_event, preloadPath, error) => {
+            log.error(`[PRELOAD] ${preloadPath} failed to load.`, error);
+            recordMainHealth({
+                category: 'startup',
+                name: 'WINDOW_PRELOAD_FAILED',
+                severity: 'error',
+                message: 'Preload script failed to initialize.',
+                context: {
+                    preloadPath,
+                },
+            });
+        });
 
         mainWindow.on('closed', () => {
             recordMainHealth({

@@ -35,6 +35,17 @@ describe('WebRTC runtime ICE configuration', () => {
         });
     });
 
+    it('uses the provided LAN signaling port for private targets', () => {
+        const peerConfig = createPeerConfig(true, '127.0.0.1', 9002);
+
+        expect(peerConfig).toMatchObject({
+            host: '127.0.0.1',
+            port: 9002,
+            path: '/gemduel',
+            secure: false,
+        });
+    });
+
     it('drops malformed runtime ICE server entries', () => {
         setRuntimeIceServers([
             { urls: 'turn:valid.example.com:80', username: 'user', credential: 'pass' },

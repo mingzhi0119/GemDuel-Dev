@@ -9,12 +9,14 @@ import type {
     GameMode,
     InitDraftPayload,
     P2DraftPoolIndices,
+    PlayerKey,
     PlayerInitRandoms,
 } from '../types';
 
 export interface StartGameOptions {
     useBuffs: boolean;
     isHost?: boolean;
+    hostPlayer?: PlayerKey;
 }
 
 export const BASIC_GEM_COLORS: BasicGemColor[] = ['red', 'green', 'blue', 'white', 'black'];
@@ -128,6 +130,7 @@ export const createGameSetupPayload = (
             p2: createPlayerInitRandoms(),
         },
         isHost: options.isHost ?? true,
+        hostPlayer: options.hostPlayer ?? 'p1',
     };
 };
 

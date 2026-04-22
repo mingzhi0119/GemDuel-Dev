@@ -9,6 +9,7 @@
         "boundaries:check": "node check-boundary-governance.mjs",
         "deps:check": "node check-dependency-governance.mjs",
         "desktop:check": "node check-electron-governance.mjs && node check-runtime-drill-governance.mjs",
+        "electron:lan:verify": "node verify-local-lan-duel.mjs",
         "governance:artifacts": "node export-governance-artifacts.mjs",
         "governance:evidence:check": "node check-governance-evidence-health.mjs",
         "licenses:check": "node check-license-governance.mjs",

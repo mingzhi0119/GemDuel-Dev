@@ -1,8 +1,9 @@
 import React from 'react';
+import { translate, type AppLocale } from '@gemduel/shared';
 import { ABILITIES } from './cardAnatomyData';
 
 type Theme = 'light' | 'dark';
-type Lang = 'en' | 'zh';
+type Lang = AppLocale;
 
 interface CardAnatomyGlossaryProps {
     theme: Theme;
@@ -14,7 +15,7 @@ export const CardAnatomyGlossary: React.FC<CardAnatomyGlossaryProps> = ({ theme,
         <h4
             className={`text-xl font-black uppercase tracking-wider mb-5 ${theme === 'dark' ? 'text-slate-200' : 'text-stone-700'}`}
         >
-            {lang === 'en' ? 'Special Abilities' : '特殊能力'}
+            {translate(lang, 'anatomy.glossaryTitle')}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {ABILITIES.map((ability) => {

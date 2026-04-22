@@ -133,7 +133,7 @@ const uiState: AppRouteProps['ui'] = {
     showDebug: false,
     isReviewing: false,
     showRulebook: false,
-    onlineSetup: false,
+    matchmakingRoute: 'none',
     isPeekingBoard: false,
     persistentWinner: null,
     showRestartConfirm: false,
@@ -143,9 +143,33 @@ const uiSetters: AppRouteProps['setters'] = {
     setShowDebug: vi.fn(),
     setIsReviewing: vi.fn(),
     setShowRulebook: vi.fn(),
-    setOnlineSetup: vi.fn(),
+    setMatchmakingRoute: vi.fn(),
     setIsPeekingBoard: vi.fn(),
     setShowRestartConfirm: vi.fn(),
+};
+
+const lanController: AppRouteProps['lan'] = {
+    state: {
+        phase: 'idle',
+        roomId: null,
+        remoteInstanceId: null,
+        remoteAddress: null,
+        hostPort: null,
+        transportHost: false,
+        localSeat: null,
+        selectedMode: null,
+        hostPeerId: null,
+        errorMessage: null,
+        statusMessage: 'LAN duel is ready.',
+    },
+    launch: null,
+    refresh: vi.fn(),
+    startSearch: vi.fn(),
+    cancelSearch: vi.fn(),
+    selectMode: vi.fn(),
+    confirmStart: vi.fn(),
+    reportPeerReady: vi.fn(),
+    clearLaunch: vi.fn(),
 };
 
 const uiCallbacks: AppRouteProps['callbacks'] = {
@@ -278,6 +302,7 @@ describe('shell smoke coverage', () => {
             <GameShell
                 appVersion="5.2.11"
                 game={createGameController()}
+                lan={lanController}
                 layout={layout}
                 theme="dark"
                 ui={uiState}

@@ -18,6 +18,8 @@
         "dev": "turbo run dev --filter=@gemduel/desktop",
         "electron:build": "pnpm run architecture:check && pnpm run boundaries:check && pnpm run deps:check && pnpm run licenses:check && pnpm run sbom:check && pnpm run secrets:check && pnpm run seal-exclusions:check && pnpm run desktop:check && pnpm run build && pnpm run bundle:check && pnpm run governance:artifacts && turbo run electron:build --filter=@gemduel/desktop",
         "electron:dev": "turbo run electron:dev --filter=@gemduel/desktop",
+        "electron:lan:verify": "pnpm --dir tools/scripts run electron:lan:verify",
+        "electron:open": "pnpm --dir apps/desktop run electron:open",
         "governance:artifacts": "turbo run governance:artifacts --filter=@gemduel/tools-scripts --",
         "governance:evidence:check": "turbo run governance:evidence:check --filter=@gemduel/tools-scripts --",
         "licenses:check": "turbo run licenses:check --filter=@gemduel/tools-scripts",

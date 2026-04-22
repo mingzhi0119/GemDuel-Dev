@@ -1,10 +1,11 @@
 import React from 'react';
+import type { AppLocale } from '@gemduel/shared';
 import { CardAnatomyDiagram } from './cardAnatomy/CardAnatomyDiagram';
 import { CardAnatomyGlossary } from './cardAnatomy/CardAnatomyGlossary';
 
 interface CardAnatomyPageProps {
     theme: 'light' | 'dark';
-    lang: 'en' | 'zh';
+    lang: AppLocale;
 }
 
 export const CardAnatomyPage: React.FC<CardAnatomyPageProps> = ({ theme, lang }) => (

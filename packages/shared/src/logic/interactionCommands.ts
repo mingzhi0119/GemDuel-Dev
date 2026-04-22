@@ -28,7 +28,9 @@ export interface ReserveFlowResult {
 
 export const buildGameStartAction = (
     mode: GameMode,
-    options: { useBuffs: boolean; isHost?: boolean } = { useBuffs: false }
+    options: { useBuffs: boolean; isHost?: boolean; hostPlayer?: PlayerKey } = {
+        useBuffs: false,
+    }
 ) => buildStartGameAction(mode, options);
 
 export const buildReplenishAction = (

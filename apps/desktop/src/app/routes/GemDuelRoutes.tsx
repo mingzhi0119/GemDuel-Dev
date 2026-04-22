@@ -15,11 +15,14 @@ const GameConfigMenu = React.lazy(() =>
 const OnlineMenu = React.lazy(() =>
     import('@gemduel/ui/components/OnlineMenu').then((module) => ({ default: module.OnlineMenu }))
 );
+const LanMenu = React.lazy(() =>
+    import('@gemduel/ui/components/LanMenu').then((module) => ({ default: module.LanMenu }))
+);
 const GameShell = React.lazy(() =>
     import('../shell/GameShell').then((module) => ({ default: module.GameShell }))
 );
 
-type RouteKind = 'config' | 'online' | 'draft' | 'game';
+type RouteKind = 'config' | 'online' | 'lan' | 'draft' | 'game';
 
 const LIGHT_GAME_VIEWPORT_STYLE: React.CSSProperties = {
     backgroundColor: '#F4F7F6',
@@ -41,7 +44,7 @@ const getDesktopViewportPresentation = (routeKind: RouteKind, theme: ThemeName) 
         };
     }
 
-    if (routeKind === 'online') {
+    if (routeKind === 'online' || routeKind === 'lan') {
         return {
             viewportClassName:
                 theme === 'dark'
@@ -86,13 +89,34 @@ export function GemDuelRoutes(props: AppRouteProps) {
     let routeKind: RouteKind;
 
     if (historyControls.historyLength === 0) {
-        if (ui.onlineSetup) {
+        if (ui.matchmakingRoute === 'online') {
             routeKind = 'online';
             routeContent = (
                 <OnlineMenu
-                    onBack={() => setters.setOnlineSetup(false)}
+                    onBack={() => setters.setMatchmakingRoute('none')}
                     online={online}
                     startGame={handlers.startGame}
+                    theme={theme}
+                />
+            );
+        } else if (ui.matchmakingRoute === 'lan') {
+            routeKind = 'lan';
+            routeContent = (
+                <LanMenu
+                    onBack={() => {
+                        void props.lan.cancelSearch();
+                        setters.setMatchmakingRoute('none');
+                    }}
+                    onRetry={() => {
+                        void props.lan.startSearch();
+                    }}
+                    onSelectMode={(mode) => {
+                        void props.lan.selectMode(mode);
+                    }}
+                    onConfirmStart={() => {
+                        void props.lan.confirmStart();
+                    }}
+                    lan={props.lan.state}
                     theme={theme}
                 />
             );
@@ -100,7 +124,8 @@ export function GemDuelRoutes(props: AppRouteProps) {
             routeKind = 'config';
             routeContent = (
                 <GameConfigMenu
-                    onOnlineSetup={() => setters.setOnlineSetup(true)}
+                    onOnlineSetup={() => setters.setMatchmakingRoute('online')}
+                    onLanSetup={() => setters.setMatchmakingRoute('lan')}
                     onStartGame={handlers.startGame}
                     theme={theme}
                 />
@@ -117,7 +142,7 @@ export function GemDuelRoutes(props: AppRouteProps) {
                 onSelectBuff={handlers.handleSelectBuff}
                 onReroll={handlers.handleRerollBuffs}
                 theme={theme}
-                localPlayer={online.isHost ? 'p1' : 'p2'}
+                localPlayer={state.localPlayer}
                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
                 isPvE={state.mode === 'PVE'}
             />

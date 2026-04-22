@@ -15,6 +15,8 @@ export const INITIAL_STATE_SKELETON: GameState = {
     phase: GAME_PHASES.IDLE,
     mode: 'LOCAL_PVP',
     isHost: true,
+    hostPlayer: 'p1',
+    localPlayer: 'p1',
     // Legacy flags removed - derived from mode
     pendingReserve: null,
     bonusGemTarget: null,
