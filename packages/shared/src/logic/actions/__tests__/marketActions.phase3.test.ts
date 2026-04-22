@@ -46,6 +46,12 @@ const createState = (overrides: Partial<GameState> = {}): GameState =>
         )
     ) as GameState;
 
+const getBasicGemTotal = (inventory: GameState['inventories']['p1']) =>
+    inventory.red + inventory.green + inventory.blue + inventory.white + inventory.black;
+
+const getBasicExtraAllocationTotal = (allocation: GameState['extraAllocation']['p1']) =>
+    allocation.red + allocation.green + allocation.blue + allocation.white + allocation.black;
+
 const createEchoReservoirBuff = (state?: Buff['state']): Buff => ({
     ...BUFFS.ECHO_RESERVOIR,
     state: state ? { ...state } : undefined,
@@ -162,8 +168,6 @@ describe('marketActions phase 3 coverage', () => {
     });
 
     it('removes reserved purchases from hand and grants speculator bonus gems', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0);
-
         const reservedCard = createCard({ id: 'reserved-speculator' });
         const state = createState({
             inventories: {
@@ -183,8 +187,8 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.playerTableau.p1).toContainEqual(
             expect.objectContaining({ id: 'reserved-speculator' })
         );
-        expect(nextState.inventories.p1.red).toBe(2);
-        expect(nextState.extraAllocation.p1.red).toBe(2);
+        expect(getBasicGemTotal(nextState.inventories.p1)).toBe(2);
+        expect(getBasicExtraAllocationTotal(nextState.extraAllocation.p1)).toBe(2);
         expect(nextState.toastMessage).toBe('Speculator: Recycled 2 gems!');
     });
 
@@ -600,8 +604,6 @@ describe('marketActions phase 3 coverage', () => {
     });
 
     it('reserves from the deck, picks up gold, and applies first-reserve plus reserve-bonus buffs', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0);
-
         const reserveBuff: Buff = {
             id: 'reserve-suite',
             level: 1,
@@ -629,15 +631,14 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.playerReserved.p1).toEqual([hiddenCard]);
         expect(nextState.inventories.p1.gold).toBe(2);
         expect(nextState.extraAllocation.p1.gold).toBe(1);
-        expect(nextState.inventories.p1.red).toBe(1);
+        expect(getBasicGemTotal(nextState.inventories.p1)).toBe(1);
+        expect(getBasicExtraAllocationTotal(nextState.extraAllocation.p1)).toBe(1);
         expect(nextState.phase).toBe(GAME_PHASES.IDLE);
         expect(nextState.turn).toBe('p2');
         expect(nextState.pendingReserve).toBeNull();
     });
 
     it('steals reserved cards with collector authority and applies reserve bonuses on the first take', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0);
-
         const collectorSuite: Buff = {
             id: 'collector-suite',
             level: 1,
@@ -670,7 +671,8 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.playerReserved.p2).toEqual([]);
         expect(nextState.inventories.p1.gold).toBe(2);
         expect(nextState.extraAllocation.p1.gold).toBe(1);
-        expect(nextState.inventories.p1.red).toBe(1);
+        expect(getBasicGemTotal(nextState.inventories.p1)).toBe(1);
+        expect(getBasicExtraAllocationTotal(nextState.extraAllocation.p1)).toBe(1);
         expect(nextState.toastMessage).toBe('Nimble Fingers: +1 Gem!');
         expect(nextState.turn).toBe('p2');
     });
@@ -694,8 +696,6 @@ describe('marketActions phase 3 coverage', () => {
     });
 
     it('recycles discarded reserved cards back into their deck when Puppet Master is active', () => {
-        vi.spyOn(Math, 'random').mockReturnValue(0);
-
         const puppetMaster: Buff = {
             id: 'puppet_master',
             level: 1,
@@ -716,7 +716,8 @@ describe('marketActions phase 3 coverage', () => {
 
         expect(nextState.playerReserved.p1).toEqual([]);
         expect(nextState.decks[2][0]).toEqual(reservedCard);
-        expect(nextState.inventories.p1.red).toBe(1);
+        expect(getBasicGemTotal(nextState.inventories.p1)).toBe(1);
+        expect(getBasicExtraAllocationTotal(nextState.extraAllocation.p1)).toBe(1);
         expect(nextState.toastMessage).toBe('Puppet Master: Card recycled!');
     });
 

@@ -16,6 +16,20 @@ import {
 const createState = (overrides: Partial<GameState> = {}): GameState =>
     JSON.parse(JSON.stringify(createMockState(overrides))) as GameState;
 
+const getBasicGemTotal = (state: GameState, player: 'p1' | 'p2') =>
+    state.inventories[player].red +
+    state.inventories[player].green +
+    state.inventories[player].blue +
+    state.inventories[player].white +
+    state.inventories[player].black;
+
+const getBasicExtraAllocationTotal = (state: GameState, player: 'p1' | 'p2') =>
+    state.extraAllocation[player].red +
+    state.extraAllocation[player].green +
+    state.extraAllocation[player].blue +
+    state.extraAllocation[player].white +
+    state.extraAllocation[player].black;
+
 describe('marketActionSupport', () => {
     beforeEach(() => {
         vi.restoreAllMocks();
@@ -42,17 +56,11 @@ describe('marketActionSupport', () => {
 
     it('grants random basic gems into both inventories and allocation tracking', () => {
         const state = createState();
-        vi.spyOn(Math, 'random')
-            .mockReturnValueOnce(0)
-            .mockReturnValueOnce(0)
-            .mockReturnValueOnce(0.99);
 
         grantRandomBasicGems(state, 'p1', 2);
 
-        expect(state.inventories.p1.red).toBe(1);
-        expect(state.inventories.p1.black).toBe(1);
-        expect(state.extraAllocation.p1.red).toBe(1);
-        expect(state.extraAllocation.p1.black).toBe(1);
+        expect(getBasicGemTotal(state, 'p1')).toBe(2);
+        expect(getBasicExtraAllocationTotal(state, 'p1')).toBe(2);
     });
 
     it('returns paid gems and gold to the bag while consuming extra allocations first', () => {

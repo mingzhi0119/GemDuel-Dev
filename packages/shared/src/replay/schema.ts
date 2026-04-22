@@ -33,18 +33,11 @@ import {
 
 const replaySchemaVersionSchema = z.literal(REPLAY_VNEXT_SCHEMA_VERSION);
 const replayGemIdSchema = z.union([gemColorSchema, z.literal('empty')]);
-const replayCardInstanceIdSchema = z.custom<ReplayCardInstanceId>(
-    (value) => typeof value === 'string' && /^c:.+#\d+$/.test(value),
-    {
-        message: 'Replay card instance ids must use the c:<template>#<seq> format.',
-    }
-);
-const replayCardTemplateIdSchema = z.custom<ReplayCardTemplateId>(
-    (value) => typeof value === 'string' && value.length > 0
-);
-const replayRoyalIdSchema = z.custom<ReplayRoyalId>(
-    (value) => typeof value === 'string' && value.length > 0
-);
+const replayCardInstanceIdSchema: z.ZodType<ReplayCardInstanceId> = z.string().regex(/^c:.+#\d+$/, {
+    message: 'Replay card instance ids must use the c:<template>#<seq> format.',
+});
+const replayCardTemplateIdSchema: z.ZodType<ReplayCardTemplateId> = z.string().min(1);
+const replayRoyalIdSchema: z.ZodType<ReplayRoyalId> = z.string().min(1);
 
 const replayBuffRefSchema = z
     .object({
