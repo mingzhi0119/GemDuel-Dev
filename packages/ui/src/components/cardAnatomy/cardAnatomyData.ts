@@ -23,9 +23,10 @@ export const SAMPLE_CARD: CardType = {
 export const ABILITIES = [
     {
         id: 'play_again',
+        termId: 'extraTurn',
         icon: RotateCcw,
         color: 'bg-amber-500',
-        label: { en: 'Extra Turn', zh: '再次行动' },
+        label: { en: 'Extra Turn', zh: '额外回合' },
         desc: {
             en: 'Immediately take another turn after this one.',
             zh: '立即获得额外的一个回合。',
@@ -33,6 +34,7 @@ export const ABILITIES = [
     },
     {
         id: 'bonus_gem',
+        termId: 'bonusGem',
         icon: Plus,
         color: 'bg-emerald-500',
         label: { en: 'Bonus Gem', zh: '奖励宝石' },
@@ -43,9 +45,10 @@ export const ABILITIES = [
     },
     {
         id: 'steal',
+        termId: 'steal',
         icon: Hand,
         color: 'bg-rose-500',
-        label: { en: 'Capture / Steal', zh: '掠夺' },
+        label: { en: 'Steal', zh: '掠夺' },
         desc: {
             en: 'Steal 1 non-Gold Gem from your opponent.',
             zh: '从对手那里偷取 1 个非黄金宝石。',
@@ -53,6 +56,7 @@ export const ABILITIES = [
     },
     {
         id: 'scroll',
+        termId: 'privilege',
         icon: Scroll,
         color: 'bg-purple-500',
         label: { en: 'Privilege', zh: '特权' },

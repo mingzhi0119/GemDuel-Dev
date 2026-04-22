@@ -6,6 +6,7 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 
 - [Quick Start](guides/quick-start.md)
 - [Testing](guides/testing.md)
+- [Lexicon and Player Copy](guides/lexicon-copy-system.md)
 - [Frontend Layout](guides/frontend-layout-guide.md)
 
 ## Architecture

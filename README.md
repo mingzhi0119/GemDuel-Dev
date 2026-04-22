@@ -45,6 +45,7 @@ pnpm --dir tools/scripts run ai:replays -- --count 10 --use-buffs
 - `--count 10` runs ten AI vs AI matches in a batch.
 - `--use-buffs` enables buff draft during those simulations, so the exported replays cover more gameplay branches.
 - By default the script writes compact Replay vNext JSON files plus a `manifest.json` summary into `Replay/ai-batches/<timestamp>/`.
+- `Replay/` is a local artifact directory and is gitignored by default.
 - `manifest.json` records which matches completed or aborted, along with each replay's winner, final hash, and evaluation confidence.
 - Add `--no-write` if you only want the batch summary and evaluation output printed to the terminal.
 
@@ -63,5 +64,6 @@ pnpm --dir tools/scripts run ai:replays -- --count 10 --use-buffs
 - Architecture overview: [`docs/architecture/overview.md`](docs/architecture/overview.md)
 - Quick start: [`docs/guides/quick-start.md`](docs/guides/quick-start.md)
 - Testing: [`docs/guides/testing.md`](docs/guides/testing.md)
+- Lexicon and player copy: [`docs/guides/lexicon-copy-system.md`](docs/guides/lexicon-copy-system.md)
 - Governance: [`docs/governance/`](docs/governance/)
 - Archived governance timeline: [`docs/archive/engineering-governance-archive.md`](docs/archive/engineering-governance-archive.md)

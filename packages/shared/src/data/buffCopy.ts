@@ -7,6 +7,7 @@ import {
     type BuffLocale,
     type LocalizedBuffText,
 } from './buffCopyCatalog';
+import { getLexiconLabel } from '../lexicon';
 
 export { BUFF_COPY, BUFF_ORDER_BY_LEVEL, type BuffLocale };
 
@@ -64,29 +65,35 @@ function buildBuffInlineGoalSummary(id: string, locale: BuffLocale): string {
 
     if (locale === 'en') {
         if (goal.points) {
-            segments.push(`Win Condition: ${goal.points} Points.`);
+            segments.push(
+                `Win Condition: ${goal.points} ${getLexiconLabel('prestigePoints', 'en')}.`
+            );
         }
         if (goal.crowns) {
-            segments.push(`Win Condition: ${goal.crowns} Crowns.`);
+            segments.push(`Win Condition: ${goal.crowns} ${getLexiconLabel('crowns', 'en')}.`);
         }
         if (goal.singleColor) {
-            segments.push(`Win Condition: ${goal.singleColor} Points in one color.`);
+            segments.push(
+                `Win Condition: ${goal.singleColor} ${getLexiconLabel('singleColorPoints', 'en')}.`
+            );
         }
         if (goal.disableSingleColor) {
-            segments.push('No Single Color Win.');
+            segments.push('No Single-Color Points Win.');
         }
     } else {
         if (goal.points) {
-            segments.push(`获胜条件：${goal.points} 分。`);
+            segments.push(`获胜条件：${goal.points} ${getLexiconLabel('prestigePoints', 'zh')}。`);
         }
         if (goal.crowns) {
-            segments.push(`获胜条件：${goal.crowns} 个皇冠。`);
+            segments.push(`获胜条件：${goal.crowns} 个${getLexiconLabel('crowns', 'zh')}。`);
         }
         if (goal.singleColor) {
-            segments.push(`获胜条件：单色 ${goal.singleColor} 分。`);
+            segments.push(
+                `获胜条件：${goal.singleColor} ${getLexiconLabel('singleColorPoints', 'zh')}。`
+            );
         }
         if (goal.disableSingleColor) {
-            segments.push('取消单色获胜。');
+            segments.push('取消单色分数获胜。');
         }
     }
 

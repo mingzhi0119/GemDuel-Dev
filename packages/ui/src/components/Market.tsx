@@ -18,6 +18,7 @@ import {
     InitiateBuyJokerPayload,
 } from '@gemduel/shared/types';
 import { useT } from '../i18n/LocaleProvider';
+import { LexiconTerm } from '../lexicon/LexiconTerm';
 
 const AnimatedCard = withGameAnimation(Card);
 
@@ -100,7 +101,9 @@ export const Market: React.FC<MarketProps> = React.memo(
                     className={`text-[13px] font-black uppercase tracking-[0.34em] mb-1 text-center
                     ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
                 >
-                    {t('market.title')}
+                    <LexiconTerm termId="market" className="normal-case">
+                        {t('market.title')}
+                    </LexiconTerm>
                 </h2>
 
                 {/* Intelligence Network Floating Action (Positioned Left) */}

@@ -1,5 +1,6 @@
 import type { BuffEffects } from '../types';
 import type { AppLocale } from '../i18n';
+import { getLexiconLabel } from '../lexicon';
 
 export type BuffLocale = AppLocale;
 
@@ -17,17 +18,80 @@ export interface BuffCopyEntry {
 
 export type BuffCopyMap = Record<string, BuffCopyEntry>;
 
+const TERM = {
+    optionalAction: {
+        en: getLexiconLabel('optionalAction', 'en'),
+        zh: getLexiconLabel('optionalAction', 'zh'),
+    },
+    privilegeScroll: {
+        en: getLexiconLabel('privilegeScroll', 'en'),
+        zh: getLexiconLabel('privilegeScroll', 'zh'),
+    },
+    specialPrivilege: {
+        en: getLexiconLabel('specialPrivilege', 'en'),
+        zh: getLexiconLabel('specialPrivilege', 'zh'),
+    },
+    basicGem: {
+        en: getLexiconLabel('basicGem', 'en'),
+        zh: getLexiconLabel('basicGem', 'zh'),
+    },
+    extraGold: {
+        en: getLexiconLabel('extraGold', 'en'),
+        zh: getLexiconLabel('extraGold', 'zh'),
+    },
+    extraPearl: {
+        en: getLexiconLabel('extraPearl', 'en'),
+        zh: getLexiconLabel('extraPearl', 'zh'),
+    },
+    reserve: {
+        en: getLexiconLabel('reserve', 'en'),
+        zh: getLexiconLabel('reserve', 'zh'),
+    },
+    reservedCard: {
+        en: getLexiconLabel('reservedCard', 'en'),
+        zh: getLexiconLabel('reservedCard', 'zh'),
+    },
+    replenish: {
+        en: getLexiconLabel('replenish', 'en'),
+        zh: getLexiconLabel('replenish', 'zh'),
+    },
+    crowns: {
+        en: getLexiconLabel('crowns', 'en'),
+        zh: getLexiconLabel('crowns', 'zh'),
+    },
+    bonus: {
+        en: getLexiconLabel('bonus', 'en'),
+        zh: getLexiconLabel('bonus', 'zh'),
+    },
+    royalCard: {
+        en: getLexiconLabel('royalCard', 'en'),
+        zh: getLexiconLabel('royalCard', 'zh'),
+    },
+    gemCap: {
+        en: getLexiconLabel('gemCap', 'en'),
+        zh: getLexiconLabel('gemCap', 'zh'),
+    },
+    takeGems: {
+        en: getLexiconLabel('takeGems', 'en'),
+        zh: getLexiconLabel('takeGems', 'zh'),
+    },
+    steal: {
+        en: getLexiconLabel('steal', 'en'),
+        zh: getLexiconLabel('steal', 'zh'),
+    },
+} as const;
+
 export const BUFF_COPY: BuffCopyMap = {
     privilege_favor: {
         level: 1,
-        en: { label: 'Privilege Favor', desc: 'Start with 1 Special Privilege.' },
-        zh: { label: '特权眷顾', desc: '开始时获得 1 个特殊特权。' },
+        en: { label: 'Privilege Favor', desc: `Start with 1 ${TERM.specialPrivilege.en}.` },
+        zh: { label: '特权眷顾', desc: `开始时获得 1 个${TERM.specialPrivilege.zh}。` },
     },
     head_start: {
         level: 1,
         goal: { points: 18 },
-        en: { label: 'Head Start', desc: 'Start with 1 random basic gem.' },
-        zh: { label: '先行一步', desc: '开始时获得 1 个随机基础宝石。' },
+        en: { label: 'Head Start', desc: `Start with 1 random ${TERM.basicGem.en}.` },
+        zh: { label: '先行一步', desc: `开始时获得 1 个随机${TERM.basicGem.zh}。` },
     },
     royal_blood: {
         level: 1,
@@ -38,24 +102,30 @@ export const BUFF_COPY: BuffCopyMap = {
         level: 1,
         en: {
             label: 'Intelligence',
-            desc: 'Gain optional action: Peek at the top 3 cards of any deck.',
+            desc: `Gain ${TERM.optionalAction.en}: Peek at the top 3 cards of any deck.`,
         },
-        zh: { label: '情报员', desc: '获得可选行动：查看任意卡组顶部的 3 张牌。' },
+        zh: { label: '情报员', desc: `获得${TERM.optionalAction.zh}：查看任意卡组顶部的 3 张牌。` },
     },
     deep_pockets: {
         level: 1,
-        en: { label: 'Deep Pockets', desc: 'Gem holding limit increased to 12.' },
-        zh: { label: '深口袋', desc: '宝石持有上限增加至 12 个。' },
+        en: { label: 'Deep Pockets', desc: `${TERM.gemCap.en} increased to 12.` },
+        zh: { label: '深口袋', desc: `${TERM.gemCap.zh}增加至 12。` },
     },
     backup_supply: {
         level: 1,
-        en: { label: 'Backup Supply', desc: 'Start with 2 random basic gems.' },
-        zh: { label: '后备补给', desc: '开始时获得 2 个随机基础宝石。' },
+        en: { label: 'Backup Supply', desc: `Start with 2 random ${TERM.basicGem.en}s.` },
+        zh: { label: '后备补给', desc: `开始时获得 2 个随机${TERM.basicGem.zh}。` },
     },
     patient_investor: {
         level: 1,
-        en: { label: 'Patient Investor', desc: 'Gain 1 Extra Gold on your first Reserve action.' },
-        zh: { label: '耐心投资者', desc: '在你的第一次保留行动中获得 1 个额外黄金。' },
+        en: {
+            label: 'Patient Investor',
+            desc: `Gain 1 ${TERM.extraGold.en} on your first ${TERM.reserve.en} action.`,
+        },
+        zh: {
+            label: '耐心投资者',
+            desc: `在你的第一次${TERM.reserve.zh}行动中获得 1 个${TERM.extraGold.zh}。`,
+        },
     },
     insight: {
         level: 1,
@@ -65,23 +135,47 @@ export const BUFF_COPY: BuffCopyMap = {
     },
     down_payment: {
         level: 1,
-        en: { label: 'Down Payment', desc: 'Reserved cards cost 1 less (basic gems only).' },
-        zh: { label: '预付定金', desc: '保留的卡牌成本减少 1（仅限基础宝石）。' },
+        en: {
+            label: 'Down Payment',
+            desc: `${TERM.reservedCard.en}s cost 1 less (${TERM.basicGem.en.toLowerCase()}s only).`,
+        },
+        zh: {
+            label: '预付定金',
+            desc: `${TERM.reservedCard.zh}成本减少 1（仅限${TERM.basicGem.zh}）。`,
+        },
     },
     nimble_fingers: {
         level: 1,
-        en: { label: 'Nimble Fingers', desc: 'Gain 1 random basic gem when you Reserve a card.' },
-        zh: { label: '快手窃贼', desc: '当你执行保留行动时，获得一个随机基础宝石。' },
+        en: {
+            label: 'Nimble Fingers',
+            desc: `Gain 1 random ${TERM.basicGem.en} when you ${TERM.reserve.en} a card.`,
+        },
+        zh: {
+            label: '快手窃贼',
+            desc: `当你执行${TERM.reserve.zh}行动时，获得 1 个随机${TERM.basicGem.zh}。`,
+        },
     },
     pearl_trader: {
         level: 2,
-        en: { label: 'Pearl Trader', desc: 'Gem limit increased to 11. Start with 1 Extra Pearl.' },
-        zh: { label: '珍珠贸易商', desc: '宝石上限增加至 11。开始时获得 1 个额外珍珠。' },
+        en: {
+            label: 'Pearl Trader',
+            desc: `${TERM.gemCap.en} increased to 11. Start with 1 ${TERM.extraPearl.en}.`,
+        },
+        zh: {
+            label: '珍珠贸易商',
+            desc: `${TERM.gemCap.zh}增加至 11。开始时获得 1 个${TERM.extraPearl.zh}。`,
+        },
     },
     gold_reserve: {
         level: 2,
-        en: { label: 'Gold Reserve', desc: 'Start with 1 Extra Gold and 1 random Reserved Card.' },
-        zh: { label: '黄金储备', desc: '开始时获得 1 个额外黄金和 1 张随机保留卡。' },
+        en: {
+            label: 'Gold Reserve',
+            desc: `Start with 1 ${TERM.extraGold.en} and 1 random ${TERM.reservedCard.en}.`,
+        },
+        zh: {
+            label: '黄金储备',
+            desc: `开始时获得 1 个${TERM.extraGold.zh}和 1 张随机${TERM.reservedCard.zh}。`,
+        },
     },
     color_preference: {
         level: 2,
@@ -95,9 +189,12 @@ export const BUFF_COPY: BuffCopyMap = {
         level: 2,
         en: {
             label: 'Extortion',
-            desc: 'Every 2nd time you Replenish the board, steal 1 basic gem from opponent.',
+            desc: `Every 2nd time you ${TERM.replenish.en}, steal 1 ${TERM.basicGem.en} from opponent.`,
         },
-        zh: { label: '巧取豪夺', desc: '你每执行 2 次补给版图，就从对手那里偷取 1 个基础宝石。' },
+        zh: {
+            label: '巧取豪夺',
+            desc: `你每执行 2 次${TERM.replenish.zh}，就从对手那里偷取 1 个${TERM.basicGem.zh}。`,
+        },
     },
     flexible_discount: {
         level: 2,
@@ -111,43 +208,55 @@ export const BUFF_COPY: BuffCopyMap = {
         level: 2,
         en: {
             label: 'Bounty Hunter',
-            desc: 'Gain 1 random basic gem when you buy a card with Crowns.',
+            desc: `Gain 1 random ${TERM.basicGem.en} when you buy a card with ${TERM.crowns.en}.`,
         },
-        zh: { label: '赏金猎人', desc: '当你购买带有皇冠的卡牌时，获得 1 个随机基础宝石。' },
+        zh: {
+            label: '赏金猎人',
+            desc: `当你购买带有${TERM.crowns.zh}的卡牌时，获得 1 个随机${TERM.basicGem.zh}。`,
+        },
     },
     recycler: {
         level: 2,
         en: {
             label: 'Recycler',
-            desc: 'Start with 1 random basic gem. Refund 1 basic gem when buying a Level 2 or 3 card.',
+            desc: `Start with 1 random ${TERM.basicGem.en}. Refund 1 ${TERM.basicGem.en} when buying a Level 2 or 3 card.`,
         },
         zh: {
             label: '回收者',
-            desc: '开始时获得 1 个随机基础宝石。购买 2 级或 3 级卡牌时，返还 1 个基础宝石。',
+            desc: `开始时获得 1 个随机${TERM.basicGem.zh}。购买 2 级或 3 级卡牌时，返还 1 个${TERM.basicGem.zh}。`,
         },
     },
     aggressive_expansion: {
         level: 2,
         en: {
             label: 'Aggressive Expansion',
-            desc: 'Gain 1 random basic gem when you Replenish the board.',
+            desc: `Gain 1 random ${TERM.basicGem.en} when you ${TERM.replenish.en}.`,
         },
-        zh: { label: '激进扩张', desc: '当你补给版图时，获得 1 个随机基础宝石。' },
+        zh: {
+            label: '激进扩张',
+            desc: `当你${TERM.replenish.zh}时，获得 1 个随机${TERM.basicGem.zh}。`,
+        },
     },
     speculator: {
         level: 2,
-        en: { label: 'Speculator', desc: 'Gain 2 random basic gems after buying a reserved card.' },
-        zh: { label: '投机商', desc: '购买一张保留卡后，获得 2 个随机基础宝石。' },
+        en: {
+            label: 'Speculator',
+            desc: `Gain 2 random ${TERM.basicGem.en}s after buying a ${TERM.reservedCard.en.toLowerCase()}.`,
+        },
+        zh: {
+            label: '投机商',
+            desc: `购买一张${TERM.reservedCard.zh}后，获得 2 个随机${TERM.basicGem.zh}。`,
+        },
     },
     hoarder: {
         level: 2,
         en: {
             label: 'Hoarder',
-            desc: 'If holding 3 reserved cards, gain 1 random basic gem at start of turn.',
+            desc: `If holding 3 ${TERM.reservedCard.en}s, gain 1 random ${TERM.basicGem.en} at start of turn.`,
         },
         zh: {
             label: '资源囤积者',
-            desc: '如果你手中持有 3 张保留卡，回合开始自动获得 1 个随机基础宝石。',
+            desc: `如果你手中持有 3 张${TERM.reservedCard.zh}，回合开始自动获得 1 个随机${TERM.basicGem.zh}。`,
         },
     },
     greed_king: {
@@ -161,17 +270,23 @@ export const BUFF_COPY: BuffCopyMap = {
         goal: { disableSingleColor: true },
         en: {
             label: 'Royal Envoy',
-            desc: 'After your 5th turn fully resolves, pick 1 remaining Royal Card.',
+            desc: `After your 5th turn fully resolves, pick 1 remaining ${TERM.royalCard.en}.`,
         },
-        zh: { label: '皇家特使', desc: '在你的第 5 个回合完整结算后，拿取 1 张剩余皇室卡。' },
+        zh: {
+            label: '皇家特使',
+            desc: `在你的第 5 个回合完整结算后，拿取 1 张剩余${TERM.royalCard.zh}。`,
+        },
     },
     double_agent: {
         level: 3,
         en: {
             label: 'Double Agent',
-            desc: 'Each Privilege Scroll takes 2 gems instead of 1. Gem Cap: 8.',
+            desc: `Each ${TERM.privilegeScroll.en} takes 2 gems instead of 1. ${TERM.gemCap.en}: 8.`,
         },
-        zh: { label: '双重间谍', desc: '每个特权卷轴改为拿取 2 个宝石。宝石上限：8。' },
+        zh: {
+            label: '双重间谍',
+            desc: `每个${TERM.privilegeScroll.zh}改为拿取 2 个宝石。${TERM.gemCap.zh}：8。`,
+        },
     },
     all_seeing_eye: {
         level: 3,
@@ -209,41 +324,44 @@ export const BUFF_COPY: BuffCopyMap = {
         level: 3,
         en: {
             label: 'Minimalist',
-            desc: 'Your first 2 purchased cards provide Double Bonuses. Gem Cap: 6.',
+            desc: `Your first 2 purchased cards provide double ${TERM.bonus.en}es. ${TERM.gemCap.en}: 6.`,
         },
-        zh: { label: '极简主义', desc: '你购买的前 2 张卡提供双倍奖励。宝石上限：6。' },
+        zh: {
+            label: '极简主义',
+            desc: `你购买的前 2 张卡提供双倍${TERM.bonus.zh}。${TERM.gemCap.zh}：6。`,
+        },
     },
     pacifist: {
         level: 3,
         en: {
             label: 'Pacifist',
-            desc: 'Immune to all negative effects, including opponent Steal, and your standard Privileges cannot be transferred away when the board Privilege supply is empty. Start with 1 Extra Gold and 1 Special Privilege.',
+            desc: `Immune to all negative effects, including opponent ${TERM.steal.en}, and your standard ${TERM.privilegeScroll.en}s cannot be transferred away when the board Privilege supply is empty. Start with 1 ${TERM.extraGold.en} and 1 ${TERM.specialPrivilege.en}.`,
         },
         zh: {
             label: '和平主义者',
-            desc: '免疫一切负面效果，包括来自对手的掠夺，且不会因版图特权供应堆为空而给予对手特权。开始时获得 1 个额外黄金和 1 个特殊特权。',
+            desc: `免疫一切负面效果，包括来自对手的${TERM.steal.zh}，且不会因版图特权供应堆为空而给予对手普通${TERM.privilegeScroll.zh}。开始时获得 1 个${TERM.extraGold.zh}和 1 个${TERM.specialPrivilege.zh}。`,
         },
     },
     desperate_gamble: {
         level: 3,
         en: {
             label: 'Desperate Gamble',
-            desc: 'Start with 2 Extra Gold. You cannot take 3 Gems with the Take Gems action. Gain 1 Special Privilege every 2 turns.',
+            desc: `Start with 2 ${TERM.extraGold.en}. You cannot take 3 Gems with the ${TERM.takeGems.en} action. Gain 1 ${TERM.specialPrivilege.en} every 2 turns.`,
         },
         zh: {
             label: '孤注一掷',
-            desc: '开始时获得 2 个额外黄金。无法通过“拿取宝石”行动一次拿 3 个宝石。每 2 回合获得 1 个特殊特权。',
+            desc: `开始时获得 2 个${TERM.extraGold.zh}。无法通过“${TERM.takeGems.zh}”行动一次拿 3 个宝石。每 2 回合获得 1 个${TERM.specialPrivilege.zh}。`,
         },
     },
     puppet_master: {
         level: 3,
         en: {
             label: 'The Puppet Master',
-            desc: 'Gain optional action: discard one reserved card, return it to the bottom of its deck, and gain 1 random basic gem. You may take this action multiple times in the same turn.',
+            desc: `Gain ${TERM.optionalAction.en}: discard one ${TERM.reservedCard.en.toLowerCase()}, return it to the bottom of its deck, and gain 1 random ${TERM.basicGem.en}. You may take this action multiple times in the same turn.`,
         },
         zh: {
             label: '幕后推手',
-            desc: '获得可选行动：弃掉 1 张保留卡，将其放回对应牌库底部，并获得 1 个随机基础宝石。该行动在同一回合可执行多次。',
+            desc: `获得${TERM.optionalAction.zh}：弃掉 1 张${TERM.reservedCard.zh}，将其放回对应牌库底部，并获得 1 个随机${TERM.basicGem.zh}。该行动在同一回合可执行多次。`,
         },
     },
     collector: {
@@ -313,18 +431,18 @@ export const BUFF_LEVEL_TITLES = {
 export const GOAL_ADJUSTMENT_COPY = {
     en: {
         title: 'Goal Adjustment',
-        points: 'Points',
-        crowns: 'Crowns',
-        singleColor: 'Points (1 Color)',
-        disableSingleColor: 'Single Color Win',
+        points: getLexiconLabel('prestigePoints', 'en'),
+        crowns: getLexiconLabel('crowns', 'en'),
+        singleColor: getLexiconLabel('singleColorPoints', 'en'),
+        disableSingleColor: 'Single-Color Points Win',
         disabled: 'Disabled',
     },
     zh: {
         title: '目标变更',
-        points: '分数',
-        crowns: '皇冠',
-        singleColor: '单色分数',
-        disableSingleColor: '单色获胜',
+        points: getLexiconLabel('prestigePoints', 'zh'),
+        crowns: getLexiconLabel('crowns', 'zh'),
+        singleColor: getLexiconLabel('singleColorPoints', 'zh'),
+        disableSingleColor: '单色分数获胜',
         disabled: '关闭',
     },
 } as const;

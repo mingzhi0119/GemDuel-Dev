@@ -6,6 +6,7 @@ import { isBonusColorSelectionPhase } from '@gemduel/shared/logic/fsm';
 import type { ActiveModal, GameMode, GamePhase, GemColor, PlayerKey } from '@gemduel/shared/types';
 import type { ThemeName } from '@gemduel/shared/types';
 import { useLocale, useT } from '@gemduel/ui/i18n/LocaleProvider';
+import { LexiconTerm } from '@gemduel/ui/lexicon/LexiconTerm';
 
 const Rulebook = React.lazy(() =>
     import('@gemduel/ui/components/Rulebook').then((module) => ({ default: module.Rulebook }))
@@ -94,7 +95,21 @@ export function AppOverlayStack({
                     {!isPeekingBoard ? (
                         <>
                             <h2 className="text-2xl font-black text-white mb-6 uppercase tracking-widest animate-in fade-in zoom-in">
-                                {t('overlays.selectJokerColor')}
+                                {locale === 'zh' ? (
+                                    <>
+                                        选择{' '}
+                                        <LexiconTerm termId="cardColor" className="normal-case">
+                                            卡牌颜色
+                                        </LexiconTerm>
+                                    </>
+                                ) : (
+                                    <>
+                                        Select{' '}
+                                        <LexiconTerm termId="cardColor" className="normal-case">
+                                            Card Color
+                                        </LexiconTerm>
+                                    </>
+                                )}
                             </h2>
                             <div className="flex gap-4 p-8 bg-white/5 rounded-3xl backdrop-blur-md border border-white/10 shadow-2xl animate-in slide-in-from-bottom-4">
                                 {BONUS_COLORS.map((color) => (

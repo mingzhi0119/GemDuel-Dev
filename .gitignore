@@ -3,6 +3,7 @@ node_modules/
 dist/
 dist-ssr/
 dist_electron/
+Replay/
 *.local
 
 # Editor directories and files

@@ -1,6 +1,8 @@
 import React from 'react';
 import { translate, type AppLocale } from '@gemduel/shared';
 import { ABILITIES } from './cardAnatomyData';
+import { LexiconTerm } from '../../lexicon/LexiconTerm';
+import { LexiconText } from '../../lexicon/LexiconText';
 
 type Theme = 'light' | 'dark';
 type Lang = AppLocale;
@@ -34,12 +36,14 @@ export const CardAnatomyGlossary: React.FC<CardAnatomyGlossaryProps> = ({ theme,
                             <span
                                 className={`text-lg md:text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
                             >
-                                {ability.label[lang]}
+                                <LexiconTerm termId={ability.termId}>
+                                    {ability.label[lang]}
+                                </LexiconTerm>
                             </span>
                             <span
                                 className={`text-[15px] md:text-base leading-7 ${theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`}
                             >
-                                {ability.desc[lang]}
+                                <LexiconText text={ability.desc[lang]} />
                             </span>
                         </div>
                     </div>

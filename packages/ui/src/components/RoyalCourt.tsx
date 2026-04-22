@@ -4,6 +4,7 @@ import { Card } from './Card';
 import { isRoyalSelectionPhase } from '@gemduel/shared/logic/fsm';
 import { RoyalCard, GamePhase, Card as CardType } from '@gemduel/shared/types';
 import { useT } from '../i18n/LocaleProvider';
+import { LexiconTerm } from '../lexicon/LexiconTerm';
 
 interface RoyalCourtProps {
     royalDeck: RoyalCard[];
@@ -38,7 +39,10 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                 className={`text-[13px] font-black uppercase tracking-[0.34em] flex items-center gap-2.5 mb-2
                 ${theme === 'dark' ? 'text-yellow-300' : 'text-amber-800'}`}
             >
-                <Crown size={18} /> {t('royalCourt.title')}
+                <Crown size={18} />{' '}
+                <LexiconTerm termId="royal" className="normal-case">
+                    {t('royalCourt.title')}
+                </LexiconTerm>
             </h2>
             <div className="grid grid-cols-2 gap-3">
                 {royalDeck.length > 0 ? (

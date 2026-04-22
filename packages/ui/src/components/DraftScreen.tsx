@@ -18,6 +18,7 @@ import { getBuffCategoryLabel } from '@gemduel/shared';
 import { Buff, GameMode, PlayerKey } from '@gemduel/shared/types';
 import { getBuffGoalAdjustment, getBuffText } from '@gemduel/shared/data/buffCopy';
 import { useLocale, useT } from '../i18n/LocaleProvider';
+import { LexiconText } from '../lexicon/LexiconText';
 
 interface DraftScreenProps {
     draftPool: string[]; // IDs only
@@ -254,7 +255,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                     className={`text-xs font-medium leading-relaxed mb-4 flex-grow
                                 ${theme === 'dark' ? 'opacity-80' : 'text-slate-600'}`}
                                 >
-                                    {buffCopy.desc}
+                                    <LexiconText text={buffCopy.desc} />
                                 </p>
 
                                 {/* Win Condition Changes (if any) */}

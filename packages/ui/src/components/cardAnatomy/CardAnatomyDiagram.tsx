@@ -1,8 +1,10 @@
 import React from 'react';
 import { Crown } from 'lucide-react';
-import { translate, type AppLocale } from '@gemduel/shared';
+import { translate, type AppLocale, type LexiconTermId } from '@gemduel/shared';
 import { Card as CardComponent, STANDARD_CARD_SIZE } from '../Card';
 import { SAMPLE_CARD } from './cardAnatomyData';
+import { LexiconTerm } from '../../lexicon/LexiconTerm';
+import { LexiconText } from '../../lexicon/LexiconText';
 
 type Theme = 'light' | 'dark';
 type Lang = AppLocale;
@@ -22,6 +24,7 @@ interface ConnectorTarget {
 
 interface LabelConfig {
     key: 'prestige' | 'bonus' | 'ability' | 'cost' | 'crowns';
+    termId?: LexiconTermId;
     align: 'left' | 'right';
     top?: number;
     bottom?: number;
@@ -74,24 +77,36 @@ const LabelBlock: React.FC<{ theme: Theme; lang: Lang; label: LabelConfig }> = (
                     fill="currentColor"
                 />
                 <span className={labelTitleClass(label.titleClassName)}>
-                    {translate(lang, label.titleKey)}
+                    {label.termId ? (
+                        <LexiconTerm termId={label.termId}>
+                            {translate(lang, label.titleKey)}
+                        </LexiconTerm>
+                    ) : (
+                        translate(lang, label.titleKey)
+                    )}
                 </span>
             </div>
         ) : (
             <span className={labelTitleClass(label.titleClassName)}>
-                {translate(lang, label.titleKey)}
+                {label.termId ? (
+                    <LexiconTerm termId={label.termId}>
+                        {translate(lang, label.titleKey)}
+                    </LexiconTerm>
+                ) : (
+                    translate(lang, label.titleKey)
+                )}
             </span>
         )}
         {label.descKeys.map((key) => (
             <span key={key} className={labelDescClass(theme)}>
-                {translate(lang, key)}
+                <LexiconText text={translate(lang, key)} />
             </span>
         ))}
         {label.strongDescKey && (
             <span
                 className={`block text-sm md:text-base font-bold leading-6 ${label.crown ? (theme === 'dark' ? 'text-yellow-500' : 'text-yellow-700') : theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`}
             >
-                {translate(lang, label.strongDescKey)}
+                <LexiconText text={translate(lang, label.strongDescKey)} />
             </span>
         )}
     </div>
@@ -206,6 +221,7 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             left: cardLeftPx - sideGapPx - labelWidthPx,
             width: labelWidthPx,
             titleKey: 'anatomy.prestige.title',
+            termId: 'prestigePoints',
             titleClassName: isDark ? 'text-amber-400' : 'text-amber-600',
             descKeys: ['anatomy.prestige.desc1', 'anatomy.prestige.desc2'],
         },
@@ -216,6 +232,7 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             left: cardLeftPx + cardWidthPx + sideGapPx,
             width: labelWidthPx,
             titleKey: 'anatomy.bonus.title',
+            termId: 'bonus',
             titleClassName: isDark ? 'text-blue-400' : 'text-blue-600',
             descKeys: ['anatomy.bonus.desc'],
         },
@@ -246,6 +263,7 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             left: cardLeftPx + cardWidthPx + sideGapPx,
             width: labelWidthPx,
             titleKey: 'anatomy.crowns.title',
+            termId: 'crowns',
             titleClassName: isDark ? 'text-yellow-400' : 'text-yellow-600',
             descKeys: ['anatomy.crowns.desc'],
             strongDescKey: 'anatomy.crowns.strong',

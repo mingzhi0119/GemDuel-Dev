@@ -15,4 +15,16 @@ describe('Rulebook', () => {
         expect(html).toContain('介绍');
         expect(html).not.toContain('Close Rules');
     });
+
+    it('renders canonical English terms in the rulebook introduction', () => {
+        const html = renderToStaticMarkup(
+            <LocaleProvider locale="en" setLocale={vi.fn()}>
+                <Rulebook onClose={vi.fn()} theme="dark" />
+            </LocaleProvider>
+        );
+
+        expect(html).toContain('Royal');
+        expect(html).toContain('Single-Color Points');
+        expect(html).not.toContain('Royal Court');
+    });
 });

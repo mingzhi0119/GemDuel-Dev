@@ -19,6 +19,10 @@ This repository is a `pnpm` + Turborepo monorepo.
 - `apps/desktop` should import shared code through workspace packages, not cross-directory relative paths.
 - `tools/scripts` owns governance checks and snapshot generation. Do not hand-edit generated snapshots unless the owning script requires it.
 - Desktop release packaging is Windows NSIS only. Do not expand release targets unless explicitly asked.
+- Canonical player-facing gameplay terms live in `packages/shared/src/lexicon/index.ts`. Do not hand-maintain a second glossary in i18n catalogs.
+- Use `getLexiconLabel(termId, locale)` for non-React labels, `<LexiconTerm />` for explicit interactive terms, and `<LexiconText />` only on designated long-form instructional prose.
+- Legacy phrases such as `Royal Court` or `Select Joker Color` may remain only as lexicon aliases or regression-test fixtures, never as live player-facing copy.
+- Generated replay outputs under `Replay/` are local artifacts and must stay untracked unless a task explicitly changes that policy.
 
 ## Default Commands
 
@@ -43,3 +47,4 @@ Use `pnpm build` for normal build validation and `pnpm electron:build` only when
 - Update docs when commands, workflow expectations, or architecture boundaries change.
 - If a change affects governance behavior, also update the matching script, snapshot, and documentation together.
 - Prefer small, targeted edits over broad refactors unless the task explicitly asks for structural work.
+- When canonical terms, buff prose, rulebook prose, or glossary interactions change, update the lexicon tests and regression checks together.

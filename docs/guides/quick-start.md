@@ -38,6 +38,7 @@ pnpm release:check
 - Network and hooks: `apps/desktop/src/hooks/**`, `packages/shared/src/logic/network**`
 - Electron shell: `apps/desktop/electron/**`
 - Reusable UI: `packages/ui/src/**`
+- Canonical player copy and term system: `packages/shared/src/lexicon/index.ts`, `packages/ui/src/lexicon/**`
 - Governance docs: [`docs/governance/`](../governance/)
 - Governance snapshots and retained evidence: `tools/governance/**`
 
@@ -45,5 +46,6 @@ pnpm release:check
 
 1. `README.md`
 2. [`docs/guides/testing.md`](testing.md)
-3. [`docs/guides/frontend-layout-guide.md`](frontend-layout-guide.md)
-4. [`docs/governance/architecture-layer-map.md`](../governance/architecture-layer-map.md)
+3. [`docs/guides/lexicon-copy-system.md`](lexicon-copy-system.md)
+4. [`docs/guides/frontend-layout-guide.md`](frontend-layout-guide.md)
+5. [`docs/governance/architecture-layer-map.md`](../governance/architecture-layer-map.md)

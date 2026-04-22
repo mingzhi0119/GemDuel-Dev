@@ -3,6 +3,7 @@ import { X, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { RULEBOOK_CONTENT } from './RulebookContent';
 import { CardAnatomyPage } from './CardAnatomyPage';
 import { useLocale, useT } from '../i18n/LocaleProvider';
+import { LexiconText } from '../lexicon/LexiconText';
 
 interface RulebookProps {
     onClose: () => void;
@@ -21,10 +22,18 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
         const segments = text.split(/(\*\*.*?\*\*)/g);
         return segments.map((segment, index) => {
             if (segment.startsWith('**') && segment.endsWith('**') && segment.length > 4) {
-                return <strong key={`${segment}-${index}`}>{segment.slice(2, -2)}</strong>;
+                return (
+                    <strong key={`${segment}-${index}`}>
+                        <LexiconText text={segment.slice(2, -2)} />
+                    </strong>
+                );
             }
 
-            return <React.Fragment key={`${segment}-${index}`}>{segment}</React.Fragment>;
+            return (
+                <React.Fragment key={`${segment}-${index}`}>
+                    <LexiconText text={segment} />
+                </React.Fragment>
+            );
         });
     };
 

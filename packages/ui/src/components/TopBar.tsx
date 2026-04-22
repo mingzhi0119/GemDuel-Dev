@@ -7,6 +7,7 @@ import { getBuffGoalAdjustment, getBuffText } from '@gemduel/shared/data/buffCop
 import { getBuffCategoryLabel } from '@gemduel/shared';
 import { AnimatedScore } from './topBar/AnimatedScore';
 import { useLocale, useT } from '../i18n/LocaleProvider';
+import { LexiconText } from '../lexicon/LexiconText';
 
 interface TopBarProps {
     p1Score: number;
@@ -106,7 +107,9 @@ const TopBarBuff = ({
                     </span>
                     <span className="text-[10px] opacity-70 font-mono">LVL {buff.level}</span>
                 </div>
-                <p className="text-[12px] leading-relaxed opacity-90">{buffCopy.desc}</p>
+                <p className="text-[12px] leading-relaxed opacity-90">
+                    <LexiconText text={buffCopy.desc} />
+                </p>
                 {goalAdjustment && (
                     <div
                         className={`mt-2 pt-2 space-y-1 border-t ${

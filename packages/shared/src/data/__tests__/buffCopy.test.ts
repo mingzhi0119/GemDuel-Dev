@@ -37,7 +37,7 @@ describe('buffCopy', () => {
         );
         expect(wonderGoal?.items).toEqual([
             { label: 'Crowns', value: '13' },
-            { label: 'Single Color Win', value: 'Disabled' },
+            { label: 'Single-Color Points Win', value: 'Disabled' },
         ]);
     });
 });

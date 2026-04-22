@@ -8,6 +8,7 @@ import {
 } from 'react';
 import type { AppLocale, TranslationKey, TranslationParams } from '@gemduel/shared';
 import { DEFAULT_APP_LOCALE, translate } from '@gemduel/shared';
+import { LexiconProvider } from '../lexicon/LexiconProvider';
 
 interface LocaleContextValue {
     locale: AppLocale;
@@ -57,7 +58,11 @@ export function LocaleProvider({ locale, setLocale, children }: LocaleProviderPr
         [locale, setLocale]
     );
 
-    return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
+    return (
+        <LocaleContext.Provider value={value}>
+            <LexiconProvider>{children}</LexiconProvider>
+        </LocaleContext.Provider>
+    );
 }
 
 export const useLocale = () => useContext(LocaleContext);
