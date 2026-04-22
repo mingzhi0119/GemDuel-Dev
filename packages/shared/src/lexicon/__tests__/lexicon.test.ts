@@ -67,4 +67,20 @@ describe('segmentLexiconText', () => {
             'bonus:奖励',
         ]);
     });
+
+    it('segments Reveal as a standalone actionable keyword in both locales', () => {
+        const enSegments = getTermSegments(
+            'Reveal 2 extra L3 cards. Revealed cards stay actionable.',
+            'en'
+        );
+        const zhSegments = getTermSegments('揭示 1 级卡组顶部的那张牌。', 'zh');
+
+        expect(enSegments.map((segment) => `${segment.termId}:${segment.value}`)).toEqual([
+            'reveal:Reveal',
+            'reveal:Revealed',
+        ]);
+        expect(zhSegments.map((segment) => `${segment.termId}:${segment.value}`)).toEqual([
+            'reveal:揭示',
+        ]);
+    });
 });

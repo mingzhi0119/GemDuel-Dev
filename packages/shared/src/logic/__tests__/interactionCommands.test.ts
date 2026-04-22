@@ -24,13 +24,34 @@ describe('Interaction Commands', () => {
     };
 
     it('builds reserve flows without React state branching', () => {
-        const withGold = buildReserveCardFlow(card, 1, 0, true);
+        const withGold = buildReserveCardFlow(card, { level: 1, idx: 0 }, true);
         const withoutGold = buildReserveDeckFlow(2, false);
 
         expect(withGold.action.type).toBe('INITIATE_RESERVE');
         expect(withGold.prompt).toBe('Select a Gold gem.');
         expect(withoutGold.action.type).toBe('RESERVE_DECK');
         expect(withoutGold.prompt).toBeUndefined();
+    });
+
+    it('preserves extra-card market references when building reserve flows', () => {
+        const reserveExtra = buildReserveCardFlow(
+            card,
+            { level: 1, idx: 0, isExtra: true, extraIdx: 0 },
+            false
+        );
+
+        expect(reserveExtra).toEqual({
+            action: {
+                type: 'RESERVE_CARD',
+                payload: {
+                    card,
+                    level: 1,
+                    idx: 0,
+                    isExtra: true,
+                    extraIdx: 0,
+                },
+            },
+        });
     });
 
     it('routes gold-card purchases through the joker flow and normal cards through BUY_CARD', () => {

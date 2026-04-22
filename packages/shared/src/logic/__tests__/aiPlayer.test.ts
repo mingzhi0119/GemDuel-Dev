@@ -590,6 +590,145 @@ describe('AI player phase routing', () => {
         });
     });
 
+    it('buys the revealed Insight top-deck card when it is the best affordable option', () => {
+        const action = computeAiAction(
+            createMockState({
+                turn: 'p2',
+                playerBuffs: {
+                    p1: createMockState().playerBuffs.p1,
+                    p2: {
+                        ...createMockState().playerBuffs.p2,
+                        id: 'insight',
+                        effects: { passive: { revealDeck1: true } },
+                    },
+                },
+                inventories: {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 0, white: 0, green: 0, black: 0, red: 5, gold: 0, pearl: 0 },
+                },
+                market: { 1: [], 2: [], 3: [] },
+                decks: {
+                    1: [
+                        {
+                            id: 'insight-target',
+                            level: 1,
+                            cost: {
+                                blue: 0,
+                                white: 0,
+                                green: 0,
+                                black: 0,
+                                red: 0,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 4,
+                            bonusColor: 'blue',
+                        },
+                    ],
+                    2: [],
+                    3: [],
+                },
+            })
+        );
+
+        expect(action).toEqual({
+            type: 'BUY_CARD',
+            payload: {
+                card: expect.objectContaining({ id: 'insight-target' }),
+                source: 'market',
+                marketInfo: { level: 1, idx: 0, isExtra: true, extraIdx: 0 },
+                randoms: { bountyHunterColor: 'red' },
+            },
+        });
+    });
+
+    it('can reserve All-Seeing Eye extra level-3 cards when they are the best visible target', () => {
+        const action = computeAiAction(
+            createMockState({
+                bag: [],
+                turn: 'p2',
+                playerBuffs: {
+                    p1: createMockState().playerBuffs.p1,
+                    p2: {
+                        ...createMockState().playerBuffs.p2,
+                        id: 'all_seeing_eye',
+                        effects: { passive: { extraL3: true } },
+                    },
+                },
+                market: { 1: [], 2: [], 3: [] },
+                decks: {
+                    1: [],
+                    2: [],
+                    3: [
+                        {
+                            id: 'hidden-bottom',
+                            level: 3,
+                            cost: {
+                                blue: 9,
+                                white: 9,
+                                green: 9,
+                                black: 9,
+                                red: 9,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 1,
+                            bonusColor: 'blue',
+                        },
+                        {
+                            id: 'revealed-extra',
+                            level: 3,
+                            cost: {
+                                blue: 9,
+                                white: 9,
+                                green: 9,
+                                black: 9,
+                                red: 9,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 4,
+                            bonusColor: 'green',
+                        },
+                        {
+                            id: 'top-hidden',
+                            level: 3,
+                            cost: {
+                                blue: 9,
+                                white: 9,
+                                green: 9,
+                                black: 9,
+                                red: 9,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 2,
+                            bonusColor: 'red',
+                        },
+                    ],
+                },
+                board: Array.from({ length: 5 }, (_, r) =>
+                    Array.from({ length: 5 }, (_, c) => ({
+                        type: r === 1 && c === 1 ? GEM_TYPES.GOLD : GEM_TYPES.EMPTY,
+                        uid: `${r}-${c}`,
+                    }))
+                ),
+            })
+        );
+
+        expect(action).toEqual({
+            type: 'RESERVE_CARD',
+            payload: {
+                card: expect.objectContaining({ id: 'revealed-extra' }),
+                level: 3,
+                idx: 0,
+                isExtra: true,
+                extraIdx: 1,
+                goldCoords: { r: 1, c: 1 },
+            },
+        });
+    });
+
     it('covers reserve without gold, final replenish, and the no-action fallback null path', () => {
         const fullReservedSlots: Card[] = [
             {

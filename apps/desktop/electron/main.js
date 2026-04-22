@@ -245,9 +245,7 @@ function createWindow() {
         mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
     }
 
-    if (isDev) {
-        mainWindow.webContents.openDevTools();
-    } else {
+    if (!isDev) {
         runtimeHarness.configureAutoUpdater();
     }
 }

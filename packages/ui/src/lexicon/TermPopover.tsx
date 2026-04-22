@@ -2,12 +2,13 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { createPortal } from 'react-dom';
 import { getLexiconDescription, getLexiconLabel, type LexiconTermId } from '@gemduel/shared';
 import { useLocale } from '../i18n/LocaleProvider';
-import { useLexicon } from './LexiconProvider';
+import { useLexicon, type LexiconInteractionMode } from './LexiconProvider';
 
 interface TermPopoverProps {
     termId: LexiconTermId;
     popoverId: string;
     anchorElement: HTMLElement;
+    interaction: LexiconInteractionMode;
 }
 
 const EDGE_PADDING_PX = 12;
@@ -16,9 +17,9 @@ const POPOVER_VERTICAL_GAP_PX = 10;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-export function TermPopover({ termId, popoverId, anchorElement }: TermPopoverProps) {
+export function TermPopover({ termId, popoverId, anchorElement, interaction }: TermPopoverProps) {
     const { locale } = useLocale();
-    const { registerPopoverElement } = useLexicon();
+    const { closePopover, registerPopoverElement } = useLexicon();
     const popoverRef = useRef<HTMLDivElement | null>(null);
     const [position, setPosition] = useState<CSSProperties | null>(null);
 
@@ -74,9 +75,11 @@ export function TermPopover({ termId, popoverId, anchorElement }: TermPopoverPro
     useEffect(() => {
         const current = popoverRef.current;
         registerPopoverElement(current);
-        current?.focus();
+        if (interaction === 'click') {
+            current?.focus();
+        }
         return () => registerPopoverElement(null);
-    }, [registerPopoverElement]);
+    }, [interaction, registerPopoverElement]);
 
     if (typeof document === 'undefined') {
         return null;
@@ -89,6 +92,17 @@ export function TermPopover({ termId, popoverId, anchorElement }: TermPopoverPro
             role="dialog"
             aria-modal="false"
             tabIndex={-1}
+            onMouseLeave={
+                interaction === 'hover'
+                    ? (event) => {
+                          const nextTarget = event.relatedTarget as Node | null;
+                          if (anchorElement.contains(nextTarget)) {
+                              return;
+                          }
+                          closePopover({ restoreFocus: false });
+                      }
+                    : undefined
+            }
             className={`z-[800] rounded-2xl border px-4 py-3 shadow-2xl outline-none backdrop-blur-xl ${
                 theme === 'light'
                     ? 'border-stone-300 bg-white/96 text-stone-900'

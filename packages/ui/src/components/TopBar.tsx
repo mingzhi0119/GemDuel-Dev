@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { Crown, Trophy, Sparkles, Coins, Tag, Zap, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '@gemduel/shared/types';
@@ -33,9 +33,14 @@ const TopBarBuff = ({
     theme: 'light' | 'dark';
     locale: 'en' | 'zh';
 }) => {
-    if (!rawBuff || rawBuff.id === 'none') return null;
+    const [isHovered, setIsHovered] = useState(false);
+    const [isPinned, setIsPinned] = useState(false);
+    const rootRef = useRef<HTMLDivElement | null>(null);
+    const tooltipId = useId();
 
-    const buff = (Object.values(BUFFS).find((b) => b.id === rawBuff.id) as Buff) || rawBuff;
+    const buff = rawBuff
+        ? (Object.values(BUFFS).find((b) => b.id === rawBuff.id) as Buff) || rawBuff
+        : null;
 
     const getBuffIcon = (category?: string) => {
         switch (category) {
@@ -54,9 +59,44 @@ const TopBarBuff = ({
         }
     };
 
-    const { Icon, color: iconColor } = getBuffIcon(buff.category);
-    const goalAdjustment = getBuffGoalAdjustment(buff.id, locale);
-    const buffCopy = getBuffText(buff.id, locale);
+    const { Icon, color: iconColor } = getBuffIcon(buff?.category);
+    const goalAdjustment = buff ? getBuffGoalAdjustment(buff.id, locale) : null;
+    const buffCopy = buff ? getBuffText(buff.id, locale) : null;
+    const isTooltipOpen = isHovered || isPinned;
+
+    useEffect(() => {
+        if (!isPinned) {
+            return;
+        }
+
+        const handlePointerDown = (event: PointerEvent) => {
+            const target = event.target as Node | null;
+            if (!target || rootRef.current?.contains(target)) {
+                return;
+            }
+
+            setIsPinned(false);
+            setIsHovered(false);
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsPinned(false);
+                setIsHovered(false);
+            }
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isPinned]);
+
+    if (!buff || buff.id === 'none' || !buffCopy) {
+        return null;
+    }
 
     // Theme-aware level styles
     const levelStyles: Record<number, string> = {
@@ -81,69 +121,105 @@ const TopBarBuff = ({
             : 'border-slate-400 bg-slate-50 text-slate-600');
 
     return (
-        <div className="relative group flex flex-col items-center">
-            <div
+        <div
+            ref={rootRef}
+            data-buff-root={buff.id}
+            className="relative flex flex-col items-center"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => {
+                if (!isPinned) {
+                    setIsHovered(false);
+                }
+            }}
+        >
+            <button
+                type="button"
+                data-buff-trigger={buff.id}
+                aria-haspopup="dialog"
+                aria-controls={isTooltipOpen ? tooltipId : undefined}
+                aria-expanded={isTooltipOpen}
+                onClick={() => {
+                    setIsHovered(true);
+                    setIsPinned((current) => !current);
+                }}
                 className={`
-                flex items-center gap-3 px-5 py-2 rounded-full border text-[13px] font-black uppercase tracking-widest cursor-help transition-all hover:scale-105 shadow-md
+                flex items-center gap-3 px-5 py-2 rounded-full border text-[13px] font-black uppercase tracking-widest cursor-pointer transition-all hover:scale-105 shadow-md
                 ${levelStyle}
             `}
             >
                 <Icon size={16} className={iconColor} />
                 <span>{buffCopy.label}</span>
-            </div>
+            </button>
 
-            {/* Tooltip */}
-            <div
-                className={`
-                absolute top-full mt-3 w-56 p-3 rounded-xl border shadow-2xl backdrop-blur-md z-[500] opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none transform -translate-x-1/2 left-1/2 scale-95 group-hover:scale-100
-                ${theme === 'dark' ? 'bg-slate-900/98 border-slate-600 text-slate-100' : 'bg-white/98 border-slate-300 text-slate-900'}
-            `}
-            >
-                <div className="flex items-center justify-between mb-1.5">
-                    <span
-                        className={`text-[12px] font-bold uppercase tracking-wider ${playerKey === 'p1' ? 'text-emerald-400' : 'text-blue-400'}`}
-                    >
-                        {buffCopy.label}
-                    </span>
-                    <span className="text-[10px] opacity-70 font-mono">LVL {buff.level}</span>
-                </div>
-                <p className="text-[12px] leading-relaxed opacity-90">
-                    <LexiconText text={buffCopy.desc} />
-                </p>
-                {goalAdjustment && (
+            {isTooltipOpen && (
+                <div
+                    className="absolute top-full left-1/2 z-[500] w-56 -translate-x-1/2 pt-3"
+                    data-buff-tooltip-wrapper={buff.id}
+                >
                     <div
-                        className={`mt-2 pt-2 space-y-1 border-t ${
-                            theme === 'dark' ? 'border-slate-700' : 'border-slate-200'
-                        }`}
+                        id={tooltipId}
+                        role="dialog"
+                        aria-modal="false"
+                        data-buff-tooltip={buff.id}
+                        onPointerDown={() => setIsPinned(true)}
+                        className={`
+                            rounded-xl border p-3 shadow-2xl backdrop-blur-md transition-all duration-200
+                            ${theme === 'dark' ? 'border-slate-600 bg-slate-900/98 text-slate-100' : 'border-slate-300 bg-white/98 text-slate-900'}
+                        `}
                     >
-                        <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                            {goalAdjustment.title}
-                        </div>
-                        {goalAdjustment.items.map((item) => (
-                            <div
-                                key={`${buff.id}-${item.label}`}
-                                className="flex items-center justify-between gap-3 text-[10px]"
+                        <div className="flex items-center justify-between mb-1.5">
+                            <span
+                                className={`text-[12px] font-bold uppercase tracking-wider ${playerKey === 'p1' ? 'text-emerald-400' : 'text-blue-400'}`}
                             >
-                                <span className="opacity-80">{item.label}</span>
-                                <span className="font-mono font-bold text-amber-400">
-                                    {item.value}
+                                {buffCopy.label}
+                            </span>
+                            <span className="text-[10px] opacity-70 font-mono">
+                                LVL {buff.level}
+                            </span>
+                        </div>
+                        <p className="text-[12px] leading-relaxed opacity-90">
+                            <LexiconText text={buffCopy.desc} />
+                        </p>
+                        {goalAdjustment && (
+                            <div
+                                className={`mt-2 pt-2 space-y-1 border-t ${
+                                    theme === 'dark' ? 'border-slate-700' : 'border-slate-200'
+                                }`}
+                            >
+                                <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                                    {goalAdjustment.title}
+                                </div>
+                                {goalAdjustment.items.map((item) => (
+                                    <div
+                                        key={`${buff.id}-${item.label}`}
+                                        className="flex items-center justify-between gap-3 text-[10px]"
+                                    >
+                                        <span className="opacity-80">
+                                            <LexiconText text={item.label} />
+                                        </span>
+                                        <span className="font-mono font-bold text-amber-400">
+                                            {item.value}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {buff.category && (
+                            <div
+                                className={`flex justify-end mt-1.5 pt-1.5 border-t ${
+                                    theme === 'dark' ? 'border-slate-700' : 'border-slate-200'
+                                }`}
+                            >
+                                <span
+                                    className={`text-[10px] font-black uppercase tracking-widest ${iconColor}`}
+                                >
+                                    {getBuffCategoryLabel(buff.category, locale)}
                                 </span>
                             </div>
-                        ))}
+                        )}
                     </div>
-                )}
-                {buff.category && (
-                    <div
-                        className={`flex justify-end mt-1.5 pt-1.5 border-t ${theme === 'dark' ? 'border-slate-700' : 'border-slate-200'}`}
-                    >
-                        <span
-                            className={`text-[10px] font-black uppercase tracking-widest ${iconColor}`}
-                        >
-                            {getBuffCategoryLabel(buff.category, locale)}
-                        </span>
-                    </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

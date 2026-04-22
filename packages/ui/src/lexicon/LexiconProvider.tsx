@@ -10,25 +10,40 @@ import {
 } from 'react';
 import type { LexiconTermId } from '@gemduel/shared';
 
+export type LexiconInteractionMode = 'click' | 'hover';
+
 interface ActiveLexiconPopover {
     termId: LexiconTermId;
-    trigger: HTMLButtonElement;
+    trigger: HTMLElement;
+    interaction: LexiconInteractionMode;
 }
 
 interface LexiconContextValue {
     activePopover: ActiveLexiconPopover | null;
-    togglePopover: (termId: LexiconTermId, trigger: HTMLButtonElement) => void;
+    openPopover: (
+        termId: LexiconTermId,
+        trigger: HTMLElement,
+        interaction: LexiconInteractionMode
+    ) => void;
+    togglePopover: (
+        termId: LexiconTermId,
+        trigger: HTMLElement,
+        interaction?: LexiconInteractionMode
+    ) => void;
     closePopover: (options?: { restoreFocus?: boolean }) => void;
     registerPopoverElement: (element: HTMLElement | null) => void;
+    isWithinPopover: (target: Node | null) => boolean;
 }
 
 const noop = () => undefined;
 
 const LexiconContext = createContext<LexiconContextValue>({
     activePopover: null,
+    openPopover: noop as LexiconContextValue['openPopover'],
     togglePopover: noop as LexiconContextValue['togglePopover'],
     closePopover: noop as LexiconContextValue['closePopover'],
     registerPopoverElement: noop,
+    isWithinPopover: () => false,
 });
 
 export function LexiconProvider({ children }: PropsWithChildren) {
@@ -41,7 +56,8 @@ export function LexiconProvider({ children }: PropsWithChildren) {
 
     const closePopover = useCallback((options?: { restoreFocus?: boolean }) => {
         setActivePopover((current) => {
-            if (options?.restoreFocus !== false) {
+            const restoreFocus = options?.restoreFocus ?? current?.interaction === 'click';
+            if (restoreFocus) {
                 current?.trigger.focus();
             }
             return null;
@@ -49,16 +65,38 @@ export function LexiconProvider({ children }: PropsWithChildren) {
         popoverElementRef.current = null;
     }, []);
 
-    const togglePopover = useCallback((termId: LexiconTermId, trigger: HTMLButtonElement) => {
-        setActivePopover((current) => {
-            if (current?.termId === termId && current.trigger === trigger) {
-                trigger.focus();
-                popoverElementRef.current = null;
-                return null;
-            }
+    const openPopover = useCallback(
+        (termId: LexiconTermId, trigger: HTMLElement, interaction: LexiconInteractionMode) => {
+            setActivePopover({ termId, trigger, interaction });
+        },
+        []
+    );
 
-            return { termId, trigger };
-        });
+    const togglePopover = useCallback(
+        (
+            termId: LexiconTermId,
+            trigger: HTMLElement,
+            interaction: LexiconInteractionMode = 'click'
+        ) => {
+            setActivePopover((current) => {
+                if (current?.termId === termId && current.trigger === trigger) {
+                    trigger.focus();
+                    popoverElementRef.current = null;
+                    return null;
+                }
+
+                return { termId, trigger, interaction };
+            });
+        },
+        []
+    );
+
+    const isWithinPopover = useCallback((target: Node | null) => {
+        if (!target) {
+            return false;
+        }
+
+        return popoverElementRef.current?.contains(target) ?? false;
     }, []);
 
     useEffect(() => {
@@ -85,7 +123,7 @@ export function LexiconProvider({ children }: PropsWithChildren) {
 
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                closePopover();
+                closePopover({ restoreFocus: activePopover.interaction === 'click' });
             }
         };
 
@@ -100,11 +138,20 @@ export function LexiconProvider({ children }: PropsWithChildren) {
     const value = useMemo<LexiconContextValue>(
         () => ({
             activePopover,
+            openPopover,
             togglePopover,
             closePopover,
             registerPopoverElement,
+            isWithinPopover,
         }),
-        [activePopover, closePopover, registerPopoverElement, togglePopover]
+        [
+            activePopover,
+            closePopover,
+            isWithinPopover,
+            openPopover,
+            registerPopoverElement,
+            togglePopover,
+        ]
     );
 
     return <LexiconContext.Provider value={value}>{children}</LexiconContext.Provider>;

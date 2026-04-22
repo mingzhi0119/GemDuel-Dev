@@ -392,6 +392,10 @@ export const serializeReplayStateSnapshot = (
                   : {}),
               level: state.pendingReserve.level,
               ...(state.pendingReserve.idx !== undefined ? { idx: state.pendingReserve.idx } : {}),
+              ...(state.pendingReserve.isExtra ? { isExtra: true } : {}),
+              ...(state.pendingReserve.extraIdx !== undefined
+                  ? { extraIdx: state.pendingReserve.extraIdx }
+                  : {}),
               ...(state.pendingReserve.isDeck ? { isDeck: true } : {}),
           }
         : null,
@@ -541,6 +545,10 @@ export const inflateReplayStateSnapshot = (
               ...(snapshot.pendingReserve.idx !== undefined
                   ? { idx: snapshot.pendingReserve.idx }
                   : {}),
+              ...(snapshot.pendingReserve.isExtra ? { isExtra: true } : {}),
+              ...(snapshot.pendingReserve.extraIdx !== undefined
+                  ? { extraIdx: snapshot.pendingReserve.extraIdx }
+                  : {}),
               ...(snapshot.pendingReserve.isDeck ? { isDeck: true } : {}),
           }
         : null;
@@ -570,9 +578,12 @@ export const inflateReplayStateSnapshot = (
 };
 
 const findCardInMarket = (state: GameState, marketRef: ReplayMarketRef) => {
-    if (marketRef.isExtra && marketRef.level === 3) {
+    if (marketRef.isExtra) {
         const indexFromTail = marketRef.extraIdx + 1;
-        return state.decks[3][state.decks[3].length - indexFromTail] ?? null;
+        return (
+            state.decks[marketRef.level][state.decks[marketRef.level].length - indexFromTail] ??
+            null
+        );
     }
     return state.market[marketRef.level][marketRef.idx] ?? null;
 };
@@ -652,6 +663,7 @@ export const inflateReplayEventToGameAction = (
             const card = event.isSteal
                 ? findCardByInstance(state, event.instanceId, event.actor === 'p1' ? 'p2' : 'p1')
                 : findCardInMarket(state, event.marketRef);
+            const isExtraMarketRef = event.marketRef.isExtra === true;
             return {
                 type: 'RESERVE_CARD',
                 payload: {
@@ -661,8 +673,12 @@ export const inflateReplayEventToGameAction = (
                     level: event.level,
                     idx: event.marketRef.idx,
                     ...(event.goldCoord ? { goldCoords: cloneJson(event.goldCoord) } : {}),
-                    ...(event.isExtra ? { isExtra: true } : {}),
-                    ...(event.extraIdx !== undefined ? { extraIdx: event.extraIdx } : {}),
+                    ...(event.isExtra || isExtraMarketRef ? { isExtra: true } : {}),
+                    ...(event.extraIdx !== undefined
+                        ? { extraIdx: event.extraIdx }
+                        : isExtraMarketRef
+                          ? { extraIdx: event.marketRef.extraIdx }
+                          : {}),
                     ...(event.isSteal ? { isSteal: true } : {}),
                 },
             };

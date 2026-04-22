@@ -23,7 +23,7 @@ const getMarketCard = (state: GameState, marketInfo: MarketCardRef | undefined):
     const { level, idx, isExtra, extraIdx } = marketInfo;
 
     if (isExtra) {
-        if (level !== 3 || extraIdx === undefined) return null;
+        if (extraIdx === undefined) return null;
         const deck = state.decks[level];
         const targetIdx = deck.length - (extraIdx + 1);
         return targetIdx >= 0 ? deck[targetIdx] || null : null;
@@ -55,7 +55,9 @@ const matchesPendingReserve = (
         return (
             !state.pendingReserve.isDeck &&
             state.pendingReserve.card?.id === payload.card.id &&
-            state.pendingReserve.idx === payload.idx
+            state.pendingReserve.idx === payload.idx &&
+            Boolean(state.pendingReserve.isExtra) === Boolean(payload.isExtra) &&
+            state.pendingReserve.extraIdx === payload.extraIdx
         );
     }
     return state.pendingReserve.isDeck === true;
@@ -202,8 +204,20 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
                 : null;
         }
         case 'INITIATE_RESERVE':
-            return getMarketCard(state, { level: action.payload.level, idx: action.payload.idx })
-                ?.id === action.payload.card.id
+            return getMarketCard(
+                state,
+                action.payload.isExtra && action.payload.extraIdx !== undefined
+                    ? {
+                          level: action.payload.level,
+                          idx: action.payload.idx,
+                          isExtra: true,
+                          extraIdx: action.payload.extraIdx,
+                      }
+                    : {
+                          level: action.payload.level,
+                          idx: action.payload.idx,
+                      }
+            )?.id === action.payload.card.id
                 ? null
                 : 'Selected reserve card does not match the market.';
         case 'INITIATE_RESERVE_DECK':
@@ -235,11 +249,9 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
 
             const sourceCard = getMarketCard(
                 state,
-                action.payload.isExtra &&
-                    action.payload.extraIdx !== undefined &&
-                    action.payload.level === 3
+                action.payload.isExtra && action.payload.extraIdx !== undefined
                     ? {
-                          level: 3,
+                          level: action.payload.level,
                           idx: action.payload.idx,
                           isExtra: true,
                           extraIdx: action.payload.extraIdx,

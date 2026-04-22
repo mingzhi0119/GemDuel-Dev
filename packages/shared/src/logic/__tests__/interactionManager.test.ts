@@ -106,6 +106,36 @@ describe('interactionManager', () => {
             },
         });
 
+        const reserveVisibleDeckCardState = createState({ phase: 'RESERVE_WAITING_GEM' });
+        reserveVisibleDeckCardState.pendingReserve = {
+            card: {
+                id: 'insight-card',
+                level: 1,
+                cost: { blue: 0, white: 0, green: 0, black: 0, red: 0, pearl: 0, gold: 0 },
+                points: 1,
+            },
+            level: 1,
+            idx: 0,
+            isExtra: true,
+            extraIdx: 0,
+            isDeck: false,
+        };
+        placeGem(reserveVisibleDeckCardState, 1, 3, GEM_TYPES.GOLD);
+        expect(processGemClick(reserveVisibleDeckCardState, 1, 3)).toEqual({
+            action: {
+                type: 'RESERVE_CARD',
+                payload: {
+                    card: reserveVisibleDeckCardState.pendingReserve.card,
+                    level: 1,
+                    idx: 0,
+                    isExtra: true,
+                    extraIdx: 0,
+                    isDeck: false,
+                    goldCoords: { r: 1, c: 3 },
+                },
+            },
+        });
+
         const reserveDeckState = createState({ phase: 'RESERVE_WAITING_GEM' });
         reserveDeckState.pendingReserve = {
             level: 2,

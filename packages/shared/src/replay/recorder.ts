@@ -150,12 +150,12 @@ const normalizeReplayEvent = (
                 ),
                 level: action.payload.level,
                 marketRef:
-                    action.payload.isExtra && action.payload.level === 3
+                    action.payload.isExtra && action.payload.extraIdx !== undefined
                         ? {
-                              level: 3,
+                              level: action.payload.level,
                               idx: action.payload.idx,
                               isExtra: true,
-                              extraIdx: action.payload.extraIdx ?? 0,
+                              extraIdx: action.payload.extraIdx,
                           }
                         : {
                               level: action.payload.level,

@@ -99,10 +99,10 @@ export const marketCardRefSchema = z.union([
         .passthrough(),
     z
         .object({
-            level: z.literal(3),
+            level: levelSchema,
             idx: z.number().int().min(0),
             isExtra: z.literal(true),
-            extraIdx: z.number().int().positive(),
+            extraIdx: z.number().int().min(0),
         })
         .passthrough(),
 ]);

@@ -79,6 +79,10 @@ const TERM = {
         en: getLexiconLabel('steal', 'en'),
         zh: getLexiconLabel('steal', 'zh'),
     },
+    reveal: {
+        en: getLexiconLabel('reveal', 'en'),
+        zh: getLexiconLabel('reveal', 'zh'),
+    },
 } as const;
 
 export const BUFF_COPY: BuffCopyMap = {
@@ -129,9 +133,14 @@ export const BUFF_COPY: BuffCopyMap = {
     },
     insight: {
         level: 1,
-        goal: { points: 18 },
-        en: { label: 'Insight', desc: 'You can always see the top card of the Level 1 Deck.' },
-        zh: { label: '洞察力', desc: '你始终可以看到 1 级卡组顶部的牌。' },
+        en: {
+            label: 'Insight',
+            desc: `${TERM.reveal.en} the top card of the Level 1 Deck.`,
+        },
+        zh: {
+            label: '洞察力',
+            desc: `${TERM.reveal.zh} 1 级卡组顶部的那张牌。`,
+        },
     },
     down_payment: {
         level: 1,
@@ -293,11 +302,11 @@ export const BUFF_COPY: BuffCopyMap = {
         goal: { singleColor: 13 },
         en: {
             label: 'All-Seeing Eye',
-            desc: 'Reveal 2 extra L3 cards. Gold pays double toward missing L3 costs.',
+            desc: `${TERM.reveal.en} 2 extra L3 cards. Gold pays double toward missing L3 costs.`,
         },
         zh: {
             label: '全知之眼',
-            desc: '展示 2 张额外 L3 卡。用黄金补足 3 级卡缺失费用时价值翻倍。',
+            desc: `${TERM.reveal.zh} 2 张额外 L3 卡。用黄金补足 3 级卡缺失费用时价值翻倍。`,
         },
     },
     echo_reservoir: {
@@ -324,11 +333,11 @@ export const BUFF_COPY: BuffCopyMap = {
         level: 3,
         en: {
             label: 'Minimalist',
-            desc: `Your first 2 purchased cards provide double ${TERM.bonus.en}es. ${TERM.gemCap.en}: 6.`,
+            desc: `Your first 2 purchased cards provide double ${TERM.bonus.en}es. ${TERM.gemCap.en}: 8.`,
         },
         zh: {
             label: '极简主义',
-            desc: `你购买的前 2 张卡提供双倍${TERM.bonus.zh}。${TERM.gemCap.zh}：6。`,
+            desc: `你购买的前 2 张卡提供双倍${TERM.bonus.zh}。${TERM.gemCap.zh}：8。`,
         },
     },
     pacifist: {

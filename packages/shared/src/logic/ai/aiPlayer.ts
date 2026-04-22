@@ -1,4 +1,12 @@
-import { GameState, GameAction, Card, PlayerKey, GemCoord, BasicGemColor } from '../../types';
+import {
+    GameState,
+    GameAction,
+    Card,
+    PlayerKey,
+    GemCoord,
+    BasicGemColor,
+    MarketCardRef,
+} from '../../types';
 import { calculateTransaction } from '../../utils';
 import { validateGemSelection } from '../validators';
 import {
@@ -109,19 +117,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
             payload: {
                 card: { ...pending.card, bonusColor: 'red' },
                 source: pending.source,
-                marketInfo: pending.marketInfo
-                    ? pending.marketInfo.isExtra
-                        ? {
-                              level: 3,
-                              idx: pending.marketInfo.idx,
-                              isExtra: true,
-                              extraIdx: pending.marketInfo.extraIdx!,
-                          }
-                        : {
-                              level: pending.marketInfo.level as 1 | 2 | 3,
-                              idx: pending.marketInfo.idx,
-                          }
-                    : undefined,
+                marketInfo: pending.marketInfo ? { ...pending.marketInfo } : undefined,
                 randoms: { bountyHunterColor: 'red' },
             },
         };
@@ -131,23 +127,18 @@ export const computeAiAction = (state: GameState): GameAction | null => {
     if (!canActionRunInPhase('TAKE_GEMS', state.phase)) return null;
 
     // Priority 2: Buy Cards
-    // Check Market
-    const buyableFromMarket = [];
-    for (const lvl of [3, 2, 1] as const) {
-        for (let i = 0; i < state.market[lvl].length; i++) {
-            const card = state.market[lvl][i];
-            if (
-                card &&
-                calculateTransaction(
-                    card,
-                    state.inventories[aiPlayer],
-                    state.playerTableau[aiPlayer],
-                    state.playerBuffs[aiPlayer],
-                    false
-                ).affordable
-            ) {
-                buyableFromMarket.push({ card, level: lvl, idx: i });
-            }
+    const buyableFromMarket: Array<{ card: Card; marketInfo: MarketCardRef }> = [];
+    for (const option of getVisibleMarketCards(state, aiPlayer)) {
+        if (
+            calculateTransaction(
+                option.card,
+                state.inventories[aiPlayer],
+                state.playerTableau[aiPlayer],
+                state.playerBuffs[aiPlayer],
+                false
+            ).affordable
+        ) {
+            buyableFromMarket.push(option);
         }
     }
     // Check Reserved
@@ -179,13 +170,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
                 payload: {
                     card: best.card,
                     source: best.source,
-                    marketInfo:
-                        (best as { level?: number; idx?: number }).level !== undefined
-                            ? {
-                                  level: (best as { level: number }).level as 1 | 2 | 3,
-                                  idx: (best as { idx: number }).idx,
-                              }
-                            : undefined,
+                    marketInfo: 'marketInfo' in best ? { ...best.marketInfo } : undefined,
                 },
             };
             return action;
@@ -195,13 +180,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
             payload: {
                 card: best.card,
                 source: best.source,
-                marketInfo:
-                    (best as { level?: number; idx?: number }).level !== undefined
-                        ? {
-                              level: (best as { level: number }).level as 1 | 2 | 3,
-                              idx: (best as { idx: number }).idx,
-                          }
-                        : undefined,
+                marketInfo: 'marketInfo' in best ? { ...best.marketInfo } : undefined,
                 randoms: { bountyHunterColor: 'red' },
             },
         };
@@ -244,33 +223,35 @@ export const computeAiAction = (state: GameState): GameAction | null => {
 
     // Priority 5: Reserve Card (if we have space)
     if (state.playerReserved[aiPlayer].length < 3) {
-        // Reserve a high level card
-        for (const lvl of [3, 2] as const) {
-            for (let i = 0; i < state.market[lvl].length; i++) {
-                const card = state.market[lvl][i];
-                if (card) {
-                    // Check if there is gold on board
-                    let goldCoord = null;
-                    for (let r = 0; r < 5; r++) {
-                        for (let c = 0; c < 5; c++) {
-                            if (state.board[r][c].type.id === 'gold') goldCoord = { r, c };
-                        }
-                    }
-                    if (goldCoord) {
-                        const action: GameAction = {
-                            type: 'RESERVE_CARD',
-                            payload: { card, level: lvl, idx: i, goldCoords: goldCoord },
-                        };
-                        return action;
-                    } else {
-                        const action: GameAction = {
-                            type: 'RESERVE_CARD',
-                            payload: { card, level: lvl, idx: i },
-                        };
-                        return action;
-                    }
-                }
-            }
+        const goldCoord = findGoldCoord(state);
+        const reserveTarget = [...getVisibleMarketCards(state, aiPlayer)]
+            .filter(
+                (option) =>
+                    option.card.level >= 2 ||
+                    (option.marketInfo.isExtra === true && option.marketInfo.level === 1)
+            )
+            .sort((left, right) => {
+                if (right.card.level !== left.card.level) return right.card.level - left.card.level;
+                return right.card.points - left.card.points;
+            })[0];
+
+        if (reserveTarget) {
+            const action: GameAction = {
+                type: 'RESERVE_CARD',
+                payload: {
+                    card: reserveTarget.card,
+                    level: reserveTarget.marketInfo.level,
+                    idx: reserveTarget.marketInfo.idx,
+                    ...(reserveTarget.marketInfo.isExtra
+                        ? {
+                              isExtra: true,
+                              extraIdx: reserveTarget.marketInfo.extraIdx,
+                          }
+                        : {}),
+                    ...(goldCoord ? { goldCoords: goldCoord } : {}),
+                },
+            };
+            return action;
         }
     }
 
@@ -335,3 +316,63 @@ function findValidGemLines(state: GameState): GemCoord[][] {
     }
     return validLines;
 }
+
+const getVisibleMarketCards = (state: GameState, player: PlayerKey) => {
+    const visibleCards: Array<{
+        card: Card;
+        marketInfo: MarketCardRef;
+    }> = [];
+
+    for (const lvl of [3, 2, 1] as const) {
+        for (let i = 0; i < state.market[lvl].length; i += 1) {
+            const card = state.market[lvl][i];
+            if (card) {
+                visibleCards.push({
+                    card,
+                    marketInfo: { level: lvl, idx: i },
+                });
+            }
+        }
+    }
+
+    const visibilityBuffs = state.playerBuffs[player]?.effects?.passive;
+    if (visibilityBuffs?.revealDeck1) {
+        const topCard = state.decks[1][state.decks[1].length - 1];
+        if (topCard) {
+            visibleCards.push({
+                card: topCard,
+                marketInfo: { level: 1, idx: 0, isExtra: true, extraIdx: 0 },
+            });
+        }
+    }
+
+    if (visibilityBuffs?.extraL3) {
+        const extraCards = [
+            state.decks[3][state.decks[3].length - 2],
+            state.decks[3][state.decks[3].length - 3],
+        ];
+        extraCards.forEach((card, index) => {
+            if (!card) {
+                return;
+            }
+            visibleCards.push({
+                card,
+                marketInfo: { level: 3, idx: index, isExtra: true, extraIdx: index + 1 },
+            });
+        });
+    }
+
+    return visibleCards;
+};
+
+const findGoldCoord = (state: GameState): GemCoord | null => {
+    for (let r = 0; r < 5; r += 1) {
+        for (let c = 0; c < 5; c += 1) {
+            if (state.board[r][c].type.id === 'gold') {
+                return { r, c };
+            }
+        }
+    }
+
+    return null;
+};

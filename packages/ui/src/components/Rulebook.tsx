@@ -24,14 +24,14 @@ export const Rulebook: React.FC<RulebookProps> = ({ onClose, theme }) => {
             if (segment.startsWith('**') && segment.endsWith('**') && segment.length > 4) {
                 return (
                     <strong key={`${segment}-${index}`}>
-                        <LexiconText text={segment.slice(2, -2)} />
+                        <LexiconText text={segment.slice(2, -2)} interaction="click" />
                     </strong>
                 );
             }
 
             return (
                 <React.Fragment key={`${segment}-${index}`}>
-                    <LexiconText text={segment} />
+                    <LexiconText text={segment} interaction="click" />
                 </React.Fragment>
             );
         });

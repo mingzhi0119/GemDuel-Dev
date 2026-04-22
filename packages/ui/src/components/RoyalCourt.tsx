@@ -40,7 +40,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                 ${theme === 'dark' ? 'text-yellow-300' : 'text-amber-800'}`}
             >
                 <Crown size={18} />{' '}
-                <LexiconTerm termId="royal" className="normal-case">
+                <LexiconTerm termId="royal" className="normal-case" underline={false}>
                     {t('royalCourt.title')}
                 </LexiconTerm>
             </h2>

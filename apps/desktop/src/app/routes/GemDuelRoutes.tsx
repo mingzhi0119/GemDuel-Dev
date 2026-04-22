@@ -88,7 +88,24 @@ export function GemDuelRoutes(props: AppRouteProps) {
     let routeContent: React.ReactNode;
     let routeKind: RouteKind;
 
-    if (historyControls.historyLength === 0) {
+    if (isDraftSelectionPhase(state.phase)) {
+        routeKind = 'draft';
+        const activeDraftLevel =
+            state.turn === 'p2' ? state.p2DraftLevel || state.buffLevel : state.buffLevel;
+        routeContent = (
+            <DraftScreen
+                draftPool={state.draftPool}
+                p2DraftPool={state.p2DraftPool}
+                activeDraftLevel={activeDraftLevel}
+                mode={state.mode}
+                activePlayer={state.turn}
+                onSelectBuff={handlers.handleSelectBuff}
+                onReroll={state.mode === 'LOCAL_PVP' ? handlers.handleRerollBuffs : undefined}
+                theme={theme}
+                localPlayer={state.localPlayer}
+            />
+        );
+    } else if (historyControls.historyLength === 0) {
         if (ui.matchmakingRoute === 'online') {
             routeKind = 'online';
             routeContent = (
@@ -131,23 +148,6 @@ export function GemDuelRoutes(props: AppRouteProps) {
                 />
             );
         }
-    } else if (isDraftSelectionPhase(state.phase)) {
-        routeKind = 'draft';
-        const activeDraftLevel =
-            state.turn === 'p2' ? state.p2DraftLevel || state.buffLevel : state.buffLevel;
-        routeContent = (
-            <DraftScreen
-                draftPool={state.draftPool}
-                p2DraftPool={state.p2DraftPool}
-                activeDraftLevel={activeDraftLevel}
-                mode={state.mode}
-                activePlayer={state.turn}
-                onSelectBuff={handlers.handleSelectBuff}
-                onReroll={state.mode === 'LOCAL_PVP' ? handlers.handleRerollBuffs : undefined}
-                theme={theme}
-                localPlayer={state.localPlayer}
-            />
-        );
     } else {
         routeKind = 'game';
         routeContent = <GameShell {...props} />;

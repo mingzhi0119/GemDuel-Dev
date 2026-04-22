@@ -9,6 +9,7 @@ import {
 } from '@gemduel/shared/logic/interactionCommands';
 import type {
     Card,
+    CardInteractionContext,
     GameAction,
     GameState,
     GemColor,
@@ -31,13 +32,12 @@ export const useMarketInteractionHandlers = ({
     canAfford,
 }: MarketInteractionParams) => {
     const handleReserveCard = useCallback(
-        (card: Card, level: number, idx: number) => {
+        (card: Card, marketInfo: CardInteractionContext) => {
             if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) return;
 
             const reserveFlow = buildReserveCardFlow(
                 card,
-                level as 1 | 2 | 3,
-                idx,
+                marketInfo,
                 gameState.board.flat().some((cell) => cell.type.id === 'gold')
             );
             networkDispatch(reserveFlow.action);

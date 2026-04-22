@@ -117,7 +117,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
     // Minimalism: Double Bonus for first 2 cards
     let finalCard = card;
-    if (buff?.effects?.passive?.doubleBonusFirst5 && state.playerTableau[player].length < 2) {
+    if (buff?.effects?.passive?.doubleBonusFirst2 && state.playerTableau[player].length < 2) {
         finalCard = { ...card, bonusCount: (card.bonusCount ?? 1) * 2 };
         state.toastMessage = 'Minimalist: Card grants Double Bonus!';
     }
@@ -270,8 +270,7 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
         const extraIdx = payload.extraIdx;
         const deck = state.decks[level];
 
-        if (isExtra && level === 3 && extraIdx !== undefined) {
-            // extraIdx 1 -> length-2, extraIdx 2 -> length-3
+        if (isExtra && extraIdx !== undefined) {
             const targetIdx = deck.length - (extraIdx + 1);
             if (targetIdx >= 0) {
                 deck.splice(targetIdx, 1);

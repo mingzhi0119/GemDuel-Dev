@@ -255,7 +255,11 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                     className={`text-xs font-medium leading-relaxed mb-4 flex-grow
                                 ${theme === 'dark' ? 'opacity-80' : 'text-slate-600'}`}
                                 >
-                                    <LexiconText text={buffCopy.desc} />
+                                    <LexiconText
+                                        text={buffCopy.desc}
+                                        interaction="hover"
+                                        as="span"
+                                    />
                                 </p>
 
                                 {/* Win Condition Changes (if any) */}

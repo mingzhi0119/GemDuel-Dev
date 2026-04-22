@@ -44,7 +44,7 @@ describe('Lexicon UI', () => {
         document.querySelector('[role="dialog"]')?.remove();
     });
 
-    it('renders an underlined button and opens then closes the popover with focus restoration', async () => {
+    it('renders an underlined button and opens the popover on hover by default', async () => {
         await renderWithLocale(<LexiconTerm termId="bonus" />);
 
         const button = getButtons()[0];
@@ -54,13 +54,38 @@ describe('Lexicon UI', () => {
         expect(button?.textContent).toBe('Bonus');
 
         await act(async () => {
-            button?.click();
+            button?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
             await Promise.resolve();
         });
 
         const popover = getPopover();
         expect(button?.getAttribute('aria-expanded')).toBe('true');
         expect(popover?.textContent).toContain('Bonus');
+        expect(popover?.textContent).toContain('permanent discount');
+
+        await act(async () => {
+            button?.dispatchEvent(
+                new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body })
+            );
+            await Promise.resolve();
+        });
+
+        expect(getPopover()).toBeNull();
+        expect(button?.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('keeps click-to-open behavior available for rulebook-style usage', async () => {
+        await renderWithLocale(<LexiconTerm termId="bonus" interaction="click" />);
+
+        const button = getButtons()[0];
+
+        await act(async () => {
+            button?.click();
+            await Promise.resolve();
+        });
+
+        const popover = getPopover();
+        expect(button?.getAttribute('aria-expanded')).toBe('true');
         expect(popover?.textContent).toContain('permanent discount');
         expect(document.activeElement).toBe(popover);
 
@@ -74,7 +99,7 @@ describe('Lexicon UI', () => {
         expect(document.activeElement).toBe(button);
     });
 
-    it('segments long text into clickable terms and keeps only one popover open', async () => {
+    it('segments long text into hoverable terms and keeps only one popover open', async () => {
         await renderWithLocale(<LexiconText text="Royal Card and Bonus Gem improve your Bonus." />);
 
         const [royalCardButton, bonusGemButton, bonusButton] = getButtons();
@@ -83,14 +108,14 @@ describe('Lexicon UI', () => {
         expect(bonusButton?.textContent).toBe('Bonus');
 
         await act(async () => {
-            royalCardButton?.click();
+            royalCardButton?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
             await Promise.resolve();
         });
 
         expect(getPopover()?.textContent).toContain('Royal Card');
 
         await act(async () => {
-            bonusGemButton?.click();
+            bonusGemButton?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
             await Promise.resolve();
         });
 

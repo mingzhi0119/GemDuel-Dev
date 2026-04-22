@@ -218,6 +218,8 @@ export const replayStateSnapshotSchema: z.ZodType<ReplayStateSnapshot> = z
                 instanceId: replayCardInstanceIdSchema.optional(),
                 level: levelSchema,
                 idx: z.number().int().optional(),
+                isExtra: z.boolean().optional(),
+                extraIdx: z.number().int().min(0).optional(),
                 isDeck: z.boolean().optional(),
             })
             .strict()

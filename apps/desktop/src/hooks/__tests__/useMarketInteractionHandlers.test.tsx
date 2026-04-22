@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -125,7 +127,7 @@ describe('useMarketInteractionHandlers', () => {
 
         renderHarness(gameState);
 
-        currentResult?.handleReserveCard(card, 1, 0);
+        currentResult?.handleReserveCard(card, { level: 1, idx: 0 });
         currentResult?.handleReserveDeck(2);
         currentResult?.initiateBuy(card);
         currentResult?.handleSelectBonusColor('red');
@@ -155,6 +157,39 @@ describe('useMarketInteractionHandlers', () => {
             'red'
         );
         expect(canAfford).toHaveBeenCalledWith(reservedCard, true);
+    });
+
+    it('preserves revealed-deck reserve context for extra visible cards', () => {
+        const card = { id: 'visible-extra', bonusColor: 'blue' } as Card;
+        const gameState = {
+            turn: 'p1',
+            phase: 'MAIN_PHASE',
+            board: [[{ type: { id: 'empty' } }]],
+            playerReserved: { p1: [], p2: [] },
+            decks: { 1: [], 2: [], 3: [] },
+            pendingBuy: null,
+        } as unknown as GameState;
+
+        mocks.buildReserveCardFlow.mockReturnValue({
+            action: {
+                type: 'RESERVE_CARD',
+                payload: { card, level: 1, idx: 0, isExtra: true, extraIdx: 0 },
+            },
+        });
+
+        renderHarness(gameState);
+
+        currentResult?.handleReserveCard(card, { level: 1, idx: 0, isExtra: true, extraIdx: 0 });
+
+        expect(mocks.buildReserveCardFlow).toHaveBeenCalledWith(
+            card,
+            { level: 1, idx: 0, isExtra: true, extraIdx: 0 },
+            false
+        );
+        expect(networkDispatch).toHaveBeenCalledWith({
+            type: 'RESERVE_CARD',
+            payload: { card, level: 1, idx: 0, isExtra: true, extraIdx: 0 },
+        });
     });
 
     it('surfaces guarded and unaffordable branches without dispatching illegal actions', () => {

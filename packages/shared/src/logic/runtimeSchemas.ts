@@ -33,10 +33,10 @@ export const marketCardRefSchema: z.ZodType<MarketCardRef> = z.union([
         extraIdx: z.undefined().optional(),
     }),
     z.object({
-        level: z.literal(3),
+        level: levelSchema,
         idx: z.number().int().min(0),
         isExtra: z.literal(true),
-        extraIdx: z.number().int().positive(),
+        extraIdx: z.number().int().min(0),
     }),
 ]);
 

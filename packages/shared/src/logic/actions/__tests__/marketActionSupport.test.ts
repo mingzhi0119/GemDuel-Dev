@@ -89,7 +89,7 @@ describe('marketActionSupport', () => {
         );
     });
 
-    it('refreshes regular market slots and trims extra level-3 cards in place', () => {
+    it('refreshes regular market slots and trims revealed deck cards in place', () => {
         const state = createState();
         const deckOne = {
             id: 'deck-one',
@@ -119,6 +119,14 @@ describe('marketActionSupport', () => {
         refreshMarketCardSlot(state, { level: 3, idx: 0, isExtra: true, extraIdx: 1 });
 
         expect(state.decks[3]).toEqual([extraA, extraC]);
+
+        const insightA = { id: 'insight-a', level: 1, cost: deckOne.cost, points: 1 };
+        const insightB = { id: 'insight-b', level: 1, cost: deckOne.cost, points: 2 };
+        state.decks[1] = [insightA, insightB] as never[];
+
+        refreshMarketCardSlot(state, { level: 1, idx: 0, isExtra: true, extraIdx: 0 });
+
+        expect(state.decks[1]).toEqual([insightA]);
     });
 
     it('moves gold from the board and applies reserve bonuses', () => {

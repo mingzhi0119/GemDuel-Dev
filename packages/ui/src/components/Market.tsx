@@ -36,7 +36,7 @@ interface MarketProps {
         source: CardActionSource,
         marketInfo?: InitiateBuyJokerPayload['marketInfo']
     ) => void;
-    handleReserveCard: (card: CardType, level: number, idx: number) => void;
+    handleReserveCard: (card: CardType, marketInfo: CardInteractionContext) => void;
     onPeekDeck?: (level: number) => void;
     theme: 'light' | 'dark';
     isOnline?: boolean;
@@ -85,7 +85,7 @@ export const Market: React.FC<MarketProps> = React.memo(
         const handleReserve = useCallback(
             (card: CardType, context?: CardInteractionContext) => {
                 if (canInteract && card && context) {
-                    handleReserveCard(card, context.level, context.idx);
+                    handleReserveCard(card, context);
                 }
             },
             [handleReserveCard, canInteract]
@@ -101,7 +101,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                     className={`text-[13px] font-black uppercase tracking-[0.34em] mb-1 text-center
                     ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
                 >
-                    <LexiconTerm termId="market" className="normal-case">
+                    <LexiconTerm termId="market" className="normal-case" underline={false}>
                         {t('market.title')}
                     </LexiconTerm>
                 </h2>
@@ -159,7 +159,25 @@ export const Market: React.FC<MarketProps> = React.memo(
                                         <div className="relative p-1 border-2 border-dashed border-purple-500/50 rounded-xl">
                                             <Card
                                                 card={topCard}
-                                                canBuy={false}
+                                                canBuy={
+                                                    surfacePolicy.marketInteraction &&
+                                                    canInteract &&
+                                                    calculateTransaction(
+                                                        topCard,
+                                                        inventories[turn],
+                                                        playerTableau[turn],
+                                                        playerBuffs[turn],
+                                                        false
+                                                    ).affordable
+                                                }
+                                                context={{
+                                                    level: 1,
+                                                    idx: 0,
+                                                    isExtra: true,
+                                                    extraIdx: 0,
+                                                }}
+                                                onClick={handleBuy}
+                                                onReserve={canInteract ? handleReserve : undefined}
                                                 theme={theme}
                                                 isDeckPreview={true}
                                             />

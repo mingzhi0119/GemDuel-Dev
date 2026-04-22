@@ -221,7 +221,13 @@ export const isInitiateBuyJokerPayload = (value: unknown): value is InitiateBuyJ
     (value.marketInfo === undefined || isMarketInfo(value.marketInfo));
 
 export const isInitiateReservePayload = (value: unknown): value is InitiateReservePayload =>
-    isPlainObject(value) && isCardLike(value.card) && isLevel(value.level) && isInteger(value.idx);
+    isPlainObject(value) &&
+    isCardLike(value.card) &&
+    isLevel(value.level) &&
+    isInteger(value.idx) &&
+    (value.isExtra === undefined || typeof value.isExtra === 'boolean') &&
+    (value.extraIdx === undefined || isInteger(value.extraIdx)) &&
+    (!value.isExtra || isInteger(value.extraIdx));
 
 export const isInitiateReserveDeckPayload = (value: unknown): value is InitiateReserveDeckPayload =>
     isPlainObject(value) && isLevel(value.level);
@@ -239,6 +245,7 @@ export const isReserveCardPayload = (value: unknown): value is ReserveCardPayloa
     if (value.isExtra !== undefined && typeof value.isExtra !== 'boolean') return false;
     if (value.extraIdx !== undefined && !isInteger(value.extraIdx)) return false;
     if (value.isSteal !== undefined && typeof value.isSteal !== 'boolean') return false;
+    if (value.isExtra && !isInteger(value.extraIdx)) return false;
     return true;
 };
 

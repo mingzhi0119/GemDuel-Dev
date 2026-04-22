@@ -87,7 +87,7 @@ describe('actionValidation guards', () => {
             isInitiateBuyJokerPayload({
                 card: { ...sampleCard, bonusColor: 'gold' },
                 source: 'reserved',
-                marketInfo: { level: 3, idx: 1, isExtra: true, extraIdx: 1 },
+                marketInfo: { level: 1, idx: 0, isExtra: true, extraIdx: 0 },
             })
         ).toBe(true);
         expect(
@@ -95,6 +95,15 @@ describe('actionValidation guards', () => {
                 card: sampleCard,
                 level: 2,
                 idx: 0,
+            })
+        ).toBe(true);
+        expect(
+            isInitiateReservePayload({
+                card: sampleCard,
+                level: 1,
+                idx: 0,
+                isExtra: true,
+                extraIdx: 0,
             })
         ).toBe(true);
         expect(isInitiateReserveDeckPayload({ level: 3 })).toBe(true);
@@ -191,6 +200,14 @@ describe('actionValidation guards', () => {
                 level: 2,
                 idx: 0,
                 isExtra: 'yes',
+            })
+        ).toBe(false);
+        expect(
+            isInitiateReservePayload({
+                card: sampleCard,
+                level: 1,
+                idx: 0,
+                isExtra: true,
             })
         ).toBe(false);
         expect(

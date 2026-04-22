@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -440,6 +442,36 @@ describe('GemDuelRoutes desktop stage rendering', () => {
             expect.objectContaining({
                 mode: 'ONLINE_MULTIPLAYER',
                 activeDraftLevel: 2,
+                onReroll: undefined,
+            })
+        );
+
+        act(() => {
+            root.unmount();
+        });
+    });
+
+    it('renders the draft route for pve draft setup before any history entry exists', async () => {
+        const { container, root } = await renderRoutes(
+            createProps({
+                game: createGame({
+                    state: {
+                        phase: 'DRAFT_PHASE',
+                        mode: 'PVE',
+                        draftPool: ['intelligence', 'deep_pockets', 'privilege_favor'],
+                    },
+                    historyControls: {
+                        historyLength: 0,
+                    },
+                }),
+            })
+        );
+
+        expect(container.querySelector('[data-testid="draft-route"]')).not.toBeNull();
+        expect(container.querySelector('[data-testid="config-route"]')).toBeNull();
+        expect(routeSpies.draftScreenProps).toHaveBeenCalledWith(
+            expect.objectContaining({
+                mode: 'PVE',
                 onReroll: undefined,
             })
         );

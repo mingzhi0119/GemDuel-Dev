@@ -70,7 +70,7 @@ export const BUFFS = {
         category: 'intel',
         label: getBuffText('insight', 'en').label,
         desc: getBuffText('insight', 'en').desc,
-        effects: { passive: { revealDeck1: true }, winCondition: getBuffWinCondition('insight') },
+        effects: { passive: { revealDeck1: true } },
     },
     DOWN_PAYMENT: {
         id: 'down_payment',
@@ -237,7 +237,7 @@ export const BUFFS = {
         category: 'economy',
         label: getBuffText('minimalist', 'en').label,
         desc: getBuffText('minimalist', 'en').desc,
-        effects: { passive: { doubleBonusFirst5: true, gemCap: 6 } },
+        effects: { passive: { doubleBonusFirst2: true, gemCap: 8 } },
     },
     PACIFIST: {
         id: 'pacifist',

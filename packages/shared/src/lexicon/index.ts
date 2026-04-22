@@ -26,6 +26,7 @@ export type LexiconTermId =
     | 'extraBasicGem'
     | 'extraPearl'
     | 'extraGold'
+    | 'reveal'
     | 'cardColor'
     | 'singleColorPoints';
 
@@ -404,6 +405,19 @@ const LEXICON_TERM_LIST: readonly LexiconTermDefinition[] = [
         aliases: {
             en: [whole('Extra Gold')],
             zh: [exact('额外黄金')],
+        },
+        matchMode: { en: 'wholeTerm', zh: 'exactSubstring' },
+    },
+    {
+        id: 'reveal',
+        label: { en: 'Reveal', zh: '揭示' },
+        description: {
+            en: 'Reveal makes deck cards stay visible to the effect owner and lets that player buy or reserve those revealed cards while the effect lasts.',
+            zh: '揭示会让牌库中的卡牌持续对效果持有者可见，并且在效果持续期间允许该玩家购买或保留这些被揭示的卡牌。',
+        },
+        aliases: {
+            en: [whole('Reveal'), whole('Revealed')],
+            zh: [exact('揭示'), exact('展示')],
         },
         matchMode: { en: 'wholeTerm', zh: 'exactSubstring' },
     },

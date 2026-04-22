@@ -638,6 +638,71 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.pendingReserve).toBeNull();
     });
 
+    it('lets Insight reserve and buy the revealed top Level 1 card', () => {
+        const visibleTop = createCard({ id: 'insight-top', level: 1 });
+        const hiddenBottom = createCard({ id: 'insight-bottom', level: 1 });
+        const reserveState = createState({
+            decks: { 1: [hiddenBottom, visibleTop], 2: [], 3: [] },
+            playerBuffs: { p1: BUFFS.INSIGHT, p2: BUFFS.NONE },
+        });
+
+        const afterReserve = handleReserveCard(reserveState, {
+            card: visibleTop,
+            level: 1,
+            idx: 0,
+            isExtra: true,
+            extraIdx: 0,
+        });
+
+        expect(afterReserve.playerReserved.p1).toContainEqual(
+            expect.objectContaining({ id: 'insight-top' })
+        );
+        expect(afterReserve.decks[1]).toEqual([hiddenBottom]);
+
+        const buyState = createState({
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+            decks: { 1: [hiddenBottom, visibleTop], 2: [], 3: [] },
+            playerBuffs: { p1: BUFFS.INSIGHT, p2: BUFFS.NONE },
+        });
+
+        const afterBuy = handleBuyCard(buyState, {
+            card: visibleTop,
+            source: 'market',
+            marketInfo: { level: 1, idx: 0, isExtra: true, extraIdx: 0 },
+        });
+
+        expect(afterBuy.playerTableau.p1).toContainEqual(
+            expect.objectContaining({ id: 'insight-top' })
+        );
+        expect(afterBuy.decks[1]).toEqual([hiddenBottom]);
+    });
+
+    it('lets All-Seeing Eye reserve the revealed extra Level 3 cards', () => {
+        const hiddenA = createCard({ id: 'l3-bottom', level: 3 });
+        const visibleExtra = createCard({ id: 'l3-visible-extra', level: 3 });
+        const hiddenTop = createCard({ id: 'l3-top', level: 3 });
+        const state = createState({
+            decks: { 1: [], 2: [], 3: [hiddenA, visibleExtra, hiddenTop] },
+            playerBuffs: { p1: BUFFS.ALL_SEEING_EYE, p2: BUFFS.NONE },
+        });
+
+        const nextState = handleReserveCard(state, {
+            card: visibleExtra,
+            level: 3,
+            idx: 0,
+            isExtra: true,
+            extraIdx: 1,
+        });
+
+        expect(nextState.playerReserved.p1).toContainEqual(
+            expect.objectContaining({ id: 'l3-visible-extra' })
+        );
+        expect(nextState.decks[3].map((card) => card.id)).toEqual(['l3-bottom', 'l3-top']);
+    });
+
     it('steals reserved cards with collector authority and applies reserve bonuses on the first take', () => {
         const collectorSuite: Buff = {
             id: 'collector-suite',

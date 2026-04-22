@@ -79,6 +79,8 @@ export interface InitiateReservePayload {
     card: Card;
     level: 1 | 2 | 3;
     idx: number;
+    isExtra?: boolean;
+    extraIdx?: number;
 }
 
 export interface InitiateReserveDeckPayload {

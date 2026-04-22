@@ -11,6 +11,7 @@ import type {
     GamePhase,
     GemColor,
     InitiateBuyJokerPayload,
+    MarketCardRef,
     PlayerKey,
     RoyalCard,
 } from '../types';
@@ -48,22 +49,21 @@ export const buildReplenishAction = (
 
 export const buildReserveCardFlow = (
     card: Card,
-    level: 1 | 2 | 3,
-    idx: number,
+    marketInfo: MarketCardRef,
     hasGold: boolean
 ): ReserveFlowResult =>
     hasGold
         ? {
               action: {
                   type: 'INITIATE_RESERVE',
-                  payload: { card, level, idx },
+                  payload: { card, ...marketInfo },
               },
               prompt: 'Select a Gold gem.',
           }
         : {
               action: {
                   type: 'RESERVE_CARD',
-                  payload: { card, level, idx },
+                  payload: { card, ...marketInfo },
               },
           };
 

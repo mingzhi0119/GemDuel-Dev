@@ -11,10 +11,10 @@ describe('runtimeSchemas', () => {
     it('accepts typed market card contexts for standard and extra cards', () => {
         const marketContext = { level: 2, idx: 1 } satisfies CardInteractionContext;
         const extraContext = {
-            level: 3,
+            level: 1,
             idx: 0,
             isExtra: true,
-            extraIdx: 2,
+            extraIdx: 0,
         } satisfies CardInteractionContext;
 
         expect(marketCardRefSchema.safeParse(marketContext).success).toBe(true);

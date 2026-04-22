@@ -57,7 +57,7 @@ export type ReplayMarketRef =
           extraIdx?: undefined;
       }
     | {
-          level: 3;
+          level: 1 | 2 | 3;
           idx: number;
           isExtra: true;
           extraIdx: number;
@@ -108,6 +108,8 @@ export interface ReplayPendingReserveSnapshot {
     instanceId?: ReplayCardInstanceId;
     level: 1 | 2 | 3;
     idx?: number;
+    isExtra?: boolean;
+    extraIdx?: number;
     isDeck?: boolean;
 }
 

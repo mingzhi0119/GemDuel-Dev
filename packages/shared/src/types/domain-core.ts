@@ -130,7 +130,7 @@ export interface BuffEffects {
         pointBonus?: number;
         crownBonusGem?: boolean;
         recycler?: boolean;
-        doubleBonusFirst5?: boolean;
+        doubleBonusFirst2?: boolean;
         refillBonus?: boolean;
         privilegeBuff?: number;
         periodicPrivilege?: number;
@@ -279,7 +279,7 @@ export interface MarketCardSlot {
 
 export type MarketCardRef =
     | (MarketCardSlot & { isExtra?: false; extraIdx?: undefined })
-    | (MarketCardSlot & { level: 3; isExtra: true; extraIdx: number });
+    | (MarketCardSlot & { isExtra: true; extraIdx: number });
 
 export type CardInteractionContext = MarketCardRef;
 
@@ -344,6 +344,8 @@ export interface GameState {
         card?: Card;
         level: 1 | 2 | 3;
         idx?: number;
+        isExtra?: boolean;
+        extraIdx?: number;
         isDeck?: boolean;
     } | null;
     bonusGemTarget: GemTypeObject | null;

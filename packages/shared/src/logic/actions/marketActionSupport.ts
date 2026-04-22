@@ -101,7 +101,7 @@ export const refreshMarketCardSlot = (
     const { level, idx, isExtra, extraIdx } = marketInfo;
     const deck = state.decks[level];
 
-    if (isExtra && level === 3 && extraIdx !== undefined) {
+    if (isExtra && extraIdx !== undefined) {
         const targetIdx = deck.length - (extraIdx + 1);
         if (targetIdx >= 0) {
             deck.splice(targetIdx, 1);
