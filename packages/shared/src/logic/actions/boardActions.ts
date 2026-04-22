@@ -22,6 +22,7 @@ import {
     StealGemPayload,
     ReplenishPayload,
 } from '../../types';
+import { pickDeterministicBasicGemColor, pickDeterministicValue } from '../deterministicRandom';
 
 /**
  * Handle player taking gems from the board
@@ -116,9 +117,11 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
                             ['blue', 'white', 'green', 'black', 'red'] as GemInventoryKey[]
                         ).filter((color) => state.inventories[opponent][color] > 0);
                         if (stealableColors.length > 0) {
-                            stolenColor = stealableColors[
-                                Math.floor(Math.random() * stealableColors.length)
-                            ] as GemColor;
+                            stolenColor = pickDeterministicValue(
+                                state,
+                                stealableColors,
+                                `extortion:${state.turn}:${buff.state.refillCount as number}`
+                            ) as GemColor;
                         }
                     }
 
@@ -139,8 +142,11 @@ export const handleReplenish = (state: GameState, payload?: ReplenishPayload): G
 
     // Handle Aggressive Expansion buff
     if (buff?.effects?.passive?.refillBonus) {
-        const randColor = (randoms?.expansionColor ||
-            ['red', 'green', 'blue', 'white', 'black'][Math.floor(Math.random() * 5)]) as GemColor;
+        const randColor = (randoms?.expansionColor ??
+            pickDeterministicBasicGemColor(
+                state,
+                `aggressive_expansion:${state.turn}:${state.bag.length}`
+            )) as GemColor;
         state.inventories[state.turn][randColor]++;
 
         // Track as extra allocation (vanishes on use)

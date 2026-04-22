@@ -60,7 +60,12 @@ export const FSM_POLICY_BY_ACTION: Record<GameAction['type'], FsmCommandPolicy> 
     },
     TAKE_BONUS_GEM: {
         allowedFrom: [GAME_PHASES.BONUS_ACTION],
-        allowedTo: [GAME_PHASES.IDLE, GAME_PHASES.DISCARD_EXCESS_GEMS, GAME_PHASES.SELECT_ROYAL],
+        allowedTo: [
+            GAME_PHASES.IDLE,
+            GAME_PHASES.STEAL_ACTION,
+            GAME_PHASES.DISCARD_EXCESS_GEMS,
+            GAME_PHASES.SELECT_ROYAL,
+        ],
     },
     DISCARD_GEM: {
         allowedFrom: [GAME_PHASES.DISCARD_EXCESS_GEMS],
@@ -68,7 +73,12 @@ export const FSM_POLICY_BY_ACTION: Record<GameAction['type'], FsmCommandPolicy> 
     },
     STEAL_GEM: {
         allowedFrom: [GAME_PHASES.STEAL_ACTION],
-        allowedTo: [GAME_PHASES.IDLE, GAME_PHASES.DISCARD_EXCESS_GEMS, GAME_PHASES.SELECT_ROYAL],
+        allowedTo: [
+            GAME_PHASES.IDLE,
+            GAME_PHASES.BONUS_ACTION,
+            GAME_PHASES.DISCARD_EXCESS_GEMS,
+            GAME_PHASES.SELECT_ROYAL,
+        ],
     },
     INITIATE_BUY_JOKER: {
         allowedFrom: [GAME_PHASES.IDLE],

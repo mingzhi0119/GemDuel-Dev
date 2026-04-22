@@ -4,6 +4,7 @@ export * from './stateHash';
 export * from './runtime';
 export * from './writer';
 export * from './reader';
+export * from './audit';
 export * from './loader';
 export * from './extract';
 export * from './metrics';

@@ -17,26 +17,26 @@ Legacy replay envelopes shaped like `{ version, timestamp, history }` are no lon
 
 ```json
 {
-  "schemaVersion": "1.0",
-  "replayRevision": 12,
-  "gameVersion": "5.2.11",
-  "createdAt": "2026-04-22T00:00:00.000Z",
-  "match": {
-    "mode": "LOCAL_PVP",
-    "seed": null,
-    "started": true,
-    "ended": false,
-    "winner": null,
-    "endReason": null
-  },
-  "players": {
-    "p1": { "buff": { "id": "none", "level": 0 } },
-    "p2": { "buff": { "id": "none", "level": 0 } }
-  },
-  "init": {},
-  "events": [],
-  "checkpoints": [],
-  "summary": {}
+    "schemaVersion": "1.0",
+    "replayRevision": 12,
+    "gameVersion": "5.2.11",
+    "createdAt": "2026-04-22T00:00:00.000Z",
+    "match": {
+        "mode": "LOCAL_PVP",
+        "seed": null,
+        "started": true,
+        "ended": false,
+        "winner": null,
+        "endReason": null
+    },
+    "players": {
+        "p1": { "buff": { "id": "none", "level": 0 } },
+        "p2": { "buff": { "id": "none", "level": 0 } }
+    },
+    "init": {},
+    "events": [],
+    "checkpoints": [],
+    "summary": {}
 }
 ```
 
@@ -59,12 +59,16 @@ Shared replay APIs live in `packages/shared/src/replay/`:
 - `evaluateReplayPerformance(...)`
 - `simulateAiVsAiReplay(...)`
 - `simulateAiVsAiReplayBatch(...)`
+- `auditReplay(...)`
+- `auditReplayBatch(...)`
 
 ## Backend-only AI simulation
 
 - AI vs AI replay generation is available in the shared layer only; no frontend mode was added.
 - Use `simulateAiVsAiReplay(...)` to run one pure-logic match and get `replay`, `summary`, `evaluation`, and `finalState`.
 - Use `simulateAiVsAiReplayBatch(...)` or `pnpm --dir tools/scripts run ai:replays -- --count 10` to batch-generate replay samples for testing and scoring.
+- Use `auditReplay(...)` to verify one replay's schema, summary integrity, loaded final-state hash, winner, end reason, and expected metadata.
+- Use `auditReplayBatch(...)` or `pnpm --dir tools/scripts run ai:replays:audit -- --count 100 --use-buffs` to run generated replay audits and collect engine-signal findings.
 
 ## Desktop runtime behavior
 

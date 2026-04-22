@@ -127,7 +127,10 @@ const normalizeReplayEvent = (
             return {
                 type: 'buy_card',
                 actor,
-                instanceId: resolveRuntimeCardIdToInstanceId(action.payload.card.id, runtimeToInstance),
+                instanceId: resolveRuntimeCardIdToInstanceId(
+                    action.payload.card.id,
+                    runtimeToInstance
+                ),
                 source: action.payload.source,
                 ...(action.payload.marketInfo
                     ? { marketRef: JSON.parse(JSON.stringify(action.payload.marketInfo)) }
@@ -141,7 +144,10 @@ const normalizeReplayEvent = (
             return {
                 type: 'reserve_card',
                 actor,
-                instanceId: resolveRuntimeCardIdToInstanceId(action.payload.card.id, runtimeToInstance),
+                instanceId: resolveRuntimeCardIdToInstanceId(
+                    action.payload.card.id,
+                    runtimeToInstance
+                ),
                 level: action.payload.level,
                 marketRef:
                     action.payload.isExtra && action.payload.level === 3
@@ -159,7 +165,9 @@ const normalizeReplayEvent = (
                     ? { goldCoord: JSON.parse(JSON.stringify(action.payload.goldCoords)) }
                     : {}),
                 ...(action.payload.isExtra ? { isExtra: true } : {}),
-                ...(action.payload.extraIdx !== undefined ? { extraIdx: action.payload.extraIdx } : {}),
+                ...(action.payload.extraIdx !== undefined
+                    ? { extraIdx: action.payload.extraIdx }
+                    : {}),
                 ...(action.payload.isSteal ? { isSteal: true } : {}),
             };
         case 'RESERVE_DECK':
@@ -175,7 +183,10 @@ const normalizeReplayEvent = (
             return {
                 type: 'discard_reserved',
                 actor,
-                instanceId: resolveRuntimeCardIdToInstanceId(action.payload.cardId, runtimeToInstance),
+                instanceId: resolveRuntimeCardIdToInstanceId(
+                    action.payload.cardId,
+                    runtimeToInstance
+                ),
             };
         case 'USE_PRIVILEGE':
             return {
@@ -218,7 +229,6 @@ export const seedReplayRecorderState = (
 ): ReplayRecorderInternalState => {
     const { init, runtimeToInstance } = buildReplayInitSnapshot(action, nextState);
     recorder.replayRevision = 0;
-    recorder.createdAt = new Date().toISOString();
     recorder.init = init;
     recorder.events = [];
     recorder.checkpoints = [];
@@ -311,7 +321,8 @@ export const buildReplayDeltaSync = (
     }
 
     const checkpoint = recorder.checkpoints.find(
-        (candidate) => candidate.revision > fromRevision && candidate.revision <= recorder.replayRevision
+        (candidate) =>
+            candidate.revision > fromRevision && candidate.revision <= recorder.replayRevision
     );
 
     const delta: ReplayDeltaSync = {
@@ -320,7 +331,9 @@ export const buildReplayDeltaSync = (
         toRevision: recorder.replayRevision,
         events: recorder.events.slice(fromRevision),
         stateHashAfter: generateReplayStateHash(currentState, recorder.runtimeToInstance),
-        ...(checkpoint ? { checkpoint: JSON.parse(JSON.stringify(checkpoint)) as ReplayCheckpoint } : {}),
+        ...(checkpoint
+            ? { checkpoint: JSON.parse(JSON.stringify(checkpoint)) as ReplayCheckpoint }
+            : {}),
     };
 
     return delta;

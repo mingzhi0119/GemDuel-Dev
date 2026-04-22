@@ -4,7 +4,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "ai:replays": "node ../../node_modules/vite-node/vite-node.mjs --script generate-ai-replays.mjs",
+        "ai:replays": "vite-node --script generate-ai-replays.mjs",
+        "ai:replays:audit": "vite-node --script audit-ai-replays.mjs",
         "architecture:check": "node check-architecture-budgets.mjs",
         "bundle:check": "node check-build-budget.mjs",
         "boundaries:check": "node check-boundary-governance.mjs",
@@ -31,6 +32,7 @@
     "devDependencies": {
         "@gemduel/config-eslint": "workspace:*",
         "@gemduel/config-typescript": "workspace:*",
+        "vite-node": "^3.2.4",
         "vitest": "^3.2.4"
     }
 }

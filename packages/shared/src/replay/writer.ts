@@ -2,7 +2,13 @@ import { getCrownCount, getPlayerScore } from '../logic/selectors';
 import type { GemColor, PlayerKey } from '../types';
 import { generateReplayStateHash } from './stateHash';
 import { serializeReplayPlayers } from './runtime';
-import type { ReplayEvent, ReplaySaveInput, ReplaySummary, ReplayVNext } from './types';
+import type {
+    ReplayEndReason,
+    ReplayEvent,
+    ReplaySaveInput,
+    ReplaySummary,
+    ReplayVNext,
+} from './types';
 import { REPLAY_VNEXT_SCHEMA_VERSION } from './types';
 
 const REPLAY_EVENT_TYPES: ReplayEvent['type'][] = [
@@ -44,14 +50,15 @@ const getTotalGems = (playerInventory: Record<GemColor | 'gold' | 'pearl', numbe
 export const buildReplaySummary = (
     events: ReplayEvent[],
     currentState: ReplaySaveInput['currentState'],
-    finalStateHash: string
+    finalStateHash: string,
+    endReason: ReplayEndReason = currentState.winner ? 'normal' : null
 ): ReplaySummary => ({
     turnCount: (currentState.playerTurnCounts?.p1 ?? 0) + (currentState.playerTurnCounts?.p2 ?? 0),
     totalEvents: events.length,
     eventsByType: countEventsByType(events),
     eventsByPlayer: countEventsByPlayer(events),
     winner: currentState.winner,
-    endReason: currentState.winner ? 'normal' : null,
+    endReason,
     finalScores: {
         p1: getPlayerScore(currentState, 'p1'),
         p2: getPlayerScore(currentState, 'p2'),
@@ -77,8 +84,10 @@ export const saveReplayVNext = ({
     checkpoints = [],
     currentState,
     runtimeToInstance,
+    endReason,
 }: ReplaySaveInput): ReplayVNext => {
     const finalStateHash = generateReplayStateHash(currentState, runtimeToInstance);
+    const resolvedEndReason = endReason ?? (currentState.winner ? 'normal' : null);
 
     return {
         schemaVersion: REPLAY_VNEXT_SCHEMA_VERSION,
@@ -89,16 +98,14 @@ export const saveReplayVNext = ({
             mode: currentState.mode,
             seed: null,
             started: true,
-            ended: Boolean(currentState.winner),
+            ended: resolvedEndReason !== null,
             winner: currentState.winner,
-            endReason: currentState.winner ? 'normal' : null,
+            endReason: resolvedEndReason,
         },
         players: serializeReplayPlayers(currentState),
         init,
         events: JSON.parse(JSON.stringify(events)),
-        ...(checkpoints.length > 0
-            ? { checkpoints: JSON.parse(JSON.stringify(checkpoints)) }
-            : {}),
-        summary: buildReplaySummary(events, currentState, finalStateHash),
+        ...(checkpoints.length > 0 ? { checkpoints: JSON.parse(JSON.stringify(checkpoints)) } : {}),
+        summary: buildReplaySummary(events, currentState, finalStateHash, resolvedEndReason),
     };
 };

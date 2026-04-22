@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { handleBuyCard } from '../marketActions';
 import { handleStealGem } from '../boardActions';
 import { INITIAL_STATE_SKELETON } from '../../initialState';
-import { ABILITIES, GAME_PHASES } from '../../../constants';
+import { ABILITIES, GAME_PHASES, GEM_TYPES } from '../../../constants';
 import { GameState, Card, PlayerKey, Buff, GemColor } from '../../../types';
 
 describe('Steal Mechanics', () => {
@@ -103,5 +103,28 @@ describe('Steal Mechanics', () => {
         expect(afterSteal.turn).toBe('p1'); // Stays p1's turn
         expect(afterSteal.phase).toBe(GAME_PHASES.IDLE);
         expect(afterSteal.pendingExtraTurn).toBe(false);
+    });
+
+    it('can continue from STEAL_ACTION into BONUS_ACTION when another ability is queued', () => {
+        baseState.phase = GAME_PHASES.STEAL_ACTION;
+        baseState.nextPlayerAfterRoyal = 'p2';
+        baseState.abilityResolution = {
+            nextPlayer: 'p2',
+            pending: ['bonus_gem'],
+            resolved: ['steal'],
+            bonusGemColor: 'blue',
+        };
+        baseState.board[0][0] = { type: GEM_TYPES.BLUE, uid: 'bonus-blue' };
+
+        const nextState = handleStealGem(baseState, {
+            gemId: 'blue' as unknown as GemColor,
+        });
+
+        expect(nextState.inventories.p1.blue).toBe(1);
+        expect(nextState.inventories.p2.blue).toBe(0);
+        expect(nextState.phase).toBe(GAME_PHASES.BONUS_ACTION);
+        expect(nextState.turn).toBe('p1');
+        expect(nextState.bonusGemTarget?.id).toBe('blue');
+        expect(nextState.nextPlayerAfterRoyal).toBe('p2');
     });
 });

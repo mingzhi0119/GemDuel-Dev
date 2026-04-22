@@ -5,10 +5,12 @@ import { applyAction } from '../logic/gameReducer';
 import { buildStartGameAction } from '../logic/gameSetup';
 import { INITIAL_STATE_SKELETON } from '../logic/initialState';
 import { buildSelectBuffAction } from '../logic/interactionCommands';
+import { getCrownCount, getPlayerScore } from '../logic/selectors';
 import type { GameAction, GameState, GemCoord, GemColor, PlayerKey } from '../types';
 import { evaluateReplayPerformance } from './evaluation';
 import { loadReplaySession } from './loader';
 import { buildReplayRecorderFromHistory } from './recorder';
+import { createReplayCheckpoint } from './runtime';
 import { saveReplayVNext } from './writer';
 import type {
     ReplaySimulationAbortReason,
@@ -26,6 +28,22 @@ const DEFAULT_RANDOMS = {
 const BASIC_DISCARD_ORDER = ['red', 'green', 'blue', 'white', 'black', 'pearl', 'gold'] as const;
 
 const getOpponent = (player: PlayerKey): PlayerKey => (player === 'p1' ? 'p2' : 'p1');
+
+const resolveWinnerOnMaxActions = (state: GameState): PlayerKey => {
+    const p1Score = getPlayerScore(state, 'p1');
+    const p2Score = getPlayerScore(state, 'p2');
+    if (p1Score !== p2Score) {
+        return p1Score > p2Score ? 'p1' : 'p2';
+    }
+
+    const p1Crowns = getCrownCount(state, 'p1');
+    const p2Crowns = getCrownCount(state, 'p2');
+    if (p1Crowns !== p2Crowns) {
+        return p1Crowns > p2Crowns ? 'p1' : 'p2';
+    }
+
+    return 'p1';
+};
 
 const findBoardCoord = (
     state: GameState,
@@ -97,7 +115,7 @@ const buildFallbackCandidates = (state: GameState): GameAction[] => {
     const goldCoord = findBoardCoord(state, (gemId) => gemId === 'gold');
 
     if (state.phase === 'DRAFT_PHASE') {
-        const pool = actor === 'p2' ? state.p2DraftPool ?? state.draftPool : state.draftPool;
+        const pool = actor === 'p2' ? (state.p2DraftPool ?? state.draftPool) : state.draftPool;
         if (pool.length > 0) {
             candidates.push({
                 type: 'SELECT_BUFF',
@@ -124,7 +142,10 @@ const buildFallbackCandidates = (state: GameState): GameAction[] => {
             payload: {
                 card: {
                     ...state.pendingBuy.card,
-                    bonusColor: state.pendingBuy.card.bonusColor === 'gold' ? 'red' : state.pendingBuy.card.bonusColor,
+                    bonusColor:
+                        state.pendingBuy.card.bonusColor === 'gold'
+                            ? 'red'
+                            : state.pendingBuy.card.bonusColor,
                 },
                 source: state.pendingBuy.source,
                 ...(state.pendingBuy.marketInfo ? { marketInfo: state.pendingBuy.marketInfo } : {}),
@@ -307,10 +328,10 @@ const stabilizeAiAction = (state: GameState, action: GameAction): GameAction => 
         return action;
     }
 
-    const availablePool = state.turn === 'p1' ? state.draftPool : state.p2DraftPool ?? [];
+    const availablePool = state.turn === 'p1' ? state.draftPool : (state.p2DraftPool ?? []);
     const selectedBuffId = availablePool.includes(action.payload.buffId)
         ? action.payload.buffId
-        : availablePool[0] ?? action.payload.buffId;
+        : (availablePool[0] ?? action.payload.buffId);
 
     return buildSelectBuffAction(
         selectedBuffId,
@@ -336,6 +357,10 @@ const finalizeSimulationReplay = (
     if (!recorder.init) {
         throw new Error('AI simulation did not produce a replay bootstrap snapshot.');
     }
+    const checkpoints = recorder.checkpoints
+        .filter((checkpoint) => checkpoint.revision !== recorder.replayRevision)
+        .concat(createReplayCheckpoint(recorder.replayRevision, state, recorder.runtimeToInstance))
+        .sort((left, right) => left.revision - right.revision);
 
     const replay = saveReplayVNext({
         replayRevision: recorder.replayRevision,
@@ -343,18 +368,11 @@ const finalizeSimulationReplay = (
         createdAt: recorder.createdAt,
         init: recorder.init,
         events: recorder.events,
-        checkpoints: recorder.checkpoints,
+        checkpoints,
         currentState: state,
         runtimeToInstance: recorder.runtimeToInstance,
+        ...(abortReason ? { endReason: 'aborted' } : {}),
     });
-
-    if (abortReason) {
-        replay.match.ended = true;
-        replay.match.winner = null;
-        replay.match.endReason = 'aborted';
-        replay.summary.winner = null;
-        replay.summary.endReason = 'aborted';
-    }
 
     const session = loadReplaySession(replay);
     if (session.finalStateHash !== replay.summary.finalStateHash) {
@@ -376,9 +394,7 @@ const finalizeSimulationReplay = (
     };
 };
 
-export const simulateAiVsAiReplay = (
-    options: ReplaySimulationOptions
-): ReplaySimulationResult => {
+export const simulateAiVsAiReplay = (options: ReplaySimulationOptions): ReplaySimulationResult => {
     const {
         gameVersion,
         useBuffs = false,
@@ -432,7 +448,10 @@ export const simulateAiVsAiReplay = (
     }
 
     if (!state.winner && !abortReason) {
-        abortReason = 'max_actions';
+        state = {
+            ...state,
+            winner: resolveWinnerOnMaxActions(state),
+        };
     }
 
     return finalizeSimulationReplay(state, history, {
@@ -453,9 +472,7 @@ export const simulateAiVsAiReplayBatch = (
     return Array.from({ length: count }, (_, index) =>
         simulateAiVsAiReplay({
             ...options,
-            createdAt:
-                options.createdAt ??
-                new Date(Date.now() + index * 1_000).toISOString(),
+            createdAt: options.createdAt ?? new Date(Date.now() + index * 1_000).toISOString(),
         })
     );
 };

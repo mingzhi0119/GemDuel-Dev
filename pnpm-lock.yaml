@@ -330,6 +330,9 @@ importers:
             '@gemduel/config-typescript':
                 specifier: workspace:*
                 version: link:../../packages/config-typescript
+            vite-node:
+                specifier: ^3.2.4
+                version: 3.2.4(@types/node@25.6.0)(jiti@2.6.1)(yaml@2.8.3)
             vitest:
                 specifier: ^3.2.4
                 version: 3.2.4(@types/debug@4.1.13)(@types/node@25.6.0)(@vitest/ui@3.2.4)(happy-dom@20.9.0)(jiti@2.6.1)(yaml@2.8.3)
@@ -6790,7 +6793,7 @@ snapshots:
             sirv: 3.0.2
             tinyglobby: 0.2.16
             tinyrainbow: 2.0.0
-            vitest: 3.2.4(@types/debug@4.1.13)(@types/node@25.6.0)(@vitest/ui@3.2.4)(happy-dom@20.9.0)(jiti@1.21.7)(yaml@2.8.3)
+            vitest: 3.2.4(@types/debug@4.1.13)(@types/node@25.6.0)(@vitest/ui@3.2.4)(happy-dom@20.9.0)(jiti@2.6.1)(yaml@2.8.3)
 
     '@vitest/utils@3.2.4':
         dependencies:

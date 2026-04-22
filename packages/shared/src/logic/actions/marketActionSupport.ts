@@ -1,8 +1,7 @@
 import { GEM_TYPES } from '../../constants';
 import { addFeedback } from '../stateHelpers';
 import type { BoardCell, Buff, BuyCardPayload, GameState, GemColor, PlayerKey } from '../../types';
-
-const BASIC_GEM_COLORS: GemColor[] = ['red', 'green', 'blue', 'white', 'black'];
+import { pickDeterministicBasicGemColor } from '../deterministicRandom';
 
 const createEmptyAllocationRow = () => ({
     blue: 0,
@@ -25,12 +24,16 @@ export const ensureExtraAllocation = (state: GameState) => {
     return state.extraAllocation;
 };
 
-export const grantRandomBasicGems = (state: GameState, player: PlayerKey, count: number) => {
+export const grantRandomBasicGems = (
+    state: GameState,
+    player: PlayerKey,
+    count: number,
+    reason = 'bonus'
+) => {
     const extraAllocation = ensureExtraAllocation(state);
 
     for (let index = 0; index < count; index += 1) {
-        const gemColor =
-            BASIC_GEM_COLORS[Math.floor(Math.random() * BASIC_GEM_COLORS.length)] ?? 'red';
+        const gemColor = pickDeterministicBasicGemColor(state, `${reason}:${player}:${index}`);
         state.inventories[player][gemColor] += 1;
         extraAllocation[player][gemColor] += 1;
         addFeedback(state, player, gemColor, 1);
@@ -154,7 +157,7 @@ export const applyReserveBonusGem = (state: GameState, player: PlayerKey, buff?:
         return false;
     }
 
-    grantRandomBasicGems(state, player, 1);
+    grantRandomBasicGems(state, player, 1, 'reserve_bonus_gem');
     state.toastMessage = 'Nimble Fingers: +1 Gem!';
     return true;
 };

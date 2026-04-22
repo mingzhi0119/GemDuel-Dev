@@ -1,4 +1,5 @@
 import type { GameState } from '../types';
+import { stableJsonStringify } from '../utils/stableJson';
 import type { ReplayCardInstanceId } from './types';
 import { serializeReplayStateSnapshot } from './runtime';
 
@@ -14,4 +15,5 @@ const hashString = (value: string): string => {
 export const generateReplayStateHash = (
     state: GameState,
     runtimeToInstance: Map<string, ReplayCardInstanceId>
-): string => hashString(JSON.stringify(serializeReplayStateSnapshot(state, runtimeToInstance)));
+): string =>
+    hashString(stableJsonStringify(serializeReplayStateSnapshot(state, runtimeToInstance)));

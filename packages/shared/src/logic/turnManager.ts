@@ -11,12 +11,12 @@ import {
     clearAbilityResolution,
     commitDeferredEchoReservoirWrite,
 } from './actions/abilityResolution';
+import { pickDeterministicBasicGemColor } from './deterministicRandom';
 
 // Helper to grant random basic gems (duplicate logic from marketActions, maybe move to utils? keeping for now)
 const grantRandomBasicGems = (state: GameState, player: PlayerKey, count: number) => {
-    const basics: GemColor[] = ['red', 'green', 'blue', 'white', 'black'];
     for (let i = 0; i < count; i++) {
-        const randColor = basics[Math.floor(Math.random() * basics.length)];
+        const randColor = pickDeterministicBasicGemColor(state, `turn_bonus:${player}:${i}`);
         state.inventories[player][randColor]++;
         if (!state.extraAllocation) {
             state.extraAllocation = {

@@ -28,6 +28,10 @@ import {
     takeGoldFromBoardIfPresent,
 } from './marketActionSupport';
 import {
+    canonicalizeDeterministicSaltToken,
+    pickDeterministicBasicGemColor,
+} from '../deterministicRandom';
+import {
     GameState,
     Card,
     GemColor,
@@ -123,7 +127,7 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     // Speculator: Gain 2 gems after buying reserved
     if (source === 'reserved' && buff?.effects?.passive?.buyReservedBonus) {
         const count = buff.effects.passive.buyReservedBonus;
-        grantRandomBasicGems(state, player, count);
+        grantRandomBasicGems(state, player, count, 'buy_reserved_bonus');
         state.toastMessage = `Speculator: Recycled ${count} gems!`;
     }
 
@@ -139,9 +143,11 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
         // Bounty Hunter: Gain gem for crown
         if (buff?.effects?.passive?.crownBonusGem) {
-            const basics: GemColor[] = ['red', 'green', 'blue', 'white', 'black'];
-            const randColor = (randoms?.bountyHunterColor ||
-                basics[Math.floor(Math.random() * basics.length)]) as GemColor;
+            const randColor = (randoms?.bountyHunterColor ??
+                pickDeterministicBasicGemColor(
+                    state,
+                    `bounty_hunter:${player}:${canonicalizeDeterministicSaltToken(card.id)}:${state.playerTableau[player].length}`
+                )) as GemColor;
             inv[randColor]++;
 
             ensureExtraAllocation(state)[player][randColor]++;
@@ -200,7 +206,7 @@ export const handleDiscardReserved = (state: GameState, payload: { cardId: strin
     const buff = state.playerBuffs?.[player];
 
     if (buff?.effects?.active === 'discard_reserved' || buff?.id === 'puppet_master') {
-        grantRandomBasicGems(state, player, 1);
+        grantRandomBasicGems(state, player, 1, 'discard_reserved_bonus');
         state.toastMessage = 'Puppet Master: Card recycled!';
         // Put card at bottom of its corresponding deck
         if (card.level >= 1 && card.level <= 3) {

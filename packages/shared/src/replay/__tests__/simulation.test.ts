@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadReplaySession } from '../loader';
+import { readReplayVNext } from '../reader';
 import { replayVNextSchema } from '../schema';
 import { simulateAiVsAiReplay, simulateAiVsAiReplayBatch } from '../simulation';
 
@@ -33,7 +34,20 @@ describe('AI vs AI replay simulation', () => {
         expect(result.actionsExecuted).toBe(result.replay.replayRevision);
     });
 
-    it('marks truncated simulations as aborted replays', () => {
+    it('preserves an explicit replay creation timestamp', () => {
+        vi.spyOn(Math, 'random').mockImplementation(createDeterministicRandom());
+
+        const createdAt = '2026-04-22T12:34:56.000Z';
+        const result = simulateAiVsAiReplay({
+            gameVersion: '5.2.11',
+            useBuffs: true,
+            createdAt,
+        });
+
+        expect(result.replay.createdAt).toBe(createdAt);
+    });
+
+    it('forces a winner when the simulation reaches max actions', () => {
         vi.spyOn(Math, 'random').mockImplementation(createDeterministicRandom());
 
         const result = simulateAiVsAiReplay({
@@ -41,11 +55,17 @@ describe('AI vs AI replay simulation', () => {
             maxActions: 1,
         });
 
-        expect(result.status).toBe('aborted');
-        expect(result.abortReason).toBe('max_actions');
-        expect(result.replay.match.endReason).toBe('aborted');
-        expect(result.summary.endReason).toBe('aborted');
-        expect(result.replay.match.winner).toBeNull();
+        expect(result.status).toBe('completed');
+        expect(result.abortReason).toBeNull();
+        expect(result.replay.match.endReason).toBe('normal');
+        expect(result.summary.endReason).toBe('normal');
+        expect(result.replay.match.winner).toBe('p1');
+        expect(result.summary.winner).toBe('p1');
+
+        const readResult = readReplayVNext(JSON.stringify(result.replay), {
+            verifySummary: 'full',
+        });
+        expect(readResult.diagnostics.summaryIntegrity).toBe('ok');
     });
 
     it('can batch-generate multiple replay samples for backend evaluation runs', () => {
@@ -73,5 +93,40 @@ describe('AI vs AI replay simulation', () => {
 
         expect(result.status).toBe('completed');
         expect(result.replay.summary.finalStateHash).toBe(session.finalStateHash);
+    });
+
+    it('keeps serialized buff-enabled replays stable after schema validation', () => {
+        vi.spyOn(Math, 'random').mockImplementation(createDeterministicRandom());
+
+        const result = simulateAiVsAiReplay({
+            gameVersion: '5.2.11',
+            useBuffs: true,
+            mode: 'LOCAL_PVP',
+        });
+        const readResult = readReplayVNext(JSON.stringify(result.replay), {
+            verifySummary: 'full',
+        });
+        const session = loadReplaySession(readResult.replay);
+
+        expect(readResult.diagnostics.summaryIntegrity).toBe('ok');
+        expect(session.finalStateHash).toBe(result.replay.summary.finalStateHash);
+    });
+
+    it('replays buff-enabled simulation batches without command-gate or FSM warnings', () => {
+        vi.spyOn(Math, 'random').mockImplementation(createDeterministicRandom());
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        const batch = simulateAiVsAiReplayBatch(20, {
+            gameVersion: '5.2.11',
+            useBuffs: true,
+            mode: 'LOCAL_PVP',
+        });
+        const messages = [...warnSpy.mock.calls, ...errorSpy.mock.calls]
+            .map((args) => args.map((value) => String(value)).join(' '))
+            .filter((message) => message.includes('[COMMAND_GATE]') || message.includes('[FSM]'));
+
+        expect(batch).toHaveLength(20);
+        expect(messages).toEqual([]);
     });
 });

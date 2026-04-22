@@ -360,6 +360,7 @@ export interface ReplaySaveInput {
     checkpoints?: ReplayCheckpoint[];
     currentState: import('../types').GameState;
     runtimeToInstance: Map<string, ReplayCardInstanceId>;
+    endReason?: ReplayEndReason;
 }
 
 export interface ReplayRecorderState {
@@ -410,4 +411,56 @@ export interface ReplaySimulationResult {
     status: ReplaySimulationStatus;
     abortReason: ReplaySimulationAbortReason | null;
     actionsExecuted: number;
+}
+
+export interface ReplayAuditExpectation {
+    fileName?: string;
+    winner?: PlayerKey | null;
+    endReason?: ReplayEndReason;
+    turnCount?: number;
+    totalEvents?: number;
+    finalStateHash?: string;
+    confidence?: number;
+}
+
+export interface ReplayAuditInput {
+    id?: string;
+    value: string | ReplayVNext;
+    expected?: ReplayAuditExpectation;
+    verifySummary?: ReplayReaderOptions['verifySummary'];
+    confidenceEpsilon?: number;
+}
+
+export interface ReplayAuditMismatch {
+    field: string;
+    expected: unknown;
+    actual: unknown;
+}
+
+export interface ReplayAuditError {
+    code: ReplayFormatError['code'] | 'REPLAY_AUDIT_EXCEPTION';
+    message: string;
+    detectedVersion?: ReplayDetectedVersion;
+}
+
+export interface ReplayAuditResult {
+    id?: string;
+    ok: boolean;
+    diagnostics?: ReplayReadDiagnostics;
+    loadedFinalStateHash?: string;
+    loadedWinner?: PlayerKey | null;
+    recomputedSummary?: ReplaySummary;
+    evaluation?: EvaluationReport;
+    mismatches: ReplayAuditMismatch[];
+    error?: ReplayAuditError;
+}
+
+export interface ReplayBatchAuditResult {
+    ok: boolean;
+    auditedCount: number;
+    passedCount: number;
+    failedCount: number;
+    mismatchCounts: Record<string, number>;
+    errorCounts: Record<string, number>;
+    results: ReplayAuditResult[];
 }
