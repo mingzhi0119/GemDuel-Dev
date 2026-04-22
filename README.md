@@ -8,8 +8,15 @@ Desktop release packaging is governed for Windows only. `electron-builder` publi
 
 ```bash
 pnpm install
-pnpm dev
 pnpm electron:dev
+```
+
+- `pnpm electron:dev` 会从仓库根目录同时启动 Vite renderer 和 Electron 壳子，是日常本地开发的默认启动命令。
+- 如果你已经单独跑着 renderer dev server，再开一个 shell 即可：
+
+```bash
+pnpm dev
+pnpm electron:open
 ```
 
 ## Core Commands
