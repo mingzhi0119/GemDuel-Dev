@@ -387,3 +387,27 @@ export interface ReplayDeltaSync {
 }
 
 export type ReplaySync = ReplayFullSync | ReplayDeltaSync;
+export type ReplaySimulationMode = Extract<GameMode, 'LOCAL_PVP' | 'PVE'>;
+export type ReplaySimulationAbortReason = 'max_actions' | 'no_action' | 'state_stall';
+export type ReplaySimulationStatus = 'completed' | 'aborted';
+
+export interface ReplaySimulationOptions {
+    gameVersion: string;
+    useBuffs?: boolean;
+    mode?: ReplaySimulationMode;
+    maxActions?: number;
+    createdAt?: string;
+    hostPlayer?: PlayerKey;
+}
+
+export interface ReplaySimulationResult {
+    replay: ReplayVNext;
+    summary: ReplaySummary;
+    evaluation: EvaluationReport;
+    finalState: import('../types').GameState;
+    finalStateHash: string;
+    history: import('../types').GameAction[];
+    status: ReplaySimulationStatus;
+    abortReason: ReplaySimulationAbortReason | null;
+    actionsExecuted: number;
+}

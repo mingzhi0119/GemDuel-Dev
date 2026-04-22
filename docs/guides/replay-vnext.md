@@ -57,6 +57,14 @@ Shared replay APIs live in `packages/shared/src/replay/`:
 - `loadReplaySession(...)`
 - `getReplaySummary(...)`
 - `evaluateReplayPerformance(...)`
+- `simulateAiVsAiReplay(...)`
+- `simulateAiVsAiReplayBatch(...)`
+
+## Backend-only AI simulation
+
+- AI vs AI replay generation is available in the shared layer only; no frontend mode was added.
+- Use `simulateAiVsAiReplay(...)` to run one pure-logic match and get `replay`, `summary`, `evaluation`, and `finalState`.
+- Use `simulateAiVsAiReplayBatch(...)` or `pnpm --dir tools/scripts run ai:replays -- --count 10` to batch-generate replay samples for testing and scoring.
 
 ## Desktop runtime behavior
 

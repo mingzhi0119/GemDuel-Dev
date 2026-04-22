@@ -13,6 +13,7 @@ pnpm boundaries:check
 pnpm deps:check
 pnpm desktop:check
 pnpm release:check
+pnpm --dir tools/scripts run ai:replays -- --count 10 --use-buffs
 ```
 
 ## What We Verify

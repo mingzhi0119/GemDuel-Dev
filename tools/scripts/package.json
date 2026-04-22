@@ -4,6 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "ai:replays": "node ../../node_modules/vite-node/vite-node.mjs --script generate-ai-replays.mjs",
         "architecture:check": "node check-architecture-budgets.mjs",
         "bundle:check": "node check-build-budget.mjs",
         "boundaries:check": "node check-boundary-governance.mjs",

@@ -27,6 +27,20 @@ pnpm desktop:check
 pnpm release:check
 ```
 
+## AI Replay Generation
+
+Use the backend-only AI simulation script to generate Replay vNext samples for testing, evaluation, and scoring without adding an AI vs AI mode to the frontend.
+
+```bash
+pnpm --dir tools/scripts run ai:replays -- --count 10 --use-buffs
+```
+
+- `--count 10` runs ten AI vs AI matches in a batch.
+- `--use-buffs` enables buff draft during those simulations, so the exported replays cover more gameplay branches.
+- By default the script writes compact Replay vNext JSON files plus a `manifest.json` summary into `Replay/ai-batches/<timestamp>/`.
+- `manifest.json` records which matches completed or aborted, along with each replay's winner, final hash, and evaluation confidence.
+- Add `--no-write` if you only want the batch summary and evaluation output printed to the terminal.
+
 ## Workspace Layout
 
 - `apps/desktop` - Electron main process, preload bridge, renderer shell, and app runtime

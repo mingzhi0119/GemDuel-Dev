@@ -238,8 +238,13 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
             const currentBuffLevel = isBuffLevel(state.buffLevel) ? state.buffLevel : null;
             if (nextPlayer === 'p2' && currentBuffLevel) {
                 state.p2DraftLevel = currentBuffLevel;
+                const levelBuffs = Object.values(BUFFS).filter(
+                    (b) => b.level === currentBuffLevel
+                );
 
-                if (state.mode === 'LOCAL_PVP' && state.p1SelectedBuff?.id) {
+                if (p2Indices && p2Indices.length === 4) {
+                    state.p2DraftPool = p2Indices.map((i) => (levelBuffs[i] as Buff).id);
+                } else if (state.mode === 'LOCAL_PVP' && state.p1SelectedBuff?.id) {
                     const p2DraftPool = buildP2AsymmetricDraftPool(
                         currentBuffLevel,
                         state.p1SelectedBuff.id
@@ -248,15 +253,8 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
                         state.p2DraftPool = p2DraftPool;
                     }
                 } else {
-                    const levelBuffs = Object.values(BUFFS).filter(
-                        (b) => b.level === currentBuffLevel
-                    );
-                    if (p2Indices && p2Indices.length === 4) {
-                        state.p2DraftPool = p2Indices.map((i) => (levelBuffs[i] as Buff).id);
-                    } else {
-                        const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
-                        state.p2DraftPool = shuffled.slice(0, 4).map((b) => (b as Buff).id);
-                    }
+                    const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
+                    state.p2DraftPool = shuffled.slice(0, 4).map((b) => (b as Buff).id);
                 }
             }
         } else {

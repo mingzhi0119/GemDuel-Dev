@@ -9,3 +9,4 @@ export * from './extract';
 export * from './metrics';
 export * from './evaluation';
 export * from './recorder';
+export * from './simulation';
