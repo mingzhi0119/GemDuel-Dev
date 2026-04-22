@@ -12,6 +12,7 @@ describe('useSettings', () => {
     let root: Root | null = null;
     let container: HTMLDivElement | null = null;
     let currentResult: ReturnType<typeof useSettings> | null = null;
+    const originalLocalStorage = window.localStorage;
 
     const renderHarness = () => {
         const Harness = () => {
@@ -50,6 +51,10 @@ describe('useSettings', () => {
         container?.remove();
         root = null;
         container = null;
+        Object.defineProperty(window, 'localStorage', {
+            configurable: true,
+            value: originalLocalStorage,
+        });
         vi.restoreAllMocks();
     });
 
@@ -102,5 +107,63 @@ describe('useSettings', () => {
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored).toMatchObject({ theme: 'dark', locale: 'en' });
+    });
+
+    it('falls back cleanly when stored settings JSON is invalid', () => {
+        window.localStorage.setItem(SETTINGS_STORAGE_KEY, '{');
+
+        renderHarness();
+
+        expect(currentResult?.theme).toBe('dark');
+        expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.hasExplicitLocalePreference).toBe(false);
+
+        const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
+        expect(stored).toMatchObject({ theme: 'dark' });
+        expect(stored.locale).toBeUndefined();
+    });
+
+    it('sanitizes invalid stored values and supports updater-form locale changes', () => {
+        window.localStorage.setItem(
+            SETTINGS_STORAGE_KEY,
+            JSON.stringify({ theme: 'neon', locale: 'fr' })
+        );
+
+        renderHarness();
+
+        expect(currentResult?.theme).toBe('dark');
+        expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.hasExplicitLocalePreference).toBe(false);
+
+        act(() => {
+            currentResult?.setLocale((current) => (current === 'en' ? 'zh' : 'en'));
+        });
+
+        expect(currentResult?.locale).toBe('zh');
+        expect(currentResult?.hasExplicitLocalePreference).toBe(true);
+
+        const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
+        expect(stored).toMatchObject({ theme: 'dark', locale: 'zh' });
+    });
+
+    it('skips storage persistence when localStorage is unavailable', () => {
+        Object.defineProperty(window, 'localStorage', {
+            configurable: true,
+            value: undefined,
+        });
+
+        setNavigatorLanguage('zh-CN');
+        renderHarness();
+
+        expect(currentResult?.locale).toBe('zh');
+        expect(currentResult?.resolvedInitialLocale).toBe('zh');
+
+        act(() => {
+            currentResult?.setLocale('en');
+            currentResult?.setTheme('light');
+        });
+
+        expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.theme).toBe('light');
     });
 });
