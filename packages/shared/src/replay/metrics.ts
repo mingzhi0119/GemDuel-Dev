@@ -1,10 +1,5 @@
 import { getPlayerScore } from '../logic/selectors';
-import type {
-    EvaluationMetric,
-    LoadedReplaySession,
-    ReplaySummary,
-    ReplayVNext,
-} from './types';
+import type { EvaluationMetric, LoadedReplaySession, ReplaySummary, ReplayVNext } from './types';
 
 const clampScore = (score: number) => Math.max(0, Math.min(1, score));
 

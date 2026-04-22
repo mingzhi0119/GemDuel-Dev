@@ -1,10 +1,6 @@
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { GAME_PHASES, BUFFS } from '../../constants';
-import {
-    buildDraftPoolForLevel,
-    buildP2AsymmetricDraftPool,
-    isBuffLevel,
-} from '../gameSetup';
+import { buildDraftPoolForLevel, buildP2AsymmetricDraftPool, isBuffLevel } from '../gameSetup';
 import { canActionRunInPhase } from '../fsm';
 import {
     BasicGemColor,
@@ -238,9 +234,7 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
             const currentBuffLevel = isBuffLevel(state.buffLevel) ? state.buffLevel : null;
             if (nextPlayer === 'p2' && currentBuffLevel) {
                 state.p2DraftLevel = currentBuffLevel;
-                const levelBuffs = Object.values(BUFFS).filter(
-                    (b) => b.level === currentBuffLevel
-                );
+                const levelBuffs = Object.values(BUFFS).filter((b) => b.level === currentBuffLevel);
 
                 if (p2Indices && p2Indices.length === 4) {
                     state.p2DraftPool = p2Indices.map((i) => (levelBuffs[i] as Buff).id);
@@ -275,10 +269,7 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
     }
 };
 
-export const handleRerollDraftPool = (
-    state: GameState,
-    payload: { level?: 1 | 2 | 3 }
-): void => {
+export const handleRerollDraftPool = (state: GameState, payload: { level?: 1 | 2 | 3 }): void => {
     if (state.mode !== 'LOCAL_PVP' || !canActionRunInPhase('REROLL_DRAFT_POOL', state.phase)) {
         return;
     }

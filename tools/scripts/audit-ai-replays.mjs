@@ -25,12 +25,7 @@ const parseMode = (value) => {
 };
 
 const buildDefaultOutDir = () =>
-    path.join(
-        workspaceRoot,
-        'Replay',
-        'ai-audits',
-        new Date().toISOString().replace(/[:.]/g, '-')
-    );
+    path.join(workspaceRoot, 'Replay', 'ai-audits', new Date().toISOString().replace(/[:.]/g, '-'));
 
 const buildReplayFileName = (index, finalStateHash) =>
     `GemDuel_AIReplay_v1_${String(index + 1).padStart(3, '0')}_${finalStateHash}.json`;
@@ -135,9 +130,13 @@ const parseCliOptions = () => {
 };
 
 const loadReplayApi = async () => {
-    const replayModulePath = ['..', '..', 'packages', 'shared', 'src', 'replay', 'index.ts'].join('/');
+    const replayModulePath = ['..', '..', 'packages', 'shared', 'src', 'replay', 'index.ts'].join(
+        '/'
+    );
     return import(replayModulePath);
 };
+
+const getConsoleBridge = () => Reflect.get(globalThis, 'console');
 
 const formatSignalMessage = (args) =>
     args
@@ -189,10 +188,11 @@ const summarizeSignals = (entries) => {
 
 const captureEngineSignals = async (work) => {
     const entries = [];
-    const originalWarn = console.warn;
-    const originalError = console.error;
+    const consoleBridge = getConsoleBridge();
+    const originalWarn = consoleBridge.warn;
+    const originalError = consoleBridge.error;
 
-    console.warn = (...args) => {
+    consoleBridge.warn = (...args) => {
         const message = formatSignalMessage(args);
         entries.push({
             level: 'warn',
@@ -200,7 +200,7 @@ const captureEngineSignals = async (work) => {
             message,
         });
     };
-    console.error = (...args) => {
+    consoleBridge.error = (...args) => {
         const message = formatSignalMessage(args);
         entries.push({
             level: 'error',
@@ -216,8 +216,8 @@ const captureEngineSignals = async (work) => {
             signals: summarizeSignals(entries),
         };
     } finally {
-        console.warn = originalWarn;
-        console.error = originalError;
+        consoleBridge.warn = originalWarn;
+        consoleBridge.error = originalError;
     }
 };
 

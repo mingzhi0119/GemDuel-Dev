@@ -154,7 +154,8 @@ export const inflateCardFromInstance = (
     cardInstances: ReplayCardInstances,
     overrides: Partial<Card> = {}
 ): Card => {
-    const templateId = cardInstances[instanceId] ?? parseReplayCardInstanceId(instanceId).templateId;
+    const templateId =
+        cardInstances[instanceId] ?? parseReplayCardInstanceId(instanceId).templateId;
     const template = CARD_TEMPLATE_MAP.get(templateId);
 
     if (!template) {
@@ -262,7 +263,9 @@ export const buildReplayInitSnapshot = (
         mode: action.payload.mode,
         hostPlayer: action.payload.hostPlayer,
         board: action.payload.board.map((row) => row.map((cell) => cell.type.id)),
-        bag: action.payload.bag.map((cell) => (typeof cell === 'string' ? cell : cell.type.id)) as ReplayInitSnapshot['bag'],
+        bag: action.payload.bag.map((cell) =>
+            typeof cell === 'string' ? cell : cell.type.id
+        ) as ReplayInitSnapshot['bag'],
         market: serializeReplayMarket(nextState.market, runtimeToInstance),
         decks: serializeReplayDecks(nextState.decks, runtimeToInstance),
         cardInstances,
@@ -299,9 +302,15 @@ const buildPendingSetupFromInit = (init: ReplayInitSnapshot): GameSetupPayload =
         ),
     },
     decks: {
-        1: init.decks[1].map((instanceId) => inflateCardFromInstance(instanceId, init.cardInstances)),
-        2: init.decks[2].map((instanceId) => inflateCardFromInstance(instanceId, init.cardInstances)),
-        3: init.decks[3].map((instanceId) => inflateCardFromInstance(instanceId, init.cardInstances)),
+        1: init.decks[1].map((instanceId) =>
+            inflateCardFromInstance(instanceId, init.cardInstances)
+        ),
+        2: init.decks[2].map((instanceId) =>
+            inflateCardFromInstance(instanceId, init.cardInstances)
+        ),
+        3: init.decks[3].map((instanceId) =>
+            inflateCardFromInstance(instanceId, init.cardInstances)
+        ),
     },
     initRandoms: cloneJson(init.initRandoms),
     isHost: true,
@@ -335,7 +344,9 @@ export const serializeReplayStateSnapshot = (
     runtimeToInstance: Map<string, ReplayCardInstanceId>
 ): ReplayStateSnapshot => ({
     board: state.board.map((row) => row.map((cell) => cell.type.id)),
-    bag: state.bag.map((cell) => (typeof cell === 'string' ? cell : cell.type.id)) as ReplayStateSnapshot['bag'],
+    bag: state.bag.map((cell) =>
+        typeof cell === 'string' ? cell : cell.type.id
+    ) as ReplayStateSnapshot['bag'],
     turn: state.turn,
     phase: state.phase,
     mode: state.mode,
@@ -343,8 +354,12 @@ export const serializeReplayStateSnapshot = (
     market: serializeReplayMarket(state.market, runtimeToInstance),
     decks: serializeReplayDecks(state.decks, runtimeToInstance),
     playerTableau: {
-        p1: state.playerTableau.p1.map((card) => serializeReplayTableauCard(card, runtimeToInstance)),
-        p2: state.playerTableau.p2.map((card) => serializeReplayTableauCard(card, runtimeToInstance)),
+        p1: state.playerTableau.p1.map((card) =>
+            serializeReplayTableauCard(card, runtimeToInstance)
+        ),
+        p2: state.playerTableau.p2.map((card) =>
+            serializeReplayTableauCard(card, runtimeToInstance)
+        ),
     },
     playerReserved: {
         p1: state.playerReserved.p1.map((card) => resolveInstanceId(card, runtimeToInstance)),
@@ -384,7 +399,9 @@ export const serializeReplayStateSnapshot = (
         ? {
               instanceId: resolveInstanceId(state.pendingBuy.card, runtimeToInstance),
               source: state.pendingBuy.source,
-              ...(state.pendingBuy.marketInfo ? { marketRef: cloneJson(state.pendingBuy.marketInfo) } : {}),
+              ...(state.pendingBuy.marketInfo
+                  ? { marketRef: cloneJson(state.pendingBuy.marketInfo) }
+                  : {}),
           }
         : null,
     bonusGemTarget: state.bonusGemTarget?.id ?? null,
@@ -396,8 +413,8 @@ export const serializeReplayStateSnapshot = (
               nextPlayer: state.abilityResolution.nextPlayer,
               pending: state.abilityResolution.pending,
               resolved: state.abilityResolution.resolved,
-              ...(state.abilityResolution.bonusGemColor
-                  && state.abilityResolution.bonusGemColor !== 'null'
+              ...(state.abilityResolution.bonusGemColor &&
+              state.abilityResolution.bonusGemColor !== 'null'
                   ? { bonusGemColor: state.abilityResolution.bonusGemColor }
                   : {}),
               ...(state.abilityResolution.deferredEchoWrite
@@ -405,8 +422,8 @@ export const serializeReplayStateSnapshot = (
                         deferredEchoWrite: {
                             holder: state.abilityResolution.deferredEchoWrite.holder,
                             abilities: state.abilityResolution.deferredEchoWrite.abilities,
-                            ...(state.abilityResolution.deferredEchoWrite.bonusColor
-                                && state.abilityResolution.deferredEchoWrite.bonusColor !== 'null'
+                            ...(state.abilityResolution.deferredEchoWrite.bonusColor &&
+                            state.abilityResolution.deferredEchoWrite.bonusColor !== 'null'
                                 ? {
                                       bonusColor:
                                           state.abilityResolution.deferredEchoWrite.bonusColor,
@@ -425,9 +442,13 @@ export const inflateReplayStateSnapshot = (
 ): GameState => {
     const base = cloneJson(INITIAL_STATE_SKELETON);
     base.board = snapshot.board.map((row, rowIndex) =>
-        row.map((gemId, columnIndex) => createBoardCell(gemId, `replay-board-${rowIndex}-${columnIndex}-${gemId}`))
+        row.map((gemId, columnIndex) =>
+            createBoardCell(gemId, `replay-board-${rowIndex}-${columnIndex}-${gemId}`)
+        )
     );
-    base.bag = snapshot.bag.map((gemId, index) => createBoardCell(gemId, `replay-bag-${index}-${gemId}`));
+    base.bag = snapshot.bag.map((gemId, index) =>
+        createBoardCell(gemId, `replay-bag-${index}-${gemId}`)
+    );
     base.turn = snapshot.turn;
     base.phase = snapshot.phase;
     base.mode = snapshot.mode;
@@ -447,13 +468,23 @@ export const inflateReplayStateSnapshot = (
         ),
     };
     base.decks = {
-        1: snapshot.decks[1].map((instanceId) => inflateCardFromInstance(instanceId, init.cardInstances)),
-        2: snapshot.decks[2].map((instanceId) => inflateCardFromInstance(instanceId, init.cardInstances)),
-        3: snapshot.decks[3].map((instanceId) => inflateCardFromInstance(instanceId, init.cardInstances)),
+        1: snapshot.decks[1].map((instanceId) =>
+            inflateCardFromInstance(instanceId, init.cardInstances)
+        ),
+        2: snapshot.decks[2].map((instanceId) =>
+            inflateCardFromInstance(instanceId, init.cardInstances)
+        ),
+        3: snapshot.decks[3].map((instanceId) =>
+            inflateCardFromInstance(instanceId, init.cardInstances)
+        ),
     };
     base.playerTableau = {
-        p1: snapshot.playerTableau.p1.map((card) => inflateReplayTableauCard(card, init.cardInstances)),
-        p2: snapshot.playerTableau.p2.map((card) => inflateReplayTableauCard(card, init.cardInstances)),
+        p1: snapshot.playerTableau.p1.map((card) =>
+            inflateReplayTableauCard(card, init.cardInstances)
+        ),
+        p2: snapshot.playerTableau.p2.map((card) =>
+            inflateReplayTableauCard(card, init.cardInstances)
+        ),
     };
     base.playerReserved = {
         p1: snapshot.playerReserved.p1.map((instanceId) =>
@@ -484,7 +515,8 @@ export const inflateReplayStateSnapshot = (
     base.p1SelectedBuff = snapshot.p1SelectedBuffId
         ? inflateReplayBuffRef({
               id: snapshot.p1SelectedBuffId,
-              level: (BUFF_MAP.get(snapshot.p1SelectedBuffId)?.level ?? 0) as ReplayBuffRef['level'],
+              level: (BUFF_MAP.get(snapshot.p1SelectedBuffId)?.level ??
+                  0) as ReplayBuffRef['level'],
           })
         : null;
     base.draftOrder = cloneJson(snapshot.draftOrder);
@@ -506,7 +538,9 @@ export const inflateReplayStateSnapshot = (
                     }
                   : {}),
               level: snapshot.pendingReserve.level,
-              ...(snapshot.pendingReserve.idx !== undefined ? { idx: snapshot.pendingReserve.idx } : {}),
+              ...(snapshot.pendingReserve.idx !== undefined
+                  ? { idx: snapshot.pendingReserve.idx }
+                  : {}),
               ...(snapshot.pendingReserve.isDeck ? { isDeck: true } : {}),
           }
         : null;
@@ -543,11 +577,7 @@ const findCardInMarket = (state: GameState, marketRef: ReplayMarketRef) => {
     return state.market[marketRef.level][marketRef.idx] ?? null;
 };
 
-const findCardByInstance = (
-    state: GameState,
-    instanceId: ReplayCardInstanceId,
-    owner: PlayerKey
-) =>
+const findCardByInstance = (state: GameState, instanceId: ReplayCardInstanceId, owner: PlayerKey) =>
     state.playerReserved[owner].find((card) => card.id === instanceId) ??
     state.playerTableau[owner].find((card) => card.id === instanceId && !card.isBuff) ??
     null;
@@ -620,16 +650,14 @@ export const inflateReplayEventToGameAction = (
         }
         case 'reserve_card': {
             const card = event.isSteal
-                ? findCardByInstance(
-                      state,
-                      event.instanceId,
-                      event.actor === 'p1' ? 'p2' : 'p1'
-                  )
+                ? findCardByInstance(state, event.instanceId, event.actor === 'p1' ? 'p2' : 'p1')
                 : findCardInMarket(state, event.marketRef);
             return {
                 type: 'RESERVE_CARD',
                 payload: {
-                    card: cloneJson(card ?? inflateCardFromInstance(event.instanceId, init.cardInstances)),
+                    card: cloneJson(
+                        card ?? inflateCardFromInstance(event.instanceId, init.cardInstances)
+                    ),
                     level: event.level,
                     idx: event.marketRef.idx,
                     ...(event.goldCoord ? { goldCoords: cloneJson(event.goldCoord) } : {}),
@@ -658,7 +686,9 @@ export const inflateReplayEventToGameAction = (
                 payload: cloneJson(event.coord),
             };
         case 'select_royal': {
-            const royal = state.royalDeck.find((card) => card.id === event.royalId) ?? inflateRoyalCard(event.royalId);
+            const royal =
+                state.royalDeck.find((card) => card.id === event.royalId) ??
+                inflateRoyalCard(event.royalId);
             return {
                 type: 'SELECT_ROYAL_CARD',
                 payload: { card: cloneJson(royal) },

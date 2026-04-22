@@ -54,7 +54,7 @@ export const useGameLogic = (
     const currentReplay = useMemo(() => {
         const recorder =
             gameState.mode === 'ONLINE_MULTIPLAYER' && !gameState.isHost
-                ? online.authoritativeReplayRecorder ?? null
+                ? (online.authoritativeReplayRecorder ?? null)
                 : localReplayRecorder;
         return recorder?.init ? buildReplayFullSync(recorder, gameState).replay : null;
     }, [gameState, localReplayRecorder, online.authoritativeReplayRecorder]);

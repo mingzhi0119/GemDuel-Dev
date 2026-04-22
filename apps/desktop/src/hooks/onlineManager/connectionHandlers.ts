@@ -102,7 +102,7 @@ export const registerConnectionHandlers = ({
             return;
         }
 
-            switch (msg.type) {
+        switch (msg.type) {
             case 'BOOTSTRAP_STATE':
                 handlersRef.current.onBootstrapReceived(msg.command, msg.checksum, msg.replayFull);
                 break;

@@ -38,7 +38,9 @@ const reduceHistoryToState = (history: GameAction[]): GameState => {
     for (const action of history) {
         const nextState = applyAction(state, action);
         if (!nextState) {
-            throw new Error(`Could not apply action ${action.type} while building replay test state.`);
+            throw new Error(
+                `Could not apply action ${action.type} while building replay test state.`
+            );
         }
         state = nextState;
     }
@@ -112,7 +114,9 @@ describe('Replay vNext', () => {
         const replay = createMinimalReplay();
 
         expect(replayVNextSchema.safeParse(replay).success).toBe(true);
-        expect(replayVNextSchema.safeParse({ ...replay, schemaVersion: '0.9' }).success).toBe(false);
+        expect(replayVNextSchema.safeParse({ ...replay, schemaVersion: '0.9' }).success).toBe(
+            false
+        );
         expect(
             replayVNextSchema.safeParse({
                 ...replay,
@@ -192,7 +196,11 @@ describe('Replay vNext', () => {
     });
 
     it('supports full+delta replay sync with idempotency and revision-gap detection', () => {
-        const { history, finalState: fullState, recorder: fullRecorder } = buildDraftReplayFixture();
+        const {
+            history,
+            finalState: fullState,
+            recorder: fullRecorder,
+        } = buildDraftReplayFixture();
         const partialHistory = history.slice(0, 1);
         const partialRecorder = buildReplayRecorderFromHistory(partialHistory, '5.2.11');
         const partialState = reduceHistoryToState(partialHistory);
@@ -200,7 +208,11 @@ describe('Replay vNext', () => {
             buildReplayFullSync(partialRecorder, partialState).replay
         );
 
-        const deltaSync = buildReplayDeltaSync(fullRecorder, fullState, guestRecorder.replayRevision);
+        const deltaSync = buildReplayDeltaSync(
+            fullRecorder,
+            fullState,
+            guestRecorder.replayRevision
+        );
         expect(deltaSync.kind).toBe('delta');
         if (deltaSync.kind !== 'delta') {
             throw new Error('Expected a replay delta sync.');
@@ -209,7 +221,11 @@ describe('Replay vNext', () => {
         applyReplaySyncToRecorder(guestRecorder, deltaSync);
         expect(guestRecorder.replayRevision).toBe(fullRecorder.replayRevision);
 
-        const idempotentSync = buildReplayDeltaSync(fullRecorder, fullState, guestRecorder.replayRevision);
+        const idempotentSync = buildReplayDeltaSync(
+            fullRecorder,
+            fullState,
+            guestRecorder.replayRevision
+        );
         expect(idempotentSync.kind).toBe('delta');
         applyReplaySyncToRecorder(guestRecorder, idempotentSync);
         expect(guestRecorder.replayRevision).toBe(fullRecorder.replayRevision);

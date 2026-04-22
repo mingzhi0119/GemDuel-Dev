@@ -5,11 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
 import { applyAction } from '@gemduel/shared/logic/gameReducer';
 import { createGameSetupPayload } from '@gemduel/shared/logic/gameSetup';
-import {
-    buildReplayInitSnapshot,
-    saveReplayVNext,
-    type ReplayVNext,
-} from '@gemduel/shared/replay';
+import { buildReplayInitSnapshot, saveReplayVNext, type ReplayVNext } from '@gemduel/shared/replay';
 import { useReplayAutoSave } from '../useReplayAutoSave';
 
 (
@@ -104,7 +100,9 @@ describe('useReplayAutoSave', () => {
 
     it('auto-saves a finished live replay exactly once per match', async () => {
         const replay = createReplayFixture(true);
-        const persistReplayToProjectFolder = vi.fn().mockResolvedValue('E:\\GemDuel-Dev\\Replay\\match.json');
+        const persistReplayToProjectFolder = vi
+            .fn()
+            .mockResolvedValue('E:\\GemDuel-Dev\\Replay\\match.json');
 
         renderHarness({
             replay,
@@ -129,7 +127,9 @@ describe('useReplayAutoSave', () => {
 
     it('skips imported replay sessions and retries only after history resets', async () => {
         const replay = createReplayFixture(true);
-        const persistReplayToProjectFolder = vi.fn().mockResolvedValue('E:\\GemDuel-Dev\\Replay\\match.json');
+        const persistReplayToProjectFolder = vi
+            .fn()
+            .mockResolvedValue('E:\\GemDuel-Dev\\Replay\\match.json');
 
         renderHarness({
             replay,

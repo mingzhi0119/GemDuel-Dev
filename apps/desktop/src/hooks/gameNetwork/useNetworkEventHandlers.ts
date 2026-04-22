@@ -106,8 +106,7 @@ export const useNetworkEventHandlers = ({
                     category: 'recovery',
                     name: 'REPLAY_SYNC_REJECTED',
                     severity: 'warn',
-                    message:
-                        'Guest rejected an authoritative replay sync and requested recovery.',
+                    message: 'Guest rejected an authoritative replay sync and requested recovery.',
                     context: createReasonTelemetryContext(recoveryReason),
                 },
                 {
@@ -117,7 +116,13 @@ export const useNetworkEventHandlers = ({
             publishStatusNotice(createUiStatusNotice(recoveryReason));
             onlineRef.current?.requestRecovery(recoveryReason);
         },
-        [localDispatch, onlineRef, pendingGuestIntentRef, publishStatusNotice, syncAuthoritativeReplay]
+        [
+            localDispatch,
+            onlineRef,
+            pendingGuestIntentRef,
+            publishStatusNotice,
+            syncAuthoritativeReplay,
+        ]
     );
 
     const handleGuestIntentReceived = useCallback(

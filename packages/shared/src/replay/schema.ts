@@ -10,7 +10,11 @@ import {
     levelSchema,
     playerKeySchema,
 } from '../logic/contractSchemasCore';
-import { gemInventorySchema, initRandomsSchema, marketCardRefSchema } from '../logic/contractSchemasGameState';
+import {
+    gemInventorySchema,
+    initRandomsSchema,
+    marketCardRefSchema,
+} from '../logic/contractSchemasGameState';
 import {
     REPLAY_VNEXT_SCHEMA_VERSION,
     type EvaluationReport,
@@ -267,12 +271,9 @@ export const replayEventSchema: z.ZodType<ReplayEvent> = z.discriminatedUnion('t
                 })
                 .strict()
                 .optional(),
-            p2DraftPoolIndices: z.tuple([
-                z.number().int(),
-                z.number().int(),
-                z.number().int(),
-                z.number().int(),
-            ]).optional(),
+            p2DraftPoolIndices: z
+                .tuple([z.number().int(), z.number().int(), z.number().int(), z.number().int()])
+                .optional(),
         })
         .strict(),
     z

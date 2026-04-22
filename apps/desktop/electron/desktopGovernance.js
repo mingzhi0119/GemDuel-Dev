@@ -37,7 +37,10 @@ const SAFE_REPLAY_FILE_NAME_SCHEMA = z
 const SAVE_REPLAY_TO_FOLDER_TUPLE_SCHEMA = z.tuple([
     z.object({
         fileName: SAFE_REPLAY_FILE_NAME_SCHEMA,
-        contents: z.string().min(2).max(512 * 1024),
+        contents: z
+            .string()
+            .min(2)
+            .max(512 * 1024),
     }),
 ]);
 const LAN_PEER_READY_TUPLE_SCHEMA = z.tuple([
@@ -118,7 +121,7 @@ export const validateIpcArgs = (channel, args) => {
                     ? 'Release-health payload did not match the allowlisted schema.'
                     : channel === IPC_INVOKE_CHANNELS.saveReplayToFolder
                       ? 'Replay export payload did not match the allowlisted schema.'
-                    : 'This channel does not accept payload arguments.',
+                      : 'This channel does not accept payload arguments.',
         };
     }
 

@@ -27,7 +27,11 @@ export interface OnlineManagerController {
     connectionStatus: ConnectionStatus;
     isHost: boolean;
     connectToPeer: (id: string) => void;
-    sendBootstrap: (command: BootstrapCommand, checksum?: string, replayFull?: ReplayFullSync) => void;
+    sendBootstrap: (
+        command: BootstrapCommand,
+        checksum?: string,
+        replayFull?: ReplayFullSync
+    ) => void;
     sendGuestIntent: (requestId: string, command: GuestIntentCommand) => void;
     sendHostDecision: (decision: Omit<HostDecisionMessage, 'type' | 'version'>) => void;
     sendState: (state: GameState, reason?: NetworkSyncReason, replaySync?: ReplaySync) => void;

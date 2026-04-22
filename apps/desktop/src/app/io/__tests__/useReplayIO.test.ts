@@ -111,7 +111,9 @@ describe('useReplayIO', () => {
         expect(saveReplayToFolder).toHaveBeenCalledTimes(2);
         expect(saveReplayToFolder).toHaveBeenLastCalledWith(
             expect.objectContaining({
-                fileName: expect.stringMatching(/^GemDuel_Replay_v1_1776688496000_[a-z0-9]+\.json$/),
+                fileName: expect.stringMatching(
+                    /^GemDuel_Replay_v1_1776688496000_[a-z0-9]+\.json$/
+                ),
                 contents: JSON.stringify(replay),
             })
         );
@@ -140,7 +142,9 @@ describe('useReplayIO', () => {
                 severity: 'warn',
             }),
             expect.objectContaining({
-                consoleMessage: expect.stringContaining('Replay export failed: GemDuel_Replay_v1_1776688496000_'),
+                consoleMessage: expect.stringContaining(
+                    'Replay export failed: GemDuel_Replay_v1_1776688496000_'
+                ),
                 consoleDetails: expect.any(Error),
             })
         );

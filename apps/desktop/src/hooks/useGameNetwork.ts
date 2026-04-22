@@ -37,8 +37,9 @@ export const useGameNetwork = (
     shouldConnect: boolean,
     targetIP: string = 'localhost',
     targetPort: number = 9000,
-    localReplayRecorder: ReturnType<typeof createReplayRecorderInternalState> =
-        createReplayRecorderInternalState('unknown')
+    localReplayRecorder: ReturnType<
+        typeof createReplayRecorderInternalState
+    > = createReplayRecorderInternalState('unknown')
 ) => {
     const onlineRef = useRef<OnlineManagerController | null>(null);
     const requestCounterRef = useRef(0);

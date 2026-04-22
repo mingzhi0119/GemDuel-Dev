@@ -135,7 +135,9 @@ const buildManifest = (options, results) => {
 };
 
 const loadSimulationApi = async () => {
-    const replayModulePath = ['..', '..', 'packages', 'shared', 'src', 'replay', 'index.ts'].join('/');
+    const replayModulePath = ['..', '..', 'packages', 'shared', 'src', 'replay', 'index.ts'].join(
+        '/'
+    );
     return import(replayModulePath);
 };
 
@@ -155,7 +157,10 @@ const main = async () => {
         await Promise.all(
             results.map((result, index) =>
                 writeFile(
-                    path.join(options.outDir, buildReplayFileName(index, result.summary.finalStateHash)),
+                    path.join(
+                        options.outDir,
+                        buildReplayFileName(index, result.summary.finalStateHash)
+                    ),
                     JSON.stringify(result.replay),
                     'utf8'
                 )

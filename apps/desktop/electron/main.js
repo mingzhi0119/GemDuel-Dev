@@ -75,7 +75,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const getReplayExportDirectory = () =>
-    isDev ? path.resolve(__dirname, '../../..', 'Replay') : path.join(app.getPath('userData'), 'Replay');
+    isDev
+        ? path.resolve(__dirname, '../../..', 'Replay')
+        : path.join(app.getPath('userData'), 'Replay');
 
 const saveReplayToFolder = async (payload) => {
     const safeFileName = path.basename(payload.fileName);

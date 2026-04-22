@@ -256,9 +256,8 @@ export const isPeekDeckPayload = (value: unknown): value is PeekDeckPayload =>
 export const isSelectBuffPayload = (value: unknown): value is SelectBuffPayload =>
     selectBuffPayloadSchema.safeParse(value).success;
 
-export const isRerollDraftPoolPayload = (
-    value: unknown
-): value is { level?: 1 | 2 | 3 } => rerollDraftPoolPayloadSchema.safeParse(value).success;
+export const isRerollDraftPoolPayload = (value: unknown): value is { level?: 1 | 2 | 3 } =>
+    rerollDraftPoolPayloadSchema.safeParse(value).success;
 
 export const isGameSetupPayload = (value: unknown): value is BuffInitPayload =>
     isPlainObject(value) &&

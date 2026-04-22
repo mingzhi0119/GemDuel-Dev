@@ -58,9 +58,7 @@ export interface ElectronBridge {
     getLanMatchmakingState: () => Promise<LanMatchmakingState>;
     startLanMatchmaking: () => Promise<LanMatchmakingState>;
     cancelLanMatchmaking: () => Promise<LanMatchmakingState>;
-    saveReplayToFolder?: (
-        payload: SaveReplayToFolderPayload
-    ) => Promise<SaveReplayToFolderResult>;
+    saveReplayToFolder?: (payload: SaveReplayToFolderPayload) => Promise<SaveReplayToFolderResult>;
     selectLanPregameMode: (payload: SelectLanPregameModePayload) => Promise<LanMatchmakingState>;
     confirmLanPregameStart: (
         payload: ConfirmLanPregameStartPayload
