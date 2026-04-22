@@ -7,6 +7,10 @@
 
 import { BONUS_COLORS, GAME_PHASES } from '../constants';
 import { GameState, PlayerKey, GemColor } from '../types';
+import {
+    clearAbilityResolution,
+    commitDeferredEchoReservoirWrite,
+} from './actions/abilityResolution';
 
 // Helper to grant random basic gems (duplicate logic from marketActions, maybe move to utils? keeping for now)
 const grantRandomBasicGems = (state: GameState, player: PlayerKey, count: number) => {
@@ -102,16 +106,23 @@ export const finalizeTurn = (
     if (isWinning(state.turn)) {
         state.winner = state.turn;
         state.phase = GAME_PHASES.IDLE; // Close any open pickers
+        state.nextPlayerAfterRoyal = null;
+        state.pendingExtraTurn = false;
+        clearAbilityResolution(state);
         return;
     }
     const opponent: PlayerKey = state.turn === 'p1' ? 'p2' : 'p1';
     if (isWinning(opponent)) {
         state.winner = opponent;
         state.phase = GAME_PHASES.IDLE; // Close any open pickers
+        state.nextPlayerAfterRoyal = null;
+        state.pendingExtraTurn = false;
+        clearAbilityResolution(state);
         return;
     }
 
     const transitionTarget: PlayerKey = state.pendingExtraTurn ? state.turn : nextPlayer;
+    const abilityResolutionTarget = state.abilityResolution?.nextPlayer || transitionTarget;
 
     // ========== BUFF EFFECTS: Hoarder ==========
     const nextBuffEffect = state.playerBuffs?.[transitionTarget]?.effects?.passive;
@@ -132,7 +143,7 @@ export const finalizeTurn = (
             const milestoneHit = crowns >= 6 && !milestones[6] ? 6 : 3;
             state.royalMilestones[state.turn][milestoneHit] = true;
             state.phase = GAME_PHASES.SELECT_ROYAL;
-            state.nextPlayerAfterRoyal = transitionTarget;
+            state.nextPlayerAfterRoyal = abilityResolutionTarget;
             return;
         }
     }
@@ -148,7 +159,7 @@ export const finalizeTurn = (
         // Enter discard phase, don't switch turn yet
         state.phase = GAME_PHASES.DISCARD_EXCESS_GEMS;
         if (!state.nextPlayerAfterRoyal) {
-            state.nextPlayerAfterRoyal = transitionTarget;
+            state.nextPlayerAfterRoyal = abilityResolutionTarget;
         }
         return;
     }
@@ -164,7 +175,7 @@ export const finalizeTurn = (
         if (!currentBuffObj.state) currentBuffObj.state = {};
         currentBuffObj.state.envoyTriggered = true;
         state.phase = GAME_PHASES.SELECT_ROYAL;
-        state.nextPlayerAfterRoyal = transitionTarget;
+        state.nextPlayerAfterRoyal = abilityResolutionTarget;
         state.toastMessage = 'Royal Envoy: Pick a Royal Card!';
         return;
     }
@@ -183,9 +194,11 @@ export const finalizeTurn = (
     }
 
     // ========== NORMAL TURN TRANSITION ==========
+    commitDeferredEchoReservoirWrite(state);
     state.playerTurnCounts[state.turn]++; // Increment completed turn count
     state.turn = transitionTarget;
     state.phase = GAME_PHASES.IDLE;
     state.nextPlayerAfterRoyal = null;
     state.pendingExtraTurn = false;
+    clearAbilityResolution(state);
 };

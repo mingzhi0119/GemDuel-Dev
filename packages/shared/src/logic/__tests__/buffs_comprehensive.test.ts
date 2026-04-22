@@ -208,6 +208,14 @@ describe('Comprehensive Buff Tests', () => {
                 state.playerTableau.p1
             );
             expect(cost.gemsPaid.red).toBe(0);
+            expect(state.playerTableau.p1).toEqual([
+                expect.objectContaining({
+                    id: 'buff-color-pref-p1-red',
+                    bonusColor: 'red',
+                    bonusCount: 1,
+                    isBuff: true,
+                }),
+            ]);
         });
 
         it('EXTORTION: Steals on 2nd Replenish', () => {

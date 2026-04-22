@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUFFS, GAME_PHASES, GEM_TYPES } from '../../../constants';
 import { createMockState } from '../../__tests__/testHelpers';
-import { handleDiscardGem } from '../boardActions';
+import { handleDiscardGem, handleStealGem } from '../boardActions';
 import {
     handleBuyCard,
     handleCancelReserve,
@@ -45,6 +45,18 @@ const createState = (overrides: Partial<GameState> = {}): GameState =>
             })
         )
     ) as GameState;
+
+const createEchoReservoirBuff = (state?: Buff['state']): Buff => ({
+    ...BUFFS.ECHO_RESERVOIR,
+    state: state ? { ...state } : undefined,
+});
+
+const buyFromMarket = (state: GameState, card: Card): GameState =>
+    handleBuyCard(state, {
+        card,
+        source: 'market',
+        marketInfo: { level: card.level, idx: 0 },
+    });
 
 describe('marketActions phase 3 coverage', () => {
     afterEach(() => {
@@ -259,7 +271,7 @@ describe('marketActions phase 3 coverage', () => {
 
         expect(afterBuy.phase).toBe(GAME_PHASES.SELECT_ROYAL);
         expect(afterBuy.turn).toBe('p1');
-        expect(afterBuy.nextPlayerAfterRoyal).toBe('p1');
+        expect(afterBuy.nextPlayerAfterRoyal).toBe('p2');
         expect(afterBuy.pendingExtraTurn).toBe(true);
 
         const afterRoyal = handleSelectRoyalCard(afterBuy, {
@@ -268,13 +280,206 @@ describe('marketActions phase 3 coverage', () => {
 
         expect(afterRoyal.phase).toBe(GAME_PHASES.DISCARD_EXCESS_GEMS);
         expect(afterRoyal.turn).toBe('p1');
-        expect(afterRoyal.nextPlayerAfterRoyal).toBe('p1');
+        expect(afterRoyal.nextPlayerAfterRoyal).toBe('p2');
         expect(afterRoyal.pendingExtraTurn).toBe(true);
 
         const afterDiscard = handleDiscardGem(afterRoyal, 'blue');
         expect(afterDiscard.phase).toBe(GAME_PHASES.IDLE);
         expect(afterDiscard.turn).toBe('p1');
         expect(afterDiscard.pendingExtraTurn).toBe(false);
+    });
+
+    it('stores an opponent steal ability, echoes it once on your purchase, and clears the ammo', () => {
+        const stealCard = createCard({ id: 'echo-source-steal', ability: 'steal' });
+        const vanillaCard = createCard({ id: 'echo-consumer-vanilla' });
+        const state = createState({
+            turn: 'p2',
+            inventories: {
+                p1: { blue: 1, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 1, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+            },
+            playerBuffs: { p1: createEchoReservoirBuff(), p2: BUFFS.NONE },
+        });
+
+        const afterOpponentBuy = buyFromMarket(state, stealCard);
+        expect(afterOpponentBuy.phase).toBe(GAME_PHASES.STEAL_ACTION);
+        expect(afterOpponentBuy.playerBuffs.p1.state?.echoReservoirStoredAbilities).toBeUndefined();
+
+        const afterOpponentSteal = handleStealGem(afterOpponentBuy, { gemId: 'blue' });
+        expect(afterOpponentSteal.turn).toBe('p1');
+        expect(afterOpponentSteal.playerBuffs.p1.state?.echoReservoirStoredAbilities).toEqual([
+            'steal',
+        ]);
+
+        const afterHolderBuy = buyFromMarket(afterOpponentSteal, vanillaCard);
+        expect(afterHolderBuy.phase).toBe(GAME_PHASES.STEAL_ACTION);
+        expect(afterHolderBuy.playerBuffs.p1.state?.echoReservoirStoredAbilities).toBeUndefined();
+
+        const afterEchoSteal = handleStealGem(afterHolderBuy, { gemId: 'blue' });
+        expect(afterEchoSteal.turn).toBe('p2');
+        expect(afterEchoSteal.inventories.p1.blue).toBe(1);
+        expect(afterEchoSteal.inventories.p2.blue).toBe(1);
+        expect(afterEchoSteal.playerBuffs.p1.state?.echoReservoirStoredAbilities).toBeUndefined();
+    });
+
+    it('dedupes AGAIN between card face and echo so only one extra turn window is created', () => {
+        const againCard = createCard({ id: 'echo-again', ability: 'again' });
+        const vanillaCard = createCard({ id: 'plain-follow-up' });
+        const state = createState({
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 2, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 2, gold: 0, pearl: 0 },
+            },
+            playerBuffs: { p1: BUFFS.NONE, p2: createEchoReservoirBuff() },
+        });
+
+        const afterFeed = buyFromMarket(state, againCard);
+        expect(afterFeed.turn).toBe('p1');
+        expect(afterFeed.playerBuffs.p2.state?.echoReservoirStoredAbilities).toEqual(['again']);
+
+        const afterP1ExtraTurn = buyFromMarket(afterFeed, vanillaCard);
+        expect(afterP1ExtraTurn.turn).toBe('p2');
+
+        const afterEchoAgain = buyFromMarket(afterP1ExtraTurn, againCard);
+        expect(afterEchoAgain.turn).toBe('p2');
+        expect(afterEchoAgain.pendingExtraTurn).toBe(false);
+        expect(afterEchoAgain.playerBuffs.p2.state?.echoReservoirStoredAbilities).toBeUndefined();
+
+        const afterOnlyExtraTurn = buyFromMarket(afterEchoAgain, vanillaCard);
+        expect(afterOnlyExtraTurn.turn).toBe('p1');
+    });
+
+    it('keeps existing stored ammo when the opponent later buys a vanilla card', () => {
+        const vanillaCard = createCard({ id: 'vanilla-overwrite-check' });
+        const state = createState({
+            turn: 'p2',
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+            },
+            playerBuffs: {
+                p1: createEchoReservoirBuff({
+                    echoReservoirStoredAbilities: ['steal'],
+                }),
+                p2: BUFFS.NONE,
+            },
+        });
+
+        const nextState = buyFromMarket(state, vanillaCard);
+        expect(nextState.turn).toBe('p1');
+        expect(nextState.playerBuffs.p1.state?.echoReservoirStoredAbilities).toEqual(['steal']);
+    });
+
+    it('records multiple printed abilities together and resolves each type once in the same purchase', () => {
+        const dualAbilityCard = createCard({
+            id: 'dual-print-source',
+            ability: ['steal', 'scroll'],
+        });
+        const vanillaCard = createCard({ id: 'dual-consumer' });
+        const state = createState({
+            turn: 'p2',
+            inventories: {
+                p1: { blue: 1, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 1, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+            },
+            privileges: { p1: 1, p2: 2 },
+            playerBuffs: { p1: createEchoReservoirBuff(), p2: BUFFS.NONE },
+        });
+
+        const afterOpponentBuy = buyFromMarket(state, dualAbilityCard);
+        const afterOpponentSteal = handleStealGem(afterOpponentBuy, { gemId: 'blue' });
+
+        expect(afterOpponentSteal.playerBuffs.p1.state?.echoReservoirStoredAbilities).toEqual([
+            'steal',
+            'scroll',
+        ]);
+
+        const afterHolderBuy = buyFromMarket(afterOpponentSteal, vanillaCard);
+        expect(afterHolderBuy.phase).toBe(GAME_PHASES.STEAL_ACTION);
+
+        const afterEchoResolution = handleStealGem(afterHolderBuy, { gemId: 'blue' });
+        expect(afterEchoResolution.turn).toBe('p2');
+        expect(afterEchoResolution.inventories.p1.blue).toBe(1);
+        expect(afterEchoResolution.privileges).toEqual({ p1: 1, p2: 2 });
+        expect(
+            afterEchoResolution.playerBuffs.p1.state?.echoReservoirStoredAbilities
+        ).toBeUndefined();
+    });
+
+    it('consumes echoed ability types even when the purchased card already has the same printed ability', () => {
+        const overlappingStealCard = createCard({ id: 'overlap-steal', ability: 'steal' });
+        const state = createState({
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 1, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+            playerBuffs: {
+                p1: createEchoReservoirBuff({
+                    echoReservoirStoredAbilities: ['steal'],
+                }),
+                p2: BUFFS.NONE,
+            },
+        });
+
+        const afterBuy = buyFromMarket(state, overlappingStealCard);
+        expect(afterBuy.phase).toBe(GAME_PHASES.STEAL_ACTION);
+        expect(afterBuy.playerBuffs.p1.state?.echoReservoirStoredAbilities).toBeUndefined();
+
+        const afterSteal = handleStealGem(afterBuy, { gemId: 'blue' });
+        expect(afterSteal.inventories.p1.blue).toBe(1);
+        expect(afterSteal.inventories.p2.blue).toBe(0);
+        expect(afterSteal.playerBuffs.p1.state?.echoReservoirStoredAbilities).toBeUndefined();
+    });
+
+    it('does not echo bonus_gem without a stored color and still clears the spent memory', () => {
+        const vanillaCard = createCard({ id: 'echo-bonus-no-color' });
+        const state = createState({
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+            playerBuffs: {
+                p1: createEchoReservoirBuff({
+                    echoReservoirStoredAbilities: ['bonus_gem'],
+                }),
+                p2: BUFFS.NONE,
+            },
+        });
+
+        const nextState = buyFromMarket(state, vanillaCard);
+        expect(nextState.phase).toBe(GAME_PHASES.IDLE);
+        expect(nextState.turn).toBe('p2');
+        expect(nextState.bonusGemTarget).toBeNull();
+        expect(nextState.playerBuffs.p1.state?.echoReservoirStoredAbilities).toBeUndefined();
+    });
+
+    it('only stores printed abilities when both players have Echo Reservoir', () => {
+        const stealCard = createCard({ id: 'both-buffs-feed', ability: 'steal' });
+        const againCard = createCard({ id: 'both-buffs-consume', ability: 'again' });
+        const state = createState({
+            turn: 'p2',
+            inventories: {
+                p1: { blue: 1, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 1, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+            },
+            playerBuffs: {
+                p1: createEchoReservoirBuff(),
+                p2: createEchoReservoirBuff(),
+            },
+        });
+
+        const afterP2Buy = buyFromMarket(state, stealCard);
+        const afterP2Steal = handleStealGem(afterP2Buy, { gemId: 'blue' });
+
+        expect(afterP2Steal.playerBuffs.p1.state?.echoReservoirStoredAbilities).toEqual(['steal']);
+
+        const afterP1Buy = buyFromMarket(afterP2Steal, againCard);
+        expect(afterP1Buy.phase).toBe(GAME_PHASES.STEAL_ACTION);
+        expect(afterP1Buy.playerBuffs.p1.state?.echoReservoirStoredAbilities).toBeUndefined();
+
+        const afterP1Steal = handleStealGem(afterP1Buy, { gemId: 'blue' });
+        expect(afterP1Steal.turn).toBe('p1');
+        expect(afterP1Steal.playerBuffs.p2.state?.echoReservoirStoredAbilities).toEqual(['again']);
     });
 
     it('skips bonus-gem cards cleanly when no matching gem exists on the board', () => {

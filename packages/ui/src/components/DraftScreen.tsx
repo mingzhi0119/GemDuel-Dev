@@ -43,7 +43,6 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     theme,
     localPlayer,
     isOnline = false,
-    isPvE = false,
 }) => {
     const { locale } = useLocale();
     const t = useT();
@@ -86,6 +85,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     });
 
     const canInteract = !isOnline || activePlayer === localPlayer;
+    const showDraftCustomization = !isOnline && activePlayer === 'p1' && Boolean(onReroll);
 
     return (
         <div
@@ -104,13 +104,13 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
             `}
             />
 
-            {/* PVE Customize Panel (PVE P1 Only) */}
-            {isPvE && activePlayer === 'p1' && onReroll && (
+            {/* Offline Draft Customize Panel (P1 Only) */}
+            {showDraftCustomization && onReroll && (
                 <div className="absolute top-8 right-8 z-[100] flex flex-col items-end gap-2 animate-in fade-in slide-in-from-right-4 duration-500 lg:scale-[1.5] lg:transform-gpu lg:origin-top-right">
                     <div className="flex items-center gap-2 mb-1">
                         <Layers size={12} className="text-yellow-500" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500/80">
-                            {t('draft.pveCustomize')}
+                            {t('draft.customize')}
                         </span>
                     </div>
                     <div

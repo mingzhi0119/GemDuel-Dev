@@ -3,6 +3,7 @@ import { GAME_PHASES, BUFFS } from '../../constants';
 import { shuffleArray } from '../../utils';
 import { canActionRunInPhase } from '../fsm';
 import {
+    BasicGemColor,
     GameState,
     PlayerKey,
     Buff,
@@ -19,6 +20,34 @@ import {
 const getLocalPlayerFromSetup = (
     setup: Pick<GameSetupPayload, 'isHost' | 'hostPlayer'>
 ): PlayerKey => (setup.isHost ? setup.hostPlayer : setup.hostPlayer === 'p1' ? 'p2' : 'p1');
+
+const COLOR_PREFERENCE_DUMMY_PREFIX = 'buff-color-pref-';
+
+const createColorPreferenceDummyCard = (pid: PlayerKey, discountColor: BasicGemColor): Card => ({
+    id: `${COLOR_PREFERENCE_DUMMY_PREFIX}${pid}-${discountColor}`,
+    points: 0,
+    crowns: 0,
+    bonusColor: discountColor,
+    bonusCount: 1,
+    level: 1,
+    cost: { red: 0, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
+    isBuff: true,
+});
+
+const syncColorPreferenceDummyCard = (
+    draft: GameState,
+    pid: PlayerKey,
+    discountColor?: BasicGemColor
+) => {
+    const prefix = `${COLOR_PREFERENCE_DUMMY_PREFIX}${pid}`;
+    draft.playerTableau[pid] = draft.playerTableau[pid].filter(
+        (card) => !card.id.startsWith(prefix)
+    );
+
+    if (discountColor) {
+        draft.playerTableau[pid].push(createColorPreferenceDummyCard(pid, discountColor));
+    }
+};
 
 /**
  * Internal Helper: Apply initialization logic for a single player
@@ -73,22 +102,11 @@ const applyPlayerInitLogic = (draft: GameState, pid: PlayerKey, randoms?: Player
         buffState.refillCount = 0;
     }
     if (buff.id === 'color_preference') {
-        const discountColor = randoms?.preferenceColor;
+        const buffState = draft.playerBuffs[pid].state as BuffRuntimeState;
+        const discountColor = buffState.discountColor ?? randoms?.preferenceColor;
         if (discountColor) {
-            const dummyId = `buff-color-pref-${pid}`;
-            if (!draft.playerTableau[pid].some((c) => c.id.startsWith(dummyId))) {
-                const dummyCard: Card = {
-                    id: `${dummyId}-${Date.now()}`,
-                    points: 0,
-                    crowns: 0,
-                    bonusColor: discountColor,
-                    bonusCount: 1,
-                    level: 1, // Using level 1 as dummy
-                    cost: { red: 0, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
-                    isBuff: true,
-                };
-                draft.playerTableau[pid].push(dummyCard);
-            }
+            buffState.discountColor = discountColor;
+            syncColorPreferenceDummyCard(draft, pid, discountColor);
         }
     }
 };
@@ -189,6 +207,7 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
     if (buffId === 'color_preference' && randomColor) {
         const buffState = state.playerBuffs[player].state as BuffRuntimeState;
         buffState.discountColor = randomColor;
+        syncColorPreferenceDummyCard(state, player, randomColor);
     }
 
     const currentIdx = state.draftOrder.indexOf(player);
@@ -218,6 +237,7 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
             state.turn = 'p1';
 
             ensureStructures(state);
+            applyPlayerInitLogic(state, 'p1', finalInitRandoms.p1);
             applyPlayerInitLogic(state, 'p2', finalInitRandoms.p2);
         }
     }
