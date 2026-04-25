@@ -16,6 +16,23 @@ import {
 import type { Card, GameAction, GameState } from '@gemduel/shared/types';
 
 const FIXTURE_GAME_VERSION = '5.2.11';
+const COMPLETED_REPLAY_RANDOM_SEED = 0x5eed2026;
+
+const withDeterministicRandom = <T>(seed: number, run: () => T): T => {
+    const originalRandom = Math.random;
+    let state = seed >>> 0;
+
+    Math.random = () => {
+        state = (Math.imul(1664525, state) + 1013904223) >>> 0;
+        return state / 0x100000000;
+    };
+
+    try {
+        return run();
+    } finally {
+        Math.random = originalRandom;
+    }
+};
 
 export interface ReplayRoundtripFixture {
     replay: ReplayVNext;
@@ -79,13 +96,15 @@ const buildReplayFixtureFromHistory = (
 };
 
 export const createCompletedReplayFixture = (): ReplayRoundtripFixture => {
-    const result = simulateAiVsAiReplay({
-        gameVersion: FIXTURE_GAME_VERSION,
-        mode: 'LOCAL_PVP',
-        useBuffs: false,
-        maxActions: 40,
-        createdAt: '2026-04-22T10:00:00.000Z',
-    });
+    const result = withDeterministicRandom(COMPLETED_REPLAY_RANDOM_SEED, () =>
+        simulateAiVsAiReplay({
+            gameVersion: FIXTURE_GAME_VERSION,
+            mode: 'LOCAL_PVP',
+            useBuffs: false,
+            maxActions: 40,
+            createdAt: '2026-04-22T10:00:00.000Z',
+        })
+    );
 
     if (result.status !== 'completed') {
         throw new Error(`Expected completed replay fixture, received ${result.status}.`);

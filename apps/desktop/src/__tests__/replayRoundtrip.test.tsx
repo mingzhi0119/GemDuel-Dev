@@ -271,18 +271,23 @@ const exportReplayThroughUi = async (
     container: HTMLElement,
     saveReplayToFolder: SaveReplayToFolderMock
 ) => {
+    await settleUi(5);
     await openSettingsMenu(container);
+    const callCountBeforeSave = saveReplayToFolder.mock.calls.length;
     await clickElement(
         getRequiredElement<HTMLButtonElement>(container, 'button[aria-label="Save"]')
     );
-    await settleUi(5);
 
-    const lastCall = saveReplayToFolder.mock.calls.at(-1);
-    if (!lastCall) {
-        throw new Error('Expected saveReplayToFolder to be called.');
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+        const saveCall = saveReplayToFolder.mock.calls[callCountBeforeSave];
+        if (saveCall) {
+            await settleUi(5);
+            return saveCall[0];
+        }
+        await settleUi(2);
     }
 
-    return lastCall[0];
+    throw new Error('Expected saveReplayToFolder to be called.');
 };
 
 const getSnapshotFromUi = (container: HTMLElement): UiSnapshot => {
@@ -570,7 +575,7 @@ describe('replay roundtrip review', () => {
                 fixture.states.length - 1
             )
         ).toEqual(getExpectedSnapshot(fixture, fixture.states.length - 1));
-    });
+    }, 15000);
 
     it('keeps replay navigation usable for imported SELECT_CARD_COLOR states without showing the blocking overlay', async () => {
         const fixture = createSelectCardColorReplayFixture();

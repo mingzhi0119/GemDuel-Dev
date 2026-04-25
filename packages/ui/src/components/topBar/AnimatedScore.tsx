@@ -11,6 +11,7 @@ export const AnimatedScore: React.FC<AnimatedScoreProps> = ({ value, className, 
     const [displayValue, setDisplayValue] = useState(value);
     const [isPulsing, setIsPulsing] = useState(false);
     const prevValue = useRef(value);
+    const pulseTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const pulseColors =
         theme === 'dark' ? ['#ffffff', '#fbbf24', '#ffffff'] : ['#0f172a', '#ea580c', '#0f172a'];
@@ -27,11 +28,23 @@ export const AnimatedScore: React.FC<AnimatedScoreProps> = ({ value, className, 
 
             if (value > prevValue.current) {
                 setIsPulsing(true);
-                setTimeout(() => setIsPulsing(false), 600);
+                if (pulseTimeout.current) {
+                    clearTimeout(pulseTimeout.current);
+                }
+                pulseTimeout.current = setTimeout(() => {
+                    setIsPulsing(false);
+                    pulseTimeout.current = null;
+                }, 600);
             }
 
             prevValue.current = value;
-            return () => controls.stop();
+            return () => {
+                controls.stop();
+                if (pulseTimeout.current) {
+                    clearTimeout(pulseTimeout.current);
+                    pulseTimeout.current = null;
+                }
+            };
         }
     }, [value]);
 
