@@ -47,6 +47,15 @@ jobs:
             - name: Dependency Governance Check
               run: pnpm run deps:check
 
+            - name: Repo Settings Desired-State Check
+              run: pnpm run repo-settings:check
+
+            - name: CODEOWNERS Role Map Check
+              run: pnpm run codeowners:check
+
+            - name: Release Changelog Coverage Check
+              run: pnpm run changelog:check
+
             - name: Boundary Governance Check
               run: pnpm run boundaries:check
 
@@ -82,6 +91,18 @@ jobs:
 
             - name: Bundle Budget Gate
               run: pnpm run bundle:check
+
+            - name: Lifecycle Benchmark Gate
+              run: pnpm run bench
+
+            - name: Audit Gate Summary
+              run: pnpm run audit:gates
+
+            - name: Lifecycle Governance Report
+              run: pnpm run governance:report
+
+            - name: Lifecycle Certification
+              run: pnpm run lifecycle:certify
 
             - name: Export Governance Artifacts
               if: always()

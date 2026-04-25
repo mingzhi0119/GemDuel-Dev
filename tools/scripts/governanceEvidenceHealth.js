@@ -30,6 +30,7 @@ export const loadGovernanceEvidence = ({
 
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const reports = {};
+    const lifecycleReports = {};
 
     for (const reportEntry of manifest?.release?.releaseHealthReports ?? []) {
         if (typeof reportEntry?.path !== 'string' || reportEntry.path.length === 0) {
@@ -46,9 +47,25 @@ export const loadGovernanceEvidence = ({
             : null;
     }
 
+    for (const reportEntry of Object.values(manifest?.lifecycle ?? {})) {
+        if (typeof reportEntry?.path !== 'string' || reportEntry.path.length === 0) {
+            continue;
+        }
+
+        const resolvedPath = resolveReportPath({
+            artifactsDir,
+            repoRoot,
+            declaredPath: reportEntry.path,
+        });
+        lifecycleReports[reportEntry.path] = resolvedPath
+            ? JSON.parse(fs.readFileSync(resolvedPath, 'utf8'))
+            : null;
+    }
+
     return {
         manifest,
         reports,
+        lifecycleReports,
     };
 };
 
@@ -110,9 +127,68 @@ const collectReleaseHealthReportDriftErrors = ({ report, expectedReport, reportL
     return issues;
 };
 
+const collectLifecycleEvidenceErrors = ({ manifest, lifecycleReports = {} }) => {
+    if ((manifest.manifestVersion ?? 0) < 3) {
+        return [];
+    }
+
+    const issues = [];
+    const lifecycle = manifest.lifecycle;
+    if (!isPlainObject(lifecycle)) {
+        return ['Governance evidence manifest v3 must define lifecycle evidence.'];
+    }
+
+    const requiredAssets = [
+        'repoSettingsSnapshot',
+        'codeownersRoleMap',
+        'releaseChangelogSnapshot',
+        'benchmarkBaseline',
+        'auditGateSnapshot',
+        'lifecycleDashboardSnapshot',
+        'lifecycleCertificationSnapshot',
+        'sealExclusionsReviewSnapshot',
+    ];
+    for (const assetKey of requiredAssets) {
+        if (!isPlainObject(lifecycle[assetKey]) || typeof lifecycle[assetKey].path !== 'string') {
+            issues.push(`Governance evidence lifecycle.${assetKey} must declare an asset path.`);
+        }
+    }
+
+    for (const reportKey of [
+        'auditGateReport',
+        'governanceReport',
+        'dashboardReport',
+        'certificationReport',
+    ]) {
+        const report = lifecycle[reportKey];
+        if (!isPlainObject(report) || typeof report.path !== 'string') {
+            issues.push(`Governance evidence lifecycle.${reportKey} must declare a report path.`);
+            continue;
+        }
+
+        if (report.status !== 'passed') {
+            issues.push(`Governance evidence lifecycle.${reportKey} must have passed status.`);
+        }
+
+        const retainedReport = lifecycleReports[report.path];
+        if (!isPlainObject(retainedReport)) {
+            issues.push(
+                `Governance evidence lifecycle.${reportKey} report is missing from the artifact.`
+            );
+        } else if (retainedReport.status !== 'passed') {
+            issues.push(
+                `Governance evidence lifecycle.${reportKey} retained report must have passed status.`
+            );
+        }
+    }
+
+    return issues;
+};
+
 export const collectGovernanceEvidenceHealthErrors = ({
     manifest,
     reports,
+    lifecycleReports = {},
     operationsSnapshot = {},
     minimumRetentionDays = MIN_GOVERNANCE_EVIDENCE_RETENTION_DAYS,
     allowedWarningIndicators = DEFAULT_ALLOWED_WARNING_INDICATORS,
@@ -122,6 +198,8 @@ export const collectGovernanceEvidenceHealthErrors = ({
     if (!isPlainObject(manifest)) {
         return ['Governance evidence manifest must be a JSON object.'];
     }
+
+    issues.push(...collectLifecycleEvidenceErrors({ manifest, lifecycleReports }));
 
     const artifactPolicy = manifest.artifactPolicy;
     if (!isPlainObject(artifactPolicy)) {

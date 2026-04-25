@@ -1,0 +1,64 @@
+{
+    "schemaVersion": 1,
+    "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
+    "coverage": {
+        "branchMinimumPercent": 88
+    },
+    "requiredRootScripts": [
+        "lint",
+        "typecheck",
+        "test",
+        "test:coverage",
+        "boundaries:check",
+        "architecture:check",
+        "deps:check",
+        "desktop:check",
+        "release:check",
+        "repo-settings:check",
+        "codeowners:check",
+        "changelog:check",
+        "governance:report",
+        "audit:gates",
+        "bench",
+        "lifecycle:certify"
+    ],
+    "workflowCommands": {
+        ".github/workflows/governance.yml": [
+            "pnpm run repo-settings:check",
+            "pnpm run codeowners:check",
+            "pnpm run changelog:check",
+            "pnpm run audit:gates",
+            "pnpm run bench",
+            "pnpm run lifecycle:certify"
+        ],
+        ".github/workflows/build.yml": [
+            "pnpm run repo-settings:check",
+            "pnpm run codeowners:check",
+            "pnpm run changelog:check",
+            "pnpm run audit:gates",
+            "pnpm run bench",
+            "pnpm run lifecycle:certify"
+        ],
+        ".github/workflows/governance-evidence.yml": [
+            "pnpm run repo-settings:check",
+            "pnpm run codeowners:check",
+            "pnpm run changelog:check",
+            "pnpm run governance:report",
+            "pnpm run audit:gates",
+            "pnpm run bench",
+            "pnpm run lifecycle:certify"
+        ],
+        ".github/workflows/dependency-governance.yml": ["pnpm run repo-settings:check"]
+    },
+    "artifactOutputs": [
+        "artifacts/governance/audit-gates.report.json",
+        "artifacts/governance/audit-gates.report.md",
+        "artifacts/governance/lifecycle-governance.report.json",
+        "artifacts/governance/lifecycle-governance.report.md",
+        "artifacts/governance/lifecycle-governance.dashboard.json",
+        "artifacts/governance/lifecycle-governance.dashboard.md",
+        "artifacts/governance/lifecycle-certification.report.json",
+        "artifacts/governance/lifecycle-certification.report.md",
+        "artifacts/governance/lifecycle-benchmarks.report.json"
+    ]
+}

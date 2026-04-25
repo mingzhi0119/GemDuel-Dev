@@ -45,6 +45,13 @@ describe('release health checklist governance', () => {
             'pnpm desktop:check',
             'pnpm release:check',
             'pnpm release:provenance:check',
+            'pnpm repo-settings:check',
+            'pnpm codeowners:check',
+            'pnpm changelog:check',
+            'pnpm audit:gates',
+            'pnpm bench',
+            'pnpm governance:report',
+            'pnpm lifecycle:certify',
             'pnpm governance:evidence:check',
         ]);
     });

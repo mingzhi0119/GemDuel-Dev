@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 import {
     SEAL_COVERAGE_EXCLUSIONS,
     SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
@@ -21,10 +22,17 @@ const getFlagValue = (flagName) => {
 };
 
 const todayOverride = getFlagValue('--today');
+const reviewSnapshot = JSON.parse(
+    fs.readFileSync(
+        path.join(repoRoot, 'tools', 'governance', 'seal-exclusions-review.snapshot.json'),
+        'utf8'
+    )
+);
 
 const errors = collectSealCoverageExclusionGovernanceErrors({
     exclusions: SEAL_COVERAGE_EXCLUSIONS,
     policy: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
+    reviewSnapshot,
     repoRoot,
     ...(todayOverride ? { today: todayOverride } : {}),
 });

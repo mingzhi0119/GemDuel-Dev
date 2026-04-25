@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ALLOWED_EXCLUSION_CATEGORIES = new Set(['leaf', 'static', 'wrapper', 'shell']);
+export const SEAL_EXCLUSION_REVIEW_SCHEMA_VERSION = 1;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const parseIsoDate = (value) => {
@@ -29,9 +30,62 @@ const normalizeToday = (today) => {
 const daysSinceReview = (reviewedOn, today) =>
     Math.floor((today.getTime() - reviewedOn.getTime()) / MS_PER_DAY);
 
+export const collectSealCoverageExclusionReviewSnapshotErrors = ({ reviewSnapshot, policy }) => {
+    const errors = [];
+
+    if (!reviewSnapshot || typeof reviewSnapshot !== 'object' || Array.isArray(reviewSnapshot)) {
+        return ['Seal coverage exclusion review snapshot must be a JSON object.'];
+    }
+
+    if (reviewSnapshot.schemaVersion !== SEAL_EXCLUSION_REVIEW_SCHEMA_VERSION) {
+        errors.push(
+            `Seal coverage exclusion review snapshot schemaVersion must remain ${SEAL_EXCLUSION_REVIEW_SCHEMA_VERSION}.`
+        );
+    }
+
+    if (reviewSnapshot.baselineCount !== policy?.baselineCount) {
+        errors.push(
+            `Seal coverage exclusion review snapshot baselineCount must match policy baselineCount ${policy?.baselineCount}.`
+        );
+    }
+
+    if (reviewSnapshot.maxReviewCadenceDays !== policy?.maxReviewCadenceDays) {
+        errors.push(
+            `Seal coverage exclusion review snapshot maxReviewCadenceDays must match policy maxReviewCadenceDays ${policy?.maxReviewCadenceDays}.`
+        );
+    }
+
+    const requiredEntryFields = reviewSnapshot.reviewPolicy?.requiredEntryFields;
+    for (const requiredField of [
+        'pattern',
+        'reason',
+        'category',
+        'lastReviewedOn',
+        'reviewCadenceDays',
+    ]) {
+        if (!Array.isArray(requiredEntryFields) || !requiredEntryFields.includes(requiredField)) {
+            errors.push(
+                `Seal coverage exclusion review snapshot must require entry field ${requiredField}.`
+            );
+        }
+    }
+
+    for (const category of ALLOWED_EXCLUSION_CATEGORIES) {
+        const ownerRole = reviewSnapshot.ownerRolesByCategory?.[category];
+        if (typeof ownerRole !== 'string' || ownerRole.trim().length === 0) {
+            errors.push(
+                `Seal coverage exclusion review snapshot must define an owner role for category ${category}.`
+            );
+        }
+    }
+
+    return errors;
+};
+
 export const collectSealCoverageExclusionGovernanceErrors = ({
     exclusions,
     policy,
+    reviewSnapshot = null,
     repoRoot,
     today = new Date(),
 }) => {
@@ -51,6 +105,16 @@ export const collectSealCoverageExclusionGovernanceErrors = ({
     }
 
     const normalizedToday = normalizeToday(today);
+    const ownerRolesByCategory = reviewSnapshot?.ownerRolesByCategory ?? {};
+
+    if (reviewSnapshot) {
+        errors.push(
+            ...collectSealCoverageExclusionReviewSnapshotErrors({
+                reviewSnapshot,
+                policy,
+            })
+        );
+    }
 
     if (exclusions.length > policy.baselineCount) {
         errors.push(
@@ -78,6 +142,13 @@ export const collectSealCoverageExclusionGovernanceErrors = ({
             errors.push(
                 `Seal coverage exclusion ${exclusion.pattern ?? '<unknown>'} uses invalid category ${String(exclusion.category)}.`
             );
+        } else if (reviewSnapshot) {
+            const ownerRole = ownerRolesByCategory[exclusion.category];
+            if (typeof ownerRole !== 'string' || ownerRole.trim().length === 0) {
+                errors.push(
+                    `Seal coverage exclusion ${exclusion.pattern ?? '<unknown>'} has no owner role for category ${exclusion.category}.`
+                );
+            }
         }
 
         if (

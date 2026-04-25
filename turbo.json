@@ -38,10 +38,24 @@
         "architecture:check": {
             "cache": false
         },
+        "audit:gates": {
+            "cache": false,
+            "outputs": ["artifacts/**"]
+        },
+        "bench": {
+            "cache": false,
+            "outputs": ["artifacts/**"]
+        },
         "bundle:check": {
             "cache": false
         },
         "boundaries:check": {
+            "cache": false
+        },
+        "changelog:check": {
+            "cache": false
+        },
+        "codeowners:check": {
             "cache": false
         },
         "deps:check": {
@@ -57,13 +71,24 @@
         "governance:evidence:check": {
             "cache": false
         },
+        "governance:report": {
+            "cache": false,
+            "outputs": ["artifacts/**"]
+        },
         "licenses:check": {
             "cache": false
+        },
+        "lifecycle:certify": {
+            "cache": false,
+            "outputs": ["artifacts/**"]
         },
         "release:check": {
             "cache": false
         },
         "release:provenance:check": {
+            "cache": false
+        },
+        "repo-settings:check": {
             "cache": false
         },
         "runtime:drills:check": {

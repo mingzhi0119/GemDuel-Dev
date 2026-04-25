@@ -39,7 +39,7 @@ const parseArgs = (argv) => {
 
 const main = () => {
     const { artifactsDir } = parseArgs(process.argv.slice(2));
-    const { manifest, reports } = loadGovernanceEvidence({
+    const { manifest, reports, lifecycleReports } = loadGovernanceEvidence({
         artifactsDir,
         repoRoot,
     });
@@ -47,6 +47,7 @@ const main = () => {
     const issues = collectGovernanceEvidenceHealthErrors({
         manifest,
         reports,
+        lifecycleReports,
         operationsSnapshot,
     });
 

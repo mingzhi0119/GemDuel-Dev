@@ -1,0 +1,36 @@
+{
+    "schemaVersion": 1,
+    "runner": "tools/scripts/run-lifecycle-benchmarks.mjs",
+    "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
+    "measurementPolicy": {
+        "mode": "deterministic-local-microbench",
+        "minimumIterations": 50,
+        "failureThreshold": "medianMs and p95Ms must stay within benchmark-specific maximums"
+    },
+    "benchmarks": [
+        {
+            "id": "reducer-init",
+            "owner": "Domain Logic",
+            "maxMedianMs": 8,
+            "maxP95Ms": 20
+        },
+        {
+            "id": "ai-action",
+            "owner": "Domain Logic",
+            "maxMedianMs": 5,
+            "maxP95Ms": 15
+        },
+        {
+            "id": "protocol-validation",
+            "owner": "Networking",
+            "maxMedianMs": 2,
+            "maxP95Ms": 8
+        },
+        {
+            "id": "replay-load-save",
+            "owner": "Frontend Platform + Domain Logic",
+            "maxMedianMs": 50,
+            "maxP95Ms": 120
+        }
+    ]
+}

@@ -1,0 +1,86 @@
+{
+    "schemaVersion": 1,
+    "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
+    "certificationMode": "repo-contained-local-10-of-10",
+    "remoteGitHubSettings": {
+        "excludedFromScore": true,
+        "reason": "Live branch protection, rulesets, and vulnerability-alert settings remain external follow-up items for this pass. Repo-contained desired-state snapshots and optional read-only drift checks still stay governed.",
+        "desiredStateSnapshot": "tools/governance/repo-settings.snapshot.json",
+        "optionalLiveCommand": "pnpm repo-settings:check -- --live"
+    },
+    "requiredLocalReports": [
+        "audit-gates.report.json",
+        "lifecycle-governance.report.json",
+        "lifecycle-governance.dashboard.json",
+        "lifecycle-certification.report.json"
+    ],
+    "scorecard": [
+        {
+            "id": "architecture-boundaries",
+            "title": "Architecture layering and module boundaries",
+            "targetScore": 10,
+            "requiredDashboardMetrics": ["architecture-warnings", "gate-status"],
+            "requiredLifecycleSections": ["repo-settings", "codeowners"]
+        },
+        {
+            "id": "logic-ownership",
+            "title": "Logic decoupling and state ownership",
+            "targetScore": 10,
+            "requiredDashboardMetrics": ["architecture-warnings", "gate-status"]
+        },
+        {
+            "id": "contracts-boundaries",
+            "title": "Contracts, interfaces, and boundary verification",
+            "targetScore": 10,
+            "requiredLifecycleSections": ["codeowners", "audit-gates"]
+        },
+        {
+            "id": "type-safety",
+            "title": "Type safety and static correctness",
+            "targetScore": 10,
+            "requiredDashboardMetrics": ["gate-status"]
+        },
+        {
+            "id": "code-quality",
+            "title": "Code quality, maintainability, and complexity",
+            "targetScore": 10,
+            "requiredDashboardMetrics": ["architecture-warnings", "gate-status"]
+        },
+        {
+            "id": "tests-coverage",
+            "title": "Testing strategy, coverage, and flake resistance",
+            "targetScore": 10,
+            "requiredDashboardMetrics": ["coverage-branch", "seal-exclusions"]
+        },
+        {
+            "id": "security-supply-chain",
+            "title": "Security, dependencies, and supply-chain governance",
+            "targetScore": 10,
+            "requiredDashboardMetrics": ["dependency-sbom"],
+            "requiredLifecycleSections": ["repo-settings"]
+        },
+        {
+            "id": "cicd-release-lifecycle",
+            "title": "CI/CD, release, and lifecycle pipeline",
+            "targetScore": 10,
+            "requiredDashboardMetrics": ["gate-status", "lifecycle-benchmarks", "bundle-budget"],
+            "requiredLifecycleSections": ["audit-gates", "release-changelog"]
+        },
+        {
+            "id": "observability-recovery",
+            "title": "Observability, recovery, and runtime governance",
+            "targetScore": 10,
+            "requiredDashboardMetrics": ["lifecycle-benchmarks", "bundle-budget"]
+        },
+        {
+            "id": "docs-onboarding",
+            "title": "Documentation, ADRs, and team handoff",
+            "targetScore": 10,
+            "requiredLifecycleSections": [
+                "release-changelog",
+                "seal-exclusion-review",
+                "lifecycle-dashboard"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,27 @@
+{
+    "schemaVersion": 1,
+    "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
+    "mode": "single-snapshot-baseline",
+    "historyPolicy": {
+        "retentionDays": 30,
+        "syntheticHistoryAllowed": false,
+        "baselineLabel": "2026-04-25 remediation baseline"
+    },
+    "requiredMetrics": [
+        "gate-status",
+        "coverage-branch",
+        "architecture-warnings",
+        "seal-exclusions",
+        "release-changelog",
+        "dependency-sbom",
+        "bundle-budget",
+        "lifecycle-benchmarks"
+    ],
+    "evidenceRefs": [
+        "artifacts/governance/lifecycle-governance.report.json",
+        "artifacts/governance/audit-gates.report.json",
+        "artifacts/governance/lifecycle-benchmarks.report.json",
+        "artifacts/governance/bundle-budget.report.json",
+        "tools/governance/seal-exclusions-review.snapshot.json"
+    ]
+}

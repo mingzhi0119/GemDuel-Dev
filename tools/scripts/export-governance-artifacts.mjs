@@ -8,6 +8,14 @@ import {
 } from './releaseHealthReport.js';
 import { buildBundleBudgetReport, serializeBundleBudgetReport } from './buildBudgetReport.js';
 import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
+import { renderAuditGateMarkdown } from './auditGateSummary.js';
+import {
+    buildLifecycleArtifactReports,
+    renderLifecycleCertificationMarkdown,
+    renderLifecycleDashboardMarkdown,
+    renderLifecycleGovernanceMarkdown,
+} from './lifecycleArtifactReports.js';
+import { buildGovernanceAssets } from './governanceArtifactAssets.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,6 +32,7 @@ const parseArgs = (argv) => {
     const args = {
         outDir: null,
         distDir: path.join(repoRoot, 'apps', 'desktop', 'dist'),
+        coverageFile: path.join(repoRoot, 'apps', 'desktop', 'coverage', 'coverage-final.json'),
         pretty: true,
     };
 
@@ -37,6 +46,12 @@ const parseArgs = (argv) => {
 
         if (value === '--dist-dir') {
             args.distDir = argv[index + 1] ?? args.distDir;
+            index += 1;
+            continue;
+        }
+
+        if (value === '--coverage-file') {
+            args.coverageFile = path.resolve(repoRoot, argv[index + 1] ?? args.coverageFile);
             index += 1;
             continue;
         }
@@ -63,24 +78,6 @@ const buildProvenance = () => ({
 const toRepoRelativePath = (absolutePath) =>
     path.relative(repoRoot, absolutePath).replaceAll(path.sep, '/');
 
-const createGovernanceAsset = ({
-    id,
-    kind,
-    relativePath,
-    producedBy,
-    checkedBy = [],
-    status = 'governed',
-    sourceRefs = [],
-}) => ({
-    id,
-    kind,
-    path: relativePath,
-    producedBy,
-    checkedBy,
-    status,
-    sourceRefs,
-});
-
 const writeTextFile = (absolutePath, contents) => {
     fs.mkdirSync(path.dirname(absolutePath), {
         recursive: true,
@@ -89,7 +86,7 @@ const writeTextFile = (absolutePath, contents) => {
 };
 
 const main = () => {
-    const { outDir, distDir, pretty } = parseArgs(process.argv.slice(2));
+    const { outDir, distDir, coverageFile, pretty } = parseArgs(process.argv.slice(2));
     const operationsSnapshot = JSON.parse(fs.readFileSync(operationsSnapshotPath, 'utf8'));
     const artifactPolicy = operationsSnapshot.artifactPolicy ?? {
         artifactName: 'governance-evidence',
@@ -159,122 +156,77 @@ const main = () => {
         };
     }
 
-    const governanceAssets = [
-        createGovernanceAsset({
-            id: 'dependency-sbom-snapshot',
-            kind: 'dependency-sbom',
-            relativePath: 'tools/governance/dependency-sbom.snapshot.json',
-            producedBy: 'tools/scripts/check-sbom-governance.mjs',
-            checkedBy: ['tools/scripts/check-dependency-governance.mjs'],
-            sourceRefs: ['pnpm-lock.yaml', 'package.json'],
-        }),
-        createGovernanceAsset({
-            id: 'dependency-license-allowlist',
-            kind: 'license-allowlist',
-            relativePath: 'tools/governance/dependency-license-allowlist.json',
-            producedBy: 'tools/governance/dependency-license-allowlist.json',
-            checkedBy: ['tools/scripts/check-license-governance.mjs'],
-            sourceRefs: ['pnpm-lock.yaml'],
-        }),
-        createGovernanceAsset({
-            id: 'dependency-runtime-governance-doc',
-            kind: 'secret-policy',
-            relativePath: GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance,
-            producedBy: 'manual-governance-document',
-            checkedBy: [
-                'tools/scripts/check-dependency-governance.mjs',
-                'tools/scripts/check-secret-governance.mjs',
-            ],
-            sourceRefs: ['apps/desktop/electron/runtimeConfig.js'],
-        }),
-        createGovernanceAsset({
-            id: 'runtime-config-policy-source',
-            kind: 'runtime-policy-source',
-            relativePath: 'apps/desktop/electron/runtimeConfig.js',
-            producedBy: 'apps/desktop/electron/runtimeConfig.js',
-            checkedBy: [
-                'tools/scripts/check-secret-governance.mjs',
-                'tools/scripts/check-dependency-governance.mjs',
-            ],
-            sourceRefs: [GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance],
-        }),
-        createGovernanceAsset({
-            id: 'runtime-drill-snapshot',
-            kind: 'runtime-snapshot',
-            relativePath: 'tools/governance/runtime-drill.snapshot.json',
-            producedBy: 'tools/governance/runtime-drill.snapshot.json',
-            checkedBy: ['tools/scripts/check-runtime-drill-governance.mjs'],
-        }),
-        createGovernanceAsset({
-            id: 'desktop-policy-snapshot',
-            kind: 'desktop-policy',
-            relativePath: 'tools/governance/desktop-policy.snapshot.json',
-            producedBy: 'tools/governance/desktop-policy.snapshot.json',
-            checkedBy: ['tools/scripts/check-electron-governance.mjs'],
-            sourceRefs: [
-                'apps/desktop/electron/preloadContract.cjs',
-                'apps/desktop/electron/desktopGovernance.js',
-            ],
-        }),
-        createGovernanceAsset({
-            id: 'release-health-operations-snapshot',
-            kind: 'operations-snapshot',
-            relativePath: 'tools/governance/release-health-operations.snapshot.json',
-            producedBy: 'tools/governance/release-health-operations.snapshot.json',
-            checkedBy: [
-                'tools/scripts/releaseHealthOperations.js',
-                'tools/scripts/export-governance-artifacts.mjs',
-            ],
-        }),
-        createGovernanceAsset({
-            id: 'boundary-registry-snapshot',
-            kind: 'boundary-registry',
-            relativePath: 'tools/governance/boundary-registry.snapshot.json',
-            producedBy: 'tools/governance/boundary-registry.snapshot.json',
-            checkedBy: ['tools/scripts/check-boundary-governance.mjs'],
-        }),
-        createGovernanceAsset({
-            id: 'contract-registry-snapshot',
-            kind: 'contract-registry',
-            relativePath: 'tools/governance/contract-registry.snapshot.json',
-            producedBy: 'tools/governance/contract-registry.snapshot.json',
-            checkedBy: ['packages/shared/src/logic/__tests__/contractSnapshot.test.ts'],
-            sourceRefs: ['packages/shared/src/logic/contractSnapshot.ts'],
-        }),
-        createGovernanceAsset({
-            id: 'turn-credential-client-source',
-            kind: 'turn-lifecycle-source',
-            relativePath: 'apps/desktop/electron/turnCredentialClient.js',
-            producedBy: 'apps/desktop/electron/turnCredentialClient.js',
-            checkedBy: ['apps/desktop/electron/__tests__/turnCredentialClient.test.ts'],
-            sourceRefs: [
-                'packages/turn-service/src/turnCredentialService.js',
-                'apps/desktop/src/app/runtime/useRuntimeAppConfig.ts',
-            ],
-        }),
-        createGovernanceAsset({
-            id: 'turn-credential-service-source',
-            kind: 'turn-lifecycle-source',
-            relativePath: 'packages/turn-service/src/turnCredentialService.js',
-            producedBy: 'packages/turn-service/src/turnCredentialService.js',
-            checkedBy: ['packages/turn-service/src/__tests__/turnCredentialService.test.ts'],
-            sourceRefs: ['apps/desktop/electron/turnCredentialClient.js'],
-        }),
-        createGovernanceAsset({
-            id: 'runtime-relay-loader-source',
-            kind: 'turn-lifecycle-source',
-            relativePath: 'apps/desktop/src/app/runtime/useRuntimeAppConfig.ts',
-            producedBy: 'apps/desktop/src/app/runtime/useRuntimeAppConfig.ts',
-            checkedBy: ['apps/desktop/src/app/runtime/__tests__/useRuntimeAppConfig.test.tsx'],
-            sourceRefs: [
-                'apps/desktop/electron/turnCredentialClient.js',
-                'packages/shared/src/config/webrtc.ts',
-            ],
-        }),
-    ];
+    const { auditGateReport, lifecycleReport, dashboardReport, certificationReport } =
+        buildLifecycleArtifactReports({
+            repoRoot,
+            outputDir,
+            distDir: absoluteDistDir,
+            coverageFile,
+            generatedAt,
+            provenance,
+            requireCompleteEvidence: true,
+        });
+    const auditGateReportPath = path.join(outputDir, 'audit-gates.report.json');
+    const auditGateMarkdownPath = path.join(outputDir, 'audit-gates.report.md');
+    writeTextFile(
+        auditGateReportPath,
+        `${JSON.stringify(auditGateReport, null, pretty ? 2 : 0)}\n`
+    );
+    writeTextFile(auditGateMarkdownPath, renderAuditGateMarkdown(auditGateReport));
+
+    const lifecycleReportPath = path.join(outputDir, 'lifecycle-governance.report.json');
+    const lifecycleMarkdownPath = path.join(outputDir, 'lifecycle-governance.report.md');
+    writeTextFile(
+        lifecycleReportPath,
+        `${JSON.stringify(lifecycleReport, null, pretty ? 2 : 0)}\n`
+    );
+    writeTextFile(lifecycleMarkdownPath, renderLifecycleGovernanceMarkdown(lifecycleReport));
+
+    const dashboardReportPath = path.join(outputDir, 'lifecycle-governance.dashboard.json');
+    const dashboardMarkdownPath = path.join(outputDir, 'lifecycle-governance.dashboard.md');
+    writeTextFile(
+        dashboardReportPath,
+        `${JSON.stringify(dashboardReport, null, pretty ? 2 : 0)}\n`
+    );
+    writeTextFile(dashboardMarkdownPath, renderLifecycleDashboardMarkdown(dashboardReport));
+
+    const certificationReportPath = path.join(outputDir, 'lifecycle-certification.report.json');
+    const certificationMarkdownPath = path.join(outputDir, 'lifecycle-certification.report.md');
+    writeTextFile(
+        certificationReportPath,
+        `${JSON.stringify(certificationReport, null, pretty ? 2 : 0)}\n`
+    );
+    writeTextFile(
+        certificationMarkdownPath,
+        renderLifecycleCertificationMarkdown(certificationReport)
+    );
+
+    if (auditGateReport.errors.length > 0) {
+        throw new Error(`Audit gate report contains ${auditGateReport.errors.length} issue(s).`);
+    }
+
+    if (lifecycleReport.status !== 'passed') {
+        throw new Error(
+            `Lifecycle governance report contains ${lifecycleReport.issues.length} issue(s).`
+        );
+    }
+
+    if (dashboardReport.status !== 'passed') {
+        throw new Error(
+            `Lifecycle governance dashboard failed ${dashboardReport.errors.length} check(s).`
+        );
+    }
+
+    if (certificationReport.status !== 'passed') {
+        throw new Error(
+            `Lifecycle governance certification failed ${certificationReport.errors.length} check(s).`
+        );
+    }
+
+    const governanceAssets = buildGovernanceAssets();
 
     const manifest = {
-        manifestVersion: 2,
+        manifestVersion: 3,
         generatedAt,
         provenance,
         batch: {
@@ -323,6 +275,54 @@ const main = () => {
                 (asset) => asset.kind === 'turn-lifecycle-source'
             ),
         },
+        lifecycle: {
+            status: lifecycleReport.status,
+            repoSettingsSnapshot: governanceAssets.find(
+                (asset) => asset.id === 'repo-settings-snapshot'
+            ),
+            codeownersRoleMap: governanceAssets.find(
+                (asset) => asset.id === 'codeowners-role-map-snapshot'
+            ),
+            releaseChangelogSnapshot: governanceAssets.find(
+                (asset) => asset.id === 'release-changelog-snapshot'
+            ),
+            benchmarkBaseline: governanceAssets.find(
+                (asset) => asset.id === 'benchmark-baseline-snapshot'
+            ),
+            auditGateSnapshot: governanceAssets.find(
+                (asset) => asset.id === 'audit-gates-snapshot'
+            ),
+            lifecycleDashboardSnapshot: governanceAssets.find(
+                (asset) => asset.id === 'lifecycle-dashboard-snapshot'
+            ),
+            lifecycleCertificationSnapshot: governanceAssets.find(
+                (asset) => asset.id === 'lifecycle-certification-snapshot'
+            ),
+            sealExclusionsReviewSnapshot: governanceAssets.find(
+                (asset) => asset.id === 'seal-exclusions-review-snapshot'
+            ),
+            auditGateReport: {
+                status: auditGateReport.status,
+                path: toRepoRelativePath(auditGateReportPath),
+                markdownPath: toRepoRelativePath(auditGateMarkdownPath),
+            },
+            governanceReport: {
+                status: lifecycleReport.status,
+                path: toRepoRelativePath(lifecycleReportPath),
+                markdownPath: toRepoRelativePath(lifecycleMarkdownPath),
+            },
+            dashboardReport: {
+                status: dashboardReport.status,
+                completeness: dashboardReport.completeness,
+                path: toRepoRelativePath(dashboardReportPath),
+                markdownPath: toRepoRelativePath(dashboardMarkdownPath),
+            },
+            certificationReport: {
+                status: certificationReport.status,
+                path: toRepoRelativePath(certificationReportPath),
+                markdownPath: toRepoRelativePath(certificationMarkdownPath),
+            },
+        },
         governanceAssets,
         evidenceRefs: {
             runtimeDrillSnapshot: 'tools/governance/runtime-drill.snapshot.json',
@@ -333,6 +333,15 @@ const main = () => {
             dependencySbomSnapshot: 'tools/governance/dependency-sbom.snapshot.json',
             dependencyLicenseAllowlist: 'tools/governance/dependency-license-allowlist.json',
             dependencyRuntimeGovernance: GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance,
+            repoSettingsSnapshot: 'tools/governance/repo-settings.snapshot.json',
+            codeownersRoleMap: 'tools/governance/codeowners-role-map.snapshot.json',
+            releaseChangelogSnapshot: 'tools/governance/release-changelog.snapshot.json',
+            benchmarkBaseline: 'tools/governance/benchmark-baselines.snapshot.json',
+            auditGateSnapshot: 'tools/governance/audit-gates.snapshot.json',
+            lifecycleDashboardSnapshot: 'tools/governance/lifecycle-dashboard.snapshot.json',
+            lifecycleCertificationSnapshot:
+                'tools/governance/lifecycle-certification.snapshot.json',
+            sealExclusionsReviewSnapshot: 'tools/governance/seal-exclusions-review.snapshot.json',
         },
     };
     const manifestPath = path.join(outputDir, 'governance-evidence.manifest.json');

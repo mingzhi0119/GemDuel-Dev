@@ -13,7 +13,7 @@ import {
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-const ChromeHarness = () => {
+const ChromeHarness = ({ theme = 'dark' }: { theme?: 'light' | 'dark' }) => {
     const [locale, setLocale] = useState<'en' | 'zh'>('en');
     const [surfaceTheme, setSurfaceTheme] = useState<SurfaceThemeSelections>(
         DEFAULT_SURFACE_THEME_SELECTIONS
@@ -22,7 +22,7 @@ const ChromeHarness = () => {
     return (
         <LocaleProvider locale={locale} setLocale={setLocale}>
             <AppChrome
-                theme="dark"
+                theme={theme}
                 showDebug={false}
                 canShowDebug={true}
                 onToggleDebug={vi.fn()}
@@ -114,5 +114,43 @@ describe('AppChrome locale controls', () => {
         });
 
         expect(woodButtons[0]?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('renders light surface options and resets selected slots', async () => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<ChromeHarness theme="light" />);
+            await Promise.resolve();
+        });
+
+        const themeButton = Array.from(container.querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('Theme')
+        );
+
+        await act(async () => {
+            themeButton?.click();
+            await Promise.resolve();
+        });
+
+        const royalButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
+            button.textContent?.includes('Royal')
+        );
+        await act(async () => {
+            royalButtons[0]?.click();
+            await Promise.resolve();
+        });
+        expect(royalButtons[0]?.getAttribute('aria-pressed')).toBe('true');
+
+        const resetButton = Array.from(container.querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('Reset')
+        );
+        await act(async () => {
+            resetButton?.click();
+            await Promise.resolve();
+        });
+        expect(royalButtons[0]?.getAttribute('aria-pressed')).toBe('false');
     });
 });

@@ -11,6 +11,7 @@
 # Shared domain and UI
 /packages/shared/src/logic/** @mingzhi0119
 /packages/shared/src/data/** @mingzhi0119
+/packages/shared/src/replay/** @mingzhi0119
 /packages/shared/src/types/** @mingzhi0119
 /packages/shared/src/config/** @mingzhi0119
 /packages/shared/src/constants.ts @mingzhi0119

@@ -4,6 +4,8 @@ export const GOVERNANCE_DOC_PATHS = Object.freeze({
     testing: 'docs/guides/testing.md',
     frontendLayoutGuide: 'docs/guides/frontend-layout-guide.md',
     engineeringGovernanceArchive: 'docs/archive/engineering-governance-archive.md',
+    engineeringGovernanceCertification:
+        'docs/archive/engineering-governance-certification-2026-04-25.md',
     architectureLayerMap: 'docs/governance/architecture-layer-map.md',
     boundaryInventory: 'docs/governance/boundary-inventory.md',
     dependencyRuntimeGovernance: 'docs/governance/dependency-runtime-governance.md',
@@ -11,5 +13,6 @@ export const GOVERNANCE_DOC_PATHS = Object.freeze({
     operationsFaultDrills: 'docs/governance/operations-fault-drills.md',
     operationsSlo: 'docs/governance/operations-slo.md',
     releaseHealthChecklist: 'docs/governance/release-health-checklist.md',
+    repoSettingsChecklist: 'docs/governance/repo-settings-checklist.md',
     testGovernanceMatrix: 'docs/governance/test-governance-matrix.md',
 });

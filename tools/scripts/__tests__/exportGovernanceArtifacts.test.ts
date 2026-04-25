@@ -10,6 +10,52 @@ import { describe, expect, it } from 'vitest';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '../../..');
+const benchmarkBaseline = JSON.parse(
+    fs.readFileSync(
+        path.join(repoRoot, 'tools', 'governance', 'benchmark-baselines.snapshot.json'),
+        'utf8'
+    )
+);
+
+const writeBenchmarkReport = (outDir: string) => {
+    fs.mkdirSync(outDir, {
+        recursive: true,
+    });
+    fs.writeFileSync(
+        path.join(outDir, 'lifecycle-benchmarks.report.json'),
+        JSON.stringify(
+            {
+                schemaVersion: 1,
+                status: 'passed',
+                errors: [],
+                benchmarks: benchmarkBaseline.benchmarks.map((benchmark: { id: string }) => ({
+                    id: benchmark.id,
+                    medianMs: 0.001,
+                    p95Ms: 0.002,
+                })),
+            },
+            null,
+            2
+        ),
+        'utf8'
+    );
+};
+
+const writeCoverageFixture = (tempDir: string) => {
+    const coverageFile = path.join(tempDir, 'coverage-final.json');
+    fs.writeFileSync(
+        coverageFile,
+        JSON.stringify({
+            'fixture.js': {
+                b: {
+                    0: [1, 1],
+                },
+            },
+        }),
+        'utf8'
+    );
+    return coverageFile;
+};
 
 describe('governance artifact exporter', () => {
     it('exports retained release-health reports, a manifest, and a bundle budget report', () => {
@@ -17,11 +63,13 @@ describe('governance artifact exporter', () => {
         const distDir = path.join(tempDir, 'dist');
         const assetsDir = path.join(distDir, 'assets');
         const outDir = path.join(tempDir, 'artifacts');
+        const coverageFile = writeCoverageFixture(tempDir);
 
         fs.mkdirSync(assetsDir, {
             recursive: true,
         });
         fs.writeFileSync(path.join(assetsDir, 'index-main.js'), 'x'.repeat(650 * 1024), 'utf8');
+        writeBenchmarkReport(outDir);
 
         try {
             execFileSync(
@@ -32,6 +80,8 @@ describe('governance artifact exporter', () => {
                     outDir,
                     '--dist-dir',
                     distDir,
+                    '--coverage-file',
+                    coverageFile,
                 ],
                 {
                     cwd: repoRoot,
@@ -52,7 +102,7 @@ describe('governance artifact exporter', () => {
                 fs.readFileSync(path.join(outDir, 'bundle-budget.report.json'), 'utf8')
             );
 
-            expect(manifest.manifestVersion).toBe(2);
+            expect(manifest.manifestVersion).toBe(3);
             expect(manifest.batch).toMatchObject({
                 releaseVersion: '5.2.11',
             });
@@ -102,7 +152,54 @@ describe('governance artifact exporter', () => {
                     expect.objectContaining({
                         id: 'desktop-policy-snapshot',
                     }),
+                    expect.objectContaining({
+                        id: 'repo-settings-snapshot',
+                    }),
+                    expect.objectContaining({
+                        id: 'audit-gates-snapshot',
+                    }),
+                    expect.objectContaining({
+                        id: 'lifecycle-certification-snapshot',
+                    }),
+                    expect.objectContaining({
+                        id: 'seal-exclusions-review-snapshot',
+                    }),
                 ])
+            );
+            expect(manifest.lifecycle).toMatchObject({
+                status: 'passed',
+                repoSettingsSnapshot: expect.objectContaining({
+                    path: 'tools/governance/repo-settings.snapshot.json',
+                }),
+                codeownersRoleMap: expect.objectContaining({
+                    path: 'tools/governance/codeowners-role-map.snapshot.json',
+                }),
+                releaseChangelogSnapshot: expect.objectContaining({
+                    path: 'tools/governance/release-changelog.snapshot.json',
+                }),
+                auditGateReport: expect.objectContaining({
+                    status: 'passed',
+                }),
+                governanceReport: expect.objectContaining({
+                    status: 'passed',
+                }),
+                dashboardReport: expect.objectContaining({
+                    status: 'passed',
+                    completeness: 'complete',
+                }),
+                certificationReport: expect.objectContaining({
+                    status: 'passed',
+                }),
+            });
+            expect(fs.existsSync(path.join(outDir, 'audit-gates.report.json'))).toBe(true);
+            expect(fs.existsSync(path.join(outDir, 'audit-gates.report.md'))).toBe(true);
+            expect(fs.existsSync(path.join(outDir, 'lifecycle-governance.report.json'))).toBe(true);
+            expect(fs.existsSync(path.join(outDir, 'lifecycle-governance.report.md'))).toBe(true);
+            expect(fs.existsSync(path.join(outDir, 'lifecycle-governance.dashboard.json'))).toBe(
+                true
+            );
+            expect(fs.existsSync(path.join(outDir, 'lifecycle-certification.report.json'))).toBe(
+                true
             );
             expect(healthyBaseline.retention).toEqual(
                 expect.objectContaining({

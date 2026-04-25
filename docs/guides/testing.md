@@ -13,6 +13,10 @@ pnpm boundaries:check
 pnpm deps:check
 pnpm desktop:check
 pnpm release:check
+pnpm audit:gates
+pnpm bench
+pnpm governance:report
+pnpm lifecycle:certify
 pnpm exec vitest run packages/shared/src/lexicon/__tests__/lexicon.test.ts packages/ui/src/lexicon/__tests__/LexiconTerm.test.tsx packages/ui/src/components/__tests__/LexiconRegression.test.tsx apps/desktop/src/app/overlays/__tests__/AppOverlayStack.test.tsx
 pnpm --dir tools/scripts run ai:replays -- --count 10 --use-buffs
 pnpm --dir tools/scripts run ai:replays:audit -- --count 100 --use-buffs
@@ -20,14 +24,15 @@ pnpm --dir tools/scripts run ai:replays:audit -- --count 100 --use-buffs
 
 ## What We Verify
 
-| Layer               | Goal                                                                                 | Main Evidence                                                                                                                                                                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Domain logic        | Reject invalid actions before mutation                                               | `packages/shared/src/logic/__tests__/**`                                                                                                                                                                                                                 |
-| Network / authority | Fail closed on malformed packets and stale decisions                                 | `packages/shared/src/logic/__tests__/**`, `apps/desktop/src/hooks/__tests__/useGameNetwork.test.tsx`                                                                                                                                                     |
-| Replay import       | Reject legacy files, validate Replay vNext, preserve deterministic replays           | `apps/desktop/src/app/io/__tests__/**`, `packages/shared/src/replay/__tests__/replayVNext.test.ts`                                                                                                                                                       |
-| Lexicon and copy    | Keep canonical gameplay terms, click-popover behavior, and long-form matching stable | `packages/shared/src/lexicon/__tests__/lexicon.test.ts`, `packages/ui/src/lexicon/__tests__/LexiconTerm.test.tsx`, `packages/ui/src/components/__tests__/LexiconRegression.test.tsx`, `apps/desktop/src/app/overlays/__tests__/AppOverlayStack.test.tsx` |
-| Desktop shell       | Freeze BrowserWindow, preload, and IPC policy                                        | `apps/desktop/electron/__tests__/**`, `tools/scripts/check-electron-governance.mjs`                                                                                                                                                                      |
-| Release governance  | Keep docs, thresholds, artifacts, and drills aligned                                 | `tools/scripts/__tests__/**`, `pnpm release:check`                                                                                                                                                                                                       |
+| Layer               | Goal                                                                                  | Main Evidence                                                                                                                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain logic        | Reject invalid actions before mutation                                                | `packages/shared/src/logic/__tests__/**`                                                                                                                                                                                                                 |
+| Network / authority | Fail closed on malformed packets and stale decisions                                  | `packages/shared/src/logic/__tests__/**`, `apps/desktop/src/hooks/__tests__/useGameNetwork.test.tsx`                                                                                                                                                     |
+| Replay import       | Reject legacy files, validate Replay vNext, preserve deterministic replays            | `apps/desktop/src/app/io/__tests__/**`, `packages/shared/src/replay/__tests__/replayVNext.test.ts`                                                                                                                                                       |
+| Lexicon and copy    | Keep canonical gameplay terms, click-popover behavior, and long-form matching stable  | `packages/shared/src/lexicon/__tests__/lexicon.test.ts`, `packages/ui/src/lexicon/__tests__/LexiconTerm.test.tsx`, `packages/ui/src/components/__tests__/LexiconRegression.test.tsx`, `apps/desktop/src/app/overlays/__tests__/AppOverlayStack.test.tsx` |
+| Desktop shell       | Freeze BrowserWindow, preload, and IPC policy                                         | `apps/desktop/electron/__tests__/**`, `tools/scripts/check-electron-governance.mjs`                                                                                                                                                                      |
+| Release governance  | Keep docs, thresholds, artifacts, and drills aligned                                  | `tools/scripts/__tests__/**`, `pnpm release:check`                                                                                                                                                                                                       |
+| Lifecycle evidence  | Keep audit gates, dashboard, certification, benchmarks, and retained evidence aligned | `tools/scripts/__tests__/**`, `pnpm audit:gates`, `pnpm bench`, `pnpm governance:report`, `pnpm lifecycle:certify`                                                                                                                                       |
 
 ## Default Workflow
 
@@ -35,7 +40,8 @@ pnpm --dir tools/scripts run ai:replays:audit -- --count 100 --use-buffs
 2. Run `pnpm test:coverage` before merging larger refactors. This now aliases the seal gate and uses `apps/desktop/vitest.config.ts` as the seal baseline.
 3. Run `pnpm boundaries:check`, `pnpm deps:check`, `pnpm run seal-exclusions:check`, and `pnpm desktop:check` before release work.
 4. Run `pnpm release:check` whenever release-health docs or telemetry change.
-5. Run the targeted lexicon suite whenever canonical player-facing terms, aliases, buff prose, rulebook prose, or glossary surfaces change.
+5. Run `pnpm audit:gates`, `pnpm bench`, `pnpm governance:report`, and `pnpm lifecycle:certify` when lifecycle governance, workflow gates, benchmarks, or retained evidence change.
+6. Run the targeted lexicon suite whenever canonical player-facing terms, aliases, buff prose, rulebook prose, or glossary surfaces change.
 
 ## Test Writing Rules
 
@@ -44,6 +50,7 @@ pnpm --dir tools/scripts run ai:replays:audit -- --count 100 --use-buffs
 - Add property or matrix coverage when a rule has many combinations.
 - Keep seal-coverage exclusions explicit in `packages/config-vitest/sealExclusions.ts`; do not add broad implicit ignores.
 - Every seal exclusion entry must record `category`, `lastReviewedOn`, and `reviewCadenceDays`.
+- `tools/governance/seal-exclusions-review.snapshot.json` maps each exclusion category to an owner role and defines the required review metadata.
 - Shell-category seal exclusions must link to an ADR and carry smoke-test coverage for their composition surface.
 - `pnpm run seal-exclusions:check` is the governance gate that enforces review cadence and shell-only ADR usage.
 - Update the related governance doc in `docs/governance/` if a new boundary or runtime contract is introduced.
