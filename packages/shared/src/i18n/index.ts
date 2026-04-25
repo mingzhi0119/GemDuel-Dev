@@ -106,10 +106,10 @@ export const getAbilityLabel = (ability: CardAbility, locale: AppLocale) =>
     translate(locale, ABILITY_LABEL_KEYS[ability]);
 
 const ROYAL_LABEL_KEYS = {
-    'royal-3pts': 'royal.royal-3pts',
-    'royal-again': 'royal.royal-again',
-    'royal-scroll': 'royal.royal-scroll',
-    'royal-steal': 'royal.royal-steal',
+    'r91-ro': 'royal.r91-ro',
+    'r92-ro': 'royal.r92-ro',
+    'r93-ro': 'royal.r93-ro',
+    'r94-ro': 'royal.r94-ro',
 } as const satisfies Record<string, TranslationKey>;
 
 export const getRoyalLabel = (royalId: string, locale: AppLocale) => {

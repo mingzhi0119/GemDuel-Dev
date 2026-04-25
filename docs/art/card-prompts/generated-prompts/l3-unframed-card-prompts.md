@@ -6,11 +6,11 @@ Generation invariant for these prompts: produce interior-only 3:4 fantasy card a
 
 ## Prompt Entries
 
-### l3-bk-58
+### 351-bk
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-bk-58.png`
+- Runtime asset: `/assets/cards/351-bk.png`
 - Card data: level 3, bonus_color=black, ability=none, points=3, crowns=2
 
 Prompt:
@@ -21,11 +21,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 black card. Show a royal obsidian throne sanctum with sovereign black regalia, twin crown motifs, velvet shadow, lacquered stone, and aristocratic menace. The interior should feel worth 3 points and unmistakably royal because the card has 2 crowns. No text, no watermark.
 
-### l3-bk-59
+### 352-bk
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-bk-59.png`
+- Runtime asset: `/assets/cards/352-bk.png`
 - Card data: level 3, bonus_color=black, ability=none, points=4, crowns=0
 
 Prompt:
@@ -36,11 +36,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 black card. Depict an exceptional black masterpiece such as a colossal obsidian relic chamber, abyssal mirror monument, or forbidden eclipse altar with overwhelming prestige and rare grandeur appropriate for 4 points, but without explicit royal court cues. Black must dominate the mood. No text, no watermark.
 
-### l3-re-60
+### 311-re
 
 - Source prompt file: `early-card-regeneration-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-re-60.png`
+- Runtime asset: `/assets/cards/311-re.png`
 - Card data: level 3, bonus_color=red, ability=none, points=3, crowns=2
 
 Prompt:
@@ -51,11 +51,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 red card. Show a royal ruby oasis throne sanctuary at sunset, with towering red crystal formations, sovereign pavilions, ceremonial crimson banners, twin crown motifs worked into the architecture, and noble desert-palace grandeur. The scene must feel unmistakably royal because the card has 2 crowns, while still matching a prestigious 3-point red card. Red must dominate through ruby crystal, sunset sky, lacquered banners, and warm reflected light. Use one unified scene only, not a split panel. No text, no numbers, no UI icons, no watermark.
 
-### l3-re-61
+### 312-re
 
 - Source prompt file: `early-card-regeneration-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-re-61.png`
+- Runtime asset: `/assets/cards/312-re.png`
 - Card data: level 3, bonus_color=red, ability=none, points=4, crowns=0
 
 Prompt:
@@ -66,11 +66,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 red card. Depict an extraordinary high-prestige red masterpiece such as a monumental ruby-domed citadel, grand crimson gem cathedral, or vast ceremonial red-stone vault, rare and impressive enough for 4 points. The card should feel elite, costly, and architectural, but explicitly not royal: no crowns, no throne, no sovereign regalia, no royal court. Red must dominate through ruby glass, crimson banners, polished stone, and glowing gem light. Use one unified scene only, not a split panel. No text, no numbers, no UI icons, no watermark.
 
-### l3-gr-62
+### 321-gr
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-gr-62.png`
+- Runtime asset: `/assets/cards/321-gr.png`
 - Card data: level 3, bonus_color=green, ability=none, points=3, crowns=2
 
 Prompt:
@@ -81,11 +81,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 green card. Show a sovereign emerald court garden with ceremonial regalia, noble architecture, living banners, and an elevated royal atmosphere that clearly reflects 2 crowns while still feeling valuable enough for 3 points. Green must be the dominant identity color. No text, no watermark.
 
-### l3-gr-63
+### 322-gr
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-gr-63.png`
+- Runtime asset: `/assets/cards/322-gr.png`
 - Card data: level 3, bonus_color=green, ability=none, points=4, crowns=0
 
 Prompt:
@@ -96,11 +96,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 green card. Depict a transcendent green masterpiece such as a monumental jade world-tree sanctuary, celestial arbor reliquary, or impossible living cathedral, clearly rarer and grander than ordinary prestige cards and worthy of 4 points, but not specifically royal. No text, no watermark.
 
-### l3-bl-64
+### 331-bl
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-bl-64.png`
+- Runtime asset: `/assets/cards/331-bl.png`
 - Card data: level 3, bonus_color=blue, ability=none, points=3, crowns=2
 
 Prompt:
@@ -111,11 +111,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 blue card. Show a royal moonlit ocean court with deep blue regalia, sovereign architecture, elevated ceremonial atmosphere, and obvious crown-coded grandeur suitable for 2 crowns and 3 points. Blue must dominate the palette. Use a single unified scene only, not a diptych or split layout. No text, no watermark.
 
-### l3-bl-65
+### 332-bl
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-bl-65.png`
+- Runtime asset: `/assets/cards/332-bl.png`
 - Card data: level 3, bonus_color=blue, ability=none, points=4, crowns=0
 
 Prompt:
@@ -126,11 +126,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 blue card. Depict a breathtaking blue prestige scene such as a star-sea observatory of impossible scale, a radiant abyssal cathedral, or a cosmic tidal monument, rare and grand enough to justify 4 points without explicit royal court cues. Use a single unified scene only, not a diptych or split layout. No text, no watermark.
 
-### l3-wh-66
+### 341-wh
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-wh-66.png`
+- Runtime asset: `/assets/cards/341-wh.png`
 - Card data: level 3, bonus_color=white, ability=none, points=3, crowns=2
 
 Prompt:
@@ -141,11 +141,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 white card. Show an exalted royal white sanctuary with noble banners, sovereign regalia, radiant ceremonial architecture, and unmistakable crown-coded majesty suitable for 2 crowns and 3 points. White must dominate the mood. No text, no watermark.
 
-### l3-wh-67
+### 342-wh
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-wh-67.png`
+- Runtime asset: `/assets/cards/342-wh.png`
 - Card data: level 3, bonus_color=white, ability=none, points=4, crowns=0
 
 Prompt:
@@ -156,11 +156,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 white card. Depict a sublime white masterpiece such as a celestial marble archive, impossible alabaster monument, or radiant sacred vault with extraordinary serenity and prestige appropriate for 4 points, but not explicitly royal. No text, no watermark.
 
-### l3-po-68
+### 381-po
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-po-68.png`
+- Runtime asset: `/assets/cards/381-po.png`
 - Card data: level 3, bonus_color=null, ability=none, points=6, crowns=0
 
 Prompt:
@@ -171,11 +171,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 neutral card of extreme prestige. Show a transcendent neutral masterpiece worthy of 6 points, such as a monumental world-axis crystal, sacred universal reliquary, or divine geometric sanctuary, surpassing all ordinary prestige cards in grandeur while remaining neutral rather than royal. No text, no watermark.
 
-### l3-jo-69
+### 371-jo
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-jo-69.png`
+- Runtime asset: `/assets/cards/371-jo.png`
 - Card data: level 3, bonus_color=gold, ability=none, points=0, crowns=3
 
 Prompt:
@@ -186,11 +186,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 gold card with 3 crowns. Show an imperial coronation chamber of overwhelming royal power with triple-crown symbolism, supreme regalia, sacred banners, and absolute sovereign spectacle. The card should feel like the apex royal gold image. No text, no watermark.
 
-### l3-jo-70
+### 372-jo
 
 - Source prompt file: `L3-remaining-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsLevel3.ts`
-- Runtime asset: `/assets/cards/l3-jo-70.png`
+- Runtime asset: `/assets/cards/372-jo.png`
 - Card data: level 3, bonus_color=gold, ability=again, points=3, crowns=0
 
 Prompt:
@@ -201,11 +201,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 gold card. Show a prestigious cyclical golden phenomenon such as looping solar rings, repeating ceremonial mirrors, or an echoing sun-mechanism sanctuary that clearly communicates `again` through visible repetition and return, while still feeling rare and valuable enough for 3 points. No text, no watermark.
 
-### l3-wh-75
+### 343-wh
 
 - Source prompt file: `Rogue-L2-L3-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsRogue.ts`
-- Runtime asset: `/assets/cards/l3-wh-75.png`
+- Runtime asset: `/assets/cards/343-wh.png`
 - Card data: level 3, bonus_color=white, ability=none, points=3, crowns=1
 
 Prompt:
@@ -216,11 +216,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 white card. Show a majestic white sovereign sanctuary with one-crown royal cues, radiant marble architecture, ceremonial banners, and luminous prestige suitable for 3 points. White must dominate the mood. No text, no watermark.
 
-### l3-jo-76
+### 373-jo
 
 - Source prompt file: `Rogue-L2-L3-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsRogue.ts`
-- Runtime asset: `/assets/cards/l3-jo-76.png`
+- Runtime asset: `/assets/cards/373-jo.png`
 - Card data: level 3, bonus_color=gold, ability=steal, points=3, crowns=2
 
 Prompt:
@@ -231,11 +231,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 gold card. Show a royal golden treasury or coronation vault where an illicit acquisition is happening: a cunning hand, masked sovereign thief, or covert royal agent seizing a priceless crown relic or golden treasure. The card must still feel regal because it has 2 crowns, but the mood should clearly communicate `steal` through covert, predatory, illicit acquisition. No text, no watermark.
 
-### l3-gr-77
+### 323-gr
 
 - Source prompt file: `Rogue-L2-L3-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsRogue.ts`
-- Runtime asset: `/assets/cards/l3-gr-77.png`
+- Runtime asset: `/assets/cards/323-gr.png`
 - Card data: level 3, bonus_color=green, ability=again, points=3, crowns=1
 
 Prompt:
@@ -246,11 +246,11 @@ Prompt:
 
 Create interior-only fantasy card art in a strict 3:4 aspect ratio for a Level 3 green card. Show a royal green sanctum where loops of living vines, repeating jade rings, or cyclical growth patterns clearly communicate `again`, while noble architecture and one-crown regalia add royal prestige suitable for 3 points. Green must dominate the identity color. No text, no watermark.
 
-### l3-bl-78
+### 333-bl
 
 - Source prompt file: `Rogue-L2-L3-prompts.md`
 - Source card data: `packages/shared/src/data/realCardsRogue.ts`
-- Runtime asset: `/assets/cards/l3-bl-78.png`
+- Runtime asset: `/assets/cards/333-bl.png`
 - Card data: level 3, bonus_color=blue, ability=bonus_gem, points=3, crowns=1
 
 Prompt:

@@ -3,7 +3,7 @@ import type { Card } from '../types';
 
 export const LEVEL_3_CARDS: Card[] = [
     {
-        id: 'l3-bk-58',
+        id: '351-bk',
         level: 3,
         points: 3,
         bonusColor: 'black',
@@ -13,7 +13,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-bk-59',
+        id: '352-bk',
         level: 3,
         points: 4,
         bonusColor: 'black',
@@ -23,7 +23,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-re-60',
+        id: '311-re',
         level: 3,
         points: 3,
         bonusColor: 'red',
@@ -33,7 +33,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-re-61',
+        id: '312-re',
         level: 3,
         points: 4,
         bonusColor: 'red',
@@ -43,7 +43,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-gr-62',
+        id: '321-gr',
         level: 3,
         points: 3,
         bonusColor: 'green',
@@ -53,7 +53,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-gr-63',
+        id: '322-gr',
         level: 3,
         points: 4,
         bonusColor: 'green',
@@ -63,7 +63,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-bl-64',
+        id: '331-bl',
         level: 3,
         points: 3,
         bonusColor: 'blue',
@@ -73,7 +73,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-bl-65',
+        id: '332-bl',
         level: 3,
         points: 4,
         bonusColor: 'blue',
@@ -83,7 +83,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-wh-66',
+        id: '341-wh',
         level: 3,
         points: 3,
         bonusColor: 'white',
@@ -93,7 +93,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-wh-67',
+        id: '342-wh',
         level: 3,
         points: 4,
         bonusColor: 'white',
@@ -103,7 +103,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-po-68',
+        id: '381-po',
         level: 3,
         points: 6,
         bonusColor: 'null',
@@ -112,7 +112,7 @@ export const LEVEL_3_CARDS: Card[] = [
         cost: { red: 0, green: 0, blue: 0, white: 8, black: 0, pearl: 0, gold: 0 },
     },
     {
-        id: 'l3-jo-69',
+        id: '371-jo',
         level: 3,
         points: 0,
         bonusColor: 'gold',
@@ -122,7 +122,7 @@ export const LEVEL_3_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l3-jo-70',
+        id: '372-jo',
         level: 3,
         points: 3,
         bonusColor: 'gold',

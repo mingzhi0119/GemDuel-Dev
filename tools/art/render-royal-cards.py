@@ -24,7 +24,7 @@ RESAMPLE = Image.Resampling.LANCZOS
 
 ROYAL_RENDER_CARDS: tuple[dict[str, Any], ...] = (
     {
-        "outputId": "royal-3pts",
+        "outputId": "r91-ro",
         "sourceId": "royal-trophy-3pts-base",
         "points": "3",
         "abilities": [],
@@ -32,7 +32,7 @@ ROYAL_RENDER_CARDS: tuple[dict[str, Any], ...] = (
         "abilityOffsetY": 0,
     },
     {
-        "outputId": "royal-again",
+        "outputId": "r92-ro",
         "sourceId": "royal-scepter-2pts-extra-turn-base",
         "points": "2",
         "abilities": ["again"],
@@ -40,15 +40,15 @@ ROYAL_RENDER_CARDS: tuple[dict[str, Any], ...] = (
         "abilityOffsetY": 10,
     },
     {
-        "outputId": "royal-scroll",
-        "sourceId": "royal-scroll-2pts-privilege-base",
+        "outputId": "r93-ro",
+        "sourceId": "r93-ro-2pts-privilege-base",
         "points": "2",
         "abilities": ["scroll"],
         "pointOffsetY": 10,
         "abilityOffsetY": 10,
     },
     {
-        "outputId": "royal-steal",
+        "outputId": "r94-ro",
         "sourceId": "royal-saber-2pts-steal-base",
         "points": "2",
         "abilities": ["steal"],

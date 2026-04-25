@@ -126,28 +126,28 @@ export const ABILITIES = {
 // 🟢 新增：皇室卡定义 (Royal Cards)
 export const ROYAL_CARDS: RoyalCard[] = [
     {
-        id: 'royal-3pts',
+        id: 'r91-ro',
         points: 3,
         bonusColor: 'gold' as GemColor,
         ability: 'none' as CardAbility,
         label: 'The Queen',
     },
     {
-        id: 'royal-again',
+        id: 'r92-ro',
         points: 2,
         bonusColor: 'gold' as GemColor,
         ability: 'again' as CardAbility,
         label: 'The Merchant',
     },
     {
-        id: 'royal-scroll',
+        id: 'r93-ro',
         points: 2,
         bonusColor: 'gold' as GemColor,
         ability: 'scroll' as CardAbility,
         label: 'The Judge',
     },
     {
-        id: 'royal-steal',
+        id: 'r94-ro',
         points: 2,
         bonusColor: 'gold' as GemColor,
         ability: 'steal' as CardAbility,

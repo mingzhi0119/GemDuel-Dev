@@ -8,7 +8,7 @@ Base cards:
 
 - `assets/card/generated/royal-layered/from-pic/base/royal-trophy-3pts-base.png`
 - `assets/card/generated/royal-layered/from-pic/base/royal-scepter-2pts-extra-turn-base.png`
-- `assets/card/generated/royal-layered/from-pic/base/royal-scroll-2pts-privilege-base.png`
+- `assets/card/generated/royal-layered/from-pic/base/r93-ro-2pts-privilege-base.png`
 - `assets/card/generated/royal-layered/from-pic/base/royal-saber-2pts-steal-base.png`
 
 Shared overlay assets:
@@ -37,7 +37,7 @@ Create bottom-layer fantasy card-face artwork in a strict vertical 3:4 aspect ra
 
 - `royal-trophy-3pts-base`: a magnificent gold, pearl, and crystal royal trophy on a marble dais, sovereign victory mood, no ability symbolism.
 - `royal-scepter-2pts-extra-turn-base`: a jeweled royal scepter above a clockwork ceremonial dais with subtle looping golden energy suggesting an extra turn.
-- `royal-scroll-2pts-privilege-base`: a sealed royal decree scroll on a gilded lectern in a palace archive, authority and privilege mood, no readable writing.
+- `r93-ro-2pts-privilege-base`: a sealed royal decree scroll on a gilded lectern in a palace archive, authority and privilege mood, no readable writing.
 - `royal-saber-2pts-steal-base`: a jeweled royal saber in a treasury scene with covert theft tension, precious relic being seized, no gore.
 
 ## Shared Overlay Prompt

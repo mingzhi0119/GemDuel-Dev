@@ -10,7 +10,7 @@ Original loose files were moved into `source/` and renamed by role:
 
 - `royal-trophy-3pts-base-source.png`
 - `royal-scepter-2pts-extra-turn-base-source.png`
-- `royal-scroll-2pts-privilege-base-source.png`
+- `r93-ro-2pts-privilege-base-source.png`
 - `royal-saber-2pts-steal-base-source.png`
 - `ig-source-index.png`
 

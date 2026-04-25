@@ -2,13 +2,13 @@
 
 Date: 2026-04-24
 
-Method: Generated with the `imagegen` skill using the built-in `image_gen` tool, one prompt per card. Selected outputs were copied from `C:\Users\sange\.codex\generated_images\019dc0f8-5c4f-79c1-ad43-8765d9cf930c` into the project card source-face paths, now under `assets/card/faces/source/`. Final source-face PNGs were saved as `1086x1448` RGBA images; `l1-jo-26.png` was center-cropped by 1 source pixel of height before save, while `l1-jo-27.png` and `l1-jo-28.png` were already generated at the target size.
+Method: Generated with the `imagegen` skill using the built-in `image_gen` tool, one prompt per card. Selected outputs were copied from `C:\Users\sange\.codex\generated_images\019dc0f8-5c4f-79c1-ad43-8765d9cf930c` into the project card source-face paths, now under `assets/card/faces/source/`. Final source-face PNGs were saved as `1086x1448` RGBA images; `171-jo.png` was center-cropped by 1 source pixel of height before save, while `172-jo.png` and `173-jo.png` were already generated at the target size.
 
 Shared art direction: Joker art should read as wildcard, neutral, and colorless. The card face art must avoid a gold identity, faction color preference, card frame, text, numbers, UI, gem costs, crowns, ribbons, and discount icons. Gold is allowed only as tiny decorative accent.
 
-## l1-jo-26
+## 171-jo
 
-Output path: `assets/card/faces/source/l1-jo-26.png`
+Output path: `assets/card/faces/source/171-jo.png`
 
 Selected source: `C:\Users\sange\.codex\generated_images\019dc0f8-5c4f-79c1-ad43-8765d9cf930c\ig_0a0f9bbaec931b090169ebc4d809bc8196ad8c257ff6f8ea1c.png`
 
@@ -19,7 +19,7 @@ Final prompt:
 ```text
 Use case: stylized-concept
 Asset type: GemDuel Joker card face art, full-bleed bottom-layer illustration
-Primary request: Generate a neutral Joker/wildcard card face artwork for `l1-jo-26`: a neutral crystal chalice or mirrored vessel in a silver-white marble hall, with only very small gold-thread accents.
+Primary request: Generate a neutral Joker/wildcard card face artwork for `171-jo`: a neutral crystal chalice or mirrored vessel in a silver-white marble hall, with only very small gold-thread accents.
 Scene/backdrop: A quiet silver-white marble interior hall with arched reflective niches, pearl stone floor, frosted glass panels, and soft mirrored surfaces; no throne, no royal symbols.
 Subject: A central faceted crystal chalice / mirror vessel, clear and silver-toned, catching prismatic white light, suggesting a versatile wildcard with no color allegiance.
 Style/medium: polished high-fantasy digital painting, premium collectible card art, realistic materials, painterly but crisp.
@@ -31,9 +31,9 @@ Constraints: final artwork must read as Joker/wildcard and colorless/neutral, no
 Avoid: whole-image gold wash, royal court, throne, crown, scepter, banner, playing-card typography, suit symbols, coins, bright faction colors, border decorations that look like a card frame.
 ```
 
-## l1-jo-27
+## 172-jo
 
-Output path: `assets/card/faces/source/l1-jo-27.png`
+Output path: `assets/card/faces/source/172-jo.png`
 
 Selected source: `C:\Users\sange\.codex\generated_images\019dc0f8-5c4f-79c1-ad43-8765d9cf930c\ig_0a0f9bbaec931b090169ebc5110ecc81968962af666d612aa7.png`
 
@@ -44,7 +44,7 @@ Final prompt:
 ```text
 Use case: stylized-concept
 Asset type: GemDuel Joker card face art, full-bleed bottom-layer illustration
-Primary request: Generate a neutral Joker/wildcard card face artwork for `l1-jo-27`: a pearl-white and silver-gray checkerboard / blank universal game table under soft neutral light.
+Primary request: Generate a neutral Joker/wildcard card face artwork for `172-jo`: a pearl-white and silver-gray checkerboard / blank universal game table under soft neutral light.
 Scene/backdrop: A calm abstract strategy chamber with a broad inlaid tabletop or floor-plane board, pearl-white and silver-gray squares, translucent glass edges, and a neutral misty background; no throne, no casino, no royal regalia.
 Subject: An empty universal board/table surface with subtle mirror reflections and a few unmarked translucent blank tiles, implying adaptability and any-color use without showing text or suits.
 Style/medium: polished high-fantasy digital painting, premium collectible card art, refined interior concept art, crisp material rendering.
@@ -56,9 +56,9 @@ Constraints: final artwork must read as Joker/wildcard and colorless/neutral, no
 Avoid: playing cards with printed marks, chess pieces, crowns, royal banners, casino chips, overt suits, whole-image gold lighting, colored faction gems, ornate border that reads as a card frame.
 ```
 
-## l1-jo-28
+## 173-jo
 
-Output path: `assets/card/faces/source/l1-jo-28.png`
+Output path: `assets/card/faces/source/173-jo.png`
 
 Selected source: `C:\Users\sange\.codex\generated_images\019dc0f8-5c4f-79c1-ad43-8765d9cf930c\ig_0a0f9bbaec931b090169ebc545bad88196a1ced7c034cd8252.png`
 
@@ -69,7 +69,7 @@ Final prompt:
 ```text
 Use case: stylized-concept
 Asset type: GemDuel Joker card face art, full-bleed bottom-layer illustration
-Primary request: Generate a neutral Joker/wildcard card face artwork for `l1-jo-28`: a many-faceted crystal bridge or mirrored corridor, emphasizing adaptable transformation without allegiance to red, green, blue, black, or gold.
+Primary request: Generate a neutral Joker/wildcard card face artwork for `173-jo`: a many-faceted crystal bridge or mirrored corridor, emphasizing adaptable transformation without allegiance to red, green, blue, black, or gold.
 Scene/backdrop: A long mirrored corridor with a suspended faceted crystal bridge crossing through silver-white arches, reflective glass planes, pearl stone, and abstract shifting reflections; no royal chamber, no colored gem shrine.
 Subject: A multifaceted transparent crystal bridge / prism walkway, splitting neutral white light into very subtle desaturated glints, symbolizing wildcard change and flexible paths.
 Style/medium: polished high-fantasy digital painting, premium collectible card art, elegant concept art, realistic reflective materials.

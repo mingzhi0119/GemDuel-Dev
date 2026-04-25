@@ -21,11 +21,11 @@ tool. No CLI fallback was used.
 
 ## Prompt Logs
 
-| Worker log | Cards |
-| --- | --- |
-| `joker-regeneration-2026-04-24-worker-1.md` | `l1-jo-26`, `l1-jo-27`, `l1-jo-28` |
-| `joker-regeneration-2026-04-24-worker-2.md` | `l1-jo-29`, `l2-jo-54`, `l2-jo-55` |
-| `joker-regeneration-2026-04-24-worker-3.md` | `l2-jo-56`, `l3-jo-69`, `l3-jo-70`, `l3-jo-76` |
+| Worker log                                  | Cards                                  |
+| ------------------------------------------- | -------------------------------------- |
+| `joker-regeneration-2026-04-24-worker-1.md` | `171-jo`, `172-jo`, `173-jo`           |
+| `joker-regeneration-2026-04-24-worker-2.md` | `174-jo`, `271-jo`, `272-jo`           |
+| `joker-regeneration-2026-04-24-worker-3.md` | `273-jo`, `371-jo`, `372-jo`, `373-jo` |
 
 Each worker log includes the final prompt, selected generated source path,
 project output path, generation method, and aesthetic intent for each assigned
@@ -35,16 +35,16 @@ card.
 
 The regenerated Joker source face PNGs are now stored under `assets/card/faces/source/`:
 
-- `assets/card/faces/source/l1-jo-26.png`
-- `assets/card/faces/source/l1-jo-27.png`
-- `assets/card/faces/source/l1-jo-28.png`
-- `assets/card/faces/source/l1-jo-29.png`
-- `assets/card/faces/source/l2-jo-54.png`
-- `assets/card/faces/source/l2-jo-55.png`
-- `assets/card/faces/source/l2-jo-56.png`
-- `assets/card/faces/source/l3-jo-69.png`
-- `assets/card/faces/source/l3-jo-70.png`
-- `assets/card/faces/source/l3-jo-76.png`
+- `assets/card/faces/source/171-jo.png`
+- `assets/card/faces/source/172-jo.png`
+- `assets/card/faces/source/173-jo.png`
+- `assets/card/faces/source/174-jo.png`
+- `assets/card/faces/source/271-jo.png`
+- `assets/card/faces/source/272-jo.png`
+- `assets/card/faces/source/273-jo.png`
+- `assets/card/faces/source/371-jo.png`
+- `assets/card/faces/source/372-jo.png`
+- `assets/card/faces/source/373-jo.png`
 
 All project outputs were normalized to `1086x1448` RGBA PNGs before the final
 batch render was regenerated.

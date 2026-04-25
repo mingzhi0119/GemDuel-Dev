@@ -3,7 +3,7 @@ import type { Card } from '../types';
 
 export const LEVEL_2_CARDS: Card[] = [
     {
-        id: 'l2-bk-32',
+        id: '251-bk',
         level: 2,
         points: 1,
         bonusColor: 'black',
@@ -13,7 +13,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.STEAL.id,
     },
     {
-        id: 'l2-bk-33',
+        id: '252-bk',
         level: 2,
         points: 1,
         bonusColor: 'black',
@@ -23,7 +23,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-bk-34',
+        id: '253-bk',
         level: 2,
         points: 2,
         bonusColor: 'black',
@@ -33,7 +33,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-bk-35',
+        id: '254-bk',
         level: 2,
         points: 2,
         bonusColor: 'black',
@@ -43,7 +43,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.SCROLL.id,
     },
     {
-        id: 'l2-re-36',
+        id: '211-re',
         level: 2,
         points: 1,
         bonusColor: 'red',
@@ -53,7 +53,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.STEAL.id,
     },
     {
-        id: 'l2-re-37',
+        id: '212-re',
         level: 2,
         points: 1,
         bonusColor: 'red',
@@ -63,7 +63,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-re-38',
+        id: '213-re',
         level: 2,
         points: 2,
         bonusColor: 'red',
@@ -73,7 +73,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-re-39',
+        id: '214-re',
         level: 2,
         points: 2,
         bonusColor: 'red',
@@ -83,7 +83,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.SCROLL.id,
     },
     {
-        id: 'l2-gr-40',
+        id: '221-gr',
         level: 2,
         points: 1,
         bonusColor: 'green',
@@ -93,7 +93,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.STEAL.id,
     },
     {
-        id: 'l2-gr-41',
+        id: '222-gr',
         level: 2,
         points: 1,
         bonusColor: 'green',
@@ -103,7 +103,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-gr-42',
+        id: '223-gr',
         level: 2,
         points: 2,
         bonusColor: 'green',
@@ -113,7 +113,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-gr-43',
+        id: '224-gr',
         level: 2,
         points: 2,
         bonusColor: 'green',
@@ -123,7 +123,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.SCROLL.id,
     },
     {
-        id: 'l2-bl-44',
+        id: '231-bl',
         level: 2,
         points: 1,
         bonusColor: 'blue',
@@ -133,7 +133,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.STEAL.id,
     },
     {
-        id: 'l2-bl-45',
+        id: '232-bl',
         level: 2,
         points: 1,
         bonusColor: 'blue',
@@ -143,7 +143,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-bl-46',
+        id: '233-bl',
         level: 2,
         points: 2,
         bonusColor: 'blue',
@@ -153,7 +153,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-bl-47',
+        id: '234-bl',
         level: 2,
         points: 2,
         bonusColor: 'blue',
@@ -163,7 +163,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.SCROLL.id,
     },
     {
-        id: 'l2-wh-48',
+        id: '241-wh',
         level: 2,
         points: 1,
         bonusColor: 'white',
@@ -173,7 +173,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.STEAL.id,
     },
     {
-        id: 'l2-wh-49',
+        id: '242-wh',
         level: 2,
         points: 1,
         bonusColor: 'white',
@@ -183,7 +183,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-wh-50',
+        id: '243-wh',
         level: 2,
         points: 2,
         bonusColor: 'white',
@@ -193,7 +193,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-wh-51',
+        id: '244-wh',
         level: 2,
         points: 2,
         bonusColor: 'white',
@@ -203,7 +203,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.SCROLL.id,
     },
     {
-        id: 'l2-po-53',
+        id: '281-po',
         level: 2,
         points: 5,
         bonusColor: 'null',
@@ -213,7 +213,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-jo-54',
+        id: '271-jo',
         level: 2,
         points: 2,
         bonusColor: 'gold',
@@ -223,7 +223,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-jo-55',
+        id: '272-jo',
         level: 2,
         points: 0,
         bonusColor: 'gold',
@@ -233,7 +233,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-jo-56',
+        id: '273-jo',
         level: 2,
         points: 0,
         bonusColor: 'gold',

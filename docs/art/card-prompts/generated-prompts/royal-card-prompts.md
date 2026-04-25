@@ -14,7 +14,7 @@ A sovereign victory card worth 3 points, centered on a magnificent royal trophy 
 
 A 2-point royal scepter card with extra-turn symbolism. Show a jeweled royal scepter floating above a ceremonial clockwork dais, wrapped in looping golden light trails, repeated circular arcs, and mirrored return paths that clearly suggest another turn, momentum, and royal command.
 
-## royal-scroll-2pts-privilege
+## r93-ro-2pts-privilege
 
 A 2-point royal scroll card with privilege symbolism. Show a sealed royal decree scroll open on a gilded lectern in a court archive, with wax seals, silk ribbons, palace columns, keys of office, and soft sovereign light. The scroll must read as authority, permission, and court-granted privilege, without readable writing.
 

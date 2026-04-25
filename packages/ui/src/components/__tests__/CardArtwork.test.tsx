@@ -7,18 +7,18 @@ import { Card, FEATURED_CARD_SIZE } from '../Card';
 import { CARD_ARTWORK_SOURCE_SIZE } from '../card/cardArtwork';
 import { RoyalCourt } from '../RoyalCourt';
 
-const realCard = CLASSIC_CARDS.find((card) => card.id === 'l1-bk-0');
-const metadataHeavyCard = ROGUE_CARDS.find((card) => card.id === 'l3-jo-76');
-const royalCard = ROYAL_CARDS.find((card) => card.id === 'royal-again');
+const realCard = CLASSIC_CARDS.find((card) => card.id === '151-bk');
+const metadataHeavyCard = ROGUE_CARDS.find((card) => card.id === '373-jo');
+const royalCard = ROYAL_CARDS.find((card) => card.id === 'r92-ro');
 
 if (!realCard) {
-    throw new Error('Expected l1-bk-0 to exist in CLASSIC_CARDS.');
+    throw new Error('Expected 151-bk to exist in CLASSIC_CARDS.');
 }
 if (!metadataHeavyCard) {
-    throw new Error('Expected l3-jo-76 to exist in ROGUE_CARDS.');
+    throw new Error('Expected 373-jo to exist in ROGUE_CARDS.');
 }
 if (!royalCard) {
-    throw new Error('Expected royal-again to exist in ROYAL_CARDS.');
+    throw new Error('Expected r92-ro to exist in ROYAL_CARDS.');
 }
 
 const fakeCard: CardType = {
@@ -32,8 +32,8 @@ describe('Card artwork rendering', () => {
     it('renders runtime card-face artwork for real development cards', () => {
         const html = renderToStaticMarkup(<Card card={realCard} theme="dark" />);
 
-        expect(html).toContain('data-card-artwork="l1-bk-0"');
-        expect(html).toContain('/assets/cards/l1-bk-0.png');
+        expect(html).toContain('data-card-artwork="151-bk"');
+        expect(html).toContain('/assets/cards/151-bk.png');
         expect(html).toContain(`width="${CARD_ARTWORK_SOURCE_SIZE.width}"`);
         expect(html).toContain(`height="${CARD_ARTWORK_SOURCE_SIZE.height}"`);
         expect(html).not.toContain('data-card-face-pattern="true"');
@@ -63,34 +63,34 @@ describe('Card artwork rendering', () => {
     it('normalizes generated runtime card IDs to their full-card artwork asset', () => {
         const generatedRuntimeCard: CardType = {
             ...realCard,
-            id: 'l1-bk-0-1700000000000-abc12',
+            id: '151-bk-1700000000000-abc12',
         };
         const html = renderToStaticMarkup(<Card card={generatedRuntimeCard} theme="dark" />);
 
-        expect(html).toContain('data-card-artwork="l1-bk-0"');
-        expect(html).toContain('/assets/cards/l1-bk-0.png');
-        expect(html).not.toContain('/assets/cards/l1-bk-0-1700000000000-abc12.png');
+        expect(html).toContain('data-card-artwork="151-bk"');
+        expect(html).toContain('/assets/cards/151-bk.png');
+        expect(html).not.toContain('/assets/cards/151-bk-1700000000000-abc12.png');
         expect(html).not.toContain('data-card-face-pattern="true"');
     });
 
     it('normalizes replay card instance IDs to their full-card artwork asset', () => {
         const replayInstanceCard: CardType = {
             ...realCard,
-            id: 'c:l1-bk-0#0',
+            id: 'c:151-bk#0',
         };
         const html = renderToStaticMarkup(<Card card={replayInstanceCard} theme="dark" />);
 
-        expect(html).toContain('data-card-artwork="l1-bk-0"');
-        expect(html).toContain('/assets/cards/l1-bk-0.png');
-        expect(html).not.toContain('/assets/cards/c:l1-bk-0#0.png');
+        expect(html).toContain('data-card-artwork="151-bk"');
+        expect(html).toContain('/assets/cards/151-bk.png');
+        expect(html).not.toContain('/assets/cards/c:151-bk#0.png');
         expect(html).not.toContain('data-card-face-pattern="true"');
     });
 
     it('treats runtime artwork as final full-card art without React metadata overlays', () => {
         const html = renderToStaticMarkup(<Card card={metadataHeavyCard} theme="dark" />);
 
-        expect(html).toContain('data-card-artwork="l3-jo-76"');
-        expect(html).toContain('/assets/cards/l3-jo-76.png');
+        expect(html).toContain('data-card-artwork="373-jo"');
+        expect(html).toContain('/assets/cards/373-jo.png');
         expect(html).not.toContain('bg-gradient-to-b');
         expect(html).not.toContain('opacity-90');
         expect(html).not.toContain('ring-');
@@ -120,8 +120,8 @@ describe('Card artwork rendering', () => {
             <Card card={royalCard as unknown as CardType} theme="dark" isRoyal />
         );
 
-        expect(html).toContain('data-card-artwork="royal-again"');
-        expect(html).toContain('/assets/cards/royal-again.png');
+        expect(html).toContain('data-card-artwork="r92-ro"');
+        expect(html).toContain('/assets/cards/r92-ro.png');
         expect(html).not.toContain('bg-gradient-to-b');
         expect(html).not.toContain('opacity-90');
         expect(html).not.toContain('ring-');
@@ -142,7 +142,7 @@ describe('Card artwork rendering', () => {
             />
         );
 
-        expect(html).toContain('/assets/cards/royal-again.png');
+        expect(html).toContain('/assets/cards/r92-ro.png');
         expect(html).not.toContain('opacity-80');
         expect(html).not.toContain('grayscale');
         expect(html).not.toContain('ring-yellow');

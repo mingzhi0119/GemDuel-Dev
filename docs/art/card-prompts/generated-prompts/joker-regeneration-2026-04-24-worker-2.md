@@ -2,9 +2,9 @@
 
 Scope:
 
-- `assets/card/faces/source/l1-jo-29.png`
-- `assets/card/faces/source/l2-jo-54.png`
-- `assets/card/faces/source/l2-jo-55.png`
+- `assets/card/faces/source/174-jo.png`
+- `assets/card/faces/source/271-jo.png`
+- `assets/card/faces/source/272-jo.png`
 
 Generation method:
 
@@ -13,9 +13,9 @@ Generation method:
 - Final project assets were normalized to `1086x1448` RGBA PNGs.
 - Original generated files were left in place.
 
-## l1-jo-29
+## 174-jo
 
-Output path: `assets/card/faces/source/l1-jo-29.png`
+Output path: `assets/card/faces/source/174-jo.png`
 
 Selected source: `C:\Users\sange\.codex\generated_images\019dc0f8-5e24-7720-b099-7fa2382243fb\ig_0f6fcd752b4a1d9c0169ebc4ed66a88193a6a2e644b326dbca.png`
 
@@ -26,7 +26,7 @@ Final prompt:
 ```text
 Use case: stylized-concept
 Asset type: 1086x1448 PNG fantasy card face art, interior-only bottom-layer artwork for a game card.
-Primary request: Regenerate l1-jo-29 as a neutral Joker/wildcard face with a silver-white halo and colorless magic ring, with only tiny fine gold-line accents.
+Primary request: Regenerate 174-jo as a neutral Joker/wildcard face with a silver-white halo and colorless magic ring, with only tiny fine gold-line accents.
 Scene/backdrop: a quiet pearl-marble and mirror-glass sanctum, abstract and colorless rather than faction-coded.
 Subject: one centered floating silver-white luminous halo interlocked with a transparent colorless magical circle, faint prismatic glass motes, no character.
 Style/medium: polished fantasy card illustration, painterly-realistic concept art, crisp readable focal subject at card size.
@@ -38,9 +38,9 @@ Constraints: create only the art inside the card; no card frame, no border, no U
 Avoid: gold-dominant palette, golden palace, throne, crowns, banners, readable writing, typography, numeric badges, card template, decorative outer frame.
 ```
 
-## l2-jo-54
+## 271-jo
 
-Output path: `assets/card/faces/source/l2-jo-54.png`
+Output path: `assets/card/faces/source/271-jo.png`
 
 Selected source: `C:\Users\sange\.codex\generated_images\019dc0f8-5e24-7720-b099-7fa2382243fb\ig_0f6fcd752b4a1d9c0169ebc536ba1c8193a8a5d2e9818acfa0.png`
 
@@ -51,7 +51,7 @@ Final prompt:
 ```text
 Use case: stylized-concept
 Asset type: 1086x1448 PNG fantasy card face art, interior-only bottom-layer artwork for a game card.
-Primary request: Regenerate l2-jo-54 as a neutral Joker/wildcard face: a high-prestige colorless crystal astronomical instrument / refractor, mostly glass and silver, not gold.
+Primary request: Regenerate 271-jo as a neutral Joker/wildcard face: a high-prestige colorless crystal astronomical instrument / refractor, mostly glass and silver, not gold.
 Scene/backdrop: an elegant neutral observatory-reliquary made from pearl stone, black mirror floor, clear crystal columns, and silver astronomical geometry.
 Subject: one centered complex crystal astrolabe or refracting lens apparatus suspended above a polished silver pedestal, with transparent lenses, prisms, mirror facets, and colorless star lines; no character.
 Style/medium: polished fantasy card illustration, painterly-realistic concept art, premium but not royal, readable at card size.
@@ -63,9 +63,9 @@ Constraints: create only the art inside the card; no card frame, no border, no U
 Avoid: gilded reliquary, gold-dominant palette, golden palace, throne, crowns, banners, readable writing, typography, numeric badges, card template, decorative outer frame.
 ```
 
-## l2-jo-55
+## 272-jo
 
-Output path: `assets/card/faces/source/l2-jo-55.png`
+Output path: `assets/card/faces/source/272-jo.png`
 
 Selected source: `C:\Users\sange\.codex\generated_images\019dc0f8-5e24-7720-b099-7fa2382243fb\ig_0f6fcd752b4a1d9c0169ebc56e1cc08193bbbc63830795d029.png`
 
@@ -76,7 +76,7 @@ Final prompt:
 ```text
 Use case: stylized-concept
 Asset type: 1086x1448 PNG fantasy card face art, interior-only bottom-layer artwork for a game card.
-Primary request: Regenerate l2-jo-55 as a neutral Joker/wildcard face: a pearl-white mirror hall / throne hall that communicates universal versatility, not a golden palace.
+Primary request: Regenerate 272-jo as a neutral Joker/wildcard face: a pearl-white mirror hall / throne hall that communicates universal versatility, not a golden palace.
 Scene/backdrop: a luminous pearl-white hall of mirrors with alabaster arches, black-and-white marble reflections, crystal wall panels, and a quiet central ceremonial seat or dais that is abstract and unmarked.
 Subject: a centered empty pearl-white mirrored throne-like seat or universal mirrored dais, surrounded by colorless prismatic reflections and silver-white light; no person, no crown, no emblems.
 Style/medium: polished fantasy card illustration, painterly-realistic concept art, premium and wildcard-neutral, not faction-colored.

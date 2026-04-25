@@ -22,11 +22,11 @@ because the UI loads final composed cards and other public art through
 - Color identity does not need to be literal gemstone art. Any strong, readable color element is valid if the card still clearly reads as that color.
 - Prefer a single strong focal element with a clean silhouette so the image survives card-size reduction.
 - Translate gameplay metadata into visual mood:
-  - `again`: looping, repeating, cyclical, echoing, momentum
-  - `bonus_gem`: one source yielding an extra shard, relic, spark, fragment, or reward
-  - `scroll`: privilege, decree, archive, sacred script, ceremonial document
-  - `steal`: covert, predatory, cunning, illicit acquisition
-  - `none`: lean on environment, prestige, relic quality, and color identity without forced effect symbolism
+    - `again`: looping, repeating, cyclical, echoing, momentum
+    - `bonus_gem`: one source yielding an extra shard, relic, spark, fragment, or reward
+    - `scroll`: privilege, decree, archive, sacred script, ceremonial document
+    - `steal`: covert, predatory, cunning, illicit acquisition
+    - `none`: lean on environment, prestige, relic quality, and color identity without forced effect symbolism
 - `points` should raise prestige, rarity, or grandeur, but should not automatically make the card royal.
 - Any card with `crowns > 0` must introduce royal style cues: throne room, regalia, ceremonial banners, noble architecture, crown motifs, courtly atmosphere, or sovereign relics.
 - A crown card can still keep its original level frame. Royal flavor changes the art direction, not the level border.
@@ -45,6 +45,7 @@ because the UI loads final composed cards and other public art through
 ## File Discipline
 
 - Use canonical `card_id` names when an artwork has been definitively matched to a card.
+- Canonical runtime/source card IDs must use `XYZ-cc`: `X` is `1/2/3` for standard levels or `r` for royal, `Y` is `1 red`, `2 green`, `3 blue`, `4 white`, `5 black`, `6 pearl/pink`, `7 gold/JOKER`, `8 pure-points/gray`, `9 royal`, `Z` is the level+color sequence (`1..9,a,b...`), and `cc` is `re/gr/bl/wh/bk/pe/jo/po/ro`. Keep old/new audit evidence in `manifests/card-id-migration.csv`.
 - If an image is intentionally left unmatched, preserve traceability in CSV or mapping files instead of inventing a fake card id.
 - Keep prompt documents under `docs/art/card-prompts/`.
 - Keep reference PDFs under `docs/references/card-art/`.

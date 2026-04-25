@@ -15,10 +15,10 @@ export const enLabelMessages = {
     'ability.scroll': getLexiconLabel('privilege', 'en'),
     'ability.bonus_gem': getLexiconLabel('bonusGem', 'en'),
     'ability.none': '',
-    'royal.royal-3pts': 'The Queen',
-    'royal.royal-again': 'The Merchant',
-    'royal.royal-scroll': 'The Judge',
-    'royal.royal-steal': 'The Thief',
+    'royal.r91-ro': 'The Queen',
+    'royal.r92-ro': 'The Merchant',
+    'royal.r93-ro': 'The Judge',
+    'royal.r94-ro': 'The Thief',
 } as const;
 
 type LabelMessageShape = { [K in keyof typeof enLabelMessages]: string };
@@ -38,8 +38,8 @@ export const zhLabelMessages: LabelMessageShape = {
     'ability.scroll': getLexiconLabel('privilege', 'zh'),
     'ability.bonus_gem': getLexiconLabel('bonusGem', 'zh'),
     'ability.none': '',
-    'royal.royal-3pts': '王后',
-    'royal.royal-again': '商贾',
-    'royal.royal-scroll': '裁判官',
-    'royal.royal-steal': '盗贼',
+    'royal.r91-ro': '王后',
+    'royal.r92-ro': '商贾',
+    'royal.r93-ro': '裁判官',
+    'royal.r94-ro': '盗贼',
 } as const;

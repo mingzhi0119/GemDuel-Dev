@@ -14,7 +14,7 @@ from PIL import Image, ImageChops, ImageDraw
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_LAYOUT = REPO_ROOT / "assets/card/layouts/standard-basic.json"
-DEFAULT_OUTPUT = REPO_ROOT / "artifacts/card-renders/standard-basic-l2-wh-50.png"
+DEFAULT_OUTPUT = REPO_ROOT / "artifacts/card-renders/standard-basic-243-wh.png"
 DEFAULT_BATCH_OUTPUT_DIR = REPO_ROOT / "artifacts/card-renders/all"
 RESAMPLE = Image.Resampling.LANCZOS
 GEM_ORDER = ("red", "green", "blue", "white", "black", "pearl", "gold")
@@ -322,6 +322,14 @@ def point_ribbon_variant(card: Mapping[str, Any]) -> str:
     return "long"
 
 
+def point_value_offset_y(point_value: Mapping[str, Any], ability_count: int) -> float:
+    if ability_count == 0:
+        return float(point_value.get("noAbilityOffsetY", 0))
+    if ability_count == 1:
+        return float(point_value.get("oneAbilityOffsetY", 0))
+    return 0
+
+
 def parse_required(pattern: str, text: str, field: str, source: Path) -> str:
     match = re.search(pattern, text, flags=re.S)
     if not match:
@@ -559,8 +567,7 @@ def render_card(layout: Mapping[str, Any], card: Mapping[str, Any]) -> Image.Ima
             point_center_x = float(point_value["centerX"])
             point_center_y = float(point_value["centerY"])
             point_size = int(point_value["size"])
-        if not abilities:
-            point_center_y += float(point_value.get("noAbilityOffsetY", 0))
+        point_center_y += point_value_offset_y(point_value, len(abilities))
         paste_number_centered(
             canvas,
             paths,

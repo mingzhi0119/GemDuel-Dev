@@ -1,202 +1,203 @@
 {
-  "schemaVersion": 1,
-  "name": "standard-basic",
-  "source": "tools/figma/standard-card-template/code.js",
-  "card": {
-    "width": 1086,
-    "height": 1448,
-    "cornerRadius": 46
-  },
-  "paths": {
-    "cardFace": "assets/card/faces/source/{id}.png",
-    "gem": "apps/desktop/public/assets/gems/{color}.png",
-    "topCloth": "assets/card/overlays/TopCloths/top-cloth-{color}.png",
-    "pointRibbon": {
-      "long": "assets/card/overlays/PointRibbons/point-ribbon-{color}.png",
-      "medium": "assets/card/overlays/PointRibbons/point-ribbon-{color}-medium.png",
-      "short": "assets/card/overlays/PointRibbons/point-ribbon-{color}-short.png"
+    "schemaVersion": 1,
+    "name": "standard-basic",
+    "source": "tools/figma/standard-card-template/code.js",
+    "card": {
+        "width": 1086,
+        "height": 1448,
+        "cornerRadius": 46
     },
-    "costToken": "assets/card/overlays/CostTokens/cost-token-back-{color}.png",
-    "bonusGemBadge": "assets/card/overlays/BonusGemBadges/bonus-gem-badge-back-{color}.png",
-    "integratedBonusGemBadgeColors": ["joker"],
-    "cardNumber": "assets/card/overlays/CardNumbers/card-number-{digit}.png",
-    "crownBadges": {
-      "1": "assets/card/overlays/CrownBadges/crown-badge-gold-one-crown.png",
-      "2": "assets/card/overlays/CrownBadges/crown-badge-gold-two-crowns.png",
-      "3": "assets/card/overlays/CrownBadges/crown-badge-gold-three-crowns.png"
-    },
-    "abilityMedallions": {
-      "again": "assets/card/overlays/AbilityMedallions/ability-extra-turn-medallion.png",
-      "extraTurn": "assets/card/overlays/AbilityMedallions/ability-extra-turn-medallion.png",
-      "bonus_gem": "assets/card/overlays/AbilityMedallions/ability-bonus-gem-medallion.png",
-      "privilege": "assets/card/overlays/AbilityMedallions/ability-privilege-medallion.png",
-      "scroll": "assets/card/overlays/AbilityMedallions/ability-privilege-medallion.png",
-      "steal": "assets/card/overlays/AbilityMedallions/ability-steal-medallion.png"
-    }
-  },
-  "layers": {
-    "cardFace": {
-      "x": 0,
-      "y": 0,
-      "w": 1086,
-      "h": 1448,
-      "scaleMode": "fill"
-    },
-    "topCloth": {
-      "x": -7,
-      "y": -10,
-      "w": 1100,
-      "h": 310,
-      "scaleMode": "fit"
-    },
-    "pointRibbon": {
-      "x": 0,
-      "y": 0,
-      "w": 340,
-      "h": 720,
-      "scaleMode": "fit",
-      "alignX": "center",
-      "alignY": "top"
-    },
-    "pointValue": {
-      "x": 95,
-      "y": 50,
-      "w": 150,
-      "h": 150,
-      "scaleMode": "fit",
-      "noAbilityOffsetY": 10
-    },
-    "abilityMedallions": [
-      {
-        "x": 70,
-        "y": 190,
-        "w": 200,
-        "h": 200,
-        "scaleMode": "fit"
-      },
-      {
-        "x": 70,
-        "y": 360,
-        "w": 200,
-        "h": 200,
-        "scaleMode": "fit"
-      }
-    ],
-    "crownBadges": {
-      "1": {
-        "x": 421,
-        "y": 26,
-        "w": 244,
-        "h": 244,
-        "scaleMode": "fit",
-        "alignX": "center",
-        "alignY": "top"
-      },
-      "2": {
-        "x": 373,
-        "y": 10,
-        "w": 340,
-        "h": 244,
-        "scaleMode": "fit",
-        "alignX": "center",
-        "alignY": "top"
-      },
-      "3": {
-        "x": 373,
-        "y": 0,
-        "w": 340,
-        "h": 310,
-        "scaleMode": "fit",
-        "alignX": "center",
-        "alignY": "top"
-      }
-    },
-    "bonusGemBadges": [
-      {
-        "x": 750,
-        "y": 70,
-        "w": 280,
-        "h": 280,
-        "gemCenterX": 890,
-        "gemCenterY": 210,
-        "gemSize": 196,
-        "gemColorAdjustments": {
-          "red": {
-            "offsetX": 10
-          },
-          "white": {
-            "scale": 0.9
-          },
-          "gold": {
-            "scale": 0.9,
-            "offsetX": -3.5
-          }
+    "paths": {
+        "cardFace": "assets/card/faces/source/{id}.png",
+        "gem": "apps/desktop/public/assets/gems/{color}.png",
+        "topCloth": "assets/card/overlays/TopCloths/top-cloth-{color}.png",
+        "pointRibbon": {
+            "long": "assets/card/overlays/PointRibbons/point-ribbon-{color}.png",
+            "medium": "assets/card/overlays/PointRibbons/point-ribbon-{color}-medium.png",
+            "short": "assets/card/overlays/PointRibbons/point-ribbon-{color}-short.png"
         },
-        "scaleMode": "fit"
-      },
-      {
-        "x": 750,
-        "y": 313,
-        "w": 280,
-        "h": 280,
-        "gemCenterX": 890,
-        "gemCenterY": 453,
-        "gemSize": 196,
-        "gemColorAdjustments": {
-          "red": {
-            "offsetX": 10
-          },
-          "white": {
-            "scale": 0.9
-          },
-          "gold": {
-            "scale": 0.9,
-            "offsetX": -3.5
-          }
+        "costToken": "assets/card/overlays/CostTokens/cost-token-back-{color}.png",
+        "bonusGemBadge": "assets/card/overlays/BonusGemBadges/bonus-gem-badge-back-{color}.png",
+        "integratedBonusGemBadgeColors": ["joker"],
+        "cardNumber": "assets/card/overlays/CardNumbers/card-number-{digit}.png",
+        "crownBadges": {
+            "1": "assets/card/overlays/CrownBadges/crown-badge-gold-one-crown.png",
+            "2": "assets/card/overlays/CrownBadges/crown-badge-gold-two-crowns.png",
+            "3": "assets/card/overlays/CrownBadges/crown-badge-gold-three-crowns.png"
         },
-        "scaleMode": "fit"
-      }
-    ],
-    "costTokens": {
-      "x": 48,
-      "y": 720,
-      "stepY": 160,
-      "w": 190,
-      "valueAnchorX": 160,
-      "valueAnchorY": 160,
-      "valueSize": 86,
-      "gemAnchorX": 288,
-      "gemAnchorY": 160,
-      "gemSize": 80,
-      "scaleMode": "fit",
-      "maxSlots": 4
+        "abilityMedallions": {
+            "again": "assets/card/overlays/AbilityMedallions/ability-extra-turn-medallion.png",
+            "extraTurn": "assets/card/overlays/AbilityMedallions/ability-extra-turn-medallion.png",
+            "bonus_gem": "assets/card/overlays/AbilityMedallions/ability-bonus-gem-medallion.png",
+            "privilege": "assets/card/overlays/AbilityMedallions/ability-privilege-medallion.png",
+            "scroll": "assets/card/overlays/AbilityMedallions/ability-privilege-medallion.png",
+            "steal": "assets/card/overlays/AbilityMedallions/ability-steal-medallion.png"
+        }
+    },
+    "layers": {
+        "cardFace": {
+            "x": 0,
+            "y": 0,
+            "w": 1086,
+            "h": 1448,
+            "scaleMode": "fill"
+        },
+        "topCloth": {
+            "x": -7,
+            "y": -10,
+            "w": 1100,
+            "h": 310,
+            "scaleMode": "fit"
+        },
+        "pointRibbon": {
+            "x": 0,
+            "y": 0,
+            "w": 340,
+            "h": 720,
+            "scaleMode": "fit",
+            "alignX": "center",
+            "alignY": "top"
+        },
+        "pointValue": {
+            "x": 95,
+            "y": 50,
+            "w": 150,
+            "h": 150,
+            "scaleMode": "fit",
+            "noAbilityOffsetY": 20,
+            "oneAbilityOffsetY": 5
+        },
+        "abilityMedallions": [
+            {
+                "x": 60,
+                "y": 183,
+                "w": 220,
+                "h": 235,
+                "scaleMode": "fit"
+            },
+            {
+                "x": 60,
+                "y": 353,
+                "w": 220,
+                "h": 235,
+                "scaleMode": "fit"
+            }
+        ],
+        "crownBadges": {
+            "1": {
+                "x": 383,
+                "y": 0,
+                "w": 320,
+                "h": 320,
+                "scaleMode": "fit",
+                "alignX": "center",
+                "alignY": "top"
+            },
+            "2": {
+                "x": 303,
+                "y": 0,
+                "w": 480,
+                "h": 480,
+                "scaleMode": "fit",
+                "alignX": "center",
+                "alignY": "top"
+            },
+            "3": {
+                "x": 303,
+                "y": 0,
+                "w": 480,
+                "h": 480,
+                "scaleMode": "fit",
+                "alignX": "center",
+                "alignY": "top"
+            }
+        },
+        "bonusGemBadges": [
+            {
+                "x": 730,
+                "y": 50,
+                "w": 320,
+                "h": 320,
+                "gemCenterX": 890,
+                "gemCenterY": 210,
+                "gemSize": 224,
+                "gemColorAdjustments": {
+                    "red": {
+                        "offsetX": 10
+                    },
+                    "white": {
+                        "scale": 0.9
+                    },
+                    "gold": {
+                        "scale": 0.9,
+                        "offsetX": -3.5
+                    }
+                },
+                "scaleMode": "fit"
+            },
+            {
+                "x": 730,
+                "y": 293,
+                "w": 320,
+                "h": 320,
+                "gemCenterX": 890,
+                "gemCenterY": 453,
+                "gemSize": 224,
+                "gemColorAdjustments": {
+                    "red": {
+                        "offsetX": 10
+                    },
+                    "white": {
+                        "scale": 0.9
+                    },
+                    "gold": {
+                        "scale": 0.9,
+                        "offsetX": -3.5
+                    }
+                },
+                "scaleMode": "fit"
+            }
+        ],
+        "costTokens": {
+            "x": 43,
+            "y": 715,
+            "stepY": 160,
+            "w": 200,
+            "valueAnchorX": 160,
+            "valueAnchorY": 160,
+            "valueSize": 91,
+            "gemAnchorX": 288,
+            "gemAnchorY": 160,
+            "gemSize": 84,
+            "scaleMode": "fit",
+            "maxSlots": 4
+        }
+    },
+    "demo": {
+        "id": "243-wh",
+        "points": "2",
+        "topClothColor": "white",
+        "pointRibbonColor": "white",
+        "bonusGemColors": ["white"],
+        "crowns": 1,
+        "abilities": ["again", "privilege"],
+        "costs": [
+            {
+                "color": "red",
+                "value": "2"
+            },
+            {
+                "color": "green",
+                "value": "2"
+            },
+            {
+                "color": "black",
+                "value": "2"
+            },
+            {
+                "color": "pearl",
+                "value": "1"
+            }
+        ]
     }
-  },
-  "demo": {
-    "id": "l2-wh-50",
-    "points": "2",
-    "topClothColor": "white",
-    "pointRibbonColor": "white",
-    "bonusGemColors": ["white"],
-    "crowns": 1,
-    "abilities": ["again", "privilege"],
-    "costs": [
-      {
-        "color": "red",
-        "value": "2"
-      },
-      {
-        "color": "green",
-        "value": "2"
-      },
-      {
-        "color": "black",
-        "value": "2"
-      },
-      {
-        "color": "pearl",
-        "value": "1"
-      }
-    ]
-  }
 }
