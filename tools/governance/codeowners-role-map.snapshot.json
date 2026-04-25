@@ -1,0 +1,73 @@
+{
+    "schemaVersion": 1,
+    "mode": "single-maintainer-role-map",
+    "maintainer": "@mingzhi0119",
+    "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
+    "boundaryRoleMappings": [
+        {
+            "role": "Frontend + Domain Logic",
+            "reviewers": ["@mingzhi0119"],
+            "codeownerPatterns": [
+                "/apps/desktop/src/app/**",
+                "/apps/desktop/src/hooks/**",
+                "/packages/shared/src/logic/**",
+                "/packages/ui/src/**"
+            ]
+        },
+        {
+            "role": "Networking",
+            "reviewers": ["@mingzhi0119"],
+            "codeownerPatterns": [
+                "/apps/desktop/src/hooks/**",
+                "/apps/desktop/electron/**",
+                "/packages/shared/src/logic/**",
+                "/packages/shared/src/types/**"
+            ]
+        },
+        {
+            "role": "Domain Logic",
+            "reviewers": ["@mingzhi0119"],
+            "codeownerPatterns": [
+                "/packages/shared/src/logic/**",
+                "/packages/shared/src/replay/**",
+                "/packages/shared/src/types/**"
+            ]
+        },
+        {
+            "role": "Desktop Platform",
+            "reviewers": ["@mingzhi0119"],
+            "codeownerPatterns": ["/apps/desktop/electron/**", "/apps/desktop/src/observability/**"]
+        },
+        {
+            "role": "Desktop Platform + Networking",
+            "reviewers": ["@mingzhi0119"],
+            "codeownerPatterns": [
+                "/apps/desktop/electron/**",
+                "/apps/desktop/src/hooks/**",
+                "/packages/shared/src/config/**"
+            ]
+        },
+        {
+            "role": "Desktop Platform + Release Engineering",
+            "reviewers": ["@mingzhi0119"],
+            "codeownerPatterns": [
+                "/apps/desktop/electron/**",
+                "/tools/scripts/**",
+                "/tools/governance/**",
+                "/docs/governance/**"
+            ]
+        },
+        {
+            "role": "Release Engineering",
+            "reviewers": ["@mingzhi0119"],
+            "codeownerPatterns": [
+                "/.github/**",
+                "/tools/scripts/**",
+                "/tools/governance/**",
+                "/package.json",
+                "/pnpm-workspace.yaml",
+                "/turbo.json"
+            ]
+        }
+    ]
+}

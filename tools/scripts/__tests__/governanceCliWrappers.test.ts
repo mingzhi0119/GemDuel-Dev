@@ -17,6 +17,12 @@ const operationsSnapshot = JSON.parse(
         'utf8'
     )
 );
+const benchmarkBaseline = JSON.parse(
+    fs.readFileSync(
+        path.join(repoRoot, 'tools', 'governance', 'benchmark-baselines.snapshot.json'),
+        'utf8'
+    )
+);
 const defaultGovernanceArtifactsDir = path.resolve(
     repoRoot,
     operationsSnapshot.artifactPolicy.outputDirectory
@@ -43,6 +49,26 @@ const createDistDir = (sizeKb: number) => {
         tempDir,
         distDir,
     };
+};
+
+const writeCoverageFixture = (tempDir: string) => {
+    const coverageFile = path.join(tempDir, 'coverage-final.json');
+    fs.writeFileSync(
+        coverageFile,
+        JSON.stringify(
+            {
+                'fixture.js': {
+                    b: {
+                        0: [1, 1],
+                    },
+                },
+            },
+            null,
+            2
+        ),
+        'utf8'
+    );
+    return coverageFile;
 };
 
 const withReplacedRepoPath = (
@@ -78,8 +104,30 @@ const withReplacedRepoPath = (
 
 const writeGovernanceArtifacts = (outDir: string, sizeKb = 620) => {
     const { tempDir, distDir } = createDistDir(sizeKb);
+    const coverageFile = writeCoverageFixture(tempDir);
 
     try {
+        fs.mkdirSync(outDir, {
+            recursive: true,
+        });
+        fs.writeFileSync(
+            path.join(outDir, 'lifecycle-benchmarks.report.json'),
+            JSON.stringify(
+                {
+                    schemaVersion: 1,
+                    status: 'passed',
+                    errors: [],
+                    benchmarks: benchmarkBaseline.benchmarks.map((benchmark: { id: string }) => ({
+                        id: benchmark.id,
+                        medianMs: 0.001,
+                        p95Ms: 0.002,
+                    })),
+                },
+                null,
+                2
+            ),
+            'utf8'
+        );
         execFileSync(
             'node',
             [
@@ -88,6 +136,8 @@ const writeGovernanceArtifacts = (outDir: string, sizeKb = 620) => {
                 outDir,
                 '--dist-dir',
                 distDir,
+                '--coverage-file',
+                coverageFile,
             ],
             {
                 cwd: repoRoot,
@@ -289,6 +339,40 @@ describe('governance CLI wrappers', () => {
         expect(result.stdout).toContain(
             `Seal coverage exclusion governance check passed for ${SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY.baselineCount} reviewed exclusions.`
         );
+    });
+
+    it('runs the lifecycle certification wrapper when benchmark, coverage, and bundle evidence exist', () => {
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lifecycle-certification-'));
+        const outDir = path.join(tempDir, 'artifacts');
+        const { tempDir: distTempDir, distDir } = createDistDir(250);
+        const coverageFile = writeCoverageFixture(tempDir);
+
+        try {
+            writeGovernanceArtifacts(outDir, 250);
+            const result = runNode([
+                'tools/scripts/check-lifecycle-certification.mjs',
+                '--out-dir',
+                outDir,
+                '--dist-dir',
+                distDir,
+                '--coverage-file',
+                coverageFile,
+            ]);
+
+            expect(result.status).toBe(0);
+            expect(result.stdout).toContain(
+                'Lifecycle certification passed with local score 10/10'
+            );
+        } finally {
+            fs.rmSync(tempDir, {
+                force: true,
+                recursive: true,
+            });
+            fs.rmSync(distTempDir, {
+                force: true,
+                recursive: true,
+            });
+        }
     });
 
     it('fails the seal exclusion wrapper when review timestamps have expired', () => {

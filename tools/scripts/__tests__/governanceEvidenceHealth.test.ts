@@ -15,6 +15,12 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '../../..');
+const benchmarkBaseline = JSON.parse(
+    fs.readFileSync(
+        path.join(repoRoot, 'tools', 'governance', 'benchmark-baselines.snapshot.json'),
+        'utf8'
+    )
+);
 const OPERATIONS_SNAPSHOT = {
     indicatorThresholds: {
         startupFailures: { warningMax: 0, incidentMax: 0 },
@@ -77,17 +83,44 @@ const writeJson = (filePath: string, value: unknown) => {
     fs.writeFileSync(filePath, JSON.stringify(value, null, 2), 'utf8');
 };
 
+const writeBenchmarkReport = (outDir: string) => {
+    writeJson(path.join(outDir, 'lifecycle-benchmarks.report.json'), {
+        schemaVersion: 1,
+        status: 'passed',
+        errors: [],
+        benchmarks: benchmarkBaseline.benchmarks.map((benchmark: { id: string }) => ({
+            id: benchmark.id,
+            medianMs: 0.001,
+            p95Ms: 0.002,
+        })),
+    });
+};
+
+const writeCoverageFixture = (tempDir: string) => {
+    const coverageFile = path.join(tempDir, 'coverage-final.json');
+    writeJson(coverageFile, {
+        'fixture.js': {
+            b: {
+                0: [1, 1],
+            },
+        },
+    });
+    return coverageFile;
+};
+
 describe('governance evidence health', () => {
     it('accepts exported governance evidence when the retained baseline stays healthy', () => {
         const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'governance-evidence-health-'));
         const distDir = path.join(tempDir, 'dist');
         const assetsDir = path.join(distDir, 'assets');
         const outDir = path.join(tempDir, 'artifacts');
+        const coverageFile = writeCoverageFixture(tempDir);
 
         fs.mkdirSync(assetsDir, {
             recursive: true,
         });
         fs.writeFileSync(path.join(assetsDir, 'index-main.js'), 'x'.repeat(620 * 1024), 'utf8');
+        writeBenchmarkReport(outDir);
 
         try {
             execFileSync(
@@ -98,6 +131,8 @@ describe('governance evidence health', () => {
                     outDir,
                     '--dist-dir',
                     distDir,
+                    '--coverage-file',
+                    coverageFile,
                 ],
                 {
                     cwd: repoRoot,
@@ -105,7 +140,7 @@ describe('governance evidence health', () => {
                 }
             );
 
-            const { manifest, reports } = loadGovernanceEvidence({
+            const { manifest, reports, lifecycleReports } = loadGovernanceEvidence({
                 artifactsDir: outDir,
                 repoRoot,
             });
@@ -114,6 +149,7 @@ describe('governance evidence health', () => {
                 collectGovernanceEvidenceHealthErrors({
                     manifest,
                     reports,
+                    lifecycleReports,
                     operationsSnapshot: OPERATIONS_SNAPSHOT,
                 })
             ).toEqual([]);

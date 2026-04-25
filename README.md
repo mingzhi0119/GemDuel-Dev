@@ -64,6 +64,8 @@ pnpm --dir tools/scripts run ai:replays -- --count 10 --use-buffs
 - Architecture overview: [`docs/architecture/overview.md`](docs/architecture/overview.md)
 - Quick start: [`docs/guides/quick-start.md`](docs/guides/quick-start.md)
 - Testing: [`docs/guides/testing.md`](docs/guides/testing.md)
+- Contributor conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - Lexicon and player copy: [`docs/guides/lexicon-copy-system.md`](docs/guides/lexicon-copy-system.md)
 - Governance: [`docs/governance/`](docs/governance/)
+- Governance certification: [`docs/archive/engineering-governance-certification-2026-04-25.md`](docs/archive/engineering-governance-certification-2026-04-25.md)
 - Archived governance timeline: [`docs/archive/engineering-governance-archive.md`](docs/archive/engineering-governance-archive.md)

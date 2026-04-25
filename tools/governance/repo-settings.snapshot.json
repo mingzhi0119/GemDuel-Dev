@@ -1,0 +1,43 @@
+{
+    "schemaVersion": 1,
+    "repository": {
+        "owner": "mingzhi0119",
+        "name": "GemDuel-Dev",
+        "defaultBranch": "main"
+    },
+    "scope": {
+        "mode": "code-only-desired-state",
+        "liveMutationsAllowed": false,
+        "externalCertificationRequired": true,
+        "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md"
+    },
+    "branchProtection": {
+        "protected": true,
+        "requirePullRequest": true,
+        "requireConversationResolution": true,
+        "restrictDirectPushes": true,
+        "requiredStatusChecks": ["governance", "production-audit"]
+    },
+    "rulesets": [
+        {
+            "id": "default-branch-lifecycle",
+            "target": "branch",
+            "enforcement": "active",
+            "includePatterns": ["~DEFAULT_BRANCH"],
+            "rules": ["pull_request", "required_status_checks", "non_fast_forward"]
+        },
+        {
+            "id": "release-tag-provenance",
+            "target": "tag",
+            "enforcement": "active",
+            "includePatterns": ["v*"],
+            "rules": ["tag_name_pattern"]
+        }
+    ],
+    "security": {
+        "vulnerabilityAlerts": true,
+        "privateVulnerabilityReporting": true,
+        "dependencyGovernanceWorkflow": ".github/workflows/dependency-governance.yml",
+        "securityAdvisoryUrl": "https://github.com/mingzhi0119/GemDuel-Dev/security/advisories/new"
+    }
+}

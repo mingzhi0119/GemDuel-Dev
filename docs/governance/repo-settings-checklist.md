@@ -2,6 +2,11 @@
 
 Use this list when reviewing GitHub repository settings for release governance.
 
+The desired state is machine-readable in `tools/governance/repo-settings.snapshot.json` and
+validated locally by `pnpm repo-settings:check`. The default command is code-only and does not
+mutate GitHub settings. Use `pnpm repo-settings:check -- --live` when an administrator wants a
+read-only drift report against the current GitHub repository.
+
 ## Required Checks
 
 - Protect the default branch and require pull requests before merge.
@@ -10,6 +15,7 @@ Use this list when reviewing GitHub repository settings for release governance.
     - `production-audit`
 - Require review conversations to be resolved before merge.
 - Restrict direct pushes to the default branch to repository administrators or automation owners.
+- Keep `tools/governance/audit-gates.snapshot.json` aligned with workflow gate additions.
 
 ## Tag And Release Rules
 
@@ -25,4 +31,12 @@ Use this list when reviewing GitHub repository settings for release governance.
 - The retained bundle must include:
     - release-health reports
     - `governance-evidence.manifest.json`
+    - `audit-gates.report.json`
+    - `audit-gates.report.md`
+    - `lifecycle-governance.report.json`
+    - `lifecycle-governance.report.md`
+    - `lifecycle-governance.dashboard.json`
+    - `lifecycle-governance.dashboard.md`
+    - `lifecycle-certification.report.json`
+    - `lifecycle-certification.report.md`
     - bundle budget output when `dist/` exists

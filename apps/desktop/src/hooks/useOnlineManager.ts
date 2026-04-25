@@ -79,7 +79,7 @@ export const useOnlineManager = (
                 setConnectionStatus,
             });
         },
-        [getCurrentStateRef, handleHeartbeat, sendMessage]
+        [getCurrentReplayFullSyncRef, getCurrentStateRef, handleHeartbeat, sendMessage]
     );
 
     const setupConnectionRef = useRef(setupConnection);

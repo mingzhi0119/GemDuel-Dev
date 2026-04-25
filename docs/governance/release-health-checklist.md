@@ -11,6 +11,13 @@ Use this list before packaging a desktop release or cutting a release candidate.
 - `pnpm desktop:check`
 - `pnpm release:check`
 - `pnpm release:provenance:check`
+- `pnpm repo-settings:check`
+- `pnpm codeowners:check`
+- `pnpm changelog:check`
+- `pnpm audit:gates`
+- `pnpm bench`
+- `pnpm governance:report`
+- `pnpm lifecycle:certify`
 - `pnpm governance:evidence:check`
 - `tools/scripts/export-release-health-report.mjs`
 - `tools/scripts/export-governance-artifacts.mjs`

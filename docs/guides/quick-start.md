@@ -24,11 +24,14 @@ pnpm run seal-exclusions:check
 ```bash
 pnpm test:security
 pnpm test:coverage
-pnpm test:coverage:seal
 pnpm boundaries:check
 pnpm deps:check
 pnpm desktop:check
 pnpm release:check
+pnpm bench
+pnpm audit:gates
+pnpm governance:report
+pnpm lifecycle:certify
 ```
 
 ## Where To Look
@@ -41,6 +44,7 @@ pnpm release:check
 - Canonical player copy and term system: `packages/shared/src/lexicon/index.ts`, `packages/ui/src/lexicon/**`
 - Governance docs: [`docs/governance/`](../governance/)
 - Governance snapshots and retained evidence: `tools/governance/**`
+- Conduct rules: [`CODE_OF_CONDUCT.md`](../../CODE_OF_CONDUCT.md)
 
 ## Suggested Reading Order
 
@@ -49,3 +53,4 @@ pnpm release:check
 3. [`docs/guides/lexicon-copy-system.md`](lexicon-copy-system.md)
 4. [`docs/guides/frontend-layout-guide.md`](frontend-layout-guide.md)
 5. [`docs/governance/architecture-layer-map.md`](../governance/architecture-layer-map.md)
+6. [`docs/archive/engineering-governance-certification-2026-04-25.md`](../archive/engineering-governance-certification-2026-04-25.md)

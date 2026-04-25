@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
@@ -12,6 +13,12 @@ import { collectSealCoverageExclusionGovernanceErrors } from '../sealExclusionGo
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '../../..');
+const reviewSnapshot = JSON.parse(
+    fs.readFileSync(
+        path.join(repoRoot, 'tools', 'governance', 'seal-exclusions-review.snapshot.json'),
+        'utf8'
+    )
+);
 const sampleShellExclusion = SEAL_COVERAGE_EXCLUSIONS.find(({ category }) => category === 'shell');
 const sampleLeafExclusion = SEAL_COVERAGE_EXCLUSIONS.find(({ category }) => category === 'leaf');
 const today = new Date('2026-04-21T00:00:00.000Z');
@@ -21,6 +28,7 @@ describe('seal exclusion governance', () => {
         const errors = collectSealCoverageExclusionGovernanceErrors({
             exclusions: SEAL_COVERAGE_EXCLUSIONS,
             policy: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
+            reviewSnapshot,
             repoRoot,
             today,
         });
@@ -146,6 +154,29 @@ describe('seal exclusion governance', () => {
         );
         expect(errors).toContain(
             'Seal coverage exclusion packages/ui/src/components/SlowReview.tsx exceeds the maximum review cadence (45 > 30).'
+        );
+    });
+
+    it('requires review snapshot owner roles for every governed category', () => {
+        const errors = collectSealCoverageExclusionGovernanceErrors({
+            exclusions: SEAL_COVERAGE_EXCLUSIONS,
+            policy: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
+            reviewSnapshot: {
+                ...reviewSnapshot,
+                ownerRolesByCategory: {
+                    ...reviewSnapshot.ownerRolesByCategory,
+                    leaf: '',
+                },
+            },
+            repoRoot,
+            today,
+        });
+
+        expect(errors).toContain(
+            'Seal coverage exclusion review snapshot must define an owner role for category leaf.'
+        );
+        expect(errors).toContain(
+            'Seal coverage exclusion ../../packages/ui/src/components/CardAnatomyPage.tsx has no owner role for category leaf.'
         );
     });
 });

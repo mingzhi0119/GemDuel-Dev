@@ -6,6 +6,7 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 
 - [Quick Start](guides/quick-start.md)
 - [Testing](guides/testing.md)
+- [Contributor Conduct](../CODE_OF_CONDUCT.md)
 - [Lexicon and Player Copy](guides/lexicon-copy-system.md)
 - [Frontend Layout](guides/frontend-layout-guide.md)
 
@@ -20,6 +21,7 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 - [Dependency and Runtime Governance](governance/dependency-runtime-governance.md)
 - [Electron IPC Allowlist](governance/electron-ipc-allowlist.md)
 - [Release Health Checklist](governance/release-health-checklist.md)
+- [Repo Settings Checklist](governance/repo-settings-checklist.md)
 - [Operations SLO](governance/operations-slo.md)
 - [Operations Fault Drills](governance/operations-fault-drills.md)
 - [Test Governance Matrix](governance/test-governance-matrix.md)
@@ -28,4 +30,6 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 ## Archive
 
 - [Engineering Governance Archive](archive/engineering-governance-archive.md)
+- [Engineering Audit Report 2026-04-25](archive/engineering-audit-report-2026-04-25.md)
+- [Engineering Governance Certification 2026-04-25](archive/engineering-governance-certification-2026-04-25.md)
 - [Independent Audit Prompt](archive/opus-4.7-independent-audit-prompt.md)

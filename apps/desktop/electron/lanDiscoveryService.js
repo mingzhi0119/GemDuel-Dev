@@ -4,36 +4,20 @@ import {
     buildLanMatchState,
     createEmptyLanMatchState,
     HEARTBEAT_INTERVAL_MS,
-    isPrivateLanAddress,
     LAN_DISCOVERY_BROADCAST_ADDRESS,
     LAN_DISCOVERY_PORT,
-    LAN_DISCOVERY_PROTOCOL_VERSION,
     PEER_STALE_AFTER_MS,
-    pickLanHostAddress,
 } from './lanDiscoveryProtocol.js';
-import {
-    applySeatAssignment,
-    applySessionHeartbeat,
-    buildLanLaunch,
-    createGuestRoomSession,
-    createHostRoomSession,
-} from './lanDiscoverySession.js';
-import {
-    applyIncomingStartReady,
-    applyRemoteModeSelection,
-    canHandleRemotePregamePacket,
-    isRemotePlayerP1,
-} from './lanDiscoveryPregame.js';
+import { buildLanLaunch } from './lanDiscoverySession.js';
 import {
     createCancelPacket,
-    createMatchAckPacket,
-    createMatchAssignPacket,
     createSearchPacket,
     createSelectModePacket,
     createSessionHeartbeatPacket,
-    createStartReadyPacket,
     createStartRequestPacket,
+    createStartReadyPacket,
 } from './lanDiscoveryPackets.js';
+import { createLanDiscoveryPacketHandlers } from './lanDiscoveryServiceHandlers.js';
 
 export const createLanDiscoveryService = ({
     appVersion,
@@ -119,192 +103,29 @@ export const createLanDiscoveryService = ({
             })
         );
     };
-    const handlePeerStale = () => {
-        if (
-            !roomSession?.remoteLastSeenAt ||
-            now() - roomSession.remoteLastSeenAt <= PEER_STALE_AFTER_MS
-        )
-            return;
-        resetSession({
-            phase: wantsSearch ? 'searching' : 'error',
-            statusMessage: wantsSearch
-                ? 'Opponent disconnected. Searching again...'
-                : 'Opponent disconnected.',
-            errorMessage: wantsSearch ? null : 'Opponent disconnected.',
+    const packetHandlers = createLanDiscoveryPacketHandlers({
+        appVersionString,
+        broadcastStartReady,
+        candidates,
+        emit,
+        emitState,
+        getHostSignalPort,
+        getRoomSession: () => roomSession,
+        getWantsSearch: () => wantsSearch,
+        instanceId,
+        networkInterfaces,
+        now,
+        resetSession,
+        sendPacket,
+        setRoomSession: (nextSession) => {
+            roomSession = nextSession;
+        },
+    });
+    const tick = () =>
+        packetHandlers.tick({
+            sendSearchHeartbeat,
+            sendSessionHeartbeat,
         });
-    };
-    const handleSearchPacket = (packet, address) => {
-        const hostPort = getHostSignalPort();
-        candidates.set(packet.instanceId, {
-            address,
-            lastSeenAt: now(),
-        });
-        if (
-            !wantsSearch ||
-            roomSession?.phase !== 'searching' ||
-            instanceId >= packet.instanceId ||
-            !hostPort
-        )
-            return;
-        roomSession = createHostRoomSession({
-            candidateAddress: address,
-            candidateId: packet.instanceId,
-            hostAddress: pickLanHostAddress(networkInterfaces?.()),
-            hostPort,
-            hostNonce: crypto.randomBytes(8).toString('hex'),
-            instanceId,
-            now: now(),
-            roomId: crypto.randomUUID(),
-        });
-        emitState();
-        sendPacket(
-            createMatchAssignPacket({
-                appVersion: appVersionString,
-                instanceId,
-                roomSession,
-            })
-        );
-    };
-    const handleMatchAssignPacket = (packet, address) => {
-        if (
-            !wantsSearch ||
-            roomSession?.phase !== 'searching' ||
-            packet.guestInstanceId !== instanceId
-        )
-            return;
-        roomSession = createGuestRoomSession({
-            address,
-            guestNonce: crypto.randomBytes(8).toString('hex'),
-            instanceId,
-            now: now(),
-            packet,
-        });
-        sendPacket(
-            createMatchAckPacket({
-                appVersion: appVersionString,
-                instanceId,
-                roomSession,
-            })
-        );
-        applySeatAssignment(roomSession);
-        emitState();
-    };
-    const handleMatchAckPacket = (packet, address) => {
-        if (
-            !roomSession?.transportHost ||
-            roomSession.roomId !== packet.roomId ||
-            packet.hostInstanceId !== instanceId ||
-            packet.guestInstanceId !== roomSession.guestInstanceId
-        )
-            return;
-        roomSession.remoteAddress = address;
-        roomSession.remoteLastSeenAt = now();
-        roomSession.guestNonce = packet.guestNonce;
-        applySeatAssignment(roomSession);
-        emitState();
-    };
-    const handleSessionHeartbeatPacket = (packet, address) => {
-        if (!applySessionHeartbeat({ address, nowValue: now(), packet, roomSession })) return;
-        emitState();
-    };
-    const handleSelectModePacket = (packet) => {
-        if (!canHandleRemotePregamePacket(roomSession, packet) || !isRemotePlayerP1(roomSession))
-            return;
-        applyRemoteModeSelection(roomSession, packet.mode);
-        emitState();
-    };
-    const handleStartRequestPacket = (packet) => {
-        if (!canHandleRemotePregamePacket(roomSession, packet) || !isRemotePlayerP1(roomSession))
-            return;
-        if (!roomSession.selectedMode || !roomSession.hostPeerId) {
-            roomSession.statusMessage = 'Waiting for transport host to finish setup...';
-            emitState();
-            return;
-        }
-        broadcastStartReady(roomSession.selectedMode);
-    };
-    const handleStartReadyPacket = (packet) => {
-        const launch = applyIncomingStartReady(roomSession, packet);
-        if (!launch) return;
-        emitState();
-        emit({ type: 'launch', launch });
-    };
-    const handleCancelPacket = (packet) => {
-        if (!roomSession?.roomId) return;
-        const matchesRoom = roomSession.roomId === packet.roomId;
-        const targetsLocal =
-            !packet.hostInstanceId ||
-            packet.hostInstanceId === roomSession.hostInstanceId ||
-            packet.guestInstanceId === roomSession.guestInstanceId;
-        if (!matchesRoom || !targetsLocal) return;
-        resetSession({
-            phase: wantsSearch ? 'searching' : 'idle',
-            statusMessage: wantsSearch ? 'Opponent left. Searching again...' : 'LAN duel is ready.',
-        });
-    };
-    const handleIncomingPacket = (message, remoteInfo) => {
-        let packet;
-        try {
-            packet = JSON.parse(message.toString());
-        } catch {
-            return;
-        }
-        if (
-            !packet ||
-            typeof packet !== 'object' ||
-            packet.protocolVersion !== LAN_DISCOVERY_PROTOCOL_VERSION ||
-            packet.appVersion !== appVersionString ||
-            packet.instanceId === instanceId
-        )
-            return;
-        const address =
-            typeof packet.hostAddress === 'string' && isPrivateLanAddress(packet.hostAddress)
-                ? packet.hostAddress
-                : remoteInfo.address;
-
-        switch (packet.kind) {
-            case 'SEARCH':
-                handleSearchPacket(packet, address);
-                break;
-            case 'MATCH_ASSIGN':
-                handleMatchAssignPacket(packet, address);
-                break;
-            case 'MATCH_ACK':
-                handleMatchAckPacket(packet, address);
-                break;
-            case 'SESSION_HEARTBEAT':
-                handleSessionHeartbeatPacket(packet, address);
-                break;
-            case 'SELECT_MODE':
-                handleSelectModePacket(packet);
-                break;
-            case 'START_REQUEST':
-                handleStartRequestPacket(packet);
-                break;
-            case 'START_READY':
-                handleStartReadyPacket(packet);
-                break;
-            case 'CANCEL':
-                handleCancelPacket(packet);
-                break;
-        }
-    };
-    const tick = () => {
-        const nowValue = now();
-        for (const [candidateId, candidate] of candidates) {
-            if (nowValue - candidate.lastSeenAt > PEER_STALE_AFTER_MS) {
-                candidates.delete(candidateId);
-            }
-        }
-
-        if (wantsSearch && roomSession?.phase === 'searching') {
-            sendSearchHeartbeat();
-        } else if (roomSession?.phase === 'matched' || roomSession?.phase === 'starting') {
-            sendSessionHeartbeat();
-        }
-
-        handlePeerStale();
-    };
     return {
         start: () => {
             if (socket) return;
@@ -322,7 +143,7 @@ export const createLanDiscoveryService = ({
                 };
                 emitState();
             });
-            socket.on('message', handleIncomingPacket);
+            socket.on('message', packetHandlers.handleIncomingPacket);
             socket.bind(bindPort, () => socket?.setBroadcast(true));
             heartbeatTimer = setInterval(tick, HEARTBEAT_INTERVAL_MS);
             resetSession();
