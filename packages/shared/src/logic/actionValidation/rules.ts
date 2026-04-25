@@ -318,8 +318,11 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
             }
             return null;
         case 'REROLL_DRAFT_POOL':
-            if (state.mode !== 'LOCAL_PVP') {
-                return 'Draft rerolls are only available in local PvP.';
+            if (state.mode === 'ONLINE_MULTIPLAYER') {
+                return 'Draft rerolls are only available in offline modes.';
+            }
+            if (state.mode === 'PVE' && state.turn !== state.localPlayer) {
+                return 'Only the local player may reroll the draft pool in solo mode.';
             }
             if (state.turn === 'p2' && !state.p1SelectedBuff?.id) {
                 return 'P2 draft rerolls require a locked-in P1 buff selection.';

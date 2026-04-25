@@ -420,7 +420,7 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         });
     });
 
-    it('falls back to buffLevel for legacy draft snapshots and withholds rerolls outside local pvp', async () => {
+    it('falls back to buffLevel for legacy draft snapshots and withholds rerolls online', async () => {
         const { root } = await renderRoutes(
             createProps({
                 game: createGame({
@@ -472,7 +472,38 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         expect(routeSpies.draftScreenProps).toHaveBeenCalledWith(
             expect.objectContaining({
                 mode: 'PVE',
-                onReroll: undefined,
+                onReroll: expect.any(Function),
+            })
+        );
+
+        act(() => {
+            root.unmount();
+        });
+    });
+
+    it('still passes the pve reroll handler during the ai draft turn so DraftScreen can hide it locally', async () => {
+        const { root } = await renderRoutes(
+            createProps({
+                game: createGame({
+                    state: {
+                        phase: 'DRAFT_PHASE',
+                        mode: 'PVE',
+                        turn: 'p2',
+                        localPlayer: 'p1',
+                    },
+                    historyControls: {
+                        historyLength: 1,
+                    },
+                }),
+            })
+        );
+
+        expect(routeSpies.draftScreenProps).toHaveBeenCalledWith(
+            expect.objectContaining({
+                mode: 'PVE',
+                activePlayer: 'p2',
+                onReroll: expect.any(Function),
+                localPlayer: 'p1',
             })
         );
 

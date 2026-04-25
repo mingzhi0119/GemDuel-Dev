@@ -128,7 +128,7 @@ describe('buffActions branch coverage', () => {
         expect(state.extraAllocation.p2.blue).toBe(1);
     });
 
-    it('rerolls only in local pvp draft and keeps p1/p2 level ownership separate', () => {
+    it('rerolls in offline draft modes and keeps p1/p2 level ownership separate', () => {
         const blockedState = createState({
             mode: 'ONLINE_MULTIPLAYER',
             phase: GAME_PHASES.DRAFT_PHASE,
@@ -141,6 +141,30 @@ describe('buffActions branch coverage', () => {
 
         handleRerollDraftPool(blockedState, { level: 3 });
         expect(blockedState).toEqual(blockedSnapshot);
+
+        const pveState = createState({
+            mode: 'PVE',
+            phase: GAME_PHASES.DRAFT_PHASE,
+            turn: 'p1',
+            localPlayer: 'p1',
+            buffLevel: 2,
+            p2DraftLevel: 2,
+            draftPool: ['stale-a', 'stale-b'],
+        });
+
+        handleRerollDraftPool(pveState, { level: 3 });
+
+        expect(pveState.buffLevel).toBe(3);
+        expect(pveState.draftPool).toHaveLength(3);
+        expect(new Set(pveState.draftPool).size).toBe(3);
+        expect(
+            pveState.draftPool.every((buffId) =>
+                Object.values(BUFFS).some((buff) => buff.id === buffId && buff.level === 3)
+            )
+        ).toBe(true);
+        expect(pveState.draftPool).toEqual(
+            expect.arrayContaining([BUFFS.GREED_KING.id, BUFFS.DOUBLE_AGENT.id])
+        );
 
         const rerollState = createState({
             mode: 'LOCAL_PVP',

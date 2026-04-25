@@ -2,6 +2,8 @@ import React from 'react';
 import { getGemLabel } from '@gemduel/shared';
 import { GemTypeObject } from '@gemduel/shared/types';
 import { useLocale } from '../i18n/LocaleProvider';
+import { cn } from '@gemduel/shared/utils';
+import { GemArtwork, type GemArtworkVariant } from './GemArtwork';
 
 interface GemIconProps {
     type: GemTypeObject;
@@ -11,6 +13,7 @@ interface GemIconProps {
     theme?: 'light' | 'dark';
     countClassName?: string;
     countStyle?: React.CSSProperties;
+    variant?: GemArtworkVariant;
 }
 
 export const GemIcon: React.FC<GemIconProps> = ({
@@ -21,16 +24,18 @@ export const GemIcon: React.FC<GemIconProps> = ({
     theme = 'dark',
     countClassName = '',
     countStyle,
+    variant = 'icon',
 }) => {
     const { locale } = useLocale();
+    const hasEnhancedContrast = theme === 'dark' && type.id === 'black';
 
     return (
         <div
-            className={`relative ${size} rounded-full bg-gradient-to-br ${type.color} border ${type.border} ${
-                theme === 'dark' ? 'shadow-sm' : 'shadow-[0_4px_12px_rgba(0,0,0,0.05)]'
-            } ${className}`}
+            data-gem-contrast={hasEnhancedContrast ? 'enhanced' : 'default'}
+            className={cn('relative', size, className)}
             title={getGemLabel(type.id === 'empty' ? 'empty' : type.id, locale)}
         >
+            <GemArtwork gemId={type.id} theme={theme} variant={variant} />
             {count !== undefined && (
                 <span
                     className={`absolute -bottom-1 -right-1 z-10 rounded-full px-1.5 text-[10px] font-black border shadow-md

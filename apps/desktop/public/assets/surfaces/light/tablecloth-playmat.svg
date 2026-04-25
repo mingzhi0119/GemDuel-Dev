@@ -1,0 +1,18 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="felt" x1="0" y1="0" x2="1400" y2="900" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#EAF4F1"/>
+    <stop offset="1" stop-color="#D5E8E2"/>
+  </linearGradient>
+  <pattern id="weave" width="18" height="18" patternUnits="userSpaceOnUse">
+    <path d="M0 9H18M9 0V18" stroke="#A9C1BA" stroke-opacity="0.26"/>
+  </pattern>
+  <radialGradient id="center" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(700 450) rotate(90) scale(420 640)">
+    <stop stop-color="#FFFFFF" stop-opacity="0.52"/>
+    <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<rect width="1400" height="900" fill="url(#felt)"/>
+<rect width="1400" height="900" fill="url(#weave)"/>
+<rect width="1400" height="900" fill="url(#center)"/>
+</svg>

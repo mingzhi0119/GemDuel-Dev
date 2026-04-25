@@ -108,13 +108,32 @@ const findMarketCrownCard = (state: GameState): { level: 1 | 2 | 3; idx: number 
     throw new Error('Could not find a crown-bearing non-joker market card for testing.');
 };
 
+const ensureMarketCrownCard = (state: GameState): { level: 1 | 2 | 3; idx: number } => {
+    try {
+        return findMarketCrownCard(state);
+    } catch {
+        for (const level of [1, 2, 3] as const) {
+            const deckIndex = state.decks[level].findIndex(
+                (card) => (card.crowns ?? 0) > 0 && card.bonusColor !== 'gold'
+            );
+            if (deckIndex >= 0) {
+                const [card] = state.decks[level].splice(deckIndex, 1);
+                state.market[level][0] = card ?? null;
+                return { level, idx: 0 };
+            }
+        }
+
+        throw new Error('Could not find a crown-bearing non-joker card for testing.');
+    }
+};
+
 const createBountyHunterPurchaseState = (): {
     state: GameState;
     level: 1 | 2 | 3;
     idx: number;
 } => {
     const state = createInitializedState();
-    const { level, idx } = findMarketCrownCard(state);
+    const { level, idx } = ensureMarketCrownCard(state);
     state.playerBuffs.p1 = cloneState(BUFFS.BOUNTY_HUNTER);
     state.playerBuffs.p1.state = {};
     state.inventories.p1 = {

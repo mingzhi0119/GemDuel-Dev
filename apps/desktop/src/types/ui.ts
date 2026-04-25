@@ -1,6 +1,11 @@
 import type { ChangeEventHandler, Dispatch, SetStateAction } from 'react';
 import type { useGameLogic } from '../hooks/useGameLogic';
 import type { useLanMatchmaking } from '../hooks/useLanMatchmaking';
+import type {
+    SurfaceThemeSelections,
+    SurfaceThemeSlot,
+    SurfaceThemeVariant,
+} from '../app/shell/surfaceTheme';
 import type { PlayerKey } from '@gemduel/shared/types';
 import type { AppReasonCode } from '@gemduel/shared/types/reason';
 
@@ -58,6 +63,8 @@ export interface AppUiCallbacks {
     handleDownloadReplay: () => void;
     handleUploadReplay: ChangeEventHandler<HTMLInputElement>;
     toggleTheme: () => void;
+    setSurfaceThemeSlot?: (slot: SurfaceThemeSlot, variant: SurfaceThemeVariant) => void;
+    resetSurfaceTheme?: () => void;
 }
 
 export interface AppRouteProps {
@@ -66,6 +73,7 @@ export interface AppRouteProps {
     lan: LanMatchmakingController;
     layout: ResponsiveLayout;
     theme: ThemeName;
+    surfaceTheme?: SurfaceThemeSelections;
     ui: AppUiState;
     setters: AppUiSetters;
     callbacks: AppUiCallbacks;

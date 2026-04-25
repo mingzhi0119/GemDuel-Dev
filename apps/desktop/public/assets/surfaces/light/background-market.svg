@@ -1,0 +1,21 @@
+<svg width="640" height="960" viewBox="0 0 640 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="market" x1="0" y1="0" x2="640" y2="960" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#F8FBFC"/>
+    <stop offset="1" stop-color="#E6EEF1"/>
+  </linearGradient>
+  <radialGradient id="spot" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(320 184) rotate(90) scale(182 250)">
+    <stop stop-color="#FFFFFF" stop-opacity="0.72"/>
+    <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<rect width="640" height="960" fill="url(#market)"/>
+<rect width="640" height="960" fill="url(#spot)"/>
+<g opacity="0.22" stroke="#A7BCC8">
+  <rect x="88" y="116" width="138" height="196" rx="24"/>
+  <rect x="252" y="194" width="138" height="196" rx="24"/>
+  <rect x="404" y="116" width="138" height="196" rx="24"/>
+  <rect x="172" y="446" width="138" height="196" rx="24"/>
+  <rect x="334" y="520" width="138" height="196" rx="24"/>
+</g>
+</svg>

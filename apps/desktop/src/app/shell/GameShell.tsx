@@ -12,6 +12,7 @@ export function GameShell({
     game,
     layout,
     theme,
+    surfaceTheme,
     ui,
     setters,
     callbacks,
@@ -44,19 +45,23 @@ export function GameShell({
         (state.mode === 'PVE' || historyControls.historyLength === 0 || ui.showDebug);
 
     const {
-        lightShellStyle,
+        shellStyle,
         scaledZoneWrapperStyle,
         playMatSurfaceStyle,
         playMatDividerStyle,
         playerRailStyle,
-    } = createGameShellStyles(theme, layout);
+        gemBoardSurfaceStyle,
+        gemPanelSkin,
+        marketSurfaceStyle,
+    } = createGameShellStyles(theme, layout, surfaceTheme);
 
     return (
         <div
-            className={`relative h-full w-full font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe
-            ${theme === 'dark' ? 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f111a] to-black text-slate-200' : 'text-stone-800'}
-        `}
-            style={theme === 'light' ? lightShellStyle : undefined}
+            data-surface-slot="app-background"
+            className={`relative h-full w-full font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe ${
+                theme === 'dark' ? 'text-slate-200' : 'text-stone-800'
+            }`}
+            style={shellStyle}
         >
             <UpdateNotification />
 
@@ -96,6 +101,9 @@ export function GameShell({
                 onAddPrivilege={handleDebugAddPrivilege}
                 onForceRoyal={handleForceRoyal}
                 showDebugPanels={ui.showDebug && state.mode !== 'ONLINE_MULTIPLAYER'}
+                surfaceTheme={surfaceTheme}
+                onSurfaceThemeChange={callbacks.setSurfaceThemeSlot}
+                onResetSurfaceTheme={callbacks.resetSurfaceTheme}
             />
 
             <AppOverlayStack
@@ -128,6 +136,9 @@ export function GameShell({
                 localPlayer={localPlayer}
                 playMatSurfaceStyle={playMatSurfaceStyle}
                 playMatDividerStyle={playMatDividerStyle}
+                gemBoardSurfaceStyle={gemBoardSurfaceStyle}
+                gemPanelSkin={gemPanelSkin}
+                marketSurfaceStyle={marketSurfaceStyle}
             />
 
             <PlayerRail
@@ -138,6 +149,7 @@ export function GameShell({
                 playerRailStyle={playerRailStyle}
                 isP1ZoneActive={isP1ZoneActive}
                 isP2ZoneActive={isP2ZoneActive}
+                playerZoneSurfaceVariant={surfaceTheme?.playerZone}
             />
         </div>
     );

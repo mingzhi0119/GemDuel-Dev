@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -90,6 +92,7 @@ describe('useMetaInteractionHandlers', () => {
             turn: 'p1',
             buffLevel: 2,
             mode: 'LOCAL_PVP',
+            localPlayer: 'p1',
         } as unknown as GameState;
         const royalCard = { id: 'royal-1' } as RoyalCard;
 
@@ -123,12 +126,46 @@ describe('useMetaInteractionHandlers', () => {
         expect(networkDispatch).toHaveBeenCalledWith({ type: 'PEEK_DECK' });
     });
 
+    it('allows draft rerolls in solo mode only on the local player draft turn', () => {
+        mocks.canActionRunInPhase.mockReturnValue(true);
+        mocks.buildRerollDraftPoolAction.mockReturnValue({
+            type: 'REROLL_DRAFT_POOL',
+        } as GameAction);
+
+        renderHarness({
+            phase: 'DRAFT_PHASE',
+            turn: 'p1',
+            localPlayer: 'p1',
+            buffLevel: 1,
+            mode: 'PVE',
+        } as unknown as GameState);
+
+        currentResult?.handleRerollBuffs(2);
+
+        expect(networkDispatch).toHaveBeenCalledWith({ type: 'REROLL_DRAFT_POOL' });
+
+        networkDispatch.mockClear();
+
+        renderHarness({
+            phase: 'DRAFT_PHASE',
+            turn: 'p2',
+            localPlayer: 'p1',
+            buffLevel: 1,
+            mode: 'PVE',
+        } as unknown as GameState);
+
+        currentResult?.handleRerollBuffs(2);
+
+        expect(networkDispatch).not.toHaveBeenCalled();
+    });
+
     it('skips guarded meta actions when the phase or local-interaction gate blocks them', () => {
         const gameState = {
             phase: 'IDLE',
             turn: 'p2',
             buffLevel: 1,
             mode: 'ONLINE_MULTIPLAYER',
+            localPlayer: 'p1',
         } as unknown as GameState;
 
         mocks.canActionRunInPhase.mockReturnValue(false);

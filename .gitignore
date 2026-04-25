@@ -26,11 +26,15 @@ pnpm-debug.log*
 
 # Testing
 coverage/
-artifacts/
+/artifacts/
+/tmp/
+/test-results/
 tmp-release-health-*/
 .turbo/
 .vite/
 *.tsbuildinfo
+__pycache__/
+*.pyc
 
 # Documentation & Reports
 GEMINI.md

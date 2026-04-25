@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PlayerKey } from '@gemduel/shared/types';
 import type { PlayerZoneFeedbackItem } from './types';
 
@@ -12,6 +12,23 @@ export function usePlayerZoneFeedback(
     const [feedbacks, setFeedbacks] = useState<PlayerZoneFeedbackItem[]>([]);
     const [isExtortionEffect, setIsExtortionEffect] = useState(false);
     const lastSeenFeedbackUid = useRef<string | null>(null);
+    const pendingTimeouts = useRef(new Set<ReturnType<typeof setTimeout>>());
+
+    const scheduleTimeout = useCallback((callback: () => void, delay: number) => {
+        const timeout = setTimeout(() => {
+            pendingTimeouts.current.delete(timeout);
+            callback();
+        }, delay);
+
+        pendingTimeouts.current.add(timeout);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            pendingTimeouts.current.forEach((timeout) => clearTimeout(timeout));
+            pendingTimeouts.current.clear();
+        };
+    }, []);
 
     useEffect(() => {
         if (lastFeedback && lastFeedback.uid !== lastSeenFeedbackUid.current) {
@@ -22,7 +39,7 @@ export function usePlayerZoneFeedback(
 
             if (myItems.some((i: { type: string }) => i.type === 'extortion')) {
                 setIsExtortionEffect(true);
-                setTimeout(() => setIsExtortionEffect(false), 1000);
+                scheduleTimeout(() => setIsExtortionEffect(false), 1000);
             }
 
             myItems.forEach((item: { type: string; diff: number }) => {
@@ -30,10 +47,13 @@ export function usePlayerZoneFeedback(
                 const label = item.type.charAt(0).toUpperCase() + item.type.slice(1);
                 const quantity = item.diff > 0 ? `+${item.diff}` : `${item.diff}`;
                 setFeedbacks((prev) => [...prev, { id, quantity, label, type: item.type }]);
-                setTimeout(() => setFeedbacks((prev) => prev.filter((f) => f.id !== id)), 1500);
+                scheduleTimeout(
+                    () => setFeedbacks((prev) => prev.filter((f) => f.id !== id)),
+                    1500
+                );
             });
         }
-    }, [lastFeedback, player]);
+    }, [lastFeedback, player, scheduleTimeout]);
 
     return { feedbacks, isExtortionEffect };
 }

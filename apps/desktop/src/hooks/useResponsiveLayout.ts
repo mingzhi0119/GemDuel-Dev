@@ -14,11 +14,11 @@ const MOBILE_MAIN_GAP_PX = 16;
 
 export const DESKTOP_STAGE_WIDTH_PX = 3840;
 export const DESKTOP_STAGE_HEIGHT_PX = 2160;
-export const DESKTOP_BOARD_SCALE = 1.14;
-export const DESKTOP_DECK_SCALE = 1.08;
+export const DESKTOP_BOARD_SCALE = 1.2;
+export const DESKTOP_DECK_SCALE = 1.12;
 export const DESKTOP_ZONE_SCALE = 0.96;
 export const DESKTOP_ZONE_HEIGHT_PX = 317;
-export const DESKTOP_MAIN_GAP_PX = 32;
+export const DESKTOP_MAIN_GAP_PX = 24;
 
 interface ResponsiveViewportMetrics {
     devicePixelRatio?: number;

@@ -3,6 +3,11 @@ import { PlayerZone } from '@gemduel/ui/components/PlayerZone';
 import { getFsmPhaseSurfacePolicy } from '@gemduel/shared/logic/fsm';
 import type { AppRouteProps } from '@app/types/ui';
 import type { GamePhase } from '@gemduel/shared/types';
+import {
+    createPlayerZoneSurfaceStyle,
+    getPlayerZoneSurfaceVariant,
+    type PlayerZoneSurfaceVariant,
+} from './playerZoneSurfaceStyles';
 
 type EffectiveGameMode = GamePhase | 'REVIEW' | 'GAME_OVER';
 
@@ -14,6 +19,7 @@ interface PlayerRailProps {
     playerRailStyle: CSSProperties;
     isP1ZoneActive: boolean;
     isP2ZoneActive: boolean;
+    playerZoneSurfaceVariant?: PlayerZoneSurfaceVariant;
 }
 
 export function PlayerRail({
@@ -24,6 +30,7 @@ export function PlayerRail({
     playerRailStyle,
     isP1ZoneActive,
     isP2ZoneActive,
+    playerZoneSurfaceVariant,
 }: PlayerRailProps) {
     const { state, handlers, getters } = game;
     const {
@@ -46,6 +53,9 @@ export function PlayerRail({
     } = handlers;
     const { getPlayerScore, getCrownCount } = getters;
     const surfacePolicy = getFsmPhaseSurfacePolicy(effectiveGameMode);
+    const previewPlayerZoneSurfaceVariant = getPlayerZoneSurfaceVariant();
+    const resolvedPlayerZoneSurfaceVariant =
+        playerZoneSurfaceVariant ?? previewPlayerZoneSurfaceVariant;
 
     return (
         <div
@@ -92,6 +102,12 @@ export function PlayerRail({
                         onGemClick={turn === 'p1' ? handleSelfGemClick : handleOpponentGemClick}
                         buff={playerBuffs?.p1}
                         theme={theme}
+                        surfaceStyle={createPlayerZoneSurfaceStyle(
+                            theme,
+                            resolvedPlayerZoneSurfaceVariant,
+                            'p1'
+                        )}
+                        surfaceVariant={resolvedPlayerZoneSurfaceVariant}
                     />
                 </div>
             </div>
@@ -135,6 +151,12 @@ export function PlayerRail({
                         onGemClick={turn === 'p2' ? handleSelfGemClick : handleOpponentGemClick}
                         buff={playerBuffs?.p2}
                         theme={theme}
+                        surfaceStyle={createPlayerZoneSurfaceStyle(
+                            theme,
+                            resolvedPlayerZoneSurfaceVariant,
+                            'p2'
+                        )}
+                        surfaceVariant={resolvedPlayerZoneSurfaceVariant}
                     />
                 </div>
             </div>

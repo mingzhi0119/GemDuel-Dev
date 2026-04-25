@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { STANDARD_CARD_SIZE } from './Card';
-import { GEM_BOARD_GEM_SIZE_PX } from './GameBoard';
 import {
     clamp,
     PLAYER_ZONE_DISPLAY_COLORS,
@@ -12,6 +11,7 @@ import {
     TABLEAU_STACK_GAP_PX,
     TABLEAU_STACK_MIN_SCALE,
 } from './playerZone/constants';
+import { GEM_BOARD_GEM_SIZE_PX } from './gameBoard/gemPanelLayout';
 import { PlayerZoneIdentityColumn } from './playerZone/PlayerZoneIdentityColumn';
 import { PlayerZoneReservedColumn } from './playerZone/PlayerZoneReservedColumn';
 import { PlayerZoneResourcesColumn } from './playerZone/PlayerZoneResourcesColumn';
@@ -48,6 +48,8 @@ export const PlayerZone = ({
     isDiscardMode,
     buff,
     theme,
+    surfaceStyle,
+    surfaceVariant,
 }: PlayerZoneProps) => {
     const safeCards = Array.isArray(cards) ? cards : [];
     const [selectedStack, setSelectedStack] = useState<PlayerZoneStackState | null>(null);
@@ -97,6 +99,9 @@ export const PlayerZone = ({
 
     return (
         <div
+            data-player-zone={player}
+            data-player-zone-bg={surfaceVariant ?? 'none'}
+            data-reserved-count={reserved.length}
             className={`flex w-full h-full flex-row items-stretch p-4 transition-all duration-500 gap-4
         ${
             isActive
@@ -111,6 +116,7 @@ export const PlayerZone = ({
         ${isDiscardMode && isActive ? 'ring-2 ring-red-500 animate-pulse' : ''}
         ${isExtortionEffect ? 'ring-4 ring-purple-500 bg-purple-500/10 animate-pulse' : ''}
     `}
+            style={surfaceStyle}
         >
             <AnimatePresence>
                 {selectedStack && (
@@ -128,6 +134,7 @@ export const PlayerZone = ({
                 player={player}
                 privileges={privileges}
                 extraPrivileges={extraPrivileges}
+                buff={buff}
                 isActive={isActive}
                 isPrivilegeMode={isPrivilegeMode}
                 theme={theme}

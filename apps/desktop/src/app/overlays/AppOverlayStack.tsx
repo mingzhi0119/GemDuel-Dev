@@ -5,6 +5,7 @@ import { getGemLabel } from '@gemduel/shared';
 import { isBonusColorSelectionPhase } from '@gemduel/shared/logic/fsm';
 import type { ActiveModal, GameMode, GamePhase, GemColor, PlayerKey } from '@gemduel/shared/types';
 import type { ThemeName } from '@gemduel/shared/types';
+import { GemIcon } from '@gemduel/ui/components/GemIcon';
 import { useLocale, useT } from '@gemduel/ui/i18n/LocaleProvider';
 import { LexiconTerm } from '@gemduel/ui/lexicon/LexiconTerm';
 
@@ -71,6 +72,7 @@ export function AppOverlayStack({
                 {showRulebook && <Rulebook onClose={onCloseRulebook} theme={theme} />}
 
                 {activeModal?.type === 'PEEK' &&
+                    !isReviewing &&
                     (mode !== 'ONLINE_MULTIPLAYER' ||
                         activeModal.data?.initiator === localPlayer) && (
                         <DeckPeekModal
@@ -88,7 +90,7 @@ export function AppOverlayStack({
                 </Suspense>
             )}
 
-            {isBonusColorSelectionPhase(phase) && (
+            {isBonusColorSelectionPhase(phase) && !isReviewing && (
                 <div
                     className={`absolute inset-0 z-[100] transition-all duration-500 flex flex-col items-center justify-center ${isPeekingBoard ? 'bg-black/20 pointer-events-none' : 'bg-black/80'}`}
                 >
@@ -116,11 +118,23 @@ export function AppOverlayStack({
                                     <button
                                         key={color}
                                         onClick={() => onSelectBonusColor(color)}
-                                        className={`w-16 h-16 rounded-full bg-gradient-to-br ${GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES].color} border-2 border-white/50 shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:scale-110 active:scale-95 transition-all`}
+                                        data-bonus-color={color}
+                                        className="w-16 h-16 rounded-full hover:scale-110 active:scale-95 transition-all"
                                         aria-label={t('overlays.selectColor', {
                                             color: getGemLabel(color, locale),
                                         })}
-                                    />
+                                    >
+                                        <GemIcon
+                                            type={
+                                                GEM_TYPES[
+                                                    color.toUpperCase() as keyof typeof GEM_TYPES
+                                                ]
+                                            }
+                                            size="w-full h-full"
+                                            theme={theme}
+                                            variant="choice"
+                                        />
+                                    </button>
                                 ))}
                             </div>
                             <button

@@ -25,6 +25,11 @@ The app is a single game shell with four top-level states:
 - `TopBar.tsx` owns the fixed header.
 - `PlayerZone.tsx` owns internal player-panel composition.
 
+## Card Artwork Sizing
+
+- Market and royal gameplay cards share the same featured display size in `packages/ui/src/components/Card.tsx`.
+- Featured cards must render from the high-resolution runtime card artwork source and be downsampled into the display slot. Do not make market-only scale-factor adjustments that upscale a lower-resolution card face or let royal cards drift from market card dimensions.
+
 ## Safe Refactor Rule
 
 Keep shell changes in `apps/desktop/src/App.tsx` and `useResponsiveLayout.ts`; keep component-specific visual changes inside the owning component. That separation avoids accidental layout drift.

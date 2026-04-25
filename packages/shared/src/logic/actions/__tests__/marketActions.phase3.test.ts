@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUFFS, GAME_PHASES, GEM_TYPES } from '../../../constants';
+import { applyAction } from '../../gameReducer';
+import { processGemClick } from '../../interactionManager';
 import { createMockState } from '../../__tests__/testHelpers';
 import { handleDiscardGem, handleStealGem } from '../boardActions';
 import {
@@ -484,6 +486,128 @@ describe('marketActions phase 3 coverage', () => {
         const afterP1Steal = handleStealGem(afterP1Buy, { gemId: 'blue' });
         expect(afterP1Steal.turn).toBe('p1');
         expect(afterP1Steal.playerBuffs.p2.state?.echoReservoirStoredAbilities).toEqual(['again']);
+    });
+
+    it('echoes and consumes stored memory when buying a reserved card', () => {
+        const reservedCard = createCard({ id: 'reserved-echo-consumer' });
+        const state = createState({
+            inventories: {
+                p1: { blue: 1, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 1, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+            playerReserved: {
+                p1: [reservedCard],
+                p2: [],
+            },
+            playerBuffs: {
+                p1: createEchoReservoirBuff({
+                    echoReservoirStoredAbilities: ['steal'],
+                }),
+                p2: BUFFS.NONE,
+            },
+            turn: 'p1',
+        });
+
+        const afterReservedBuy = handleBuyCard(state, {
+            card: reservedCard,
+            source: 'reserved',
+        });
+
+        expect(afterReservedBuy.phase).toBe(GAME_PHASES.STEAL_ACTION);
+        expect(afterReservedBuy.playerBuffs.p1.state?.echoReservoirStoredAbilities).toBeUndefined();
+
+        const afterReservedSteal = handleStealGem(afterReservedBuy, {
+            gemId: 'blue',
+        });
+
+        expect(afterReservedSteal.turn).toBe('p2');
+        expect(afterReservedSteal.inventories.p1.blue).toBe(2);
+        expect(afterReservedSteal.inventories.p2.blue).toBe(0);
+    });
+
+    it('does not trigger stored extra-turn memory when reserving a market card for gold', () => {
+        const reserveCard = createCard({ id: 'reserve-no-echo', level: 1, ability: 'none' });
+        const state = createState({
+            turn: 'p1',
+            playerBuffs: {
+                p1: createEchoReservoirBuff({
+                    echoReservoirStoredAbilities: ['again'],
+                }),
+                p2: BUFFS.NONE,
+            },
+            market: {
+                1: [reserveCard, null, null, null],
+                2: [],
+                3: [],
+            },
+            decks: { 1: [], 2: [], 3: [] },
+        });
+
+        state.board[0][0] = { type: GEM_TYPES.GOLD, uid: 'reserve-gold' };
+
+        const nextState = handleReserveCard(state, {
+            card: reserveCard,
+            level: 1,
+            idx: 0,
+            goldCoords: { r: 0, c: 0 },
+        });
+
+        expect(nextState.turn).toBe('p2');
+        expect(nextState.phase).toBe(GAME_PHASES.IDLE);
+        expect(nextState.pendingExtraTurn).toBe(false);
+        expect(nextState.inventories.p1.gold).toBe(1);
+        expect(nextState.playerReserved.p1).toContainEqual(
+            expect.objectContaining({ id: 'reserve-no-echo' })
+        );
+        expect(nextState.playerBuffs.p1.state?.echoReservoirStoredAbilities).toEqual(['again']);
+    });
+
+    it('keeps stored again memory dormant across the full reserve-gold reducer flow', () => {
+        const reserveCard = createCard({ id: 'reserve-flow-no-echo', level: 1, ability: 'none' });
+        const state = createState({
+            turn: 'p1',
+            playerBuffs: {
+                p1: createEchoReservoirBuff({
+                    echoReservoirStoredAbilities: ['again'],
+                }),
+                p2: BUFFS.NONE,
+            },
+            market: {
+                1: [reserveCard, null, null, null],
+                2: [],
+                3: [],
+            },
+            decks: { 1: [], 2: [], 3: [] },
+        });
+
+        state.board[1][1] = { type: GEM_TYPES.GOLD, uid: 'reserve-flow-gold' };
+
+        const reservingState = applyAction(state, {
+            type: 'INITIATE_RESERVE',
+            payload: {
+                card: reserveCard,
+                level: 1,
+                idx: 0,
+            },
+        });
+
+        expect(reservingState?.phase).toBe(GAME_PHASES.RESERVE_WAITING_GEM);
+
+        const reserveResolution = processGemClick(reservingState ?? null, 1, 1);
+        expect(reserveResolution.error).toBeUndefined();
+        expect(reserveResolution.action?.type).toBe('RESERVE_CARD');
+
+        const resolvedState = reserveResolution.action
+            ? applyAction(reservingState, reserveResolution.action)
+            : reservingState;
+
+        expect(resolvedState?.turn).toBe('p2');
+        expect(resolvedState?.phase).toBe(GAME_PHASES.IDLE);
+        expect(resolvedState?.pendingExtraTurn).toBe(false);
+        expect(resolvedState?.inventories.p1.gold).toBe(1);
+        expect(resolvedState?.playerBuffs.p1.state?.echoReservoirStoredAbilities).toEqual([
+            'again',
+        ]);
     });
 
     it('skips bonus-gem cards cleanly when no matching gem exists on the board', () => {

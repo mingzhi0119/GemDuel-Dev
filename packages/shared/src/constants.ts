@@ -37,8 +37,8 @@ export const GEM_TYPES = {
     },
     BLACK: {
         id: 'black' as const,
-        color: 'from-slate-700 to-slate-900',
-        border: 'border-gray-500',
+        color: 'from-slate-500 via-slate-700 to-slate-950',
+        border: 'border-slate-300',
         label: 'Black',
     },
     RED: {

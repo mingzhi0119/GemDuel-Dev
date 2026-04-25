@@ -8,6 +8,7 @@ import { AppOverlayStack } from '../app/overlays/AppOverlayStack';
 import { GamePlaySurface } from '../app/shell/GamePlaySurface';
 import { GameShell } from '../app/shell/GameShell';
 import { PlayerRail } from '../app/shell/PlayerRail';
+import { getGemPanelSkin } from '../app/shell/surfaceArtwork';
 import type { AppRouteProps } from '@app/types/ui';
 import type { ResponsiveLayout } from '@gemduel/shared/types';
 import { createMockState } from '@gemduel/shared/logic/__tests__/testHelpers';
@@ -275,6 +276,9 @@ describe('shell smoke coverage', () => {
                 localPlayer="p1"
                 playMatSurfaceStyle={{}}
                 playMatDividerStyle={{}}
+                gemBoardSurfaceStyle={{}}
+                gemPanelSkin={getGemPanelSkin('dark')}
+                marketSurfaceStyle={{}}
             />
         );
 

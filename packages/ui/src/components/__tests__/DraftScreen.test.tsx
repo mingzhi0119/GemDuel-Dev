@@ -106,6 +106,28 @@ describe('DraftScreen', () => {
         expect(html).toContain('Lvl 3');
     });
 
+    it('shows reroll controls for the local player during solo roguelike drafts', () => {
+        const html = renderDraftScreen({
+            mode: 'PVE',
+            localPlayer: 'p1',
+            activePlayer: 'p1',
+        });
+
+        expect(html).toContain('DRAFT CUSTOMIZE');
+        expect(html).toContain('Refresh Pool');
+    });
+
+    it('hides reroll controls during the AI draft turn in solo mode', () => {
+        const html = renderDraftScreen({
+            mode: 'PVE',
+            localPlayer: 'p1',
+            activePlayer: 'p2',
+        });
+
+        expect(html).not.toContain('DRAFT CUSTOMIZE');
+        expect(html).not.toContain('Refresh Pool');
+    });
+
     it('hides reroll controls for online drafts', () => {
         const html = renderDraftScreen({
             mode: 'ONLINE_MULTIPLAYER',

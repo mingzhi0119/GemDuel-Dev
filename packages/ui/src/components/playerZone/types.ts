@@ -31,6 +31,8 @@ export interface PlayerZoneProps {
     theme: 'light' | 'dark';
     score: number;
     crowns: number;
+    surfaceStyle?: React.CSSProperties;
+    surfaceVariant?: string;
 }
 
 export interface PlayerZoneStackState {

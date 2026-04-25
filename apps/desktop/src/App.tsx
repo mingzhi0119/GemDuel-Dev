@@ -1,13 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GemDuelRoutes } from './app/routes/GemDuelRoutes';
 import { useReplayAutoSave } from './app/io/useReplayAutoSave';
 import { useReplayIO } from './app/io/useReplayIO';
+import {
+    getPersistentWinnerForUi,
+    shouldAutoEnterReplayReview,
+} from './app/runtime/replayReviewState';
 import { useRuntimeAppConfig } from './app/runtime/useRuntimeAppConfig';
 import { useGameLogic } from './hooks/useGameLogic';
 import { useLanDevVerification } from './hooks/useLanDevVerification';
 import { useLanMatchmaking } from './hooks/useLanMatchmaking';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { useSettings } from './hooks/useSettings';
+import { DEFAULT_SURFACE_THEME_SELECTIONS } from './app/shell/surfaceTheme';
 import type { PlayerKey } from '@gemduel/shared/types';
 import { getDocumentLanguage } from '@gemduel/shared';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
@@ -24,7 +29,7 @@ export default function GemDuelBoard() {
     const lastHostStartRoomRef = useRef<string | null>(null);
 
     const { appVersion } = useRuntimeAppConfig();
-    const { theme, setTheme, locale, setLocale } = useSettings();
+    const { theme, setTheme, locale, setLocale, surfaceTheme, setSurfaceTheme } = useSettings();
     const layout = useResponsiveLayout();
     const lan = useLanMatchmaking();
     const lanShouldConnect =
@@ -46,6 +51,21 @@ export default function GemDuelBoard() {
         appVersion
     );
     const { state, handlers, historyControls } = game;
+    const desiredPersistentWinner = useMemo(
+        () =>
+            getPersistentWinnerForUi({
+                winner: state.winner,
+                historySource: historyControls.historySource,
+                historyLength: historyControls.historyLength,
+                currentIndex: historyControls.currentIndex,
+            }),
+        [
+            historyControls.currentIndex,
+            historyControls.historyLength,
+            historyControls.historySource,
+            state.winner,
+        ]
+    );
 
     useLanDevVerification({
         lan,
@@ -56,10 +76,10 @@ export default function GemDuelBoard() {
     });
 
     useEffect(() => {
-        if (state.winner && !persistentWinner) {
-            setPersistentWinner(state.winner);
-        }
-    }, [state.winner, persistentWinner]);
+        setPersistentWinner((current) =>
+            current === desiredPersistentWinner ? current : desiredPersistentWinner
+        );
+    }, [desiredPersistentWinner]);
 
     useEffect(() => {
         if (historyControls.historyLength === 0) {
@@ -67,6 +87,18 @@ export default function GemDuelBoard() {
             setIsReviewing(false);
         }
     }, [historyControls.historyLength]);
+
+    useEffect(() => {
+        if (
+            shouldAutoEnterReplayReview({
+                historySource: historyControls.historySource,
+                historyLength: historyControls.historyLength,
+            })
+        ) {
+            setPersistentWinner(null);
+            setIsReviewing(true);
+        }
+    }, [historyControls.historyLength, historyControls.historySource]);
 
     useEffect(() => {
         document.documentElement.dataset.theme = theme;
@@ -170,6 +202,7 @@ export default function GemDuelBoard() {
                 lan={lan}
                 layout={layout}
                 theme={theme}
+                surfaceTheme={surfaceTheme}
                 ui={{
                     showDebug,
                     isReviewing,
@@ -193,6 +226,10 @@ export default function GemDuelBoard() {
                     handleUploadReplay,
                     toggleTheme: () =>
                         setTheme((current) => (current === 'dark' ? 'light' : 'dark')),
+                    setSurfaceThemeSlot: (slot, variant) =>
+                        setSurfaceTheme((current) => ({ ...current, [slot]: variant })),
+                    resetSurfaceTheme: () =>
+                        setSurfaceTheme({ ...DEFAULT_SURFACE_THEME_SELECTIONS }),
                 }}
             />
         </LocaleProvider>

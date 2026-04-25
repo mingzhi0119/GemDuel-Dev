@@ -4,6 +4,10 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import { AppChrome } from '../AppChrome';
+import {
+    DEFAULT_SURFACE_THEME_SELECTIONS,
+    type SurfaceThemeSelections,
+} from '../../shell/surfaceTheme';
 
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -11,6 +15,9 @@ import { AppChrome } from '../AppChrome';
 
 const ChromeHarness = () => {
     const [locale, setLocale] = useState<'en' | 'zh'>('en');
+    const [surfaceTheme, setSurfaceTheme] = useState<SurfaceThemeSelections>(
+        DEFAULT_SURFACE_THEME_SELECTIONS
+    );
 
     return (
         <LocaleProvider locale={locale} setLocale={setLocale}>
@@ -29,6 +36,11 @@ const ChromeHarness = () => {
                 onAddPrivilege={vi.fn()}
                 onForceRoyal={vi.fn()}
                 showDebugPanels={false}
+                surfaceTheme={surfaceTheme}
+                onSurfaceThemeChange={(slot, variant) =>
+                    setSurfaceTheme((current) => ({ ...current, [slot]: variant }))
+                }
+                onResetSurfaceTheme={() => setSurfaceTheme(DEFAULT_SURFACE_THEME_SELECTIONS)}
             />
         </LocaleProvider>
     );
@@ -68,5 +80,39 @@ describe('AppChrome locale controls', () => {
 
         expect(container.textContent).toContain('English');
         expect(container.textContent).toContain('中文');
+    });
+
+    it('opens the surface theme menu and updates a slot selection', async () => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<ChromeHarness />);
+            await Promise.resolve();
+        });
+
+        const themeButton = Array.from(container.querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('Theme')
+        );
+
+        await act(async () => {
+            themeButton?.click();
+            await Promise.resolve();
+        });
+
+        expect(container.textContent).toContain('Market Background');
+        expect(container.textContent).toContain('Player Zone');
+
+        const woodButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
+            button.textContent?.includes('Wood')
+        );
+
+        await act(async () => {
+            woodButtons[0]?.click();
+            await Promise.resolve();
+        });
+
+        expect(woodButtons[0]?.getAttribute('aria-pressed')).toBe('true');
     });
 });

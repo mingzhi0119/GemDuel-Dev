@@ -1,6 +1,12 @@
 import type { ChangeEventHandler } from 'react';
 import type { GameLogicController } from '@app/types/ui';
-import type { ReplayVNext } from '@gemduel/shared/replay';
+import {
+    buildIdentityRuntimeToInstanceMap,
+    loadReplaySession,
+    saveReplayVNext,
+    type ReplayEndReason,
+    type ReplayVNext,
+} from '@gemduel/shared/replay';
 import { reportRendererEvent } from '../../observability/rendererLogger';
 import { importReplayFromFile } from './safeReplayImport';
 
@@ -28,35 +34,63 @@ const triggerBrowserDownload = (replay: ReplayVNext, fileName: string) => {
     URL.revokeObjectURL(url);
 };
 
+const getReplayExportEndReason = (replay: ReplayVNext): ReplayEndReason | undefined =>
+    replay.match.endReason === 'aborted' ||
+    replay.match.endReason === 'disconnect' ||
+    replay.match.endReason === 'surrender'
+        ? replay.match.endReason
+        : undefined;
+
+const normalizeReplayForExport = (targetReplay: ReplayVNext): ReplayVNext => {
+    const session = loadReplaySession(targetReplay);
+    return saveReplayVNext({
+        replayRevision: targetReplay.replayRevision,
+        gameVersion: targetReplay.gameVersion,
+        createdAt: targetReplay.createdAt,
+        init: targetReplay.init,
+        events: targetReplay.events,
+        checkpoints: targetReplay.checkpoints ?? [],
+        currentState: session.finalState,
+        runtimeToInstance: buildIdentityRuntimeToInstanceMap(targetReplay.init.cardInstances),
+        endReason: getReplayExportEndReason(targetReplay),
+    });
+};
+
+const reportReplayExportFailure = (fileName: string, error: unknown) => {
+    reportRendererEvent(
+        {
+            category: 'runtime',
+            name: 'REPLAY_EXPORT_FAILED',
+            severity: 'warn',
+            message: 'Replay export failed.',
+            context: {
+                fileName,
+            },
+        },
+        {
+            consoleMessage: `Replay export failed: ${fileName}`,
+            consoleDetails: error,
+        }
+    );
+};
+
 export const useReplayIO = ({ replay, importHistory }: UseReplayIOOptions) => {
     const persistReplayToProjectFolder = async (targetReplay: ReplayVNext | null = replay) => {
         if (!targetReplay || !window.electron?.saveReplayToFolder) {
             return null;
         }
 
-        const fileName = buildReplayExportFileName(targetReplay);
+        let fileName = buildReplayExportFileName(targetReplay);
         try {
+            const exportReplay = normalizeReplayForExport(targetReplay);
+            fileName = buildReplayExportFileName(exportReplay);
             const result = await window.electron.saveReplayToFolder({
                 fileName,
-                contents: JSON.stringify(targetReplay),
+                contents: JSON.stringify(exportReplay),
             });
             return result.path;
         } catch (error) {
-            reportRendererEvent(
-                {
-                    category: 'runtime',
-                    name: 'REPLAY_EXPORT_FAILED',
-                    severity: 'warn',
-                    message: 'Replay export failed.',
-                    context: {
-                        fileName,
-                    },
-                },
-                {
-                    consoleMessage: `Replay export failed: ${fileName}`,
-                    consoleDetails: error,
-                }
-            );
+            reportReplayExportFailure(fileName, error);
             return null;
         }
     };
@@ -66,12 +100,19 @@ export const useReplayIO = ({ replay, importHistory }: UseReplayIOOptions) => {
             return;
         }
 
-        if (window.electron?.saveReplayToFolder) {
-            void persistReplayToProjectFolder(replay);
-            return;
-        }
+        let fileName = buildReplayExportFileName(replay);
+        try {
+            const exportReplay = normalizeReplayForExport(replay);
+            fileName = buildReplayExportFileName(exportReplay);
+            if (window.electron?.saveReplayToFolder) {
+                void persistReplayToProjectFolder(exportReplay);
+                return;
+            }
 
-        triggerBrowserDownload(replay, buildReplayExportFileName(replay));
+            triggerBrowserDownload(exportReplay, fileName);
+        } catch (error) {
+            reportReplayExportFailure(fileName, error);
+        }
     };
 
     const handleUploadReplay: ChangeEventHandler<HTMLInputElement> = async (event) => {

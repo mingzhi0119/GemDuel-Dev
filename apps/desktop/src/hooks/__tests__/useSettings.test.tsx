@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SETTINGS_STORAGE_KEY, useSettings } from '../useSettings';
+import { DEFAULT_SURFACE_THEME_SELECTIONS } from '../../app/shell/surfaceTheme';
 
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -71,6 +72,7 @@ describe('useSettings', () => {
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored).toMatchObject({ theme: 'dark' });
+        expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
         expect(stored.locale).toBeUndefined();
     });
 
@@ -96,17 +98,29 @@ describe('useSettings', () => {
 
         expect(currentResult?.theme).toBe('light');
         expect(currentResult?.locale).toBe('zh');
+        expect(currentResult?.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
 
         act(() => {
             currentResult?.setTheme('dark');
             currentResult?.setLocale('en');
+            currentResult?.setSurfaceTheme((current) => ({
+                ...current,
+                playerZone: 'royal',
+                marketBackground: 'wood',
+            }));
         });
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.surfaceTheme.playerZone).toBe('royal');
+        expect(currentResult?.surfaceTheme.marketBackground).toBe('wood');
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored).toMatchObject({ theme: 'dark', locale: 'en' });
+        expect(stored.surfaceTheme).toMatchObject({
+            playerZone: 'royal',
+            marketBackground: 'wood',
+        });
     });
 
     it('falls back cleanly when stored settings JSON is invalid', () => {
@@ -120,13 +134,18 @@ describe('useSettings', () => {
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored).toMatchObject({ theme: 'dark' });
+        expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
         expect(stored.locale).toBeUndefined();
     });
 
     it('sanitizes invalid stored values and supports updater-form locale changes', () => {
         window.localStorage.setItem(
             SETTINGS_STORAGE_KEY,
-            JSON.stringify({ theme: 'neon', locale: 'fr' })
+            JSON.stringify({
+                theme: 'neon',
+                locale: 'fr',
+                surfaceTheme: { playerZone: 'geek', tablecloth: 'sparkle' },
+            })
         );
 
         renderHarness();
@@ -134,6 +153,10 @@ describe('useSettings', () => {
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
         expect(currentResult?.hasExplicitLocalePreference).toBe(false);
+        expect(currentResult?.surfaceTheme).toEqual({
+            ...DEFAULT_SURFACE_THEME_SELECTIONS,
+            playerZone: 'geek',
+        });
 
         act(() => {
             currentResult?.setLocale((current) => (current === 'en' ? 'zh' : 'en'));

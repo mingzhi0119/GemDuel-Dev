@@ -3,7 +3,6 @@ import {
     Sparkles,
     Shield,
     Swords,
-    ArrowRight,
     Coins,
     Tag,
     Zap,
@@ -46,7 +45,8 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
     const { locale } = useLocale();
     const t = useT();
     const rawPool = (activePlayer === 'p1' ? draftPool : p2DraftPool) || [];
-    const isOnline = mode === 'ONLINE_MULTIPLAYER';
+    const isLocalDraftTurn =
+        mode === 'LOCAL_PVP' || (mode === 'PVE' && (!localPlayer || activePlayer === localPlayer));
 
     const getBuffIcon = (category?: string) => {
         switch (category) {
@@ -84,8 +84,8 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
         return (fullData as Buff) || (BUFFS.NONE as Buff);
     });
 
-    const canInteract = !isOnline || activePlayer === localPlayer;
-    const showDraftCustomization = mode === 'LOCAL_PVP' && Boolean(onReroll);
+    const canInteract = mode === 'LOCAL_PVP' || !localPlayer || activePlayer === localPlayer;
+    const showDraftCustomization = Boolean(onReroll) && isLocalDraftTurn;
 
     return (
         <div
@@ -294,15 +294,6 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                         ))}
                                     </div>
                                 )}
-
-                                {/* Select Action */}
-                                <div
-                                    className={`absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-2 font-bold uppercase tracking-widest text-[10px]
-                                    ${theme === 'dark' ? 'text-white' : 'text-slate-900'}
-                                `}
-                                >
-                                    {t('draft.select')} <ArrowRight size={14} />
-                                </div>
                             </button>
                         );
                     })}

@@ -9,6 +9,27 @@ export interface UiStatusNotice {
     severity: UiNoticeSeverity;
 }
 
+export interface NormalizedPoint {
+    x: number;
+    y: number;
+}
+
+export interface NormalizedRect {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+}
+
+export interface GemPanelSkin {
+    id: string;
+    artworkPath: string;
+    intrinsicWidthPx: number;
+    intrinsicHeightPx: number;
+    playfieldRectNormalized: NormalizedRect;
+    cellCentersNormalized?: NormalizedPoint[];
+}
+
 export interface ResponsiveLayout {
     layoutMode: 'mobile' | 'desktop-4k';
     viewportWidth: number;

@@ -3,7 +3,7 @@ import type { Card } from '../types';
 
 export const LEVEL_1_CARDS: Card[] = [
     {
-        id: 'l1-bl-0',
+        id: 'l1-bk-0',
         level: 1,
         points: 0,
         bonusColor: 'black',
@@ -13,7 +13,7 @@ export const LEVEL_1_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l1-bl-1',
+        id: 'l1-bk-1',
         level: 1,
         points: 0,
         bonusColor: 'black',
@@ -23,7 +23,7 @@ export const LEVEL_1_CARDS: Card[] = [
         ability: ABILITIES.AGAIN.id,
     },
     {
-        id: 'l1-bl-2',
+        id: 'l1-bk-2',
         level: 1,
         points: 0,
         bonusColor: 'black',
@@ -33,7 +33,7 @@ export const LEVEL_1_CARDS: Card[] = [
         ability: ABILITIES.BONUS_GEM.id,
     },
     {
-        id: 'l1-bl-3',
+        id: 'l1-bk-3',
         level: 1,
         points: 1,
         bonusColor: 'black',
@@ -43,7 +43,7 @@ export const LEVEL_1_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l1-bl-4',
+        id: 'l1-bk-4',
         level: 1,
         points: 0,
         bonusColor: 'black',

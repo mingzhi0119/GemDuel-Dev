@@ -102,4 +102,25 @@ describe('usePlayerZoneFeedback', () => {
         renderHarness('p2', null);
         expect(currentResult?.feedbacks).toEqual([]);
     });
+
+    it('clears pending feedback timers when unmounted', () => {
+        renderHarness('p1', {
+            uid: 'feedback-3',
+            items: [
+                { player: 'p1', type: 'extortion', diff: -1 },
+                { player: 'p1', type: 'gold', diff: 1 },
+            ],
+        });
+
+        expect(vi.getTimerCount()).toBe(3);
+
+        act(() => {
+            root?.unmount();
+        });
+        root = null;
+        container?.remove();
+        container = null;
+
+        expect(vi.getTimerCount()).toBe(0);
+    });
 });

@@ -323,11 +323,13 @@ export const TopBar: React.FC<TopBarProps> = ({
                                 className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isP1Winning)}`}
                             >
                                 <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
-                                <AnimatedScore
-                                    value={p1Score}
-                                    theme={theme}
-                                    className="text-xl lg:text-4xl font-black drop-shadow-lg"
-                                />
+                                <span data-topbar-score="p1" data-value={p1Score}>
+                                    <AnimatedScore
+                                        value={p1Score}
+                                        theme={theme}
+                                        className="text-xl lg:text-4xl font-black drop-shadow-lg"
+                                    />
+                                </span>
                                 <span
                                     className={`text-[15px] font-bold mt-1.5 lg:mt-2 ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
                                 >
@@ -338,7 +340,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                                 className={`flex items-center gap-1 lg:gap-2 ${p1Crowns >= p1Goals.crowns - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}
                             >
                                 <Crown className="w-4 h-4 lg:w-6 lg:h-6" fill="currentColor" />
-                                <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
+                                <span
+                                    data-topbar-crowns="p1"
+                                    data-value={p1Crowns}
+                                    className="text-xl lg:text-4xl font-black drop-shadow-lg"
+                                >
                                     {p1Crowns}
                                 </span>
                                 <span
@@ -364,6 +370,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                     >
                         <div className="flex items-center gap-2">
                             <span
+                                data-topbar-turn-count="p1"
+                                data-value={playerTurnCounts.p1}
                                 className={`text-[10px] lg:text-base font-black transition-colors ${activePlayer === 'p1' ? 'text-emerald-500' : theme === 'dark' ? 'text-slate-300' : 'text-stone-800'}`}
                             >
                                 {playerTurnCounts.p1}
@@ -379,6 +387,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                         />
                         <div className="flex items-center gap-2">
                             <span
+                                data-topbar-turn-count="p2"
+                                data-value={playerTurnCounts.p2}
                                 className={`text-[10px] lg:text-base font-black transition-colors ${activePlayer === 'p2' ? 'text-blue-500' : theme === 'dark' ? 'text-slate-300' : 'text-stone-800'}`}
                             >
                                 {playerTurnCounts.p2}
@@ -405,11 +415,13 @@ export const TopBar: React.FC<TopBarProps> = ({
                                 className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isP2Winning)}`}
                             >
                                 <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
-                                <AnimatedScore
-                                    value={p2Score}
-                                    theme={theme}
-                                    className="text-xl lg:text-4xl font-black drop-shadow-lg"
-                                />
+                                <span data-topbar-score="p2" data-value={p2Score}>
+                                    <AnimatedScore
+                                        value={p2Score}
+                                        theme={theme}
+                                        className="text-xl lg:text-4xl font-black drop-shadow-lg"
+                                    />
+                                </span>
                                 <span
                                     className={`text-[15px] font-bold mt-1.5 lg:mt-2 ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
                                 >
@@ -420,7 +432,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                                 className={`flex items-center gap-1 lg:gap-2 ${p2Crowns >= p2Goals.crowns - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}
                             >
                                 <Crown className="w-4 h-4 lg:w-6 lg:h-6" fill="currentColor" />
-                                <span className="text-xl lg:text-4xl font-black drop-shadow-lg">
+                                <span
+                                    data-topbar-crowns="p2"
+                                    data-value={p2Crowns}
+                                    className="text-xl lg:text-4xl font-black drop-shadow-lg"
+                                >
                                     {p2Crowns}
                                 </span>
                                 <span

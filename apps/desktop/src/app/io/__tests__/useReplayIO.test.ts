@@ -6,6 +6,7 @@ import { createGameSetupPayload } from '@gemduel/shared/logic/gameSetup';
 import {
     buildReplayInitSnapshot,
     loadReplaySession,
+    readReplayVNext,
     saveReplayVNext,
     type ReplayVNext,
 } from '@gemduel/shared/replay';
@@ -116,6 +117,46 @@ describe('useReplayIO', () => {
                 ),
                 contents: JSON.stringify(replay),
             })
+        );
+    });
+
+    it('normalizes replay summary metadata before persisting exported JSON', async () => {
+        const replay = createReplayFixture();
+        const staleReplay = {
+            ...replay,
+            summary: {
+                ...replay.summary,
+                winner: 'p1',
+                endReason: 'normal',
+                finalStateHash: 'stale-hash',
+            },
+        } satisfies ReplayVNext;
+        const importHistory = vi.fn();
+        const saveReplayToFolder = vi.fn().mockResolvedValue({
+            path: 'E:\\GemDuel-Dev\\Replay\\GemDuel_Replay_v1_1776688496000_test.json',
+        });
+
+        window.electron = {
+            saveReplayToFolder,
+        } as Partial<ElectronBridge> as ElectronBridge;
+
+        const { persistReplayToProjectFolder } = useReplayIO({
+            replay: staleReplay,
+            importHistory,
+        });
+
+        await persistReplayToProjectFolder(staleReplay);
+
+        const payload = saveReplayToFolder.mock.calls[0]?.[0];
+        expect(payload).toBeDefined();
+        const { replay: savedReplay, diagnostics } = readReplayVNext(payload.contents, {
+            verifySummary: 'sample',
+        });
+
+        expect(diagnostics.summaryIntegrity).toBe('ok');
+        expect(savedReplay.summary.finalStateHash).not.toBe('stale-hash');
+        expect(savedReplay.summary.finalStateHash).toBe(
+            loadReplaySession(savedReplay).finalStateHash
         );
     });
 

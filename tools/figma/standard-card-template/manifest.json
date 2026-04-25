@@ -1,0 +1,7 @@
+{
+  "name": "GemDuel Standard Card Template",
+  "id": "gemduel-standard-card-template",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"]
+}

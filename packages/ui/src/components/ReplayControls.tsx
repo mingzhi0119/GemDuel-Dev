@@ -39,6 +39,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                 onClick={undo}
                 disabled={!canUndo}
                 aria-label={t('replay.stepBackward')}
+                data-replay-control="undo"
                 className={`p-3 rounded-xl border transition-all flex items-center justify-center
                     ${
                         canUndo
@@ -63,6 +64,9 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                     {t('replay.action')}
                 </span>
                 <span
+                    data-replay-step-counter="true"
+                    data-current-step={currentStep}
+                    data-history-length={historyLength}
                     className={`text-[21px] font-mono font-bold tabular-nums ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}
                 >
                     {currentStep}{' '}
@@ -79,6 +83,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                 onClick={redo}
                 disabled={!canRedo}
                 aria-label={t('replay.stepForward')}
+                data-replay-control="redo"
                 className={`p-3 rounded-xl border transition-all flex items-center justify-center
                     ${
                         canRedo

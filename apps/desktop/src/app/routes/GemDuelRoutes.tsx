@@ -100,7 +100,9 @@ export function GemDuelRoutes(props: AppRouteProps) {
                 mode={state.mode}
                 activePlayer={state.turn}
                 onSelectBuff={handlers.handleSelectBuff}
-                onReroll={state.mode === 'LOCAL_PVP' ? handlers.handleRerollBuffs : undefined}
+                onReroll={
+                    state.mode !== 'ONLINE_MULTIPLAYER' ? handlers.handleRerollBuffs : undefined
+                }
                 theme={theme}
                 localPlayer={state.localPlayer}
             />

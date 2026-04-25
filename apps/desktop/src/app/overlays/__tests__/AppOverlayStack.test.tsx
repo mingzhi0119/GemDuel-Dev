@@ -5,6 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GAME_PHASES } from '@gemduel/shared';
+import type { ActiveModal } from '@gemduel/shared/types';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import { AppOverlayStack } from '../AppOverlayStack';
 
@@ -16,7 +17,14 @@ describe('AppOverlayStack', () => {
     let root: Root | null = null;
     let container: HTMLDivElement | null = null;
 
-    const renderOverlay = async (locale: 'en' | 'zh') => {
+    const renderOverlay = async (
+        locale: 'en' | 'zh',
+        overrides: Partial<{
+            activeModal: ActiveModal | null;
+            isReviewing: boolean;
+            phase: (typeof GAME_PHASES)[keyof typeof GAME_PHASES];
+        }> = {}
+    ) => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -27,13 +35,13 @@ describe('AppOverlayStack', () => {
                     <AppOverlayStack
                         theme="dark"
                         showRulebook={false}
-                        activeModal={null}
+                        activeModal={overrides.activeModal ?? null}
                         mode="LOCAL_PVP"
                         localPlayer="p1"
                         persistentWinner={null}
-                        isReviewing={false}
+                        isReviewing={overrides.isReviewing ?? false}
                         showRestartConfirm={false}
-                        phase={GAME_PHASES.SELECT_CARD_COLOR}
+                        phase={overrides.phase ?? GAME_PHASES.SELECT_CARD_COLOR}
                         isPeekingBoard={false}
                         onCloseRulebook={vi.fn()}
                         onCloseModal={vi.fn()}
@@ -74,5 +82,43 @@ describe('AppOverlayStack', () => {
         expect(container?.textContent).toContain('选择');
         expect(container?.textContent).toContain('卡牌颜色');
         expect(container?.textContent).not.toContain('选择小丑颜色');
+    });
+
+    it('suppresses the card-color overlay while review mode is active', async () => {
+        await renderOverlay('en', { isReviewing: true });
+
+        expect(container?.textContent).not.toContain('Select Card Color');
+    });
+
+    it('suppresses the peek modal while review mode is active', async () => {
+        await renderOverlay('en', {
+            isReviewing: true,
+            phase: GAME_PHASES.IDLE,
+            activeModal: {
+                type: 'PEEK',
+                data: {
+                    cards: [],
+                    initiator: 'p1',
+                },
+            },
+        });
+
+        expect(container?.textContent).not.toContain('Deck Intelligence');
+    });
+
+    it('renders five basic gem artwork buttons and excludes gold', async () => {
+        await renderOverlay('en');
+
+        const artworkNodes = Array.from(
+            container?.querySelectorAll('[data-gem-artwork="true"]') ?? []
+        );
+        const bonusButtons = Array.from(
+            container?.querySelectorAll('button[data-bonus-color] [data-gem-artwork="true"]') ?? []
+        );
+        const gemIds = bonusButtons.map((node) => node.getAttribute('data-gem-id'));
+
+        expect(artworkNodes.length).toBeGreaterThanOrEqual(5);
+        expect(gemIds).toEqual(['blue', 'white', 'green', 'black', 'red']);
+        expect(gemIds).not.toContain('gold');
     });
 });

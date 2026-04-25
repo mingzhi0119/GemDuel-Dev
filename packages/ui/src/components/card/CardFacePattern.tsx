@@ -1,13 +1,39 @@
 import React from 'react';
 import { GEM_TYPES } from '@gemduel/shared/constants';
 import { Card as CardType } from '@gemduel/shared/types';
+import { CARD_ARTWORK_SOURCE_SIZE } from './cardArtwork';
 
 interface CardFacePatternProps {
     cardId: string;
     bonusColor?: CardType['bonusColor'];
+    artworkPath?: string | null;
 }
 
-export const CardFacePattern: React.FC<CardFacePatternProps> = ({ cardId, bonusColor }) => {
+export const CardFacePattern: React.FC<CardFacePatternProps> = ({
+    cardId,
+    bonusColor,
+    artworkPath,
+}) => {
+    const [failedArtworkPath, setFailedArtworkPath] = React.useState<string | null>(null);
+    const artworkFailed = Boolean(artworkPath && failedArtworkPath === artworkPath);
+
+    if (artworkPath && !artworkFailed) {
+        return (
+            <img
+                src={artworkPath}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                width={CARD_ARTWORK_SOURCE_SIZE.width}
+                height={CARD_ARTWORK_SOURCE_SIZE.height}
+                decoding="async"
+                data-card-artwork={cardId}
+                className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
+                onError={() => setFailedArtworkPath(artworkPath)}
+            />
+        );
+    }
+
     const isGray = bonusColor === 'null';
     const themeColor =
         !isGray && bonusColor
@@ -21,6 +47,7 @@ export const CardFacePattern: React.FC<CardFacePatternProps> = ({ cardId, bonusC
 
     return (
         <div
+            data-card-face-pattern="true"
             className={`absolute inset-0 overflow-hidden pointer-events-none opacity-30 mix-blend-overlay ${isGray ? 'brightness-50 grayscale' : ''}`}
         >
             <svg width="100%" height="100%" className="w-full h-full">

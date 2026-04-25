@@ -66,7 +66,8 @@ export const useMetaInteractionHandlers = ({
         (level?: number) => {
             if (
                 !canLocalInteract ||
-                gameState.mode !== 'LOCAL_PVP' ||
+                gameState.mode === 'ONLINE_MULTIPLAYER' ||
+                (gameState.mode === 'PVE' && gameState.turn !== gameState.localPlayer) ||
                 !canActionRunInPhase('REROLL_DRAFT_POOL', gameState.phase)
             ) {
                 return;
@@ -76,7 +77,14 @@ export const useMetaInteractionHandlers = ({
                 buildRerollDraftPoolAction(level === undefined ? undefined : (level as 1 | 2 | 3))
             );
         },
-        [canLocalInteract, gameState.mode, gameState.phase, networkDispatch]
+        [
+            canLocalInteract,
+            gameState.localPlayer,
+            gameState.mode,
+            gameState.phase,
+            gameState.turn,
+            networkDispatch,
+        ]
     );
 
     const handlePeekDeck = useCallback(

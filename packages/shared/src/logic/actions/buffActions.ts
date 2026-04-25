@@ -270,7 +270,10 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
 };
 
 export const handleRerollDraftPool = (state: GameState, payload: { level?: 1 | 2 | 3 }): void => {
-    if (state.mode !== 'LOCAL_PVP' || !canActionRunInPhase('REROLL_DRAFT_POOL', state.phase)) {
+    if (
+        state.mode === 'ONLINE_MULTIPLAYER' ||
+        !canActionRunInPhase('REROLL_DRAFT_POOL', state.phase)
+    ) {
         return;
     }
 
@@ -282,6 +285,10 @@ export const handleRerollDraftPool = (state: GameState, payload: { level?: 1 | 2
 
         state.buffLevel = level;
         state.draftPool = buildDraftPoolForLevel(level);
+        return;
+    }
+
+    if (state.mode !== 'LOCAL_PVP') {
         return;
     }
 

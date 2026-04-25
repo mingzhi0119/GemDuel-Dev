@@ -5,6 +5,8 @@ import { GemIcon } from './GemIcon';
 import { Card as CardType, CardInteractionContext, GemColor } from '@gemduel/shared/types';
 import { CardAbilityBadges } from './card/CardAbilityBadges';
 import { CardFacePattern } from './card/CardFacePattern';
+import { JokerBonusBadge } from './card/JokerBonusBadge';
+import { getCardArtworkPath, getRuntimeCardArtworkId } from './card/cardArtwork';
 import { useT } from '../i18n/LocaleProvider';
 
 interface CardProps {
@@ -16,7 +18,7 @@ interface CardProps {
     isReservedView?: boolean;
     isRoyal?: boolean;
     className?: string;
-    size?: 'default' | 'small';
+    size?: 'default' | 'small' | 'featured';
     theme?: 'light' | 'dark';
     isDeckPreview?: boolean;
 }
@@ -31,6 +33,11 @@ export const STANDARD_CARD_SIZE = Object.freeze({
     height: 160,
 });
 
+export const FEATURED_CARD_SIZE = Object.freeze({
+    width: 150,
+    height: 200,
+});
+
 export const SMALL_CARD_SCALE = 0.75;
 
 export const SMALL_CARD_SIZE = Object.freeze({
@@ -38,44 +45,71 @@ export const SMALL_CARD_SIZE = Object.freeze({
     height: Math.round(STANDARD_CARD_SIZE.height * SMALL_CARD_SCALE),
 });
 
-const getCardDimensions = (size: CardProps['size']) =>
-    size === 'small' ? SMALL_CARD_SIZE : STANDARD_CARD_SIZE;
+const getCardDimensions = (size: CardProps['size']) => {
+    if (size === 'small') {
+        return SMALL_CARD_SIZE;
+    }
+
+    if (size === 'featured') {
+        return FEATURED_CARD_SIZE;
+    }
+
+    return STANDARD_CARD_SIZE;
+};
 
 const scaleCardMetric = (value: number, cardScale: number) =>
     Math.max(1, Math.round(value * cardScale));
 
-const WildBonusDisc = ({
-    diameter,
-    theme,
-    title,
-}: {
-    diameter: number;
-    theme: 'light' | 'dark';
-    title: string;
-}) => (
-    <div
-        className={`relative overflow-hidden rounded-full border ${
-            theme === 'dark'
-                ? 'border-white/35 shadow-[0_2px_8px_rgba(0,0,0,0.45)]'
-                : 'border-slate-400/80 shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
-        }`}
-        style={{
-            width: `${diameter}px`,
-            height: `${diameter}px`,
-            background:
-                'conic-gradient(from -90deg, #2563eb 0deg 72deg, #f8fafc 72deg 144deg, #10b981 144deg 216deg, #0f172a 216deg 288deg, #ef4444 288deg 360deg)',
-        }}
-        title={title}
-    >
-        <div
-            className={`absolute inset-[22%] rounded-full ${
-                theme === 'dark'
-                    ? 'border border-white/30 bg-white/10'
-                    : 'border border-white/80 bg-white/35'
-            }`}
-        />
-    </div>
-);
+const getCardCostCountStyle = (gemId: GemColor, theme: 'light' | 'dark'): React.CSSProperties => {
+    switch (gemId) {
+        case 'blue':
+            return {
+                color: theme === 'dark' ? '#fef3c7' : '#fff7ed',
+                textShadow: '0 1px 2px rgba(15,23,42,0.92), 0 0 3px rgba(15,23,42,0.35)',
+            };
+        case 'green':
+            return {
+                color: theme === 'dark' ? '#ecfccb' : '#f7fee7',
+                textShadow: '0 1px 2px rgba(6,78,59,0.92), 0 0 3px rgba(6,78,59,0.35)',
+            };
+        case 'red':
+            return {
+                color: theme === 'dark' ? '#ffedd5' : '#fff7ed',
+                textShadow: '0 1px 2px rgba(127,29,29,0.92), 0 0 3px rgba(127,29,29,0.35)',
+            };
+        case 'black':
+            return {
+                color: '#fde68a',
+                textShadow: '0 1px 2px rgba(15,23,42,0.96), 0 0 3px rgba(15,23,42,0.46)',
+            };
+        case 'white':
+            return {
+                color: '#ffffff',
+                textShadow: '0 1px 2px rgba(15,23,42,0.96), 0 0 3px rgba(15,23,42,0.42)',
+            };
+        case 'pearl':
+            return {
+                color: theme === 'dark' ? '#fdf2f8' : '#701a75',
+                textShadow:
+                    theme === 'dark'
+                        ? '0 1px 2px rgba(76,29,149,0.88), 0 0 3px rgba(76,29,149,0.34)'
+                        : '0 1px 2px rgba(255,255,255,0.72), 0 0 3px rgba(255,255,255,0.28)',
+            };
+        case 'gold':
+            return {
+                color: '#78350f',
+                textShadow: '0 1px 1px rgba(255,255,255,0.84), 0 0 2px rgba(255,255,255,0.40)',
+            };
+        default:
+            return {
+                color: theme === 'dark' ? '#f8fafc' : '#0f172a',
+                textShadow:
+                    theme === 'dark'
+                        ? '0 1px 2px rgba(15,23,42,0.92)'
+                        : '0 1px 1px rgba(255,255,255,0.72)',
+            };
+    }
+};
 
 export const Card: React.FC<CardProps> = React.memo(
     ({
@@ -107,6 +141,7 @@ export const Card: React.FC<CardProps> = React.memo(
         const bonusGemSizePx = scaleCardMetric(20, cardScale);
         const costContainerSizePx = scaleCardMetric(18, cardScale);
         const costTextSizePx = scaleCardMetric(9, cardScale);
+        const costRowGapPx = scaleCardMetric(3, cardScale);
         const crownIconSizePx = scaleCardMetric(12, cardScale);
         const royalBadgeSizePx = scaleCardMetric(24, cardScale);
         const reserveButtonIconSizePx = scaleCardMetric(16, cardScale);
@@ -136,6 +171,9 @@ export const Card: React.FC<CardProps> = React.memo(
               : card.level === 2
                 ? 'from-yellow-900/40 to-slate-800'
                 : 'from-blue-900/40 to-slate-800';
+        const artworkPath = getCardArtworkPath(card.id);
+        const hasRuntimeArtwork = Boolean(artworkPath);
+        const artworkCardId = hasRuntimeArtwork ? getRuntimeCardArtworkId(card.id) : card.id;
 
         const handleCardClick = () => {
             if ((canBuy || isRoyal) && onClick) {
@@ -166,16 +204,21 @@ export const Card: React.FC<CardProps> = React.memo(
             }
         };
 
-        return (
-            <div
-                onClick={handleCardClick}
-                className={`relative rounded-lg border transition-colors duration-200 bg-gradient-to-b ${bgGradient} overflow-hidden group ${className}
+        const affordableClassName =
+            canBuy && !isRoyal
+                ? theme === 'dark'
+                    ? 'border-emerald-300 ring-2 ring-emerald-400/30 shadow-[0_0_0_1px_rgba(110,231,183,0.20),0_0_20px_rgba(16,185,129,0.22)]'
+                    : 'border-emerald-700 ring-2 ring-emerald-500/45 ring-offset-2 ring-offset-white shadow-[0_0_0_1px_rgba(5,150,105,0.16),0_12px_28px_rgba(5,150,105,0.18),0_0_0_6px_rgba(236,253,245,0.92)]'
+                : '';
+        const runtimeArtworkAffordableClassName =
+            canBuy && !isRoyal ? 'outline outline-2 outline-emerald-500 outline-offset-2' : '';
+        const runtimeArtworkShellClassName = `relative overflow-hidden group ${className} ${
+            canBuy || isRoyal ? 'cursor-pointer' : 'cursor-default'
+        } ${runtimeArtworkAffordableClassName}`;
+        const fallbackShellClassName = `relative rounded-lg border transition-colors duration-200 bg-gradient-to-b ${bgGradient} overflow-hidden group ${className}
         ${
             canBuy && !isRoyal
-                ? (theme === 'dark'
-                      ? 'border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
-                      : 'border-emerald-500 shadow-[0_4px_12px_rgba(0,0,0,0.05),0_0_10px_rgba(16,185,129,0.28)]') +
-                  ' cursor-pointer'
+                ? `${affordableClassName} cursor-pointer`
                 : isRoyal
                   ? theme === 'dark'
                       ? 'border-yellow-700/50'
@@ -185,86 +228,101 @@ export const Card: React.FC<CardProps> = React.memo(
                         : 'border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.05)]') +
                     ' opacity-90 cursor-default'
         }
-    `}
+    `;
+
+        return (
+            <div
+                onClick={handleCardClick}
+                data-card-affordable={canBuy && !isRoyal ? 'true' : 'false'}
+                className={
+                    hasRuntimeArtwork ? runtimeArtworkShellClassName : fallbackShellClassName
+                }
                 style={{
                     width: `${dimensions.width}px`,
                     height: `${dimensions.height}px`,
                     borderRadius: `${cornerRadiusPx}px`,
                 }}
             >
-                <CardFacePattern cardId={card.id} bonusColor={card.bonusColor} />
+                <CardFacePattern
+                    cardId={artworkCardId}
+                    bonusColor={card.bonusColor}
+                    artworkPath={artworkPath}
+                />
                 {/* 1. Top Left: Points & Ability */}
-                <div
-                    className="absolute flex flex-row items-center pointer-events-none z-10"
-                    style={{
-                        top: `${topInsetPx}px`,
-                        left: `${sideInsetPx}px`,
-                        gap: `${topClusterGapPx}px`,
-                    }}
-                >
-                    {Number(card.points) > 0 && (
-                        <span
-                            className={`font-bold leading-none drop-shadow-md ${getScoreColor(card.bonusColor)}`}
-                            style={{ fontSize: `${pointFontSizePx}px` }}
-                        >
-                            {card.points}
-                        </span>
-                    )}
-                    <CardAbilityBadges
-                        ability={card.ability}
-                        stackedGapPx={stackedGapPx}
-                        abilityIconSizePx={abilityIconSizePx}
-                        abilityBadgePaddingPx={abilityBadgePaddingPx}
-                        abilityBadgeRadiusPx={abilityBadgeRadiusPx}
-                    />
-                </div>
+                {!hasRuntimeArtwork && (
+                    <div
+                        className="absolute flex flex-row items-center pointer-events-none z-10"
+                        style={{
+                            top: `${topInsetPx}px`,
+                            left: `${sideInsetPx}px`,
+                            gap: `${topClusterGapPx}px`,
+                        }}
+                    >
+                        {Number(card.points) > 0 && (
+                            <span
+                                className={`font-bold leading-none drop-shadow-md ${getScoreColor(card.bonusColor)}`}
+                                style={{ fontSize: `${pointFontSizePx}px` }}
+                            >
+                                {card.points}
+                            </span>
+                        )}
+                        <CardAbilityBadges
+                            ability={card.ability}
+                            stackedGapPx={stackedGapPx}
+                            abilityIconSizePx={abilityIconSizePx}
+                            abilityBadgePaddingPx={abilityBadgePaddingPx}
+                            abilityBadgeRadiusPx={abilityBadgeRadiusPx}
+                        />
+                    </div>
+                )}
 
                 {/* 2. Top Right: Bonus Gem */}
-                <div
-                    className="absolute pointer-events-none flex flex-col z-10"
-                    style={{
-                        top: `${topInsetPx}px`,
-                        right: `${topRightInsetPx}px`,
-                        gap: `${stackedGapPx}px`,
-                    }}
-                >
-                    {card.bonusColor &&
-                        card.bonusColor !== 'null' &&
-                        Array.from({
-                            length: card.bonusCount ?? (isRoyal ? 0 : 1),
-                        }).map((_, i) =>
-                            card.bonusColor === 'gold' ? (
-                                <WildBonusDisc
-                                    key={`wild-${i}`}
-                                    diameter={bonusGemSizePx}
-                                    theme={theme}
-                                    title={t('card.wildBonus')}
-                                />
-                            ) : (
+                {!hasRuntimeArtwork && (
+                    <div
+                        className="absolute pointer-events-none flex flex-col z-10"
+                        style={{
+                            top: `${topInsetPx}px`,
+                            right: `${topRightInsetPx}px`,
+                            gap: `${stackedGapPx}px`,
+                        }}
+                    >
+                        {card.bonusColor &&
+                            card.bonusColor !== 'null' &&
+                            Array.from({
+                                length: card.bonusCount ?? (isRoyal ? 0 : 1),
+                            }).map((_, i) => (
                                 <div
                                     key={i}
                                     style={{
                                         width: `${bonusGemSizePx}px`,
                                         height: `${bonusGemSizePx}px`,
                                     }}
+                                    title={
+                                        card.bonusColor === 'gold' ? t('card.wildBonus') : undefined
+                                    }
                                 >
-                                    <GemIcon
-                                        type={
-                                            GEM_TYPES[
-                                                card.bonusColor!.toUpperCase() as keyof typeof GEM_TYPES
-                                            ]
-                                        }
-                                        size="w-full h-full"
-                                        theme={theme}
-                                        className="shadow-md"
-                                    />
+                                    {card.bonusColor === 'gold' ? (
+                                        <JokerBonusBadge theme={theme} className="shadow-md" />
+                                    ) : (
+                                        <GemIcon
+                                            type={
+                                                GEM_TYPES[
+                                                    card.bonusColor!.toUpperCase() as keyof typeof GEM_TYPES
+                                                ]
+                                            }
+                                            size="w-full h-full"
+                                            theme={theme}
+                                            variant="card-bonus"
+                                            className="shadow-md"
+                                        />
+                                    )}
                                 </div>
-                            )
-                        )}
-                </div>
+                            ))}
+                    </div>
+                )}
 
                 {/* 3. Bottom Left: Cost */}
-                {card.cost && (
+                {!hasRuntimeArtwork && card.cost && (
                     <div
                         className="absolute pointer-events-none z-10"
                         style={{
@@ -278,19 +336,36 @@ export const Card: React.FC<CardProps> = React.memo(
                                 .map(([color, amt]) => (
                                     <div
                                         key={color}
-                                        className={`
-                    relative flex items-center justify-center rounded-full shrink-0
-                    bg-gradient-to-br ${GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES].color} 
-                    shadow-[0_1px_2px_rgba(0,0,0,0.5)] border border-white/10
-                `}
-                                        style={{
-                                            width: `${costContainerSizePx}px`,
-                                            height: `${costContainerSizePx}px`,
-                                        }}
+                                        data-card-cost-row={color}
+                                        data-card-cost-gem={color}
+                                        className="flex items-center shrink-0"
+                                        style={{ gap: `${costRowGapPx}px` }}
                                     >
+                                        <div
+                                            className="relative shrink-0"
+                                            style={{
+                                                width: `${costContainerSizePx}px`,
+                                                height: `${costContainerSizePx}px`,
+                                            }}
+                                        >
+                                            <GemIcon
+                                                type={
+                                                    GEM_TYPES[
+                                                        color.toUpperCase() as keyof typeof GEM_TYPES
+                                                    ]
+                                                }
+                                                size="w-full h-full"
+                                                theme={theme}
+                                                variant="card-cost"
+                                            />
+                                        </div>
                                         <span
-                                            className="font-black text-white z-10 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] leading-none"
-                                            style={{ fontSize: `${costTextSizePx}px` }}
+                                            data-card-cost-count={color}
+                                            className="font-black leading-none whitespace-nowrap"
+                                            style={{
+                                                fontSize: `${costTextSizePx}px`,
+                                                ...getCardCostCountStyle(color as GemColor, theme),
+                                            }}
                                         >
                                             {amt}
                                         </span>
@@ -301,27 +376,29 @@ export const Card: React.FC<CardProps> = React.memo(
                 )}
 
                 {/* 4. Bottom Right: Crowns */}
-                <div
-                    className="absolute pointer-events-none flex flex-col items-center z-10"
-                    style={{
-                        bottom: `${bottomInsetPx}px`,
-                        right: `${sideInsetPx}px`,
-                        gap: `${stackedGapPx}px`,
-                    }}
-                >
-                    {Number(card.crowns) > 0 &&
-                        Array.from({ length: Number(card.crowns) }).map((_, i) => (
-                            <Crown
-                                key={i}
-                                size={crownIconSizePx}
-                                className="text-yellow-400 drop-shadow-md"
-                                fill="currentColor"
-                            />
-                        ))}
-                </div>
+                {!hasRuntimeArtwork && (
+                    <div
+                        className="absolute pointer-events-none flex flex-col items-center z-10"
+                        style={{
+                            bottom: `${bottomInsetPx}px`,
+                            right: `${sideInsetPx}px`,
+                            gap: `${stackedGapPx}px`,
+                        }}
+                    >
+                        {Number(card.crowns) > 0 &&
+                            Array.from({ length: Number(card.crowns) }).map((_, i) => (
+                                <Crown
+                                    key={i}
+                                    size={crownIconSizePx}
+                                    className="text-yellow-400 drop-shadow-md"
+                                    fill="currentColor"
+                                />
+                            ))}
+                    </div>
+                )}
 
                 {/* 5. Royal Badge */}
-                {isRoyal && (
+                {isRoyal && !hasRuntimeArtwork && (
                     <>
                         <div className="absolute inset-0 bg-yellow-500/10 animate-pulse pointer-events-none z-0" />
                         <div

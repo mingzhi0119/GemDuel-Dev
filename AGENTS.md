@@ -23,6 +23,7 @@ This repository is a `pnpm` + Turborepo monorepo.
 - Use `getLexiconLabel(termId, locale)` for non-React labels, `<LexiconTerm />` for explicit interactive terms, and `<LexiconText />` only on designated long-form instructional prose.
 - Legacy phrases such as `Royal Court` or `Select Joker Color` may remain only as lexicon aliases or regression-test fixtures, never as live player-facing copy.
 - Generated replay outputs under `Replay/` are local artifacts and must stay untracked unless a task explicitly changes that policy.
+- Market and royal gameplay cards must share the same featured display size. Render them from the high-resolution runtime card artwork source and downsample to the display size; do not enlarge low-resolution card faces by increasing a market-only scale factor.
 
 ## Default Commands
 

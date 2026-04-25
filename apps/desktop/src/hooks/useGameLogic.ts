@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { GameState, GemCoord, GameAction } from '@gemduel/shared/types';
+import { applyAction } from '@gemduel/shared/logic/gameReducer';
 import { buildReplayFullSync, buildReplayRecorderFromHistory } from '@gemduel/shared/replay';
 import { useAIController } from './useAIController';
 import { useGameState } from './useGameState';
@@ -21,6 +22,34 @@ export const useGameLogic = (
         () => buildReplayRecorderFromHistory(historyControls.history, appVersion),
         [appVersion, historyControls.history]
     );
+    const localReplayExportState = useMemo(() => {
+        if (
+            historyControls.history.length === 0 ||
+            historyControls.currentIndex === historyControls.history.length - 1
+        ) {
+            return gameState;
+        }
+
+        const firstAction = historyControls.history[0];
+        if (!firstAction || !('payload' in firstAction)) {
+            return gameState;
+        }
+
+        try {
+            let terminalState: GameState | null = null;
+            for (const action of historyControls.history) {
+                const nextState = applyAction(terminalState, action);
+                if (!nextState) {
+                    return gameState;
+                }
+                terminalState = nextState;
+            }
+
+            return terminalState ?? gameState;
+        } catch {
+            return gameState;
+        }
+    }, [gameState, historyControls.currentIndex, historyControls.history]);
 
     // 2. Network & Authority Layer
     const { online, networkDispatch } = useGameNetwork(
@@ -56,8 +85,14 @@ export const useGameLogic = (
             gameState.mode === 'ONLINE_MULTIPLAYER' && !gameState.isHost
                 ? (online.authoritativeReplayRecorder ?? null)
                 : localReplayRecorder;
-        return recorder?.init ? buildReplayFullSync(recorder, gameState).replay : null;
-    }, [gameState, localReplayRecorder, online.authoritativeReplayRecorder]);
+        const replayState = recorder === localReplayRecorder ? localReplayExportState : gameState;
+        return recorder?.init ? buildReplayFullSync(recorder, replayState).replay : null;
+    }, [
+        gameState,
+        localReplayExportState,
+        localReplayRecorder,
+        online.authoritativeReplayRecorder,
+    ]);
 
     const result = useMemo(
         () => ({

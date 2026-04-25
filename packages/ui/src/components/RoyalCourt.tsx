@@ -26,7 +26,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
 
     return (
         <div
-            className={`flex flex-col gap-4 items-center p-5 rounded-[2rem] border backdrop-blur-md shrink-0 w-fit transition-all duration-500
+            className={`flex flex-col gap-4 items-center p-6 rounded-[2rem] border backdrop-blur-md shrink-0 w-fit transition-all duration-500
             ${
                 theme === 'dark'
                     ? 'bg-slate-800/70 border-slate-600 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
@@ -44,17 +44,22 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                     {t('royalCourt.title')}
                 </LexiconTerm>
             </h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
                 {royalDeck.length > 0 ? (
                     royalDeck.map((card) => (
                         <div
                             key={card.id}
-                            className={`relative transition-all duration-300 ${canSelectRoyal ? 'cursor-pointer hover:scale-110 hover:rotate-1 z-50 ring-4 ring-yellow-400/50 rounded-lg shadow-xl' : 'opacity-80 grayscale-[0.2]'}`}
+                            className={`relative ${canSelectRoyal ? 'cursor-pointer z-50' : ''}`}
                             onClick={() => canSelectRoyal && handleSelectRoyal(card)}
                         >
-                            <Card card={card as unknown as CardType} isRoyal={true} />
+                            <Card
+                                card={card as unknown as CardType}
+                                isRoyal={true}
+                                theme={theme}
+                                size="featured"
+                            />
                             {canSelectRoyal && (
-                                <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full animate-bounce shadow-lg">
+                                <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full animate-bounce">
                                     {t('royalCourt.pick')}
                                 </div>
                             )}

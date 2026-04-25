@@ -33,7 +33,7 @@ export const ROGUE_ONLY_CARDS: Card[] = [
         ability: ABILITIES.BONUS_GEM.id,
     },
     {
-        id: 'l3-ma-75',
+        id: 'l3-wh-75',
         level: 3,
         points: 3,
         bonusColor: 'white',
@@ -53,7 +53,7 @@ export const ROGUE_ONLY_CARDS: Card[] = [
         ability: ABILITIES.STEAL.id,
     },
     {
-        id: 'l3-ag-77',
+        id: 'l3-gr-77',
         level: 3,
         points: 3,
         bonusColor: 'green',
@@ -63,7 +63,7 @@ export const ROGUE_ONLY_CARDS: Card[] = [
         ability: ABILITIES.AGAIN.id,
     },
     {
-        id: 'l3-ba-78',
+        id: 'l3-bl-78',
         level: 3,
         points: 3,
         bonusColor: 'blue',

@@ -3,7 +3,7 @@ import type { Card } from '../types';
 
 export const LEVEL_2_CARDS: Card[] = [
     {
-        id: 'l2-bl-32',
+        id: 'l2-bk-32',
         level: 2,
         points: 1,
         bonusColor: 'black',
@@ -13,7 +13,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.STEAL.id,
     },
     {
-        id: 'l2-bl-33',
+        id: 'l2-bk-33',
         level: 2,
         points: 1,
         bonusColor: 'black',
@@ -23,7 +23,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-bl-34',
+        id: 'l2-bk-34',
         level: 2,
         points: 2,
         bonusColor: 'black',
@@ -33,7 +33,7 @@ export const LEVEL_2_CARDS: Card[] = [
         ability: ABILITIES.NONE.id,
     },
     {
-        id: 'l2-bl-35',
+        id: 'l2-bk-35',
         level: 2,
         points: 2,
         bonusColor: 'black',

@@ -8,7 +8,13 @@ import { RoyalCourt } from '@gemduel/ui/components/RoyalCourt';
 import { StatusBar } from '@gemduel/ui/components/StatusBar';
 import { SHARED_PRIVILEGE_SUPPLY_SIZE } from '@gemduel/shared/logic/stateHelpers';
 import type { AppRouteProps } from '@app/types/ui';
-import type { DeckState, GamePhase, MarketState, PlayerKey } from '@gemduel/shared/types';
+import type {
+    DeckState,
+    GamePhase,
+    GemPanelSkin,
+    MarketState,
+    PlayerKey,
+} from '@gemduel/shared/types';
 
 type EffectiveGameMode = GamePhase | 'REVIEW' | 'GAME_OVER';
 
@@ -20,6 +26,9 @@ interface GamePlaySurfaceProps {
     localPlayer: PlayerKey;
     playMatSurfaceStyle: CSSProperties;
     playMatDividerStyle: CSSProperties;
+    gemBoardSurfaceStyle: CSSProperties;
+    gemPanelSkin: GemPanelSkin;
+    marketSurfaceStyle: CSSProperties;
 }
 
 export function GamePlaySurface({
@@ -30,6 +39,9 @@ export function GamePlaySurface({
     localPlayer,
     playMatSurfaceStyle,
     playMatDividerStyle,
+    gemBoardSurfaceStyle,
+    gemPanelSkin,
+    marketSurfaceStyle,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
     const {
@@ -78,6 +90,7 @@ export function GamePlaySurface({
                 }}
             >
                 <div
+                    data-surface-slot="tablecloth"
                     className="absolute inset-0 rounded-[24px] pointer-events-none"
                     style={playMatSurfaceStyle}
                 />
@@ -107,6 +120,7 @@ export function GamePlaySurface({
                             theme={theme}
                             isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
                             localPlayer={localPlayer}
+                            surfaceStyle={marketSurfaceStyle}
                         />
                     </div>
 
@@ -151,6 +165,8 @@ export function GamePlaySurface({
                             bonusGemTarget={bonusGemTarget}
                             theme={theme}
                             canInteract={isMyTurn}
+                            surfaceStyle={gemBoardSurfaceStyle}
+                            panelSkin={gemPanelSkin}
                         />
 
                         <div className="h-24 w-full flex items-start justify-center pt-4">
