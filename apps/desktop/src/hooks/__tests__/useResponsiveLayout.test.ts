@@ -5,6 +5,23 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ResponsiveLayout } from '@gemduel/shared/types';
 import { calculateResponsiveLayout, useResponsiveLayout } from '../useResponsiveLayout';
 
+const expectedDesktopBoardScale = (stageCanvasHeightPx: number) =>
+    Math.min(
+        Math.max(
+            Math.min((3840 - 96) / 2000, (stageCanvasHeightPx - 120 - 440 - 48 - 16) / 797),
+            1.2
+        ),
+        2.08
+    );
+
+const expectedDesktopSizing = (stageCanvasHeightPx: number) => ({
+    boardScale: expectedDesktopBoardScale(stageCanvasHeightPx),
+    deckScale: 1.12,
+    zoneScale: 1,
+    zoneHeightPx: 440,
+    mainGapPx: 24,
+});
+
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -65,6 +82,22 @@ const expectLayoutMatch = (
     expect(layout.mainGapPx).toBe(expected.mainGapPx);
 };
 
+const expectSharedDesktopCanvas = (
+    viewports: Array<readonly [number, number]>,
+    expectedHeightPx: number
+) => {
+    for (const [width, height] of viewports) {
+        const layout = calculateResponsiveLayout(width, height);
+
+        expect(layout.layoutMode).toBe('desktop-4k');
+        expect(layout.stageCanvasWidthPx).toBe(3840);
+        expect(layout.stageCanvasHeightPx).toBeCloseTo(expectedHeightPx, 5);
+        expect(layout.stageScale).toBeCloseTo(width / 3840, 5);
+        expect(layout.stageInsetXPx).toBe(0);
+        expect(layout.stageInsetYPx).toBe(0);
+    }
+};
+
 describe('Responsive layout adaptation', () => {
     afterEach(() => {
         document.body.innerHTML = '';
@@ -81,11 +114,7 @@ describe('Responsive layout adaptation', () => {
             stageScale: 1,
             stageInsetXPx: 0,
             stageInsetYPx: 0,
-            boardScale: 1.2,
-            deckScale: 1.12,
-            zoneScale: 0.96,
-            zoneHeightPx: 317,
-            mainGapPx: 24,
+            ...expectedDesktopSizing(2160),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(3840, 2400), {
@@ -97,11 +126,7 @@ describe('Responsive layout adaptation', () => {
             stageScale: 1,
             stageInsetXPx: 0,
             stageInsetYPx: 0,
-            boardScale: 1.2,
-            deckScale: 1.12,
-            zoneScale: 0.96,
-            zoneHeightPx: 317,
-            mainGapPx: 24,
+            ...expectedDesktopSizing(2400),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(2560, 1440), {
@@ -113,11 +138,7 @@ describe('Responsive layout adaptation', () => {
             stageScale: 0.6666666666666666,
             stageInsetXPx: 0,
             stageInsetYPx: 0,
-            boardScale: 1.2,
-            deckScale: 1.12,
-            zoneScale: 0.96,
-            zoneHeightPx: 317,
-            mainGapPx: 24,
+            ...expectedDesktopSizing(2160),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(1920, 1080), {
@@ -129,11 +150,7 @@ describe('Responsive layout adaptation', () => {
             stageScale: 0.5,
             stageInsetXPx: 0,
             stageInsetYPx: 0,
-            boardScale: 1.2,
-            deckScale: 1.12,
-            zoneScale: 0.96,
-            zoneHeightPx: 317,
-            mainGapPx: 24,
+            ...expectedDesktopSizing(2160),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(1920, 1200), {
@@ -145,11 +162,7 @@ describe('Responsive layout adaptation', () => {
             stageScale: 0.5,
             stageInsetXPx: 0,
             stageInsetYPx: 0,
-            boardScale: 1.2,
-            deckScale: 1.12,
-            zoneScale: 0.96,
-            zoneHeightPx: 317,
-            mainGapPx: 24,
+            ...expectedDesktopSizing(2400),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(1440, 900), {
@@ -161,11 +174,7 @@ describe('Responsive layout adaptation', () => {
             stageScale: 0.375,
             stageInsetXPx: 0,
             stageInsetYPx: 0,
-            boardScale: 1.2,
-            deckScale: 1.12,
-            zoneScale: 0.96,
-            zoneHeightPx: 317,
-            mainGapPx: 24,
+            ...expectedDesktopSizing(2400),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(3440, 1440), {
@@ -177,11 +186,19 @@ describe('Responsive layout adaptation', () => {
             stageScale: 3440 / 3840,
             stageInsetXPx: 0,
             stageInsetYPx: 0,
-            boardScale: 1.2,
-            deckScale: 1.12,
-            zoneScale: 0.96,
-            zoneHeightPx: 317,
-            mainGapPx: 24,
+            ...expectedDesktopSizing(1440 / (3440 / 3840)),
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(3840, 1600), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 3840,
+            viewportHeight: 1600,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 1600,
+            stageScale: 1,
+            stageInsetXPx: 0,
+            stageInsetYPx: 0,
+            ...expectedDesktopSizing(1600),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(375, 812), {
@@ -279,7 +296,7 @@ describe('Responsive layout adaptation', () => {
         ).toBe(true);
     });
 
-    it('compensates the desktop canvas for high-density laptop displays', () => {
+    it('promotes high-density laptop displays without changing the desktop canvas', () => {
         expectLayoutMatch(
             calculateResponsiveLayout(1707, 1067, {
                 devicePixelRatio: 1.5,
@@ -289,18 +306,109 @@ describe('Responsive layout adaptation', () => {
                 layoutMode: 'desktop-4k',
                 viewportWidth: 1707,
                 viewportHeight: 1067,
-                stageCanvasWidthPx: 2560,
-                stageCanvasHeightPx: 1067 / (1707 / 2560),
-                stageScale: 1707 / 2560,
+                stageCanvasWidthPx: 3840,
+                stageCanvasHeightPx: 2400,
+                stageScale: 1707 / 3840,
                 stageInsetXPx: 0,
                 stageInsetYPx: 0,
-                boardScale: 1.2,
-                deckScale: 1.12,
-                zoneScale: 0.96,
-                zoneHeightPx: 317,
-                mainGapPx: 24,
+                ...expectedDesktopSizing(2400),
             }
         );
+    });
+
+    it('keeps the same logical canvas for matching desktop aspect ratios', () => {
+        expectSharedDesktopCanvas(
+            [
+                [1440, 900],
+                [1920, 1200],
+                [3840, 2400],
+            ],
+            2400
+        );
+        expectSharedDesktopCanvas(
+            [
+                [1920, 1080],
+                [2560, 1440],
+                [3840, 2160],
+            ],
+            2160
+        );
+        expectSharedDesktopCanvas(
+            [
+                [2560, 1080],
+                [5120, 2160],
+            ],
+            1620
+        );
+        expectSharedDesktopCanvas(
+            [
+                [3440, 1440],
+                [5160, 2160],
+            ],
+            3840 / (43 / 18)
+        );
+        expectSharedDesktopCanvas(
+            [
+                [1920, 800],
+                [3840, 1600],
+            ],
+            1600
+        );
+    });
+
+    it('clamps out-of-range desktop stages to the supported aspect envelope', () => {
+        expectLayoutMatch(calculateResponsiveLayout(3840, 1080), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 3840,
+            viewportHeight: 1080,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 1600,
+            stageScale: 0.675,
+            stageInsetXPx: 624,
+            stageInsetYPx: 0,
+            ...expectedDesktopSizing(1600),
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(5120, 1440), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 5120,
+            viewportHeight: 1440,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 1600,
+            stageScale: 0.9,
+            stageInsetXPx: 832,
+            stageInsetYPx: 0,
+            ...expectedDesktopSizing(1600),
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(1280, 1024), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 1280,
+            viewportHeight: 1024,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2400,
+            stageScale: 1280 / 3840,
+            stageInsetXPx: 0,
+            stageInsetYPx: 112,
+            ...expectedDesktopSizing(2400),
+        });
+    });
+
+    it('keeps desktop canvas calculations independent of device pixel ratio', () => {
+        const dprOne = calculateResponsiveLayout(1920, 1200, {
+            devicePixelRatio: 1,
+            isFinePointer: true,
+        });
+        const dprTwo = calculateResponsiveLayout(1920, 1200, {
+            devicePixelRatio: 2,
+            isFinePointer: true,
+        });
+
+        expect(dprTwo.stageCanvasWidthPx).toBe(dprOne.stageCanvasWidthPx);
+        expect(dprTwo.stageCanvasHeightPx).toBe(dprOne.stageCanvasHeightPx);
+        expect(dprTwo.stageScale).toBe(dprOne.stageScale);
+        expect(dprTwo.stageInsetXPx).toBe(dprOne.stageInsetXPx);
+        expect(dprTwo.stageInsetYPx).toBe(dprOne.stageInsetYPx);
     });
 
     it('promotes fine-pointer high-density laptop viewports to the desktop stage', () => {
@@ -310,9 +418,10 @@ describe('Responsive layout adaptation', () => {
         });
 
         expect(layout.layoutMode).toBe('desktop-4k');
-        expect(layout.stageCanvasWidthPx).toBe(1920);
-        expect(layout.stageCanvasHeightPx).toBe(1200);
-        expect(layout.stageScale).toBeCloseTo(0.5, 5);
+        expect(layout.stageCanvasWidthPx).toBe(3840);
+        expect(layout.stageCanvasHeightPx).toBe(2400);
+        expect(layout.stageScale).toBeCloseTo(0.25, 5);
+        expect(layout.stageInsetXPx).toBe(0);
         expect(layout.stageInsetYPx).toBe(0);
     });
 
@@ -328,7 +437,7 @@ describe('Responsive layout adaptation', () => {
         expect(layout.stageScale).toBe(1);
     });
 
-    it('keeps the desktop 4k constants stable across supported desktop viewports', () => {
+    it('keeps desktop chrome stable while scaling the play surface by logical width or height', () => {
         [
             [1280, 720],
             [1366, 768],
@@ -337,13 +446,17 @@ describe('Responsive layout adaptation', () => {
             [1920, 1200],
             [2560, 1440],
             [3840, 2160],
+            [3840, 1600],
         ].forEach(([width, height]) => {
             const layout = calculateResponsiveLayout(width, height);
             expect(layout.layoutMode).toBe('desktop-4k');
-            expect(layout.boardScale).toBe(1.2);
+            expect(layout.boardScale).toBeCloseTo(
+                expectedDesktopBoardScale(layout.stageCanvasHeightPx),
+                5
+            );
             expect(layout.deckScale).toBe(1.12);
-            expect(layout.zoneScale).toBe(0.96);
-            expect(layout.zoneHeightPx).toBe(317);
+            expect(layout.zoneScale).toBe(1);
+            expect(layout.zoneHeightPx).toBe(440);
             expect(layout.mainGapPx).toBe(24);
             expect(layout.stageScale).toBeGreaterThan(0);
         });

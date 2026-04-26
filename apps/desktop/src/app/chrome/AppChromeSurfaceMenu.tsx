@@ -38,6 +38,80 @@ interface AppChromeSurfaceMenuProps {
     onResetSurfaceTheme?: () => void;
 }
 
+type AppChromeSurfaceControlsProps = Pick<
+    AppChromeSurfaceMenuProps,
+    | 'theme'
+    | 'neutralMutedButtonClass'
+    | 'surfaceTheme'
+    | 'onSurfaceThemeChange'
+    | 'onResetSurfaceTheme'
+>;
+
+export function AppChromeSurfaceControls({
+    theme,
+    neutralMutedButtonClass,
+    surfaceTheme,
+    onSurfaceThemeChange,
+    onResetSurfaceTheme,
+}: AppChromeSurfaceControlsProps) {
+    const t = useT();
+    const surfaceOptionBaseClass =
+        'min-h-9 rounded-md border px-1.5 text-[10px] font-black uppercase tracking-[0.08em] transition-colors';
+    const getSurfaceOptionClass = (active: boolean) =>
+        active
+            ? theme === 'dark'
+                ? `${surfaceOptionBaseClass} bg-cyan-400/18 text-cyan-100 border-cyan-300/70`
+                : `${surfaceOptionBaseClass} bg-cyan-50 text-cyan-900 border-cyan-500`
+            : theme === 'dark'
+              ? `${surfaceOptionBaseClass} bg-slate-900/70 text-slate-300 border-slate-700 hover:border-slate-500 hover:text-white`
+              : `${surfaceOptionBaseClass} bg-white/85 text-stone-700 border-stone-300 hover:border-stone-500 hover:text-stone-950`;
+
+    return (
+        <div className="flex flex-col gap-3">
+            {SURFACE_THEME_CONTROLS.map((control) => (
+                <div key={control.slot}>
+                    <div
+                        className={`mb-1.5 px-1 text-[10px] font-black uppercase tracking-[0.16em] ${
+                            theme === 'dark' ? 'text-slate-500' : 'text-stone-500'
+                        }`}
+                    >
+                        {t(control.labelKey)}
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                        {SURFACE_THEME_VARIANTS.map((variant) => {
+                            const active = surfaceTheme[control.slot] === variant;
+                            const variantLabel = t(SURFACE_THEME_VARIANT_LABEL_KEYS[variant]);
+                            return (
+                                <button
+                                    key={`${control.slot}-${variant}`}
+                                    type="button"
+                                    className={getSurfaceOptionClass(active)}
+                                    aria-pressed={active}
+                                    onClick={() => onSurfaceThemeChange?.(control.slot, variant)}
+                                    title={`${t(control.labelKey)}: ${variantLabel}`}
+                                >
+                                    {variantLabel}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
+
+            <button
+                type="button"
+                onClick={() => onResetSurfaceTheme?.()}
+                className={`mt-1 px-3 py-2.5 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none ${neutralMutedButtonClass}`}
+            >
+                <RotateCcw size={18} />
+                <span className="text-[11px] font-black uppercase tracking-[0.14em]">
+                    {t('settings.surface.reset')}
+                </span>
+            </button>
+        </div>
+    );
+}
+
 export function AppChromeSurfaceMenu({
     theme,
     isOpen,
@@ -51,16 +125,6 @@ export function AppChromeSurfaceMenu({
     onResetSurfaceTheme,
 }: AppChromeSurfaceMenuProps) {
     const t = useT();
-    const surfaceOptionBaseClass =
-        'min-h-9 rounded-md border px-1.5 text-[10px] font-black uppercase tracking-[0.08em] transition-colors';
-    const getSurfaceOptionClass = (active: boolean) =>
-        active
-            ? theme === 'dark'
-                ? `${surfaceOptionBaseClass} bg-cyan-400/18 text-cyan-100 border-cyan-300/70`
-                : `${surfaceOptionBaseClass} bg-cyan-50 text-cyan-900 border-cyan-500`
-            : theme === 'dark'
-              ? `${surfaceOptionBaseClass} bg-slate-900/70 text-slate-300 border-slate-700 hover:border-slate-500 hover:text-white`
-              : `${surfaceOptionBaseClass} bg-white/85 text-stone-700 border-stone-300 hover:border-stone-500 hover:text-stone-950`;
 
     return (
         <div className="relative" ref={menuRef}>
@@ -90,52 +154,13 @@ export function AppChromeSurfaceMenu({
                         {t('settings.surface.title')}
                     </div>
 
-                    <div className="flex flex-col gap-3">
-                        {SURFACE_THEME_CONTROLS.map((control) => (
-                            <div key={control.slot}>
-                                <div
-                                    className={`mb-1.5 px-1 text-[10px] font-black uppercase tracking-[0.16em] ${
-                                        theme === 'dark' ? 'text-slate-500' : 'text-stone-500'
-                                    }`}
-                                >
-                                    {t(control.labelKey)}
-                                </div>
-                                <div className="grid grid-cols-5 gap-1.5">
-                                    {SURFACE_THEME_VARIANTS.map((variant) => {
-                                        const active = surfaceTheme[control.slot] === variant;
-                                        const variantLabel = t(
-                                            SURFACE_THEME_VARIANT_LABEL_KEYS[variant]
-                                        );
-                                        return (
-                                            <button
-                                                key={`${control.slot}-${variant}`}
-                                                type="button"
-                                                className={getSurfaceOptionClass(active)}
-                                                aria-pressed={active}
-                                                onClick={() =>
-                                                    onSurfaceThemeChange?.(control.slot, variant)
-                                                }
-                                                title={`${t(control.labelKey)}: ${variantLabel}`}
-                                            >
-                                                {variantLabel}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ))}
-
-                        <button
-                            type="button"
-                            onClick={() => onResetSurfaceTheme?.()}
-                            className={`mt-1 px-3 py-2.5 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none ${neutralMutedButtonClass}`}
-                        >
-                            <RotateCcw size={18} />
-                            <span className="text-[11px] font-black uppercase tracking-[0.14em]">
-                                {t('settings.surface.reset')}
-                            </span>
-                        </button>
-                    </div>
+                    <AppChromeSurfaceControls
+                        theme={theme}
+                        neutralMutedButtonClass={neutralMutedButtonClass}
+                        surfaceTheme={surfaceTheme}
+                        onSurfaceThemeChange={onSurfaceThemeChange}
+                        onResetSurfaceTheme={onResetSurfaceTheme}
+                    />
                 </div>
             )}
         </div>

@@ -1,7 +1,18 @@
-import React, { Suspense, useEffect, useRef, useState, type ChangeEventHandler } from 'react';
+import React, {
+    Suspense,
+    useEffect,
+    useId,
+    useRef,
+    useState,
+    type ChangeEventHandler,
+} from 'react';
 import { BookOpen, Download, Moon, RotateCcw, Settings, Sun, Upload } from 'lucide-react';
 import type { ThemeName } from '@gemduel/shared/types';
 import { LocaleSwitch } from '@gemduel/ui/components/LocaleSwitch';
+import {
+    TOOLTIP_LABEL_CLASS,
+    getTooltipLabelThemeClass,
+} from '@gemduel/ui/components/tooltipStyles';
 import { useT } from '@gemduel/ui/i18n/LocaleProvider';
 import {
     DEFAULT_SURFACE_THEME_SELECTIONS,
@@ -9,7 +20,7 @@ import {
     type SurfaceThemeSlot,
     type SurfaceThemeVariant,
 } from '../shell/surfaceTheme';
-import { AppChromeSurfaceMenu } from './AppChromeSurfaceMenu';
+import { AppChromeSurfaceControls } from './AppChromeSurfaceMenu';
 
 const DebugPanel = React.lazy(() =>
     import('@gemduel/ui/components/DebugPanel').then((module) => ({ default: module.DebugPanel }))
@@ -55,16 +66,13 @@ export function AppChrome({
     onResetSurfaceTheme,
 }: AppChromeProps) {
     const t = useT();
-    const sideButtonLabelClass =
-        'text-[13px] font-black uppercase tracking-[0.14em] hidden md:inline';
+    const settingsTooltipId = useId();
     const settingsMenuRef = useRef<HTMLDivElement | null>(null);
-    const themeMenuRef = useRef<HTMLDivElement | null>(null);
     const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-    const [showThemeMenu, setShowThemeMenu] = useState(false);
-    const neutralButtonClass =
+    const settingsIconButtonClass =
         theme === 'dark'
-            ? 'bg-slate-900/70 hover:bg-slate-800/90 text-slate-200 hover:text-white border-slate-600 hover:border-slate-500 shadow-[0_6px_20px_rgba(0,0,0,0.35)]'
-            : 'bg-white/95 hover:bg-stone-50 text-stone-800 border-stone-300';
+            ? 'text-slate-200 hover:bg-slate-800/80 hover:text-white focus-visible:outline-slate-300'
+            : 'text-stone-700 hover:bg-white/80 hover:text-stone-950 focus-visible:outline-stone-700';
     const neutralMutedButtonClass =
         theme === 'dark'
             ? 'bg-slate-900/70 hover:bg-slate-800/90 text-slate-200 hover:text-white border-slate-600 hover:border-slate-500 shadow-[0_6px_20px_rgba(0,0,0,0.35)]'
@@ -99,84 +107,33 @@ export function AppChrome({
         };
     }, [showSettingsMenu]);
 
-    useEffect(() => {
-        if (!showThemeMenu) {
-            return;
-        }
-
-        const handlePointerDown = (event: PointerEvent) => {
-            if (!themeMenuRef.current?.contains(event.target as Node)) {
-                setShowThemeMenu(false);
-            }
-        };
-
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setShowThemeMenu(false);
-            }
-        };
-
-        document.addEventListener('pointerdown', handlePointerDown);
-        document.addEventListener('keydown', handleEscape);
-        return () => {
-            document.removeEventListener('pointerdown', handlePointerDown);
-            document.removeEventListener('keydown', handleEscape);
-        };
-    }, [showThemeMenu]);
-
     return (
         <>
-            <div className="absolute top-24 right-4 z-[200] flex flex-col gap-1.5">
-                <button
-                    onClick={onRequestRestart}
-                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none
-                    ${dangerButtonClass}`}
-                    aria-label={t('settings.restart')}
-                >
-                    <RotateCcw size={21} />
-                    <span className={sideButtonLabelClass}>{t('settings.restart')}</span>
-                </button>
-
-                <button
-                    onClick={onShowRulebook}
-                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none
-                    ${neutralButtonClass}`}
-                    aria-label={t('settings.rules')}
-                >
-                    <BookOpen size={21} />
-                    <span className={sideButtonLabelClass}>{t('settings.rules')}</span>
-                </button>
-
-                <button
-                    onClick={onToggleTheme}
-                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none
-                    ${neutralButtonClass}`}
-                    aria-label={t('settings.toggleTheme')}
-                >
-                    {theme === 'dark' ? <Moon size={21} /> : <Sun size={21} />}
-                    <span className={sideButtonLabelClass}>
-                        {theme === 'dark' ? t('settings.dark') : t('settings.light')}
-                    </span>
-                </button>
-
+            <div className="absolute right-4 top-0 z-[200] flex h-24 items-center lg:right-6 lg:h-[120px]">
                 <div className="relative" ref={settingsMenuRef}>
                     <button
                         onClick={() => {
-                            setShowThemeMenu(false);
                             setShowSettingsMenu((value) => !value);
                         }}
-                        className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-center shadow-none
-                        ${neutralButtonClass}`}
+                        className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
                         aria-label={t('settings.title')}
+                        aria-describedby={settingsTooltipId}
                         aria-expanded={showSettingsMenu}
                     >
-                        <Settings size={21} />
-                        <span className={sideButtonLabelClass}>{t('settings.title')}</span>
+                        <Settings size={32} strokeWidth={2.4} />
+                        <span
+                            id={settingsTooltipId}
+                            role="tooltip"
+                            data-tooltip-size="standard-label"
+                            className={`pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${TOOLTIP_LABEL_CLASS} ${getTooltipLabelThemeClass(theme)}`}
+                        >
+                            {t('settings.title')}
+                        </span>
                     </button>
 
                     {showSettingsMenu && (
                         <div
-                            className={`absolute right-full top-0 mr-3 min-w-[208px] rounded-2xl border p-3 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.32)] ${
+                            className={`absolute right-0 top-full mt-3 w-[min(88vw,420px)] rounded-2xl border p-3 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.32)] ${
                                 theme === 'dark'
                                     ? 'bg-slate-950/92 border-slate-700/80'
                                     : 'bg-white/96 border-stone-300'
@@ -200,6 +157,47 @@ export function AppChrome({
                                     </div>
                                     <LocaleSwitch theme={theme} className="w-full justify-center" />
                                 </div>
+                                <button
+                                    onClick={() => {
+                                        onRequestRestart();
+                                        setShowSettingsMenu(false);
+                                    }}
+                                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${dangerButtonClass}`}
+                                    aria-label={t('settings.restart')}
+                                >
+                                    <RotateCcw size={20} />
+                                    <span className="text-[13px] font-black uppercase tracking-[0.14em]">
+                                        {t('settings.restart')}
+                                    </span>
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        onShowRulebook();
+                                        setShowSettingsMenu(false);
+                                    }}
+                                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
+                                    aria-label={t('settings.rules')}
+                                >
+                                    <BookOpen size={20} />
+                                    <span className="text-[13px] font-black uppercase tracking-[0.14em]">
+                                        {t('settings.rules')}
+                                    </span>
+                                </button>
+
+                                <button
+                                    onClick={onToggleTheme}
+                                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
+                                    aria-label={t('settings.toggleTheme')}
+                                >
+                                    {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+                                    <span className="text-[13px] font-black uppercase tracking-[0.14em]">
+                                        {theme === 'dark'
+                                            ? t('settings.dark')
+                                            : t('settings.light')}
+                                    </span>
+                                </button>
+
                                 <button
                                     onClick={() => {
                                         onDownloadReplay();
@@ -256,26 +254,27 @@ export function AppChrome({
                                         </span>
                                     </button>
                                 )}
+
+                                <div className="px-1 pt-2">
+                                    <div
+                                        className={`mb-3 text-[10px] font-black uppercase tracking-[0.18em] ${
+                                            theme === 'dark' ? 'text-slate-500' : 'text-stone-500'
+                                        }`}
+                                    >
+                                        {t('settings.surface.title')}
+                                    </div>
+                                    <AppChromeSurfaceControls
+                                        theme={theme}
+                                        neutralMutedButtonClass={neutralMutedButtonClass}
+                                        surfaceTheme={surfaceTheme}
+                                        onSurfaceThemeChange={onSurfaceThemeChange}
+                                        onResetSurfaceTheme={onResetSurfaceTheme}
+                                    />
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
-
-                <AppChromeSurfaceMenu
-                    theme={theme}
-                    isOpen={showThemeMenu}
-                    menuRef={themeMenuRef}
-                    sideButtonLabelClass={sideButtonLabelClass}
-                    neutralButtonClass={neutralButtonClass}
-                    neutralMutedButtonClass={neutralMutedButtonClass}
-                    surfaceTheme={surfaceTheme}
-                    onToggleOpen={() => {
-                        setShowSettingsMenu(false);
-                        setShowThemeMenu((value) => !value);
-                    }}
-                    onSurfaceThemeChange={onSurfaceThemeChange}
-                    onResetSurfaceTheme={onResetSurfaceTheme}
-                />
             </div>
 
             {showDebugPanels && (

@@ -118,7 +118,7 @@ describe('AppOverlayStack', () => {
         const gemIds = bonusButtons.map((node) => node.getAttribute('data-gem-id'));
 
         expect(artworkNodes.length).toBeGreaterThanOrEqual(5);
-        expect(gemIds).toEqual(['blue', 'white', 'green', 'black', 'red']);
+        expect(gemIds).toEqual(['red', 'green', 'blue', 'white', 'black']);
         expect(gemIds).not.toContain('gold');
     });
 });

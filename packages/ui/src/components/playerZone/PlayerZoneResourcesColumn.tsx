@@ -5,9 +5,10 @@ import { GemIcon } from '../GemIcon';
 import { FloatingGem, FloatingText } from '../VisualFeedback';
 import { cn } from '@gemduel/shared/utils';
 import type { RefObject } from 'react';
-import type { GemColor, GemInventory, GemTypeObject } from '@gemduel/shared/types';
+import type { GemColor, GemInventory } from '@gemduel/shared/types';
 import {
     PLAYER_ZONE_DISPLAY_COLORS,
+    PLAYER_ZONE_RESOURCE_COLORS,
     PLAYER_ZONE_STACK_OFFSET_X,
     PLAYER_ZONE_STACK_OFFSET_Y,
     SUMMARY_TEXT_COLORS,
@@ -54,79 +55,77 @@ export function PlayerZoneResourcesColumn({
     return (
         <div
             className="self-stretch flex flex-col gap-3 shrink-0 justify-center"
-            style={{ flex: 65 }}
+            style={{ flex: 58 }}
         >
             <div className="flex gap-3 justify-center items-center">
-                {(Object.values(GEM_TYPES) as GemTypeObject[])
-                    .filter((g) => g.id !== 'empty')
-                    .map((gem) => {
-                        const count = inventory[gem.id as GemColor] || 0;
-                        const isClickable =
-                            (isStealMode && count > 0 && gem.id !== 'gold') ||
-                            (isDiscardMode && count > 0);
+                {PLAYER_ZONE_RESOURCE_COLORS.map(
+                    (color) => GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES]
+                ).map((gem) => {
+                    const count = inventory[gem.id as GemColor] || 0;
+                    const isClickable =
+                        (isStealMode && count > 0 && gem.id !== 'gold') ||
+                        (isDiscardMode && count > 0);
 
-                        return (
+                    return (
+                        <div
+                            key={gem.id}
+                            onClick={() => isClickable && onGemClick && onGemClick(gem.id)}
+                            className={`relative transition-all group ${isClickable ? 'cursor-pointer hover:scale-110 active:scale-95 ring-2 ring-rose-500 rounded-full' : ''}`}
+                        >
+                            <AnimatePresence>
+                                {feedbacks
+                                    .filter((f) => f.type === gem.id)
+                                    .map((f) =>
+                                        Object.keys(GEM_TYPES)
+                                            .map((k) => k.toLowerCase())
+                                            .includes(f.type) ? (
+                                            <FloatingGem
+                                                key={f.id}
+                                                type={f.type}
+                                                count={parseInt(f.quantity)}
+                                                theme={theme}
+                                            />
+                                        ) : (
+                                            <FloatingText
+                                                key={f.id}
+                                                quantity={f.quantity}
+                                                label={f.label}
+                                            />
+                                        )
+                                    )}
+                            </AnimatePresence>
                             <div
-                                key={gem.id}
-                                onClick={() => isClickable && onGemClick && onGemClick(gem.id)}
-                                className={`relative transition-all group ${isClickable ? 'cursor-pointer hover:scale-110 active:scale-95 ring-2 ring-rose-500 rounded-full' : ''}`}
+                                style={{
+                                    width: `${inventoryGemSizePx}px`,
+                                    height: `${inventoryGemSizePx}px`,
+                                }}
                             >
-                                <AnimatePresence>
-                                    {feedbacks
-                                        .filter((f) => f.type === gem.id)
-                                        .map((f) =>
-                                            Object.keys(GEM_TYPES)
-                                                .map((k) => k.toLowerCase())
-                                                .includes(f.type) ? (
-                                                <FloatingGem
-                                                    key={f.id}
-                                                    type={f.type}
-                                                    count={parseInt(f.quantity)}
-                                                    theme={theme}
-                                                />
-                                            ) : (
-                                                <FloatingText
-                                                    key={f.id}
-                                                    quantity={f.quantity}
-                                                    label={f.label}
-                                                />
-                                            )
-                                        )}
-                                </AnimatePresence>
-                                <div
-                                    style={{
-                                        width: `${inventoryGemSizePx}px`,
-                                        height: `${inventoryGemSizePx}px`,
+                                <GemIcon
+                                    type={gem}
+                                    size="w-full h-full"
+                                    count={count}
+                                    theme={theme}
+                                    countClassName="-bottom-2 -right-2 px-2 py-0.5"
+                                    countStyle={{
+                                        minWidth: `${inventoryGemBadgeSizePx}px`,
+                                        minHeight: `${inventoryGemBadgeSizePx}px`,
+                                        fontSize: `${inventoryGemCountFontPx}px`,
+                                        lineHeight: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
                                     }}
-                                >
-                                    <GemIcon
-                                        type={gem}
-                                        size="w-full h-full"
-                                        count={count}
-                                        theme={theme}
-                                        countClassName="-bottom-2 -right-2 px-2 py-0.5"
-                                        countStyle={{
-                                            minWidth: `${inventoryGemBadgeSizePx}px`,
-                                            minHeight: `${inventoryGemBadgeSizePx}px`,
-                                            fontSize: `${inventoryGemCountFontPx}px`,
-                                            lineHeight: 1,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                        }}
-                                        className={
-                                            count === 0 ? 'grayscale opacity-50' : 'shadow-lg'
-                                        }
-                                    />
-                                </div>
+                                    className={count === 0 ? 'grayscale opacity-50' : 'shadow-lg'}
+                                />
                             </div>
-                        );
-                    })}
+                        </div>
+                    );
+                })}
             </div>
 
             <div
                 ref={tableauRowRef}
-                className="flex w-full items-start justify-start mt-1 overflow-hidden py-2 max-w-full min-w-0"
+                className="flex w-full shrink-0 items-start justify-start mt-1 overflow-hidden py-2 max-w-full min-w-0"
                 style={{ gap: `${TABLEAU_STACK_GAP_PX}px` }}
             >
                 {PLAYER_ZONE_DISPLAY_COLORS.map((color: string) => {

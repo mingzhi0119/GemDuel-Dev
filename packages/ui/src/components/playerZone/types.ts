@@ -55,5 +55,9 @@ export interface PlayerZoneColorStats {
 
 export interface PlayerZoneScaledCardFrameProps {
     scale: number;
+    baseSize?: {
+        width: number;
+        height: number;
+    };
     children: React.ReactNode;
 }

@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { Layers } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { Card, FEATURED_CARD_SIZE } from './Card';
 import { withGameAnimation } from '../hoc/withGameAnimation';
@@ -19,6 +18,7 @@ import {
 } from '@gemduel/shared/types';
 import { useT } from '../i18n/LocaleProvider';
 import { LexiconTerm } from '../lexicon/LexiconTerm';
+import { MarketDeckBack } from './market/MarketDeckBack';
 
 const AnimatedCard = withGameAnimation(Card);
 
@@ -39,6 +39,7 @@ interface MarketProps {
     handleReserveCard: (card: CardType, marketInfo: CardInteractionContext) => void;
     onPeekDeck?: (level: number) => void;
     theme: 'light' | 'dark';
+    reserveModeActive?: boolean;
     isOnline?: boolean;
     localPlayer?: PlayerKey;
     surfaceStyle?: React.CSSProperties;
@@ -58,6 +59,7 @@ export const Market: React.FC<MarketProps> = React.memo(
         handleReserveCard,
         onPeekDeck,
         theme,
+        reserveModeActive = false,
         isOnline,
         localPlayer,
         surfaceStyle,
@@ -77,10 +79,15 @@ export const Market: React.FC<MarketProps> = React.memo(
         const handleBuy = useCallback(
             (card: CardType, context?: CardInteractionContext) => {
                 if (canInteract && card && context) {
+                    if (reserveModeActive) {
+                        handleReserveCard(card, context);
+                        return;
+                    }
+
                     initiateBuy(card, 'market', context);
                 }
             },
-            [initiateBuy, canInteract]
+            [canInteract, handleReserveCard, initiateBuy, reserveModeActive]
         );
 
         // Optimization: Stable callback for reserving cards
@@ -194,6 +201,11 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                     onReserve={
                                                         canInteract ? handleReserve : undefined
                                                     }
+                                                    reserveOnClick={
+                                                        reserveModeActive &&
+                                                        surfacePolicy.marketInteraction &&
+                                                        canInteract
+                                                    }
                                                     theme={theme}
                                                     isDeckPreview={true}
                                                     size="featured"
@@ -238,6 +250,11 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                         onReserve={
                                                             canInteract ? handleReserve : undefined
                                                         }
+                                                        reserveOnClick={
+                                                            reserveModeActive &&
+                                                            surfacePolicy.marketInteraction &&
+                                                            canInteract
+                                                        }
                                                         theme={theme}
                                                         size="featured"
                                                     />
@@ -272,28 +289,12 @@ export const Market: React.FC<MarketProps> = React.memo(
                                             height: `${FEATURED_CARD_SIZE.height}px`,
                                         }}
                                     >
-                                        <div
-                                            className={`absolute inset-0 ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-200'}`}
+                                        <MarketDeckBack
+                                            level={lvl}
+                                            count={decks[lvl].length}
+                                            theme={theme}
+                                            levelLabel={t('market.level', { level: lvl })}
                                         />
-
-                                        <div className="relative z-10 flex flex-col items-center">
-                                            <Layers
-                                                size={24}
-                                                className={`mb-1 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
-                                            />
-                                            <div
-                                                className={`font-bold text-[13px] ${theme === 'dark' ? 'text-slate-100' : 'text-slate-700'}`}
-                                            >
-                                                {t('market.level', { level: lvl })}
-                                            </div>
-                                            <div
-                                                data-market-deck-count={lvl}
-                                                data-count={decks[lvl].length}
-                                                className={`text-[12px] font-mono font-bold ${theme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}
-                                            >
-                                                {decks[lvl].length}
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
 
@@ -334,6 +335,11 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                         onClick={handleBuy}
                                                         onReserve={
                                                             canInteract ? handleReserve : undefined
+                                                        }
+                                                        reserveOnClick={
+                                                            reserveModeActive &&
+                                                            surfacePolicy.marketInteraction &&
+                                                            canInteract
                                                         }
                                                         theme={theme}
                                                         size="featured"

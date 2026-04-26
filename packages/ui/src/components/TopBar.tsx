@@ -36,7 +36,6 @@ export const TopBar: React.FC<TopBarProps> = ({
     const t = useT();
     const getVictoryGoals = (pid: PlayerKey) => {
         const rawBuff = playerBuffs[pid];
-        // Reconstruct to get effects
         const buff = (Object.values(BUFFS).find((b) => b.id === rawBuff?.id) as Buff) || rawBuff;
         const winCondition = (buff?.effects as BuffEffects)?.winCondition || {};
 
@@ -51,18 +50,121 @@ export const TopBar: React.FC<TopBarProps> = ({
 
     const isP1Winning = p1Score >= p1Goals.points * 0.75 || p1Crowns >= p1Goals.crowns * 0.7;
     const isP2Winning = p2Score >= p2Goals.points * 0.75 || p2Crowns >= p2Goals.crowns * 0.7;
-
     const isMyTurn = isOnline && localPlayer === activePlayer;
 
-    // Helper for winning text color
     const getWinningClass = (isWinning: boolean) => {
         if (!isWinning) return theme === 'dark' ? 'text-white' : 'text-slate-900';
         return theme === 'dark' ? 'animate-pulse text-yellow-400' : 'animate-pulse text-orange-600';
     };
 
+    const renderPoints = (pid: PlayerKey, score: number, pointGoal: number, isWinning: boolean) => (
+        <div
+            className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isWinning)}`}
+            data-topbar-points-group={pid}
+        >
+            <Trophy className="h-4 w-4 lg:h-12 lg:w-12" />
+            <span data-topbar-score={pid} data-value={score}>
+                <AnimatedScore
+                    value={score}
+                    theme={theme}
+                    className="text-xl lg:text-[64px] font-black leading-none drop-shadow-lg"
+                />
+            </span>
+            <span
+                className={`mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl ${
+                    theme === 'dark' ? 'text-slate-300' : 'text-stone-600'
+                }`}
+            >
+                /{pointGoal}
+            </span>
+        </div>
+    );
+
+    const renderCrowns = (pid: PlayerKey, crowns: number, crownGoal: number) => (
+        <div
+            className={`flex items-center gap-1 lg:gap-2 ${
+                crowns >= crownGoal - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'
+            }`}
+            data-topbar-crown-group={pid}
+        >
+            <Crown className="h-4 w-4 lg:h-12 lg:w-12" fill="currentColor" />
+            <span
+                data-topbar-crowns={pid}
+                data-value={crowns}
+                className="text-xl lg:text-[64px] font-black leading-none drop-shadow-lg"
+            >
+                {crowns}
+            </span>
+            <span
+                className={`mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl ${
+                    theme === 'dark' ? 'text-slate-300' : 'text-stone-600'
+                }`}
+            >
+                /{crownGoal}
+            </span>
+        </div>
+    );
+
+    const renderScoreGroup = (pid: PlayerKey) => {
+        const isP1 = pid === 'p1';
+        const score = isP1 ? p1Score : p2Score;
+        const crowns = isP1 ? p1Crowns : p2Crowns;
+        const goals = isP1 ? p1Goals : p2Goals;
+        const isWinning = isP1 ? isP1Winning : isP2Winning;
+
+        return (
+            <div
+                data-topbar-score-group={pid}
+                className={`flex items-center gap-3 lg:gap-8 transition-transform duration-500 ${
+                    activePlayer === pid ? 'scale-105 opacity-100' : 'opacity-100'
+                }`}
+            >
+                {renderCrowns(pid, crowns, goals.crowns)}
+                {renderPoints(pid, score, goals.points, isWinning)}
+            </div>
+        );
+    };
+
+    const renderTurnSide = (pid: PlayerKey) => {
+        const isP1 = pid === 'p1';
+        const activeClass = isP1 ? 'text-emerald-500' : 'text-blue-500';
+        const inactiveClass = theme === 'dark' ? 'text-slate-300' : 'text-stone-800';
+
+        return (
+            <div
+                data-topbar-turn-side={pid}
+                className={`flex items-baseline gap-3 lg:gap-6 ${isP1 ? '' : 'flex-row-reverse'}`}
+            >
+                <span
+                    className={`text-[16px] font-black uppercase tracking-widest lg:text-[42px] ${
+                        isP1 ? 'text-emerald-500' : 'text-blue-500'
+                    }`}
+                >
+                    {isP1 ? 'P1' : 'P2'}
+                </span>
+                <span
+                    data-topbar-turn-count={pid}
+                    data-value={playerTurnCounts[pid]}
+                    className={`text-[12px] font-black leading-none transition-colors lg:text-[38px] ${
+                        activePlayer === pid ? activeClass : inactiveClass
+                    }`}
+                >
+                    {playerTurnCounts[pid]}
+                </span>
+                <span
+                    className={`text-[9px] font-black uppercase tracking-tighter lg:text-2xl ${
+                        theme === 'dark' ? 'text-slate-300/80' : 'text-stone-600'
+                    }`}
+                >
+                    {t('topBar.turn')}
+                </span>
+            </div>
+        );
+    };
+
     return (
         <div
-            className={`absolute top-0 left-0 w-full h-16 lg:h-20 backdrop-blur-xl border-b z-[60] transition-colors duration-500
+            className={`relative z-[60] h-24 w-full shrink-0 border-b backdrop-blur-xl transition-colors duration-500 lg:h-[120px]
             ${
                 theme === 'dark'
                     ? 'bg-slate-950/95 border-slate-700 shadow-[0_8px_24px_rgba(0,0,0,0.3)]'
@@ -70,26 +172,63 @@ export const TopBar: React.FC<TopBarProps> = ({
             }
         `}
         >
-            <div className="relative flex h-full w-full items-center justify-between px-2 lg:px-8">
-                {/* 1/4 and 3/4 Positioned Buffs (Absolute) */}
-                <div className="absolute left-1/4 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+            <div className="relative h-full w-full">
+                <div
+                    data-topbar-buff-slot="p1"
+                    className="absolute left-10 top-1/2 hidden min-w-0 -translate-y-1/2 items-center justify-start md:flex lg:left-28"
+                >
                     <TopBarBuff
-                        buff={playerBuffs['p1']}
+                        buff={playerBuffs.p1}
                         playerKey="p1"
                         theme={theme}
                         locale={locale}
                     />
                 </div>
-                <div className="absolute left-3/4 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+
+                <div
+                    data-topbar-score-anchor="p1"
+                    className="absolute left-1/4 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                >
+                    {renderScoreGroup('p1')}
+                </div>
+
+                <div
+                    data-topbar-center-core="true"
+                    className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                >
+                    <div
+                        data-topbar-turn-core="true"
+                        className="flex min-w-[190px] items-center justify-center gap-4 lg:min-w-[430px] lg:gap-10"
+                    >
+                        {renderTurnSide('p1')}
+                        <div
+                            className={`h-5 w-px lg:h-8 ${
+                                theme === 'dark' ? 'bg-slate-600/70' : 'bg-stone-300/80'
+                            }`}
+                        />
+                        {renderTurnSide('p2')}
+                    </div>
+                </div>
+
+                <div
+                    data-topbar-score-anchor="p2"
+                    className="absolute left-3/4 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                >
+                    {renderScoreGroup('p2')}
+                </div>
+
+                <div
+                    data-topbar-buff-slot="p2"
+                    className="absolute right-24 top-1/2 hidden min-w-0 -translate-y-1/2 items-center justify-end md:flex lg:right-36"
+                >
                     <TopBarBuff
-                        buff={playerBuffs['p2']}
+                        buff={playerBuffs.p2}
                         playerKey="p2"
                         theme={theme}
                         locale={locale}
                     />
                 </div>
 
-                {/* Turn Indicator (Online Only) */}
                 <AnimatePresence>
                     {isOnline && isMyTurn && (
                         <motion.div
@@ -97,153 +236,14 @@ export const TopBar: React.FC<TopBarProps> = ({
                             animate={{ y: 0, opacity: 1, x: '-50%' }}
                             exit={{ y: -50, opacity: 0, x: '-50%' }}
                             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                            className="absolute top-full left-1/2 -mt-3 px-6 py-1.5 rounded-b-xl shadow-lg border-x border-b bg-emerald-500 border-emerald-600 z-50 flex items-center gap-2"
+                            className="absolute top-full left-1/2 z-50 -mt-3 flex items-center gap-2 rounded-b-xl border-x border-b border-emerald-600 bg-emerald-500 px-6 py-1.5 shadow-lg"
                         >
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white animate-pulse">
+                            <span className="animate-pulse text-[10px] font-black uppercase tracking-widest text-white">
                                 {t('topBar.yourTurn')}
                             </span>
                         </motion.div>
                     )}
                 </AnimatePresence>
-
-                {/* Player 1 Overview (Left) */}
-                <div
-                    className={`flex items-center gap-2 lg:gap-8 transition-all duration-500 ${activePlayer === 'p1' ? 'opacity-100 scale-105' : 'opacity-100'}`}
-                >
-                    <span className="text-[18px] lg:text-[27px] font-black text-emerald-500 uppercase tracking-widest drop-shadow-md hidden sm:inline">
-                        P1
-                    </span>
-                    <div className="flex flex-col items-start gap-0.5">
-                        <div className="flex items-center gap-2 lg:gap-6">
-                            <div
-                                className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isP1Winning)}`}
-                            >
-                                <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
-                                <span data-topbar-score="p1" data-value={p1Score}>
-                                    <AnimatedScore
-                                        value={p1Score}
-                                        theme={theme}
-                                        className="text-xl lg:text-4xl font-black drop-shadow-lg"
-                                    />
-                                </span>
-                                <span
-                                    className={`text-[15px] font-bold mt-1.5 lg:mt-2 ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
-                                >
-                                    /{p1Goals.points}
-                                </span>
-                            </div>
-                            <div
-                                className={`flex items-center gap-1 lg:gap-2 ${p1Crowns >= p1Goals.crowns - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}
-                            >
-                                <Crown className="w-4 h-4 lg:w-6 lg:h-6" fill="currentColor" />
-                                <span
-                                    data-topbar-crowns="p1"
-                                    data-value={p1Crowns}
-                                    className="text-xl lg:text-4xl font-black drop-shadow-lg"
-                                >
-                                    {p1Crowns}
-                                </span>
-                                <span
-                                    className={`text-[15px] font-bold mt-1.5 lg:mt-2 ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
-                                >
-                                    /{p1Goals.crowns}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Center Info */}
-                <div className="flex flex-col items-center justify-center">
-                    <div
-                        className={`flex items-center gap-4 px-6 lg:px-10 py-2 lg:py-3 rounded-2xl transition-all duration-500
-                        ${
-                            theme === 'dark'
-                                ? 'bg-slate-800/70 border border-slate-600 shadow-[0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
-                                : 'bg-white/88 border border-stone-300/90 shadow-[0_6px_18px_rgba(15,23,42,0.05)]'
-                        }
-                    `}
-                    >
-                        <div className="flex items-center gap-2">
-                            <span
-                                data-topbar-turn-count="p1"
-                                data-value={playerTurnCounts.p1}
-                                className={`text-[10px] lg:text-base font-black transition-colors ${activePlayer === 'p1' ? 'text-emerald-500' : theme === 'dark' ? 'text-slate-300' : 'text-stone-800'}`}
-                            >
-                                {playerTurnCounts.p1}
-                            </span>
-                            <span
-                                className={`text-[8px] lg:text-[10px] font-black uppercase tracking-tighter ${theme === 'dark' ? 'text-slate-300/80' : 'text-stone-600'}`}
-                            >
-                                {t('topBar.turn')}
-                            </span>
-                        </div>
-                        <div
-                            className={`h-4 w-px ${theme === 'dark' ? 'bg-slate-600/70' : 'bg-stone-300/80'}`}
-                        />
-                        <div className="flex items-center gap-2">
-                            <span
-                                data-topbar-turn-count="p2"
-                                data-value={playerTurnCounts.p2}
-                                className={`text-[10px] lg:text-base font-black transition-colors ${activePlayer === 'p2' ? 'text-blue-500' : theme === 'dark' ? 'text-slate-300' : 'text-stone-800'}`}
-                            >
-                                {playerTurnCounts.p2}
-                            </span>
-                            <span
-                                className={`text-[8px] lg:text-[10px] font-black uppercase tracking-tighter ${theme === 'dark' ? 'text-slate-300/80' : 'text-stone-600'}`}
-                            >
-                                {t('topBar.turn')}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Player 2 Overview (Right) */}
-                <div
-                    className={`flex items-center gap-2 lg:gap-8 transition-all duration-500 flex-row-reverse ${activePlayer === 'p2' ? 'opacity-100 scale-105' : 'opacity-100'}`}
-                >
-                    <span className="text-[18px] lg:text-[27px] font-black text-blue-500 uppercase tracking-widest drop-shadow-md hidden sm:inline">
-                        P2
-                    </span>
-                    <div className="flex flex-col items-end gap-0.5">
-                        <div className="flex items-center gap-2 lg:gap-6 flex-row-reverse">
-                            <div
-                                className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isP2Winning)}`}
-                            >
-                                <Trophy className="w-4 h-4 lg:w-6 lg:h-6" />
-                                <span data-topbar-score="p2" data-value={p2Score}>
-                                    <AnimatedScore
-                                        value={p2Score}
-                                        theme={theme}
-                                        className="text-xl lg:text-4xl font-black drop-shadow-lg"
-                                    />
-                                </span>
-                                <span
-                                    className={`text-[15px] font-bold mt-1.5 lg:mt-2 ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
-                                >
-                                    /{p2Goals.points}
-                                </span>
-                            </div>
-                            <div
-                                className={`flex items-center gap-1 lg:gap-2 ${p2Crowns >= p2Goals.crowns - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'}`}
-                            >
-                                <Crown className="w-4 h-4 lg:w-6 lg:h-6" fill="currentColor" />
-                                <span
-                                    data-topbar-crowns="p2"
-                                    data-value={p2Crowns}
-                                    className="text-xl lg:text-4xl font-black drop-shadow-lg"
-                                >
-                                    {p2Crowns}
-                                </span>
-                                <span
-                                    className={`text-[15px] font-bold mt-1.5 lg:mt-2 ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
-                                >
-                                    /{p2Goals.crowns}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );

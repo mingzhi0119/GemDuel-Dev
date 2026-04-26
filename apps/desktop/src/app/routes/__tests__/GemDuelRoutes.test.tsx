@@ -52,11 +52,11 @@ const createLayout = (
     stageScale: 0.5,
     stageInsetXPx: 0,
     stageInsetYPx: 0,
-    boardScale: 1.14,
-    deckScale: 1.08,
-    zoneScale: 0.96,
-    zoneHeightPx: 317,
-    mainGapPx: 32,
+    boardScale: (3840 - 96) / 2000,
+    deckScale: 1.12,
+    zoneScale: 1,
+    zoneHeightPx: 440,
+    mainGapPx: 24,
     ...overrides,
 });
 
@@ -75,6 +75,7 @@ const createGame = (
         state: {
             ...INITIAL_STATE_SKELETON,
             selectedGems: [],
+            reserveGoldSelection: null,
             errorMsg: null,
             phase: 'IDLE',
             turn: 'p1',
@@ -358,16 +359,16 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         });
     });
 
-    it('renders high-density desktop layouts with the compensated stage canvas size', async () => {
+    it('renders high-density desktop layouts with the canonical stage canvas size', async () => {
         const { container, root } = await renderRoutes(
             createProps({
                 layout: createLayout({
                     viewportWidth: 1707,
                     viewportHeight: 1067,
                     aspectRatio: 1707 / 1067,
-                    stageCanvasWidthPx: 2560,
-                    stageCanvasHeightPx: 1067 / (1707 / 2560),
-                    stageScale: 1707 / 2560,
+                    stageCanvasWidthPx: 3840,
+                    stageCanvasHeightPx: 2400,
+                    stageScale: 1707 / 3840,
                     stageInsetXPx: 0,
                     stageInsetYPx: 0,
                 }),
@@ -379,9 +380,9 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         ) as HTMLDivElement | null;
 
         expect(canvas).not.toBeNull();
-        expect(canvas?.style.width).toBe('2560px');
-        expect(Number.parseFloat(canvas?.style.height ?? '0')).toBeCloseTo(1067 / (1707 / 2560), 5);
-        expect(canvas?.style.transform).toBe(`scale(${1707 / 2560})`);
+        expect(canvas?.style.width).toBe('3840px');
+        expect(canvas?.style.height).toBe('2400px');
+        expect(canvas?.style.transform).toBe(`scale(${1707 / 3840})`);
         expect(canvas?.style.top).toBe('0px');
 
         act(() => {

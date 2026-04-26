@@ -69,8 +69,8 @@ describe('AppChrome locale controls', () => {
             await Promise.resolve();
         });
 
-        const settingsButton = Array.from(container.querySelectorAll('button')).find((button) =>
-            button.textContent?.includes('Settings')
+        const settingsButton = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
         );
 
         await act(async () => {
@@ -82,7 +82,7 @@ describe('AppChrome locale controls', () => {
         expect(container.textContent).toContain('中文');
     });
 
-    it('opens the surface theme menu and updates a slot selection', async () => {
+    it('uses the shared readable tooltip standard for the settings icon', async () => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -92,15 +92,41 @@ describe('AppChrome locale controls', () => {
             await Promise.resolve();
         });
 
-        const themeButton = Array.from(container.querySelectorAll('button')).find((button) =>
-            button.textContent?.includes('Theme')
+        const settingsButton = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
         );
+        const tooltip = container.querySelector<HTMLSpanElement>('[role="tooltip"]');
+
+        expect(settingsButton).not.toBeNull();
+        expect(tooltip).not.toBeNull();
+        expect(settingsButton?.getAttribute('aria-describedby')).toBe(tooltip?.id);
+        expect(settingsButton?.hasAttribute('title')).toBe(false);
+        expect(tooltip?.dataset.tooltipSize).toBe('standard-label');
+        expect(tooltip?.className).toContain('text-[16px]');
+        expect(tooltip?.className).toContain('px-4');
+    });
+
+    it('shows shell actions and surface controls inside the settings menu', async () => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
 
         await act(async () => {
-            themeButton?.click();
+            root = createRoot(container!);
+            root.render(<ChromeHarness />);
             await Promise.resolve();
         });
 
+        const settingsButton = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
+        );
+
+        await act(async () => {
+            settingsButton?.click();
+            await Promise.resolve();
+        });
+
+        expect(container.textContent).toContain('Restart');
+        expect(container.textContent).toContain('Rules');
         expect(container.textContent).toContain('Market Background');
         expect(container.textContent).toContain('Player Zone');
 
@@ -116,7 +142,7 @@ describe('AppChrome locale controls', () => {
         expect(woodButtons[0]?.getAttribute('aria-pressed')).toBe('true');
     });
 
-    it('renders light surface options and resets selected slots', async () => {
+    it('renders light surface options inside settings and resets selected slots', async () => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -126,12 +152,12 @@ describe('AppChrome locale controls', () => {
             await Promise.resolve();
         });
 
-        const themeButton = Array.from(container.querySelectorAll('button')).find((button) =>
-            button.textContent?.includes('Theme')
+        const settingsButton = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
         );
 
         await act(async () => {
-            themeButton?.click();
+            settingsButton?.click();
             await Promise.resolve();
         });
 

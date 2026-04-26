@@ -6,6 +6,8 @@ import { validateGemSelection } from '@gemduel/shared/logic/validators';
 import { getRandomBasicGemColor } from '@gemduel/shared/logic/gameSetup';
 import type { GameAction, GameState, GemColor, GemCoord } from '@gemduel/shared/types';
 
+type GemDragSelectionIntent = 'select' | 'deselect';
+
 interface BoardInteractionParams {
     gameState: GameState;
     canLocalInteract: boolean;
@@ -13,6 +15,8 @@ interface BoardInteractionParams {
     selectedGems: GemCoord[];
     setSelectedGems: Dispatch<SetStateAction<GemCoord[]>>;
     clearSelectedGems: () => void;
+    preselectedReserveGold: GemCoord | null;
+    setPreselectedReserveGold: Dispatch<SetStateAction<GemCoord | null>>;
     setErrorMsg: (value: string | null) => void;
 }
 
@@ -23,6 +27,8 @@ export const useBoardInteractionHandlers = ({
     selectedGems,
     setSelectedGems,
     clearSelectedGems,
+    preselectedReserveGold,
+    setPreselectedReserveGold,
     setErrorMsg,
 }: BoardInteractionParams) => {
     const surfacePolicy = getFsmPhaseSurfacePolicy(gameState.phase);
@@ -38,16 +44,44 @@ export const useBoardInteractionHandlers = ({
     const handleGemClick = useCallback(
         (r: number, c: number) => {
             if (!canLocalInteract || gameState.winner) return;
+            const clickedGem = gameState.board[r]?.[c];
+            if (
+                surfacePolicy.boardInteractionMode === 'selection' &&
+                clickedGem?.type?.id === 'gold'
+            ) {
+                const nextCoord = { r, c };
+                const isSameGold =
+                    preselectedReserveGold?.r === r && preselectedReserveGold?.c === c;
+                setPreselectedReserveGold(isSameGold ? null : nextCoord);
+                clearSelectedGems();
+                setErrorMsg(isSameGold ? null : 'Select a card or deck to reserve.');
+                return;
+            }
+
             const result = processGemClick(gameState, r, c, selectedGems);
             if (result.error) return setErrorMsg(result.error);
             if (result.action) return networkDispatch(result.action);
-            if (result.newSelection) setSelectedGems(result.newSelection);
+            if (result.newSelection) {
+                setPreselectedReserveGold(null);
+                setSelectedGems(result.newSelection);
+            }
         },
-        [canLocalInteract, gameState, networkDispatch, selectedGems, setErrorMsg, setSelectedGems]
+        [
+            canLocalInteract,
+            clearSelectedGems,
+            gameState,
+            networkDispatch,
+            preselectedReserveGold,
+            selectedGems,
+            setErrorMsg,
+            setPreselectedReserveGold,
+            setSelectedGems,
+            surfacePolicy.boardInteractionMode,
+        ]
     );
 
     const handleGemDragSelection = useCallback(
-        (coords: GemCoord[]) => {
+        (coords: GemCoord[], intent: GemDragSelectionIntent = 'select') => {
             if (
                 !canLocalInteract ||
                 gameState.winner ||
@@ -56,6 +90,20 @@ export const useBoardInteractionHandlers = ({
                 return;
             }
             if (coords.length === 0 || coords.length > 3) return;
+
+            if (intent === 'deselect') {
+                const coordsToRemove = new Set(coords.map((coord) => `${coord.r}:${coord.c}`));
+                const nextSelection = selectedGems.filter(
+                    (selection) => !coordsToRemove.has(`${selection.r}:${selection.c}`)
+                );
+
+                if (nextSelection.length === selectedGems.length) return;
+
+                setErrorMsg(null);
+                setPreselectedReserveGold(null);
+                setSelectedGems(nextSelection);
+                return;
+            }
 
             const check = validateGemSelection(coords);
             if (!check.valid || check.hasGap) return;
@@ -66,6 +114,7 @@ export const useBoardInteractionHandlers = ({
             }
 
             setErrorMsg(null);
+            setPreselectedReserveGold(null);
             setSelectedGems(coords);
         },
         [
@@ -73,7 +122,9 @@ export const useBoardInteractionHandlers = ({
             gameState.playerBuffs,
             gameState.turn,
             gameState.winner,
+            selectedGems,
             setErrorMsg,
+            setPreselectedReserveGold,
             setSelectedGems,
             surfacePolicy.boardInteractionMode,
         ]
@@ -107,6 +158,7 @@ export const useBoardInteractionHandlers = ({
         }
 
         networkDispatch({ type: 'TAKE_GEMS', payload: { coords: selectedGems } });
+        setPreselectedReserveGold(null);
         clearSelectedGems();
     }, [
         canLocalInteract,
@@ -117,6 +169,7 @@ export const useBoardInteractionHandlers = ({
         networkDispatch,
         selectedGems,
         setErrorMsg,
+        setPreselectedReserveGold,
     ]);
 
     const handleReplenish = useCallback(() => {
@@ -131,12 +184,14 @@ export const useBoardInteractionHandlers = ({
                 : undefined;
 
         networkDispatch(buildReplenishAction(getRandomBasicGemColor(), extortionColor));
+        setPreselectedReserveGold(null);
     }, [
         canLocalInteract,
         gameState.bag.length,
         gameState.inventories,
         gameState.turn,
         networkDispatch,
+        setPreselectedReserveGold,
     ]);
 
     const activatePrivilegeMode = useCallback(() => {
@@ -155,6 +210,7 @@ export const useBoardInteractionHandlers = ({
         }
 
         networkDispatch({ type: 'ACTIVATE_PRIVILEGE' });
+        setPreselectedReserveGold(null);
         clearSelectedGems();
     }, [
         canLocalInteract,
@@ -166,6 +222,7 @@ export const useBoardInteractionHandlers = ({
         gameState.turn,
         networkDispatch,
         setErrorMsg,
+        setPreselectedReserveGold,
     ]);
 
     return useMemo(

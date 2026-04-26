@@ -44,6 +44,7 @@ describe('useMarketInteractionHandlers', () => {
     const networkDispatch = vi.fn<(action: GameAction) => void>();
     const setErrorMsg = vi.fn<(value: string | null) => void>();
     const canAfford = vi.fn<(card: Card, isReserved?: boolean) => boolean>();
+    const clearPreselectedReserveGold = vi.fn<() => void>();
 
     const renderHarness = (gameState: GameState, canLocalInteract = true) => {
         const Harness = () => {
@@ -53,6 +54,8 @@ describe('useMarketInteractionHandlers', () => {
                 networkDispatch,
                 setErrorMsg,
                 canAfford,
+                preselectedReserveGold: null,
+                clearPreselectedReserveGold,
             });
             return null;
         };
@@ -73,6 +76,7 @@ describe('useMarketInteractionHandlers', () => {
         networkDispatch.mockReset();
         setErrorMsg.mockReset();
         canAfford.mockReset();
+        clearPreselectedReserveGold.mockReset();
         mocks.getRandomBasicGemColor.mockReset();
         mocks.canActionRunInPhase.mockReset();
         mocks.isBonusColorSelectionPhase.mockReset();
@@ -190,6 +194,61 @@ describe('useMarketInteractionHandlers', () => {
             type: 'RESERVE_CARD',
             payload: { card, level: 1, idx: 0, isExtra: true, extraIdx: 0 },
         });
+    });
+
+    it('uses a preselected gold gem to complete card and deck reserve immediately', () => {
+        const card = { id: 'reserve-with-gold', bonusColor: 'blue' } as Card;
+        const gameState = {
+            turn: 'p1',
+            phase: 'IDLE',
+            board: [[{ type: { id: 'gold' } }]],
+            playerReserved: { p1: [], p2: [] },
+            decks: { 1: [{ id: 'deck-1' }], 2: [], 3: [] },
+            pendingBuy: null,
+        } as unknown as GameState;
+
+        const Harness = () => {
+            currentResult = useMarketInteractionHandlers({
+                gameState,
+                canLocalInteract: true,
+                networkDispatch,
+                setErrorMsg,
+                canAfford,
+                preselectedReserveGold: { r: 2, c: 3 },
+                clearPreselectedReserveGold,
+            });
+            return null;
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        root = createRoot(container);
+
+        act(() => {
+            root?.render(<Harness />);
+        });
+
+        currentResult?.handleReserveCard(card, { level: 1, idx: 0 });
+        currentResult?.handleReserveDeck(1);
+        currentResult?.initiateBuy(card, 'market', { level: 1, idx: 0 });
+
+        expect(networkDispatch).toHaveBeenCalledWith({
+            type: 'RESERVE_CARD',
+            payload: { card, level: 1, idx: 0, goldCoords: { r: 2, c: 3 } },
+        });
+        expect(networkDispatch).toHaveBeenCalledWith({
+            type: 'RESERVE_DECK',
+            payload: { level: 1, goldCoords: { r: 2, c: 3 } },
+        });
+        expect(networkDispatch).toHaveBeenCalledWith({
+            type: 'RESERVE_CARD',
+            payload: { card, level: 1, idx: 0, goldCoords: { r: 2, c: 3 } },
+        });
+        expect(networkDispatch).toHaveBeenCalledTimes(3);
+        expect(mocks.buildReserveCardFlow).not.toHaveBeenCalled();
+        expect(mocks.buildReserveDeckFlow).not.toHaveBeenCalled();
+        expect(clearPreselectedReserveGold).toHaveBeenCalledTimes(3);
+        expect(setErrorMsg).toHaveBeenCalledWith(null);
     });
 
     it('surfaces guarded and unaffordable branches without dispatching illegal actions', () => {

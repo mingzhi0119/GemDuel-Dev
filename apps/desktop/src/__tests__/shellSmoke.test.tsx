@@ -58,15 +58,15 @@ const layout: ResponsiveLayout = {
     viewportWidth: 1920,
     viewportHeight: 1080,
     aspectRatio: 16 / 9,
-    stageCanvasWidthPx: 1600,
-    stageCanvasHeightPx: 900,
-    stageScale: 1,
-    stageInsetXPx: 32,
-    stageInsetYPx: 24,
-    boardScale: 1,
-    deckScale: 1,
+    stageCanvasWidthPx: 3840,
+    stageCanvasHeightPx: 2160,
+    stageScale: 0.5,
+    stageInsetXPx: 0,
+    stageInsetYPx: 0,
+    boardScale: (3840 - 96) / 2000,
+    deckScale: 1.12,
     zoneScale: 1,
-    zoneHeightPx: 280,
+    zoneHeightPx: 440,
     mainGapPx: 24,
 };
 
@@ -225,7 +225,15 @@ describe('shell smoke coverage', () => {
             />
         );
 
-        expect(container?.textContent).toContain('Restart');
+        const settingsButton = container?.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
+        );
+        const tooltip = container?.querySelector<HTMLElement>('[role="tooltip"]');
+        expect(settingsButton).not.toBeNull();
+        expect(settingsButton?.hasAttribute('title')).toBe(false);
+        expect(settingsButton?.getAttribute('aria-describedby')).toBe(tooltip?.id);
+        expect(tooltip?.dataset.tooltipSize).toBe('standard-label');
+        expect(container?.textContent).not.toContain('Restart');
     });
 
     it('renders DesktopStage with its child canvas anchoring intact', () => {

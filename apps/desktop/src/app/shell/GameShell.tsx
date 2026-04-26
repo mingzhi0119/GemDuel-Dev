@@ -58,7 +58,7 @@ export function GameShell({
     return (
         <div
             data-surface-slot="app-background"
-            className={`relative h-full w-full font-sans flex flex-col overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe ${
+            className={`relative h-full w-full font-sans grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe ${
                 theme === 'dark' ? 'text-slate-200' : 'text-stone-800'
             }`}
             style={shellStyle}

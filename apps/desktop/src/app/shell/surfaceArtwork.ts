@@ -7,7 +7,7 @@ import {
 } from './surfaceTheme';
 
 type SurfaceArtworkSlot = 'shellBackground' | 'tablecloth' | 'gemPanel' | 'marketBackground';
-type GemPanelSkinId = 'dashboard';
+type GemPanelSkinId = 'dashboard' | 'square-dashboard';
 
 interface SurfaceArtworkAsset {
     path: string;
@@ -36,6 +36,17 @@ const GEM_PANEL_SKIN_BASE: Record<GemPanelSkinId, Omit<GemPanelSkin, 'artworkPat
             top: 0.1571,
             right: 0.807,
             bottom: 0.7871,
+        },
+    },
+    'square-dashboard': {
+        id: 'square-dashboard',
+        intrinsicWidthPx: 1254,
+        intrinsicHeightPx: 1254,
+        playfieldRectNormalized: {
+            left: 0.085,
+            top: 0.085,
+            right: 0.915,
+            bottom: 0.915,
         },
     },
 };
@@ -69,10 +80,10 @@ export const SURFACE_ARTWORK: Record<ThemeName, ThemeSurfaceArtwork> = {
             position: 'center center',
         },
         gemPanel: {
-            path: '/assets/surfaces/dark/panel-gem-board.png',
+            path: '/assets/surfaces/dark/panel-gem-board-square.png',
             size: '100% 100%',
             position: 'center center',
-            skinId: 'dashboard',
+            skinId: 'square-dashboard',
         },
         marketBackground: {
             path: '/assets/surfaces/dark/background-market.png',
@@ -95,6 +106,7 @@ const getSurfaceArtworkAsset = (
     return {
         ...baseAsset,
         path: `/assets/surfaces/theme-presets/${theme}/${SURFACE_THEME_SLOT_PATHS[slot]}/${variant}.png`,
+        ...(slot === 'gemPanel' ? { skinId: 'dashboard' as const } : {}),
     };
 };
 

@@ -13,12 +13,21 @@ const MOBILE_ZONE_SCALE = 0.55;
 const MOBILE_MAIN_GAP_PX = 16;
 
 export const DESKTOP_STAGE_WIDTH_PX = 3840;
-export const DESKTOP_STAGE_HEIGHT_PX = 2160;
-export const DESKTOP_BOARD_SCALE = 1.2;
+export const DESKTOP_MIN_ASPECT = 16 / 10;
+export const DESKTOP_MAX_ASPECT = 12 / 5;
+export const DESKTOP_TOP_BAR_HEIGHT_PX = 120;
+export const DESKTOP_BOARD_SCALE_MIN = 1.2;
+export const DESKTOP_BOARD_SCALE_MAX = 2.08;
 export const DESKTOP_DECK_SCALE = 1.12;
-export const DESKTOP_ZONE_SCALE = 0.96;
-export const DESKTOP_ZONE_HEIGHT_PX = 317;
+export const DESKTOP_ZONE_SCALE = 1;
+export const DESKTOP_ZONE_HEIGHT_PX = 440;
 export const DESKTOP_MAIN_GAP_PX = 24;
+
+const DESKTOP_PLAY_SURFACE_BASE_HEIGHT_PX = 797;
+const DESKTOP_PLAY_SURFACE_BASE_WIDTH_PX = 2000;
+const DESKTOP_PLAY_SURFACE_HORIZONTAL_PADDING_PX = 96;
+const DESKTOP_PLAY_SURFACE_VERTICAL_PADDING_PX = 48;
+const DESKTOP_PLAY_SURFACE_VERTICAL_SAFE_GAP_PX = 16;
 
 interface ResponsiveViewportMetrics {
     devicePixelRatio?: number;
@@ -64,8 +73,33 @@ const getViewport = () => {
 const calculateStageInsetPx = (viewportSpan: number, scaledStageSpan: number) =>
     Math.max(0, Math.round((viewportSpan - scaledStageSpan) / 2));
 
-const calculateDesktopStageCanvasSpanPx = (referenceSpan: number, devicePixelRatio: number) =>
-    referenceSpan / devicePixelRatio;
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const calculateDesktopStageScale = (
+    viewportWidth: number,
+    viewportHeight: number,
+    stageCanvasWidthPx: number,
+    stageCanvasHeightPx: number
+) => Math.min(viewportWidth / stageCanvasWidthPx, viewportHeight / stageCanvasHeightPx);
+
+const calculateDesktopBoardScale = (stageCanvasWidthPx: number, stageCanvasHeightPx: number) => {
+    const availablePlaySurfaceWidthPx =
+        stageCanvasWidthPx - DESKTOP_PLAY_SURFACE_HORIZONTAL_PADDING_PX;
+    const availablePlaySurfaceHeightPx =
+        stageCanvasHeightPx -
+        DESKTOP_TOP_BAR_HEIGHT_PX -
+        DESKTOP_ZONE_HEIGHT_PX -
+        DESKTOP_PLAY_SURFACE_VERTICAL_PADDING_PX -
+        DESKTOP_PLAY_SURFACE_VERTICAL_SAFE_GAP_PX;
+    const widthScale = availablePlaySurfaceWidthPx / DESKTOP_PLAY_SURFACE_BASE_WIDTH_PX;
+    const heightScale = availablePlaySurfaceHeightPx / DESKTOP_PLAY_SURFACE_BASE_HEIGHT_PX;
+
+    return clamp(
+        Math.min(widthScale, heightScale),
+        DESKTOP_BOARD_SCALE_MIN,
+        DESKTOP_BOARD_SCALE_MAX
+    );
+};
 
 export const calculateResponsiveLayout = (
     viewportWidth: number,
@@ -97,14 +131,18 @@ export const calculateResponsiveLayout = (
         };
     }
 
-    const stageCanvasWidthPx = calculateDesktopStageCanvasSpanPx(
-        DESKTOP_STAGE_WIDTH_PX,
-        devicePixelRatio
+    const clampedDesktopAspect = clamp(aspectRatio, DESKTOP_MIN_ASPECT, DESKTOP_MAX_ASPECT);
+    const stageCanvasWidthPx = DESKTOP_STAGE_WIDTH_PX;
+    const stageCanvasHeightPx = stageCanvasWidthPx / clampedDesktopAspect;
+    const stageScale = calculateDesktopStageScale(
+        safeWidth,
+        safeHeight,
+        stageCanvasWidthPx,
+        stageCanvasHeightPx
     );
-    const stageScale = safeWidth / stageCanvasWidthPx;
-    const stageCanvasHeightPx = safeHeight / stageScale;
     const scaledStageWidth = stageCanvasWidthPx * stageScale;
     const scaledStageHeight = stageCanvasHeightPx * stageScale;
+    const boardScale = calculateDesktopBoardScale(stageCanvasWidthPx, stageCanvasHeightPx);
 
     return {
         layoutMode: 'desktop-4k',
@@ -116,7 +154,7 @@ export const calculateResponsiveLayout = (
         stageScale,
         stageInsetXPx: calculateStageInsetPx(safeWidth, scaledStageWidth),
         stageInsetYPx: calculateStageInsetPx(safeHeight, scaledStageHeight),
-        boardScale: DESKTOP_BOARD_SCALE,
+        boardScale,
         deckScale: DESKTOP_DECK_SCALE,
         zoneScale: DESKTOP_ZONE_SCALE,
         zoneHeightPx: DESKTOP_ZONE_HEIGHT_PX,

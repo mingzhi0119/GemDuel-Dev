@@ -26,15 +26,21 @@ export const getCardCostCountStyle = (gemId: GemColor, theme: 'light' | 'dark'):
         case 'white':
             return {
                 color: '#ffffff',
-                textShadow: '0 1px 2px rgba(15,23,42,0.96), 0 0 3px rgba(15,23,42,0.42)',
+                WebkitTextStroke: '0.45px rgba(15,23,42,0.94)',
+                textShadow:
+                    '0 0 1px rgba(15,23,42,1), 0 1px 3px rgba(15,23,42,0.98), 0 0 6px rgba(15,23,42,0.62)',
             };
         case 'pearl':
             return {
-                color: theme === 'dark' ? '#fdf2f8' : '#701a75',
+                color: theme === 'dark' ? '#fff7fb' : '#701a75',
+                WebkitTextStroke:
+                    theme === 'dark'
+                        ? '0.42px rgba(76,29,149,0.9)'
+                        : '0.35px rgba(255,255,255,0.9)',
                 textShadow:
                     theme === 'dark'
-                        ? '0 1px 2px rgba(76,29,149,0.88), 0 0 3px rgba(76,29,149,0.34)'
-                        : '0 1px 2px rgba(255,255,255,0.72), 0 0 3px rgba(255,255,255,0.28)',
+                        ? '0 0 1px rgba(76,29,149,1), 0 1px 3px rgba(76,29,149,0.96), 0 0 6px rgba(131,24,67,0.5)'
+                        : '0 1px 2px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.55)',
             };
         case 'gold':
             return {

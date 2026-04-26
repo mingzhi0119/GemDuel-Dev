@@ -25,18 +25,18 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
 
             {/* Modal */}
             <div
-                className={`relative w-full max-w-4xl max-h-[80%] rounded-[2rem] shadow-2xl border flex flex-col overflow-hidden animate-in zoom-in-95 duration-300
+                className={`relative flex max-h-[88%] min-h-[520px] w-[min(92vw,1500px)] flex-col overflow-hidden rounded-[2rem] border shadow-2xl animate-in zoom-in-95 duration-300
                 ${theme === 'dark' ? 'bg-slate-900 border-slate-700' : 'bg-white border-stone-200'}
             `}
             >
                 {/* Header */}
                 <div
-                    className={`flex items-center justify-between p-5 border-b
+                    className={`flex items-center justify-between border-b px-7 py-5
                     ${theme === 'dark' ? 'border-slate-800' : 'border-stone-100'}
                 `}
                 >
                     <h2
-                        className={`text-xl font-black uppercase tracking-wider ${theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
+                        className={`text-2xl font-black uppercase tracking-wider ${theme === 'dark' ? 'text-white' : 'text-stone-800'}`}
                     >
                         {t('deckPeek.title')}
                     </h2>
@@ -50,7 +50,7 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-8 flex flex-wrap justify-center gap-6">
+                <div className="flex min-h-[360px] flex-1 flex-wrap items-center justify-center gap-8 overflow-y-auto p-10">
                     {cards.length > 0 ? (
                         cards.map((card, i) => (
                             <div
@@ -58,7 +58,7 @@ export const DeckPeekModal: React.FC<DeckPeekModalProps> = ({ isOpen, cards, onC
                                 className="animate-in slide-in-from-bottom-4 duration-500"
                                 style={{ animationDelay: `${i * 100}ms` }}
                             >
-                                <Card card={card} canBuy={false} theme={theme} />
+                                <Card card={card} canBuy={false} theme={theme} size="large" />
                             </div>
                         ))
                     ) : (

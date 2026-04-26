@@ -1,4 +1,4 @@
-import { Card } from '../Card';
+import { Card, FEATURED_CARD_SIZE } from '../Card';
 import { ScaledCardFrame } from './ScaledCardFrame';
 import type { RefObject } from 'react';
 import type { Card as CardType } from '@gemduel/shared/types';
@@ -30,7 +30,7 @@ export function PlayerZoneReservedColumn({
             className={`self-stretch flex items-center border-l pl-4 min-w-0 transition-colors duration-500
           ${theme === 'dark' ? 'border-slate-700' : 'border-stone-300'}
       `}
-            style={{ flex: 35 }}
+            style={{ flex: 42 }}
         >
             <div
                 ref={reservedRowRef}
@@ -49,10 +49,15 @@ export function PlayerZoneReservedColumn({
                         style={{ gap: `${RESERVED_CARD_GAP_PX}px` }}
                     >
                         {reserved.map((card, i) => (
-                            <ScaledCardFrame key={card.id || i} scale={reservedCardScale}>
+                            <ScaledCardFrame
+                                key={card.id || i}
+                                scale={reservedCardScale}
+                                baseSize={FEATURED_CARD_SIZE}
+                            >
                                 <div className="relative group/card">
                                     <Card
                                         card={card}
+                                        size="featured"
                                         canBuy={isActive && onBuyReserved(card)}
                                         onClick={() =>
                                             isActive &&

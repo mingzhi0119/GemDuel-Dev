@@ -26,12 +26,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
 
     return (
         <div
-            className={`flex flex-col gap-4 items-center p-6 rounded-[2rem] border backdrop-blur-md shrink-0 w-fit transition-all duration-500
-            ${
-                theme === 'dark'
-                    ? 'bg-slate-800/70 border-slate-600 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
-                    : 'bg-white border-stone-300/80'
-            }
+            className={`flex flex-col gap-4 items-center p-1 shrink-0 w-fit transition-all duration-500
             ${!canInteract ? 'opacity-70 pointer-events-none' : ''}
         `}
         >

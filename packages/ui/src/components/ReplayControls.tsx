@@ -26,15 +26,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
     const currentStep = historyLength === 0 ? 0 : safeIndex + 1;
 
     return (
-        <div
-            className={`flex items-center gap-4 p-4 rounded-2xl border backdrop-blur-md transition-all duration-500
-            ${
-                theme === 'dark'
-                    ? 'bg-slate-800/70 border-slate-600 shadow-[0_8px_30px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
-                    : 'bg-white border-stone-300 shadow-none'
-            }
-        `}
-        >
+        <div className="flex items-center gap-4 transition-all duration-500">
             <button
                 onClick={undo}
                 disabled={!canUndo}

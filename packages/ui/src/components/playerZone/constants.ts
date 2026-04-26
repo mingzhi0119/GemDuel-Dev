@@ -1,4 +1,5 @@
 import { BONUS_COLORS } from '@gemduel/shared/constants';
+import type { GemColor } from '@gemduel/shared/types';
 import { STANDARD_CARD_SIZE } from '../Card';
 
 export const TABLEAU_STACK_FALLBACK_SCALE = 0.72;
@@ -12,6 +13,15 @@ export const PLAYER_ZONE_STACK_OFFSET_Y = Math.round((STANDARD_CARD_SIZE.height 
 export const PLAYER_ZONE_STACK_OFFSET_X = Math.round((STANDARD_CARD_SIZE.width / 72) * 1);
 
 export const PLAYER_ZONE_DISPLAY_COLORS = [...BONUS_COLORS];
+export const PLAYER_ZONE_RESOURCE_COLORS: GemColor[] = [
+    'red',
+    'green',
+    'blue',
+    'white',
+    'black',
+    'pearl',
+    'gold',
+];
 
 export const SUMMARY_TEXT_COLORS: Record<string, string> = {
     blue: '#60a5fa',

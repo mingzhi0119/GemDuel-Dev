@@ -9,6 +9,7 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 - [Contributor Conduct](../CODE_OF_CONDUCT.md)
 - [Lexicon and Player Copy](guides/lexicon-copy-system.md)
 - [Frontend Layout](guides/frontend-layout-guide.md)
+- [Animation and Motion Plan](guides/animation-motion-plan.md)
 
 ## Architecture
 

@@ -73,6 +73,10 @@ describe('TopBar buff tooltip', () => {
             '[data-buff-tooltip="intelligence"]'
         ) as HTMLDivElement | null;
         expect(tooltip?.textContent).toContain('Optional Action');
+        expect(tooltip?.dataset.tooltipSize).toBe('standard-panel');
+        expect(tooltip?.className).toContain('w-[min(90vw,380px)]');
+        expect(tooltip?.className).toContain('text-[16px]');
+        expect(tooltip?.className).toContain('p-5');
 
         const optionalActionButton = Array.from(tooltip?.querySelectorAll('button') ?? []).find(
             (button) => button.textContent === 'Optional Action'

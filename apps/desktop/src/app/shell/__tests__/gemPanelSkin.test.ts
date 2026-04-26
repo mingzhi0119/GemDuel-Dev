@@ -6,17 +6,17 @@ import {
 import { getGemPanelSkin } from '../surfaceArtwork';
 
 describe('gem panel skin geometry', () => {
-    it('exposes the dashboard skin geometry for future panel skins', () => {
+    it('exposes the square dashboard skin geometry for the dark default panel', () => {
         const skin = getGemPanelSkin('dark');
 
-        expect(skin.id).toBe('dashboard');
+        expect(skin.id).toBe('square-dashboard');
         expect(skin.intrinsicWidthPx).toBe(1254);
         expect(skin.intrinsicHeightPx).toBe(1254);
         expect(skin.playfieldRectNormalized).toEqual({
-            left: 0.1922,
-            top: 0.1571,
-            right: 0.807,
-            bottom: 0.7871,
+            left: 0.085,
+            top: 0.085,
+            right: 0.915,
+            bottom: 0.915,
         });
     });
 

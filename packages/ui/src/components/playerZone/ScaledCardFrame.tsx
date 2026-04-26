@@ -1,10 +1,14 @@
 import { STANDARD_CARD_SIZE } from '../Card';
 import type { PlayerZoneScaledCardFrameProps } from './types';
 
-export function ScaledCardFrame({ scale, children }: PlayerZoneScaledCardFrameProps) {
+export function ScaledCardFrame({
+    scale,
+    baseSize = STANDARD_CARD_SIZE,
+    children,
+}: PlayerZoneScaledCardFrameProps) {
     const safeScale = Number.isFinite(scale) ? scale : 1;
-    const scaledWidth = STANDARD_CARD_SIZE.width * safeScale;
-    const scaledHeight = STANDARD_CARD_SIZE.height * safeScale;
+    const scaledWidth = baseSize.width * safeScale;
+    const scaledHeight = baseSize.height * safeScale;
 
     return (
         <div
@@ -16,8 +20,8 @@ export function ScaledCardFrame({ scale, children }: PlayerZoneScaledCardFramePr
         >
             <div
                 style={{
-                    width: `${STANDARD_CARD_SIZE.width}px`,
-                    height: `${STANDARD_CARD_SIZE.height}px`,
+                    width: `${baseSize.width}px`,
+                    height: `${baseSize.height}px`,
                     transform: `scale(${safeScale})`,
                     transformOrigin: 'top left',
                 }}

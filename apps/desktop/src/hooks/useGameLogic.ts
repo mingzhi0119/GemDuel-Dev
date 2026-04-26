@@ -99,8 +99,15 @@ export const useGameLogic = (
             state: {
                 ...gameState,
                 selectedGems: interactions.selectedGems,
+                reserveGoldSelection: interactions.reserveGoldSelection ?? null,
                 errorMsg: interactions.errorMsg ?? online.statusNotice?.message ?? null,
-            } as Readonly<GameState & { selectedGems: GemCoord[]; errorMsg: string | null }>,
+            } as Readonly<
+                GameState & {
+                    selectedGems: GemCoord[];
+                    reserveGoldSelection: GemCoord | null;
+                    errorMsg: string | null;
+                }
+            >,
 
             handlers: {
                 ...interactions.handlers,

@@ -144,11 +144,11 @@ const buildBackdropStyle = (
     theme: 'light' | 'dark',
     variant: GemArtworkVariant
 ): CSSProperties | undefined => {
-    if (variant === 'board' && theme === 'light') {
+    if (variant === 'board') {
         return undefined;
     }
 
-    if (variant !== 'board' && variant !== 'choice') {
+    if (variant !== 'choice') {
         if (theme === 'light' && gemId === 'white') {
             return {
                 background:

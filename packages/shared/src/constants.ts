@@ -83,7 +83,7 @@ export const INITIAL_COUNTS: Record<string, number> = {
     gold: 3,
 };
 
-export const BONUS_COLORS: GemColor[] = ['blue', 'white', 'green', 'black', 'red'];
+export const BONUS_COLORS: GemColor[] = ['red', 'green', 'blue', 'white', 'black'];
 
 // 🌀 螺旋填充顺序 (之前如果缺了这个，刷新盘面会报错)
 export const SPIRAL_ORDER = [

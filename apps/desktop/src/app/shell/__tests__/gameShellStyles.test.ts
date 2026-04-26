@@ -60,10 +60,12 @@ describe('createGameShellStyles', () => {
             '/assets/surfaces/dark/tablecloth-playmat.png'
         );
         expect(String(styles.gemBoardSurfaceStyle.backgroundImage)).toContain(
-            '/assets/surfaces/dark/panel-gem-board.png'
+            '/assets/surfaces/dark/panel-gem-board-square.png'
         );
-        expect(styles.gemPanelSkin.id).toBe('dashboard');
-        expect(styles.gemPanelSkin.artworkPath).toBe('/assets/surfaces/dark/panel-gem-board.png');
+        expect(styles.gemPanelSkin.id).toBe('square-dashboard');
+        expect(styles.gemPanelSkin.artworkPath).toBe(
+            '/assets/surfaces/dark/panel-gem-board-square.png'
+        );
         expect(String(styles.marketSurfaceStyle.backgroundImage)).toContain(
             '/assets/surfaces/dark/background-market.png'
         );

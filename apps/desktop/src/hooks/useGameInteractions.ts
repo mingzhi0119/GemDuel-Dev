@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { calculateTransaction } from '@gemduel/shared/utils';
 import { getPlayerScore, getCrownCount } from '@gemduel/shared/logic/selectors';
 import { canPlayerInteract } from '@gemduel/shared/logic/interactionAccess';
@@ -24,6 +24,15 @@ export const useGameInteractions = (
 ) => {
     const { selectedGems, setSelectedGems, clearSelectedGems, errorMsg, setErrorMsg } =
         useInteractionFeedback(currentIndex);
+    const [preselectedReserveGold, setPreselectedReserveGold] = useState<GemCoord | null>(null);
+
+    useEffect(() => {
+        setPreselectedReserveGold(null);
+    }, [currentIndex, gameState.phase, gameState.turn]);
+
+    const clearPreselectedReserveGold = useCallback(() => {
+        setPreselectedReserveGold(null);
+    }, []);
 
     const canLocalInteract = useMemo(
         () => canPlayerInteract(gameState, isReviewing),
@@ -58,6 +67,8 @@ export const useGameInteractions = (
         selectedGems,
         setSelectedGems,
         clearSelectedGems,
+        preselectedReserveGold,
+        setPreselectedReserveGold,
         setErrorMsg,
     });
 
@@ -67,6 +78,8 @@ export const useGameInteractions = (
         networkDispatch,
         setErrorMsg,
         canAfford,
+        preselectedReserveGold,
+        clearPreselectedReserveGold,
     });
 
     const metaHandlers = useMetaInteractionHandlers({
@@ -115,11 +128,12 @@ export const useGameInteractions = (
     return useMemo(
         () => ({
             selectedGems,
+            reserveGoldSelection: preselectedReserveGold,
             errorMsg,
             isMyTurn: canLocalInteract,
             handlers,
             getters,
         }),
-        [canLocalInteract, errorMsg, getters, handlers, selectedGems]
+        [canLocalInteract, errorMsg, getters, handlers, preselectedReserveGold, selectedGems]
     );
 };

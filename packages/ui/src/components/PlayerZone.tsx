@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { STANDARD_CARD_SIZE } from './Card';
+import { FEATURED_CARD_SIZE, STANDARD_CARD_SIZE } from './Card';
 import {
     clamp,
     PLAYER_ZONE_DISPLAY_COLORS,
@@ -26,7 +26,7 @@ import type {
 
 export type { PlayerZoneProps };
 
-const INVENTORY_GEM_SIZE_PX = GEM_BOARD_GEM_SIZE_PX;
+const INVENTORY_GEM_SIZE_PX = Math.round(GEM_BOARD_GEM_SIZE_PX * 1.3);
 const INVENTORY_GEM_BADGE_SIZE_PX = Math.round(INVENTORY_GEM_SIZE_PX * 0.42);
 const INVENTORY_GEM_COUNT_FONT_PX = Math.round(INVENTORY_GEM_SIZE_PX * 0.24);
 
@@ -91,7 +91,7 @@ export const PlayerZone = ({
         reserved.length > 0 && reservedRowWidth > 0
             ? clamp(
                   (reservedRowWidth - reservedGapTotalPx) /
-                      (reserved.length * STANDARD_CARD_SIZE.width),
+                      (reserved.length * FEATURED_CARD_SIZE.width),
                   RESERVED_CARD_MIN_SCALE,
                   1
               )

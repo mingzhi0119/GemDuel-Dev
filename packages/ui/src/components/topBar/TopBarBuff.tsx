@@ -5,6 +5,15 @@ import type { Buff, PlayerKey } from '@gemduel/shared/types';
 import { getBuffGoalAdjustment, getBuffText } from '@gemduel/shared/data/buffCopy';
 import { getBuffCategoryLabel } from '@gemduel/shared';
 import { LexiconText } from '../../lexicon/LexiconText';
+import {
+    TOOLTIP_PANEL_BODY_CLASS,
+    TOOLTIP_PANEL_CAPTION_CLASS,
+    TOOLTIP_PANEL_CLASS,
+    TOOLTIP_PANEL_HEADER_CLASS,
+    TOOLTIP_PANEL_META_CLASS,
+    TOOLTIP_PANEL_WIDTH_CLASS,
+    getTooltipPanelThemeClass,
+} from '../tooltipStyles';
 
 interface TopBarBuffProps {
     buff: Buff;
@@ -42,6 +51,7 @@ export const TopBarBuff = ({ buff: rawBuff, playerKey, theme, locale }: TopBarBu
     const goalAdjustment = buff ? getBuffGoalAdjustment(buff.id, locale) : null;
     const buffCopy = buff ? getBuffText(buff.id, locale) : null;
     const isTooltipOpen = isHovered || isPinned;
+    const tooltipSideClass = playerKey === 'p1' ? 'left-0' : 'right-0';
 
     useEffect(() => {
         if (!isPinned) return;
@@ -68,24 +78,12 @@ export const TopBarBuff = ({ buff: rawBuff, playerKey, theme, locale }: TopBarBu
     if (!buff || buff.id === 'none' || !buffCopy) return null;
 
     const levelStyles: Record<number, string> = {
-        1:
-            theme === 'dark'
-                ? 'border-blue-400 bg-blue-900/30 text-blue-200'
-                : 'border-blue-500 bg-blue-50 text-blue-700',
-        2:
-            theme === 'dark'
-                ? 'border-purple-400 bg-purple-900/30 text-purple-200'
-                : 'border-purple-500 bg-purple-50 text-purple-700',
-        3:
-            theme === 'dark'
-                ? 'border-amber-400 bg-amber-900/30 text-amber-200'
-                : 'border-amber-500 bg-amber-50 text-amber-700',
+        1: theme === 'dark' ? 'text-blue-200' : 'text-blue-700',
+        2: theme === 'dark' ? 'text-purple-200' : 'text-purple-700',
+        3: theme === 'dark' ? 'text-amber-200' : 'text-amber-700',
     };
     const levelStyle =
-        levelStyles[buff.level] ||
-        (theme === 'dark'
-            ? 'border-slate-500 bg-slate-500/20 text-slate-300'
-            : 'border-slate-400 bg-slate-50 text-slate-600');
+        levelStyles[buff.level] || (theme === 'dark' ? 'text-slate-300' : 'text-slate-600');
 
     return (
         <div
@@ -107,15 +105,15 @@ export const TopBarBuff = ({ buff: rawBuff, playerKey, theme, locale }: TopBarBu
                     setIsHovered(true);
                     setIsPinned((current) => !current);
                 }}
-                className={`flex items-center gap-3 px-5 py-2 rounded-full border text-[13px] font-black uppercase tracking-widest cursor-pointer transition-all hover:scale-105 shadow-md ${levelStyle}`}
+                className={`flex items-center gap-5 px-2 py-1 text-[26px] font-black uppercase tracking-widest cursor-pointer transition-all hover:scale-105 ${levelStyle}`}
             >
-                <Icon size={16} className={iconColor} />
+                <Icon size={32} className={iconColor} />
                 <span>{buffCopy.label}</span>
             </button>
 
             {isTooltipOpen && (
                 <div
-                    className="absolute top-full left-1/2 z-[500] w-56 -translate-x-1/2 pt-3"
+                    className={`absolute top-full z-[500] pt-4 ${tooltipSideClass}`}
                     data-buff-tooltip-wrapper={buff.id}
                 >
                     <div
@@ -123,39 +121,34 @@ export const TopBarBuff = ({ buff: rawBuff, playerKey, theme, locale }: TopBarBu
                         role="dialog"
                         aria-modal="false"
                         data-buff-tooltip={buff.id}
+                        data-tooltip-size="standard-panel"
                         onPointerDown={() => setIsPinned(true)}
-                        className={`rounded-xl border p-3 shadow-2xl backdrop-blur-md transition-all duration-200 ${
-                            theme === 'dark'
-                                ? 'border-slate-600 bg-slate-900/98 text-slate-100'
-                                : 'border-slate-300 bg-white/98 text-slate-900'
-                        }`}
+                        className={`${TOOLTIP_PANEL_WIDTH_CLASS} ${TOOLTIP_PANEL_CLASS} ${getTooltipPanelThemeClass(theme)} transition-all duration-200`}
                     >
-                        <div className="flex items-center justify-between mb-1.5">
+                        <div className="mb-3 flex items-center justify-between">
                             <span
-                                className={`text-[12px] font-bold uppercase tracking-wider ${playerKey === 'p1' ? 'text-emerald-400' : 'text-blue-400'}`}
+                                className={`${TOOLTIP_PANEL_HEADER_CLASS} ${playerKey === 'p1' ? 'text-emerald-400' : 'text-blue-400'}`}
                             >
                                 {buffCopy.label}
                             </span>
-                            <span className="text-[10px] opacity-70 font-mono">
-                                LVL {buff.level}
-                            </span>
+                            <span className={TOOLTIP_PANEL_META_CLASS}>LVL {buff.level}</span>
                         </div>
-                        <p className="text-[12px] leading-relaxed opacity-90">
+                        <p className={TOOLTIP_PANEL_BODY_CLASS}>
                             <LexiconText text={buffCopy.desc} />
                         </p>
                         {goalAdjustment && (
                             <div
-                                className={`mt-2 pt-2 space-y-1 border-t ${
+                                className={`mt-4 space-y-2 border-t pt-3 ${
                                     theme === 'dark' ? 'border-slate-700' : 'border-slate-200'
                                 }`}
                             >
-                                <div className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                                <div className={`${TOOLTIP_PANEL_CAPTION_CLASS} opacity-75`}>
                                     {goalAdjustment.title}
                                 </div>
                                 {goalAdjustment.items.map((item) => (
                                     <div
                                         key={`${buff.id}-${item.label}`}
-                                        className="flex items-center justify-between gap-3 text-[10px]"
+                                        className="flex items-center justify-between gap-4 text-[14px] leading-snug"
                                     >
                                         <span className="opacity-80">
                                             <LexiconText text={item.label} />
@@ -169,13 +162,11 @@ export const TopBarBuff = ({ buff: rawBuff, playerKey, theme, locale }: TopBarBu
                         )}
                         {buff.category && (
                             <div
-                                className={`flex justify-end mt-1.5 pt-1.5 border-t ${
+                                className={`mt-4 flex justify-end border-t pt-3 ${
                                     theme === 'dark' ? 'border-slate-700' : 'border-slate-200'
                                 }`}
                             >
-                                <span
-                                    className={`text-[10px] font-black uppercase tracking-widest ${iconColor}`}
-                                >
+                                <span className={`${TOOLTIP_PANEL_CAPTION_CLASS} ${iconColor}`}>
                                     {getBuffCategoryLabel(buff.category, locale)}
                                 </span>
                             </div>

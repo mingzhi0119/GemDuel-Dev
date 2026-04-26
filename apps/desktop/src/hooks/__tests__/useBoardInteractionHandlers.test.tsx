@@ -83,6 +83,8 @@ describe('useBoardInteractionHandlers', () => {
             selectedGems: [],
             setSelectedGems: vi.fn(),
             clearSelectedGems: vi.fn(),
+            preselectedReserveGold: null,
+            setPreselectedReserveGold: vi.fn(),
             setErrorMsg: vi.fn(),
         };
         vi.clearAllMocks();
@@ -157,7 +159,42 @@ describe('useBoardInteractionHandlers', () => {
         act(() => {
             currentResult?.handleGemClick(0, 0);
         });
+        expect(currentProps.setPreselectedReserveGold).toHaveBeenCalledWith(null);
         expect(currentProps.setSelectedGems).toHaveBeenCalledWith(newSelection);
+    });
+
+    it('preselects a gold gem for the next reserve action while in selection mode', () => {
+        currentProps.gameState = createState({
+            board: [
+                [
+                    {
+                        type: { id: 'gold', color: 'gold', border: 'solid', label: 'Gold' },
+                        uid: 'gold-1',
+                    },
+                ],
+            ] as unknown as GameState['board'],
+        });
+
+        renderHarness();
+
+        act(() => {
+            currentResult?.handleGemClick(0, 0);
+        });
+
+        expect(mocks.processGemClick).not.toHaveBeenCalled();
+        expect(currentProps.setPreselectedReserveGold).toHaveBeenCalledWith({ r: 0, c: 0 });
+        expect(currentProps.clearSelectedGems).toHaveBeenCalled();
+        expect(currentProps.setErrorMsg).toHaveBeenCalledWith('Select a card or deck to reserve.');
+
+        currentProps.preselectedReserveGold = { r: 0, c: 0 };
+        renderHarness();
+
+        act(() => {
+            currentResult?.handleGemClick(0, 0);
+        });
+
+        expect(currentProps.setPreselectedReserveGold).toHaveBeenCalledWith(null);
+        expect(currentProps.setErrorMsg).toHaveBeenCalledWith(null);
     });
 
     it('validates drag selection, confirms TAKE_GEMS, and clears selection on success', () => {
@@ -189,6 +226,32 @@ describe('useBoardInteractionHandlers', () => {
             payload: { coords: currentProps.selectedGems },
         });
         expect(currentProps.clearSelectedGems).toHaveBeenCalled();
+    });
+
+    it('removes drag-deselected gems locally without dispatching a take action', () => {
+        currentProps.selectedGems = [
+            { r: 0, c: 0 },
+            { r: 0, c: 1 },
+            { r: 0, c: 2 },
+        ];
+        renderHarness();
+
+        act(() => {
+            currentResult?.handleGemDragSelection(
+                [
+                    { r: 0, c: 0 },
+                    { r: 0, c: 1 },
+                ],
+                'deselect'
+            );
+        });
+
+        expect(currentProps.setErrorMsg).toHaveBeenCalledWith(null);
+        expect(currentProps.setPreselectedReserveGold).toHaveBeenCalledWith(null);
+        expect(currentProps.setSelectedGems).toHaveBeenCalledWith([{ r: 0, c: 2 }]);
+        expect(currentProps.networkDispatch).not.toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'TAKE_GEMS' })
+        );
     });
 
     it('rejects invalid confirm-take branches and buff-restricted drag selection', () => {

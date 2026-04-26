@@ -49,6 +49,7 @@ export function GamePlaySurface({
         bag,
         turn,
         selectedGems,
+        reserveGoldSelection,
         errorMsg,
         bonusGemTarget,
         decks,
@@ -81,7 +82,7 @@ export function GamePlaySurface({
     );
 
     return (
-        <div className="flex-1 flex items-center justify-center min-h-0 relative z-30 px-4 pt-20 lg:pt-24 pb-6 lg:pb-8 transition-all duration-500">
+        <div className="min-h-0 h-full w-full overflow-hidden flex items-center justify-center relative z-30 px-4 py-4 lg:py-6 transition-all duration-500">
             <div
                 className="relative shrink-0 transition-all duration-500"
                 style={{
@@ -118,6 +119,7 @@ export function GamePlaySurface({
                             handleReserveCard={handleReserveCard}
                             onPeekDeck={handlePeekDeck}
                             theme={theme}
+                            reserveModeActive={Boolean(reserveGoldSelection)}
                             isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
                             localPlayer={localPlayer}
                             surfaceStyle={marketSurfaceStyle}
@@ -139,13 +141,13 @@ export function GamePlaySurface({
                         </div>
 
                         <div
-                            className="mb-1 w-full min-h-[42px] flex items-center justify-center gap-2.5"
+                            className="-mt-3 mb-2 w-full min-h-[32px] flex items-center justify-center gap-2"
                             title="Shared Privilege Scroll supply"
                         >
                             {Array.from({ length: remainingPrivilegeSupply }).map((_, index) => (
                                 <Scroll
                                     key={`supply-scroll-${index}`}
-                                    size={36}
+                                    size={32}
                                     fill="#fcd34d"
                                     className={
                                         theme === 'dark'
@@ -161,6 +163,7 @@ export function GamePlaySurface({
                             handleGemClick={handleGemClick}
                             handleGemDragSelection={handleGemDragSelection}
                             selectedGems={selectedGems}
+                            reserveGoldSelection={reserveGoldSelection}
                             phase={effectiveGameMode}
                             bonusGemTarget={bonusGemTarget}
                             theme={theme}
@@ -169,7 +172,7 @@ export function GamePlaySurface({
                             panelSkin={gemPanelSkin}
                         />
 
-                        <div className="h-24 w-full flex items-start justify-center pt-4">
+                        <div className="mt-3 h-14 w-full flex items-start justify-center pt-1">
                             <GameActions
                                 handleReplenish={handleReplenish}
                                 bag={bag}
