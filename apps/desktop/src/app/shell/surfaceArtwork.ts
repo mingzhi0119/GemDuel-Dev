@@ -1,7 +1,9 @@
 import type { CSSProperties } from 'react';
 import type { GemPanelSkin, ThemeName } from '@gemduel/shared/types';
+import { GEM_PANEL_CANONICAL_PLAYFIELD_RECT } from '@gemduel/ui/components/gameBoard/gemPanelLayout';
 import {
     DEFAULT_SURFACE_THEME_SELECTIONS,
+    normalizeSurfaceThemeSelections,
     type SurfaceThemeSelections,
     type SurfaceThemeVariant,
 } from './surfaceTheme';
@@ -31,23 +33,13 @@ const GEM_PANEL_SKIN_BASE: Record<GemPanelSkinId, Omit<GemPanelSkin, 'artworkPat
         id: 'dashboard',
         intrinsicWidthPx: 1254,
         intrinsicHeightPx: 1254,
-        playfieldRectNormalized: {
-            left: 0.1922,
-            top: 0.1571,
-            right: 0.807,
-            bottom: 0.7871,
-        },
+        playfieldRectNormalized: GEM_PANEL_CANONICAL_PLAYFIELD_RECT,
     },
     'square-dashboard': {
         id: 'square-dashboard',
         intrinsicWidthPx: 1254,
         intrinsicHeightPx: 1254,
-        playfieldRectNormalized: {
-            left: 0.085,
-            top: 0.085,
-            right: 0.915,
-            bottom: 0.915,
-        },
+        playfieldRectNormalized: GEM_PANEL_CANONICAL_PLAYFIELD_RECT,
     },
 };
 
@@ -157,7 +149,7 @@ export const getGemPanelSkin = (
 
 export const createShellSurfaceStyle = (
     theme: ThemeName,
-    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.shellBackground
+    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.background
 ): CSSProperties =>
     theme === 'light'
         ? buildSurfaceStyle({
@@ -177,9 +169,46 @@ export const createShellSurfaceStyle = (
                   'radial-gradient(ellipse at top, rgba(30,41,59,0.92) 0%, rgba(15,17,26,0.94) 56%, rgba(2,6,23,0.98) 100%)',
           });
 
+export const createTopBarSurfaceStyle = (
+    theme: ThemeName,
+    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.topBar
+): CSSProperties => {
+    const darkBase =
+        variant === 'default'
+            ? {
+                  background:
+                      'linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(15,23,42,0.92) 100%)',
+                  borderColor: 'rgba(51,65,85,0.82)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+              }
+            : {
+                  background:
+                      'linear-gradient(90deg, rgba(2,6,23,0.97) 0%, rgba(15,23,42,0.94) 42%, rgba(30,41,59,0.90) 100%)',
+                  borderColor: 'rgba(250,204,21,0.18)',
+                  boxShadow: '0 10px 28px rgba(0,0,0,0.34), inset 0 -1px 0 rgba(250,204,21,0.10)',
+              };
+
+    const lightBase =
+        variant === 'default'
+            ? {
+                  background:
+                      'linear-gradient(180deg, rgba(251,252,252,0.78) 0%, rgba(244,247,246,0.90) 100%)',
+                  borderColor: 'rgba(15,23,42,0.08)',
+                  boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
+              }
+            : {
+                  background:
+                      'linear-gradient(90deg, rgba(255,255,255,0.88) 0%, rgba(248,250,252,0.82) 46%, rgba(226,232,240,0.78) 100%)',
+                  borderColor: 'rgba(180,83,9,0.16)',
+                  boxShadow: '0 10px 26px rgba(15,23,42,0.08), inset 0 -1px 0 rgba(180,83,9,0.10)',
+              };
+
+    return theme === 'dark' ? darkBase : lightBase;
+};
+
 export const createPlayMatSurfaceStyle = (
     theme: ThemeName,
-    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.tablecloth
+    variant: SurfaceThemeVariant = 'default'
 ): CSSProperties =>
     theme === 'light'
         ? buildSurfaceStyle({
@@ -229,7 +258,7 @@ export const createGemPanelSurfaceStyle = (
 
 export const createMarketSurfaceStyle = (
     theme: ThemeName,
-    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.marketBackground
+    variant: SurfaceThemeVariant = 'default'
 ): CSSProperties =>
     theme === 'light'
         ? buildSurfaceStyle({
@@ -254,4 +283,5 @@ export const createMarketSurfaceStyle = (
 
 export const normalizeGameShellSurfaceTheme = (
     surfaceTheme: SurfaceThemeSelections | undefined
-): SurfaceThemeSelections => surfaceTheme ?? DEFAULT_SURFACE_THEME_SELECTIONS;
+): SurfaceThemeSelections =>
+    surfaceTheme ? normalizeSurfaceThemeSelections(surfaceTheme) : DEFAULT_SURFACE_THEME_SELECTIONS;

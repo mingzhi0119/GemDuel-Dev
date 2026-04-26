@@ -170,21 +170,23 @@ export function AppOverlayStack({
 
             {showRestartConfirm && (
                 <div className="absolute inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in">
-                    <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
-                        <h3 className="text-xl font-bold text-white mb-2">
+                    <div className="max-h-[calc(100vh-96px)] w-[min(88vw,1344px)] overflow-auto rounded-[48px] border border-slate-700 bg-slate-900 p-12 text-center shadow-2xl lg:p-24">
+                        <h3 className="mb-6 text-4xl font-bold text-white lg:text-6xl">
                             {t('overlays.restartTitle')}
                         </h3>
-                        <p className="text-slate-300 mb-8">{t('overlays.restartBody')}</p>
-                        <div className="flex gap-4 justify-center">
+                        <p className="mb-16 text-2xl text-slate-300 lg:text-4xl">
+                            {t('overlays.restartBody')}
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-8 lg:gap-12">
                             <button
                                 onClick={onCancelRestart}
-                                className="px-6 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold transition-colors"
+                                className="rounded-3xl bg-slate-800 px-12 py-6 text-2xl font-semibold text-white transition-colors hover:bg-slate-700 lg:px-[4.5rem] lg:py-7 lg:text-4xl"
                             >
                                 {t('actions.cancel')}
                             </button>
                             <button
                                 onClick={onConfirmRestart}
-                                className="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold shadow-lg shadow-red-900/20 transition-all hover:scale-105"
+                                className="rounded-3xl bg-red-600 px-12 py-6 text-2xl font-semibold text-white shadow-lg shadow-red-900/20 transition-all hover:scale-105 hover:bg-red-500 lg:px-[4.5rem] lg:py-7 lg:text-4xl"
                             >
                                 {t('overlays.confirmRestart')}
                             </button>

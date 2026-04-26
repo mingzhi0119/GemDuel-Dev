@@ -18,6 +18,8 @@ interface TopBarProps {
     playerBuffs?: Record<PlayerKey, Buff>;
     localPlayer?: PlayerKey;
     isOnline?: boolean;
+    surfaceStyle?: React.CSSProperties;
+    surfaceVariant?: string;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -31,6 +33,8 @@ export const TopBar: React.FC<TopBarProps> = ({
     playerBuffs = {} as Record<PlayerKey, Buff>,
     localPlayer,
     isOnline,
+    surfaceStyle,
+    surfaceVariant,
 }) => {
     const { locale } = useLocale();
     const t = useT();
@@ -164,6 +168,8 @@ export const TopBar: React.FC<TopBarProps> = ({
 
     return (
         <div
+            data-presentation-anchor="topbar"
+            data-topbar-surface-variant={surfaceVariant}
             className={`relative z-[60] h-24 w-full shrink-0 border-b backdrop-blur-xl transition-colors duration-500 lg:h-[120px]
             ${
                 theme === 'dark'
@@ -171,11 +177,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                     : 'bg-[rgba(251,252,252,0.72)] border-[rgba(15,23,42,0.08)] shadow-[0_8px_24px_rgba(15,23,42,0.06)]'
             }
         `}
+            style={surfaceStyle}
         >
             <div className="relative h-full w-full">
                 <div
                     data-topbar-buff-slot="p1"
-                    className="absolute left-10 top-1/2 hidden min-w-0 -translate-y-1/2 items-center justify-start md:flex lg:left-28"
+                    className="absolute left-[37.5%] top-1/2 hidden w-[min(21vw,520px)] min-w-0 -translate-x-1/2 -translate-y-1/2 items-center justify-center md:flex"
                 >
                     <TopBarBuff
                         buff={playerBuffs.p1}
@@ -219,7 +226,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
                 <div
                     data-topbar-buff-slot="p2"
-                    className="absolute right-24 top-1/2 hidden min-w-0 -translate-y-1/2 items-center justify-end md:flex lg:right-36"
+                    className="absolute left-[62.5%] top-1/2 hidden w-[min(21vw,520px)] min-w-0 -translate-x-1/2 -translate-y-1/2 items-center justify-center md:flex"
                 >
                     <TopBarBuff
                         buff={playerBuffs.p2}

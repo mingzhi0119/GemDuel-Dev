@@ -90,6 +90,11 @@
             "micromatch>picomatch": "2.3.2",
             "readdirp>picomatch": "2.3.2",
             "tinyglobby>picomatch": "4.0.4"
-        }
+        },
+        "onlyBuiltDependencies": [
+            "electron",
+            "electron-winstaller",
+            "esbuild"
+        ]
     }
 }

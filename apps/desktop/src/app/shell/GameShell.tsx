@@ -3,6 +3,8 @@ import { UpdateNotification } from '@gemduel/ui/components/UpdateNotification';
 import type { AppRouteProps } from '@app/types/ui';
 import { AppChrome } from '../chrome/AppChrome';
 import { AppOverlayStack } from '../overlays/AppOverlayStack';
+import { PresentationLayer } from '../presentation/PresentationLayer';
+import { usePresentationEvents } from '../presentation/usePresentationEvents';
 import { GamePlaySurface } from './GamePlaySurface';
 import { PlayerRail } from './PlayerRail';
 import { createGameShellStyles } from './gameShellStyles';
@@ -40,12 +42,19 @@ export function GameShell({
     const isP2ZoneActive = turn === 'p2' && !ui.isReviewing && !winner;
     const effectiveGameMode = ui.isReviewing ? 'REVIEW' : winner ? 'GAME_OVER' : phase;
     const localPlayer = state.localPlayer;
+    const presentation = usePresentationEvents({
+        state,
+        currentIndex: historyControls.currentIndex,
+        historySource: historyControls.historySource,
+        isReviewing: ui.isReviewing,
+    });
     const canShowDebug =
         state.mode !== 'ONLINE_MULTIPLAYER' &&
         (state.mode === 'PVE' || historyControls.historyLength === 0 || ui.showDebug);
 
     const {
         shellStyle,
+        topBarSurfaceStyle,
         scaledZoneWrapperStyle,
         playMatSurfaceStyle,
         playMatDividerStyle,
@@ -58,7 +67,7 @@ export function GameShell({
     return (
         <div
             data-surface-slot="app-background"
-            className={`relative h-full w-full font-sans grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden transition-colors duration-500 pt-safe pb-safe pl-safe pr-safe ${
+            className={`relative h-full w-full font-sans grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden transition-colors duration-500 ${
                 theme === 'dark' ? 'text-slate-200' : 'text-stone-800'
             }`}
             style={shellStyle}
@@ -82,6 +91,8 @@ export function GameShell({
                 activePlayer={turn}
                 playerBuffs={playerBuffs}
                 theme={theme}
+                surfaceStyle={topBarSurfaceStyle}
+                surfaceVariant={surfaceTheme?.topBar}
                 localPlayer={localPlayer}
                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
             />
@@ -102,8 +113,7 @@ export function GameShell({
                 onForceRoyal={handleForceRoyal}
                 showDebugPanels={ui.showDebug && state.mode !== 'ONLINE_MULTIPLAYER'}
                 surfaceTheme={surfaceTheme}
-                onSurfaceThemeChange={callbacks.setSurfaceThemeSlot}
-                onResetSurfaceTheme={callbacks.resetSurfaceTheme}
+                onCycleSurfaceTheme={callbacks.cycleSurfaceTheme}
             />
 
             <AppOverlayStack
@@ -128,6 +138,13 @@ export function GameShell({
                 onSelectBonusColor={handleSelectBonusColor}
             />
 
+            <PresentationLayer
+                presentation={presentation}
+                royalDeck={state.royalDeck}
+                theme={theme}
+                onSelectRoyal={handlers.handleSelectRoyal}
+            />
+
             <GamePlaySurface
                 game={game}
                 layout={layout}
@@ -139,6 +156,7 @@ export function GameShell({
                 gemBoardSurfaceStyle={gemBoardSurfaceStyle}
                 gemPanelSkin={gemPanelSkin}
                 marketSurfaceStyle={marketSurfaceStyle}
+                isRoyalSelectionBlocked={presentation.isBlockingRoyalSelection}
             />
 
             <PlayerRail

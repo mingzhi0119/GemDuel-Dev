@@ -18,6 +18,7 @@ import { Buff, GameMode, PlayerKey } from '@gemduel/shared/types';
 import { getBuffGoalAdjustment, getBuffText } from '@gemduel/shared/data/buffCopy';
 import { useLocale, useT } from '../i18n/LocaleProvider';
 import { LexiconText } from '../lexicon/LexiconText';
+import { useViewportFitScale } from './useViewportFitScale';
 
 interface DraftScreenProps {
     draftPool: string[]; // IDs only
@@ -86,6 +87,8 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
 
     const canInteract = mode === 'LOCAL_PVP' || !localPlayer || activePlayer === localPlayer;
     const showDraftCustomization = Boolean(onReroll) && isLocalDraftTurn;
+    const draftFitScale = useViewportFitScale<HTMLDivElement>(3, 96);
+    const customizeFitScale = useViewportFitScale<HTMLDivElement>(3, 96);
 
     return (
         <div
@@ -106,7 +109,11 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
 
             {/* Local PvP Draft Customize Panel */}
             {showDraftCustomization && onReroll && (
-                <div className="absolute top-8 right-8 z-[100] flex flex-col items-end gap-2 animate-in fade-in slide-in-from-right-4 duration-500 lg:scale-[1.5] lg:transform-gpu lg:origin-top-right">
+                <div
+                    ref={customizeFitScale.ref}
+                    style={customizeFitScale.style}
+                    className="absolute right-8 top-8 z-[100] flex origin-top-right transform-gpu flex-col items-end gap-2 animate-in fade-in slide-in-from-right-4 duration-500"
+                >
                     <div className="flex items-center gap-2 mb-1">
                         <Layers size={12} className="text-yellow-500" />
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500/80">
@@ -156,7 +163,11 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                 </div>
             )}
 
-            <div className="z-10 flex flex-col items-center lg:scale-[1.5] lg:transform-gpu lg:origin-center">
+            <div
+                ref={draftFitScale.ref}
+                style={draftFitScale.style}
+                className="z-10 flex origin-center transform-gpu flex-col items-center"
+            >
                 {/* Header */}
                 <div className="text-center mb-6 animate-in slide-in-from-top-10 duration-700">
                     <div className="flex items-center justify-center gap-3 mb-2">

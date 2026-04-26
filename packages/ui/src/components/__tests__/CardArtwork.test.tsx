@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ROYAL_CARDS } from '@gemduel/shared/constants';
 import { CLASSIC_CARDS, ROGUE_CARDS } from '@gemduel/shared/data/realCards';
 import type { Card as CardType } from '@gemduel/shared/types';
-import { Card, FEATURED_CARD_SIZE } from '../Card';
+import { Card, FEATURED_CARD_SAMPLE_SIZE, FEATURED_CARD_SIZE } from '../Card';
 import { CARD_ARTWORK_SOURCE_SIZE } from '../card/cardArtwork';
 import { RoyalCourt } from '../RoyalCourt';
 
@@ -54,8 +54,17 @@ describe('Card artwork rendering', () => {
 
         expect(featuredCardHtml).toContain(expectedFeaturedStyle);
         expect(royalCourtHtml).toContain(expectedFeaturedStyle);
+        expect(FEATURED_CARD_SAMPLE_SIZE).toEqual(CARD_ARTWORK_SOURCE_SIZE);
+        expect(featuredCardHtml).toContain('data-card-sample-canvas="featured"');
+        expect(featuredCardHtml).toContain(
+            `data-card-sample-width="${FEATURED_CARD_SAMPLE_SIZE.width}"`
+        );
+        expect(featuredCardHtml).toContain(
+            `data-card-sample-height="${FEATURED_CARD_SAMPLE_SIZE.height}"`
+        );
         expect(featuredCardHtml).toContain(`width="${CARD_ARTWORK_SOURCE_SIZE.width}"`);
         expect(featuredCardHtml).toContain(`height="${CARD_ARTWORK_SOURCE_SIZE.height}"`);
+        expect(royalCourtHtml).toContain('data-card-sample-canvas="featured"');
         expect(royalCourtHtml).toContain(`width="${CARD_ARTWORK_SOURCE_SIZE.width}"`);
         expect(royalCourtHtml).toContain(`height="${CARD_ARTWORK_SOURCE_SIZE.height}"`);
     });
@@ -147,6 +156,37 @@ describe('Card artwork rendering', () => {
         expect(html).not.toContain('grayscale');
         expect(html).not.toContain('ring-yellow');
         expect(html).not.toContain('shadow-xl');
+    });
+
+    it('keeps the royal court footprint fixed after royal cards are removed', () => {
+        const html = renderToStaticMarkup(
+            <RoyalCourt
+                royalDeck={[royalCard]}
+                phase="IDLE"
+                handleSelectRoyal={() => undefined}
+                theme="dark"
+            />
+        );
+        const expectedGridWidth = FEATURED_CARD_SIZE.width * 2 + 16;
+        const expectedGridHeight = FEATURED_CARD_SIZE.height * 2 + 16;
+
+        expect(html).toContain('data-royal-court-grid="true"');
+        expect(html).toContain(`width:${expectedGridWidth}px;height:${expectedGridHeight}px`);
+        expect(html.match(/data-royal-court-empty-slot="true"/g)).toHaveLength(3);
+    });
+
+    it('does not render the retired royal selection corner marker', () => {
+        const html = renderToStaticMarkup(
+            <RoyalCourt
+                royalDeck={[royalCard]}
+                phase="SELECT_ROYAL"
+                handleSelectRoyal={() => undefined}
+                theme="dark"
+            />
+        );
+
+        expect(html).not.toContain('PICK!');
+        expect(html).not.toContain('animate-bounce');
     });
 
     it('falls back to the generated pattern for non-catalog fixture cards', () => {

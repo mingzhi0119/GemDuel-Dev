@@ -105,10 +105,10 @@ export const TopBarBuff = ({ buff: rawBuff, playerKey, theme, locale }: TopBarBu
                     setIsHovered(true);
                     setIsPinned((current) => !current);
                 }}
-                className={`flex items-center gap-5 px-2 py-1 text-[26px] font-black uppercase tracking-widest cursor-pointer transition-all hover:scale-105 ${levelStyle}`}
+                className={`flex max-w-full cursor-pointer items-center gap-5 px-2 py-1 text-[26px] font-black uppercase tracking-widest transition-all hover:scale-105 ${levelStyle}`}
             >
-                <Icon size={32} className={iconColor} />
-                <span>{buffCopy.label}</span>
+                <Icon size={32} className={`shrink-0 ${iconColor}`} />
+                <span className="min-w-0 truncate whitespace-nowrap">{buffCopy.label}</span>
             </button>
 
             {isTooltipOpen && (

@@ -23,7 +23,7 @@ This repository is a `pnpm` + Turborepo monorepo.
 - Use `getLexiconLabel(termId, locale)` for non-React labels, `<LexiconTerm />` for explicit interactive terms, and `<LexiconText />` only on designated long-form instructional prose.
 - Legacy phrases such as `Royal Court` or `Select Joker Color` may remain only as lexicon aliases or regression-test fixtures, never as live player-facing copy.
 - Generated replay outputs under `Replay/` are local artifacts and must stay untracked unless a task explicitly changes that policy.
-- Market and royal gameplay cards must share the same featured display size. Render them from the high-resolution runtime card artwork source and downsample to the display size; do not enlarge low-resolution card faces by increasing a market-only scale factor.
+- Market and royal gameplay cards must share the same featured display box. Featured cards use a `1086x1448` design/sampling canvas (`FEATURED_CARD_SAMPLE_SIZE`) rendered inside the card and downsampled into the layout-controlled display box (`FEATURED_CARD_SIZE`); do not enlarge low-resolution card faces or change a market-only scale factor.
 - Runtime card IDs must use `XYZ-cc`: `X` is `1/2/3` for standard levels or `r` for royal, `Y` is `1 red`, `2 green`, `3 blue`, `4 white`, `5 black`, `6 pearl/pink`, `7 gold/JOKER`, `8 pure-points/gray`, `9 royal`, `Z` is the level+color sequence (`1..9,a,b...`), and `cc` is one of `re/gr/bl/wh/bk/pe/jo/po/ro`. The authoritative old-to-new audit table is `assets/card/manifests/card-id-migration.csv`.
 
 ## Default Commands

@@ -5,13 +5,15 @@ import {
     createMarketSurfaceStyle,
     createPlayMatSurfaceStyle,
     createShellSurfaceStyle,
+    createTopBarSurfaceStyle,
     getGemPanelSkin,
     normalizeGameShellSurfaceTheme,
 } from './surfaceArtwork';
-import type { SurfaceThemeSelections } from './surfaceTheme';
+import type { SurfaceEffectsSkin, SurfaceThemeSelections } from './surfaceTheme';
 
 export interface GameShellStyles {
     shellStyle: CSSProperties;
+    topBarSurfaceStyle: CSSProperties;
     scaledZoneWrapperStyle: CSSProperties;
     playMatSurfaceStyle: CSSProperties;
     playMatDividerStyle: CSSProperties;
@@ -19,6 +21,7 @@ export interface GameShellStyles {
     gemBoardSurfaceStyle: CSSProperties;
     gemPanelSkin: GemPanelSkin;
     marketSurfaceStyle: CSSProperties;
+    effectsSkin: SurfaceEffectsSkin;
 }
 
 export const createGameShellStyles = (
@@ -29,14 +32,15 @@ export const createGameShellStyles = (
     const resolvedSurfaceTheme = normalizeGameShellSurfaceTheme(surfaceTheme);
 
     return {
-        shellStyle: createShellSurfaceStyle(theme, resolvedSurfaceTheme.shellBackground),
+        shellStyle: createShellSurfaceStyle(theme, resolvedSurfaceTheme.background),
+        topBarSurfaceStyle: createTopBarSurfaceStyle(theme, resolvedSurfaceTheme.topBar),
         scaledZoneWrapperStyle: {
             width: `${100 / layout.zoneScale}%`,
             height: `${100 / layout.zoneScale}%`,
             transform: `scale(${layout.zoneScale})`,
             transformOrigin: 'center center',
         } as CSSProperties,
-        playMatSurfaceStyle: createPlayMatSurfaceStyle(theme, resolvedSurfaceTheme.tablecloth),
+        playMatSurfaceStyle: createPlayMatSurfaceStyle(theme),
         playMatDividerStyle:
             theme === 'light'
                 ? ({ backgroundColor: 'rgba(15,23,42,0.08)' } as CSSProperties)
@@ -56,6 +60,7 @@ export const createGameShellStyles = (
         } as CSSProperties,
         gemBoardSurfaceStyle: createGemPanelSurfaceStyle(theme, resolvedSurfaceTheme.gemPanel),
         gemPanelSkin: getGemPanelSkin(theme, resolvedSurfaceTheme.gemPanel),
-        marketSurfaceStyle: createMarketSurfaceStyle(theme, resolvedSurfaceTheme.marketBackground),
+        marketSurfaceStyle: createMarketSurfaceStyle(theme),
+        effectsSkin: resolvedSurfaceTheme.effects,
     };
 };
