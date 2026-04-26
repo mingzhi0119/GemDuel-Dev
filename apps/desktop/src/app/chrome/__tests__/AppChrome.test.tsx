@@ -6,6 +6,7 @@ import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import { AppChrome } from '../AppChrome';
 import {
     DEFAULT_SURFACE_THEME_SELECTIONS,
+    getNextSurfaceThemeSelections,
     type SurfaceThemeSelections,
 } from '../../shell/surfaceTheme';
 
@@ -37,10 +38,9 @@ const ChromeHarness = ({ theme = 'dark' }: { theme?: 'light' | 'dark' }) => {
                 onForceRoyal={vi.fn()}
                 showDebugPanels={false}
                 surfaceTheme={surfaceTheme}
-                onSurfaceThemeChange={(slot, variant) =>
-                    setSurfaceTheme((current) => ({ ...current, [slot]: variant }))
+                onCycleSurfaceTheme={() =>
+                    setSurfaceTheme((current) => getNextSurfaceThemeSelections(current))
                 }
-                onResetSurfaceTheme={() => setSurfaceTheme(DEFAULT_SURFACE_THEME_SELECTIONS)}
             />
         </LocaleProvider>
     );
@@ -95,7 +95,10 @@ describe('AppChrome locale controls', () => {
         const settingsButton = container.querySelector<HTMLButtonElement>(
             'button[aria-label="Settings"]'
         );
-        const tooltip = container.querySelector<HTMLSpanElement>('[role="tooltip"]');
+        const settingsTooltipId = settingsButton?.getAttribute('aria-describedby');
+        const tooltip = settingsTooltipId
+            ? container.querySelector<HTMLSpanElement>(`#${settingsTooltipId}`)
+            : null;
 
         expect(settingsButton).not.toBeNull();
         expect(tooltip).not.toBeNull();
@@ -106,7 +109,65 @@ describe('AppChrome locale controls', () => {
         expect(tooltip?.className).toContain('px-4');
     });
 
-    it('shows shell actions and surface controls inside the settings menu', async () => {
+    it('renders restart as a white icon action outside the settings menu', async () => {
+        const onRequestRestart = vi.fn();
+        const RestartHarness = () => {
+            const [locale, setLocale] = useState<'en' | 'zh'>('en');
+
+            return (
+                <LocaleProvider locale={locale} setLocale={setLocale}>
+                    <AppChrome
+                        theme="dark"
+                        showDebug={false}
+                        canShowDebug={true}
+                        onToggleDebug={vi.fn()}
+                        onDownloadReplay={vi.fn()}
+                        onUploadReplay={vi.fn()}
+                        onRequestRestart={onRequestRestart}
+                        onShowRulebook={vi.fn()}
+                        onToggleTheme={vi.fn()}
+                        onAddCrowns={vi.fn()}
+                        onAddPoints={vi.fn()}
+                        onAddPrivilege={vi.fn()}
+                        onForceRoyal={vi.fn()}
+                        showDebugPanels={false}
+                    />
+                </LocaleProvider>
+            );
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<RestartHarness />);
+            await Promise.resolve();
+        });
+
+        const restartButton = container.querySelector<HTMLButtonElement>(
+            'button[data-app-restart-button="true"]'
+        );
+        const restartTooltipId = restartButton?.getAttribute('aria-describedby');
+        const restartTooltip = restartTooltipId
+            ? container.querySelector<HTMLSpanElement>(`#${restartTooltipId}`)
+            : null;
+
+        expect(restartButton?.getAttribute('aria-label')).toBe('Restart');
+        expect(restartButton?.hasAttribute('title')).toBe(false);
+        expect(restartButton?.className).toContain('text-slate-200');
+        expect(restartTooltip?.textContent).toBe('Restart');
+        expect(restartTooltip?.dataset.tooltipSize).toBe('standard-label');
+
+        await act(async () => {
+            restartButton?.click();
+            await Promise.resolve();
+        });
+
+        expect(onRequestRestart).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows shell actions and a single bundled surface theme control inside the settings menu', async () => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -125,24 +186,31 @@ describe('AppChrome locale controls', () => {
             await Promise.resolve();
         });
 
-        expect(container.textContent).toContain('Restart');
-        expect(container.textContent).toContain('Rules');
-        expect(container.textContent).toContain('Market Background');
-        expect(container.textContent).toContain('Player Zone');
+        const settingsMenu = container.querySelector<HTMLElement>('[data-settings-menu="true"]');
 
-        const woodButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
-            button.textContent?.includes('Wood')
+        expect(settingsMenu?.textContent).not.toContain('Restart');
+        expect(settingsMenu?.textContent).not.toContain('Rules');
+        expect(settingsMenu?.textContent).toContain('Theme: Default');
+        expect(settingsMenu?.textContent).not.toContain('Surface Theme');
+        expect(settingsMenu?.textContent).not.toContain('Market Background');
+        expect(settingsMenu?.textContent).not.toContain('Player Zone');
+        expect(settingsMenu?.className).toContain('w-[216px]');
+
+        const surfaceThemeButton = Array.from(container.querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('Theme: Default')
         );
 
+        expect(surfaceThemeButton?.className).toContain('justify-start');
+
         await act(async () => {
-            woodButtons[0]?.click();
+            surfaceThemeButton?.click();
             await Promise.resolve();
         });
 
-        expect(woodButtons[0]?.getAttribute('aria-pressed')).toBe('true');
+        expect(container.textContent).toContain('Theme: Wood');
     });
 
-    it('renders light surface options inside settings and resets selected slots', async () => {
+    it('renders the light surface theme cycle button inside settings', async () => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -161,22 +229,13 @@ describe('AppChrome locale controls', () => {
             await Promise.resolve();
         });
 
-        const royalButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
-            button.textContent?.includes('Royal')
+        const surfaceThemeButton = Array.from(container.querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('Theme: Default')
         );
         await act(async () => {
-            royalButtons[0]?.click();
+            surfaceThemeButton?.click();
             await Promise.resolve();
         });
-        expect(royalButtons[0]?.getAttribute('aria-pressed')).toBe('true');
-
-        const resetButton = Array.from(container.querySelectorAll('button')).find((button) =>
-            button.textContent?.includes('Reset')
-        );
-        await act(async () => {
-            resetButton?.click();
-            await Promise.resolve();
-        });
-        expect(royalButtons[0]?.getAttribute('aria-pressed')).toBe('false');
+        expect(container.textContent).toContain('Theme: Wood');
     });
 });

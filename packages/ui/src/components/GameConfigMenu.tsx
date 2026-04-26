@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { GameMode } from '@gemduel/shared/types';
 import { useLocale, useT } from '../i18n/LocaleProvider';
 import { LocaleSwitch } from './LocaleSwitch';
+import { useViewportFitScale } from './useViewportFitScale';
 
 interface GameConfigMenuProps {
     onOnlineSetup: () => void;
@@ -20,6 +21,7 @@ export function GameConfigMenu({
     const [gameConfig, setGameConfig] = useState<{ useBuffs: boolean } | null>(null);
     const { locale } = useLocale();
     const t = useT();
+    const fitScale = useViewportFitScale<HTMLDivElement>(3, 96);
 
     if (!gameConfig) {
         return (
@@ -28,7 +30,11 @@ export function GameConfigMenu({
                   ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}
               `}
             >
-                <div className="flex flex-col items-center gap-8 lg:scale-[1.5] lg:transform-gpu lg:origin-center">
+                <div
+                    ref={fitScale.ref}
+                    style={fitScale.style}
+                    className="flex origin-center transform-gpu flex-col items-center gap-8"
+                >
                     <div className="flex flex-col items-center gap-3 animate-in slide-in-from-bottom-4 duration-700">
                         <h1 className="text-4xl md:text-6xl font-black tracking-tighter bg-gradient-to-br from-amber-400 to-amber-600 bg-clip-text text-transparent drop-shadow-lg">
                             {locale === 'zh' ? t('startPage.title.zh') : t('startPage.title')}
@@ -123,7 +129,11 @@ export function GameConfigMenu({
               ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}
           `}
         >
-            <div className="flex flex-col items-center gap-8 lg:scale-[1.5] lg:transform-gpu lg:origin-center">
+            <div
+                ref={fitScale.ref}
+                style={fitScale.style}
+                className="flex origin-center transform-gpu flex-col items-center gap-8"
+            >
                 <div className="flex flex-col items-center gap-2">
                     <h2 className="text-2xl font-bold uppercase tracking-widest opacity-80">
                         {t('startPage.selectOpponent')}

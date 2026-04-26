@@ -2,6 +2,7 @@ import { Scroll } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { GameActions } from '@gemduel/ui/components/GameActions';
 import { GameBoard } from '@gemduel/ui/components/GameBoard';
+import { calculateGemPanelFootprintPx } from '@gemduel/ui/components/gameBoard/gemPanelLayout';
 import { Market } from '@gemduel/ui/components/Market';
 import { ReplayControls } from '@gemduel/ui/components/ReplayControls';
 import { RoyalCourt } from '@gemduel/ui/components/RoyalCourt';
@@ -29,6 +30,7 @@ interface GamePlaySurfaceProps {
     gemBoardSurfaceStyle: CSSProperties;
     gemPanelSkin: GemPanelSkin;
     marketSurfaceStyle: CSSProperties;
+    isRoyalSelectionBlocked?: boolean;
 }
 
 export function GamePlaySurface({
@@ -42,6 +44,7 @@ export function GamePlaySurface({
     gemBoardSurfaceStyle,
     gemPanelSkin,
     marketSurfaceStyle,
+    isRoyalSelectionBlocked = false,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
     const {
@@ -76,15 +79,17 @@ export function GamePlaySurface({
     const { isMyTurn } = getters;
     const marketState: MarketState = market;
     const deckState: DeckState = decks;
+    const gemPanelFootprint = calculateGemPanelFootprintPx(gemPanelSkin);
     const remainingPrivilegeSupply = Math.max(
         0,
         SHARED_PRIVILEGE_SUPPLY_SIZE - (privileges.p1 + privileges.p2)
     );
 
     return (
-        <div className="min-h-0 h-full w-full overflow-hidden flex items-center justify-center relative z-30 px-4 py-4 lg:py-6 transition-all duration-500">
+        <div className="min-h-0 h-full w-full overflow-hidden flex items-center justify-center relative z-30 px-4 py-4 lg:py-6 transition-colors duration-500">
             <div
-                className="relative shrink-0 transition-all duration-500"
+                data-presentation-anchor="middle-zone"
+                className="relative shrink-0 transition-transform duration-500"
                 style={{
                     transform: `scale(${layout.boardScale})`,
                     transformOrigin: 'center center',
@@ -96,7 +101,7 @@ export function GamePlaySurface({
                     style={playMatSurfaceStyle}
                 />
                 <div
-                    className="relative z-10 flex flex-col lg:flex-row items-center justify-center px-5 py-4 lg:px-6 lg:py-5 transition-all duration-500"
+                    className="relative z-10 flex flex-col lg:flex-row items-center justify-center px-5 py-4 lg:px-6 lg:py-5 transition-[gap] duration-500"
                     style={{ gap: `${layout.mainGapPx}px` }}
                 >
                     <div
@@ -131,7 +136,13 @@ export function GamePlaySurface({
                         style={playMatDividerStyle}
                     />
 
-                    <div className="relative z-10 flex flex-col items-center shrink-0">
+                    <div
+                        data-presentation-anchor="center-playfield"
+                        className="relative z-10 flex flex-col items-center shrink-0"
+                        style={{
+                            width: `${gemPanelFootprint.widthPx}px`,
+                        }}
+                    >
                         <div className="h-5 w-full flex items-center justify-center">
                             <StatusBar
                                 errorMsg={errorMsg}
@@ -204,9 +215,9 @@ export function GamePlaySurface({
                             phase={effectiveGameMode}
                             handleSelectRoyal={handleSelectRoyal}
                             theme={theme}
-                            canInteract={isMyTurn}
+                            canInteract={isMyTurn && !isRoyalSelectionBlocked}
                         />
-                        <div className="flex flex-col gap-3 items-center p-2 lg:p-3 transition-all duration-500">
+                        <div className="flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500">
                             <ReplayControls
                                 undo={historyControls.undo}
                                 redo={historyControls.redo}

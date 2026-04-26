@@ -228,12 +228,18 @@ describe('shell smoke coverage', () => {
         const settingsButton = container?.querySelector<HTMLButtonElement>(
             'button[aria-label="Settings"]'
         );
-        const tooltip = container?.querySelector<HTMLElement>('[role="tooltip"]');
+        const settingsTooltipId = settingsButton?.getAttribute('aria-describedby');
+        const tooltip = settingsTooltipId
+            ? container?.querySelector<HTMLElement>(`#${settingsTooltipId}`)
+            : null;
+        const restartButton = container?.querySelector<HTMLButtonElement>(
+            'button[data-app-restart-button="true"]'
+        );
         expect(settingsButton).not.toBeNull();
         expect(settingsButton?.hasAttribute('title')).toBe(false);
         expect(settingsButton?.getAttribute('aria-describedby')).toBe(tooltip?.id);
         expect(tooltip?.dataset.tooltipSize).toBe('standard-label');
-        expect(container?.textContent).not.toContain('Restart');
+        expect(restartButton?.getAttribute('aria-label')).toBe('Restart');
     });
 
     it('renders DesktopStage with its child canvas anchoring intact', () => {

@@ -133,7 +133,10 @@ export const calculateResponsiveLayout = (
 
     const clampedDesktopAspect = clamp(aspectRatio, DESKTOP_MIN_ASPECT, DESKTOP_MAX_ASPECT);
     const stageCanvasWidthPx = DESKTOP_STAGE_WIDTH_PX;
-    const stageCanvasHeightPx = stageCanvasWidthPx / clampedDesktopAspect;
+    const aspectStageCanvasHeightPx = stageCanvasWidthPx / clampedDesktopAspect;
+    const widthLockedStageScale = safeWidth / stageCanvasWidthPx;
+    const viewportFilledStageHeightPx = safeHeight / widthLockedStageScale;
+    const stageCanvasHeightPx = Math.max(aspectStageCanvasHeightPx, viewportFilledStageHeightPx);
     const stageScale = calculateDesktopStageScale(
         safeWidth,
         safeHeight,
@@ -141,7 +144,6 @@ export const calculateResponsiveLayout = (
         stageCanvasHeightPx
     );
     const scaledStageWidth = stageCanvasWidthPx * stageScale;
-    const scaledStageHeight = stageCanvasHeightPx * stageScale;
     const boardScale = calculateDesktopBoardScale(stageCanvasWidthPx, stageCanvasHeightPx);
 
     return {
@@ -153,7 +155,7 @@ export const calculateResponsiveLayout = (
         stageCanvasHeightPx,
         stageScale,
         stageInsetXPx: calculateStageInsetPx(safeWidth, scaledStageWidth),
-        stageInsetYPx: calculateStageInsetPx(safeHeight, scaledStageHeight),
+        stageInsetYPx: 0,
         boardScale,
         deckScale: DESKTOP_DECK_SCALE,
         zoneScale: DESKTOP_ZONE_SCALE,

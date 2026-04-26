@@ -7,7 +7,7 @@ Runtime full-card artwork lives in this folder.
 - Card IDs must follow `XYZ-cc`: standard cards use `1/2/3` for the level, royal cards use `r`, the color digit is `1 red`, `2 green`, `3 blue`, `4 white`, `5 black`, `6 pearl/pink`, `7 gold/JOKER`, `8 pure-points/gray`, `9 royal`, and the suffix is `re/gr/bl/wh/bk/pe/jo/po/ro`.
 - Source prompt and manifest records live in `docs/art/card-prompts/card-art-prompt-archive.md` and `assets/card/manifests/card-artwork-manifest.csv`.
 - Replace a card face by keeping the same filename and `1086x1448` 3:4 PNG dimensions.
-- Market and royal featured cards use these high-resolution images as the source and downsample them to the shared featured display size in the UI.
+- Market and royal featured cards use these `1086x1448` images as the design/sampling baseline. The UI renders that high-resolution canvas inside `Card` and downscales it to the shared featured display box controlled by layout.
 
 These images are final composed cards. The UI renders them as image-only card faces and uses React overlays only for cards without a runtime artwork asset.
 

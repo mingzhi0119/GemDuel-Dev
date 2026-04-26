@@ -23,7 +23,8 @@ export function DebugPanel({
 
     return (
         <div
-            className={`p-3 rounded-lg backdrop-blur-md shadow-2xl w-48 transition-colors duration-500
+            data-debug-panel={player}
+            className={`p-6 rounded-xl backdrop-blur-md shadow-2xl w-96 transition-colors duration-500
       ${
           theme === 'dark'
               ? 'bg-slate-900/90 border-2 border-red-900/50'
@@ -32,16 +33,16 @@ export function DebugPanel({
     `}
         >
             <div
-                className={`font-bold text-[10px] mb-2 uppercase tracking-tighter border-b pb-1 transition-colors duration-500
+                className={`font-bold text-[20px] mb-4 uppercase tracking-tighter border-b pb-2 transition-colors duration-500
         ${theme === 'dark' ? 'text-red-500 border-red-900/30' : 'text-red-600 border-red-200'}
       `}
             >
                 {t('debug.title', { player: player.toUpperCase() })}
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
                 <button
                     onClick={onAddCrowns}
-                    className={`text-[9px] py-1 rounded border transition-colors text-left px-2
+                    className={`text-[18px] py-2 rounded-lg border transition-colors text-left px-4
           ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'}
         `}
                 >
@@ -49,7 +50,7 @@ export function DebugPanel({
                 </button>
                 <button
                     onClick={onAddPoints}
-                    className={`text-[9px] py-1 rounded border transition-colors text-left px-2
+                    className={`text-[18px] py-2 rounded-lg border transition-colors text-left px-4
           ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'}
         `}
                 >
@@ -57,7 +58,7 @@ export function DebugPanel({
                 </button>
                 <button
                     onClick={onAddPrivilege}
-                    className={`text-[9px] py-1 rounded border transition-colors text-left px-2
+                    className={`text-[18px] py-2 rounded-lg border transition-colors text-left px-4
           ${theme === 'dark' ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'}
         `}
                 >
@@ -65,7 +66,7 @@ export function DebugPanel({
                 </button>
                 <button
                     onClick={onForceRoyal}
-                    className={`text-[9px] py-1 rounded border transition-colors font-bold
+                    className={`text-[18px] py-2 rounded-lg border transition-colors font-bold
           ${theme === 'dark' ? 'bg-red-900/40 hover:bg-red-800/60 text-red-200 border-red-700' : 'bg-red-100 hover:bg-red-200 text-red-700 border-red-300'}
         `}
                 >

@@ -297,6 +297,7 @@ describe('Responsive layout adaptation', () => {
     });
 
     it('promotes high-density laptop displays without changing the desktop canvas', () => {
+        const stageCanvasHeightPx = 1067 / (1707 / 3840);
         expectLayoutMatch(
             calculateResponsiveLayout(1707, 1067, {
                 devicePixelRatio: 1.5,
@@ -307,11 +308,11 @@ describe('Responsive layout adaptation', () => {
                 viewportWidth: 1707,
                 viewportHeight: 1067,
                 stageCanvasWidthPx: 3840,
-                stageCanvasHeightPx: 2400,
+                stageCanvasHeightPx,
                 stageScale: 1707 / 3840,
                 stageInsetXPx: 0,
                 stageInsetYPx: 0,
-                ...expectedDesktopSizing(2400),
+                ...expectedDesktopSizing(stageCanvasHeightPx),
             }
         );
     });
@@ -386,11 +387,11 @@ describe('Responsive layout adaptation', () => {
             viewportWidth: 1280,
             viewportHeight: 1024,
             stageCanvasWidthPx: 3840,
-            stageCanvasHeightPx: 2400,
+            stageCanvasHeightPx: 3072,
             stageScale: 1280 / 3840,
             stageInsetXPx: 0,
-            stageInsetYPx: 112,
-            ...expectedDesktopSizing(2400),
+            stageInsetYPx: 0,
+            ...expectedDesktopSizing(3072),
         });
     });
 

@@ -20,6 +20,7 @@ import { PlayerZone } from '@gemduel/ui/components/PlayerZone';
 import { TopBar } from '@gemduel/ui/components/TopBar';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import { getGemPanelSkin } from '../app/shell/surfaceArtwork';
+import { SURFACE_THEME_VARIANTS } from '../app/shell/surfaceTheme';
 
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -150,6 +151,27 @@ describe('surface styling affordances', () => {
         expect(html).toContain('width:452px');
         expect(html).toContain('left:16.800%');
         expect(html).toContain('top:16.800%');
+    });
+
+    it('keeps the gem board footprint stable across panel theme variants', () => {
+        for (const variant of SURFACE_THEME_VARIANTS) {
+            const html = renderToStaticMarkup(
+                <GameBoard
+                    board={buildBoard()}
+                    handleGemClick={() => undefined}
+                    handleGemDragSelection={() => undefined}
+                    selectedGems={[]}
+                    phase="IDLE"
+                    bonusGemTarget={null}
+                    theme="dark"
+                    canInteract={true}
+                    panelSkin={getGemPanelSkin('dark', variant)}
+                />
+            );
+
+            expect(html).toContain('width:452px');
+            expect(html).toContain('height:452px');
+        }
     });
 
     it('does not render a light-mode circular base behind board gems', () => {

@@ -79,7 +79,7 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
             <div
                 data-surface-slot="gem-panel"
                 data-gem-panel-skin={panelSkin.id}
-                className={`relative overflow-hidden transition-all duration-500 ${
+                className={`relative overflow-hidden transition-[box-shadow,filter,opacity] duration-500 ${
                     phase === 'DISCARD_EXCESS_GEMS' ? 'ring-2 ring-red-500/20' : ''
                 }`}
                 style={{

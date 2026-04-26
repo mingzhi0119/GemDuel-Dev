@@ -15,6 +15,11 @@ export const FEATURED_CARD_SIZE = Object.freeze({
     height: 200,
 });
 
+export const FEATURED_CARD_SAMPLE_SIZE = Object.freeze({
+    width: 1086,
+    height: 1448,
+});
+
 export const LARGE_CARD_SIZE = Object.freeze({
     width: 180,
     height: 240,
@@ -42,6 +47,9 @@ export const getCardDimensions = (size: CardSize) => {
 
     return STANDARD_CARD_SIZE;
 };
+
+export const getCardSampleDimensions = (size: CardSize) =>
+    size === 'featured' ? FEATURED_CARD_SAMPLE_SIZE : getCardDimensions(size);
 
 export const scaleCardMetric = (value: number, cardScale: number) =>
     Math.max(1, Math.round(value * cardScale));

@@ -5,6 +5,7 @@ import { isRoyalSelectionPhase } from '@gemduel/shared/logic/fsm';
 import { RoyalCard, GamePhase, Card as CardType } from '@gemduel/shared/types';
 import { useT } from '../i18n/LocaleProvider';
 import { LexiconTerm } from '../lexicon/LexiconTerm';
+import { FEATURED_CARD_SIZE } from './card/cardSizing';
 
 interface RoyalCourtProps {
     royalDeck: RoyalCard[];
@@ -13,6 +14,16 @@ interface RoyalCourtProps {
     theme: 'light' | 'dark';
     canInteract?: boolean;
 }
+
+const ROYAL_COURT_SLOT_COUNT = 4;
+const ROYAL_COURT_COLUMNS = 2;
+const ROYAL_COURT_GAP_PX = 16;
+const ROYAL_COURT_GRID_SIZE = {
+    width: FEATURED_CARD_SIZE.width * ROYAL_COURT_COLUMNS + ROYAL_COURT_GAP_PX,
+    height:
+        FEATURED_CARD_SIZE.height * (ROYAL_COURT_SLOT_COUNT / ROYAL_COURT_COLUMNS) +
+        ROYAL_COURT_GAP_PX,
+};
 
 export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     royalDeck,
@@ -23,15 +34,20 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
 }) => {
     const t = useT();
     const canSelectRoyal = isRoyalSelectionPhase(phase) && canInteract;
+    const royalSlots = Array.from(
+        { length: ROYAL_COURT_SLOT_COUNT },
+        (_, index) => royalDeck[index] ?? null
+    );
 
     return (
         <div
-            className={`flex flex-col gap-4 items-center p-1 shrink-0 w-fit transition-all duration-500
+            className={`flex flex-col gap-4 items-center p-1 shrink-0 transition-all duration-500
             ${!canInteract ? 'opacity-70 pointer-events-none' : ''}
         `}
+            style={{ width: ROYAL_COURT_GRID_SIZE.width }}
         >
             <h2
-                className={`text-[13px] font-black uppercase tracking-[0.34em] flex items-center gap-2.5 mb-2
+                className={`min-h-6 text-[13px] font-black uppercase tracking-[0.34em] flex items-center justify-center gap-2.5 mb-2
                 ${theme === 'dark' ? 'text-yellow-300' : 'text-amber-800'}`}
             >
                 <Crown size={18} />{' '}
@@ -39,11 +55,19 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                     {t('royalCourt.title')}
                 </LexiconTerm>
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-                {royalDeck.length > 0 ? (
-                    royalDeck.map((card) => (
+            <div
+                data-royal-court-grid="true"
+                className="relative grid grid-cols-2 gap-4 shrink-0"
+                style={{
+                    width: ROYAL_COURT_GRID_SIZE.width,
+                    height: ROYAL_COURT_GRID_SIZE.height,
+                }}
+            >
+                {royalSlots.map((card, index) =>
+                    card ? (
                         <div
                             key={card.id}
+                            data-royal-card={card.id}
                             className={`relative ${canSelectRoyal ? 'cursor-pointer z-50' : ''}`}
                             onClick={() => canSelectRoyal && handleSelectRoyal(card)}
                         >
@@ -53,16 +77,23 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                                 theme={theme}
                                 size="featured"
                             />
-                            {canSelectRoyal && (
-                                <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full animate-bounce">
-                                    {t('royalCourt.pick')}
-                                </div>
-                            )}
                         </div>
-                    ))
-                ) : (
+                    ) : (
+                        <div
+                            key={`royal-empty-slot-${index}`}
+                            data-royal-court-empty-slot="true"
+                            aria-hidden="true"
+                            className="invisible pointer-events-none"
+                            style={{
+                                width: FEATURED_CARD_SIZE.width,
+                                height: FEATURED_CARD_SIZE.height,
+                            }}
+                        />
+                    )
+                )}
+                {royalDeck.length === 0 && (
                     <div
-                        className={`col-span-2 h-64 flex items-center justify-center italic text-xs
+                        className={`absolute inset-0 flex items-center justify-center italic text-xs
                         ${theme === 'dark' ? 'text-slate-400' : 'text-stone-600'}`}
                     >
                         {t('royalCourt.empty')}

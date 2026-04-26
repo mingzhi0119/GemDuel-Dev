@@ -4,6 +4,7 @@ import {
     getGemPanelCellCentersNormalized,
 } from '@gemduel/ui/components/gameBoard/gemPanelLayout';
 import { getGemPanelSkin } from '../surfaceArtwork';
+import { SURFACE_THEME_VARIANTS } from '../surfaceTheme';
 
 describe('gem panel skin geometry', () => {
     it('exposes the square dashboard skin geometry for the dark default panel', () => {
@@ -20,25 +21,38 @@ describe('gem panel skin geometry', () => {
         });
     });
 
-    it('derives normalized 5x5 cell centers and a widened footprint from the skin', () => {
+    it('derives normalized 5x5 cell centers and a fixed footprint from the canonical skin', () => {
         const skin = getGemPanelSkin('light');
         const centers = getGemPanelCellCentersNormalized(skin);
         const footprint = calculateGemPanelFootprintPx(skin);
 
         expect(centers).toHaveLength(25);
         expect(centers[0]).toEqual({
-            x: expect.closeTo(0.25368, 5),
-            y: expect.closeTo(0.2201, 5),
+            x: expect.closeTo(0.168, 5),
+            y: expect.closeTo(0.168, 5),
         });
         expect(centers[12]).toEqual({
-            x: expect.closeTo(0.4996, 5),
-            y: expect.closeTo(0.4721, 5),
+            x: expect.closeTo(0.5, 5),
+            y: expect.closeTo(0.5, 5),
         });
         expect(centers[24]).toEqual({
-            x: expect.closeTo(0.74552, 5),
-            y: expect.closeTo(0.7241, 5),
+            x: expect.closeTo(0.832, 5),
+            y: expect.closeTo(0.832, 5),
         });
-        expect(footprint.widthPx).toBeGreaterThan(375);
-        expect(footprint.heightPx).toBeGreaterThan(375);
+        expect(footprint.widthPx).toBe(452);
+        expect(footprint.heightPx).toBe(452);
+    });
+
+    it('keeps every gem panel theme variant at the same layout footprint', () => {
+        const footprints = SURFACE_THEME_VARIANTS.map((variant) =>
+            calculateGemPanelFootprintPx(getGemPanelSkin('dark', variant))
+        );
+
+        expect(footprints).toEqual(
+            SURFACE_THEME_VARIANTS.map(() => ({
+                widthPx: 452,
+                heightPx: 452,
+            }))
+        );
     });
 });

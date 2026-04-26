@@ -12,7 +12,7 @@ import { useLanDevVerification } from './hooks/useLanDevVerification';
 import { useLanMatchmaking } from './hooks/useLanMatchmaking';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { useSettings } from './hooks/useSettings';
-import { DEFAULT_SURFACE_THEME_SELECTIONS } from './app/shell/surfaceTheme';
+import { getNextSurfaceThemeSelections } from './app/shell/surfaceTheme';
 import type { PlayerKey } from '@gemduel/shared/types';
 import { getDocumentLanguage } from '@gemduel/shared';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
@@ -226,10 +226,8 @@ export default function GemDuelBoard() {
                     handleUploadReplay,
                     toggleTheme: () =>
                         setTheme((current) => (current === 'dark' ? 'light' : 'dark')),
-                    setSurfaceThemeSlot: (slot, variant) =>
-                        setSurfaceTheme((current) => ({ ...current, [slot]: variant })),
-                    resetSurfaceTheme: () =>
-                        setSurfaceTheme({ ...DEFAULT_SURFACE_THEME_SELECTIONS }),
+                    cycleSurfaceTheme: () =>
+                        setSurfaceTheme((current) => getNextSurfaceThemeSelections(current)),
                 }}
             />
         </LocaleProvider>

@@ -30,8 +30,9 @@ The app is a single game shell with four top-level states:
 
 ## Card Artwork Sizing
 
-- Market and royal gameplay cards share the same featured display size in `packages/ui/src/components/Card.tsx`.
-- Featured cards must render from the high-resolution runtime card artwork source and be downsampled into the display slot. Do not make market-only scale-factor adjustments that upscale a lower-resolution card face or let royal cards drift from market card dimensions.
+- Market and royal gameplay cards share the same featured display box in `packages/ui/src/components/Card.tsx`.
+- Featured cards split rendering into a `1086x1448` design/sampling canvas (`FEATURED_CARD_SAMPLE_SIZE`) and a layout-controlled display box (`FEATURED_CARD_SIZE`). `Card` renders the artwork and any fallback overlays on the high-resolution internal canvas, then downscales that canvas into the display box.
+- Layout scaling belongs to the shell (`useResponsiveLayout.ts`, `GamePlaySurface.tsx`) and parent transforms. Do not resize featured cards by changing a market-only scale factor, upscaling low-resolution faces, or letting royal cards drift from market card dimensions.
 
 ## Tooltip Standard
 

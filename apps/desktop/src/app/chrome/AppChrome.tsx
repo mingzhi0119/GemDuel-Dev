@@ -17,8 +17,6 @@ import { useT } from '@gemduel/ui/i18n/LocaleProvider';
 import {
     DEFAULT_SURFACE_THEME_SELECTIONS,
     type SurfaceThemeSelections,
-    type SurfaceThemeSlot,
-    type SurfaceThemeVariant,
 } from '../shell/surfaceTheme';
 import { AppChromeSurfaceControls } from './AppChromeSurfaceMenu';
 
@@ -42,8 +40,7 @@ interface AppChromeProps {
     onForceRoyal: () => void;
     showDebugPanels: boolean;
     surfaceTheme?: SurfaceThemeSelections;
-    onSurfaceThemeChange?: (slot: SurfaceThemeSlot, variant: SurfaceThemeVariant) => void;
-    onResetSurfaceTheme?: () => void;
+    onCycleSurfaceTheme?: () => void;
 }
 
 export function AppChrome({
@@ -62,11 +59,12 @@ export function AppChrome({
     onForceRoyal,
     showDebugPanels,
     surfaceTheme = DEFAULT_SURFACE_THEME_SELECTIONS,
-    onSurfaceThemeChange,
-    onResetSurfaceTheme,
+    onCycleSurfaceTheme,
 }: AppChromeProps) {
     const t = useT();
     const settingsTooltipId = useId();
+    const restartTooltipId = useId();
+    const rulebookTooltipId = useId();
     const settingsMenuRef = useRef<HTMLDivElement | null>(null);
     const [showSettingsMenu, setShowSettingsMenu] = useState(false);
     const settingsIconButtonClass =
@@ -77,10 +75,6 @@ export function AppChrome({
         theme === 'dark'
             ? 'bg-slate-900/70 hover:bg-slate-800/90 text-slate-200 hover:text-white border-slate-600 hover:border-slate-500 shadow-[0_6px_20px_rgba(0,0,0,0.35)]'
             : 'bg-white/95 hover:bg-stone-50 text-stone-700 border-stone-300';
-    const dangerButtonClass =
-        theme === 'dark'
-            ? 'bg-red-950/50 hover:bg-red-900/70 text-red-200 hover:text-white border-red-700/60 hover:border-red-500/70 shadow-[0_6px_20px_rgba(69,10,10,0.35)]'
-            : 'bg-red-50 hover:bg-red-100 text-red-800 border-red-300';
 
     useEffect(() => {
         if (!showSettingsMenu) {
@@ -109,7 +103,49 @@ export function AppChrome({
 
     return (
         <>
-            <div className="absolute right-4 top-0 z-[200] flex h-24 items-center lg:right-6 lg:h-[120px]">
+            <div className="absolute right-4 top-0 z-[200] flex h-24 items-center gap-1 lg:right-6 lg:h-[120px]">
+                <button
+                    type="button"
+                    data-app-rulebook-button="true"
+                    onClick={() => {
+                        setShowSettingsMenu(false);
+                        onShowRulebook();
+                    }}
+                    className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
+                    aria-label={t('settings.rules')}
+                    aria-describedby={rulebookTooltipId}
+                >
+                    <BookOpen size={30} strokeWidth={2.4} />
+                    <span
+                        id={rulebookTooltipId}
+                        role="tooltip"
+                        data-tooltip-size="standard-label"
+                        className={`pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${TOOLTIP_LABEL_CLASS} ${getTooltipLabelThemeClass(theme)}`}
+                    >
+                        {t('settings.rules')}
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    data-app-restart-button="true"
+                    onClick={() => {
+                        setShowSettingsMenu(false);
+                        onRequestRestart();
+                    }}
+                    className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
+                    aria-label={t('settings.restart')}
+                    aria-describedby={restartTooltipId}
+                >
+                    <RotateCcw size={30} strokeWidth={2.4} />
+                    <span
+                        id={restartTooltipId}
+                        role="tooltip"
+                        data-tooltip-size="standard-label"
+                        className={`pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${TOOLTIP_LABEL_CLASS} ${getTooltipLabelThemeClass(theme)}`}
+                    >
+                        {t('settings.restart')}
+                    </span>
+                </button>
                 <div className="relative" ref={settingsMenuRef}>
                     <button
                         onClick={() => {
@@ -133,20 +169,21 @@ export function AppChrome({
 
                     {showSettingsMenu && (
                         <div
-                            className={`absolute right-0 top-full mt-3 w-[min(88vw,420px)] rounded-2xl border p-3 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.32)] ${
+                            data-settings-menu="true"
+                            className={`absolute right-0 top-full mt-3 w-[216px] origin-top-right rounded-2xl border p-2.5 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.32)] lg:scale-[1.5] ${
                                 theme === 'dark'
                                     ? 'bg-slate-950/92 border-slate-700/80'
                                     : 'bg-white/96 border-stone-300'
                             }`}
                         >
                             <div
-                                className={`mb-3 px-1 text-[11px] font-black uppercase tracking-[0.22em] ${
+                                className={`mb-2 px-1 text-[11px] font-black uppercase tracking-[0.22em] ${
                                     theme === 'dark' ? 'text-slate-400' : 'text-stone-500'
                                 }`}
                             >
                                 {t('settings.title')}
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-1.5">
                                 <div className="px-1 pb-1">
                                     <div
                                         className={`mb-2 text-[10px] font-black uppercase tracking-[0.18em] ${
@@ -157,69 +194,51 @@ export function AppChrome({
                                     </div>
                                     <LocaleSwitch theme={theme} className="w-full justify-center" />
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        onRequestRestart();
-                                        setShowSettingsMenu(false);
-                                    }}
-                                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${dangerButtonClass}`}
-                                    aria-label={t('settings.restart')}
-                                >
-                                    <RotateCcw size={20} />
-                                    <span className="text-[13px] font-black uppercase tracking-[0.14em]">
-                                        {t('settings.restart')}
-                                    </span>
-                                </button>
 
-                                <button
-                                    onClick={() => {
-                                        onShowRulebook();
-                                        setShowSettingsMenu(false);
-                                    }}
-                                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
-                                    aria-label={t('settings.rules')}
-                                >
-                                    <BookOpen size={20} />
-                                    <span className="text-[13px] font-black uppercase tracking-[0.14em]">
-                                        {t('settings.rules')}
-                                    </span>
-                                </button>
-
-                                <button
-                                    onClick={onToggleTheme}
-                                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
-                                    aria-label={t('settings.toggleTheme')}
-                                >
-                                    {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
-                                    <span className="text-[13px] font-black uppercase tracking-[0.14em]">
-                                        {theme === 'dark'
-                                            ? t('settings.dark')
-                                            : t('settings.light')}
-                                    </span>
-                                </button>
+                                {canShowDebug && (
+                                    <button
+                                        onClick={() => {
+                                            onToggleDebug();
+                                            setShowSettingsMenu(false);
+                                        }}
+                                        className={`px-3 py-2.5 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
+                                        aria-label={
+                                            showDebug
+                                                ? t('settings.closeDebug')
+                                                : t('settings.openDebug')
+                                        }
+                                    >
+                                        <Settings size={20} />
+                                        <span className="whitespace-nowrap text-[13px] font-black uppercase tracking-[0.14em]">
+                                            {showDebug
+                                                ? t('settings.closeDebug')
+                                                : t('settings.openDebug')}
+                                        </span>
+                                    </button>
+                                )}
 
                                 <button
                                     onClick={() => {
                                         onDownloadReplay();
                                         setShowSettingsMenu(false);
                                     }}
-                                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
+                                    className={`px-3 py-2.5 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
                                     title={t('settings.save')}
                                     aria-label={t('settings.save')}
                                 >
                                     <Download size={20} />
-                                    <span className="text-[13px] font-black uppercase tracking-[0.14em]">
+                                    <span className="whitespace-nowrap text-[13px] font-black uppercase tracking-[0.14em]">
                                         {t('settings.save')}
                                     </span>
                                 </button>
 
                                 <label
-                                    className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start cursor-pointer shadow-none ${neutralMutedButtonClass}`}
+                                    className={`px-3 py-2.5 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start cursor-pointer shadow-none ${neutralMutedButtonClass}`}
                                     title={t('settings.load')}
                                     aria-label={t('settings.load')}
                                 >
                                     <Upload size={20} />
-                                    <span className="text-[13px] font-black uppercase tracking-[0.14em]">
+                                    <span className="whitespace-nowrap text-[13px] font-black uppercase tracking-[0.14em]">
                                         {t('settings.load')}
                                     </span>
                                     <input
@@ -233,44 +252,24 @@ export function AppChrome({
                                     />
                                 </label>
 
-                                {canShowDebug && (
-                                    <button
-                                        onClick={() => {
-                                            onToggleDebug();
-                                            setShowSettingsMenu(false);
-                                        }}
-                                        className={`px-3 py-3 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
-                                        aria-label={
-                                            showDebug
-                                                ? t('settings.closeDebug')
-                                                : t('settings.openDebug')
-                                        }
-                                    >
-                                        <Settings size={20} />
-                                        <span className="text-[13px] font-black uppercase tracking-[0.14em]">
-                                            {showDebug
-                                                ? t('settings.closeDebug')
-                                                : t('settings.openDebug')}
-                                        </span>
-                                    </button>
-                                )}
+                                <button
+                                    onClick={onToggleTheme}
+                                    className={`px-3 py-2.5 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
+                                    aria-label={t('settings.toggleTheme')}
+                                >
+                                    {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+                                    <span className="whitespace-nowrap text-[13px] font-black uppercase tracking-[0.14em]">
+                                        {theme === 'dark'
+                                            ? t('settings.dark')
+                                            : t('settings.light')}
+                                    </span>
+                                </button>
 
-                                <div className="px-1 pt-2">
-                                    <div
-                                        className={`mb-3 text-[10px] font-black uppercase tracking-[0.18em] ${
-                                            theme === 'dark' ? 'text-slate-500' : 'text-stone-500'
-                                        }`}
-                                    >
-                                        {t('settings.surface.title')}
-                                    </div>
-                                    <AppChromeSurfaceControls
-                                        theme={theme}
-                                        neutralMutedButtonClass={neutralMutedButtonClass}
-                                        surfaceTheme={surfaceTheme}
-                                        onSurfaceThemeChange={onSurfaceThemeChange}
-                                        onResetSurfaceTheme={onResetSurfaceTheme}
-                                    />
-                                </div>
+                                <AppChromeSurfaceControls
+                                    neutralMutedButtonClass={neutralMutedButtonClass}
+                                    surfaceTheme={surfaceTheme}
+                                    onCycleSurfaceTheme={onCycleSurfaceTheme}
+                                />
                             </div>
                         </div>
                     )}

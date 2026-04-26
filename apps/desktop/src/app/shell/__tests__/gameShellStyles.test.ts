@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ResponsiveLayout } from '@gemduel/shared/types';
+import { GEM_PANEL_CANONICAL_PLAYFIELD_RECT } from '@gemduel/ui/components/gameBoard/gemPanelLayout';
 import { createGameShellStyles } from '../gameShellStyles';
 import {
     createPlayerZoneSurfaceStyle,
@@ -39,15 +40,14 @@ describe('createGameShellStyles', () => {
         );
         expect(styles.gemPanelSkin.id).toBe('dashboard');
         expect(styles.gemPanelSkin.artworkPath).toBe('/assets/surfaces/light/panel-gem-board.png');
-        expect(styles.gemPanelSkin.playfieldRectNormalized).toEqual({
-            left: 0.1922,
-            top: 0.1571,
-            right: 0.807,
-            bottom: 0.7871,
-        });
+        expect(styles.gemPanelSkin.playfieldRectNormalized).toEqual(
+            GEM_PANEL_CANONICAL_PLAYFIELD_RECT
+        );
         expect(String(styles.marketSurfaceStyle.backgroundImage)).toContain(
             '/assets/surfaces/light/background-market.png'
         );
+        expect(styles.topBarSurfaceStyle.background).toContain('linear-gradient');
+        expect(styles.effectsSkin).toBe('anime');
     });
 
     it('wires dark mode surface artwork slots into the game shell', () => {
@@ -69,15 +69,19 @@ describe('createGameShellStyles', () => {
         expect(String(styles.marketSurfaceStyle.backgroundImage)).toContain(
             '/assets/surfaces/dark/background-market.png'
         );
+        expect(styles.gemPanelSkin.playfieldRectNormalized).toEqual(
+            GEM_PANEL_CANONICAL_PLAYFIELD_RECT
+        );
+        expect(styles.effectsSkin).toBe('anime');
     });
 
-    it('wires independent surface theme variants into their slots', () => {
+    it('wires the bundled surface theme slots without resizing fixed surfaces', () => {
         const surfaceTheme: SurfaceThemeSelections = {
-            shellBackground: 'geek',
-            tablecloth: 'royal',
+            background: 'geek',
+            topBar: 'royal',
             gemPanel: 'minimal',
-            marketBackground: 'wood',
-            playerZone: 'default',
+            playerZone: 'wood',
+            effects: 'anime',
         };
         const styles = createGameShellStyles('dark', TEST_LAYOUT, surfaceTheme);
 
@@ -85,7 +89,7 @@ describe('createGameShellStyles', () => {
             '/assets/surfaces/theme-presets/dark/shell-background/geek.png'
         );
         expect(String(styles.playMatSurfaceStyle.backgroundImage)).toContain(
-            '/assets/surfaces/theme-presets/dark/tablecloth/royal.png'
+            '/assets/surfaces/dark/tablecloth-playmat.png'
         );
         expect(String(styles.gemBoardSurfaceStyle.backgroundImage)).toContain(
             '/assets/surfaces/theme-presets/dark/gem-panel/minimal.png'
@@ -94,8 +98,13 @@ describe('createGameShellStyles', () => {
             '/assets/surfaces/theme-presets/dark/gem-panel/minimal.png'
         );
         expect(String(styles.marketSurfaceStyle.backgroundImage)).toContain(
-            '/assets/surfaces/theme-presets/dark/market-background/wood.png'
+            '/assets/surfaces/dark/background-market.png'
         );
+        expect(styles.gemPanelSkin.playfieldRectNormalized).toEqual(
+            GEM_PANEL_CANONICAL_PLAYFIELD_RECT
+        );
+        expect(styles.topBarSurfaceStyle.background).toContain('linear-gradient');
+        expect(styles.effectsSkin).toBe('anime');
     });
 });
 
