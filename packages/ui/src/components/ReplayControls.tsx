@@ -51,7 +51,11 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
 
             <div className="flex flex-col items-center min-w-[5.25rem]">
                 <span
-                    className={`text-[13px] uppercase font-bold tracking-widest mb-0.5 ${theme === 'dark' ? 'text-slate-300' : 'text-slate-600'}`}
+                    className="mb-0.5 text-[13px] font-bold uppercase tracking-widest"
+                    style={{
+                        color: 'var(--gd-shell-label-muted)',
+                        textShadow: 'var(--gd-shell-text-shadow)',
+                    }}
                 >
                     {t('replay.action')}
                 </span>
@@ -59,12 +63,14 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                     data-replay-step-counter="true"
                     data-current-step={currentStep}
                     data-history-length={historyLength}
-                    className={`text-[21px] font-mono font-bold tabular-nums ${theme === 'dark' ? 'text-slate-200' : 'text-slate-800'}`}
+                    className="font-mono text-[21px] font-bold tabular-nums"
+                    style={{
+                        color: 'var(--gd-shell-action-text)',
+                        textShadow: 'var(--gd-shell-text-shadow)',
+                    }}
                 >
                     {currentStep}{' '}
-                    <span
-                        className={`${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'} mx-1`}
-                    >
+                    <span className="mx-1" style={{ color: 'var(--gd-shell-label-muted)' }}>
                         /
                     </span>{' '}
                     {historyLength}

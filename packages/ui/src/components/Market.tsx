@@ -1,7 +1,5 @@
 import React, { useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import { Card, FEATURED_CARD_SIZE } from './Card';
-import { withGameAnimation } from '../hoc/withGameAnimation';
 import { getFsmPhaseSurfacePolicy } from '@gemduel/shared/logic/fsm';
 import { calculateTransaction } from '@gemduel/shared/utils';
 import {
@@ -19,8 +17,7 @@ import {
 import { useT } from '../i18n/LocaleProvider';
 import { LexiconTerm } from '../lexicon/LexiconTerm';
 import { MarketDeckBack } from './market/MarketDeckBack';
-
-const AnimatedCard = withGameAnimation(Card);
+import type { MarketDeckBackArtworkMap } from './card/cardBackArtwork';
 
 interface MarketProps {
     market: MarketState;
@@ -43,6 +40,7 @@ interface MarketProps {
     isOnline?: boolean;
     localPlayer?: PlayerKey;
     surfaceStyle?: React.CSSProperties;
+    deckBackArtwork?: MarketDeckBackArtworkMap;
 }
 
 export const Market: React.FC<MarketProps> = React.memo(
@@ -63,6 +61,7 @@ export const Market: React.FC<MarketProps> = React.memo(
         isOnline,
         localPlayer,
         surfaceStyle,
+        deckBackArtwork,
     }) => {
         const t = useT();
         const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
@@ -103,7 +102,7 @@ export const Market: React.FC<MarketProps> = React.memo(
         return (
             <div
                 data-surface-slot="market-background"
-                className={`relative shrink-0 overflow-visible rounded-[2.5rem] p-5 transition-all duration-500 backdrop-blur-sm ${
+                className={`relative shrink-0 overflow-visible rounded-[2.5rem] p-5 transition-all duration-500 ${
                     !canInteract ? 'opacity-80' : ''
                 }`}
             >
@@ -115,8 +114,11 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                 <div className="relative z-10 flex flex-col gap-2.5 items-center">
                     <h2
-                        className={`text-[13px] font-black uppercase tracking-[0.34em] mb-1 text-center
-                    ${theme === 'dark' ? 'text-slate-300' : 'text-stone-600'}`}
+                        className="mb-1 text-center text-[13px] font-black uppercase tracking-[0.34em]"
+                        style={{
+                            color: 'var(--gd-shell-label-primary)',
+                            textShadow: 'var(--gd-shell-text-shadow)',
+                        }}
                     >
                         <LexiconTerm termId="market" className="normal-case" underline={false}>
                             {t('market.title')}
@@ -158,6 +160,7 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                         const deck = decks[lvl];
                         const topCard = deck.length > 0 ? deck[deck.length - 1] : null;
+                        const deckArtwork = deckBackArtwork?.[lvl];
 
                         const extraL3Cards =
                             lvl === 3 && revealL3
@@ -265,12 +268,18 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                                     <div
                                         data-market-deck={lvl}
+                                        data-market-deck-back-artwork-path={
+                                            deckArtwork?.path ?? 'none'
+                                        }
+                                        data-market-deck-back-artwork-variant={
+                                            deckArtwork?.variant ?? 'none'
+                                        }
                                         onClick={() =>
                                             surfacePolicy.marketInteraction &&
                                             canInteract &&
                                             handleReserveDeck(lvl)
                                         }
-                                        className={`shrink-0 rounded-lg border-2 flex flex-col items-center justify-center transition-all duration-200 shadow-md relative overflow-hidden group
+                                        className={`shrink-0 rounded-lg border-2 flex flex-col items-center justify-center shadow-md relative overflow-hidden
                             ${
                                 surfacePolicy.marketInteraction &&
                                 canInteract &&
@@ -278,7 +287,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                                     ? (theme === 'dark'
                                           ? 'border-slate-600 hover:border-emerald-400'
                                           : 'border-slate-400 hover:border-emerald-500') +
-                                      ' cursor-pointer hover:scale-105 hover:-translate-y-1 active:scale-95 active:translate-y-0'
+                                      ' cursor-pointer active:scale-[0.98]'
                                     : (theme === 'dark'
                                           ? 'border-slate-700 opacity-60'
                                           : 'border-slate-300 opacity-55') + ' cursor-default'
@@ -287,6 +296,9 @@ export const Market: React.FC<MarketProps> = React.memo(
                                         style={{
                                             width: `${FEATURED_CARD_SIZE.width}px`,
                                             height: `${FEATURED_CARD_SIZE.height}px`,
+                                            contain: 'layout paint',
+                                            isolation: 'isolate',
+                                            transform: 'translateZ(0)',
                                         }}
                                     >
                                         <MarketDeckBack
@@ -294,6 +306,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                                             count={decks[lvl].length}
                                             theme={theme}
                                             levelLabel={t('market.level', { level: lvl })}
+                                            artwork={deckArtwork}
                                         />
                                     </div>
                                 </div>
@@ -312,51 +325,38 @@ export const Market: React.FC<MarketProps> = React.memo(
                                                 height: `${FEATURED_CARD_SIZE.height}px`,
                                             }}
                                         >
-                                            <AnimatePresence mode="wait">
-                                                {card && (
-                                                    <AnimatedCard
-                                                        key={card.id} // Stable Card ID triggers exit/enter on change
-                                                        card={card}
-                                                        canBuy={
-                                                            surfacePolicy.marketInteraction &&
-                                                            canInteract &&
-                                                            calculateTransaction(
-                                                                card,
-                                                                inventories[turn],
-                                                                playerTableau[turn],
-                                                                playerBuffs[turn],
-                                                                false
-                                                            ).affordable
-                                                        }
-                                                        context={{
-                                                            level: lvl as 1 | 2 | 3,
-                                                            idx: i,
-                                                        }}
-                                                        onClick={handleBuy}
-                                                        onReserve={
-                                                            canInteract ? handleReserve : undefined
-                                                        }
-                                                        reserveOnClick={
-                                                            reserveModeActive &&
-                                                            surfacePolicy.marketInteraction &&
-                                                            canInteract
-                                                        }
-                                                        theme={theme}
-                                                        size="featured"
-                                                        animationConfig={{
-                                                            mode:
-                                                                card.bonusColor === 'null'
-                                                                    ? 'prestige'
-                                                                    : 'acquire',
-                                                            layout: false,
-                                                            // P1 is on the left, P2 is on the right.
-                                                            // Market is also on the left.
-                                                            targetX: turn === 'p1' ? 0 : 600,
-                                                            targetY: 500,
-                                                        }}
-                                                    />
-                                                )}
-                                            </AnimatePresence>
+                                            {card && (
+                                                <Card
+                                                    key={card.id}
+                                                    card={card}
+                                                    canBuy={
+                                                        surfacePolicy.marketInteraction &&
+                                                        canInteract &&
+                                                        calculateTransaction(
+                                                            card,
+                                                            inventories[turn],
+                                                            playerTableau[turn],
+                                                            playerBuffs[turn],
+                                                            false
+                                                        ).affordable
+                                                    }
+                                                    context={{
+                                                        level: lvl as 1 | 2 | 3,
+                                                        idx: i,
+                                                    }}
+                                                    onClick={handleBuy}
+                                                    onReserve={
+                                                        canInteract ? handleReserve : undefined
+                                                    }
+                                                    reserveOnClick={
+                                                        reserveModeActive &&
+                                                        surfacePolicy.marketInteraction &&
+                                                        canInteract
+                                                    }
+                                                    theme={theme}
+                                                    size="featured"
+                                                />
+                                            )}
                                         </div>
                                     ))}
                                 </div>

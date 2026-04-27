@@ -105,28 +105,28 @@ describe('useSettings', () => {
             currentResult?.setLocale('en');
             currentResult?.setSurfaceTheme((current) => ({
                 ...current,
-                background: 'wood',
-                topBar: 'wood',
-                gemPanel: 'wood',
-                playerZone: 'royal',
+                background: 'royal-luxury',
+                topBar: 'royal-luxury',
+                gemPanel: 'royal-luxury',
+                playerZone: 'dark-arcane',
             }));
         });
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
-        expect(currentResult?.surfaceTheme.playerZone).toBe('royal');
-        expect(currentResult?.surfaceTheme.background).toBe('wood');
-        expect(currentResult?.surfaceTheme.topBar).toBe('wood');
-        expect(currentResult?.surfaceTheme.gemPanel).toBe('wood');
+        expect(currentResult?.surfaceTheme.playerZone).toBe('dark-arcane');
+        expect(currentResult?.surfaceTheme.background).toBe('royal-luxury');
+        expect(currentResult?.surfaceTheme.topBar).toBe('royal-luxury');
+        expect(currentResult?.surfaceTheme.gemPanel).toBe('royal-luxury');
         expect(currentResult?.surfaceTheme.effects).toBe('anime');
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored).toMatchObject({ theme: 'dark', locale: 'en' });
         expect(stored.surfaceTheme).toMatchObject({
-            background: 'wood',
-            topBar: 'wood',
-            gemPanel: 'wood',
-            playerZone: 'royal',
+            background: 'royal-luxury',
+            topBar: 'royal-luxury',
+            gemPanel: 'royal-luxury',
+            playerZone: 'dark-arcane',
             effects: 'anime',
         });
     });
@@ -161,13 +161,7 @@ describe('useSettings', () => {
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
         expect(currentResult?.hasExplicitLocalePreference).toBe(false);
-        expect(currentResult?.surfaceTheme).toEqual({
-            background: 'geek',
-            topBar: 'geek',
-            gemPanel: 'geek',
-            playerZone: 'geek',
-            effects: 'anime',
-        });
+        expect(currentResult?.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
 
         act(() => {
             currentResult?.setLocale((current) => (current === 'en' ? 'zh' : 'en'));

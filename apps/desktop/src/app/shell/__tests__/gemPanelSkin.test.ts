@@ -7,7 +7,7 @@ import { getGemPanelSkin } from '../surfaceArtwork';
 import { SURFACE_THEME_VARIANTS } from '../surfaceTheme';
 
 describe('gem panel skin geometry', () => {
-    it('exposes the square dashboard skin geometry for the dark default panel', () => {
+    it('exposes the square dashboard skin geometry for the default panel', () => {
         const skin = getGemPanelSkin('dark');
 
         expect(skin.id).toBe('square-dashboard');

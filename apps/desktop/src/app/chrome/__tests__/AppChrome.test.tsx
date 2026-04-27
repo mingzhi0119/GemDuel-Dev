@@ -6,8 +6,8 @@ import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import { AppChrome } from '../AppChrome';
 import {
     DEFAULT_SURFACE_THEME_SELECTIONS,
-    getNextSurfaceThemeSelections,
     type SurfaceThemeSelections,
+    type SurfaceThemeVariant,
 } from '../../shell/surfaceTheme';
 
 (
@@ -38,8 +38,14 @@ const ChromeHarness = ({ theme = 'dark' }: { theme?: 'light' | 'dark' }) => {
                 onForceRoyal={vi.fn()}
                 showDebugPanels={false}
                 surfaceTheme={surfaceTheme}
-                onCycleSurfaceTheme={() =>
-                    setSurfaceTheme((current) => getNextSurfaceThemeSelections(current))
+                onSelectSurfaceTheme={(variant: SurfaceThemeVariant) =>
+                    setSurfaceTheme({
+                        background: variant,
+                        topBar: variant,
+                        playerZone: variant,
+                        gemPanel: variant,
+                        effects: 'anime',
+                    })
                 }
             />
         </LocaleProvider>
@@ -167,7 +173,7 @@ describe('AppChrome locale controls', () => {
         expect(onRequestRestart).toHaveBeenCalledTimes(1);
     });
 
-    it('shows shell actions and a single bundled surface theme control inside the settings menu', async () => {
+    it('shows shell actions and a surface theme dropdown inside the settings menu', async () => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -190,27 +196,52 @@ describe('AppChrome locale controls', () => {
 
         expect(settingsMenu?.textContent).not.toContain('Restart');
         expect(settingsMenu?.textContent).not.toContain('Rules');
-        expect(settingsMenu?.textContent).toContain('Theme: Default');
+        expect(settingsMenu?.textContent).toContain('Crystal Anime');
+        expect(settingsMenu?.textContent).not.toContain('Royal Luxury');
+        expect(settingsMenu?.textContent).not.toContain('Dark Arcane');
+        expect(settingsMenu?.textContent).not.toContain('Clean Boardgame');
         expect(settingsMenu?.textContent).not.toContain('Surface Theme');
         expect(settingsMenu?.textContent).not.toContain('Market Background');
         expect(settingsMenu?.textContent).not.toContain('Player Zone');
-        expect(settingsMenu?.className).toContain('w-[216px]');
+        expect(settingsMenu?.className).toContain('w-[248px]');
 
-        const surfaceThemeButton = Array.from(container.querySelectorAll('button')).find((button) =>
-            button.textContent?.includes('Theme: Default')
+        const surfaceThemeSelect = container.querySelector<HTMLButtonElement>(
+            'button[data-app-surface-theme-select="true"]'
         );
 
-        expect(surfaceThemeButton?.className).toContain('justify-start');
+        expect(surfaceThemeSelect?.dataset.appSurfaceThemeValue).toBe('crystal-anime');
 
         await act(async () => {
-            surfaceThemeButton?.click();
+            surfaceThemeSelect?.click();
             await Promise.resolve();
         });
 
-        expect(container.textContent).toContain('Theme: Wood');
+        const surfaceThemeDropdown = container.querySelector<HTMLElement>(
+            '[data-app-surface-theme-dropdown="true"]'
+        );
+        expect(surfaceThemeDropdown?.className).toContain('bg-slate-950');
+        expect(surfaceThemeDropdown?.textContent).toContain('Crystal Anime');
+        expect(surfaceThemeDropdown?.textContent).toContain('Royal Luxury');
+        expect(surfaceThemeDropdown?.textContent).toContain('Dark Arcane');
+        expect(surfaceThemeDropdown?.textContent).toContain('Clean Boardgame');
+
+        const royalLuxuryOption = container.querySelector<HTMLButtonElement>(
+            '[data-app-surface-theme-option="royal-luxury"]'
+        );
+
+        await act(async () => {
+            royalLuxuryOption?.click();
+            await Promise.resolve();
+        });
+
+        expect(
+            container.querySelector<HTMLButtonElement>(
+                'button[data-app-surface-theme-select="true"]'
+            )?.dataset.appSurfaceThemeValue
+        ).toBe('royal-luxury');
     });
 
-    it('renders the light surface theme cycle button inside settings', async () => {
+    it('renders the light surface theme dropdown inside settings', async () => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -229,13 +260,27 @@ describe('AppChrome locale controls', () => {
             await Promise.resolve();
         });
 
-        const surfaceThemeButton = Array.from(container.querySelectorAll('button')).find((button) =>
-            button.textContent?.includes('Theme: Default')
+        const surfaceThemeSelect = container.querySelector<HTMLButtonElement>(
+            'button[data-app-surface-theme-select="true"]'
         );
+
         await act(async () => {
-            surfaceThemeButton?.click();
+            surfaceThemeSelect?.click();
             await Promise.resolve();
         });
-        expect(container.textContent).toContain('Theme: Wood');
+
+        const cleanBoardgameOption = container.querySelector<HTMLButtonElement>(
+            '[data-app-surface-theme-option="clean-boardgame"]'
+        );
+
+        await act(async () => {
+            cleanBoardgameOption?.click();
+            await Promise.resolve();
+        });
+        expect(
+            container.querySelector<HTMLButtonElement>(
+                'button[data-app-surface-theme-select="true"]'
+            )?.dataset.appSurfaceThemeValue
+        ).toBe('clean-boardgame');
     });
 });

@@ -7,6 +7,7 @@ import { Market } from '@gemduel/ui/components/Market';
 import { ReplayControls } from '@gemduel/ui/components/ReplayControls';
 import { RoyalCourt } from '@gemduel/ui/components/RoyalCourt';
 import { StatusBar } from '@gemduel/ui/components/StatusBar';
+import type { MarketDeckBackArtworkMap } from '@gemduel/ui/components/card/cardBackArtwork';
 import { SHARED_PRIVILEGE_SUPPLY_SIZE } from '@gemduel/shared/logic/stateHelpers';
 import type { AppRouteProps } from '@app/types/ui';
 import type {
@@ -25,11 +26,10 @@ interface GamePlaySurfaceProps {
     theme: AppRouteProps['theme'];
     effectiveGameMode: EffectiveGameMode;
     localPlayer: PlayerKey;
-    playMatSurfaceStyle: CSSProperties;
-    playMatDividerStyle: CSSProperties;
     gemBoardSurfaceStyle: CSSProperties;
     gemPanelSkin: GemPanelSkin;
     marketSurfaceStyle: CSSProperties;
+    marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     isRoyalSelectionBlocked?: boolean;
 }
 
@@ -39,11 +39,10 @@ export function GamePlaySurface({
     theme,
     effectiveGameMode,
     localPlayer,
-    playMatSurfaceStyle,
-    playMatDividerStyle,
     gemBoardSurfaceStyle,
     gemPanelSkin,
     marketSurfaceStyle,
+    marketDeckBackArtwork,
     isRoyalSelectionBlocked = false,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
@@ -96,11 +95,6 @@ export function GamePlaySurface({
                 }}
             >
                 <div
-                    data-surface-slot="tablecloth"
-                    className="absolute inset-0 rounded-[24px] pointer-events-none"
-                    style={playMatSurfaceStyle}
-                />
-                <div
                     className="relative z-10 flex flex-col lg:flex-row items-center justify-center px-5 py-4 lg:px-6 lg:py-5 transition-[gap] duration-500"
                     style={{ gap: `${layout.mainGapPx}px` }}
                 >
@@ -128,13 +122,9 @@ export function GamePlaySurface({
                             isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
                             localPlayer={localPlayer}
                             surfaceStyle={marketSurfaceStyle}
+                            deckBackArtwork={marketDeckBackArtwork}
                         />
                     </div>
-
-                    <div
-                        className="hidden lg:block self-stretch w-px my-6 rounded-full"
-                        style={playMatDividerStyle}
-                    />
 
                     <div
                         data-presentation-anchor="center-playfield"
@@ -197,11 +187,6 @@ export function GamePlaySurface({
                             />
                         </div>
                     </div>
-
-                    <div
-                        className="hidden lg:block self-stretch w-px my-6 rounded-full"
-                        style={playMatDividerStyle}
-                    />
 
                     <div
                         className="relative z-10 flex flex-row lg:flex-col gap-4 items-center shrink-0"

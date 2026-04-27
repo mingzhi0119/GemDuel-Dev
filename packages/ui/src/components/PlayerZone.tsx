@@ -6,7 +6,9 @@ import {
     PLAYER_ZONE_DISPLAY_COLORS,
     RESERVED_CARD_FALLBACK_SCALE,
     RESERVED_CARD_GAP_PX,
+    RESERVED_CARD_MAX_SCALE,
     RESERVED_CARD_MIN_SCALE,
+    RESERVED_CARD_TARGET_SLOTS,
     TABLEAU_STACK_FALLBACK_SCALE,
     TABLEAU_STACK_GAP_PX,
     TABLEAU_STACK_MIN_SCALE,
@@ -50,6 +52,7 @@ export const PlayerZone = ({
     theme,
     surfaceStyle,
     surfaceVariant,
+    pendingReservedCardIds = [],
 }: PlayerZoneProps) => {
     const safeCards = Array.isArray(cards) ? cards : [];
     const [selectedStack, setSelectedStack] = useState<PlayerZoneStackState | null>(null);
@@ -86,14 +89,15 @@ export const PlayerZone = ({
     const summaryDisplayScale = clamp(tableauSummaryScale, TABLEAU_STACK_MIN_SCALE, 1);
     const summaryBadgeFontPx = Math.round(INVENTORY_GEM_COUNT_FONT_PX / summaryDisplayScale);
     const summaryBadgeSizePx = Math.round(INVENTORY_GEM_BADGE_SIZE_PX / summaryDisplayScale);
-    const reservedGapTotalPx = Math.max(reserved.length - 1, 0) * RESERVED_CARD_GAP_PX;
+    const reservedSlotCount = Math.max(reserved.length, RESERVED_CARD_TARGET_SLOTS);
+    const reservedGapTotalPx = Math.max(reservedSlotCount - 1, 0) * RESERVED_CARD_GAP_PX;
     const reservedCardScale =
         reserved.length > 0 && reservedRowWidth > 0
             ? clamp(
                   (reservedRowWidth - reservedGapTotalPx) /
-                      (reserved.length * FEATURED_CARD_SIZE.width),
+                      (reservedSlotCount * FEATURED_CARD_SIZE.width),
                   RESERVED_CARD_MIN_SCALE,
-                  1
+                  RESERVED_CARD_MAX_SCALE
               )
             : RESERVED_CARD_FALLBACK_SCALE;
 
@@ -102,16 +106,7 @@ export const PlayerZone = ({
             data-player-zone={player}
             data-player-zone-bg={surfaceVariant ?? 'none'}
             data-reserved-count={reserved.length}
-            className={`flex w-full h-full flex-row items-stretch p-4 transition-all duration-500 gap-4
-        ${
-            isActive
-                ? theme === 'dark'
-                    ? 'bg-slate-900/80'
-                    : 'bg-white/80'
-                : theme === 'dark'
-                  ? 'bg-slate-950/40 opacity-90'
-                  : 'bg-slate-100/40 opacity-90'
-        }
+            className={`flex w-full h-full flex-row items-stretch p-4 transition-all duration-500 gap-4 bg-transparent
         ${isStealMode ? 'ring-2 ring-rose-500 animate-pulse' : ''}
         ${isDiscardMode && isActive ? 'ring-2 ring-red-500 animate-pulse' : ''}
         ${isExtortionEffect ? 'ring-4 ring-purple-500 bg-purple-500/10 animate-pulse' : ''}
@@ -142,6 +137,7 @@ export const PlayerZone = ({
             />
 
             <PlayerZoneResourcesColumn
+                player={player}
                 inventory={inventory}
                 feedbacks={feedbacks}
                 isStealMode={isStealMode}
@@ -160,6 +156,7 @@ export const PlayerZone = ({
             />
 
             <PlayerZoneReservedColumn
+                player={player}
                 reserved={reserved}
                 reservedRowRef={reservedRowRef}
                 reservedCardScale={reservedCardScale}
@@ -168,6 +165,7 @@ export const PlayerZone = ({
                 theme={theme}
                 onBuyReserved={onBuyReserved}
                 onDiscardReserved={onDiscardReserved}
+                pendingReservedCardIds={pendingReservedCardIds}
             />
         </div>
     );

@@ -8,6 +8,8 @@ import { CardFacePattern } from './card/CardFacePattern';
 import { JokerBonusBadge } from './card/JokerBonusBadge';
 import { getCardArtworkPath, getRuntimeCardArtworkId } from './card/cardArtwork';
 import { getCardCostCountStyle } from './card/cardCostStyles';
+import type { CardBackArtwork } from './card/cardBackArtwork';
+import { getCardScoreColorClass } from './card/cardScoreColor';
 import {
     BASE_CARD_SIZE,
     FEATURED_CARD_SAMPLE_SIZE,
@@ -36,10 +38,12 @@ interface CardProps {
     isReservedView?: boolean;
     isRoyal?: boolean;
     reserveOnClick?: boolean;
+    allowUnavailableClick?: boolean;
     className?: string;
     size?: CardSize;
     theme?: 'light' | 'dark';
     isDeckPreview?: boolean;
+    cardBackArtwork?: CardBackArtwork;
 }
 
 export const Card: React.FC<CardProps> = React.memo(
@@ -52,9 +56,11 @@ export const Card: React.FC<CardProps> = React.memo(
         isReservedView = false,
         isRoyal = false,
         reserveOnClick = false,
+        allowUnavailableClick = false,
         className = '',
         size = 'default',
         theme = 'dark',
+        cardBackArtwork,
     }) => {
         const t = useT();
         const dimensions = getCardDimensions(size);
@@ -105,9 +111,14 @@ export const Card: React.FC<CardProps> = React.memo(
               : card.level === 2
                 ? 'from-yellow-900/40 to-slate-800'
                 : 'from-blue-900/40 to-slate-800';
-        const artworkPath = getCardArtworkPath(card.id);
+        const runtimeArtworkPath = getCardArtworkPath(card.id);
+        const artworkPath = cardBackArtwork?.path ?? runtimeArtworkPath;
         const hasRuntimeArtwork = Boolean(artworkPath);
-        const artworkCardId = hasRuntimeArtwork ? getRuntimeCardArtworkId(card.id) : card.id;
+        const artworkCardId = cardBackArtwork
+            ? cardBackArtwork.variant
+            : hasRuntimeArtwork
+              ? getRuntimeCardArtworkId(card.id)
+              : card.id;
 
         const handleCardClick = () => {
             if (reserveOnClick && onReserve) {
@@ -115,31 +126,8 @@ export const Card: React.FC<CardProps> = React.memo(
                 return;
             }
 
-            if ((canBuy || isRoyal) && onClick) {
+            if ((canBuy || isRoyal || allowUnavailableClick) && onClick) {
                 onClick(card, context);
-            }
-        };
-
-        const getScoreColor = (color: string | undefined | null) => {
-            switch (color) {
-                case 'blue':
-                    return 'text-blue-300';
-                case 'green':
-                    return theme === 'dark' ? 'text-emerald-300' : 'text-emerald-400';
-                case 'red':
-                    return theme === 'dark' ? 'text-rose-300' : 'text-rose-500';
-                case 'black':
-                    return theme === 'dark' ? 'text-slate-500' : 'text-black';
-                case 'white':
-                    return 'text-white';
-                case 'gold':
-                    return theme === 'dark' ? 'text-amber-300' : 'text-amber-500';
-                case 'null':
-                case null:
-                case undefined:
-                    return theme === 'dark' ? 'text-gray-200' : 'text-gray-400';
-                default:
-                    return 'text-white';
             }
         };
 
@@ -152,7 +140,9 @@ export const Card: React.FC<CardProps> = React.memo(
         const runtimeArtworkAffordableClassName =
             canBuy && !isRoyal ? 'outline outline-2 outline-emerald-500 outline-offset-2' : '';
         const runtimeArtworkShellClassName = `relative overflow-hidden group ${className} ${
-            canBuy || isRoyal || reserveOnClick ? 'cursor-pointer' : 'cursor-default'
+            canBuy || isRoyal || reserveOnClick || allowUnavailableClick
+                ? 'cursor-pointer'
+                : 'cursor-default'
         } ${runtimeArtworkAffordableClassName}`;
         const fallbackShellClassName = `relative rounded-lg border transition-colors duration-200 bg-gradient-to-b ${bgGradient} overflow-hidden group ${className}
         ${
@@ -165,7 +155,11 @@ export const Card: React.FC<CardProps> = React.memo(
                   : (theme === 'dark'
                         ? 'border-slate-600'
                         : 'border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.05)]') +
-                    ` opacity-90 ${reserveOnClick ? 'cursor-pointer' : 'cursor-default'}`
+                    ` opacity-90 ${
+                        reserveOnClick || allowUnavailableClick
+                            ? 'cursor-pointer'
+                            : 'cursor-default'
+                    }`
         }
     `;
 
@@ -174,6 +168,8 @@ export const Card: React.FC<CardProps> = React.memo(
                 onClick={handleCardClick}
                 data-card-affordable={canBuy && !isRoyal ? 'true' : 'false'}
                 data-card-reserve-on-click={reserveOnClick ? 'true' : 'false'}
+                data-card-preview-click={allowUnavailableClick ? 'true' : 'false'}
+                data-card-back-preview={cardBackArtwork?.variant}
                 className={
                     hasRuntimeArtwork ? runtimeArtworkShellClassName : fallbackShellClassName
                 }
@@ -212,7 +208,7 @@ export const Card: React.FC<CardProps> = React.memo(
                         >
                             {Number(card.points) > 0 && (
                                 <span
-                                    className={`font-bold leading-none drop-shadow-md ${getScoreColor(card.bonusColor)}`}
+                                    className={`font-bold leading-none drop-shadow-md ${getCardScoreColorClass(card.bonusColor, theme)}`}
                                     style={{ fontSize: `${pointFontSizePx}px` }}
                                 >
                                     {card.points}

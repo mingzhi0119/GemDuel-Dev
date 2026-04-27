@@ -80,6 +80,14 @@ export const GameActions: React.FC<GameActionsProps> = ({
                             whileTap={selectedCount === 0 && bagCount > 0 ? { scale: 0.95 } : {}}
                             onClick={handleReplenish}
                             disabled={bagCount === 0 || selectedCount > 0}
+                            style={{
+                                color:
+                                    bagCount > 0 && selectedCount === 0
+                                        ? 'var(--gd-shell-control-text, var(--gd-shell-action-text))'
+                                        : 'var(--gd-shell-control-muted, var(--gd-shell-label-muted))',
+                                textShadow:
+                                    'var(--gd-shell-control-text-shadow, var(--gd-shell-text-shadow))',
+                            }}
                             className={`flex items-center gap-2 px-6 py-2 rounded-full font-bold text-base transition-all duration-300 border
                             ${
                                 bagCount > 0 && selectedCount === 0

@@ -14,10 +14,14 @@ import type {
 import { Card } from '@gemduel/ui/components/Card';
 import { DeckPeekModal } from '@gemduel/ui/components/DeckPeekModal';
 import { GemIcon } from '@gemduel/ui/components/GemIcon';
+import { GameActions } from '@gemduel/ui/components/GameActions';
 import { GameBoard } from '@gemduel/ui/components/GameBoard';
 import { Market } from '@gemduel/ui/components/Market';
 import { PlayerZone } from '@gemduel/ui/components/PlayerZone';
+import { ReplayControls } from '@gemduel/ui/components/ReplayControls';
+import { RoyalCourt } from '@gemduel/ui/components/RoyalCourt';
 import { TopBar } from '@gemduel/ui/components/TopBar';
+import { MarketDeckBack } from '@gemduel/ui/components/market/MarketDeckBack';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import { getGemPanelSkin } from '../app/shell/surfaceArtwork';
 import { SURFACE_THEME_VARIANTS } from '../app/shell/surfaceTheme';
@@ -303,6 +307,24 @@ describe('surface styling affordances', () => {
         expect(chineseHtml).toContain('1 级');
     });
 
+    it('renders market deck artwork as an isolated image layer', () => {
+        const html = renderToStaticMarkup(
+            <MarketDeckBack
+                level={1}
+                count={12}
+                theme="dark"
+                levelLabel="Lvl 1"
+                artwork={{ path: '/assets/test-card-back.png', variant: 'test-l1' }}
+            />
+        );
+
+        expect(html).toContain('data-market-deck-back-img="true"');
+        expect(html).toContain('src="/assets/test-card-back.png"');
+        expect(html).not.toContain('background-image:url');
+        expect(html).not.toContain('filter:');
+        expect(html).not.toContain('group-hover');
+    });
+
     it('uses featured card dimensions for reserved player-zone cards', () => {
         const html = renderToStaticMarkup(
             <LocaleProvider locale="en" setLocale={() => undefined}>
@@ -398,6 +420,116 @@ describe('surface styling affordances', () => {
         expect(html.indexOf('data-topbar-crown-group="p2"')).toBeLessThan(
             html.indexOf('data-topbar-points-group="p2"')
         );
+    });
+
+    it('wires semantic contrast variables into visible shell labels', () => {
+        const topBarHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <TopBar
+                    p1Score={0}
+                    p1Crowns={0}
+                    p2Score={0}
+                    p2Crowns={0}
+                    playerTurnCounts={{ p1: 1, p2: 0 }}
+                    activePlayer="p1"
+                    theme="light"
+                />
+            </LocaleProvider>
+        );
+        const marketHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <Market
+                    market={EMPTY_MARKET}
+                    decks={EMPTY_DECKS}
+                    phase="IDLE"
+                    turn="p1"
+                    inventories={{ p1: EMPTY_COST, p2: EMPTY_COST }}
+                    playerTableau={{ p1: [], p2: [] }}
+                    playerBuffs={{
+                        p1: BUFFS.NONE as unknown as Buff,
+                        p2: BUFFS.NONE as unknown as Buff,
+                    }}
+                    handleReserveDeck={() => undefined}
+                    initiateBuy={() => undefined}
+                    handleReserveCard={() => undefined}
+                    theme="light"
+                />
+            </LocaleProvider>
+        );
+        const royalHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <RoyalCourt
+                    royalDeck={[]}
+                    phase="IDLE"
+                    handleSelectRoyal={() => undefined}
+                    theme="light"
+                />
+            </LocaleProvider>
+        );
+        const actionsHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <GameActions
+                    handleReplenish={() => undefined}
+                    bag={[{ type: GEM_TYPES.BLUE, uid: 'bag-blue' }]}
+                    phase="IDLE"
+                    handleConfirmTake={() => undefined}
+                    handleCancelReserve={() => undefined}
+                    handleCancelPrivilege={() => undefined}
+                    theme="light"
+                />
+            </LocaleProvider>
+        );
+        const replayHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <ReplayControls
+                    undo={() => undefined}
+                    redo={() => undefined}
+                    canUndo={true}
+                    canRedo={false}
+                    currentIndex={0}
+                    historyLength={1}
+                    theme="light"
+                />
+            </LocaleProvider>
+        );
+
+        expect(topBarHtml).toContain('var(--gd-topbar-goal-text)');
+        expect(marketHtml).toContain('var(--gd-shell-label-primary)');
+        expect(royalHtml).toContain('var(--gd-shell-gold-text)');
+        expect(actionsHtml).toContain('var(--gd-shell-action-text)');
+        expect(replayHtml).toContain('var(--gd-shell-action-text)');
+    });
+
+    it('hides pending reserved cards while keeping the target slot anchor', () => {
+        const html = renderToStaticMarkup(
+            <LocaleProvider locale="en" setLocale={() => undefined}>
+                <PlayerZone
+                    player="p1"
+                    inventory={EMPTY_COST}
+                    cards={[]}
+                    reserved={[SAMPLE_CARD]}
+                    privileges={0}
+                    isActive={true}
+                    lastFeedback={null}
+                    onBuyReserved={() => false}
+                    onDiscardReserved={() => undefined}
+                    onUsePrivilege={() => undefined}
+                    isPrivilegeMode={false}
+                    onGemClick={() => undefined}
+                    isStealMode={false}
+                    isDiscardMode={false}
+                    buff={BUFFS.NONE as unknown as Buff}
+                    theme="dark"
+                    score={0}
+                    crowns={0}
+                    pendingReservedCardIds={[SAMPLE_CARD.id]}
+                />
+            </LocaleProvider>
+        );
+
+        expect(html).toContain('data-reserved-slot="p1-0"');
+        expect(html).toContain('data-reserved-card-pending="true"');
+        expect(html).toContain('visibility:hidden');
     });
 
     it('renders deck peek cards larger than featured market cards', () => {

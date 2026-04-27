@@ -141,6 +141,22 @@ describe('Card artwork rendering', () => {
         expect(html).not.toContain('lucide-crown');
     });
 
+    it('keeps royal court cards on face artwork instead of card backs', () => {
+        const html = renderToStaticMarkup(
+            <RoyalCourt
+                royalDeck={[royalCard]}
+                phase="IDLE"
+                handleSelectRoyal={() => undefined}
+                theme="dark"
+            />
+        );
+
+        expect(html).toContain('data-card-artwork="r92-ro"');
+        expect(html).toContain('/assets/cards/r92-ro.png');
+        expect(html).not.toContain('data-card-back-preview=');
+        expect(html).not.toContain('/assets/surfaces/anime-themes/');
+    });
+
     it('does not dim royal full-card artwork in the court while selection is inactive', () => {
         const html = renderToStaticMarkup(
             <RoyalCourt

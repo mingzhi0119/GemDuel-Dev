@@ -5,7 +5,7 @@ import { GemIcon } from '../GemIcon';
 import { FloatingGem, FloatingText } from '../VisualFeedback';
 import { cn } from '@gemduel/shared/utils';
 import type { RefObject } from 'react';
-import type { GemColor, GemInventory } from '@gemduel/shared/types';
+import type { GemColor, GemInventory, PlayerKey } from '@gemduel/shared/types';
 import {
     PLAYER_ZONE_DISPLAY_COLORS,
     PLAYER_ZONE_RESOURCE_COLORS,
@@ -18,6 +18,7 @@ import { ScaledCardFrame } from './ScaledCardFrame';
 import type { PlayerZoneColorStats, PlayerZoneFeedbackItem, PlayerZoneStackState } from './types';
 
 interface PlayerZoneResourcesColumnProps {
+    player: PlayerKey;
     inventory: GemInventory;
     feedbacks: PlayerZoneFeedbackItem[];
     isStealMode: boolean;
@@ -36,6 +37,7 @@ interface PlayerZoneResourcesColumnProps {
 }
 
 export function PlayerZoneResourcesColumn({
+    player,
     inventory,
     feedbacks,
     isStealMode,
@@ -69,6 +71,9 @@ export function PlayerZoneResourcesColumn({
                     return (
                         <div
                             key={gem.id}
+                            data-player-gem={`${player}-${gem.id}`}
+                            data-player-gem-color={gem.id}
+                            data-player-gem-count={count}
                             onClick={() => isClickable && onGemClick && onGemClick(gem.id)}
                             className={`relative transition-all group ${isClickable ? 'cursor-pointer hover:scale-110 active:scale-95 ring-2 ring-rose-500 rounded-full' : ''}`}
                         >
@@ -125,6 +130,7 @@ export function PlayerZoneResourcesColumn({
 
             <div
                 ref={tableauRowRef}
+                data-tableau-row={player}
                 className="flex w-full shrink-0 items-start justify-start mt-1 overflow-hidden py-2 max-w-full min-w-0"
                 style={{ gap: `${TABLEAU_STACK_GAP_PX}px` }}
             >
@@ -137,6 +143,9 @@ export function PlayerZoneResourcesColumn({
                     return (
                         <div
                             key={color}
+                            data-tableau-stack={`${player}-${color}`}
+                            data-tableau-stack-color={color}
+                            data-tableau-card-count={stats.cards.length}
                             className="flex shrink-0 flex-col items-center gap-1 min-w-[32px]"
                             onClick={() =>
                                 stats.cards.length > 0 &&
@@ -262,7 +271,7 @@ export function PlayerZoneResourcesColumn({
                                             className={`rounded border border-dashed flex items-center justify-center ${
                                                 theme === 'dark'
                                                     ? 'border-slate-600 bg-slate-800/35'
-                                                    : 'border-stone-300 bg-stone-100/70'
+                                                    : 'border-stone-400/10 bg-white/[0.04]'
                                             }`}
                                             style={{
                                                 width: `${STANDARD_CARD_SIZE.width}px`,
@@ -270,7 +279,11 @@ export function PlayerZoneResourcesColumn({
                                             }}
                                         >
                                             <div
-                                                className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} opacity-20`}
+                                                className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} ${
+                                                    theme === 'dark'
+                                                        ? 'opacity-20'
+                                                        : 'opacity-[0.07]'
+                                                }`}
                                             />
                                         </div>
                                     )}

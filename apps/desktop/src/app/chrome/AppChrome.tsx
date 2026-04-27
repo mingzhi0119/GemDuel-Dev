@@ -17,6 +17,7 @@ import { useT } from '@gemduel/ui/i18n/LocaleProvider';
 import {
     DEFAULT_SURFACE_THEME_SELECTIONS,
     type SurfaceThemeSelections,
+    type SurfaceThemeVariant,
 } from '../shell/surfaceTheme';
 import { AppChromeSurfaceControls } from './AppChromeSurfaceMenu';
 
@@ -40,7 +41,7 @@ interface AppChromeProps {
     onForceRoyal: () => void;
     showDebugPanels: boolean;
     surfaceTheme?: SurfaceThemeSelections;
-    onCycleSurfaceTheme?: () => void;
+    onSelectSurfaceTheme?: (variant: SurfaceThemeVariant) => void;
 }
 
 export function AppChrome({
@@ -59,7 +60,7 @@ export function AppChrome({
     onForceRoyal,
     showDebugPanels,
     surfaceTheme = DEFAULT_SURFACE_THEME_SELECTIONS,
-    onCycleSurfaceTheme,
+    onSelectSurfaceTheme,
 }: AppChromeProps) {
     const t = useT();
     const settingsTooltipId = useId();
@@ -170,7 +171,7 @@ export function AppChrome({
                     {showSettingsMenu && (
                         <div
                             data-settings-menu="true"
-                            className={`absolute right-0 top-full mt-3 w-[216px] origin-top-right rounded-2xl border p-2.5 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.32)] lg:scale-[1.5] ${
+                            className={`absolute right-0 top-full mt-3 w-[248px] origin-top-right rounded-2xl border p-2.5 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.32)] lg:scale-[1.5] ${
                                 theme === 'dark'
                                     ? 'bg-slate-950/92 border-slate-700/80'
                                     : 'bg-white/96 border-stone-300'
@@ -266,9 +267,10 @@ export function AppChrome({
                                 </button>
 
                                 <AppChromeSurfaceControls
+                                    theme={theme}
                                     neutralMutedButtonClass={neutralMutedButtonClass}
                                     surfaceTheme={surfaceTheme}
-                                    onCycleSurfaceTheme={onCycleSurfaceTheme}
+                                    onSelectSurfaceTheme={onSelectSurfaceTheme}
                                 />
                             </div>
                         </div>

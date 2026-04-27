@@ -98,19 +98,8 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                     className="absolute z-[1] pointer-events-none rounded-[2rem]"
                     style={{
                         ...playfieldRectStyle,
-                        ...(theme === 'light'
-                            ? {
-                                  background:
-                                      'linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%)',
-                                  boxShadow:
-                                      'inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -12px 24px rgba(15,23,42,0.06)',
-                              }
-                            : {
-                                  background:
-                                      'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(2,6,23,0.10) 100%)',
-                                  boxShadow:
-                                      'inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -14px 24px rgba(0,0,0,0.18)',
-                              }),
+                        background: 'transparent',
+                        boxShadow: 'none',
                     }}
                 />
 

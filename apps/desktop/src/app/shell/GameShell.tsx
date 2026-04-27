@@ -1,13 +1,23 @@
+import { useMemo, useState } from 'react';
 import { TopBar } from '@gemduel/ui/components/TopBar';
 import { UpdateNotification } from '@gemduel/ui/components/UpdateNotification';
 import type { AppRouteProps } from '@app/types/ui';
 import { AppChrome } from '../chrome/AppChrome';
 import { AppOverlayStack } from '../overlays/AppOverlayStack';
 import { PresentationLayer } from '../presentation/PresentationLayer';
-import { usePresentationEvents } from '../presentation/usePresentationEvents';
+import {
+    usePresentationEvents,
+    type PresentationController,
+} from '../presentation/usePresentationEvents';
 import { GamePlaySurface } from './GamePlaySurface';
 import { PlayerRail } from './PlayerRail';
 import { createGameShellStyles } from './gameShellStyles';
+import {
+    createPreviewPresentationEvent,
+    getPresentationPreviewMode,
+    getShouldHoldPresentationPreviewIntro,
+    type PresentationPreviewStage,
+} from './presentationPreview';
 
 export function GameShell({
     appVersion,
@@ -48,6 +58,72 @@ export function GameShell({
         historySource: historyControls.historySource,
         isReviewing: ui.isReviewing,
     });
+    const presentationPreviewMode = useMemo(getPresentationPreviewMode, []);
+    const shouldHoldPresentationPreviewIntro = useMemo(getShouldHoldPresentationPreviewIntro, []);
+    const [presentationPreviewStage, setPresentationPreviewStage] =
+        useState<PresentationPreviewStage>(
+            presentationPreviewMode === 'royal-unlock' ? 'intro' : null
+        );
+    const previewPresentation = useMemo<PresentationController | null>(() => {
+        if (!presentationPreviewMode) {
+            return null;
+        }
+
+        if (presentationPreviewMode !== 'royal-unlock') {
+            const activeEvent = createPreviewPresentationEvent(
+                presentationPreviewMode,
+                state,
+                historyControls.currentIndex
+            );
+
+            if (!activeEvent) {
+                return null;
+            }
+
+            return {
+                activeEvent,
+                activeStage: 'pulse',
+                queuedEventCount: 0,
+                isBlockingRoyalSelection: false,
+                pendingReservedCardIds: [],
+                completeIntro: () => {},
+                completeEvent: () => setPresentationPreviewStage(null),
+                cancelEvent: () => setPresentationPreviewStage(null),
+            };
+        }
+
+        if (!presentationPreviewStage) {
+            return null;
+        }
+
+        return {
+            activeEvent: {
+                id: `royal-unlock:preview:${state.turn}:forced`,
+                type: 'royal-unlock',
+                player: state.turn,
+                milestone: 'forced',
+                createdAtIndex: historyControls.currentIndex,
+            },
+            activeStage: presentationPreviewStage,
+            queuedEventCount: 0,
+            isBlockingRoyalSelection: true,
+            pendingReservedCardIds: [],
+            completeIntro: () => {
+                if (!shouldHoldPresentationPreviewIntro) {
+                    setPresentationPreviewStage('selection');
+                }
+            },
+            completeEvent: () => setPresentationPreviewStage(null),
+            cancelEvent: () => setPresentationPreviewStage(null),
+        };
+    }, [
+        historyControls.currentIndex,
+        presentationPreviewMode,
+        presentationPreviewStage,
+        shouldHoldPresentationPreviewIntro,
+        state,
+    ]);
+    const effectivePresentation = previewPresentation ?? presentation;
     const canShowDebug =
         state.mode !== 'ONLINE_MULTIPLAYER' &&
         (state.mode === 'PVE' || historyControls.historyLength === 0 || ui.showDebug);
@@ -56,17 +132,19 @@ export function GameShell({
         shellStyle,
         topBarSurfaceStyle,
         scaledZoneWrapperStyle,
-        playMatSurfaceStyle,
-        playMatDividerStyle,
         playerRailStyle,
         gemBoardSurfaceStyle,
         gemPanelSkin,
         marketSurfaceStyle,
+        marketDeckBackArtwork,
+        shellSurfaceVariant,
+        topBarSurfaceVariant,
     } = createGameShellStyles(theme, layout, surfaceTheme);
 
     return (
         <div
             data-surface-slot="app-background"
+            data-surface-variant={shellSurfaceVariant}
             className={`relative h-full w-full font-sans grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden transition-colors duration-500 ${
                 theme === 'dark' ? 'text-slate-200' : 'text-stone-800'
             }`}
@@ -92,7 +170,7 @@ export function GameShell({
                 playerBuffs={playerBuffs}
                 theme={theme}
                 surfaceStyle={topBarSurfaceStyle}
-                surfaceVariant={surfaceTheme?.topBar}
+                surfaceVariant={topBarSurfaceVariant}
                 localPlayer={localPlayer}
                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
             />
@@ -113,7 +191,7 @@ export function GameShell({
                 onForceRoyal={handleForceRoyal}
                 showDebugPanels={ui.showDebug && state.mode !== 'ONLINE_MULTIPLAYER'}
                 surfaceTheme={surfaceTheme}
-                onCycleSurfaceTheme={callbacks.cycleSurfaceTheme}
+                onSelectSurfaceTheme={callbacks.selectSurfaceTheme}
             />
 
             <AppOverlayStack
@@ -139,10 +217,15 @@ export function GameShell({
             />
 
             <PresentationLayer
-                presentation={presentation}
+                presentation={effectivePresentation}
                 royalDeck={state.royalDeck}
                 theme={theme}
-                onSelectRoyal={handlers.handleSelectRoyal}
+                onSelectRoyal={
+                    previewPresentation
+                        ? () => setPresentationPreviewStage(null)
+                        : handlers.handleSelectRoyal
+                }
+                marketDeckBackArtwork={marketDeckBackArtwork}
             />
 
             <GamePlaySurface
@@ -151,12 +234,11 @@ export function GameShell({
                 theme={theme}
                 effectiveGameMode={effectiveGameMode}
                 localPlayer={localPlayer}
-                playMatSurfaceStyle={playMatSurfaceStyle}
-                playMatDividerStyle={playMatDividerStyle}
                 gemBoardSurfaceStyle={gemBoardSurfaceStyle}
                 gemPanelSkin={gemPanelSkin}
                 marketSurfaceStyle={marketSurfaceStyle}
-                isRoyalSelectionBlocked={presentation.isBlockingRoyalSelection}
+                marketDeckBackArtwork={marketDeckBackArtwork}
+                isRoyalSelectionBlocked={effectivePresentation.isBlockingRoyalSelection}
             />
 
             <PlayerRail
@@ -168,6 +250,7 @@ export function GameShell({
                 isP1ZoneActive={isP1ZoneActive}
                 isP2ZoneActive={isP2ZoneActive}
                 playerZoneSurfaceVariant={surfaceTheme?.playerZone}
+                pendingReservedCardIds={effectivePresentation.pendingReservedCardIds}
             />
         </div>
     );

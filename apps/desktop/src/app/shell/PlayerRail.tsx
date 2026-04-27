@@ -20,6 +20,7 @@ interface PlayerRailProps {
     isP1ZoneActive: boolean;
     isP2ZoneActive: boolean;
     playerZoneSurfaceVariant?: PlayerZoneSurfaceVariant;
+    pendingReservedCardIds?: string[];
 }
 
 export function PlayerRail({
@@ -31,6 +32,7 @@ export function PlayerRail({
     isP1ZoneActive,
     isP2ZoneActive,
     playerZoneSurfaceVariant,
+    pendingReservedCardIds = [],
 }: PlayerRailProps) {
     const { state, handlers, getters } = game;
     const {
@@ -55,12 +57,14 @@ export function PlayerRail({
     const surfacePolicy = getFsmPhaseSurfacePolicy(effectiveGameMode);
     const previewPlayerZoneSurfaceVariant = getPlayerZoneSurfaceVariant();
     const resolvedPlayerZoneSurfaceVariant =
-        playerZoneSurfaceVariant ?? previewPlayerZoneSurfaceVariant;
+        previewPlayerZoneSurfaceVariant !== 'none'
+            ? previewPlayerZoneSurfaceVariant
+            : (playerZoneSurfaceVariant ?? 'none');
 
     return (
         <div
-            className={`shrink-0 flex w-full backdrop-blur-xl relative z-20 transition-all duration-500 
-                ${theme === 'dark' ? 'bg-black/30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]' : ''}`}
+            data-player-rail="true"
+            className="shrink-0 flex w-full relative z-20 transition-all duration-500"
             style={playerRailStyle}
         >
             <div
@@ -69,11 +73,11 @@ export function PlayerRail({
                     ${
                         isP1ZoneActive
                             ? theme === 'dark'
-                                ? 'animate-breathe-emerald border-emerald-500/40 bg-emerald-900/20'
-                                : 'animate-breathe-emerald border-emerald-200 bg-emerald-50/30'
+                                ? 'animate-breathe-emerald border-emerald-400/45'
+                                : 'animate-breathe-emerald border-emerald-500/45'
                             : theme === 'dark'
-                              ? 'border-emerald-950/70 bg-emerald-950/10'
-                              : 'border-emerald-50 bg-emerald-50/30'
+                              ? 'border-slate-400/18'
+                              : 'border-slate-500/24'
                     }`}
             >
                 <div className="shrink-0" style={scaledZoneWrapperStyle}>
@@ -108,6 +112,7 @@ export function PlayerRail({
                             'p1'
                         )}
                         surfaceVariant={resolvedPlayerZoneSurfaceVariant}
+                        pendingReservedCardIds={pendingReservedCardIds}
                     />
                 </div>
             </div>
@@ -118,11 +123,11 @@ export function PlayerRail({
                     ${
                         isP2ZoneActive
                             ? theme === 'dark'
-                                ? 'animate-breathe-blue border-blue-500/40 bg-blue-900/20'
-                                : 'animate-breathe-blue border-blue-200 bg-slate-50/30'
+                                ? 'animate-breathe-blue border-blue-400/45'
+                                : 'animate-breathe-blue border-blue-500/45'
                             : theme === 'dark'
-                              ? 'border-blue-950/70 bg-blue-950/10'
-                              : 'border-blue-50 bg-slate-50/30'
+                              ? 'border-slate-400/18'
+                              : 'border-slate-500/24'
                     }`}
             >
                 <div className="shrink-0" style={scaledZoneWrapperStyle}>
@@ -157,6 +162,7 @@ export function PlayerRail({
                             'p2'
                         )}
                         surfaceVariant={resolvedPlayerZoneSurfaceVariant}
+                        pendingReservedCardIds={pendingReservedCardIds}
                     />
                 </div>
             </div>

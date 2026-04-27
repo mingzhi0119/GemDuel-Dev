@@ -1,17 +1,22 @@
 import React from 'react';
 import { validateGemSelection } from '@gemduel/shared/logic/validators';
 import type { BoardCell, GemCoord } from '@gemduel/shared/types';
-import {
-    GEM_BOARD_DIMENSION,
-    GEM_BOARD_GEM_SIZE_PX,
-    type GemPanelFootprint,
-} from './gemPanelLayout';
+import type { GemPanelFootprint } from './gemPanelLayout';
+import { findNearestGemCoordFromPointer } from './gemBoardPointerHitTest';
 
 export type GemDragSelectionIntent = 'select' | 'deselect';
 
 interface NormalizedCellCenter {
     x: number;
     y: number;
+}
+
+interface DragSelectionState {
+    active: boolean;
+    moved: boolean;
+    suppressClick: boolean;
+    anchor: GemCoord | null;
+    intent: GemDragSelectionIntent;
 }
 
 interface UseGemBoardDragSelectionParams {
@@ -32,6 +37,22 @@ const hasCoord = (coords: GemCoord[], target: GemCoord) =>
 
 const isSelectableDragCell = (cell: BoardCell | undefined) =>
     Boolean(cell && cell.type.id !== 'empty' && cell.type.id !== 'gold');
+
+const suppressNextBoardClick = (
+    dragStateRef: React.MutableRefObject<DragSelectionState>,
+    suppressClickTimeoutRef: React.MutableRefObject<number | null>
+) => {
+    dragStateRef.current.suppressClick = true;
+
+    if (suppressClickTimeoutRef.current !== null) {
+        window.clearTimeout(suppressClickTimeoutRef.current);
+    }
+
+    suppressClickTimeoutRef.current = window.setTimeout(() => {
+        dragStateRef.current.suppressClick = false;
+        suppressClickTimeoutRef.current = null;
+    }, 0);
+};
 
 const buildDragSelectionCandidate = (
     currentPath: GemCoord[],
@@ -96,7 +117,7 @@ export const useGemBoardDragSelection = ({
     const [dragPreview, setDragPreview] = React.useState<GemCoord[]>([]);
     const dragPreviewRef = React.useRef<GemCoord[]>([]);
     const dragDeselectPathRef = React.useRef<GemCoord[]>([]);
-    const dragStateRef = React.useRef({
+    const dragStateRef = React.useRef<DragSelectionState>({
         active: false,
         moved: false,
         suppressClick: false,
@@ -122,10 +143,13 @@ export const useGemBoardDragSelection = ({
         }
 
         const dragIntent = dragStateRef.current.intent;
+        const dragAnchor = dragStateRef.current.anchor;
+        const didMove = dragStateRef.current.moved;
         const shouldCommit =
             dragIntent === 'select'
-                ? dragStateRef.current.moved && dragPreviewRef.current.length > 1
-                : dragStateRef.current.moved && dragDeselectPathRef.current.length > 0;
+                ? didMove && dragPreviewRef.current.length > 1
+                : didMove && dragDeselectPathRef.current.length > 0;
+        const shouldCommitTap = !didMove && dragAnchor !== null;
         dragStateRef.current.active = false;
         dragStateRef.current.moved = false;
         dragStateRef.current.anchor = null;
@@ -135,20 +159,14 @@ export const useGemBoardDragSelection = ({
             const committedCoords =
                 dragIntent === 'select' ? dragPreviewRef.current : dragDeselectPathRef.current;
             handleGemDragSelection(committedCoords, dragIntent);
-            dragStateRef.current.suppressClick = true;
-
-            if (suppressClickTimeoutRef.current !== null) {
-                window.clearTimeout(suppressClickTimeoutRef.current);
-            }
-
-            suppressClickTimeoutRef.current = window.setTimeout(() => {
-                dragStateRef.current.suppressClick = false;
-                suppressClickTimeoutRef.current = null;
-            }, 0);
+            suppressNextBoardClick(dragStateRef, suppressClickTimeoutRef);
+        } else if (shouldCommitTap) {
+            handleGemClick(dragAnchor.r, dragAnchor.c);
+            suppressNextBoardClick(dragStateRef, suppressClickTimeoutRef);
         }
 
         clearDragPreview();
-    }, [clearDragPreview, handleGemDragSelection]);
+    }, [clearDragPreview, handleGemClick, handleGemDragSelection]);
 
     const cancelDragSelection = React.useCallback(() => {
         dragStateRef.current.active = false;
@@ -204,16 +222,27 @@ export const useGemBoardDragSelection = ({
                 return;
             }
 
-            if (typeof event.currentTarget.setPointerCapture === 'function') {
+            const startPointerCapture = () => {
+                if (typeof event.currentTarget.setPointerCapture !== 'function') {
+                    return;
+                }
+
                 try {
                     event.currentTarget.setPointerCapture(event.pointerId);
                 } catch {
                     // Some synthetic/browser automation paths do not expose pointer capture.
                 }
-            }
+            };
 
             const coord = { r, c };
+            if (board[r]?.[c]?.type.id === 'gold') {
+                handleGemClick(r, c);
+                suppressNextBoardClick(dragStateRef, suppressClickTimeoutRef);
+                return;
+            }
+
             if (hasCoord(selectedGems, coord)) {
+                startPointerCapture();
                 dragStateRef.current.active = true;
                 dragStateRef.current.moved = false;
                 dragStateRef.current.anchor = coord;
@@ -229,6 +258,7 @@ export const useGemBoardDragSelection = ({
                 return;
             }
 
+            startPointerCapture();
             dragStateRef.current.active = true;
             dragStateRef.current.moved = false;
             dragStateRef.current.anchor = coord;
@@ -241,6 +271,7 @@ export const useGemBoardDragSelection = ({
             boardInteractionMode,
             canInteract,
             clearDragPreview,
+            handleGemClick,
             selectedGems,
             updateDragPreview,
         ]
@@ -319,43 +350,19 @@ export const useGemBoardDragSelection = ({
                 return;
             }
 
-            const rect = event.currentTarget.getBoundingClientRect();
-            if (rect.width <= 0 || rect.height <= 0) {
-                return;
-            }
-
-            const pointerX = event.clientX - rect.left;
-            const pointerY = event.clientY - rect.top;
-            const renderedGemSize =
-                Math.min(
-                    (rect.width / panelFootprint.widthPx) * GEM_BOARD_GEM_SIZE_PX,
-                    (rect.height / panelFootprint.heightPx) * GEM_BOARD_GEM_SIZE_PX
-                ) * 0.7;
-            const hitRadiusSq = Math.pow(renderedGemSize / 2, 2);
-
-            let nearestRow = -1;
-            let nearestColumn = -1;
-            let nearestDistanceSq = Number.POSITIVE_INFINITY;
-
-            cellCenters.forEach((center, index) => {
-                const centerX = center.x * rect.width;
-                const centerY = center.y * rect.height;
-                const dx = pointerX - centerX;
-                const dy = pointerY - centerY;
-                const distanceSq = dx * dx + dy * dy;
-
-                if (distanceSq <= hitRadiusSq && distanceSq < nearestDistanceSq) {
-                    nearestRow = Math.floor(index / GEM_BOARD_DIMENSION);
-                    nearestColumn = index % GEM_BOARD_DIMENSION;
-                    nearestDistanceSq = distanceSq;
-                }
+            const coord = findNearestGemCoordFromPointer({
+                clientX: event.clientX,
+                clientY: event.clientY,
+                rect: event.currentTarget.getBoundingClientRect(),
+                panelFootprint,
+                cellCenters,
             });
 
-            if (nearestRow < 0 || nearestColumn < 0) {
+            if (!coord) {
                 return;
             }
 
-            handleBoardGemPointerEnter(nearestRow, nearestColumn);
+            handleBoardGemPointerEnter(coord.r, coord.c);
         },
         [
             boardInteractionMode,

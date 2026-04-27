@@ -1,9 +1,10 @@
 import React from 'react';
-import { Crown, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '@gemduel/shared/types';
 import { BUFFS } from '@gemduel/shared/constants';
 import { AnimatedScore } from './topBar/AnimatedScore';
+import { AnimatedCrownMetric } from './topBar/AnimatedCrownMetric';
 import { TopBarBuff } from './topBar/TopBarBuff';
 import { useLocale, useT } from '../i18n/LocaleProvider';
 
@@ -55,16 +56,24 @@ export const TopBar: React.FC<TopBarProps> = ({
     const isP1Winning = p1Score >= p1Goals.points * 0.75 || p1Crowns >= p1Goals.crowns * 0.7;
     const isP2Winning = p2Score >= p2Goals.points * 0.75 || p2Crowns >= p2Goals.crowns * 0.7;
     const isMyTurn = isOnline && localPlayer === activePlayer;
+    const topBarTextShadow = 'var(--gd-topbar-text-shadow)';
 
     const getWinningClass = (isWinning: boolean) => {
-        if (!isWinning) return theme === 'dark' ? 'text-white' : 'text-slate-900';
-        return theme === 'dark' ? 'animate-pulse text-yellow-400' : 'animate-pulse text-orange-600';
+        if (!isWinning) return '';
+        return theme === 'dark'
+            ? 'drop-shadow-[0_0_12px_rgba(250,204,21,0.36)]'
+            : 'drop-shadow-[0_0_10px_rgba(234,88,12,0.22)]';
     };
 
     const renderPoints = (pid: PlayerKey, score: number, pointGoal: number, isWinning: boolean) => (
         <div
             className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isWinning)}`}
             data-topbar-points-group={pid}
+            data-topbar-score-pressure={isWinning ? 'near-victory' : 'normal'}
+            style={{
+                color: isWinning ? 'var(--gd-topbar-gold-text)' : 'var(--gd-topbar-label-primary)',
+                textShadow: topBarTextShadow,
+            }}
         >
             <Trophy className="h-4 w-4 lg:h-12 lg:w-12" />
             <span data-topbar-score={pid} data-value={score}>
@@ -75,39 +84,41 @@ export const TopBar: React.FC<TopBarProps> = ({
                 />
             </span>
             <span
-                className={`mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl ${
-                    theme === 'dark' ? 'text-slate-300' : 'text-stone-600'
-                }`}
+                className="mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl"
+                style={{ color: 'var(--gd-topbar-goal-text)', textShadow: topBarTextShadow }}
             >
                 /{pointGoal}
             </span>
         </div>
     );
 
-    const renderCrowns = (pid: PlayerKey, crowns: number, crownGoal: number) => (
-        <div
-            className={`flex items-center gap-1 lg:gap-2 ${
-                crowns >= crownGoal - 3 ? 'animate-pulse text-yellow-400' : 'text-yellow-500'
-            }`}
-            data-topbar-crown-group={pid}
-        >
-            <Crown className="h-4 w-4 lg:h-12 lg:w-12" fill="currentColor" />
-            <span
-                data-topbar-crowns={pid}
-                data-value={crowns}
-                className="text-xl lg:text-[64px] font-black leading-none drop-shadow-lg"
+    const renderCrowns = (pid: PlayerKey, crowns: number, crownGoal: number) => {
+        const isNearGoal = crowns >= crownGoal - 3;
+
+        return (
+            <div
+                className="flex items-center gap-1 lg:gap-2"
+                data-topbar-crown-group={pid}
+                data-topbar-crown-pressure={isNearGoal ? 'near-victory' : 'normal'}
+                style={{ color: 'var(--gd-topbar-gold-text)', textShadow: topBarTextShadow }}
             >
-                {crowns}
-            </span>
-            <span
-                className={`mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl ${
-                    theme === 'dark' ? 'text-slate-300' : 'text-stone-600'
-                }`}
-            >
-                /{crownGoal}
-            </span>
-        </div>
-    );
+                <AnimatedCrownMetric
+                    value={crowns}
+                    player={pid}
+                    theme={theme}
+                    isNearGoal={isNearGoal}
+                    iconClassName="h-4 w-4 lg:h-12 lg:w-12"
+                    className="text-xl lg:text-[64px] font-black leading-none drop-shadow-lg"
+                />
+                <span
+                    className="mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl"
+                    style={{ color: 'var(--gd-topbar-goal-text)', textShadow: topBarTextShadow }}
+                >
+                    /{crownGoal}
+                </span>
+            </div>
+        );
+    };
 
     const renderScoreGroup = (pid: PlayerKey) => {
         const isP1 = pid === 'p1';
@@ -132,7 +143,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     const renderTurnSide = (pid: PlayerKey) => {
         const isP1 = pid === 'p1';
         const activeClass = isP1 ? 'text-emerald-500' : 'text-blue-500';
-        const inactiveClass = theme === 'dark' ? 'text-slate-300' : 'text-stone-800';
+        const inactiveClass = '';
 
         return (
             <div
@@ -152,13 +163,20 @@ export const TopBar: React.FC<TopBarProps> = ({
                     className={`text-[12px] font-black leading-none transition-colors lg:text-[38px] ${
                         activePlayer === pid ? activeClass : inactiveClass
                     }`}
+                    style={
+                        activePlayer === pid
+                            ? { textShadow: topBarTextShadow }
+                            : {
+                                  color: 'var(--gd-topbar-label-primary)',
+                                  textShadow: topBarTextShadow,
+                              }
+                    }
                 >
                     {playerTurnCounts[pid]}
                 </span>
                 <span
-                    className={`text-[9px] font-black uppercase tracking-tighter lg:text-2xl ${
-                        theme === 'dark' ? 'text-slate-300/80' : 'text-stone-600'
-                    }`}
+                    className="text-[9px] font-black uppercase tracking-tighter lg:text-2xl"
+                    style={{ color: 'var(--gd-topbar-label-muted)', textShadow: topBarTextShadow }}
                 >
                     {t('topBar.turn')}
                 </span>
@@ -170,13 +188,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div
             data-presentation-anchor="topbar"
             data-topbar-surface-variant={surfaceVariant}
-            className={`relative z-[60] h-24 w-full shrink-0 border-b backdrop-blur-xl transition-colors duration-500 lg:h-[120px]
-            ${
-                theme === 'dark'
-                    ? 'bg-slate-950/95 border-slate-700 shadow-[0_8px_24px_rgba(0,0,0,0.3)]'
-                    : 'bg-[rgba(251,252,252,0.72)] border-[rgba(15,23,42,0.08)] shadow-[0_8px_24px_rgba(15,23,42,0.06)]'
-            }
-        `}
+            className="relative z-[60] h-24 w-full shrink-0 border-b transition-colors duration-500 lg:h-[120px]"
             style={surfaceStyle}
         >
             <div className="relative h-full w-full">
@@ -245,7 +257,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                             className="absolute top-full left-1/2 z-50 -mt-3 flex items-center gap-2 rounded-b-xl border-x border-b border-emerald-600 bg-emerald-500 px-6 py-1.5 shadow-lg"
                         >
-                            <span className="animate-pulse text-[10px] font-black uppercase tracking-widest text-white">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">
                                 {t('topBar.yourTurn')}
                             </span>
                         </motion.div>

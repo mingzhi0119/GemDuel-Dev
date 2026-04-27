@@ -18,6 +18,13 @@ The app is a single game shell with four top-level states:
 | Center playfield | `Market`, `StatusBar`, `GameBoard`, `GameActions`, `RoyalCourt`, `ReplayControls`   | Three-column game layout                                                     |
 | Player rail      | `apps/desktop/src/App.tsx`, `packages/ui/src/components/PlayerZone.tsx`             | Outer shell handles active-player framing; `PlayerZone` owns internal layout |
 
+## Surface Backgrounds
+
+- The shell background is the single full-board table surface. Do not add a separate tablecloth, playmat, or center-panel background slot.
+- Center playfield and player rail separation should use border lines and dividers only. Avoid gray overlays, gradient bands, or color-difference panels to separate these areas.
+- Light and Dark surface variants describe the artwork's tonal direction only. Do not add generic white or black masks to force a bright or dark mode; the bitmap should carry the visual tone and React should preserve readable foreground styling.
+- Player-zone artwork is rendered directly from the selected Surface Theme; React-rendered controls and cards must remain readable over the artwork without baking labels, card frames, card slots, fake controls, or numbers into the bitmap.
+
 ## Layout Ownership
 
 - Major gameplay shell placement changes start in `apps/desktop/src/app/shell/GameShell.tsx`.

@@ -12,7 +12,14 @@ import { useLanDevVerification } from './hooks/useLanDevVerification';
 import { useLanMatchmaking } from './hooks/useLanMatchmaking';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { useSettings } from './hooks/useSettings';
-import { getNextSurfaceThemeSelections } from './app/shell/surfaceTheme';
+import { createSurfaceThemeSelections, type SurfaceThemeVariant } from './app/shell/surfaceTheme';
+import {
+    clearSurfacePreviewArtworkQuery,
+    getSurfacePreviewStartMode,
+    getSurfacePreviewTheme,
+    getSurfacePreviewVariant,
+    setSurfacePreviewThemeQuery,
+} from './app/shell/surfacePreviewQuery';
 import type { PlayerKey } from '@gemduel/shared/types';
 import { getDocumentLanguage } from '@gemduel/shared';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
@@ -27,9 +34,26 @@ export default function GemDuelBoard() {
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
     const lastGuestLaunchRoomRef = useRef<string | null>(null);
     const lastHostStartRoomRef = useRef<string | null>(null);
+    const didSurfacePreviewStartRef = useRef(false);
 
     const { appVersion } = useRuntimeAppConfig();
     const { theme, setTheme, locale, setLocale, surfaceTheme, setSurfaceTheme } = useSettings();
+    const surfacePreviewTheme = useMemo(getSurfacePreviewTheme, []);
+    const [surfacePreviewThemeOverride, setSurfacePreviewThemeOverride] =
+        useState(surfacePreviewTheme);
+    const initialSurfacePreviewVariant = useMemo(getSurfacePreviewVariant, []);
+    const [surfacePreviewVariant, setSurfacePreviewVariant] = useState(
+        initialSurfacePreviewVariant
+    );
+    const surfacePreviewStartMode = useMemo(getSurfacePreviewStartMode, []);
+    const effectiveTheme = surfacePreviewThemeOverride ?? theme;
+    const effectiveSurfaceTheme = useMemo(
+        () =>
+            surfacePreviewVariant
+                ? createSurfaceThemeSelections(surfacePreviewVariant)
+                : surfaceTheme,
+        [surfacePreviewVariant, surfaceTheme]
+    );
     const layout = useResponsiveLayout();
     const lan = useLanMatchmaking();
     const lanShouldConnect =
@@ -101,9 +125,9 @@ export default function GemDuelBoard() {
     }, [historyControls.historyLength, historyControls.historySource]);
 
     useEffect(() => {
-        document.documentElement.dataset.theme = theme;
-        document.body.dataset.theme = theme;
-    }, [theme]);
+        document.documentElement.dataset.theme = effectiveTheme;
+        document.body.dataset.theme = effectiveTheme;
+    }, [effectiveTheme]);
 
     useEffect(() => {
         const documentLanguage = getDocumentLanguage(locale);
@@ -124,6 +148,21 @@ export default function GemDuelBoard() {
         persistReplayToProjectFolder,
     });
 
+    useEffect(() => {
+        if (
+            !surfacePreviewStartMode ||
+            didSurfacePreviewStartRef.current ||
+            historyControls.historyLength > 0
+        ) {
+            return;
+        }
+
+        didSurfacePreviewStartRef.current = true;
+        handlers.startGame(surfacePreviewStartMode === 'pve' ? 'PVE' : 'LOCAL_PVP', {
+            useBuffs: false,
+        });
+    }, [handlers, historyControls.historyLength, surfacePreviewStartMode]);
+
     const handleRestart = () => {
         if (lan.state.phase !== 'idle') {
             void lan.cancelSearch();
@@ -133,6 +172,25 @@ export default function GemDuelBoard() {
         setShowRestartConfirm(false);
         lastGuestLaunchRoomRef.current = null;
         lastHostStartRoomRef.current = null;
+    };
+
+    const handleToggleTheme = () => {
+        if (surfacePreviewThemeOverride) {
+            setSurfacePreviewThemeOverride((current) => {
+                const nextTheme = (current ?? theme) === 'dark' ? 'light' : 'dark';
+                setSurfacePreviewThemeQuery(nextTheme);
+                return nextTheme;
+            });
+            return;
+        }
+
+        setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
+    };
+
+    const handleSelectSurfaceTheme = (variant: SurfaceThemeVariant) => {
+        clearSurfacePreviewArtworkQuery();
+        setSurfacePreviewVariant(undefined);
+        setSurfaceTheme(createSurfaceThemeSelections(variant));
     };
 
     useEffect(() => {
@@ -201,8 +259,8 @@ export default function GemDuelBoard() {
                 game={game}
                 lan={lan}
                 layout={layout}
-                theme={theme}
-                surfaceTheme={surfaceTheme}
+                theme={effectiveTheme}
+                surfaceTheme={effectiveSurfaceTheme}
                 ui={{
                     showDebug,
                     isReviewing,
@@ -224,10 +282,8 @@ export default function GemDuelBoard() {
                     handleRestart,
                     handleDownloadReplay,
                     handleUploadReplay,
-                    toggleTheme: () =>
-                        setTheme((current) => (current === 'dark' ? 'light' : 'dark')),
-                    cycleSurfaceTheme: () =>
-                        setSurfaceTheme((current) => getNextSurfaceThemeSelections(current)),
+                    toggleTheme: handleToggleTheme,
+                    selectSurfaceTheme: handleSelectSurfaceTheme,
                 }}
             />
         </LocaleProvider>

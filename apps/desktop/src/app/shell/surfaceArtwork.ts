@@ -1,6 +1,10 @@
 import type { CSSProperties } from 'react';
 import type { GemPanelSkin, ThemeName } from '@gemduel/shared/types';
 import { GEM_PANEL_CANONICAL_PLAYFIELD_RECT } from '@gemduel/ui/components/gameBoard/gemPanelLayout';
+import type {
+    CardBackArtwork,
+    MarketDeckBackArtworkMap,
+} from '@gemduel/ui/components/card/cardBackArtwork';
 import {
     DEFAULT_SURFACE_THEME_SELECTIONS,
     normalizeSurfaceThemeSelections,
@@ -8,8 +12,9 @@ import {
     type SurfaceThemeVariant,
 } from './surfaceTheme';
 
-type SurfaceArtworkSlot = 'shellBackground' | 'tablecloth' | 'gemPanel' | 'marketBackground';
+type SurfaceArtworkSlot = 'shellBackground' | 'gemPanel' | 'marketBackground';
 type GemPanelSkinId = 'dashboard' | 'square-dashboard';
+type SurfaceRuntimeMode = 'dark' | 'light';
 
 interface SurfaceArtworkAsset {
     path: string;
@@ -23,10 +28,10 @@ type ThemeSurfaceArtwork = Record<SurfaceArtworkSlot, SurfaceArtworkAsset>;
 
 const SURFACE_THEME_SLOT_PATHS: Record<SurfaceArtworkSlot, string> = {
     shellBackground: 'shell-background',
-    tablecloth: 'tablecloth',
     gemPanel: 'gem-panel',
     marketBackground: 'market-background',
 };
+const SURFACE_THEME_RUNTIME_BASE_PATH = '/assets/surfaces/anime-themes';
 
 const GEM_PANEL_SKIN_BASE: Record<GemPanelSkinId, Omit<GemPanelSkin, 'artworkPath'>> = {
     dashboard: {
@@ -48,10 +53,6 @@ export const SURFACE_ARTWORK: Record<ThemeName, ThemeSurfaceArtwork> = {
         shellBackground: {
             path: '/assets/surfaces/light/background-shell.png',
         },
-        tablecloth: {
-            path: '/assets/surfaces/light/tablecloth-playmat.png',
-            position: 'center center',
-        },
         gemPanel: {
             path: '/assets/surfaces/light/panel-gem-board.png',
             size: '100% 100%',
@@ -67,10 +68,6 @@ export const SURFACE_ARTWORK: Record<ThemeName, ThemeSurfaceArtwork> = {
         shellBackground: {
             path: '/assets/surfaces/dark/background-shell.png',
         },
-        tablecloth: {
-            path: '/assets/surfaces/dark/tablecloth-playmat.png',
-            position: 'center center',
-        },
         gemPanel: {
             path: '/assets/surfaces/dark/panel-gem-board-square.png',
             size: '100% 100%',
@@ -84,21 +81,65 @@ export const SURFACE_ARTWORK: Record<ThemeName, ThemeSurfaceArtwork> = {
     },
 };
 
+const getSurfaceThemeAssetPath = (
+    theme: ThemeName,
+    variant: SurfaceThemeVariant,
+    fileName: string
+): string => {
+    const mode: SurfaceRuntimeMode = theme === 'dark' ? 'dark' : 'light';
+    return `${SURFACE_THEME_RUNTIME_BASE_PATH}/${variant}/${mode}/${fileName}.png`;
+};
+
+export const getSurfaceThemeMarketDeckBackArtwork = (
+    theme: ThemeName,
+    variant: SurfaceThemeVariant
+): MarketDeckBackArtworkMap =>
+    ([1, 2, 3] as const).reduce<MarketDeckBackArtworkMap>((acc, level) => {
+        acc[level] = {
+            path: getSurfaceThemeAssetPath(theme, variant, `market-card-back-l${level}`),
+            variant: `${variant}-${theme}-l${level}`,
+        };
+
+        return acc;
+    }, {});
+
+export const getSurfaceThemeRoyalCardBackArtwork = (
+    theme: ThemeName,
+    variant: SurfaceThemeVariant
+): CardBackArtwork => ({
+    path: getSurfaceThemeAssetPath(theme, variant, 'royal-card-back'),
+    variant: `${variant}-${theme}`,
+});
+
 const getSurfaceArtworkAsset = (
     theme: ThemeName,
     slot: SurfaceArtworkSlot,
-    variant: SurfaceThemeVariant = 'default'
+    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.background
 ): SurfaceArtworkAsset => {
     const baseAsset = SURFACE_ARTWORK[theme][slot];
 
-    if (variant === 'default') {
+    if (slot === 'marketBackground') {
         return baseAsset;
     }
 
+    const mode: SurfaceRuntimeMode = theme === 'dark' ? 'dark' : 'light';
+    const runtimeAssetName =
+        slot === 'shellBackground'
+            ? 'shell-background'
+            : slot === 'gemPanel'
+              ? 'gem-panel'
+              : SURFACE_THEME_SLOT_PATHS[slot];
+
     return {
         ...baseAsset,
-        path: `/assets/surfaces/theme-presets/${theme}/${SURFACE_THEME_SLOT_PATHS[slot]}/${variant}.png`,
-        ...(slot === 'gemPanel' ? { skinId: 'dashboard' as const } : {}),
+        path: `${SURFACE_THEME_RUNTIME_BASE_PATH}/${variant}/${mode}/${runtimeAssetName}.png`,
+        ...(slot === 'gemPanel'
+            ? {
+                  size: '100% 100%',
+                  position: 'center center',
+                  skinId: 'square-dashboard' as const,
+              }
+            : {}),
     };
 };
 
@@ -134,6 +175,21 @@ const buildSurfaceStyle = ({
     };
 };
 
+const createTopBarArtworkSurfaceStyle = (theme: ThemeName, asset: string): CSSProperties => {
+    return {
+        backgroundColor: 'transparent',
+        backgroundImage: `url("${asset}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        borderColor: theme === 'light' ? 'rgba(15,23,42,0.12)' : 'rgba(250,204,21,0.18)',
+        boxShadow:
+            theme === 'light'
+                ? '0 10px 24px rgba(15,23,42,0.10)'
+                : '0 12px 30px rgba(0,0,0,0.36), inset 0 -1px 0 rgba(250,204,21,0.12)',
+    };
+};
+
 export const getGemPanelSkin = (
     theme: ThemeName,
     variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.gemPanel
@@ -143,6 +199,7 @@ export const getGemPanelSkin = (
 
     return {
         ...GEM_PANEL_SKIN_BASE[skinId],
+        id: skinId,
         artworkPath: asset.path,
     };
 };
@@ -158,7 +215,7 @@ export const createShellSurfaceStyle = (
               variant,
               backgroundColor: '#F4F7F6',
               overlay:
-                  'radial-gradient(circle at 50% 42%, rgba(251,252,252,0.97) 0%, rgba(244,247,246,0.93) 58%, rgba(238,242,241,0.98) 100%)',
+                  'linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 100%)',
           })
         : buildSurfaceStyle({
               theme,
@@ -173,64 +230,11 @@ export const createTopBarSurfaceStyle = (
     theme: ThemeName,
     variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.topBar
 ): CSSProperties => {
-    const darkBase =
-        variant === 'default'
-            ? {
-                  background:
-                      'linear-gradient(180deg, rgba(2,6,23,0.96) 0%, rgba(15,23,42,0.92) 100%)',
-                  borderColor: 'rgba(51,65,85,0.82)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-              }
-            : {
-                  background:
-                      'linear-gradient(90deg, rgba(2,6,23,0.97) 0%, rgba(15,23,42,0.94) 42%, rgba(30,41,59,0.90) 100%)',
-                  borderColor: 'rgba(250,204,21,0.18)',
-                  boxShadow: '0 10px 28px rgba(0,0,0,0.34), inset 0 -1px 0 rgba(250,204,21,0.10)',
-              };
-
-    const lightBase =
-        variant === 'default'
-            ? {
-                  background:
-                      'linear-gradient(180deg, rgba(251,252,252,0.78) 0%, rgba(244,247,246,0.90) 100%)',
-                  borderColor: 'rgba(15,23,42,0.08)',
-                  boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
-              }
-            : {
-                  background:
-                      'linear-gradient(90deg, rgba(255,255,255,0.88) 0%, rgba(248,250,252,0.82) 46%, rgba(226,232,240,0.78) 100%)',
-                  borderColor: 'rgba(180,83,9,0.16)',
-                  boxShadow: '0 10px 26px rgba(15,23,42,0.08), inset 0 -1px 0 rgba(180,83,9,0.10)',
-              };
-
-    return theme === 'dark' ? darkBase : lightBase;
+    return createTopBarArtworkSurfaceStyle(
+        theme,
+        getSurfaceThemeAssetPath(theme, variant, 'topbar')
+    );
 };
-
-export const createPlayMatSurfaceStyle = (
-    theme: ThemeName,
-    variant: SurfaceThemeVariant = 'default'
-): CSSProperties =>
-    theme === 'light'
-        ? buildSurfaceStyle({
-              theme,
-              slot: 'tablecloth',
-              variant,
-              backgroundColor: 'rgba(255,255,255,0.54)',
-              overlay:
-                  'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(250,247,240,0.58) 100%)',
-              border: '1px solid rgba(15,23,42,0.08)',
-              boxShadow:
-                  '0 12px 30px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.82), inset 0 -8px 16px rgba(15,23,42,0.03)',
-          })
-        : buildSurfaceStyle({
-              theme,
-              slot: 'tablecloth',
-              variant,
-              backgroundColor: 'rgba(15,23,42,0.20)',
-              overlay: 'linear-gradient(180deg, rgba(15,23,42,0.28) 0%, rgba(2,6,23,0.38) 100%)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              boxShadow: '0 18px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04)',
-          });
 
 export const createGemPanelSurfaceStyle = (
     theme: ThemeName,
@@ -258,28 +262,12 @@ export const createGemPanelSurfaceStyle = (
 
 export const createMarketSurfaceStyle = (
     theme: ThemeName,
-    variant: SurfaceThemeVariant = 'default'
-): CSSProperties =>
-    theme === 'light'
-        ? buildSurfaceStyle({
-              theme,
-              slot: 'marketBackground',
-              variant,
-              backgroundColor: 'rgba(255,255,255,0.48)',
-              overlay:
-                  'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(248,250,252,0.54) 100%)',
-              border: '1px solid rgba(15,23,42,0.07)',
-              boxShadow: '0 14px 32px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.74)',
-          })
-        : buildSurfaceStyle({
-              theme,
-              slot: 'marketBackground',
-              variant,
-              backgroundColor: 'rgba(2,6,23,0.24)',
-              overlay: 'linear-gradient(180deg, rgba(15,23,42,0.16) 0%, rgba(2,6,23,0.24) 100%)',
-              border: '1px solid rgba(255,255,255,0.04)',
-              boxShadow: '0 18px 36px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.03)',
-          });
+    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.background
+): CSSProperties => {
+    void theme;
+    void variant;
+    return {};
+};
 
 export const normalizeGameShellSurfaceTheme = (
     surfaceTheme: SurfaceThemeSelections | undefined

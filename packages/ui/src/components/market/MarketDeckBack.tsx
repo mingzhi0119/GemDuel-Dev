@@ -1,4 +1,5 @@
 import React from 'react';
+import type { CardBackArtwork } from '../card/cardBackArtwork';
 
 const MARKET_DECK_BACK_STYLES = {
     1: {
@@ -29,6 +30,7 @@ interface MarketDeckBackProps {
     count: number;
     theme: 'light' | 'dark';
     levelLabel: string;
+    artwork?: CardBackArtwork;
 }
 
 export const MarketDeckBack: React.FC<MarketDeckBackProps> = ({
@@ -36,8 +38,69 @@ export const MarketDeckBack: React.FC<MarketDeckBackProps> = ({
     count,
     theme,
     levelLabel,
+    artwork,
 }) => {
     const style = MARKET_DECK_BACK_STYLES[level];
+
+    if (artwork) {
+        return (
+            <>
+                <img
+                    src={artwork.path}
+                    alt=""
+                    aria-hidden="true"
+                    data-market-deck-back-artwork={level}
+                    data-card-back-variant={artwork.variant}
+                    data-market-deck-back-img="true"
+                    draggable={false}
+                    decoding="async"
+                    className="pointer-events-none select-none absolute inset-0 h-full w-full object-cover"
+                    style={{
+                        zIndex: 5,
+                        backfaceVisibility: 'hidden',
+                        transform: 'translateZ(0)',
+                    }}
+                />
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        zIndex: 6,
+                        background:
+                            theme === 'dark'
+                                ? 'linear-gradient(180deg, rgba(2,6,23,0.04) 0%, rgba(2,6,23,0.08) 54%, rgba(2,6,23,0.16) 100%)'
+                                : 'linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(15,23,42,0.04) 54%, rgba(15,23,42,0.20) 100%)',
+                    }}
+                />
+                <div
+                    className={`absolute inset-2 rounded-md border ${style.ring}`}
+                    style={{ zIndex: 7 }}
+                />
+
+                <div className="absolute inset-x-2 bottom-3 z-10 flex flex-col items-center gap-1">
+                    <div
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] ${
+                            theme === 'dark'
+                                ? 'border-white/15 bg-black/45 text-slate-100'
+                                : 'border-white/40 bg-slate-950/35 text-white'
+                        }`}
+                    >
+                        {levelLabel}
+                    </div>
+                    <div
+                        data-market-deck-count={level}
+                        data-count={count}
+                        className={`rounded-full border px-3 py-0.5 text-[12px] font-black tabular-nums ${
+                            theme === 'dark'
+                                ? 'border-white/15 bg-black/50 text-slate-100'
+                                : 'border-white/40 bg-slate-950/35 text-white'
+                        }`}
+                    >
+                        {count}
+                    </div>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>

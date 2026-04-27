@@ -1,27 +1,142 @@
 import type { CSSProperties } from 'react';
 import type { GemPanelSkin, ResponsiveLayout, ThemeName } from '@gemduel/shared/types';
+import type { MarketDeckBackArtworkMap } from '@gemduel/ui/components/card/cardBackArtwork';
 import {
     createGemPanelSurfaceStyle,
     createMarketSurfaceStyle,
-    createPlayMatSurfaceStyle,
     createShellSurfaceStyle,
     createTopBarSurfaceStyle,
     getGemPanelSkin,
+    getSurfaceThemeMarketDeckBackArtwork,
     normalizeGameShellSurfaceTheme,
 } from './surfaceArtwork';
-import type { SurfaceEffectsSkin, SurfaceThemeSelections } from './surfaceTheme';
+import type {
+    SurfaceEffectsSkin,
+    SurfaceThemeSelections,
+    SurfaceThemeVariant,
+} from './surfaceTheme';
+
+interface SurfaceTextPalette {
+    primary: string;
+    muted: string;
+    goal: string;
+    gold: string;
+    action: string;
+    control: string;
+    controlMuted: string;
+    shadow: string;
+    controlShadow: string;
+}
+
+type SurfaceTextVariableStyle = CSSProperties & Record<`--gd-${string}`, string>;
+
+const DARK_FIELD_PALETTE: SurfaceTextPalette = {
+    primary: '#f8fafc',
+    muted: '#e2e8f0',
+    goal: '#f8fafc',
+    gold: '#fde68a',
+    action: '#f8fafc',
+    control: '#f8fafc',
+    controlMuted: '#dbeafe',
+    shadow: '0 2px 5px rgba(0,0,0,0.86)',
+    controlShadow: '0 2px 5px rgba(0,0,0,0.82)',
+};
+
+const LIGHT_FIELD_PALETTE: SurfaceTextPalette = {
+    primary: '#f8fafc',
+    muted: '#e5edf8',
+    goal: '#f8fafc',
+    gold: '#fbbf24',
+    action: '#f8fafc',
+    control: '#102033',
+    controlMuted: '#334155',
+    shadow: '0 2px 6px rgba(0,0,0,0.9)',
+    controlShadow: '0 1px 0 rgba(255,255,255,0.68)',
+};
+
+const LIGHT_ON_DARK_FIELD_PALETTE: SurfaceTextPalette = {
+    primary: '#f8fafc',
+    muted: '#e5edf8',
+    goal: '#f8fafc',
+    gold: '#fbbf24',
+    action: '#f8fafc',
+    control: '#102033',
+    controlMuted: '#334155',
+    shadow: '0 2px 6px rgba(0,0,0,0.92)',
+    controlShadow: '0 1px 0 rgba(255,255,255,0.68)',
+};
+
+const DARK_TOPBAR_PALETTE: SurfaceTextPalette = {
+    primary: '#f8fafc',
+    muted: '#dbeafe',
+    goal: '#f8fafc',
+    gold: '#fde047',
+    action: '#f8fafc',
+    control: '#f8fafc',
+    controlMuted: '#dbeafe',
+    shadow: '0 2px 5px rgba(0,0,0,0.88)',
+    controlShadow: '0 2px 5px rgba(0,0,0,0.82)',
+};
+
+const getFieldPalette = (theme: ThemeName, variant: SurfaceThemeVariant): SurfaceTextPalette => {
+    if (theme === 'dark') {
+        return DARK_FIELD_PALETTE;
+    }
+
+    return variant === 'dark-arcane' || variant === 'clean-boardgame'
+        ? LIGHT_ON_DARK_FIELD_PALETTE
+        : LIGHT_FIELD_PALETTE;
+};
+
+const getTopBarPalette = (theme: ThemeName): SurfaceTextPalette => {
+    if (theme === 'dark') {
+        return DARK_TOPBAR_PALETTE;
+    }
+
+    return DARK_TOPBAR_PALETTE;
+};
+
+const createSurfaceTextVariableStyle = (
+    theme: ThemeName,
+    fieldVariant: SurfaceThemeVariant
+): SurfaceTextVariableStyle => {
+    const field = getFieldPalette(theme, fieldVariant);
+    const topBar = getTopBarPalette(theme);
+
+    return {
+        '--gd-shell-label-primary': field.primary,
+        '--gd-shell-label-muted': field.muted,
+        '--gd-shell-goal-text': field.goal,
+        '--gd-shell-gold-text': field.gold,
+        '--gd-shell-action-text': field.action,
+        '--gd-shell-control-text': field.control,
+        '--gd-shell-control-muted': field.controlMuted,
+        '--gd-shell-text-shadow': field.shadow,
+        '--gd-shell-control-text-shadow': field.controlShadow,
+        '--gd-topbar-label-primary': topBar.primary,
+        '--gd-topbar-label-muted': topBar.muted,
+        '--gd-topbar-goal-text': topBar.goal,
+        '--gd-topbar-gold-text': topBar.gold,
+        '--gd-topbar-action-text': topBar.action,
+        '--gd-topbar-control-text': topBar.control,
+        '--gd-topbar-control-muted': topBar.controlMuted,
+        '--gd-topbar-text-shadow': topBar.shadow,
+        '--gd-topbar-control-text-shadow': topBar.controlShadow,
+    } as SurfaceTextVariableStyle;
+};
 
 export interface GameShellStyles {
     shellStyle: CSSProperties;
     topBarSurfaceStyle: CSSProperties;
     scaledZoneWrapperStyle: CSSProperties;
-    playMatSurfaceStyle: CSSProperties;
-    playMatDividerStyle: CSSProperties;
     playerRailStyle: CSSProperties;
     gemBoardSurfaceStyle: CSSProperties;
     gemPanelSkin: GemPanelSkin;
     marketSurfaceStyle: CSSProperties;
+    marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     effectsSkin: SurfaceEffectsSkin;
+    shellSurfaceVariant: string;
+    topBarSurfaceVariant: string;
 }
 
 export const createGameShellStyles = (
@@ -30,9 +145,14 @@ export const createGameShellStyles = (
     surfaceTheme?: SurfaceThemeSelections
 ): GameShellStyles => {
     const resolvedSurfaceTheme = normalizeGameShellSurfaceTheme(surfaceTheme);
+    const shellVariant = resolvedSurfaceTheme.background;
+    const shellStyle = {
+        ...createShellSurfaceStyle(theme, resolvedSurfaceTheme.background),
+        ...createSurfaceTextVariableStyle(theme, shellVariant),
+    } as CSSProperties;
 
     return {
-        shellStyle: createShellSurfaceStyle(theme, resolvedSurfaceTheme.background),
+        shellStyle,
         topBarSurfaceStyle: createTopBarSurfaceStyle(theme, resolvedSurfaceTheme.topBar),
         scaledZoneWrapperStyle: {
             width: `${100 / layout.zoneScale}%`,
@@ -40,27 +160,24 @@ export const createGameShellStyles = (
             transform: `scale(${layout.zoneScale})`,
             transformOrigin: 'center center',
         } as CSSProperties,
-        playMatSurfaceStyle: createPlayMatSurfaceStyle(theme),
-        playMatDividerStyle:
-            theme === 'light'
-                ? ({ backgroundColor: 'rgba(15,23,42,0.08)' } as CSSProperties)
-                : ({ backgroundColor: 'rgba(148,163,184,0.12)' } as CSSProperties),
         playerRailStyle: {
             height: `${layout.zoneHeightPx}px`,
-            ...(theme === 'light'
-                ? {
-                      background:
-                          'linear-gradient(180deg, rgba(251,252,252,0.78) 0%, rgba(244,247,246,0.92) 100%)',
-                      borderTop: '1px solid rgba(15,23,42,0.08)',
-                      boxShadow: '0 -10px 20px rgba(15,23,42,0.04)',
-                  }
-                : {
-                      borderTop: '1px solid rgba(255,255,255,0.06)',
-                  }),
+            background: 'transparent',
+            borderTop:
+                theme === 'light'
+                    ? '1px solid rgba(15,23,42,0.18)'
+                    : '1px solid rgba(148,163,184,0.18)',
+            boxShadow: 'none',
         } as CSSProperties,
         gemBoardSurfaceStyle: createGemPanelSurfaceStyle(theme, resolvedSurfaceTheme.gemPanel),
         gemPanelSkin: getGemPanelSkin(theme, resolvedSurfaceTheme.gemPanel),
         marketSurfaceStyle: createMarketSurfaceStyle(theme),
+        marketDeckBackArtwork: getSurfaceThemeMarketDeckBackArtwork(
+            theme,
+            resolvedSurfaceTheme.background
+        ),
         effectsSkin: resolvedSurfaceTheme.effects,
+        shellSurfaceVariant: resolvedSurfaceTheme.background,
+        topBarSurfaceVariant: resolvedSurfaceTheme.topBar,
     };
 };

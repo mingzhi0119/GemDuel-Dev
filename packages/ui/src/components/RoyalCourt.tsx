@@ -47,8 +47,11 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
             style={{ width: ROYAL_COURT_GRID_SIZE.width }}
         >
             <h2
-                className={`min-h-6 text-[13px] font-black uppercase tracking-[0.34em] flex items-center justify-center gap-2.5 mb-2
-                ${theme === 'dark' ? 'text-yellow-300' : 'text-amber-800'}`}
+                className="mb-2 flex min-h-6 items-center justify-center gap-2.5 text-[13px] font-black uppercase tracking-[0.34em]"
+                style={{
+                    color: 'var(--gd-shell-gold-text)',
+                    textShadow: 'var(--gd-shell-text-shadow)',
+                }}
             >
                 <Crown size={18} />{' '}
                 <LexiconTerm termId="royal" className="normal-case" underline={false}>
@@ -93,8 +96,11 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                 )}
                 {royalDeck.length === 0 && (
                     <div
-                        className={`absolute inset-0 flex items-center justify-center italic text-xs
-                        ${theme === 'dark' ? 'text-slate-400' : 'text-stone-600'}`}
+                        className="absolute inset-0 flex items-center justify-center text-xs italic"
+                        style={{
+                            color: 'var(--gd-shell-label-muted)',
+                            textShadow: 'var(--gd-shell-text-shadow)',
+                        }}
                     >
                         {t('royalCourt.empty')}
                     </div>
