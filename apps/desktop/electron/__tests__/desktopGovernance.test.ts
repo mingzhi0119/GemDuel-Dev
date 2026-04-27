@@ -1,8 +1,9 @@
 // @vitest-environment node
 
 import { createRequire } from 'node:module';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+    applyDesktopAspectRatioToWindow,
     authorizeIpcSender,
     buildDesktopGovernanceSnapshot,
     collectDesktopGovernanceErrors,
@@ -36,6 +37,12 @@ describe('electron desktop governance', () => {
             contextIsolation: true,
             webSecurity: true,
             allowRunningInsecureContent: false,
+        });
+        expect(options).toMatchObject({
+            width: 1280,
+            height: 800,
+            minWidth: 1280,
+            minHeight: 800,
         });
     });
 
@@ -154,6 +161,14 @@ describe('electron desktop governance', () => {
         });
         expect(validateIpcArgs('start-lan-matchmaking', [])).toEqual({ ok: true, args: [] });
         expect(validateIpcArgs('cancel-lan-matchmaking', [])).toEqual({ ok: true, args: [] });
+        expect(validateIpcArgs('set-desktop-aspect-ratio', [{ ratio: '16:9' }])).toEqual({
+            ok: true,
+            args: [{ ratio: '16:9' }],
+        });
+        expect(validateIpcArgs('set-desktop-aspect-ratio', [{ ratio: '21:9' }])).toEqual({
+            ok: false,
+            reason: 'Desktop aspect ratio payload did not match the allowlisted schema.',
+        });
         expect(validateIpcArgs('refresh-runtime-relay-profile', [])).toEqual({
             ok: true,
             args: [],
@@ -242,6 +257,36 @@ describe('electron desktop governance', () => {
                 },
             ],
         });
+    });
+
+    it('applies the governed desktop aspect ratio to BrowserWindow-like targets', () => {
+        const window = {
+            getBounds: vi.fn(() => ({ width: 1600, height: 900 })),
+            setMinimumSize: vi.fn(),
+            setAspectRatio: vi.fn(),
+            setSize: vi.fn(),
+        };
+
+        expect(applyDesktopAspectRatioToWindow(window, '16:9')).toEqual({
+            ratio: '16:9',
+            width: 1600,
+            height: 900,
+            aspectRatio: 16 / 9,
+        });
+        expect(window.setMinimumSize).toHaveBeenCalledWith(1280, 720);
+        expect(window.setAspectRatio).toHaveBeenCalledWith(16 / 9);
+        expect(window.setSize).toHaveBeenCalledWith(1600, 900);
+
+        window.getBounds.mockReturnValue({ width: 1600, height: 900 });
+        expect(applyDesktopAspectRatioToWindow(window, '16:10')).toEqual({
+            ratio: '16:10',
+            width: 1600,
+            height: 1000,
+            aspectRatio: 16 / 10,
+        });
+        expect(window.setMinimumSize).toHaveBeenLastCalledWith(1280, 800);
+        expect(window.setAspectRatio).toHaveBeenLastCalledWith(16 / 10);
+        expect(window.setSize).toHaveBeenLastCalledWith(1600, 1000);
     });
 
     it('fails the release governance check if the bridge surface or doc drifts', () => {

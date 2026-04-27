@@ -40,6 +40,14 @@ vi.mock('../../shell/GameShell', () => ({
     GameShell: () => <div data-testid="game-route">game</div>,
 }));
 
+vi.mock('../../visual-lab/VisualLabRoute', () => ({
+    VisualLabRoute: ({ mode }: { mode: string }) => (
+        <div data-testid="visual-lab-route" data-visual-lab-mode={mode}>
+            visual lab
+        </div>
+    ),
+}));
+
 const createLayout = (
     overrides: Partial<AppRouteProps['layout']> = {}
 ): AppRouteProps['layout'] => ({
@@ -213,7 +221,6 @@ const createProps = (overrides: Partial<AppRouteProps> = {}): AppRouteProps => (
         handleRestart: vi.fn(),
         handleDownloadReplay: vi.fn(),
         handleUploadReplay: vi.fn(),
-        toggleTheme: vi.fn(),
         ...(overrides.callbacks ?? {}),
     },
     ...overrides,
@@ -240,6 +247,7 @@ const renderRoutes = async (props: AppRouteProps) => {
 describe('GemDuelRoutes desktop stage rendering', () => {
     afterEach(() => {
         document.body.innerHTML = '';
+        window.history.replaceState(null, '', '/');
         routeSpies.draftScreenProps.mockReset();
         vi.restoreAllMocks();
     });
@@ -353,6 +361,22 @@ describe('GemDuelRoutes desktop stage rendering', () => {
 
         expect(container.querySelector('[data-testid="desktop-stage-canvas"]')).toBeNull();
         expect(container.querySelector('[data-testid="config-route"]')).not.toBeNull();
+
+        act(() => {
+            root.unmount();
+        });
+    });
+
+    it('mounts the visual lab route from the query string without entering normal game routes', async () => {
+        window.history.replaceState(null, '', '/?visualLab=surfaces');
+
+        const { container, root } = await renderRoutes(createProps());
+
+        const visualLab = container.querySelector('[data-testid="visual-lab-route"]');
+
+        expect(visualLab).not.toBeNull();
+        expect(visualLab?.getAttribute('data-visual-lab-mode')).toBe('surfaces');
+        expect(container.querySelector('[data-testid="config-route"]')).toBeNull();
 
         act(() => {
             root.unmount();

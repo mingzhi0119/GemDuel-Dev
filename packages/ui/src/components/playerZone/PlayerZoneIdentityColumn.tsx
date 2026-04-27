@@ -4,6 +4,7 @@ import { getAbilityLabel, getGemLabel, getPlayerDisplayName } from '@gemduel/sha
 import { cn } from '@gemduel/shared/utils';
 import type { Buff, EffectiveCardAbility } from '@gemduel/shared/types';
 import { useLocale, useT } from '../../i18n/LocaleProvider';
+import { PlayerBuffIcon } from './PlayerBuffIcon';
 
 interface PlayerZoneIdentityColumnProps {
     player: 'p1' | 'p2';
@@ -14,6 +15,7 @@ interface PlayerZoneIdentityColumnProps {
     isPrivilegeMode: boolean;
     theme: 'light' | 'dark';
     onUsePrivilege: () => void;
+    dividerSide?: 'left' | 'right';
 }
 
 const MEMORY_ICON_BY_ABILITY: Record<
@@ -69,6 +71,7 @@ export function PlayerZoneIdentityColumn({
     isPrivilegeMode,
     theme,
     onUsePrivilege,
+    dividerSide = 'right',
 }: PlayerZoneIdentityColumnProps) {
     const { locale } = useLocale();
     const t = useT();
@@ -124,7 +127,10 @@ export function PlayerZoneIdentityColumn({
 
     return (
         <div
-            className={`self-stretch flex flex-col gap-5 min-w-[128px] shrink-0 items-center justify-center border-r pr-3 transition-colors duration-500
+            data-player-zone-column="identity"
+            className={`self-stretch flex flex-col gap-5 min-w-[128px] shrink-0 items-center justify-center transition-colors duration-500 ${
+                dividerSide === 'right' ? 'border-r pr-3' : 'border-l pl-3'
+            }
           ${theme === 'dark' ? 'border-slate-700' : 'border-stone-300'}
       `}
         >
@@ -155,25 +161,40 @@ export function PlayerZoneIdentityColumn({
                         <div>{echoReservoirMemory.detail}</div>
                     </div>
                 ) : null}
-                <div
-                    className={`p-4 rounded-full ${isActive ? (player === 'p1' ? 'bg-emerald-600' : 'bg-blue-600') : theme === 'dark' ? 'bg-slate-700' : 'bg-stone-300'}`}
-                >
-                    {player === 'p1' ? (
-                        <Shield
-                            size={40}
-                            className={
-                                theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
-                            }
+                {buff?.id && buff.id !== 'none' ? (
+                    <div data-player-avatar={player}>
+                        <PlayerBuffIcon
+                            buff={buff}
+                            playerKey={player}
+                            theme={theme}
+                            locale={locale}
+                            variant="avatar"
                         />
-                    ) : (
-                        <Swords
-                            size={40}
-                            className={
-                                theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
-                            }
-                        />
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    <div
+                        className={`p-4 rounded-full ${isActive ? (player === 'p1' ? 'bg-emerald-600' : 'bg-blue-600') : theme === 'dark' ? 'bg-slate-700' : 'bg-stone-300'}`}
+                        data-player-avatar={player}
+                    >
+                        {player === 'p1' ? (
+                            <Shield
+                                size={40}
+                                data-player-avatar-fallback="shield"
+                                className={
+                                    theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
+                                }
+                            />
+                        ) : (
+                            <Swords
+                                size={40}
+                                data-player-avatar-fallback="swords"
+                                className={
+                                    theme === 'dark' || isActive ? 'text-white' : 'text-stone-600'
+                                }
+                            />
+                        )}
+                    </div>
+                )}
                 <h3
                     className={`font-black text-[20px] whitespace-nowrap uppercase tracking-[0.16em] ${
                         isActive

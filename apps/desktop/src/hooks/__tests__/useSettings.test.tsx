@@ -64,6 +64,7 @@ describe('useSettings', () => {
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.desktopAspectRatio).toBe('16:10');
         expect(currentResult?.resolvedInitialLocale).toBe('en');
         expect(currentResult?.GAME_CONFIG).toMatchObject({
             difficulty: 'NORMAL',
@@ -71,8 +72,9 @@ describe('useSettings', () => {
         });
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
-        expect(stored).toMatchObject({ theme: 'dark' });
+        expect(stored.theme).toBeUndefined();
         expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
+        expect(stored.desktopAspectRatio).toBe('16:10');
         expect(stored.locale).toBeUndefined();
     });
 
@@ -88,21 +90,22 @@ describe('useSettings', () => {
         });
     });
 
-    it('restores explicit locale preference from storage and persists explicit changes', () => {
+    it('normalizes legacy theme preferences to dark and persists explicit changes', () => {
         window.localStorage.setItem(
             SETTINGS_STORAGE_KEY,
-            JSON.stringify({ theme: 'light', locale: 'zh' })
+            JSON.stringify({ theme: 'light', locale: 'zh', desktopAspectRatio: '16:9' })
         );
 
         renderHarness();
 
-        expect(currentResult?.theme).toBe('light');
+        expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('zh');
+        expect(currentResult?.desktopAspectRatio).toBe('16:9');
         expect(currentResult?.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
 
         act(() => {
-            currentResult?.setTheme('dark');
             currentResult?.setLocale('en');
+            currentResult?.setDesktopAspectRatio('16:10');
             currentResult?.setSurfaceTheme((current) => ({
                 ...current,
                 background: 'royal-luxury',
@@ -114,6 +117,7 @@ describe('useSettings', () => {
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.desktopAspectRatio).toBe('16:10');
         expect(currentResult?.surfaceTheme.playerZone).toBe('dark-arcane');
         expect(currentResult?.surfaceTheme.background).toBe('royal-luxury');
         expect(currentResult?.surfaceTheme.topBar).toBe('royal-luxury');
@@ -121,7 +125,11 @@ describe('useSettings', () => {
         expect(currentResult?.surfaceTheme.effects).toBe('anime');
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
-        expect(stored).toMatchObject({ theme: 'dark', locale: 'en' });
+        expect(stored).toMatchObject({
+            locale: 'en',
+            desktopAspectRatio: '16:10',
+        });
+        expect(stored.theme).toBeUndefined();
         expect(stored.surfaceTheme).toMatchObject({
             background: 'royal-luxury',
             topBar: 'royal-luxury',
@@ -141,8 +149,9 @@ describe('useSettings', () => {
         expect(currentResult?.hasExplicitLocalePreference).toBe(false);
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
-        expect(stored).toMatchObject({ theme: 'dark' });
+        expect(stored.theme).toBeUndefined();
         expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
+        expect(stored.desktopAspectRatio).toBe('16:10');
         expect(stored.locale).toBeUndefined();
     });
 
@@ -153,6 +162,7 @@ describe('useSettings', () => {
                 theme: 'neon',
                 locale: 'fr',
                 surfaceTheme: { playerZone: 'geek', tablecloth: 'sparkle' },
+                desktopAspectRatio: '21:9',
             })
         );
 
@@ -162,6 +172,7 @@ describe('useSettings', () => {
         expect(currentResult?.locale).toBe('en');
         expect(currentResult?.hasExplicitLocalePreference).toBe(false);
         expect(currentResult?.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
+        expect(currentResult?.desktopAspectRatio).toBe('16:10');
 
         act(() => {
             currentResult?.setLocale((current) => (current === 'en' ? 'zh' : 'en'));
@@ -171,7 +182,8 @@ describe('useSettings', () => {
         expect(currentResult?.hasExplicitLocalePreference).toBe(true);
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
-        expect(stored).toMatchObject({ theme: 'dark', locale: 'zh' });
+        expect(stored).toMatchObject({ locale: 'zh' });
+        expect(stored.theme).toBeUndefined();
     });
 
     it('skips storage persistence when localStorage is unavailable', () => {
@@ -188,10 +200,9 @@ describe('useSettings', () => {
 
         act(() => {
             currentResult?.setLocale('en');
-            currentResult?.setTheme('light');
         });
 
         expect(currentResult?.locale).toBe('en');
-        expect(currentResult?.theme).toBe('light');
+        expect(currentResult?.theme).toBe('dark');
     });
 });

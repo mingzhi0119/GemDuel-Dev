@@ -14,8 +14,9 @@ import {
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-const ChromeHarness = ({ theme = 'dark' }: { theme?: 'light' | 'dark' }) => {
+const ChromeHarness = ({ theme = 'dark' }: { theme?: 'dark' }) => {
     const [locale, setLocale] = useState<'en' | 'zh'>('en');
+    const [desktopAspectRatio, setDesktopAspectRatio] = useState<'16:10' | '16:9'>('16:10');
     const [surfaceTheme, setSurfaceTheme] = useState<SurfaceThemeSelections>(
         DEFAULT_SURFACE_THEME_SELECTIONS
     );
@@ -31,13 +32,14 @@ const ChromeHarness = ({ theme = 'dark' }: { theme?: 'light' | 'dark' }) => {
                 onUploadReplay={vi.fn()}
                 onRequestRestart={vi.fn()}
                 onShowRulebook={vi.fn()}
-                onToggleTheme={vi.fn()}
                 onAddCrowns={vi.fn()}
                 onAddPoints={vi.fn()}
                 onAddPrivilege={vi.fn()}
                 onForceRoyal={vi.fn()}
                 showDebugPanels={false}
                 surfaceTheme={surfaceTheme}
+                desktopAspectRatio={desktopAspectRatio}
+                onSelectDesktopAspectRatio={setDesktopAspectRatio}
                 onSelectSurfaceTheme={(variant: SurfaceThemeVariant) =>
                     setSurfaceTheme({
                         background: variant,
@@ -131,7 +133,6 @@ describe('AppChrome locale controls', () => {
                         onUploadReplay={vi.fn()}
                         onRequestRestart={onRequestRestart}
                         onShowRulebook={vi.fn()}
-                        onToggleTheme={vi.fn()}
                         onAddCrowns={vi.fn()}
                         onAddPoints={vi.fn()}
                         onAddPrivilege={vi.fn()}
@@ -198,6 +199,9 @@ describe('AppChrome locale controls', () => {
         expect(settingsMenu?.textContent).not.toContain('Restart');
         expect(settingsMenu?.textContent).not.toContain('Rules');
         expect(settingsMenu?.textContent).toContain('Crystal Anime');
+        expect(settingsMenu?.textContent).toContain('Aspect Ratio');
+        expect(settingsMenu?.textContent).not.toContain('Dark');
+        expect(settingsMenu?.textContent).not.toContain('Light');
         expect(settingsMenu?.textContent).not.toContain('Royal Luxury');
         expect(settingsMenu?.textContent).not.toContain('Dark Arcane');
         expect(settingsMenu?.textContent).not.toContain('Clean Boardgame');
@@ -211,6 +215,29 @@ describe('AppChrome locale controls', () => {
         );
 
         expect(surfaceThemeSelect?.dataset.appSurfaceThemeValue).toBe('crystal-anime');
+
+        const aspectOptions = Array.from(
+            container.querySelectorAll<HTMLButtonElement>(
+                'button[data-desktop-aspect-ratio-option]'
+            )
+        );
+
+        expect(aspectOptions.map((button) => button.dataset.desktopAspectRatioOption)).toEqual([
+            '16:10',
+            '16:9',
+        ]);
+        expect(aspectOptions[0]?.getAttribute('aria-pressed')).toBe('true');
+
+        await act(async () => {
+            aspectOptions[1]?.click();
+            await Promise.resolve();
+        });
+
+        expect(
+            container
+                .querySelector<HTMLButtonElement>('button[data-desktop-aspect-ratio-option="16:9"]')
+                ?.getAttribute('aria-pressed')
+        ).toBe('true');
 
         await act(async () => {
             surfaceThemeSelect?.click();
@@ -240,48 +267,5 @@ describe('AppChrome locale controls', () => {
                 'button[data-app-surface-theme-select="true"]'
             )?.dataset.appSurfaceThemeValue
         ).toBe('royal-luxury');
-    });
-
-    it('renders the light surface theme dropdown inside settings', async () => {
-        container = document.createElement('div');
-        document.body.appendChild(container);
-
-        await act(async () => {
-            root = createRoot(container!);
-            root.render(<ChromeHarness theme="light" />);
-            await Promise.resolve();
-        });
-
-        const settingsButton = container.querySelector<HTMLButtonElement>(
-            'button[aria-label="Settings"]'
-        );
-
-        await act(async () => {
-            settingsButton?.click();
-            await Promise.resolve();
-        });
-
-        const surfaceThemeSelect = container.querySelector<HTMLButtonElement>(
-            'button[data-app-surface-theme-select="true"]'
-        );
-
-        await act(async () => {
-            surfaceThemeSelect?.click();
-            await Promise.resolve();
-        });
-
-        const cleanBoardgameOption = container.querySelector<HTMLButtonElement>(
-            '[data-app-surface-theme-option="clean-boardgame"]'
-        );
-
-        await act(async () => {
-            cleanBoardgameOption?.click();
-            await Promise.resolve();
-        });
-        expect(
-            container.querySelector<HTMLButtonElement>(
-                'button[data-app-surface-theme-select="true"]'
-            )?.dataset.appSurfaceThemeValue
-        ).toBe('clean-boardgame');
     });
 });

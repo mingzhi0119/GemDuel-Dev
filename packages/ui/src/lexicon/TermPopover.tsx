@@ -103,7 +103,7 @@ export function TermPopover({ termId, popoverId, anchorElement, interaction }: T
                       }
                     : undefined
             }
-            className={`z-[800] rounded-2xl border px-4 py-3 shadow-2xl outline-none backdrop-blur-xl ${
+            className={`z-[1100] rounded-2xl border px-4 py-3 shadow-2xl outline-none backdrop-blur-xl ${
                 theme === 'light'
                     ? 'border-stone-300 bg-white/96 text-stone-900'
                     : 'border-slate-600 bg-slate-950/96 text-slate-50'

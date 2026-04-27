@@ -1,6 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { CardPreviewOverlay } from '@gemduel/ui/components/CardPreviewOverlay';
 import { TopBar } from '@gemduel/ui/components/TopBar';
 import { UpdateNotification } from '@gemduel/ui/components/UpdateNotification';
+import type { PlayerZoneStackState } from '@gemduel/ui/components/playerZone/types';
+import type { Card as CardType, PlayerKey, RoyalCard } from '@gemduel/shared/types';
 import type { AppRouteProps } from '@app/types/ui';
 import { AppChrome } from '../chrome/AppChrome';
 import { AppOverlayStack } from '../overlays/AppOverlayStack';
@@ -20,12 +23,27 @@ import {
 } from './presentationPreview';
 import { getShouldShowGemPanelCalibrationOverlay } from './surfacePreviewQuery';
 
+type CardPreviewState =
+    | {
+          mode: 'single';
+          cards: CardType[];
+          title?: string;
+      }
+    | {
+          mode: 'collection';
+          cards: CardType[];
+          player: PlayerKey;
+          color: string;
+          title?: string;
+      };
+
 export function GameShell({
     appVersion,
     game,
     layout,
     theme,
     surfaceTheme,
+    desktopAspectRatio = '16:10',
     ui,
     setters,
     callbacks,
@@ -66,6 +84,24 @@ export function GameShell({
         useState<PresentationPreviewStage>(
             presentationPreviewMode === 'royal-unlock' ? 'intro' : null
         );
+    const [cardPreview, setCardPreview] = useState<CardPreviewState | null>(null);
+    const previewMarketCard = useCallback((card: CardType) => {
+        setCardPreview({ mode: 'single', cards: [card] });
+    }, []);
+    const previewRoyalCard = useCallback((card: RoyalCard) => {
+        setCardPreview({ mode: 'single', cards: [card as unknown as CardType] });
+    }, []);
+    const previewPlayerStack = useCallback(
+        (stack: PlayerZoneStackState & { player: PlayerKey }) => {
+            setCardPreview({
+                mode: 'collection',
+                cards: stack.cards,
+                player: stack.player,
+                color: stack.color,
+            });
+        },
+        []
+    );
     const previewPresentation = useMemo<PresentationController | null>(() => {
         if (!presentationPreviewMode) {
             return null;
@@ -83,11 +119,24 @@ export function GameShell({
             }
 
             return {
-                activeEvent,
+                activeEvent:
+                    activeEvent.type === 'market-refill' || activeEvent.type === 'turn-handoff'
+                        ? null
+                        : activeEvent,
+                activeMarketRefillEvent: activeEvent.type === 'market-refill' ? activeEvent : null,
+                activeTurnHandoffEvent: activeEvent.type === 'turn-handoff' ? activeEvent : null,
                 activeStage: 'pulse',
                 queuedEventCount: 0,
                 isBlockingRoyalSelection: false,
                 pendingReservedCardIds: [],
+                pendingMarketRefillSlots:
+                    activeEvent.type === 'market-refill'
+                        ? activeEvent.slots.slice(0, 1).map((slot) => ({
+                              level: slot.level,
+                              index: slot.index,
+                              nextCardId: slot.nextCardId,
+                          }))
+                        : [],
                 completeIntro: () => {},
                 completeEvent: () => setPresentationPreviewStage(null),
                 cancelEvent: () => setPresentationPreviewStage(null),
@@ -106,10 +155,13 @@ export function GameShell({
                 milestone: 'forced',
                 createdAtIndex: historyControls.currentIndex,
             },
+            activeMarketRefillEvent: null,
+            activeTurnHandoffEvent: null,
             activeStage: presentationPreviewStage,
             queuedEventCount: 0,
             isBlockingRoyalSelection: true,
             pendingReservedCardIds: [],
+            pendingMarketRefillSlots: [],
             completeIntro: () => {
                 if (!shouldHoldPresentationPreviewIntro) {
                     setPresentationPreviewStage('selection');
@@ -186,7 +238,6 @@ export function GameShell({
                 onUploadReplay={callbacks.handleUploadReplay}
                 onRequestRestart={() => setters.setShowRestartConfirm(true)}
                 onShowRulebook={() => setters.setShowRulebook(true)}
-                onToggleTheme={callbacks.toggleTheme}
                 onAddCrowns={handleDebugAddCrowns}
                 onAddPoints={handleDebugAddPoints}
                 onAddPrivilege={handleDebugAddPrivilege}
@@ -194,6 +245,8 @@ export function GameShell({
                 showDebugPanels={ui.showDebug && state.mode !== 'ONLINE_MULTIPLAYER'}
                 surfaceTheme={surfaceTheme}
                 onSelectSurfaceTheme={callbacks.selectSurfaceTheme}
+                desktopAspectRatio={desktopAspectRatio}
+                onSelectDesktopAspectRatio={callbacks.selectDesktopAspectRatio}
             />
 
             <AppOverlayStack
@@ -216,6 +269,17 @@ export function GameShell({
                 onStartBoardPeek={() => setters.setIsPeekingBoard(true)}
                 onStopBoardPeek={() => setters.setIsPeekingBoard(false)}
                 onSelectBonusColor={handleSelectBonusColor}
+            />
+
+            <CardPreviewOverlay
+                isOpen={Boolean(cardPreview)}
+                mode={cardPreview?.mode ?? 'single'}
+                cards={cardPreview?.cards ?? []}
+                theme={theme}
+                player={cardPreview?.mode === 'collection' ? cardPreview.player : undefined}
+                color={cardPreview?.mode === 'collection' ? cardPreview.color : undefined}
+                title={cardPreview?.title}
+                onClose={() => setCardPreview(null)}
             />
 
             <PresentationLayer
@@ -242,6 +306,9 @@ export function GameShell({
                 marketDeckBackArtwork={marketDeckBackArtwork}
                 isRoyalSelectionBlocked={effectivePresentation.isBlockingRoyalSelection}
                 showGemPanelCalibrationOverlay={showGemPanelCalibrationOverlay}
+                pendingMarketRefillSlots={effectivePresentation.pendingMarketRefillSlots}
+                onPreviewCard={previewMarketCard}
+                onPreviewRoyal={previewRoyalCard}
             />
 
             <PlayerRail
@@ -254,6 +321,7 @@ export function GameShell({
                 isP2ZoneActive={isP2ZoneActive}
                 playerZoneSurfaceVariant={surfaceTheme?.playerZone}
                 pendingReservedCardIds={effectivePresentation.pendingReservedCardIds}
+                onPreviewStack={previewPlayerStack}
             />
         </div>
     );

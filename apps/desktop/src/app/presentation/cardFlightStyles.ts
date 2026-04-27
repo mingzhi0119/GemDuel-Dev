@@ -10,16 +10,6 @@ export const CARD_FLIGHT_STYLES = `
     45% { opacity: 0.88; transform: translate3d(var(--end-x), var(--end-y), 0) scale(1.04); }
     100% { opacity: 0; transform: translate3d(var(--end-x), var(--end-y), 0) scale(1); }
 }
-@keyframes gemduel-market-refill-flip {
-    0% { opacity: 0; transform: rotateY(-74deg) scale(0.94); }
-    34% { opacity: 0.95; }
-    100% { opacity: 0; transform: rotateY(0deg) scale(1); }
-}
-@keyframes gemduel-market-refill-reduced {
-    0% { opacity: 0; transform: scale(0.98); }
-    45% { opacity: 0.85; transform: scale(1.02); }
-    100% { opacity: 0; transform: scale(1); }
-}
 @keyframes gemduel-card-reserve-deck-flight {
     0% { opacity: 0; transform: translate3d(var(--start-x), var(--start-y), 0) scale(0.92) rotate(-2deg); }
     12% { opacity: 1; }

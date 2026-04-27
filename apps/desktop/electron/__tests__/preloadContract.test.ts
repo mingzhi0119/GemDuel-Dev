@@ -71,6 +71,7 @@ describe('electron preload contract', () => {
             }) => Promise<string>;
             startLanMatchmaking: () => Promise<string>;
             cancelLanMatchmaking: () => Promise<string>;
+            setDesktopAspectRatio: (payload: { ratio: '16:10' | '16:9' }) => Promise<string>;
             selectLanPregameMode: (payload: {
                 roomId: string;
                 mode: 'classic' | 'roguelike';
@@ -106,6 +107,9 @@ describe('electron preload contract', () => {
         ).resolves.toBe('save-replay-to-folder');
         await expect(bridge.startLanMatchmaking()).resolves.toBe('start-lan-matchmaking');
         await expect(bridge.cancelLanMatchmaking()).resolves.toBe('cancel-lan-matchmaking');
+        await expect(bridge.setDesktopAspectRatio({ ratio: '16:9' })).resolves.toBe(
+            'set-desktop-aspect-ratio'
+        );
         await expect(
             bridge.selectLanPregameMode({
                 roomId: 'room-1',
@@ -153,6 +157,9 @@ describe('electron preload contract', () => {
         });
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('start-lan-matchmaking');
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('cancel-lan-matchmaking');
+        expect(ipcRenderer.invoke).toHaveBeenCalledWith('set-desktop-aspect-ratio', {
+            ratio: '16:9',
+        });
         expect(ipcRenderer.invoke).toHaveBeenCalledWith('select-lan-pregame-mode', {
             roomId: 'room-1',
             mode: 'classic',

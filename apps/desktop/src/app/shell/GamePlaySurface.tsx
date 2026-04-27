@@ -17,6 +17,8 @@ import type {
     GemPanelSkin,
     MarketState,
     PlayerKey,
+    Card as CardType,
+    RoyalCard,
 } from '@gemduel/shared/types';
 
 type EffectiveGameMode = GamePhase | 'REVIEW' | 'GAME_OVER';
@@ -33,6 +35,13 @@ interface GamePlaySurfaceProps {
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     isRoyalSelectionBlocked?: boolean;
     showGemPanelCalibrationOverlay?: boolean;
+    pendingMarketRefillSlots?: Array<{
+        level: 1 | 2 | 3;
+        index: number;
+        nextCardId?: string | null;
+    }>;
+    onPreviewCard?: (card: CardType) => void;
+    onPreviewRoyal?: (card: RoyalCard) => void;
 }
 
 const MARKET_ROW_GAP_PX = 6;
@@ -58,6 +67,9 @@ export function GamePlaySurface({
     marketDeckBackArtwork,
     isRoyalSelectionBlocked = false,
     showGemPanelCalibrationOverlay = false,
+    pendingMarketRefillSlots = [],
+    onPreviewCard,
+    onPreviewRoyal,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
     const {
@@ -150,6 +162,8 @@ export function GamePlaySurface({
                                 localPlayer={localPlayer}
                                 surfaceStyle={marketSurfaceStyle}
                                 deckBackArtwork={marketDeckBackArtwork}
+                                pendingMarketRefillSlots={pendingMarketRefillSlots}
+                                onPreviewCard={onPreviewCard}
                             />
                         </div>
                     </div>
@@ -238,6 +252,7 @@ export function GamePlaySurface({
                                 handleSelectRoyal={handleSelectRoyal}
                                 theme={theme}
                                 canInteract={isMyTurn && !isRoyalSelectionBlocked}
+                                onPreviewRoyal={onPreviewRoyal}
                             />
                             <div className="flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500">
                                 <ReplayControls

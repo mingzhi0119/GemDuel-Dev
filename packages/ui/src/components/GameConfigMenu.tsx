@@ -1,4 +1,4 @@
-import { Globe, Radio, Users, User } from 'lucide-react';
+import { FlaskConical, Globe, Radio, Users, User } from 'lucide-react';
 import { useState } from 'react';
 import { GameMode } from '@gemduel/shared/types';
 import { useLocale, useT } from '../i18n/LocaleProvider';
@@ -9,6 +9,7 @@ interface GameConfigMenuProps {
     onOnlineSetup: () => void;
     onLanSetup: () => void;
     onStartGame: (mode: GameMode, config: { useBuffs: boolean }) => void;
+    onOpenVisualLab?: (mode: 'surfaces' | 'motion') => void;
     theme: string;
 }
 
@@ -16,9 +17,11 @@ export function GameConfigMenu({
     onOnlineSetup,
     onLanSetup,
     onStartGame,
+    onOpenVisualLab,
     theme,
 }: GameConfigMenuProps) {
     const [gameConfig, setGameConfig] = useState<{ useBuffs: boolean } | null>(null);
+    const [showVisualLabMenu, setShowVisualLabMenu] = useState(false);
     const { locale } = useLocale();
     const t = useT();
     const fitScale = useViewportFitScale<HTMLDivElement>(3, 96);
@@ -119,6 +122,46 @@ export function GameConfigMenu({
                 <div className="absolute bottom-8 text-xs opacity-30 lg:text-base">
                     {t('startPage.selectMode')}
                 </div>
+
+                {onOpenVisualLab && (
+                    <div className="absolute bottom-8 right-8 z-10 flex items-end gap-4">
+                        {showVisualLabMenu && (
+                            <div className="flex overflow-hidden rounded-2xl border border-cyan-300/45 bg-slate-950/92 text-[16px] font-black uppercase tracking-[0.14em] text-slate-100 shadow-2xl shadow-cyan-950/45 backdrop-blur-md">
+                                <button
+                                    type="button"
+                                    className="px-7 py-5 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
+                                    onClick={() => onOpenVisualLab('surfaces')}
+                                >
+                                    Surfaces
+                                </button>
+                                <button
+                                    type="button"
+                                    className="border-l border-cyan-300/35 px-7 py-5 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
+                                    onClick={() => onOpenVisualLab('motion')}
+                                >
+                                    Motion
+                                </button>
+                            </div>
+                        )}
+                        <button
+                            type="button"
+                            aria-label="Open Visual Lab"
+                            aria-expanded={showVisualLabMenu}
+                            className="flex min-h-28 items-center gap-6 rounded-[2rem] border border-cyan-300/55 bg-cyan-400/12 px-8 py-6 text-left text-cyan-50 shadow-2xl shadow-cyan-950/35 backdrop-blur-md transition-all hover:border-cyan-200 hover:bg-cyan-400/20 hover:shadow-cyan-800/30 focus-visible:border-cyan-200 focus-visible:bg-cyan-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/40"
+                            onClick={() => setShowVisualLabMenu((current) => !current)}
+                        >
+                            <FlaskConical size={44} aria-hidden="true" className="text-cyan-200" />
+                            <span className="flex flex-col leading-none">
+                                <span className="text-3xl font-black uppercase tracking-[0.16em]">
+                                    Visual Lab
+                                </span>
+                                <span className="mt-3 text-[15px] font-bold uppercase tracking-[0.14em] text-cyan-100/70">
+                                    Surfaces / Motion
+                                </span>
+                            </span>
+                        </button>
+                    </div>
+                )}
             </div>
         );
     }

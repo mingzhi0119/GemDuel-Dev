@@ -2,10 +2,11 @@ import type { ChangeEventHandler, Dispatch, SetStateAction } from 'react';
 import type { useGameLogic } from '../hooks/useGameLogic';
 import type { useLanMatchmaking } from '../hooks/useLanMatchmaking';
 import type { SurfaceThemeSelections, SurfaceThemeVariant } from '../app/shell/surfaceTheme';
-import type { PlayerKey } from '@gemduel/shared/types';
+import type { DesktopAspectRatio, PlayerKey, ThemeName } from '@gemduel/shared/types';
 import type { AppReasonCode } from '@gemduel/shared/types/reason';
 
-export type ThemeName = 'light' | 'dark';
+export type { ThemeName } from '@gemduel/shared/types';
+
 export type UiNoticeSeverity = 'info' | 'warn' | 'error';
 
 export interface UiStatusNotice {
@@ -58,8 +59,9 @@ export interface AppUiCallbacks {
     handleRestart: () => void;
     handleDownloadReplay: () => void;
     handleUploadReplay: ChangeEventHandler<HTMLInputElement>;
-    toggleTheme: () => void;
     selectSurfaceTheme?: (variant: SurfaceThemeVariant) => void;
+    selectDesktopAspectRatio?: (ratio: DesktopAspectRatio) => void;
+    openVisualLab?: (mode: 'surfaces' | 'motion') => void;
 }
 
 export interface AppRouteProps {
@@ -69,6 +71,7 @@ export interface AppRouteProps {
     layout: ResponsiveLayout;
     theme: ThemeName;
     surfaceTheme?: SurfaceThemeSelections;
+    desktopAspectRatio?: DesktopAspectRatio;
     ui: AppUiState;
     setters: AppUiSetters;
     callbacks: AppUiCallbacks;

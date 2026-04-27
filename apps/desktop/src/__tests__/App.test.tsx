@@ -13,9 +13,9 @@ const mocks = vi.hoisted(() => ({
     game: null as AppRouteProps['game'] | null,
     lan: null as AppRouteProps['lan'] | null,
     layout: null as ResponsiveLayout | null,
-    setTheme: vi.fn(),
     setLocale: vi.fn(),
     setSurfaceTheme: vi.fn(),
+    setDesktopAspectRatio: vi.fn(),
     useReplayAutoSave: vi.fn(),
     useLanDevVerification: vi.fn(),
 }));
@@ -40,7 +40,6 @@ vi.mock('../hooks/useResponsiveLayout', () => ({
 vi.mock('../hooks/useSettings', () => ({
     useSettings: () => ({
         theme: 'dark' as const,
-        setTheme: mocks.setTheme,
         locale: 'en' as const,
         setLocale: mocks.setLocale,
         surfaceTheme: {
@@ -51,6 +50,8 @@ vi.mock('../hooks/useSettings', () => ({
             effects: 'anime',
         },
         setSurfaceTheme: mocks.setSurfaceTheme,
+        desktopAspectRatio: '16:10' as const,
+        setDesktopAspectRatio: mocks.setDesktopAspectRatio,
     }),
 }));
 
@@ -175,11 +176,12 @@ describe('GemDuelBoard replay review state', () => {
         mocks.layout = createLayout();
         mocks.lan = createLanController();
         mocks.game = createGameController();
-        mocks.setTheme.mockReset();
         mocks.setLocale.mockReset();
         mocks.setSurfaceTheme.mockReset();
+        mocks.setDesktopAspectRatio.mockReset();
         mocks.useReplayAutoSave.mockReset();
         mocks.useLanDevVerification.mockReset();
+        delete window.electron;
     });
 
     afterEach(() => {
@@ -203,6 +205,10 @@ describe('GemDuelBoard replay review state', () => {
 
         expect(mocks.routeProps?.ui.isReviewing).toBe(true);
         expect(mocks.routeProps?.ui.persistentWinner).toBeNull();
+        expect(mocks.routeProps?.desktopAspectRatio).toBe('16:10');
+        expect(mocks.routeProps?.callbacks.selectDesktopAspectRatio).toBe(
+            mocks.setDesktopAspectRatio
+        );
     });
 
     it('keeps the winner overlay for the latest live match state', async () => {
@@ -217,5 +223,21 @@ describe('GemDuelBoard replay review state', () => {
 
         expect(mocks.routeProps?.ui.isReviewing).toBe(false);
         expect(mocks.routeProps?.ui.persistentWinner).toBe('p1');
+    });
+
+    it('applies the stored desktop aspect ratio through the Electron bridge when available', async () => {
+        const setDesktopAspectRatio = vi.fn(async () => ({
+            ratio: '16:10' as const,
+            width: 1280,
+            height: 800,
+            aspectRatio: 16 / 10,
+        }));
+        window.electron = {
+            setDesktopAspectRatio,
+        } as unknown as typeof window.electron;
+
+        await renderBoard();
+
+        expect(setDesktopAspectRatio).toHaveBeenCalledWith({ ratio: '16:10' });
     });
 });

@@ -65,6 +65,12 @@ export interface MarketRefillPresentationEvent extends PresentationEventBase {
     }>;
 }
 
+export interface PendingMarketRefillSlot {
+    level: 1 | 2 | 3;
+    index: number;
+    nextCardId: string | null;
+}
+
 export interface BoardGemPresentationSource {
     row: number;
     col: number;

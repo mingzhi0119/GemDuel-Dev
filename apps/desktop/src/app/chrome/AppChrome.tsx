@@ -6,8 +6,8 @@ import React, {
     useState,
     type ChangeEventHandler,
 } from 'react';
-import { BookOpen, Download, Moon, RotateCcw, Settings, Sun, Upload } from 'lucide-react';
-import type { ThemeName } from '@gemduel/shared/types';
+import { BookOpen, Download, Monitor, RotateCcw, Settings, Upload } from 'lucide-react';
+import type { DesktopAspectRatio, ThemeName } from '@gemduel/shared/types';
 import { LocaleSwitch } from '@gemduel/ui/components/LocaleSwitch';
 import {
     TOOLTIP_LABEL_CLASS,
@@ -34,7 +34,6 @@ interface AppChromeProps {
     onUploadReplay: ChangeEventHandler<HTMLInputElement>;
     onRequestRestart: () => void;
     onShowRulebook: () => void;
-    onToggleTheme: () => void;
     onAddCrowns: (player: 'p1' | 'p2') => void;
     onAddPoints: (player: 'p1' | 'p2') => void;
     onAddPrivilege: (player: 'p1' | 'p2') => void;
@@ -42,6 +41,8 @@ interface AppChromeProps {
     showDebugPanels: boolean;
     surfaceTheme?: SurfaceThemeSelections;
     onSelectSurfaceTheme?: (variant: SurfaceThemeVariant) => void;
+    desktopAspectRatio?: DesktopAspectRatio;
+    onSelectDesktopAspectRatio?: (ratio: DesktopAspectRatio) => void;
 }
 
 export function AppChrome({
@@ -53,7 +54,6 @@ export function AppChrome({
     onUploadReplay,
     onRequestRestart,
     onShowRulebook,
-    onToggleTheme,
     onAddCrowns,
     onAddPoints,
     onAddPrivilege,
@@ -61,6 +61,8 @@ export function AppChrome({
     showDebugPanels,
     surfaceTheme = DEFAULT_SURFACE_THEME_SELECTIONS,
     onSelectSurfaceTheme,
+    desktopAspectRatio = '16:10',
+    onSelectDesktopAspectRatio,
 }: AppChromeProps) {
     const t = useT();
     const settingsTooltipId = useId();
@@ -80,6 +82,14 @@ export function AppChrome({
         theme === 'dark'
             ? 'bg-slate-900/70 hover:bg-slate-800/90 text-slate-200 hover:text-white border-slate-600 hover:border-slate-500 shadow-[0_6px_20px_rgba(0,0,0,0.35)]'
             : 'bg-white/95 hover:bg-stone-50 text-stone-700 border-stone-300';
+    const aspectOptionClass =
+        theme === 'dark'
+            ? 'border-slate-700 bg-slate-950/80 text-slate-300 hover:border-cyan-300/60 hover:text-cyan-100'
+            : 'border-stone-300 bg-white text-stone-700 hover:border-stone-700 hover:text-stone-950';
+    const activeAspectOptionClass =
+        theme === 'dark'
+            ? 'border-cyan-300/70 bg-cyan-400/18 text-cyan-50 shadow-[0_0_18px_rgba(34,211,238,0.22)]'
+            : 'border-stone-900 bg-stone-900 text-white shadow-[0_8px_18px_rgba(28,25,23,0.18)]';
 
     useEffect(() => {
         if (!showSettingsMenu) {
@@ -203,6 +213,49 @@ export function AppChrome({
                                     <LocaleSwitch theme={theme} className="w-full justify-center" />
                                 </div>
 
+                                {onSelectDesktopAspectRatio && (
+                                    <div className="px-1 pb-1">
+                                        <div
+                                            className={`mb-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] ${
+                                                theme === 'dark'
+                                                    ? 'text-slate-500'
+                                                    : 'text-stone-500'
+                                            }`}
+                                        >
+                                            <Monitor size={13} aria-hidden="true" />
+                                            <span>{t('settings.aspectRatio')}</span>
+                                        </div>
+                                        <div
+                                            role="group"
+                                            aria-label={t('settings.aspectRatio')}
+                                            className="grid grid-cols-2 gap-1"
+                                        >
+                                            {(['16:10', '16:9'] as const).map((ratio) => {
+                                                const isSelected = ratio === desktopAspectRatio;
+
+                                                return (
+                                                    <button
+                                                        key={ratio}
+                                                        type="button"
+                                                        data-desktop-aspect-ratio-option={ratio}
+                                                        aria-pressed={isSelected}
+                                                        className={`rounded-lg border px-2 py-2 text-[12px] font-black uppercase tracking-[0.10em] transition-all ${
+                                                            isSelected
+                                                                ? activeAspectOptionClass
+                                                                : aspectOptionClass
+                                                        }`}
+                                                        onClick={() =>
+                                                            onSelectDesktopAspectRatio(ratio)
+                                                        }
+                                                    >
+                                                        {ratio}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {canShowDebug && (
                                     <button
                                         onClick={() => {
@@ -259,19 +312,6 @@ export function AppChrome({
                                         className="hidden"
                                     />
                                 </label>
-
-                                <button
-                                    onClick={onToggleTheme}
-                                    className={`px-3 py-2.5 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start shadow-none ${neutralMutedButtonClass}`}
-                                    aria-label={t('settings.toggleTheme')}
-                                >
-                                    {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
-                                    <span className="whitespace-nowrap text-[13px] font-black uppercase tracking-[0.14em]">
-                                        {theme === 'dark'
-                                            ? t('settings.dark')
-                                            : t('settings.light')}
-                                    </span>
-                                </button>
 
                                 <AppChromeSurfaceControls
                                     theme={theme}

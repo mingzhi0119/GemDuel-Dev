@@ -16,9 +16,7 @@ import { createSurfaceThemeSelections, type SurfaceThemeVariant } from './app/sh
 import {
     clearSurfacePreviewArtworkQuery,
     getSurfacePreviewStartMode,
-    getSurfacePreviewTheme,
     getSurfacePreviewVariant,
-    setSurfacePreviewThemeQuery,
 } from './app/shell/surfacePreviewQuery';
 import type { PlayerKey } from '@gemduel/shared/types';
 import { getDocumentLanguage } from '@gemduel/shared';
@@ -37,16 +35,20 @@ export default function GemDuelBoard() {
     const didSurfacePreviewStartRef = useRef(false);
 
     const { appVersion } = useRuntimeAppConfig();
-    const { theme, setTheme, locale, setLocale, surfaceTheme, setSurfaceTheme } = useSettings();
-    const surfacePreviewTheme = useMemo(getSurfacePreviewTheme, []);
-    const [surfacePreviewThemeOverride, setSurfacePreviewThemeOverride] =
-        useState(surfacePreviewTheme);
+    const {
+        theme,
+        locale,
+        setLocale,
+        surfaceTheme,
+        setSurfaceTheme,
+        desktopAspectRatio,
+        setDesktopAspectRatio,
+    } = useSettings();
     const initialSurfacePreviewVariant = useMemo(getSurfacePreviewVariant, []);
     const [surfacePreviewVariant, setSurfacePreviewVariant] = useState(
         initialSurfacePreviewVariant
     );
     const surfacePreviewStartMode = useMemo(getSurfacePreviewStartMode, []);
-    const effectiveTheme = surfacePreviewThemeOverride ?? theme;
     const effectiveSurfaceTheme = useMemo(
         () =>
             surfacePreviewVariant
@@ -125,9 +127,19 @@ export default function GemDuelBoard() {
     }, [historyControls.historyLength, historyControls.historySource]);
 
     useEffect(() => {
-        document.documentElement.dataset.theme = effectiveTheme;
-        document.body.dataset.theme = effectiveTheme;
-    }, [effectiveTheme]);
+        document.documentElement.dataset.theme = theme;
+        document.body.dataset.theme = theme;
+    }, [theme]);
+
+    useEffect(() => {
+        const applyDesktopAspectRatio = window.electron?.setDesktopAspectRatio;
+
+        if (!applyDesktopAspectRatio) {
+            return;
+        }
+
+        void applyDesktopAspectRatio({ ratio: desktopAspectRatio }).catch(() => undefined);
+    }, [desktopAspectRatio]);
 
     useEffect(() => {
         const documentLanguage = getDocumentLanguage(locale);
@@ -174,23 +186,16 @@ export default function GemDuelBoard() {
         lastHostStartRoomRef.current = null;
     };
 
-    const handleToggleTheme = () => {
-        if (surfacePreviewThemeOverride) {
-            setSurfacePreviewThemeOverride((current) => {
-                const nextTheme = (current ?? theme) === 'dark' ? 'light' : 'dark';
-                setSurfacePreviewThemeQuery(nextTheme);
-                return nextTheme;
-            });
-            return;
-        }
-
-        setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
-    };
-
     const handleSelectSurfaceTheme = (variant: SurfaceThemeVariant) => {
         clearSurfacePreviewArtworkQuery();
         setSurfacePreviewVariant(undefined);
         setSurfaceTheme(createSurfaceThemeSelections(variant));
+    };
+
+    const handleOpenVisualLab = (mode: 'surfaces' | 'motion') => {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set('visualLab', mode);
+        window.location.assign(`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
     };
 
     useEffect(() => {
@@ -259,8 +264,9 @@ export default function GemDuelBoard() {
                 game={game}
                 lan={lan}
                 layout={layout}
-                theme={effectiveTheme}
+                theme={theme}
                 surfaceTheme={effectiveSurfaceTheme}
+                desktopAspectRatio={desktopAspectRatio}
                 ui={{
                     showDebug,
                     isReviewing,
@@ -282,8 +288,9 @@ export default function GemDuelBoard() {
                     handleRestart,
                     handleDownloadReplay,
                     handleUploadReplay,
-                    toggleTheme: handleToggleTheme,
                     selectSurfaceTheme: handleSelectSurfaceTheme,
+                    selectDesktopAspectRatio: setDesktopAspectRatio,
+                    openVisualLab: handleOpenVisualLab,
                 }}
             />
         </LocaleProvider>

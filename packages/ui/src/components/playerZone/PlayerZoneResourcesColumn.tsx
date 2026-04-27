@@ -56,6 +56,7 @@ export function PlayerZoneResourcesColumn({
 }: PlayerZoneResourcesColumnProps) {
     return (
         <div
+            data-player-zone-column="resources"
             className="self-stretch flex flex-col gap-3 shrink-0 justify-center"
             style={{ flex: 58 }}
         >

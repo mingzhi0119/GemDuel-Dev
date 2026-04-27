@@ -79,6 +79,12 @@ const createElectronBridgeMock = (overrides: Partial<ElectronBridge> = {}): Elec
         errorMessage: null,
         statusMessage: 'LAN duel is ready.',
     }),
+    setDesktopAspectRatio: vi.fn().mockResolvedValue({
+        ratio: '16:10',
+        width: 1280,
+        height: 800,
+        aspectRatio: 16 / 10,
+    }),
     selectLanPregameMode: vi.fn().mockResolvedValue({
         phase: 'matched',
         roomId: 'room',

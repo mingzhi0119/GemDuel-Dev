@@ -8,6 +8,7 @@ import { AbilityCalloutStack } from './AbilityCalloutStack';
 import { CardFlightLayer } from './CardFlightLayer';
 import { GemFlightLayer } from './GemFlightLayer';
 import { TurnHandoffBanner } from './TurnHandoffBanner';
+import type { PresentationPreviewMode } from './presentationPreviewMode';
 import type { PresentationController } from './usePresentationEvents';
 
 interface PresentationLayerProps {
@@ -16,6 +17,7 @@ interface PresentationLayerProps {
     theme: ThemeName;
     onSelectRoyal: (card: RoyalCard) => void;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
+    previewMode?: PresentationPreviewMode;
 }
 
 const MIDDLE_ZONE_ANCHOR = '[data-presentation-anchor="middle-zone"]';
@@ -26,25 +28,47 @@ export function PresentationLayer({
     theme,
     onSelectRoyal,
     marketDeckBackArtwork,
+    previewMode,
 }: PresentationLayerProps) {
-    const { activeEvent, activeStage } = presentation;
-    let layer: ReactNode = null;
+    const { activeEvent, activeMarketRefillEvent, activeTurnHandoffEvent, activeStage } =
+        presentation;
+    const layers: ReactNode[] = [];
 
-    if (!activeEvent) {
-        return null;
+    if (activeMarketRefillEvent) {
+        layers.push(
+            <CardFlightLayer
+                key={activeMarketRefillEvent.id}
+                event={activeMarketRefillEvent}
+                theme={theme}
+                marketDeckBackArtwork={marketDeckBackArtwork}
+                previewMode={previewMode}
+            />
+        );
     }
 
-    if (activeEvent.type !== 'royal-unlock') {
+    if (activeTurnHandoffEvent) {
+        layers.push(
+            <TurnHandoffBanner
+                key={activeTurnHandoffEvent.id}
+                event={activeTurnHandoffEvent}
+                previewMode={previewMode}
+            />
+        );
+    }
+
+    if (activeEvent && activeEvent.type !== 'royal-unlock') {
         if (activeStage === 'pulse') {
             switch (activeEvent.type) {
                 case 'card-acquire':
                 case 'card-reserve':
                 case 'market-refill':
-                    layer = (
+                    layers.push(
                         <CardFlightLayer
+                            key={activeEvent.id}
                             event={activeEvent}
                             theme={theme}
                             marketDeckBackArtwork={marketDeckBackArtwork}
+                            previewMode={previewMode}
                         />
                     );
                     break;
@@ -52,21 +76,33 @@ export function PresentationLayer({
                 case 'gem-drop':
                 case 'gem-steal':
                 case 'gem-discard':
-                    layer = <GemFlightLayer event={activeEvent} theme={theme} />;
+                    layers.push(
+                        <GemFlightLayer
+                            key={activeEvent.id}
+                            event={activeEvent}
+                            theme={theme}
+                            previewMode={previewMode}
+                        />
+                    );
                     break;
                 case 'ability-callout':
-                    layer = <AbilityCalloutStack event={activeEvent} theme={theme} />;
-                    break;
-                case 'turn-handoff':
-                    layer = <TurnHandoffBanner event={activeEvent} />;
+                    layers.push(
+                        <AbilityCalloutStack
+                            key={activeEvent.id}
+                            event={activeEvent}
+                            theme={theme}
+                            previewMode={previewMode}
+                        />
+                    );
                     break;
                 default:
-                    layer = null;
+                    break;
             }
         }
-    } else if (activeStage === 'intro') {
-        layer = (
+    } else if (activeEvent && activeStage === 'intro') {
+        layers.push(
             <RoyalUnlockIntro
+                key={activeEvent.id}
                 player={activeEvent.player}
                 milestone={activeEvent.milestone}
                 theme={theme}
@@ -74,9 +110,10 @@ export function PresentationLayer({
                 onComplete={presentation.completeIntro}
             />
         );
-    } else if (activeStage === 'selection') {
-        layer = (
+    } else if (activeEvent && activeStage === 'selection') {
+        layers.push(
             <RoyalSelectionOverlay
+                key={activeEvent.id}
                 royalDeck={royalDeck}
                 player={activeEvent.player}
                 theme={theme}
@@ -88,9 +125,11 @@ export function PresentationLayer({
         );
     }
 
-    if (!layer) {
+    if (layers.length === 0) {
         return null;
     }
+
+    const layer = <>{layers}</>;
 
     return typeof document === 'undefined' ? layer : createPortal(layer, document.body);
 }

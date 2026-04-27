@@ -25,7 +25,7 @@ import {
 
 type SurfaceArtworkSlot = 'shellBackground' | 'gemPanel' | 'marketBackground';
 type GemPanelSkinId = 'dashboard' | 'square-dashboard';
-type SurfaceRuntimeMode = 'dark' | 'light';
+const SURFACE_RUNTIME_MODE = 'dark';
 
 interface SurfaceArtworkAsset {
     path: string;
@@ -37,11 +37,6 @@ interface SurfaceArtworkAsset {
 
 type ThemeSurfaceArtwork = Record<SurfaceArtworkSlot, SurfaceArtworkAsset>;
 
-const SURFACE_THEME_SLOT_PATHS: Record<SurfaceArtworkSlot, string> = {
-    shellBackground: 'shell-background',
-    gemPanel: 'gem-panel',
-    marketBackground: 'market-background',
-};
 const SURFACE_THEME_RUNTIME_BASE_PATH = '/assets/surfaces/anime-themes';
 
 interface GemPanelGeometryConfig {
@@ -50,8 +45,6 @@ interface GemPanelGeometryConfig {
     cellGridLinesNormalized: NormalizedGridLines;
     gemDiameterNormalized: number;
 }
-
-type GemPanelGeometryModeMap = Record<SurfaceRuntimeMode, GemPanelGeometryConfig>;
 
 const createGridLinesFromRect = (rect: NormalizedRect): NormalizedGridLines => {
     const cellWidth = (rect.right - rect.left) / GEM_BOARD_DIMENSION;
@@ -109,55 +102,27 @@ const createGemPanelGeometryFromGridLines = (
 };
 
 // Grid lines are the detected 6x6 intersection lattice of each panel image.
-const GEM_PANEL_GEOMETRY_BY_SURFACE: Record<SurfaceThemeVariant, GemPanelGeometryModeMap> = {
-    'crystal-anime': {
-        dark: createGemPanelGeometryFromGridLines(
-            [0.1116, 0.2665, 0.4214, 0.5762, 0.7311, 0.886],
-            [0.0726, 0.2341, 0.3957, 0.5573, 0.7188, 0.8804],
-            0.127
-        ),
-        light: createGemPanelGeometryFromGridLines(
-            [0.0829, 0.2504, 0.4179, 0.5853, 0.7528, 0.9203],
-            [0.0949, 0.2617, 0.4285, 0.5954, 0.7622, 0.929],
-            0.1368
-        ),
-    },
-    'royal-luxury': {
-        dark: createGemPanelGeometryFromGridLines(
-            [0.0941, 0.2561, 0.4182, 0.5802, 0.7423, 0.9043],
-            [0.0941, 0.2557, 0.4172, 0.5788, 0.7404, 0.9019],
-            0.1325
-        ),
-        light: createGemPanelGeometryFromGridLines(
-            [0.0845, 0.2459, 0.4073, 0.5687, 0.7301, 0.8915],
-            [0.0949, 0.2581, 0.4212, 0.5844, 0.7475, 0.9107],
-            0.1324
-        ),
-    },
-    'dark-arcane': {
-        dark: createGemPanelGeometryFromGridLines(
-            [0.114, 0.2681, 0.4222, 0.5762, 0.7303, 0.8844],
-            [0.0989, 0.2547, 0.4105, 0.5663, 0.7222, 0.878],
-            0.1263
-        ),
-        light: createGemPanelGeometryFromGridLines(
-            [0.0981, 0.2582, 0.4183, 0.5785, 0.7386, 0.8987],
-            [0.0989, 0.2571, 0.4153, 0.5735, 0.7317, 0.89],
-            0.1297
-        ),
-    },
-    'clean-boardgame': {
-        dark: createGemPanelGeometryFromGridLines(
-            [0.0805, 0.2477, 0.4148, 0.582, 0.7491, 0.9163],
-            [0.0797, 0.2469, 0.414, 0.5812, 0.7483, 0.9155],
-            0.1371
-        ),
-        light: createGemPanelGeometryFromGridLines(
-            [0.0885, 0.256, 0.4234, 0.5909, 0.7584, 0.9258],
-            [0.0837, 0.2512, 0.4187, 0.5861, 0.7536, 0.9211],
-            0.1373
-        ),
-    },
+const GEM_PANEL_GEOMETRY_BY_SURFACE: Record<SurfaceThemeVariant, GemPanelGeometryConfig> = {
+    'crystal-anime': createGemPanelGeometryFromGridLines(
+        [0.1116, 0.2665, 0.4214, 0.5762, 0.7311, 0.886],
+        [0.0726, 0.2341, 0.3957, 0.5573, 0.7188, 0.8804],
+        0.127
+    ),
+    'royal-luxury': createGemPanelGeometryFromGridLines(
+        [0.0941, 0.2561, 0.4182, 0.5802, 0.7423, 0.9043],
+        [0.0941, 0.2557, 0.4172, 0.5788, 0.7404, 0.9019],
+        0.1325
+    ),
+    'dark-arcane': createGemPanelGeometryFromGridLines(
+        [0.114, 0.2681, 0.4222, 0.5762, 0.7303, 0.8844],
+        [0.0989, 0.2547, 0.4105, 0.5663, 0.7222, 0.878],
+        0.1263
+    ),
+    'clean-boardgame': createGemPanelGeometryFromGridLines(
+        [0.0805, 0.2477, 0.4148, 0.582, 0.7491, 0.9163],
+        [0.0797, 0.2469, 0.414, 0.5812, 0.7483, 0.9155],
+        0.1371
+    ),
 };
 
 const GEM_PANEL_SKIN_BASE: Record<GemPanelSkinId, Omit<GemPanelSkin, 'artworkPath'>> = {
@@ -176,21 +141,6 @@ const GEM_PANEL_SKIN_BASE: Record<GemPanelSkinId, Omit<GemPanelSkin, 'artworkPat
 };
 
 export const SURFACE_ARTWORK: Record<ThemeName, ThemeSurfaceArtwork> = {
-    light: {
-        shellBackground: {
-            path: '/assets/surfaces/light/background-shell.png',
-        },
-        gemPanel: {
-            path: '/assets/surfaces/light/panel-gem-board.png',
-            size: '100% 100%',
-            position: 'center center',
-            skinId: 'dashboard',
-        },
-        marketBackground: {
-            path: '/assets/surfaces/light/background-market.png',
-            position: 'center top',
-        },
-    },
     dark: {
         shellBackground: {
             path: '/assets/surfaces/dark/background-shell.png',
@@ -213,8 +163,8 @@ const getSurfaceThemeAssetPath = (
     variant: SurfaceThemeVariant,
     fileName: string
 ): string => {
-    const mode: SurfaceRuntimeMode = theme === 'dark' ? 'dark' : 'light';
-    return `${SURFACE_THEME_RUNTIME_BASE_PATH}/${variant}/${mode}/${fileName}.png`;
+    void theme;
+    return `${SURFACE_THEME_RUNTIME_BASE_PATH}/${variant}/${SURFACE_RUNTIME_MODE}/${fileName}.png`;
 };
 
 export const getSurfaceThemeMarketDeckBackArtwork = (
@@ -249,17 +199,11 @@ const getSurfaceArtworkAsset = (
         return baseAsset;
     }
 
-    const mode: SurfaceRuntimeMode = theme === 'dark' ? 'dark' : 'light';
-    const runtimeAssetName =
-        slot === 'shellBackground'
-            ? 'shell-background'
-            : slot === 'gemPanel'
-              ? 'gem-panel'
-              : SURFACE_THEME_SLOT_PATHS[slot];
+    const runtimeAssetName = slot === 'gemPanel' ? 'gem-panel' : 'shell-background';
 
     return {
         ...baseAsset,
-        path: `${SURFACE_THEME_RUNTIME_BASE_PATH}/${variant}/${mode}/${runtimeAssetName}.png`,
+        path: `${SURFACE_THEME_RUNTIME_BASE_PATH}/${variant}/${SURFACE_RUNTIME_MODE}/${runtimeAssetName}.png`,
         ...(slot === 'gemPanel'
             ? {
                   size: '100% 100%',
@@ -303,17 +247,15 @@ const buildSurfaceStyle = ({
 };
 
 const createTopBarArtworkSurfaceStyle = (theme: ThemeName, asset: string): CSSProperties => {
+    void theme;
     return {
         backgroundColor: 'transparent',
         backgroundImage: `url("${asset}")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        borderColor: theme === 'light' ? 'rgba(15,23,42,0.12)' : 'rgba(250,204,21,0.18)',
-        boxShadow:
-            theme === 'light'
-                ? '0 10px 24px rgba(15,23,42,0.10)'
-                : '0 12px 30px rgba(0,0,0,0.36), inset 0 -1px 0 rgba(250,204,21,0.12)',
+        borderColor: 'rgba(250,204,21,0.18)',
+        boxShadow: '0 12px 30px rgba(0,0,0,0.36), inset 0 -1px 0 rgba(250,204,21,0.12)',
     };
 };
 
@@ -323,11 +265,10 @@ export const getGemPanelSkin = (
 ): GemPanelSkin => {
     const asset = getSurfaceArtworkAsset(theme, 'gemPanel', variant);
     const skinId = asset.skinId ?? 'dashboard';
-    const mode: SurfaceRuntimeMode = theme === 'dark' ? 'dark' : 'light';
     const fallbackGeometry = createGemPanelGeometry(
         GEM_PANEL_SKIN_BASE[skinId].playfieldRectNormalized
     );
-    const geometry = GEM_PANEL_GEOMETRY_BY_SURFACE[variant]?.[mode] ?? fallbackGeometry;
+    const geometry = GEM_PANEL_GEOMETRY_BY_SURFACE[variant] ?? fallbackGeometry;
 
     return {
         ...GEM_PANEL_SKIN_BASE[skinId],
@@ -344,23 +285,13 @@ export const createShellSurfaceStyle = (
     theme: ThemeName,
     variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.background
 ): CSSProperties =>
-    theme === 'light'
-        ? buildSurfaceStyle({
-              theme,
-              slot: 'shellBackground',
-              variant,
-              backgroundColor: '#F4F7F6',
-              overlay:
-                  'linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 100%)',
-          })
-        : buildSurfaceStyle({
-              theme,
-              slot: 'shellBackground',
-              variant,
-              backgroundColor: '#020617',
-              overlay:
-                  'linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 100%)',
-          });
+    buildSurfaceStyle({
+        theme,
+        slot: 'shellBackground',
+        variant,
+        backgroundColor: '#020617',
+        overlay: 'linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 100%)',
+    });
 
 export const createTopBarSurfaceStyle = (
     theme: ThemeName,
@@ -376,34 +307,19 @@ export const createGemPanelSurfaceStyle = (
     theme: ThemeName,
     variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.gemPanel
 ): CSSProperties =>
-    theme === 'light'
-        ? buildSurfaceStyle({
-              theme,
-              slot: 'gemPanel',
-              variant,
-              backgroundColor: 'transparent',
-              overlay:
-                  'linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 100%)',
-              boxShadow: '0 16px 28px rgba(15,23,42,0.12)',
-          })
-        : buildSurfaceStyle({
-              theme,
-              slot: 'gemPanel',
-              variant,
-              backgroundColor: 'transparent',
-              overlay:
-                  'linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 100%)',
-              boxShadow: '0 18px 36px rgba(0,0,0,0.32)',
-          });
+    buildSurfaceStyle({
+        theme,
+        slot: 'gemPanel',
+        variant,
+        backgroundColor: 'transparent',
+        overlay: 'linear-gradient(180deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 100%)',
+        boxShadow: '0 18px 36px rgba(0,0,0,0.32)',
+    });
 
 export const createMarketSurfaceStyle = (
-    theme: ThemeName,
-    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.background
-): CSSProperties => {
-    void theme;
-    void variant;
-    return {};
-};
+    _theme: ThemeName,
+    _variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.background
+): CSSProperties => (void _theme, void _variant, {});
 
 export const normalizeGameShellSurfaceTheme = (
     surfaceTheme: SurfaceThemeSelections | undefined

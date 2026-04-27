@@ -48,6 +48,10 @@ describe('PlayerZoneIdentityColumn echo reservoir memory', () => {
             root?.unmount();
         });
         container?.remove();
+        document.querySelectorAll('[data-player-buff-tooltip]').forEach((element) => {
+            element.remove();
+        });
+        vi.useRealTimers();
         root = null;
         container = null;
     });
@@ -87,5 +91,85 @@ describe('PlayerZoneIdentityColumn echo reservoir memory', () => {
         ) as HTMLDivElement | null;
 
         expect(memory?.dataset.echoReservoirMemoryDetail).toBe('Bonus Gem (Red)');
+    });
+
+    it('renders the active buff as the player avatar and keeps the tooltip interactive', async () => {
+        vi.useFakeTimers();
+        const rendered = await renderColumn(BUFFS.INTELLIGENCE as unknown as Buff);
+        container = rendered.container;
+        root = rendered.root;
+
+        const trigger = container?.querySelector(
+            '[data-player-buff-icon-trigger="intelligence"]'
+        ) as HTMLButtonElement | null;
+        const image = container?.querySelector(
+            '[data-player-buff-icon-image="intelligence"]'
+        ) as HTMLImageElement | null;
+
+        expect(trigger).not.toBeNull();
+        expect(image?.getAttribute('src')).toBe('/assets/rogue-buffs/rogue-buff-intelligence.png');
+        expect(container?.querySelector('[data-player-avatar="p1"] img')).not.toBeNull();
+        expect(container?.querySelector('[data-player-avatar-fallback]')).toBeNull();
+        expect(trigger?.textContent).toBe('');
+        expect(container?.textContent).not.toContain('Intelligence');
+
+        await act(async () => {
+            trigger?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+            await Promise.resolve();
+        });
+
+        const tooltip = document.body.querySelector(
+            '[data-player-buff-tooltip="intelligence"]'
+        ) as HTMLDivElement | null;
+
+        expect(tooltip?.textContent).toContain('Intelligence');
+        expect(tooltip?.dataset.tooltipSize).toBe('compact-panel');
+        expect(tooltip?.className).toContain('text-sm');
+
+        await act(async () => {
+            trigger?.dispatchEvent(
+                new MouseEvent('mouseout', { bubbles: true, relatedTarget: tooltip })
+            );
+            tooltip?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+            vi.advanceTimersByTime(200);
+            await Promise.resolve();
+        });
+
+        expect(
+            document.body.querySelector('[data-player-buff-tooltip="intelligence"]')
+        ).not.toBeNull();
+
+        const keywordButton = Array.from(tooltip?.querySelectorAll('button') ?? []).find(
+            (button) => button.textContent === 'Optional Action'
+        ) as HTMLButtonElement | undefined;
+        expect(keywordButton).toBeDefined();
+
+        await act(async () => {
+            keywordButton?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+            keywordButton?.click();
+            tooltip?.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+            vi.advanceTimersByTime(200);
+            await Promise.resolve();
+        });
+
+        expect(
+            document.body.querySelector('[data-player-buff-tooltip="intelligence"]')
+        ).not.toBeNull();
+
+        await act(async () => {
+            document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+            await Promise.resolve();
+        });
+
+        expect(document.body.querySelector('[data-player-buff-tooltip="intelligence"]')).toBeNull();
+    });
+
+    it('does not render a buff icon for the none buff', async () => {
+        const rendered = await renderColumn(BUFFS.NONE as unknown as Buff);
+        container = rendered.container;
+        root = rendered.root;
+
+        expect(container?.querySelector('[data-player-buff-icon-trigger]')).toBeNull();
+        expect(container?.querySelector('[data-player-avatar-fallback="shield"]')).not.toBeNull();
     });
 });

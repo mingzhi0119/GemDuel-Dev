@@ -1,10 +1,15 @@
 import type { CSSProperties } from 'react';
 import { PlayerZone } from '@gemduel/ui/components/PlayerZone';
+import type {
+    PlayerZoneStackState,
+    PlayerZoneSurfaceArtwork,
+} from '@gemduel/ui/components/playerZone/types';
 import { getFsmPhaseSurfacePolicy } from '@gemduel/shared/logic/fsm';
 import type { AppRouteProps } from '@app/types/ui';
-import type { GamePhase } from '@gemduel/shared/types';
+import type { GamePhase, PlayerKey } from '@gemduel/shared/types';
 import {
     createPlayerZoneSurfaceStyle,
+    createPlayerZoneSurfaceArtwork,
     getPlayerZoneSurfaceVariant,
     type PlayerZoneSurfaceVariant,
 } from './playerZoneSurfaceStyles';
@@ -20,7 +25,10 @@ interface PlayerRailProps {
     isP1ZoneActive: boolean;
     isP2ZoneActive: boolean;
     playerZoneSurfaceVariant?: PlayerZoneSurfaceVariant;
+    playerZoneSurfaceStyleOverride?: (player: PlayerKey) => CSSProperties | undefined;
+    playerZoneSurfaceArtworkOverride?: (player: PlayerKey) => PlayerZoneSurfaceArtwork | undefined;
     pendingReservedCardIds?: string[];
+    onPreviewStack?: (stack: PlayerZoneStackState & { player: PlayerKey }) => void;
 }
 
 export function PlayerRail({
@@ -32,7 +40,10 @@ export function PlayerRail({
     isP1ZoneActive,
     isP2ZoneActive,
     playerZoneSurfaceVariant,
+    playerZoneSurfaceStyleOverride,
+    playerZoneSurfaceArtworkOverride,
     pendingReservedCardIds = [],
+    onPreviewStack,
 }: PlayerRailProps) {
     const { state, handlers, getters } = game;
     const {
@@ -106,13 +117,25 @@ export function PlayerRail({
                         onGemClick={turn === 'p1' ? handleSelfGemClick : handleOpponentGemClick}
                         buff={playerBuffs?.p1}
                         theme={theme}
-                        surfaceStyle={createPlayerZoneSurfaceStyle(
-                            theme,
-                            resolvedPlayerZoneSurfaceVariant,
-                            'p1'
-                        )}
+                        surfaceStyle={
+                            playerZoneSurfaceStyleOverride?.('p1') ??
+                            createPlayerZoneSurfaceStyle(
+                                theme,
+                                resolvedPlayerZoneSurfaceVariant,
+                                'p1'
+                            )
+                        }
+                        surfaceArtwork={
+                            playerZoneSurfaceArtworkOverride?.('p1') ??
+                            createPlayerZoneSurfaceArtwork(
+                                theme,
+                                resolvedPlayerZoneSurfaceVariant,
+                                'p1'
+                            )
+                        }
                         surfaceVariant={resolvedPlayerZoneSurfaceVariant}
                         pendingReservedCardIds={pendingReservedCardIds}
+                        onPreviewStack={onPreviewStack}
                     />
                 </div>
             </div>
@@ -156,13 +179,25 @@ export function PlayerRail({
                         onGemClick={turn === 'p2' ? handleSelfGemClick : handleOpponentGemClick}
                         buff={playerBuffs?.p2}
                         theme={theme}
-                        surfaceStyle={createPlayerZoneSurfaceStyle(
-                            theme,
-                            resolvedPlayerZoneSurfaceVariant,
-                            'p2'
-                        )}
+                        surfaceStyle={
+                            playerZoneSurfaceStyleOverride?.('p2') ??
+                            createPlayerZoneSurfaceStyle(
+                                theme,
+                                resolvedPlayerZoneSurfaceVariant,
+                                'p2'
+                            )
+                        }
+                        surfaceArtwork={
+                            playerZoneSurfaceArtworkOverride?.('p2') ??
+                            createPlayerZoneSurfaceArtwork(
+                                theme,
+                                resolvedPlayerZoneSurfaceVariant,
+                                'p2'
+                            )
+                        }
                         surfaceVariant={resolvedPlayerZoneSurfaceVariant}
                         pendingReservedCardIds={pendingReservedCardIds}
+                        onPreviewStack={onPreviewStack}
                     />
                 </div>
             </div>

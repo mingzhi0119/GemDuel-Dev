@@ -108,6 +108,9 @@ importers:
             electron-updater:
                 specifier: ^6.6.2
                 version: 6.8.3
+            framer-motion:
+                specifier: ^12.23.26
+                version: 12.38.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
             lucide-react:
                 specifier: ^0.479.0
                 version: 0.479.0(react@19.2.5)

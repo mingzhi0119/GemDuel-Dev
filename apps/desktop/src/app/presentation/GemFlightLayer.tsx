@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { GEM_TYPES } from '@gemduel/shared/constants';
-import type { GemColor } from '@gemduel/shared/types';
+import type { GemColor, ThemeName } from '@gemduel/shared/types';
 import { GemIcon } from '@gemduel/ui/components/GemIcon';
 import { usePrefersReducedMotion } from '@gemduel/ui/components/animation';
 import type {
@@ -11,8 +11,10 @@ import type {
     GemStealPresentationEvent,
 } from './presentationTypes';
 import { getAnchorCenter, getElementRect, getRectCenter } from './presentationGeometry';
+import { getPresentationDurationMs, type PresentationPreviewMode } from './presentationPreviewMode';
 
 const GEM_SIZE_PX = 46;
+const LAB_GEM_SIZE_PX = 64;
 const CENTER_PLAYFIELD_SELECTOR = '[data-presentation-anchor="center-playfield"]';
 const MIDDLE_ZONE_SELECTOR = '[data-presentation-anchor="middle-zone"]';
 const GEM_FLIGHT_STYLES = `
@@ -32,6 +34,9 @@ const GEM_FLIGHT_STYLES = `
 const shouldHoldPresentationPreview = (): boolean =>
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('presentationPreviewHold') === 'true';
+
+const getGemSizePx = (previewMode: PresentationPreviewMode | undefined): number =>
+    previewMode ? LAB_GEM_SIZE_PX : GEM_SIZE_PX;
 
 type GemLayerEvent =
     | GemFlightPresentationEvent
@@ -144,10 +149,12 @@ function AnimatedGemClone({
     item,
     index,
     theme,
+    previewMode,
 }: {
     item: GemMotionItem;
     index: number;
-    theme: 'light' | 'dark';
+    theme: ThemeName;
+    previewMode?: PresentationPreviewMode;
 }) {
     const prefersReducedMotion = usePrefersReducedMotion();
     const source = resolvePoint(item.sourceSelector, item.sourceFallbackSelector, item.sourcePoint);
@@ -155,16 +162,23 @@ function AnimatedGemClone({
     const start = prefersReducedMotion ? target : source;
     const laneOffset = ((index % 5) - 2) * 8;
     const gemType = GEM_TYPES[item.color.toUpperCase() as keyof typeof GEM_TYPES];
+    const gemSizePx = getGemSizePx(previewMode);
 
-    const startX = start.x - GEM_SIZE_PX / 2 + laneOffset;
-    const startY = start.y - GEM_SIZE_PX / 2;
-    const endX = target.x - GEM_SIZE_PX / 2 + laneOffset * 0.25;
-    const endY = target.y - GEM_SIZE_PX / 2;
+    const startX = start.x - gemSizePx / 2 + laneOffset;
+    const startY = start.y - gemSizePx / 2;
+    const endX = target.x - gemSizePx / 2 + laneOffset * 0.25;
+    const endY = target.y - gemSizePx / 2;
     const shouldHold = shouldHoldPresentationPreview();
+    const durationMs = getPresentationDurationMs(prefersReducedMotion ? 180 : 660, previewMode);
     const style = {
-        width: GEM_SIZE_PX,
-        height: GEM_SIZE_PX,
-        filter: 'drop-shadow(0 10px 14px rgba(0,0,0,0.38))',
+        width: gemSizePx,
+        height: gemSizePx,
+        left: previewMode ? 0 : undefined,
+        top: previewMode ? 0 : undefined,
+        zIndex: previewMode ? 190 : undefined,
+        filter: previewMode
+            ? 'drop-shadow(0 0 18px rgba(125,211,252,0.8)) drop-shadow(0 12px 18px rgba(0,0,0,0.42))'
+            : 'drop-shadow(0 10px 14px rgba(0,0,0,0.38))',
         '--start-x': `${startX}px`,
         '--start-y': `${startY}px`,
         '--mid-x': `${(startX + endX) / 2}px`,
@@ -178,7 +192,7 @@ function AnimatedGemClone({
         animation: shouldHold
             ? 'none'
             : `${prefersReducedMotion ? 'gemduel-gem-flight-reduced' : 'gemduel-gem-flight'} ${
-                  prefersReducedMotion ? 180 : 660
+                  durationMs
               }ms cubic-bezier(0.2, 0.8, 0.2, 1) ${index * 25}ms both`,
     } as CSSProperties;
 
@@ -207,9 +221,11 @@ function AnimatedGemClone({
 export function GemFlightLayer({
     event,
     theme,
+    previewMode,
 }: {
     event: GemLayerEvent;
-    theme: 'light' | 'dark';
+    theme: ThemeName;
+    previewMode?: PresentationPreviewMode;
 }) {
     const [isReady, setIsReady] = useState(false);
 
@@ -233,7 +249,13 @@ export function GemFlightLayer({
         <div data-gem-flight-layer={event.id}>
             <style>{GEM_FLIGHT_STYLES}</style>
             {items.map((item, index) => (
-                <AnimatedGemClone key={item.key} item={item} index={index} theme={theme} />
+                <AnimatedGemClone
+                    key={item.key}
+                    item={item}
+                    index={index}
+                    theme={theme}
+                    previewMode={previewMode}
+                />
             ))}
         </div>
     );

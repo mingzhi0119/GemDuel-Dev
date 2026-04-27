@@ -76,6 +76,12 @@ describe('useLanMatchmaking', () => {
                 statusMessage: 'Searching for opponent on local network...',
             })),
             cancelLanMatchmaking: vi.fn(async () => idleState),
+            setDesktopAspectRatio: vi.fn(async () => ({
+                ratio: '16:10',
+                width: 1280,
+                height: 800,
+                aspectRatio: 16 / 10,
+            })),
             selectLanPregameMode: vi.fn(async () => ({
                 ...idleState,
                 phase: 'matched',

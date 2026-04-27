@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { PlayerKey, ThemeName } from '@gemduel/shared/types';
+import type { PlayerZoneSurfaceArtwork } from '@gemduel/ui/components/playerZone/types';
 import { isSurfaceThemeVariant, type SurfaceThemeVariant } from './surfaceTheme';
 
 export type PlayerZoneSurfaceVariant = 'none' | SurfaceThemeVariant;
@@ -39,5 +40,27 @@ export const createPlayerZoneSurfaceStyle = (
         backgroundPosition: player === 'p1' ? 'left center' : 'right center',
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
+    };
+};
+
+export const createPlayerZoneSurfaceArtwork = (
+    theme: ThemeName,
+    variant: PlayerZoneSurfaceVariant,
+    player: PlayerKey
+): PlayerZoneSurfaceArtwork | undefined => {
+    if (variant === 'none') {
+        return undefined;
+    }
+
+    if (!isSurfaceThemeVariant(variant)) {
+        return undefined;
+    }
+
+    const basePath = `/assets/surfaces/anime-themes/${variant}/${theme}`;
+
+    return {
+        primaryPath: `${basePath}/player-zone-${player}.png`,
+        fallbackPath: `${basePath}/player-zone.png`,
+        mirrorFallback: player === 'p2',
     };
 };

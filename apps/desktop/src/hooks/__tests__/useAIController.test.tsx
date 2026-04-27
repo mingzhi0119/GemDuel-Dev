@@ -23,9 +23,18 @@ describe('useAIController', () => {
     let currentResult: ReturnType<typeof useAIController> | null = null;
     const recordAction = vi.fn<(action: GameAction) => void>();
 
-    const renderHarness = (gameState: GameState, isViewingHistory = false) => {
+    const renderHarness = (
+        gameState: GameState,
+        isViewingHistory = false,
+        isInteractionLocked = false
+    ) => {
         const Harness = () => {
-            currentResult = useAIController(gameState, recordAction, isViewingHistory);
+            currentResult = useAIController(
+                gameState,
+                recordAction,
+                isViewingHistory,
+                isInteractionLocked
+            );
             return null;
         };
 
@@ -86,5 +95,28 @@ describe('useAIController', () => {
 
         expect(mocks.computeAiAction).not.toHaveBeenCalled();
         expect(recordAction).not.toHaveBeenCalled();
+    });
+
+    it('waits for the turn handoff interaction lock to clear before scheduling AI', () => {
+        mocks.computeAiAction.mockReturnValue({ type: 'AI_PLAY' } as unknown as GameAction);
+        const gameState = { mode: 'PVE', turn: 'p2', winner: null } as unknown as GameState;
+
+        renderHarness(gameState, false, true);
+
+        act(() => {
+            vi.advanceTimersByTime(2000);
+        });
+        expect(mocks.computeAiAction).not.toHaveBeenCalled();
+
+        renderHarness(gameState, false, false);
+        act(() => {
+            vi.advanceTimersByTime(999);
+        });
+        expect(mocks.computeAiAction).not.toHaveBeenCalled();
+
+        act(() => {
+            vi.advanceTimersByTime(1);
+        });
+        expect(recordAction).toHaveBeenCalledWith({ type: 'AI_PLAY' });
     });
 });

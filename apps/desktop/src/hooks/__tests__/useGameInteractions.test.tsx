@@ -61,13 +61,19 @@ describe('useGameInteractions', () => {
     let currentResult: ReturnType<typeof useGameInteractions> | null = null;
     const networkDispatch = vi.fn<(action: GameAction) => void>();
 
-    const renderHarness = (gameState: GameState, currentIndex = 0, isReviewing = false) => {
+    const renderHarness = (
+        gameState: GameState,
+        currentIndex = 0,
+        isReviewing = false,
+        isInteractionLocked = false
+    ) => {
         const Harness = () => {
             currentResult = useGameInteractions(
                 gameState,
                 networkDispatch,
                 currentIndex,
-                isReviewing
+                isReviewing,
+                isInteractionLocked
             );
             return null;
         };
@@ -195,5 +201,30 @@ describe('useGameInteractions', () => {
         expect(mocks.canPlayerInteract).toHaveBeenCalledWith(gameState, false);
         expect(currentResult?.isMyTurn).toBe(false);
         expect(currentResult?.errorMsg).toBeNull();
+    });
+
+    it('passes a false gameplay interaction gate while the turn handoff lock is active', () => {
+        const gameState = {
+            mode: 'LOCAL_PVP',
+            turn: 'p1',
+            inventories: { p1: { gold: 0 }, p2: { gold: 0 } },
+            playerTableau: { p1: [], p2: [] },
+            playerBuffs: { p1: null, p2: null },
+        } as unknown as GameState;
+
+        renderHarness(gameState, 0, false, true);
+
+        expect(mocks.canPlayerInteract).toHaveBeenCalledWith(gameState, false);
+        expect(mocks.useBoardInteractionHandlers).toHaveBeenCalledWith(
+            expect.objectContaining({ canLocalInteract: false })
+        );
+        expect(mocks.useMarketInteractionHandlers).toHaveBeenCalledWith(
+            expect.objectContaining({ canLocalInteract: false })
+        );
+        expect(mocks.useMetaInteractionHandlers).toHaveBeenCalledWith(
+            expect.objectContaining({ canLocalInteract: false })
+        );
+        expect(currentResult?.isMyTurn).toBe(false);
+        expect(currentResult?.getters.isMyTurn).toBe(false);
     });
 });

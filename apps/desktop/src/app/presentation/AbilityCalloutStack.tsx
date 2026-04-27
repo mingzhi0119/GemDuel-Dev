@@ -1,8 +1,10 @@
 import type { CSSProperties } from 'react';
 import { Crown, HandCoins, MessageSquare, ScrollText, Sparkles, Swords, Zap } from 'lucide-react';
 import { usePrefersReducedMotion } from '@gemduel/ui/components/animation';
+import type { ThemeName } from '@gemduel/shared/types';
 import type { AbilityCalloutPresentationEvent } from './presentationTypes';
 import { getElementRect, getRectCenter } from './presentationGeometry';
+import { getPresentationDurationMs, type PresentationPreviewMode } from './presentationPreviewMode';
 
 const ABILITY_CALLOUT_STYLES = `
 @keyframes gemduel-ability-callout {
@@ -97,10 +99,11 @@ const TONE_CLASS: Record<string, string> = {
 
 export function AbilityCalloutStack({
     event,
-    theme,
+    previewMode,
 }: {
     event: AbilityCalloutPresentationEvent;
-    theme: 'light' | 'dark';
+    theme: ThemeName;
+    previewMode?: PresentationPreviewMode;
 }) {
     const prefersReducedMotion = usePrefersReducedMotion();
     const config = CALLOUT_COPY[event.callout];
@@ -112,12 +115,13 @@ export function AbilityCalloutStack({
     const Icon = config.Icon;
     const detail = event.message ?? config.detail;
     const playerTint = event.player === 'p1' ? 'before:bg-emerald-300/70' : 'before:bg-blue-300/70';
+    const durationMs = getPresentationDurationMs(prefersReducedMotion ? 240 : 1050, previewMode);
 
     const style = {
         left: center.x,
         top,
         animation: `${prefersReducedMotion ? 'gemduel-ability-callout-reduced' : 'gemduel-ability-callout'} ${
-            prefersReducedMotion ? 240 : 1050
+            durationMs
         }ms ease-out both`,
     } as CSSProperties;
 
@@ -131,9 +135,7 @@ export function AbilityCalloutStack({
         >
             <style>{ABILITY_CALLOUT_STYLES}</style>
             <div
-                className={`relative flex min-w-[210px] max-w-[360px] items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 shadow-2xl backdrop-blur-xl before:absolute before:left-0 before:top-0 before:h-full before:w-1 ${TONE_CLASS[config.tone]} ${playerTint} ${
-                    theme === 'light' ? 'bg-white/88 text-slate-900' : ''
-                }`}
+                className={`relative flex min-w-[210px] max-w-[360px] items-center gap-3 overflow-hidden rounded-xl border px-4 py-3 shadow-2xl backdrop-blur-xl before:absolute before:left-0 before:top-0 before:h-full before:w-1 ${TONE_CLASS[config.tone]} ${playerTint} ${''}`}
             >
                 <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/14 ring-1 ring-white/18">
                     <Icon size={23} strokeWidth={2.3} />

@@ -158,8 +158,14 @@ describe('useGameLogic', () => {
             9100,
             { init: { actionType: 'INIT' } }
         );
-        expect(mocks.useGameInteractions).toHaveBeenCalledWith(gameState, networkDispatch, 0, true);
-        expect(mocks.useAIController).toHaveBeenCalledWith(gameState, networkDispatch, true);
+        expect(mocks.useGameInteractions).toHaveBeenCalledWith(
+            gameState,
+            networkDispatch,
+            0,
+            true,
+            false
+        );
+        expect(mocks.useAIController).toHaveBeenCalledWith(gameState, networkDispatch, true, false);
         expect(mocks.useHistoryFlattening).toHaveBeenCalledWith(gameState, historyControls, true);
         expect(mocks.usePlayableHistoryControls).toHaveBeenCalledWith(
             gameState.mode,
@@ -225,7 +231,12 @@ describe('useGameLogic', () => {
 
         renderHarness();
 
-        expect(mocks.useAIController).toHaveBeenCalledWith(gameState, networkDispatch, false);
+        expect(mocks.useAIController).toHaveBeenCalledWith(
+            gameState,
+            networkDispatch,
+            false,
+            false
+        );
         expect(currentResult?.state.errorMsg).toBe('peer lagging');
     });
 });

@@ -8,6 +8,7 @@ import { useGameNetwork } from './useGameNetwork';
 import { useGameInteractions } from './useGameInteractions';
 import { useHistoryFlattening } from './useHistoryFlattening';
 import { usePlayableHistoryControls } from './usePlayableHistoryControls';
+import { useTurnHandoffInteractionLock } from './useTurnHandoffInteractionLock';
 
 export const useGameLogic = (
     shouldConnect: boolean = false,
@@ -62,20 +63,26 @@ export const useGameLogic = (
         localReplayRecorder
     );
 
+    const isViewingHistory =
+        historyControls.historyLength > 0 &&
+        historyControls.currentIndex < historyControls.historyLength - 1;
+    const isTurnHandoffInteractionLocked = useTurnHandoffInteractionLock(
+        gameState,
+        isReviewing,
+        isViewingHistory
+    );
+
     // 3. User Interaction Handlers
     const interactions = useGameInteractions(
         gameState,
         networkDispatch,
         historyControls.currentIndex,
-        isReviewing
+        isReviewing,
+        isTurnHandoffInteractionLocked
     );
 
-    const isViewingHistory =
-        historyControls.historyLength > 0 &&
-        historyControls.currentIndex < historyControls.historyLength - 1;
-
     // 4. AI Controller
-    useAIController(gameState, networkDispatch, isViewingHistory);
+    useAIController(gameState, networkDispatch, isViewingHistory, isTurnHandoffInteractionLocked);
 
     // 5. History Flattening
     useHistoryFlattening(gameState, historyControls, historyControls.historySource === 'live');

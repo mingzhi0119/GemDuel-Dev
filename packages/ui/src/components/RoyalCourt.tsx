@@ -13,6 +13,7 @@ interface RoyalCourtProps {
     handleSelectRoyal: (card: RoyalCard) => void;
     theme: 'light' | 'dark';
     canInteract?: boolean;
+    onPreviewRoyal?: (card: RoyalCard) => void;
 }
 
 const ROYAL_COURT_SLOT_COUNT = 4;
@@ -31,9 +32,12 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     handleSelectRoyal,
     theme,
     canInteract = true,
+    onPreviewRoyal,
 }) => {
     const t = useT();
-    const canSelectRoyal = isRoyalSelectionPhase(phase) && canInteract;
+    const isSelectingRoyal = isRoyalSelectionPhase(phase);
+    const canSelectRoyal = isSelectingRoyal && canInteract;
+    const canPreviewRoyal = !isSelectingRoyal && Boolean(onPreviewRoyal);
     const royalSlots = Array.from(
         { length: ROYAL_COURT_SLOT_COUNT },
         (_, index) => royalDeck[index] ?? null
@@ -42,7 +46,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     return (
         <div
             className={`flex flex-col gap-4 items-center p-1 shrink-0 transition-all duration-500
-            ${!canInteract ? 'opacity-70 pointer-events-none' : ''}
+            ${!canInteract ? 'opacity-70' : ''}
         `}
             style={{ width: ROYAL_COURT_GRID_SIZE.width }}
         >
@@ -71,8 +75,20 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                         <div
                             key={card.id}
                             data-royal-card={card.id}
-                            className={`relative ${canSelectRoyal ? 'cursor-pointer z-50' : ''}`}
-                            onClick={() => canSelectRoyal && handleSelectRoyal(card)}
+                            data-royal-card-preview={canPreviewRoyal ? 'true' : undefined}
+                            className={`relative ${
+                                canSelectRoyal || canPreviewRoyal ? 'cursor-pointer z-50' : ''
+                            }`}
+                            onClick={() => {
+                                if (canSelectRoyal) {
+                                    handleSelectRoyal(card);
+                                    return;
+                                }
+
+                                if (canPreviewRoyal) {
+                                    onPreviewRoyal?.(card);
+                                }
+                            }}
                         >
                             <Card
                                 card={card as unknown as CardType}

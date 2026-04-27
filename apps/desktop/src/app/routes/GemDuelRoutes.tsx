@@ -3,6 +3,7 @@ import { isDraftSelectionPhase } from '@gemduel/shared/logic/fsm';
 import type { AppRouteProps } from '@app/types/ui';
 import type { ThemeName } from '@gemduel/shared/types';
 import { DesktopStage } from '../layout/DesktopStage';
+import { getVisualLabMode } from '../visual-lab/visualLabMode';
 
 const DraftScreen = React.lazy(() =>
     import('@gemduel/ui/components/DraftScreen').then((module) => ({ default: module.DraftScreen }))
@@ -21,63 +22,43 @@ const LanMenu = React.lazy(() =>
 const GameShell = React.lazy(() =>
     import('../shell/GameShell').then((module) => ({ default: module.GameShell }))
 );
+const VisualLabRoute = React.lazy(() =>
+    import('../visual-lab/VisualLabRoute').then((module) => ({
+        default: module.VisualLabRoute,
+    }))
+);
 
 type RouteKind = 'config' | 'online' | 'lan' | 'draft' | 'game';
 
-const LIGHT_GAME_VIEWPORT_STYLE: React.CSSProperties = {
-    backgroundColor: '#F4F7F6',
-    backgroundImage: 'radial-gradient(circle at 50% 42%, #FBFCFC 0%, #F4F7F6 58%, #EEF2F1 100%)',
-};
-
 const getDesktopViewportPresentation = (routeKind: RouteKind, theme: ThemeName) => {
+    void theme;
     if (routeKind === 'game') {
-        if (theme === 'dark') {
-            return {
-                viewportClassName:
-                    'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f111a] to-black text-slate-200 transition-colors duration-500',
-            };
-        }
-
         return {
-            viewportClassName: 'text-stone-800 transition-colors duration-500',
-            viewportStyle: LIGHT_GAME_VIEWPORT_STYLE,
+            viewportClassName:
+                'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f111a] to-black text-slate-200 transition-colors duration-500',
         };
     }
 
     if (routeKind === 'online' || routeKind === 'lan') {
         return {
-            viewportClassName:
-                theme === 'dark'
-                    ? 'bg-slate-950 text-slate-100 transition-colors duration-500'
-                    : 'bg-slate-50 text-slate-900 transition-colors duration-500',
+            viewportClassName: 'bg-slate-950 text-slate-100 transition-colors duration-500',
         };
     }
 
     return {
-        viewportClassName:
-            theme === 'dark'
-                ? 'bg-slate-950 text-slate-100 transition-colors duration-500'
-                : 'bg-slate-100 text-slate-900 transition-colors duration-500',
+        viewportClassName: 'bg-slate-950 text-slate-100 transition-colors duration-500',
     };
 };
 
 const getRouteFallback = (routeKind: RouteKind, theme: ThemeName) => {
-    if (routeKind === 'game' && theme === 'light') {
-        return <div className="h-full w-full" style={LIGHT_GAME_VIEWPORT_STYLE} />;
-    }
+    void theme;
 
     const fallbackClassName =
         routeKind === 'game'
-            ? theme === 'dark'
-                ? 'h-full w-full bg-slate-950/95'
-                : 'h-full w-full bg-[#F4F7F6]'
+            ? 'h-full w-full bg-slate-950/95'
             : routeKind === 'online'
-              ? theme === 'dark'
-                  ? 'h-full w-full bg-slate-950'
-                  : 'h-full w-full bg-slate-50'
-              : theme === 'dark'
-                ? 'h-full w-full bg-slate-950'
-                : 'h-full w-full bg-slate-100';
+              ? 'h-full w-full bg-slate-950'
+              : 'h-full w-full bg-slate-950';
 
     return <div className={fallbackClassName} />;
 };
@@ -85,10 +66,14 @@ const getRouteFallback = (routeKind: RouteKind, theme: ThemeName) => {
 export function GemDuelRoutes(props: AppRouteProps) {
     const { game, theme, ui, setters } = props;
     const { state, handlers, historyControls, online } = game;
+    const visualLabMode = getVisualLabMode();
     let routeContent: React.ReactNode;
     let routeKind: RouteKind;
 
-    if (isDraftSelectionPhase(state.phase)) {
+    if (visualLabMode) {
+        routeKind = 'game';
+        routeContent = <VisualLabRoute {...props} mode={visualLabMode} />;
+    } else if (isDraftSelectionPhase(state.phase)) {
         routeKind = 'draft';
         const activeDraftLevel =
             state.turn === 'p2' ? state.p2DraftLevel || state.buffLevel : state.buffLevel;
@@ -146,6 +131,7 @@ export function GemDuelRoutes(props: AppRouteProps) {
                     onOnlineSetup={() => setters.setMatchmakingRoute('online')}
                     onLanSetup={() => setters.setMatchmakingRoute('lan')}
                     onStartGame={handlers.startGame}
+                    onOpenVisualLab={props.callbacks.openVisualLab}
                     theme={theme}
                 />
             );

@@ -31,6 +31,7 @@
         "electron-is-dev": "^3.0.1",
         "electron-log": "^5.4.3",
         "electron-updater": "^6.6.2",
+        "framer-motion": "^12.23.26",
         "lucide-react": "^0.479.0",
         "peer": "^1.0.2",
         "peerjs": "^1.5.5",

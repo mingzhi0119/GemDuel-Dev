@@ -5,11 +5,13 @@ import { computeAiAction } from '@gemduel/shared/logic/ai/aiPlayer';
 export const useAIController = (
     gameState: GameState,
     recordAction: (action: GameAction) => void,
-    isViewingHistory: boolean = false
+    isViewingHistory: boolean = false,
+    isInteractionLocked: boolean = false
 ) => {
     useEffect(() => {
         if (
             !isViewingHistory &&
+            !isInteractionLocked &&
             gameState &&
             gameState.mode === 'PVE' &&
             gameState.turn === 'p2' &&
@@ -21,5 +23,5 @@ export const useAIController = (
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [gameState, recordAction, isViewingHistory]);
+    }, [gameState, recordAction, isViewingHistory, isInteractionLocked]);
 };

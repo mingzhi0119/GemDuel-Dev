@@ -11,6 +11,7 @@ const IPC_INVOKE_CHANNELS = Object.freeze({
     saveReplayToFolder: 'save-replay-to-folder',
     startLanMatchmaking: 'start-lan-matchmaking',
     cancelLanMatchmaking: 'cancel-lan-matchmaking',
+    setDesktopAspectRatio: 'set-desktop-aspect-ratio',
     selectLanPregameMode: 'select-lan-pregame-mode',
     confirmLanPregameStart: 'confirm-lan-pregame-start',
 });
@@ -57,6 +58,8 @@ contextBridge.exposeInMainWorld(
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.saveReplayToFolder, payload),
         startLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.startLanMatchmaking),
         cancelLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.cancelLanMatchmaking),
+        setDesktopAspectRatio: (payload) =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.setDesktopAspectRatio, payload),
         selectLanPregameMode: (payload) =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.selectLanPregameMode, payload),
         confirmLanPregameStart: (payload) =>

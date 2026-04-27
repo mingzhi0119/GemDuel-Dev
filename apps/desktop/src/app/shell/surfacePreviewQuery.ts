@@ -93,25 +93,6 @@ export const clearSurfacePreviewArtworkQuery = () => {
     }
 };
 
-export const setSurfacePreviewThemeQuery = (theme: 'light' | 'dark') => {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    const url = new URL(window.location.href);
-    url.searchParams.set('surfacePreviewTheme', theme);
-    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
-};
-
-export const getSurfacePreviewTheme = (): 'light' | 'dark' | undefined => {
-    if (typeof window === 'undefined') {
-        return undefined;
-    }
-
-    const rawTheme = new URLSearchParams(window.location.search).get('surfacePreviewTheme');
-    return rawTheme === 'light' || rawTheme === 'dark' ? rawTheme : undefined;
-};
-
 export const getSurfacePreviewStartMode = (): 'local' | 'pve' | undefined => {
     if (typeof window === 'undefined') {
         return undefined;

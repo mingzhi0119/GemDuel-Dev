@@ -13,7 +13,7 @@ import { TopBar } from '../TopBar';
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-describe('TopBar buff tooltip', () => {
+describe('TopBar buff placement', () => {
     let root: Root | null = null;
     let container: HTMLDivElement | null = null;
 
@@ -56,60 +56,11 @@ describe('TopBar buff tooltip', () => {
         container = null;
     });
 
-    it('keeps the buff tooltip interactive and closes it on outside click after pinning', async () => {
+    it('does not render player buff text or tooltip slots in the top bar', async () => {
         await renderTopBar();
 
-        const trigger = container?.querySelector(
-            '[data-buff-trigger="intelligence"]'
-        ) as HTMLButtonElement | null;
-        expect(trigger).not.toBeNull();
-
-        await act(async () => {
-            trigger?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
-            await Promise.resolve();
-        });
-
-        const tooltip = container?.querySelector(
-            '[data-buff-tooltip="intelligence"]'
-        ) as HTMLDivElement | null;
-        expect(tooltip?.textContent).toContain('Optional Action');
-        expect(tooltip?.dataset.tooltipSize).toBe('standard-panel');
-        expect(tooltip?.className).toContain('w-[min(90vw,380px)]');
-        expect(tooltip?.className).toContain('text-[16px]');
-        expect(tooltip?.className).toContain('p-5');
-
-        const optionalActionButton = Array.from(tooltip?.querySelectorAll('button') ?? []).find(
-            (button) => button.textContent === 'Optional Action'
-        ) as HTMLButtonElement | undefined;
-        expect(optionalActionButton).toBeDefined();
-
-        await act(async () => {
-            optionalActionButton?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
-            await Promise.resolve();
-        });
-
-        expect(container?.querySelector('[data-buff-tooltip="intelligence"]')).not.toBeNull();
-
-        const lexiconPopover = Array.from(document.querySelectorAll('[role="dialog"]')).find(
-            (element) => element.textContent?.includes('before your main action')
-        );
-        expect(lexiconPopover).toBeDefined();
-
-        await act(async () => {
-            trigger?.click();
-            await Promise.resolve();
-        });
-
-        await act(async () => {
-            document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-            await Promise.resolve();
-        });
-
-        expect(container?.querySelector('[data-buff-tooltip="intelligence"]')).toBeNull();
-        expect(
-            Array.from(document.querySelectorAll('[role="dialog"]')).find((element) =>
-                element.textContent?.includes('before your main action')
-            )
-        ).toBeUndefined();
+        expect(container?.querySelector('[data-topbar-buff-slot]')).toBeNull();
+        expect(container?.querySelector('[data-buff-trigger="intelligence"]')).toBeNull();
+        expect(container?.textContent).not.toContain('Intelligence');
     });
 });

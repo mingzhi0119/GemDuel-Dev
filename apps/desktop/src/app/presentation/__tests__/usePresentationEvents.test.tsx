@@ -3,7 +3,7 @@
 import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GAME_PHASES } from '@gemduel/shared/constants';
 import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
 import type { Card, GameState } from '@gemduel/shared/types';
@@ -42,6 +42,18 @@ const RESERVED_FROM_DECK_CARD: Card = {
     bonusCount: 1,
 };
 
+const ACQUIRED_MARKET_CARD: Card = {
+    ...RESERVED_FROM_DECK_CARD,
+    id: 'acquired-market-card',
+    bonusColor: 'red',
+};
+
+const REFILLED_MARKET_CARD: Card = {
+    ...RESERVED_FROM_DECK_CARD,
+    id: 'refilled-market-card',
+    bonusColor: 'blue',
+};
+
 describe('usePresentationEvents', () => {
     let root: Root | null = null;
     let container: HTMLDivElement | null = null;
@@ -78,6 +90,9 @@ describe('usePresentationEvents', () => {
         root = null;
         container = null;
         currentResult = null;
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
     });
 
     it('blocks royal selection while intro and overlay event stages are active', async () => {
@@ -152,5 +167,146 @@ describe('usePresentationEvents', () => {
         });
 
         expect(currentResult?.pendingReservedCardIds).toEqual([]);
+    });
+
+    it('starts market-refill in parallel and exposes the pending slot immediately', async () => {
+        const previousState = cloneState();
+        previousState.market[1] = [ACQUIRED_MARKET_CARD];
+
+        const nextState = cloneState();
+        nextState.market[1] = [REFILLED_MARKET_CARD];
+        nextState.playerTableau.p1 = [ACQUIRED_MARKET_CARD];
+
+        await renderHarness(previousState, 0);
+        await renderHarness(nextState, 1);
+
+        expect(currentResult?.activeEvent?.type).toBe('card-acquire');
+        expect(currentResult?.activeMarketRefillEvent?.type).toBe('market-refill');
+        expect(currentResult?.pendingMarketRefillSlots).toEqual([
+            { level: 1, index: 0, nextCardId: REFILLED_MARKET_CARD.id },
+        ]);
+    });
+
+    it('starts turn-handoff in a parallel lane without blocking other presentation events', async () => {
+        const previousState = cloneState();
+        previousState.turn = 'p1';
+        previousState.market[1] = [ACQUIRED_MARKET_CARD];
+
+        const nextState = cloneState();
+        nextState.turn = 'p2';
+        nextState.market[1] = [REFILLED_MARKET_CARD];
+        nextState.playerTableau.p1 = [ACQUIRED_MARKET_CARD];
+
+        await renderHarness(previousState, 0);
+        await renderHarness(nextState, 1);
+
+        expect(currentResult?.activeEvent?.type).toBe('card-acquire');
+        expect(currentResult?.activeMarketRefillEvent?.type).toBe('market-refill');
+        expect(currentResult?.activeTurnHandoffEvent).toMatchObject({
+            type: 'turn-handoff',
+            fromPlayer: 'p1',
+            toPlayer: 'p2',
+        });
+    });
+
+    it('keeps turn-handoff visible for three seconds and replaces it immediately on a new handoff', async () => {
+        vi.useFakeTimers();
+        const p1State = cloneState();
+        p1State.turn = 'p1';
+        const p2State = cloneState();
+        p2State.turn = 'p2';
+        const nextP1State = cloneState();
+        nextP1State.turn = 'p1';
+
+        await renderHarness(p1State, 0);
+        await renderHarness(p2State, 1);
+
+        expect(currentResult?.activeTurnHandoffEvent).toMatchObject({
+            fromPlayer: 'p1',
+            toPlayer: 'p2',
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(1500);
+        });
+        await renderHarness(nextP1State, 2);
+
+        expect(currentResult?.activeTurnHandoffEvent).toMatchObject({
+            fromPlayer: 'p2',
+            toPlayer: 'p1',
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(2999);
+        });
+        expect(currentResult?.activeTurnHandoffEvent?.toPlayer).toBe('p1');
+
+        act(() => {
+            vi.advanceTimersByTime(1);
+        });
+        expect(currentResult?.activeTurnHandoffEvent).toBeNull();
+    });
+
+    it('keeps market-refill pending for the one-second visual duration', async () => {
+        vi.useFakeTimers();
+        const previousState = cloneState();
+        previousState.market[1] = [ACQUIRED_MARKET_CARD];
+
+        const nextState = cloneState();
+        nextState.market[1] = [REFILLED_MARKET_CARD];
+        nextState.playerTableau.p1 = [ACQUIRED_MARKET_CARD];
+
+        await renderHarness(previousState, 0);
+        await renderHarness(nextState, 1);
+
+        expect(currentResult?.activeMarketRefillEvent?.type).toBe('market-refill');
+
+        act(() => {
+            vi.advanceTimersByTime(999);
+        });
+        expect(currentResult?.activeMarketRefillEvent?.type).toBe('market-refill');
+
+        act(() => {
+            vi.advanceTimersByTime(1);
+        });
+        expect(currentResult?.activeMarketRefillEvent).toBeNull();
+    });
+
+    it('keeps reduced-motion market-refill pending only for the short duration', async () => {
+        vi.useFakeTimers();
+        vi.stubGlobal(
+            'matchMedia',
+            vi.fn((query: string) => ({
+                matches: query === '(prefers-reduced-motion: reduce)',
+                media: query,
+                onchange: null,
+                addListener: vi.fn(),
+                removeListener: vi.fn(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                dispatchEvent: vi.fn(),
+            }))
+        );
+        const previousState = cloneState();
+        previousState.market[1] = [ACQUIRED_MARKET_CARD];
+
+        const nextState = cloneState();
+        nextState.market[1] = [REFILLED_MARKET_CARD];
+        nextState.playerTableau.p1 = [ACQUIRED_MARKET_CARD];
+
+        await renderHarness(previousState, 0);
+        await renderHarness(nextState, 1);
+
+        expect(currentResult?.activeMarketRefillEvent?.type).toBe('market-refill');
+
+        act(() => {
+            vi.advanceTimersByTime(239);
+        });
+        expect(currentResult?.activeMarketRefillEvent?.type).toBe('market-refill');
+
+        act(() => {
+            vi.advanceTimersByTime(1);
+        });
+        expect(currentResult?.activeMarketRefillEvent).toBeNull();
     });
 });

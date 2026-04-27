@@ -70,6 +70,13 @@ const IPC_ALLOWLIST = Object.freeze({
             payload: 'none',
             threat: 'Requests that the main process leave LAN matchmaking and tear down the active room session.',
         }),
+        setDesktopAspectRatio: Object.freeze({
+            api: 'setDesktopAspectRatio',
+            channel: 'set-desktop-aspect-ratio',
+            owner: 'Desktop shell',
+            payload: 'SetDesktopAspectRatioPayload',
+            threat: 'Locks the governed BrowserWindow to the selected supported aspect ratio.',
+        }),
         selectLanPregameMode: Object.freeze({
             api: 'selectLanPregameMode',
             channel: 'select-lan-pregame-mode',
@@ -185,6 +192,8 @@ const createElectronBridge = (ipcRenderer) =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.saveReplayToFolder, payload),
         startLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.startLanMatchmaking),
         cancelLanMatchmaking: () => ipcRenderer.invoke(IPC_INVOKE_CHANNELS.cancelLanMatchmaking),
+        setDesktopAspectRatio: (payload) =>
+            ipcRenderer.invoke(IPC_INVOKE_CHANNELS.setDesktopAspectRatio, payload),
         selectLanPregameMode: (payload) =>
             ipcRenderer.invoke(IPC_INVOKE_CHANNELS.selectLanPregameMode, payload),
         confirmLanPregameStart: (payload) =>

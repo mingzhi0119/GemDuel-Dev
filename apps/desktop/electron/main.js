@@ -10,6 +10,8 @@ import { PeerServer } from 'peer';
 import preloadContract from './preloadContract.cjs';
 import { createLanDiscoveryService } from './lanDiscoveryService.js';
 import {
+    DEFAULT_DESKTOP_ASPECT_RATIO,
+    applyDesktopAspectRatioToWindow,
     authorizeIpcSender,
     createMainWindowOptions,
     validateIpcArgs,
@@ -25,7 +27,6 @@ import { createElectronRuntimeHarness } from './runtimeHarness.js';
 import { createTurnCredentialClient } from './turnCredentialClient.js';
 const { autoUpdater } = pkg;
 const { IPC_INVOKE_CHANNELS, IPC_SEND_CHANNELS, UPDATE_CHANNELS } = preloadContract;
-
 const DEFAULT_LOG_LEVEL = isDev ? 'debug' : 'info';
 const MAX_LOG_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_REPLAY_EXPORT_BYTES = 512 * 1024;
@@ -33,7 +34,6 @@ const DEFAULT_DEV_SERVER_URL = process.env.GEMDUEL_DEV_SERVER_URL ?? 'http://loc
 const DEFAULT_PEER_SERVER_PORT = Number(process.env.GEMDUEL_PEER_SERVER_PORT ?? 9000);
 const MAX_PEER_SERVER_PORT_CANDIDATES = 25;
 const DEV_USER_DATA_SUFFIX = process.env.GEMDUEL_USER_DATA_SUFFIX?.trim() ?? '';
-
 if (DEV_USER_DATA_SUFFIX) {
     app.setPath('userData', path.join(app.getPath('userData'), DEV_USER_DATA_SUFFIX));
 }
@@ -115,6 +115,8 @@ let mainWindow;
 let peerServer = null; // Keep reference to prevent garbage collection
 let peerServerPort = null;
 let lanDiscoveryService = null;
+let activeDesktopAspectRatio = DEFAULT_DESKTOP_ASPECT_RATIO;
+let isApplyingDesktopAspectRatio = false;
 
 const findAvailablePort = (startingPort) =>
     new Promise((resolve, reject) => {
@@ -213,6 +215,20 @@ const runtimeHarness = createElectronRuntimeHarness({
     validateIpcArgs,
 });
 
+const applyMainWindowDesktopAspectRatio = (ratio) => {
+    if (!mainWindow) {
+        return null;
+    }
+    isApplyingDesktopAspectRatio = true;
+    try {
+        const result = applyDesktopAspectRatioToWindow(mainWindow, ratio);
+        activeDesktopAspectRatio = result.ratio;
+        return result;
+    } finally {
+        setTimeout(() => (isApplyingDesktopAspectRatio = false), 0);
+    }
+};
+
 function createWindow() {
     const windowOptions = createMainWindowOptions({
         preloadPath: path.join(__dirname, 'preload.js'),
@@ -227,6 +243,11 @@ function createWindow() {
 
     mainWindow = new BrowserWindow(windowOptions);
     runtimeHarness.attachWindowLifecycle(mainWindow);
+    applyMainWindowDesktopAspectRatio(activeDesktopAspectRatio);
+    mainWindow.on('resize', () => {
+        if (!isApplyingDesktopAspectRatio)
+            applyMainWindowDesktopAspectRatio(activeDesktopAspectRatio);
+    });
     recordMainHealth({
         category: 'startup',
         name: 'WINDOW_CREATED',
@@ -267,6 +288,8 @@ runtimeHarness.registerGovernedIpcHandlers({
         [IPC_INVOKE_CHANNELS.saveReplayToFolder]: (_event, payload) => saveReplayToFolder(payload),
         [IPC_INVOKE_CHANNELS.startLanMatchmaking]: () => lanDiscoveryService?.startMatchmaking(),
         [IPC_INVOKE_CHANNELS.cancelLanMatchmaking]: () => lanDiscoveryService?.cancelMatchmaking(),
+        [IPC_INVOKE_CHANNELS.setDesktopAspectRatio]: (_event, payload) =>
+            applyMainWindowDesktopAspectRatio(payload.ratio),
         [IPC_INVOKE_CHANNELS.selectLanPregameMode]: (_event, payload) =>
             lanDiscoveryService?.selectPregameMode(payload),
         [IPC_INVOKE_CHANNELS.confirmLanPregameStart]: (_event, payload) =>

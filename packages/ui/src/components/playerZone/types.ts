@@ -32,8 +32,16 @@ export interface PlayerZoneProps {
     score: number;
     crowns: number;
     surfaceStyle?: React.CSSProperties;
+    surfaceArtwork?: PlayerZoneSurfaceArtwork;
     surfaceVariant?: string;
     pendingReservedCardIds?: string[];
+    onPreviewStack?: (stack: PlayerZoneStackState & { player: PlayerKey }) => void;
+}
+
+export interface PlayerZoneSurfaceArtwork {
+    primaryPath: string;
+    fallbackPath?: string;
+    mirrorFallback?: boolean;
 }
 
 export interface PlayerZoneStackState {

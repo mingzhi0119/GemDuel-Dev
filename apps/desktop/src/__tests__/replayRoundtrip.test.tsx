@@ -204,7 +204,6 @@ function ReplayRoundtripHarness() {
                     },
                     handleDownloadReplay,
                     handleUploadReplay,
-                    toggleTheme: () => undefined,
                 }}
             />
         </LocaleProvider>

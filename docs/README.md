@@ -10,6 +10,8 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 - [Lexicon and Player Copy](guides/lexicon-copy-system.md)
 - [Frontend Layout](guides/frontend-layout-guide.md)
 - [Animation and Motion Plan](guides/animation-motion-plan.md)
+- [Animation Library Strategy](guides/animation-library-strategy.md)
+- [Light/Dark Runtime Theme Retirement](theme-retirement-plan-2026-04-27.md)
 
 ## Architecture
 

@@ -19,18 +19,26 @@ export const CardFacePattern: React.FC<CardFacePatternProps> = ({
 
     if (artworkPath && !artworkFailed) {
         return (
-            <img
-                src={artworkPath}
-                alt=""
-                aria-hidden="true"
-                draggable={false}
-                width={CARD_ARTWORK_SOURCE_SIZE.width}
-                height={CARD_ARTWORK_SOURCE_SIZE.height}
-                decoding="async"
-                data-card-artwork={cardId}
-                className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
-                onError={() => setFailedArtworkPath(artworkPath)}
-            />
+            <>
+                <div
+                    aria-hidden="true"
+                    data-card-artwork-placeholder={cardId}
+                    className="absolute inset-0 pointer-events-none bg-slate-800"
+                />
+                <img
+                    src={artworkPath}
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    width={CARD_ARTWORK_SOURCE_SIZE.width}
+                    height={CARD_ARTWORK_SOURCE_SIZE.height}
+                    loading="eager"
+                    decoding="sync"
+                    data-card-artwork={cardId}
+                    className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
+                    onError={() => setFailedArtworkPath(artworkPath)}
+                />
+            </>
         );
     }
 

@@ -24,6 +24,7 @@ The app is a single game shell with four top-level states:
 - Center playfield and player rail separation should use border lines and dividers only. Avoid gray overlays, gradient bands, or color-difference panels to separate these areas.
 - Light and Dark surface variants describe the artwork's tonal direction only. Do not add generic white or black masks to force a bright or dark mode; the bitmap should carry the visual tone and React should preserve readable foreground styling.
 - Player-zone artwork is rendered directly from the selected Surface Theme; React-rendered controls and cards must remain readable over the artwork without baking labels, card frames, card slots, fake controls, or numbers into the bitmap.
+- New PlayerZone assets are side-specific `1920x520` files: `player-zone-p1.png` and `player-zone-p2.png`. Existing `player-zone.png` remains a legacy fallback and may be mirrored for P2.
 
 ## Layout Ownership
 

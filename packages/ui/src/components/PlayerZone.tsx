@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { FEATURED_CARD_SIZE, STANDARD_CARD_SIZE } from './Card';
 import {
@@ -51,17 +51,40 @@ export const PlayerZone = ({
     buff,
     theme,
     surfaceStyle,
+    surfaceArtwork,
     surfaceVariant,
     pendingReservedCardIds = [],
+    onPreviewStack,
 }: PlayerZoneProps) => {
     const safeCards = Array.isArray(cards) ? cards : [];
     const [selectedStack, setSelectedStack] = useState<PlayerZoneStackState | null>(null);
     const { tableauRowRef, reservedRowRef, tableauRowWidth, reservedRowWidth } =
         usePlayerZoneMeasurements();
     const { feedbacks, isExtortionEffect } = usePlayerZoneFeedback(player, lastFeedback);
+    const [surfaceImage, setSurfaceImage] = useState<{
+        path: string;
+        isFallback: boolean;
+    } | null>(() =>
+        surfaceArtwork
+            ? {
+                  path: surfaceArtwork.primaryPath,
+                  isFallback:
+                      surfaceArtwork.primaryPath === surfaceArtwork.fallbackPath &&
+                      Boolean(surfaceArtwork.mirrorFallback),
+              }
+            : null
+    );
 
     const hasPuppetMaster =
         buff?.effects?.active === 'discard_reserved' || buff?.id === 'puppet_master';
+    const handleSelectStack = (stack: PlayerZoneStackState) => {
+        if (onPreviewStack) {
+            onPreviewStack({ ...stack, player });
+            return;
+        }
+
+        setSelectedStack(stack);
+    };
 
     const colorStats = PLAYER_ZONE_DISPLAY_COLORS.reduce(
         (acc: Record<string, PlayerZoneColorStats>, color) => {
@@ -75,6 +98,28 @@ export const PlayerZone = ({
         },
         {}
     );
+    useEffect(() => {
+        setSurfaceImage(
+            surfaceArtwork
+                ? {
+                      path: surfaceArtwork.primaryPath,
+                      isFallback:
+                          surfaceArtwork.primaryPath === surfaceArtwork.fallbackPath &&
+                          Boolean(surfaceArtwork.mirrorFallback),
+                  }
+                : null
+        );
+    }, [surfaceArtwork?.fallbackPath, surfaceArtwork?.mirrorFallback, surfaceArtwork?.primaryPath]);
+
+    const rootSurfaceStyle = surfaceArtwork
+        ? {
+              ...surfaceStyle,
+              backgroundImage: undefined,
+              backgroundPosition: undefined,
+              backgroundRepeat: undefined,
+              backgroundSize: undefined,
+          }
+        : surfaceStyle;
 
     const tableauSummaryGapTotalPx =
         Math.max(PLAYER_ZONE_DISPLAY_COLORS.length - 1, 0) * TABLEAU_STACK_GAP_PX;
@@ -100,19 +145,105 @@ export const PlayerZone = ({
                   RESERVED_CARD_MAX_SCALE
               )
             : RESERVED_CARD_FALLBACK_SCALE;
+    const identityColumn = (
+        <PlayerZoneIdentityColumn
+            player={player}
+            privileges={privileges}
+            extraPrivileges={extraPrivileges}
+            buff={buff}
+            isActive={isActive}
+            isPrivilegeMode={isPrivilegeMode}
+            theme={theme}
+            onUsePrivilege={onUsePrivilege}
+            dividerSide={player === 'p1' ? 'left' : 'right'}
+        />
+    );
+    const resourcesColumn = (
+        <PlayerZoneResourcesColumn
+            player={player}
+            inventory={inventory}
+            feedbacks={feedbacks}
+            isStealMode={isStealMode}
+            isDiscardMode={isDiscardMode}
+            theme={theme}
+            colorStats={colorStats}
+            tableauRowRef={tableauRowRef}
+            tableauSummaryScale={tableauSummaryScale}
+            inventoryGemSizePx={INVENTORY_GEM_SIZE_PX}
+            inventoryGemBadgeSizePx={INVENTORY_GEM_BADGE_SIZE_PX}
+            inventoryGemCountFontPx={INVENTORY_GEM_COUNT_FONT_PX}
+            summaryBadgeFontPx={summaryBadgeFontPx}
+            summaryBadgeSizePx={summaryBadgeSizePx}
+            onGemClick={onGemClick}
+            onSelectStack={handleSelectStack}
+        />
+    );
+    const reservedColumn = (
+        <PlayerZoneReservedColumn
+            player={player}
+            reserved={reserved}
+            reservedRowRef={reservedRowRef}
+            reservedCardScale={reservedCardScale}
+            isActive={isActive}
+            hasPuppetMaster={hasPuppetMaster}
+            theme={theme}
+            onBuyReserved={onBuyReserved}
+            onDiscardReserved={onDiscardReserved}
+            pendingReservedCardIds={pendingReservedCardIds}
+            dividerSide={player === 'p1' ? 'right' : 'left'}
+        />
+    );
 
     return (
         <div
             data-player-zone={player}
             data-player-zone-bg={surfaceVariant ?? 'none'}
             data-reserved-count={reserved.length}
-            className={`flex w-full h-full flex-row items-stretch p-4 transition-all duration-500 gap-4 bg-transparent
+            className={`relative w-full h-full overflow-hidden p-4 transition-all duration-500 bg-transparent
         ${isStealMode ? 'ring-2 ring-rose-500 animate-pulse' : ''}
         ${isDiscardMode && isActive ? 'ring-2 ring-red-500 animate-pulse' : ''}
         ${isExtortionEffect ? 'ring-4 ring-purple-500 bg-purple-500/10 animate-pulse' : ''}
     `}
-            style={surfaceStyle}
+            style={rootSurfaceStyle}
         >
+            {surfaceArtwork && surfaceImage && (
+                <img
+                    src={surfaceImage.path}
+                    alt=""
+                    aria-hidden="true"
+                    data-player-zone-surface-artwork={player}
+                    data-player-zone-surface-primary={surfaceArtwork.primaryPath}
+                    data-player-zone-surface-fallback={surfaceArtwork.fallbackPath ?? 'none'}
+                    data-player-zone-surface-using-fallback={
+                        surfaceImage.isFallback ? 'true' : undefined
+                    }
+                    data-player-zone-surface-mirrored={
+                        surfaceImage.isFallback && surfaceArtwork.mirrorFallback
+                            ? 'true'
+                            : undefined
+                    }
+                    draggable={false}
+                    decoding="async"
+                    className="pointer-events-none absolute inset-0 z-0 h-full w-full select-none object-cover"
+                    style={{
+                        transform:
+                            surfaceImage.isFallback && surfaceArtwork.mirrorFallback
+                                ? 'scaleX(-1)'
+                                : undefined,
+                    }}
+                    onError={() => {
+                        if (
+                            surfaceArtwork.fallbackPath &&
+                            surfaceImage.path !== surfaceArtwork.fallbackPath
+                        ) {
+                            setSurfaceImage({
+                                path: surfaceArtwork.fallbackPath,
+                                isFallback: true,
+                            });
+                        }
+                    }}
+                />
+            )}
             <AnimatePresence>
                 {selectedStack && (
                     <StackOverlay
@@ -125,48 +256,21 @@ export const PlayerZone = ({
                 )}
             </AnimatePresence>
 
-            <PlayerZoneIdentityColumn
-                player={player}
-                privileges={privileges}
-                extraPrivileges={extraPrivileges}
-                buff={buff}
-                isActive={isActive}
-                isPrivilegeMode={isPrivilegeMode}
-                theme={theme}
-                onUsePrivilege={onUsePrivilege}
-            />
-
-            <PlayerZoneResourcesColumn
-                player={player}
-                inventory={inventory}
-                feedbacks={feedbacks}
-                isStealMode={isStealMode}
-                isDiscardMode={isDiscardMode}
-                theme={theme}
-                colorStats={colorStats}
-                tableauRowRef={tableauRowRef}
-                tableauSummaryScale={tableauSummaryScale}
-                inventoryGemSizePx={INVENTORY_GEM_SIZE_PX}
-                inventoryGemBadgeSizePx={INVENTORY_GEM_BADGE_SIZE_PX}
-                inventoryGemCountFontPx={INVENTORY_GEM_COUNT_FONT_PX}
-                summaryBadgeFontPx={summaryBadgeFontPx}
-                summaryBadgeSizePx={summaryBadgeSizePx}
-                onGemClick={onGemClick}
-                onSelectStack={setSelectedStack}
-            />
-
-            <PlayerZoneReservedColumn
-                player={player}
-                reserved={reserved}
-                reservedRowRef={reservedRowRef}
-                reservedCardScale={reservedCardScale}
-                isActive={isActive}
-                hasPuppetMaster={hasPuppetMaster}
-                theme={theme}
-                onBuyReserved={onBuyReserved}
-                onDiscardReserved={onDiscardReserved}
-                pendingReservedCardIds={pendingReservedCardIds}
-            />
+            <div className="relative z-10 flex h-full w-full flex-row items-stretch gap-4">
+                {player === 'p1' ? (
+                    <>
+                        {reservedColumn}
+                        {resourcesColumn}
+                        {identityColumn}
+                    </>
+                ) : (
+                    <>
+                        {identityColumn}
+                        {resourcesColumn}
+                        {reservedColumn}
+                    </>
+                )}
+            </div>
         </div>
     );
 };

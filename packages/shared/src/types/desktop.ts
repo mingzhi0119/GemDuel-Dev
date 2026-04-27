@@ -48,6 +48,19 @@ export interface SaveReplayToFolderResult {
     path: string;
 }
 
+export type DesktopAspectRatio = '16:10' | '16:9';
+
+export interface SetDesktopAspectRatioPayload {
+    ratio: DesktopAspectRatio;
+}
+
+export interface SetDesktopAspectRatioResult {
+    ratio: DesktopAspectRatio;
+    width: number;
+    height: number;
+    aspectRatio: number;
+}
+
 export interface ElectronBridge {
     getAppVersion: () => Promise<string>;
     getRuntimeIceServers: () => Promise<RTCIceServer[]>;
@@ -59,6 +72,9 @@ export interface ElectronBridge {
     startLanMatchmaking: () => Promise<LanMatchmakingState>;
     cancelLanMatchmaking: () => Promise<LanMatchmakingState>;
     saveReplayToFolder?: (payload: SaveReplayToFolderPayload) => Promise<SaveReplayToFolderResult>;
+    setDesktopAspectRatio: (
+        payload: SetDesktopAspectRatioPayload
+    ) => Promise<SetDesktopAspectRatioResult>;
     selectLanPregameMode: (payload: SelectLanPregameModePayload) => Promise<LanMatchmakingState>;
     confirmLanPregameStart: (
         payload: ConfirmLanPregameStartPayload

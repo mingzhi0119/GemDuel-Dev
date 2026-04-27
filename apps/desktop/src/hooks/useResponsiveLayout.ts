@@ -13,8 +13,9 @@ const MOBILE_ZONE_SCALE = 0.55;
 const MOBILE_MAIN_GAP_PX = 16;
 
 export const DESKTOP_STAGE_WIDTH_PX = 3840;
-export const DESKTOP_MIN_ASPECT = 16 / 10;
-export const DESKTOP_MAX_ASPECT = 12 / 5;
+export const DESKTOP_ASPECT_16_10 = 16 / 10;
+export const DESKTOP_ASPECT_16_9 = 16 / 9;
+export const DESKTOP_ASPECT_SELECTION_THRESHOLD = (DESKTOP_ASPECT_16_10 + DESKTOP_ASPECT_16_9) / 2;
 export const DESKTOP_TOP_BAR_HEIGHT_PX = 120;
 export const DESKTOP_BOARD_SCALE_MIN = 1.2;
 export const DESKTOP_BOARD_SCALE_MAX = 2.08;
@@ -75,6 +76,9 @@ const calculateStageInsetPx = (viewportSpan: number, scaledStageSpan: number) =>
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+const resolveSupportedDesktopAspect = (aspectRatio: number) =>
+    aspectRatio >= DESKTOP_ASPECT_SELECTION_THRESHOLD ? DESKTOP_ASPECT_16_9 : DESKTOP_ASPECT_16_10;
+
 const calculateDesktopStageScale = (
     viewportWidth: number,
     viewportHeight: number,
@@ -131,12 +135,9 @@ export const calculateResponsiveLayout = (
         };
     }
 
-    const clampedDesktopAspect = clamp(aspectRatio, DESKTOP_MIN_ASPECT, DESKTOP_MAX_ASPECT);
+    const desktopAspect = resolveSupportedDesktopAspect(aspectRatio);
     const stageCanvasWidthPx = DESKTOP_STAGE_WIDTH_PX;
-    const aspectStageCanvasHeightPx = stageCanvasWidthPx / clampedDesktopAspect;
-    const widthLockedStageScale = safeWidth / stageCanvasWidthPx;
-    const viewportFilledStageHeightPx = safeHeight / widthLockedStageScale;
-    const stageCanvasHeightPx = Math.max(aspectStageCanvasHeightPx, viewportFilledStageHeightPx);
+    const stageCanvasHeightPx = stageCanvasWidthPx / desktopAspect;
     const stageScale = calculateDesktopStageScale(
         safeWidth,
         safeHeight,
@@ -144,6 +145,7 @@ export const calculateResponsiveLayout = (
         stageCanvasHeightPx
     );
     const scaledStageWidth = stageCanvasWidthPx * stageScale;
+    const scaledStageHeight = stageCanvasHeightPx * stageScale;
     const boardScale = calculateDesktopBoardScale(stageCanvasWidthPx, stageCanvasHeightPx);
 
     return {
@@ -155,7 +157,7 @@ export const calculateResponsiveLayout = (
         stageCanvasHeightPx,
         stageScale,
         stageInsetXPx: calculateStageInsetPx(safeWidth, scaledStageWidth),
-        stageInsetYPx: 0,
+        stageInsetYPx: calculateStageInsetPx(safeHeight, scaledStageHeight),
         boardScale,
         deckScale: DESKTOP_DECK_SCALE,
         zoneScale: DESKTOP_ZONE_SCALE,

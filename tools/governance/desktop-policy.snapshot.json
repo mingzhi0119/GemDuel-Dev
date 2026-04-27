@@ -2,6 +2,25 @@
     "policyVersion": 1,
     "mainWindow": {
         "autoHideMenuBar": true,
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1280,
+        "minHeight": 800,
+        "defaultAspectRatio": "16:10",
+        "supportedAspectRatios": [
+            {
+                "ratio": "16:10",
+                "width": 1280,
+                "height": 800,
+                "aspectRatio": 1.6
+            },
+            {
+                "ratio": "16:9",
+                "width": 1280,
+                "height": 720,
+                "aspectRatio": 1.7777777777777777
+            }
+        ],
         "webPreferences": {
             "nodeIntegration": false,
             "contextIsolation": true,
@@ -28,6 +47,7 @@
         "revokeRuntimeRelayProfile",
         "saveReplayToFolder",
         "selectLanPregameMode",
+        "setDesktopAspectRatio",
         "startLanMatchmaking"
     ],
     "allowlistedChannels": [
@@ -47,6 +67,7 @@
         "revoke-runtime-relay-profile",
         "save-replay-to-folder",
         "select-lan-pregame-mode",
+        "set-desktop-aspect-ratio",
         "start-lan-matchmaking",
         "update_available",
         "update_downloaded"

@@ -47,50 +47,48 @@ describe('gem panel skin geometry', () => {
     });
 
     it('resolves normalized 5x5 cell centers and a fixed footprint from the calibrated skin', () => {
-        const skin = getGemPanelSkin('light');
+        const skin = getGemPanelSkin('dark');
         const centers = getGemPanelCellCentersNormalized(skin);
         const footprint = calculateGemPanelFootprintPx(skin);
 
         expect(centers).toHaveLength(25);
         expect(centers[0]).toEqual({
-            x: expect.closeTo(0.16665, 5),
-            y: expect.closeTo(0.1783, 5),
+            x: expect.closeTo(0.18905, 5),
+            y: expect.closeTo(0.15335, 5),
         });
         expect(centers[12]).toEqual({
-            x: expect.closeTo(0.5016, 5),
-            y: expect.closeTo(0.51195, 5),
+            x: expect.closeTo(0.4988, 5),
+            y: expect.closeTo(0.4765, 5),
         });
         expect(centers[24]).toEqual({
-            x: expect.closeTo(0.83655, 5),
-            y: expect.closeTo(0.8456, 5),
+            x: expect.closeTo(0.80855, 5),
+            y: expect.closeTo(0.7996, 5),
         });
         expect(footprint.widthPx).toBe(452);
         expect(footprint.heightPx).toBe(452);
-        expect(calculateGemPanelGemDiameterPx(skin, footprint)).toBe(62);
+        expect(calculateGemPanelGemDiameterPx(skin, footprint)).toBe(57);
     });
 
     it('keeps every gem panel theme variant calibrated within the fixed layout footprint', () => {
-        for (const theme of ['dark', 'light'] as const) {
-            for (const variant of SURFACE_THEME_VARIANTS) {
-                const skin = getGemPanelSkin(theme, variant);
-                const footprint = calculateGemPanelFootprintPx(skin);
-                const centers = getGemPanelCellCentersNormalized(skin);
-                const gemDiameterPx = calculateGemPanelGemDiameterPx(skin, footprint);
+        for (const variant of SURFACE_THEME_VARIANTS) {
+            const skin = getGemPanelSkin('dark', variant);
+            const footprint = calculateGemPanelFootprintPx(skin);
+            const centers = getGemPanelCellCentersNormalized(skin);
+            const gemDiameterPx = calculateGemPanelGemDiameterPx(skin, footprint);
 
-                expect(footprint).toEqual({
-                    widthPx: 452,
-                    heightPx: 452,
-                });
-                expect(centers).toHaveLength(25);
-                expect(skin.cellGridLinesNormalized?.x).toHaveLength(6);
-                expect(skin.cellGridLinesNormalized?.y).toHaveLength(6);
-                expect(centers[12].x).toBeGreaterThan(0.48);
-                expect(centers[12].x).toBeLessThan(0.52);
-                expect(centers[12].y).toBeGreaterThan(0.47);
-                expect(centers[12].y).toBeLessThan(0.52);
-                expect(gemDiameterPx).toBeGreaterThanOrEqual(57);
-                expect(gemDiameterPx).toBeLessThanOrEqual(63);
-            }
+            expect(footprint).toEqual({
+                widthPx: 452,
+                heightPx: 452,
+            });
+            expect(centers).toHaveLength(25);
+            expect(skin.cellGridLinesNormalized?.x).toHaveLength(6);
+            expect(skin.cellGridLinesNormalized?.y).toHaveLength(6);
+            expect(centers[12].x).toBeGreaterThan(0.48);
+            expect(centers[12].x).toBeLessThan(0.52);
+            expect(centers[12].y).toBeGreaterThan(0.47);
+            expect(centers[12].y).toBeLessThan(0.52);
+            expect(gemDiameterPx).toBeGreaterThanOrEqual(57);
+            expect(gemDiameterPx).toBeLessThanOrEqual(63);
         }
     });
 });

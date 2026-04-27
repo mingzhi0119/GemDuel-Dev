@@ -5,8 +5,7 @@ import { PlayerKey, Buff, BuffEffects } from '@gemduel/shared/types';
 import { BUFFS } from '@gemduel/shared/constants';
 import { AnimatedScore } from './topBar/AnimatedScore';
 import { AnimatedCrownMetric } from './topBar/AnimatedCrownMetric';
-import { TopBarBuff } from './topBar/TopBarBuff';
-import { useLocale, useT } from '../i18n/LocaleProvider';
+import { useT } from '../i18n/LocaleProvider';
 
 interface TopBarProps {
     p1Score: number;
@@ -37,7 +36,6 @@ export const TopBar: React.FC<TopBarProps> = ({
     surfaceStyle,
     surfaceVariant,
 }) => {
-    const { locale } = useLocale();
     const t = useT();
     const getVictoryGoals = (pid: PlayerKey) => {
         const rawBuff = playerBuffs[pid];
@@ -193,18 +191,6 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
             <div className="relative h-full w-full">
                 <div
-                    data-topbar-buff-slot="p1"
-                    className="absolute left-[37.5%] top-1/2 hidden w-[min(21vw,520px)] min-w-0 -translate-x-1/2 -translate-y-1/2 items-center justify-center md:flex"
-                >
-                    <TopBarBuff
-                        buff={playerBuffs.p1}
-                        playerKey="p1"
-                        theme={theme}
-                        locale={locale}
-                    />
-                </div>
-
-                <div
                     data-topbar-score-anchor="p1"
                     className="absolute left-1/4 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
                 >
@@ -234,18 +220,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                     className="absolute left-3/4 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
                 >
                     {renderScoreGroup('p2')}
-                </div>
-
-                <div
-                    data-topbar-buff-slot="p2"
-                    className="absolute left-[62.5%] top-1/2 hidden w-[min(21vw,520px)] min-w-0 -translate-x-1/2 -translate-y-1/2 items-center justify-center md:flex"
-                >
-                    <TopBarBuff
-                        buff={playerBuffs.p2}
-                        playerKey="p2"
-                        theme={theme}
-                        locale={locale}
-                    />
                 </div>
 
                 <AnimatePresence>

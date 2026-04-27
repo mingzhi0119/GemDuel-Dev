@@ -177,7 +177,6 @@ const uiCallbacks: AppRouteProps['callbacks'] = {
     handleRestart: vi.fn(),
     handleDownloadReplay: vi.fn(),
     handleUploadReplay: vi.fn(),
-    toggleTheme: vi.fn(),
 };
 
 describe('shell smoke coverage', () => {
@@ -216,7 +215,6 @@ describe('shell smoke coverage', () => {
                 onUploadReplay={vi.fn()}
                 onRequestRestart={vi.fn()}
                 onShowRulebook={vi.fn()}
-                onToggleTheme={vi.fn()}
                 onAddCrowns={vi.fn()}
                 onAddPoints={vi.fn()}
                 onAddPrivilege={vi.fn()}
@@ -255,7 +253,7 @@ describe('shell smoke coverage', () => {
     it('renders AppOverlayStack without active overlays or modal crashes', () => {
         renderElement(
             <AppOverlayStack
-                theme="light"
+                theme="dark"
                 showRulebook={false}
                 activeModal={null}
                 mode="LOCAL_PVP"
@@ -301,7 +299,7 @@ describe('shell smoke coverage', () => {
         renderElement(
             <PlayerRail
                 game={createGameController()}
-                theme="light"
+                theme="dark"
                 effectiveGameMode="IDLE"
                 scaledZoneWrapperStyle={{}}
                 playerRailStyle={{}}

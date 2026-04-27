@@ -33,9 +33,12 @@ describe('Card artwork rendering', () => {
         const html = renderToStaticMarkup(<Card card={realCard} theme="dark" />);
 
         expect(html).toContain('data-card-artwork="151-bk"');
+        expect(html).toContain('data-card-artwork-placeholder="151-bk"');
         expect(html).toContain('/assets/cards/151-bk.png');
         expect(html).toContain(`width="${CARD_ARTWORK_SOURCE_SIZE.width}"`);
         expect(html).toContain(`height="${CARD_ARTWORK_SOURCE_SIZE.height}"`);
+        expect(html).toContain('loading="eager"');
+        expect(html).toContain('decoding="sync"');
         expect(html).not.toContain('data-card-face-pattern="true"');
     });
 

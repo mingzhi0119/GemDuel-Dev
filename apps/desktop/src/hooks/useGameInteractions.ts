@@ -20,7 +20,8 @@ export const useGameInteractions = (
     gameState: GameState,
     networkDispatch: (action: GameAction) => void,
     currentIndex: number,
-    isReviewing: boolean = false
+    isReviewing: boolean = false,
+    isInteractionLocked: boolean = false
 ) => {
     const { selectedGems, setSelectedGems, clearSelectedGems, errorMsg, setErrorMsg } =
         useInteractionFeedback(currentIndex);
@@ -34,10 +35,11 @@ export const useGameInteractions = (
         setPreselectedReserveGold(null);
     }, []);
 
-    const canLocalInteract = useMemo(
+    const baseCanLocalInteract = useMemo(
         () => canPlayerInteract(gameState, isReviewing),
         [gameState, isReviewing]
     );
+    const canLocalInteract = baseCanLocalInteract && !isInteractionLocked;
 
     const isSelected = useCallback(
         (r: number, c: number) =>

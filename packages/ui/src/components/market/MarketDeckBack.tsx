@@ -71,11 +71,6 @@ export const MarketDeckBack: React.FC<MarketDeckBackProps> = ({
                                 : 'linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(15,23,42,0.04) 54%, rgba(15,23,42,0.20) 100%)',
                     }}
                 />
-                <div
-                    className={`absolute inset-2 rounded-md border ${style.ring}`}
-                    style={{ zIndex: 7 }}
-                />
-
                 <div className="absolute inset-x-2 bottom-3 z-10 flex flex-col items-center gap-1">
                     <div
                         className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] ${
@@ -105,7 +100,6 @@ export const MarketDeckBack: React.FC<MarketDeckBackProps> = ({
     return (
         <>
             <div className={`absolute inset-0 bg-gradient-to-br ${style.frame}`} />
-            <div className={`absolute inset-3 rounded-md border ${style.ring}`} />
             <div
                 className={`absolute left-1/2 top-6 h-12 w-12 -translate-x-1/2 rounded-full blur-xl ${style.glow}`}
             />

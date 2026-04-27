@@ -42,30 +42,6 @@ const DARK_FIELD_PALETTE: SurfaceTextPalette = {
     controlShadow: '0 2px 5px rgba(0,0,0,0.82)',
 };
 
-const LIGHT_FIELD_PALETTE: SurfaceTextPalette = {
-    primary: '#f8fafc',
-    muted: '#e5edf8',
-    goal: '#f8fafc',
-    gold: '#fbbf24',
-    action: '#f8fafc',
-    control: '#102033',
-    controlMuted: '#334155',
-    shadow: '0 2px 6px rgba(0,0,0,0.9)',
-    controlShadow: '0 1px 0 rgba(255,255,255,0.68)',
-};
-
-const LIGHT_ON_DARK_FIELD_PALETTE: SurfaceTextPalette = {
-    primary: '#f8fafc',
-    muted: '#e5edf8',
-    goal: '#f8fafc',
-    gold: '#fbbf24',
-    action: '#f8fafc',
-    control: '#102033',
-    controlMuted: '#334155',
-    shadow: '0 2px 6px rgba(0,0,0,0.92)',
-    controlShadow: '0 1px 0 rgba(255,255,255,0.68)',
-};
-
 const DARK_TOPBAR_PALETTE: SurfaceTextPalette = {
     primary: '#f8fafc',
     muted: '#dbeafe',
@@ -79,20 +55,13 @@ const DARK_TOPBAR_PALETTE: SurfaceTextPalette = {
 };
 
 const getFieldPalette = (theme: ThemeName, variant: SurfaceThemeVariant): SurfaceTextPalette => {
-    if (theme === 'dark') {
-        return DARK_FIELD_PALETTE;
-    }
-
-    return variant === 'dark-arcane' || variant === 'clean-boardgame'
-        ? LIGHT_ON_DARK_FIELD_PALETTE
-        : LIGHT_FIELD_PALETTE;
+    void theme;
+    void variant;
+    return DARK_FIELD_PALETTE;
 };
 
 const getTopBarPalette = (theme: ThemeName): SurfaceTextPalette => {
-    if (theme === 'dark') {
-        return DARK_TOPBAR_PALETTE;
-    }
-
+    void theme;
     return DARK_TOPBAR_PALETTE;
 };
 
@@ -168,10 +137,7 @@ export const createGameShellStyles = (
         playerRailStyle: {
             height: `${layout.zoneHeightPx}px`,
             background: 'transparent',
-            borderTop:
-                theme === 'light'
-                    ? '1px solid rgba(15,23,42,0.18)'
-                    : '1px solid rgba(148,163,184,0.18)',
+            borderTop: '1px solid rgba(148,163,184,0.18)',
             boxShadow: 'none',
         } as CSSProperties,
         gemBoardSurfaceStyle: createGemPanelSurfaceStyle(theme, resolvedSurfaceTheme.gemPanel),

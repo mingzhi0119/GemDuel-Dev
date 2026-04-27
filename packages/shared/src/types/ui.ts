@@ -1,6 +1,6 @@
 import type { AppReasonCode } from './reason';
 
-export type ThemeName = 'light' | 'dark';
+export type ThemeName = 'dark';
 export type UiNoticeSeverity = 'info' | 'warn' | 'error';
 
 export interface UiStatusNotice {
