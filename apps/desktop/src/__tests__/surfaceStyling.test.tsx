@@ -153,8 +153,9 @@ describe('surface styling affordances', () => {
         expect(html).toContain('data-gem-panel-skin="square-dashboard"');
         expect(html).not.toContain('grid-cols-5');
         expect(html).toContain('width:452px');
-        expect(html).toContain('left:16.800%');
-        expect(html).toContain('top:16.800%');
+        expect(html).toContain('left:18.905%');
+        expect(html).toContain('top:15.335%');
+        expect(html).toContain('width:57px');
     });
 
     it('keeps the gem board footprint stable across panel theme variants', () => {
@@ -175,7 +176,30 @@ describe('surface styling affordances', () => {
 
             expect(html).toContain('width:452px');
             expect(html).toContain('height:452px');
+            expect(html).toContain('data-gem-panel-skin="square-dashboard"');
         }
+    });
+
+    it('can render the gem panel calibration overlay without changing board footprint', () => {
+        const html = renderToStaticMarkup(
+            <GameBoard
+                board={buildBoard()}
+                handleGemClick={() => undefined}
+                handleGemDragSelection={() => undefined}
+                selectedGems={[]}
+                phase="IDLE"
+                bonusGemTarget={null}
+                theme="dark"
+                canInteract={true}
+                panelSkin={getGemPanelSkin('dark', 'clean-boardgame')}
+                showCalibrationOverlay={true}
+            />
+        );
+
+        expect(html).toContain('data-gem-panel-calibration-overlay="true"');
+        expect(html.match(/data-gem-panel-calibration-cell=/g)).toHaveLength(25);
+        expect(html).toContain('width:452px');
+        expect(html).toContain('height:452px');
     });
 
     it('does not render a light-mode circular base behind board gems', () => {

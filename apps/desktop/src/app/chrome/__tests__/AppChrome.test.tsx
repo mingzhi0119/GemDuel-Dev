@@ -161,7 +161,8 @@ describe('AppChrome locale controls', () => {
 
         expect(restartButton?.getAttribute('aria-label')).toBe('Restart');
         expect(restartButton?.hasAttribute('title')).toBe(false);
-        expect(restartButton?.className).toContain('text-slate-200');
+        expect(restartButton?.style.color).toBe('var(--gd-chrome-icon)');
+        expect(restartButton?.style.textShadow).toBe('var(--gd-chrome-text-shadow)');
         expect(restartTooltip?.textContent).toBe('Restart');
         expect(restartTooltip?.dataset.tooltipSize).toBe('standard-label');
 

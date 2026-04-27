@@ -18,6 +18,7 @@ import {
     getShouldHoldPresentationPreviewIntro,
     type PresentationPreviewStage,
 } from './presentationPreview';
+import { getShouldShowGemPanelCalibrationOverlay } from './surfacePreviewQuery';
 
 export function GameShell({
     appVersion,
@@ -60,6 +61,7 @@ export function GameShell({
     });
     const presentationPreviewMode = useMemo(getPresentationPreviewMode, []);
     const shouldHoldPresentationPreviewIntro = useMemo(getShouldHoldPresentationPreviewIntro, []);
+    const showGemPanelCalibrationOverlay = useMemo(getShouldShowGemPanelCalibrationOverlay, []);
     const [presentationPreviewStage, setPresentationPreviewStage] =
         useState<PresentationPreviewStage>(
             presentationPreviewMode === 'royal-unlock' ? 'intro' : null
@@ -239,6 +241,7 @@ export function GameShell({
                 marketSurfaceStyle={marketSurfaceStyle}
                 marketDeckBackArtwork={marketDeckBackArtwork}
                 isRoyalSelectionBlocked={effectivePresentation.isBlockingRoyalSelection}
+                showGemPanelCalibrationOverlay={showGemPanelCalibrationOverlay}
             />
 
             <PlayerRail

@@ -70,8 +70,12 @@ export function AppChrome({
     const [showSettingsMenu, setShowSettingsMenu] = useState(false);
     const settingsIconButtonClass =
         theme === 'dark'
-            ? 'text-slate-200 hover:bg-slate-800/80 hover:text-white focus-visible:outline-slate-300'
-            : 'text-stone-700 hover:bg-white/80 hover:text-stone-950 focus-visible:outline-stone-700';
+            ? 'hover:bg-slate-800/80 focus-visible:outline-slate-300'
+            : 'hover:bg-white/80 focus-visible:outline-stone-700';
+    const chromeIconStyle = {
+        color: 'var(--gd-chrome-icon)',
+        textShadow: 'var(--gd-chrome-text-shadow)',
+    } as React.CSSProperties;
     const neutralMutedButtonClass =
         theme === 'dark'
             ? 'bg-slate-900/70 hover:bg-slate-800/90 text-slate-200 hover:text-white border-slate-600 hover:border-slate-500 shadow-[0_6px_20px_rgba(0,0,0,0.35)]'
@@ -113,6 +117,7 @@ export function AppChrome({
                         onShowRulebook();
                     }}
                     className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
+                    style={chromeIconStyle}
                     aria-label={t('settings.rules')}
                     aria-describedby={rulebookTooltipId}
                 >
@@ -134,6 +139,7 @@ export function AppChrome({
                         onRequestRestart();
                     }}
                     className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
+                    style={chromeIconStyle}
                     aria-label={t('settings.restart')}
                     aria-describedby={restartTooltipId}
                 >
@@ -153,6 +159,7 @@ export function AppChrome({
                             setShowSettingsMenu((value) => !value);
                         }}
                         className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
+                        style={chromeIconStyle}
                         aria-label={t('settings.title')}
                         aria-describedby={settingsTooltipId}
                         aria-expanded={showSettingsMenu}

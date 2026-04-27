@@ -10,12 +10,7 @@ import type {
     GemTypeObject,
 } from '@gemduel/shared/types';
 import { AnimatedGemButton } from './gameBoard/AnimatedGemButton';
-import {
-    calculateGemPanelFootprintPx,
-    GEM_BOARD_DIMENSION,
-    GEM_BOARD_GEM_SIZE_PX,
-    getGemPanelCellCentersNormalized,
-} from './gameBoard/gemPanelLayout';
+import { GEM_BOARD_DIMENSION, resolveGemPanelGeometry } from './gameBoard/gemPanelLayout';
 import {
     useGemBoardDragSelection,
     type GemDragSelectionIntent,
@@ -33,6 +28,7 @@ interface GameBoardProps {
     canInteract?: boolean;
     surfaceStyle?: React.CSSProperties;
     panelSkin: GemPanelSkin;
+    showCalibrationOverlay?: boolean;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = React.memo(
@@ -48,10 +44,11 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
         canInteract = true,
         surfaceStyle,
         panelSkin,
+        showCalibrationOverlay = false,
     }) => {
         const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
-        const panelFootprint = calculateGemPanelFootprintPx(panelSkin);
-        const cellCenters = getGemPanelCellCentersNormalized(panelSkin);
+        const { panelFootprint, cellCenters, cellGridLines, gemDiameterPx } =
+            resolveGemPanelGeometry(panelSkin);
         const playfieldRectStyle = {
             left: `${panelSkin.playfieldRectNormalized.left * 100}%`,
             top: `${panelSkin.playfieldRectNormalized.top * 100}%`,
@@ -150,8 +147,8 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                                     style={{
                                         left: `${(center.x * 100).toFixed(3)}%`,
                                         top: `${(center.y * 100).toFixed(3)}%`,
-                                        width: `${GEM_BOARD_GEM_SIZE_PX}px`,
-                                        height: `${GEM_BOARD_GEM_SIZE_PX}px`,
+                                        width: `${gemDiameterPx}px`,
+                                        height: `${gemDiameterPx}px`,
                                         transform: 'translate(-50%, -50%)',
                                     }}
                                 >
@@ -202,6 +199,117 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                         })
                     )}
                 </div>
+                {showCalibrationOverlay && (
+                    <div
+                        data-gem-panel-calibration-overlay="true"
+                        className="pointer-events-none absolute inset-0 z-40"
+                    >
+                        <svg
+                            aria-hidden="true"
+                            viewBox="0 0 100 100"
+                            preserveAspectRatio="none"
+                            className="absolute inset-0 h-full w-full"
+                        >
+                            <rect
+                                x={panelSkin.playfieldRectNormalized.left * 100}
+                                y={panelSkin.playfieldRectNormalized.top * 100}
+                                width={
+                                    (panelSkin.playfieldRectNormalized.right -
+                                        panelSkin.playfieldRectNormalized.left) *
+                                    100
+                                }
+                                height={
+                                    (panelSkin.playfieldRectNormalized.bottom -
+                                        panelSkin.playfieldRectNormalized.top) *
+                                    100
+                                }
+                                fill="rgba(6,182,212,0.04)"
+                                stroke="rgba(125,211,252,0.74)"
+                                strokeWidth="0.18"
+                            />
+                            {cellGridLines.x.map((x) => (
+                                <line
+                                    key={`calibration-x-${x}`}
+                                    x1={x * 100}
+                                    y1={panelSkin.playfieldRectNormalized.top * 100}
+                                    x2={x * 100}
+                                    y2={panelSkin.playfieldRectNormalized.bottom * 100}
+                                    stroke="rgba(250,204,21,0.72)"
+                                    strokeWidth="0.12"
+                                />
+                            ))}
+                            {cellGridLines.y.map((y) => (
+                                <line
+                                    key={`calibration-y-${y}`}
+                                    x1={panelSkin.playfieldRectNormalized.left * 100}
+                                    y1={y * 100}
+                                    x2={panelSkin.playfieldRectNormalized.right * 100}
+                                    y2={y * 100}
+                                    stroke="rgba(250,204,21,0.72)"
+                                    strokeWidth="0.12"
+                                />
+                            ))}
+                            {Array.from({
+                                length: GEM_BOARD_DIMENSION * GEM_BOARD_DIMENSION,
+                            }).map((_, index) => {
+                                const row = Math.floor(index / GEM_BOARD_DIMENSION);
+                                const col = index % GEM_BOARD_DIMENSION;
+                                const left = cellGridLines.x[col] ?? 0;
+                                const right = cellGridLines.x[col + 1] ?? left;
+                                const top = cellGridLines.y[row] ?? 0;
+                                const bottom = cellGridLines.y[row + 1] ?? top;
+
+                                return (
+                                    <React.Fragment key={`calibration-diagonal-${index}`}>
+                                        <line
+                                            x1={left * 100}
+                                            y1={top * 100}
+                                            x2={right * 100}
+                                            y2={bottom * 100}
+                                            stroke="rgba(34,211,238,0.45)"
+                                            strokeWidth="0.1"
+                                        />
+                                        <line
+                                            x1={right * 100}
+                                            y1={top * 100}
+                                            x2={left * 100}
+                                            y2={bottom * 100}
+                                            stroke="rgba(34,211,238,0.45)"
+                                            strokeWidth="0.1"
+                                        />
+                                    </React.Fragment>
+                                );
+                            })}
+                            {cellGridLines.x.flatMap((x) =>
+                                cellGridLines.y.map((y) => (
+                                    <circle
+                                        key={`calibration-intersection-${x}-${y}`}
+                                        cx={x * 100}
+                                        cy={y * 100}
+                                        r="0.32"
+                                        fill="rgba(251,191,36,0.92)"
+                                        stroke="rgba(0,0,0,0.65)"
+                                        strokeWidth="0.08"
+                                    />
+                                ))
+                            )}
+                        </svg>
+                        {cellCenters.map((center, index) => (
+                            <div
+                                key={`calibration-${index}`}
+                                data-gem-panel-calibration-cell={index}
+                                className="absolute rounded-full border border-white/80 bg-cyan-300/10 shadow-[0_0_8px_rgba(6,182,212,0.7)]"
+                                style={{
+                                    left: `${(center.x * 100).toFixed(3)}%`,
+                                    top: `${(center.y * 100).toFixed(3)}%`,
+                                    width: `${gemDiameterPx}px`,
+                                    height: `${gemDiameterPx}px`,
+                                    transform: 'translate(-50%, -50%)',
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         );
     }

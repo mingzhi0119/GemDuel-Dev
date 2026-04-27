@@ -122,6 +122,11 @@ const createSurfaceTextVariableStyle = (
         '--gd-topbar-control-muted': topBar.controlMuted,
         '--gd-topbar-text-shadow': topBar.shadow,
         '--gd-topbar-control-text-shadow': topBar.controlShadow,
+        '--gd-chrome-icon': topBar.primary,
+        '--gd-chrome-icon-hover': '#ffffff',
+        '--gd-chrome-focus': topBar.gold,
+        '--gd-chrome-hover-bg': 'rgba(15,23,42,0.38)',
+        '--gd-chrome-text-shadow': topBar.shadow,
     } as SurfaceTextVariableStyle;
 };
 

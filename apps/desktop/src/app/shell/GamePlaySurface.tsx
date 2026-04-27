@@ -7,6 +7,7 @@ import { Market } from '@gemduel/ui/components/Market';
 import { ReplayControls } from '@gemduel/ui/components/ReplayControls';
 import { RoyalCourt } from '@gemduel/ui/components/RoyalCourt';
 import { StatusBar } from '@gemduel/ui/components/StatusBar';
+import { FEATURED_CARD_SIZE } from '@gemduel/ui/components/card/cardSizing';
 import type { MarketDeckBackArtworkMap } from '@gemduel/ui/components/card/cardBackArtwork';
 import { SHARED_PRIVILEGE_SUPPLY_SIZE } from '@gemduel/shared/logic/stateHelpers';
 import type { AppRouteProps } from '@app/types/ui';
@@ -31,7 +32,19 @@ interface GamePlaySurfaceProps {
     marketSurfaceStyle: CSSProperties;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     isRoyalSelectionBlocked?: boolean;
+    showGemPanelCalibrationOverlay?: boolean;
 }
+
+const MARKET_ROW_GAP_PX = 6;
+const MARKET_PANEL_PADDING_X_PX = 40;
+const MARKET_FRAME_SAFETY_PX = 24;
+const MARKET_FRAME_BASE_WIDTH_PX =
+    FEATURED_CARD_SIZE.width * 5 +
+    MARKET_ROW_GAP_PX * 4 +
+    MARKET_PANEL_PADDING_X_PX +
+    MARKET_FRAME_SAFETY_PX;
+const CENTER_FRAME_SIDE_BREATHING_ROOM_PX = 120;
+const ROYAL_FRAME_BASE_WIDTH_PX = FEATURED_CARD_SIZE.width * 2 + 16 + 36;
 
 export function GamePlaySurface({
     game,
@@ -44,6 +57,7 @@ export function GamePlaySurface({
     marketSurfaceStyle,
     marketDeckBackArtwork,
     isRoyalSelectionBlocked = false,
+    showGemPanelCalibrationOverlay = false,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
     const {
@@ -79,6 +93,9 @@ export function GamePlaySurface({
     const marketState: MarketState = market;
     const deckState: DeckState = decks;
     const gemPanelFootprint = calculateGemPanelFootprintPx(gemPanelSkin);
+    const marketFrameWidthPx = Math.round(MARKET_FRAME_BASE_WIDTH_PX * layout.deckScale);
+    const centerFrameWidthPx = gemPanelFootprint.widthPx + CENTER_FRAME_SIDE_BREATHING_ROOM_PX;
+    const royalFrameWidthPx = Math.round(ROYAL_FRAME_BASE_WIDTH_PX * layout.deckScale);
     const remainingPrivilegeSupply = Math.max(
         0,
         SHARED_PRIVILEGE_SUPPLY_SIZE - (privileges.p1 + privileges.p2)
@@ -95,42 +112,54 @@ export function GamePlaySurface({
                 }}
             >
                 <div
-                    className="relative z-10 flex flex-col lg:flex-row items-center justify-center px-5 py-4 lg:px-6 lg:py-5 transition-[gap] duration-500"
-                    style={{ gap: `${layout.mainGapPx}px` }}
+                    data-gameplay-zone-frames="true"
+                    className="relative z-10 grid items-center justify-center px-5 py-4 lg:px-6 lg:py-5 transition-[grid-template-columns] duration-500"
+                    style={{
+                        gridTemplateColumns: `${marketFrameWidthPx}px ${centerFrameWidthPx}px ${royalFrameWidthPx}px`,
+                    }}
                 >
                     <div
-                        className="relative z-10 flex flex-row lg:flex-col items-center gap-4 shrink-0"
+                        data-gameplay-frame="market"
+                        className="relative z-10 flex items-center justify-center overflow-visible"
                         style={{
-                            transform: `scale(${layout.deckScale})`,
-                            transformOrigin: 'center center',
+                            width: `${marketFrameWidthPx}px`,
                         }}
                     >
-                        <Market
-                            market={marketState}
-                            decks={deckState}
-                            phase={effectiveGameMode}
-                            turn={turn}
-                            inventories={inventories}
-                            playerTableau={playerTableau}
-                            playerBuffs={playerBuffs}
-                            handleReserveDeck={handleReserveDeck}
-                            initiateBuy={initiateBuy}
-                            handleReserveCard={handleReserveCard}
-                            onPeekDeck={handlePeekDeck}
-                            theme={theme}
-                            reserveModeActive={Boolean(reserveGoldSelection)}
-                            isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
-                            localPlayer={localPlayer}
-                            surfaceStyle={marketSurfaceStyle}
-                            deckBackArtwork={marketDeckBackArtwork}
-                        />
+                        <div
+                            className="relative shrink-0"
+                            style={{
+                                transform: `scale(${layout.deckScale})`,
+                                transformOrigin: 'center center',
+                            }}
+                        >
+                            <Market
+                                market={marketState}
+                                decks={deckState}
+                                phase={effectiveGameMode}
+                                turn={turn}
+                                inventories={inventories}
+                                playerTableau={playerTableau}
+                                playerBuffs={playerBuffs}
+                                handleReserveDeck={handleReserveDeck}
+                                initiateBuy={initiateBuy}
+                                handleReserveCard={handleReserveCard}
+                                onPeekDeck={handlePeekDeck}
+                                theme={theme}
+                                reserveModeActive={Boolean(reserveGoldSelection)}
+                                isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
+                                localPlayer={localPlayer}
+                                surfaceStyle={marketSurfaceStyle}
+                                deckBackArtwork={marketDeckBackArtwork}
+                            />
+                        </div>
                     </div>
 
                     <div
                         data-presentation-anchor="center-playfield"
-                        className="relative z-10 flex flex-col items-center shrink-0"
+                        data-gameplay-frame="gem-panel"
+                        className="relative z-10 flex flex-col items-center justify-center overflow-visible"
                         style={{
-                            width: `${gemPanelFootprint.widthPx}px`,
+                            width: `${centerFrameWidthPx}px`,
                         }}
                     >
                         <div className="h-5 w-full flex items-center justify-center">
@@ -171,6 +200,7 @@ export function GamePlaySurface({
                             canInteract={isMyTurn}
                             surfaceStyle={gemBoardSurfaceStyle}
                             panelSkin={gemPanelSkin}
+                            showCalibrationOverlay={showGemPanelCalibrationOverlay}
                         />
 
                         <div className="mt-3 h-14 w-full flex items-start justify-center pt-1">
@@ -189,33 +219,43 @@ export function GamePlaySurface({
                     </div>
 
                     <div
-                        className="relative z-10 flex flex-row lg:flex-col gap-4 items-center shrink-0"
+                        data-gameplay-frame="royal"
+                        className="relative z-10 flex flex-col gap-4 items-center justify-center overflow-visible"
                         style={{
-                            transform: `scale(${layout.deckScale})`,
-                            transformOrigin: 'center center',
+                            width: `${royalFrameWidthPx}px`,
                         }}
                     >
-                        <RoyalCourt
-                            royalDeck={royalDeck}
-                            phase={effectiveGameMode}
-                            handleSelectRoyal={handleSelectRoyal}
-                            theme={theme}
-                            canInteract={isMyTurn && !isRoyalSelectionBlocked}
-                        />
-                        <div className="flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500">
-                            <ReplayControls
-                                undo={historyControls.undo}
-                                redo={historyControls.redo}
-                                canUndo={
-                                    state.mode !== 'ONLINE_MULTIPLAYER' && historyControls.canUndo
-                                }
-                                canRedo={
-                                    state.mode !== 'ONLINE_MULTIPLAYER' && historyControls.canRedo
-                                }
-                                currentIndex={historyControls.currentIndex}
-                                historyLength={historyControls.historyLength}
+                        <div
+                            className="relative flex shrink-0 flex-col items-center gap-4"
+                            style={{
+                                transform: `scale(${layout.deckScale})`,
+                                transformOrigin: 'center center',
+                            }}
+                        >
+                            <RoyalCourt
+                                royalDeck={royalDeck}
+                                phase={effectiveGameMode}
+                                handleSelectRoyal={handleSelectRoyal}
                                 theme={theme}
+                                canInteract={isMyTurn && !isRoyalSelectionBlocked}
                             />
+                            <div className="flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500">
+                                <ReplayControls
+                                    undo={historyControls.undo}
+                                    redo={historyControls.redo}
+                                    canUndo={
+                                        state.mode !== 'ONLINE_MULTIPLAYER' &&
+                                        historyControls.canUndo
+                                    }
+                                    canRedo={
+                                        state.mode !== 'ONLINE_MULTIPLAYER' &&
+                                        historyControls.canRedo
+                                    }
+                                    currentIndex={historyControls.currentIndex}
+                                    historyLength={historyControls.historyLength}
+                                    theme={theme}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

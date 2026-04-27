@@ -132,3 +132,17 @@ export const getSurfacePreviewVariant = (): SurfaceThemeVariant | undefined => {
 
     return isSurfaceThemeVariant(rawVariant) ? rawVariant : undefined;
 };
+
+export const getShouldShowGemPanelCalibrationOverlay = (): boolean => {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const rawValue =
+        params.get('surfaceGemCalibration') ??
+        params.get('gemPanelCalibration') ??
+        params.get('surfaceCalibration');
+
+    return rawValue === '1' || rawValue === 'true';
+};

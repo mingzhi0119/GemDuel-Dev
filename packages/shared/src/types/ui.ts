@@ -21,6 +21,11 @@ export interface NormalizedRect {
     bottom: number;
 }
 
+export interface NormalizedGridLines {
+    x: number[];
+    y: number[];
+}
+
 export interface GemPanelSkin {
     id: string;
     artworkPath: string;
@@ -28,6 +33,8 @@ export interface GemPanelSkin {
     intrinsicHeightPx: number;
     playfieldRectNormalized: NormalizedRect;
     cellCentersNormalized?: NormalizedPoint[];
+    cellGridLinesNormalized?: NormalizedGridLines;
+    gemDiameterNormalized?: number;
 }
 
 export interface ResponsiveLayout {

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { ResponsiveLayout } from '@gemduel/shared/types';
-import { GEM_PANEL_CANONICAL_PLAYFIELD_RECT } from '@gemduel/ui/components/gameBoard/gemPanelLayout';
 import { createGameShellStyles } from '../gameShellStyles';
 import {
     createPlayerZoneSurfaceStyle,
@@ -40,9 +39,8 @@ describe('createGameShellStyles', () => {
         expect(styles.gemPanelSkin.artworkPath).toBe(
             '/assets/surfaces/anime-themes/crystal-anime/light/gem-panel.png'
         );
-        expect(styles.gemPanelSkin.playfieldRectNormalized).toEqual(
-            GEM_PANEL_CANONICAL_PLAYFIELD_RECT
-        );
+        expect(styles.gemPanelSkin.cellCentersNormalized).toHaveLength(25);
+        expect(styles.gemPanelSkin.gemDiameterNormalized).toBe(0.1368);
         expect(styles.marketSurfaceStyle).toEqual({});
         expect(String(styles.topBarSurfaceStyle.backgroundImage)).toContain(
             '/assets/surfaces/anime-themes/crystal-anime/light/topbar.png'
@@ -78,9 +76,8 @@ describe('createGameShellStyles', () => {
             '/assets/surfaces/anime-themes/crystal-anime/dark/gem-panel.png'
         );
         expect(styles.marketSurfaceStyle).toEqual({});
-        expect(styles.gemPanelSkin.playfieldRectNormalized).toEqual(
-            GEM_PANEL_CANONICAL_PLAYFIELD_RECT
-        );
+        expect(styles.gemPanelSkin.cellCentersNormalized).toHaveLength(25);
+        expect(styles.gemPanelSkin.gemDiameterNormalized).toBe(0.127);
         expect(styles.effectsSkin).toBe('anime');
     });
 
@@ -105,9 +102,8 @@ describe('createGameShellStyles', () => {
             '/assets/surfaces/anime-themes/clean-boardgame/dark/gem-panel.png'
         );
         expect(styles.marketSurfaceStyle).toEqual({});
-        expect(styles.gemPanelSkin.playfieldRectNormalized).toEqual(
-            GEM_PANEL_CANONICAL_PLAYFIELD_RECT
-        );
+        expect(styles.gemPanelSkin.cellCentersNormalized).toHaveLength(25);
+        expect(styles.gemPanelSkin.gemDiameterNormalized).toBe(0.1371);
         expect(String(styles.topBarSurfaceStyle.backgroundImage)).toContain(
             '/assets/surfaces/anime-themes/royal-luxury/dark/topbar.png'
         );
