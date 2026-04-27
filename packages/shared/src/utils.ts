@@ -1,5 +1,6 @@
 import { GEM_TYPES, INITIAL_COUNTS, BONUS_COLORS } from './constants';
 // 🟢 确保引入了真实数据
+import { isColorPreferenceBonusCardId } from './data/colorPreferenceProxyCards';
 import { CLASSIC_CARDS, ROGUE_CARDS } from './data/realCards';
 import { Card, GemInventory, GemInventoryKey, Buff, BoardCell, GemColor } from './types';
 
@@ -65,9 +66,8 @@ export const calculateTransaction = (
             acc[color] = playerTableau
                 .filter(
                     (c) =>
-                        c.bonusColor === color &&
-                        (!c.isBuff || (c.id && c.id.startsWith('buff-color-pref')))
-                ) // ✅ Allow Color Preference dummy cards
+                        c.bonusColor === color && (!c.isBuff || isColorPreferenceBonusCardId(c.id))
+                ) // Allow Color Preference proxy cards and legacy replay dummy cards.
                 .reduce((sum, c) => sum + (c.bonusCount ?? 1), 0);
             return acc;
         },

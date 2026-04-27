@@ -40,7 +40,7 @@ describe('buffActions branch coverage', () => {
         expect(state.playerBuffs.p1.state?.discountColor).toBe('blue');
         expect(state.playerTableau.p1).toEqual([
             expect.objectContaining({
-                id: 'buff-color-pref-p1-blue',
+                id: '131-bl',
                 bonusColor: 'blue',
                 bonusCount: 1,
                 isBuff: true,
@@ -116,7 +116,7 @@ describe('buffActions branch coverage', () => {
         expect(state.playerBuffs.p1.state?.discountColor).toBe('green');
         expect(state.playerTableau.p1).toEqual([
             expect.objectContaining({
-                id: 'buff-color-pref-p1-green',
+                id: '121-gr',
                 bonusColor: 'green',
                 bonusCount: 1,
                 isBuff: true,

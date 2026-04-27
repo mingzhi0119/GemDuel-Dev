@@ -1,5 +1,10 @@
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { GAME_PHASES, BUFFS } from '../../constants';
+import {
+    COLOR_PREFERENCE_LEGACY_DUMMY_PREFIX,
+    getColorPreferenceProxyCard,
+    isColorPreferenceProxyCardId,
+} from '../../data/colorPreferenceProxyCards';
 import { buildDraftPoolForLevel, buildP2AsymmetricDraftPool, isBuffLevel } from '../gameSetup';
 import { canActionRunInPhase } from '../fsm';
 import {
@@ -21,16 +26,8 @@ const getLocalPlayerFromSetup = (
     setup: Pick<GameSetupPayload, 'isHost' | 'hostPlayer'>
 ): PlayerKey => (setup.isHost ? setup.hostPlayer : setup.hostPlayer === 'p1' ? 'p2' : 'p1');
 
-const COLOR_PREFERENCE_DUMMY_PREFIX = 'buff-color-pref-';
-
-const createColorPreferenceDummyCard = (pid: PlayerKey, discountColor: BasicGemColor): Card => ({
-    id: `${COLOR_PREFERENCE_DUMMY_PREFIX}${pid}-${discountColor}`,
-    points: 0,
-    crowns: 0,
-    bonusColor: discountColor,
-    bonusCount: 1,
-    level: 1,
-    cost: { red: 0, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
+const createColorPreferenceDummyCard = (discountColor: BasicGemColor): Card => ({
+    ...getColorPreferenceProxyCard(discountColor),
     isBuff: true,
 });
 
@@ -39,13 +36,17 @@ const syncColorPreferenceDummyCard = (
     pid: PlayerKey,
     discountColor?: BasicGemColor
 ) => {
-    const prefix = `${COLOR_PREFERENCE_DUMMY_PREFIX}${pid}`;
+    const legacyPrefix = `${COLOR_PREFERENCE_LEGACY_DUMMY_PREFIX}${pid}`;
     draft.playerTableau[pid] = draft.playerTableau[pid].filter(
-        (card) => !card.id.startsWith(prefix)
+        (card) =>
+            !(
+                card.isBuff &&
+                (card.id.startsWith(legacyPrefix) || isColorPreferenceProxyCardId(card.id))
+            )
     );
 
     if (discountColor) {
-        draft.playerTableau[pid].push(createColorPreferenceDummyCard(pid, discountColor));
+        draft.playerTableau[pid].push(createColorPreferenceDummyCard(discountColor));
     }
 };
 
