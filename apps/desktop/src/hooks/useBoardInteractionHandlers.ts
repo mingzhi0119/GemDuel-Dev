@@ -49,6 +49,11 @@ export const useBoardInteractionHandlers = ({
                 surfacePolicy.boardInteractionMode === 'selection' &&
                 clickedGem?.type?.id === 'gold'
             ) {
+                if (selectedGems.length > 0) {
+                    setErrorMsg('Cannot take Gold directly!');
+                    return;
+                }
+
                 const nextCoord = { r, c };
                 const isSameGold =
                     preselectedReserveGold?.r === r && preselectedReserveGold?.c === c;

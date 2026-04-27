@@ -33,6 +33,7 @@ export interface PlayerZoneProps {
     crowns: number;
     surfaceStyle?: React.CSSProperties;
     surfaceVariant?: string;
+    pendingReservedCardIds?: string[];
 }
 
 export interface PlayerZoneStackState {

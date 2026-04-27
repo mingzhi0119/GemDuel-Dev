@@ -7,6 +7,8 @@ export const TABLEAU_STACK_MIN_SCALE = 0.46;
 export const TABLEAU_STACK_GAP_PX = 6;
 export const RESERVED_CARD_FALLBACK_SCALE = 0.88;
 export const RESERVED_CARD_MIN_SCALE = 0.42;
+export const RESERVED_CARD_MAX_SCALE = 1.32;
+export const RESERVED_CARD_TARGET_SLOTS = 3;
 export const RESERVED_CARD_GAP_PX = 8;
 
 export const PLAYER_ZONE_STACK_OFFSET_Y = Math.round((STANDARD_CARD_SIZE.height / 96) * -2);

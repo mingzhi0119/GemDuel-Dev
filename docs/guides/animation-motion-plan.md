@@ -106,7 +106,7 @@ Implementation:
 
 - Add a `royal-unlock` presentation event when the phase enters `SELECT_ROYAL`.
 - Temporarily pass `canInteract={false}` to `RoyalCourt` while the intro is playing.
-- Render a `RoyalUnlockIntro` overlay anchored to the center playfield/tablecloth.
+- Render a `RoyalUnlockIntro` overlay anchored to the center playfield.
 - Use an SVG `rect` or rounded path that traces a gold line around the middle zone using `stroke-dasharray` and `stroke-dashoffset`.
 - Show three crown icons in sequence near the center of the framed area.
 - After the line and crowns finish, open a proper royal selection overlay/modal.

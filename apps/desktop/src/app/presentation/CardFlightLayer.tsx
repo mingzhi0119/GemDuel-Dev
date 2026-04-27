@@ -1,0 +1,375 @@
+import { useEffect, useState, type CSSProperties } from 'react';
+import { Card, FEATURED_CARD_SIZE } from '@gemduel/ui/components/Card';
+import { usePrefersReducedMotion } from '@gemduel/ui/components/animation';
+import type { MarketDeckBackArtworkMap } from '@gemduel/ui/components/card/cardBackArtwork';
+import type {
+    CardAcquirePresentationEvent,
+    CardFlightPresentationItem,
+    CardFlightSource,
+    CardReservePresentationEvent,
+    MarketRefillPresentationEvent,
+} from './presentationTypes';
+import { getAnchorCenter, getElementRect } from './presentationGeometry';
+import { CARD_FLIGHT_STYLES } from './cardFlightStyles';
+import { DeckBackFace } from './DeckBackFace';
+
+const CARD_SCALE = 0.42;
+const CARD_WIDTH = FEATURED_CARD_SIZE.width * CARD_SCALE;
+const CARD_HEIGHT = FEATURED_CARD_SIZE.height * CARD_SCALE;
+const MIDDLE_ZONE_SELECTOR = '[data-presentation-anchor="middle-zone"]';
+
+type CardFlightEvent =
+    | CardAcquirePresentationEvent
+    | CardReservePresentationEvent
+    | MarketRefillPresentationEvent;
+
+const getCardSourceSelector = (
+    source: CardFlightSource,
+    player: string
+): { selector: string; fallbackSelector: string } => {
+    switch (source.kind) {
+        case 'market':
+            return {
+                selector: `[data-market-slot="${source.level}-${source.index}"]`,
+                fallbackSelector: MIDDLE_ZONE_SELECTOR,
+            };
+        case 'reserved':
+            return {
+                selector: `[data-reserved-slot="${player}-${source.index}"]`,
+                fallbackSelector: `[data-reserved-row="${player}"]`,
+            };
+        case 'deck':
+            return {
+                selector: `[data-market-deck="${source.level}"]`,
+                fallbackSelector: MIDDLE_ZONE_SELECTOR,
+            };
+        default:
+            return { selector: MIDDLE_ZONE_SELECTOR, fallbackSelector: MIDDLE_ZONE_SELECTOR };
+    }
+};
+
+const getCardTargetSelector = (
+    event: CardAcquirePresentationEvent | CardReservePresentationEvent,
+    item: CardFlightPresentationItem
+): { selector: string; fallbackSelector: string } => {
+    if (event.type === 'card-reserve') {
+        return {
+            selector: `[data-reserved-slot="${event.player}-${item.targetIndex ?? 0}"]`,
+            fallbackSelector: `[data-reserved-row="${event.player}"]`,
+        };
+    }
+
+    if (item.bonusColor && item.bonusColor !== 'null') {
+        return {
+            selector: `[data-tableau-stack="${event.player}-${item.bonusColor}"]`,
+            fallbackSelector: `[data-player-zone="${event.player}"]`,
+        };
+    }
+
+    return {
+        selector: `[data-player-zone="${event.player}"]`,
+        fallbackSelector: MIDDLE_ZONE_SELECTOR,
+    };
+};
+
+function FlightCard({
+    event,
+    item,
+    index,
+    theme,
+}: {
+    event: CardAcquirePresentationEvent | CardReservePresentationEvent;
+    item: CardFlightPresentationItem;
+    index: number;
+    theme: 'light' | 'dark';
+}) {
+    const prefersReducedMotion = usePrefersReducedMotion();
+    const sourceSelectors = getCardSourceSelector(item.source, event.player);
+    const targetSelectors = getCardTargetSelector(event, item);
+    const source = getAnchorCenter(
+        sourceSelectors.selector,
+        getAnchorCenter(sourceSelectors.fallbackSelector)
+    );
+    const target = getAnchorCenter(
+        targetSelectors.selector,
+        getAnchorCenter(targetSelectors.fallbackSelector)
+    );
+    const stagger = index * 34;
+    const startX = (prefersReducedMotion ? target.x : source.x) - CARD_WIDTH / 2;
+    const startY = (prefersReducedMotion ? target.y : source.y) - CARD_HEIGHT / 2;
+    const endX = target.x - CARD_WIDTH / 2;
+    const endY = target.y - CARD_HEIGHT / 2;
+
+    const style = {
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        filter: 'drop-shadow(0 14px 28px rgba(0,0,0,0.36))',
+        '--start-x': `${startX}px`,
+        '--start-y': `${startY}px`,
+        '--end-x': `${endX}px`,
+        '--end-y': `${endY}px`,
+        '--mid-x': `${(startX + endX) / 2}px`,
+        '--mid-y': `${(startY + endY) / 2 - 42}px`,
+        animation: `${prefersReducedMotion ? 'gemduel-card-flight-reduced' : 'gemduel-card-flight'} ${
+            prefersReducedMotion ? 180 : 720
+        }ms cubic-bezier(0.2, 0.8, 0.2, 1) ${stagger}ms both`,
+    } as CSSProperties;
+
+    return (
+        <div
+            aria-hidden="true"
+            data-card-flight={event.type}
+            data-card-id={item.cardId}
+            className="fixed z-[119] pointer-events-none"
+            style={style}
+        >
+            <div
+                className="origin-top-left overflow-hidden rounded-lg"
+                style={{
+                    width: FEATURED_CARD_SIZE.width,
+                    height: FEATURED_CARD_SIZE.height,
+                    transform: `scale(${CARD_SCALE})`,
+                }}
+            >
+                <Card
+                    card={item.card}
+                    size="featured"
+                    canBuy={false}
+                    theme={theme}
+                    className="shadow-2xl"
+                />
+            </div>
+        </div>
+    );
+}
+
+function DeckReserveFlightCard({
+    event,
+    item,
+    index,
+    theme,
+    marketDeckBackArtwork,
+}: {
+    event: CardReservePresentationEvent;
+    item: CardFlightPresentationItem & { source: Extract<CardFlightSource, { kind: 'deck' }> };
+    index: number;
+    theme: 'light' | 'dark';
+    marketDeckBackArtwork?: MarketDeckBackArtworkMap;
+}) {
+    const prefersReducedMotion = usePrefersReducedMotion();
+    const sourceSelectors = getCardSourceSelector(item.source, event.player);
+    const targetSelectors = getCardTargetSelector(event, item);
+    const source = getAnchorCenter(
+        sourceSelectors.selector,
+        getAnchorCenter(sourceSelectors.fallbackSelector)
+    );
+    const target = getAnchorCenter(
+        targetSelectors.selector,
+        getAnchorCenter(targetSelectors.fallbackSelector)
+    );
+    const stagger = index * 34;
+    const startX = (prefersReducedMotion ? target.x : source.x) - CARD_WIDTH / 2;
+    const startY = (prefersReducedMotion ? target.y : source.y) - CARD_HEIGHT / 2;
+    const endX = target.x - CARD_WIDTH / 2;
+    const endY = target.y - CARD_HEIGHT / 2;
+    const artwork = marketDeckBackArtwork?.[item.source.level];
+
+    const style = {
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        filter: 'drop-shadow(0 14px 28px rgba(0,0,0,0.36))',
+        '--start-x': `${startX}px`,
+        '--start-y': `${startY}px`,
+        '--end-x': `${endX}px`,
+        '--end-y': `${endY}px`,
+        '--mid-x': `${(startX + endX) / 2}px`,
+        '--mid-y': `${(startY + endY) / 2 - 42}px`,
+        animation: `${prefersReducedMotion ? 'gemduel-card-flight-reduced' : 'gemduel-card-reserve-deck-flight'} ${
+            prefersReducedMotion ? 180 : 760
+        }ms cubic-bezier(0.2, 0.8, 0.2, 1) ${stagger}ms both`,
+        perspective: '900px',
+    } as CSSProperties;
+
+    return (
+        <div
+            aria-hidden="true"
+            data-card-flight={event.type}
+            data-card-reserve-source="deck"
+            data-card-id={item.cardId}
+            className="fixed z-[119] pointer-events-none"
+            style={style}
+        >
+            <div
+                className="origin-top-left overflow-hidden rounded-lg"
+                style={{
+                    width: FEATURED_CARD_SIZE.width,
+                    height: FEATURED_CARD_SIZE.height,
+                    transform: `scale(${CARD_SCALE})`,
+                    transformOrigin: 'top left',
+                    transformStyle: 'preserve-3d',
+                }}
+            >
+                {!prefersReducedMotion && (
+                    <div
+                        className="absolute inset-0 overflow-hidden rounded-lg"
+                        style={{
+                            backfaceVisibility: 'hidden',
+                            animation: `gemduel-card-reserve-deck-back 760ms ease-out ${stagger}ms both`,
+                        }}
+                    >
+                        <DeckBackFace artwork={artwork} level={item.source.level} />
+                    </div>
+                )}
+                <div
+                    className="absolute inset-0 overflow-hidden rounded-lg"
+                    style={{
+                        backfaceVisibility: 'hidden',
+                        animation: prefersReducedMotion
+                            ? undefined
+                            : `gemduel-card-reserve-deck-face 760ms ease-out ${stagger}ms both`,
+                    }}
+                >
+                    <Card
+                        card={item.card}
+                        size="featured"
+                        canBuy={false}
+                        theme={theme}
+                        className="shadow-2xl"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MarketRefillFlip({
+    slot,
+    index,
+    theme,
+}: {
+    slot: MarketRefillPresentationEvent['slots'][number];
+    index: number;
+    theme: 'light' | 'dark';
+}) {
+    const prefersReducedMotion = usePrefersReducedMotion();
+    const rect = getElementRect(`[data-market-slot="${slot.level}-${slot.index}"]`);
+
+    if (!rect) {
+        return null;
+    }
+
+    return (
+        <div
+            aria-hidden="true"
+            data-card-flight="market-refill"
+            data-market-refill-slot={`${slot.level}-${slot.index}`}
+            className="fixed z-[118] pointer-events-none rounded-xl"
+            style={{
+                left: rect.x,
+                top: rect.y,
+                width: rect.width,
+                height: rect.height,
+                perspective: 800,
+                animation: `${
+                    prefersReducedMotion
+                        ? 'gemduel-market-refill-reduced'
+                        : 'gemduel-market-refill-flip'
+                } ${prefersReducedMotion ? 180 : 620}ms ease-out ${index * 35}ms both`,
+            }}
+        >
+            <div
+                className={`absolute inset-0 rounded-xl border ${
+                    theme === 'dark'
+                        ? 'border-cyan-200/45 bg-cyan-200/12'
+                        : 'border-sky-500/45 bg-sky-200/25'
+                } shadow-[0_0_30px_rgba(125,211,252,0.26)]`}
+            />
+            {slot.nextCard && (
+                <div
+                    className="origin-top-left overflow-hidden rounded-lg"
+                    style={{
+                        width: FEATURED_CARD_SIZE.width,
+                        height: FEATURED_CARD_SIZE.height,
+                        transform: `scale(${rect.width / FEATURED_CARD_SIZE.width})`,
+                    }}
+                >
+                    <Card
+                        card={slot.nextCard}
+                        size="featured"
+                        canBuy={false}
+                        theme={theme}
+                        className="shadow-2xl"
+                    />
+                </div>
+            )}
+        </div>
+    );
+}
+
+export function CardFlightLayer({
+    event,
+    theme,
+    marketDeckBackArtwork,
+}: {
+    event: CardFlightEvent;
+    theme: 'light' | 'dark';
+    marketDeckBackArtwork?: MarketDeckBackArtworkMap;
+}) {
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        setIsReady(false);
+        const frame = window.requestAnimationFrame(() => setIsReady(true));
+        return () => window.cancelAnimationFrame(frame);
+    }, [event.id]);
+
+    if (!isReady) {
+        return null;
+    }
+
+    if (event.type === 'market-refill') {
+        return (
+            <div data-card-flight-layer={event.id}>
+                <style>{CARD_FLIGHT_STYLES}</style>
+                {event.slots.map((slot, index) => (
+                    <MarketRefillFlip
+                        key={`${slot.level}-${slot.index}-${slot.nextCardId ?? 'empty'}`}
+                        slot={slot}
+                        index={index}
+                        theme={theme}
+                    />
+                ))}
+            </div>
+        );
+    }
+
+    return (
+        <div data-card-flight-layer={event.id}>
+            <style>{CARD_FLIGHT_STYLES}</style>
+            {event.cards.map((item, index) =>
+                event.type === 'card-reserve' && item.source.kind === 'deck' ? (
+                    <DeckReserveFlightCard
+                        key={`${event.id}-${item.cardId}`}
+                        event={event}
+                        item={
+                            item as CardFlightPresentationItem & {
+                                source: Extract<CardFlightSource, { kind: 'deck' }>;
+                            }
+                        }
+                        index={index}
+                        theme={theme}
+                        marketDeckBackArtwork={marketDeckBackArtwork}
+                    />
+                ) : (
+                    <FlightCard
+                        key={`${event.id}-${item.cardId}`}
+                        event={event}
+                        item={item}
+                        index={index}
+                        theme={theme}
+                    />
+                )
+            )}
+        </div>
+    );
+}

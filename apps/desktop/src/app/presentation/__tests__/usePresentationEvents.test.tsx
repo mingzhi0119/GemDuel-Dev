@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 import { GAME_PHASES } from '@gemduel/shared/constants';
 import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
-import type { GameState } from '@gemduel/shared/types';
+import type { Card, GameState } from '@gemduel/shared/types';
 import { usePresentationEvents, type PresentationController } from '../usePresentationEvents';
 
 (
@@ -21,6 +21,25 @@ const createRoyalState = (): GameState => {
     state.turn = 'p1';
     state.royalMilestones.p1[3] = true;
     return state;
+};
+
+const RESERVED_FROM_DECK_CARD: Card = {
+    id: 'reserve-pending-card',
+    level: 1,
+    cost: {
+        blue: 0,
+        white: 0,
+        green: 0,
+        black: 0,
+        red: 0,
+        pearl: 0,
+        gold: 0,
+    },
+    points: 0,
+    ability: 'none',
+    bonusColor: 'green',
+    crowns: 0,
+    bonusCount: 1,
 };
 
 describe('usePresentationEvents', () => {
@@ -114,5 +133,24 @@ describe('usePresentationEvents', () => {
 
         expect(currentResult?.activeEvent).toBeNull();
         expect(currentResult?.isBlockingRoyalSelection).toBe(false);
+    });
+
+    it('exposes pending reserved card ids while reserve animation is active', async () => {
+        const idleState = cloneState();
+        const reservedState = cloneState();
+        reservedState.playerReserved.p1 = [RESERVED_FROM_DECK_CARD];
+
+        await renderHarness(idleState, 0);
+        await renderHarness(reservedState, 1);
+
+        expect(currentResult?.activeEvent?.type).toBe('card-reserve');
+        expect(currentResult?.pendingReservedCardIds).toEqual([RESERVED_FROM_DECK_CARD.id]);
+
+        const activeEventId = currentResult?.activeEvent?.id ?? '';
+        act(() => {
+            currentResult?.completeEvent(activeEventId);
+        });
+
+        expect(currentResult?.pendingReservedCardIds).toEqual([]);
     });
 });

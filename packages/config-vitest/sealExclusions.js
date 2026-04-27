@@ -3,7 +3,7 @@ const REVIEW_CADENCE_DAYS = 30;
 const SHELL_ADR_PATH = 'docs/adr/0008-seal-coverage-exclusion-governance.md';
 
 export const SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY = {
-    baselineCount: 76,
+    baselineCount: 88,
     maxReviewCadenceDays: 30,
     shellAdrPath: SHELL_ADR_PATH,
 };
@@ -47,6 +47,42 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
         'src/app/overlays/AppOverlayStack.tsx',
         'Overlay stack is a composition shell whose modal behavior is governed by lower-level props and dedicated route tests.'
     ),
+    leafExclusion(
+        'src/app/presentation/AbilityCalloutStack.tsx',
+        'Ability callouts are visual animation leaves over presentation events that are covered by controller and event-derivation tests.'
+    ),
+    leafExclusion(
+        'src/app/presentation/CardFlightLayer.tsx',
+        'Card flight layer is a DOM-measurement animation surface validated by presentation event tests and browser smoke checks.'
+    ),
+    leafExclusion(
+        'src/app/presentation/DeckBackFace.tsx',
+        'Deck back face is a visual asset leaf with no gameplay or protocol branching.'
+    ),
+    leafExclusion(
+        'src/app/presentation/GemFlightLayer.tsx',
+        'Gem flight layer is a visual animation surface over already-tested gem presentation events.'
+    ),
+    shellExclusion(
+        'src/app/presentation/PresentationLayer.tsx',
+        'Presentation layer composes tested event controllers and visual animation leaves without owning domain decisions.'
+    ),
+    leafExclusion(
+        'src/app/presentation/TurnHandoffBanner.tsx',
+        'Turn handoff banner is a transient visual leaf over already-governed turn events.'
+    ),
+    staticExclusion(
+        'src/app/presentation/cardFlightStyles.ts',
+        'Card flight keyframes are static animation CSS tokens.'
+    ),
+    wrapperExclusion(
+        'src/app/presentation/presentationGeometry.ts',
+        'Presentation geometry is a DOM anchor measurement adapter exercised by browser smoke checks.'
+    ),
+    wrapperExclusion(
+        'src/app/presentation/presentationTypes.ts',
+        'Presentation event contracts are type-only surfaces exercised through event and controller tests.'
+    ),
     shellExclusion(
         'src/app/shell/GamePlaySurface.tsx',
         'Gameplay surface is a prop-wiring shell around already-tested board, action, and rail primitives.'
@@ -58,6 +94,14 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
     staticExclusion(
         'src/app/shell/gameShellStyles.ts',
         'Game shell styles are static presentation tokens and layout style objects.'
+    ),
+    wrapperExclusion(
+        'src/app/shell/presentationPreview.ts',
+        'Presentation preview helpers are browser-query developer tooling over already-tested presentation events.'
+    ),
+    wrapperExclusion(
+        'src/app/shell/surfacePreviewQuery.ts',
+        'Surface preview query helpers only map local browser preview parameters into runtime surface selections.'
     ),
     shellExclusion(
         'src/app/shell/PlayerRail.tsx',
@@ -170,6 +214,10 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
     leafExclusion(
         '../../packages/ui/src/components/card/CardFacePattern.tsx',
         'Card face pattern is decorative rendering only.'
+    ),
+    staticExclusion(
+        '../../packages/ui/src/components/card/cardScoreColor.ts',
+        'Card score color classes are static presentation tokens used by the excluded card renderer.'
     ),
     staticExclusion(
         '../../packages/ui/src/components/cardAnatomy/cardAnatomyData.ts',
