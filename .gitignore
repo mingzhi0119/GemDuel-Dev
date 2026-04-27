@@ -36,6 +36,11 @@ tmp-release-health-*/
 __pycache__/
 *.pyc
 
+# Raw surface art candidates and local contact-sheet tooling
+/assets/art-library/
+/docs/art/surface-anime-*.md
+/tools/scripts/build-surface-asset-contact-sheet.mjs
+
 # Documentation & Reports
 GEMINI.md
 FUTURE_OPTIMIZATIONS.md

@@ -28,6 +28,7 @@ const toPosixPath = (value) => value.replaceAll(path.sep, '/');
 const isIgnoredPath = (repoPath) =>
     repoPath.includes('/__tests__/') ||
     repoPath.endsWith('.d.ts') ||
+    repoPath === 'tools/scripts/build-surface-asset-contact-sheet.mjs' ||
     /\.test\.[^.]+$/.test(repoPath) ||
     /\.spec\.[^.]+$/.test(repoPath);
 

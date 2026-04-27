@@ -5,7 +5,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
     {
-        ignores: ['dist', 'coverage', 'artifacts'],
+        ignores: ['dist', 'coverage', 'artifacts', 'build-surface-asset-contact-sheet.mjs'],
     },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
