@@ -283,4 +283,35 @@ describe('useMarketInteractionHandlers', () => {
         expect(canAfford).toHaveBeenCalledWith(card, false);
         expect(canAfford).toHaveBeenCalledWith(card, true);
     });
+
+    it('blocks buy and reserve handlers while an ability is waiting for resolution', () => {
+        const card = { id: 'ability-window-card', bonusColor: 'blue' } as Card;
+        const gameState = {
+            turn: 'p1',
+            phase: 'BONUS_ACTION',
+            board: [[{ type: { id: 'empty' } }]],
+            playerReserved: { p1: [card], p2: [] },
+            decks: { 1: [card], 2: [], 3: [] },
+            pendingBuy: null,
+        } as unknown as GameState;
+
+        mocks.canActionRunInPhase.mockImplementation((_actionType, phase) => phase === 'IDLE');
+        mocks.buildReserveCardFlow.mockReturnValue({
+            action: { type: 'RESERVE_CARD', payload: { card, level: 1, idx: 0 } },
+        });
+        mocks.buildReserveDeckFlow.mockReturnValue({
+            action: { type: 'RESERVE_DECK', payload: { level: 1 } },
+        });
+
+        renderHarness(gameState);
+
+        currentResult?.handleReserveCard(card, { level: 1, idx: 0 });
+        currentResult?.handleReserveDeck(1);
+        currentResult?.initiateBuy(card);
+        currentResult?.checkAndInitiateBuyReserved(card, true);
+        currentResult?.handleDiscardReserved(card.id);
+
+        expect(networkDispatch).not.toHaveBeenCalled();
+        expect(canAfford).not.toHaveBeenCalled();
+    });
 });

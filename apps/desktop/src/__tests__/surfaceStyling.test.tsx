@@ -1326,6 +1326,36 @@ describe('card preview interactions', () => {
         expect(reserveAction?.disabled).toBe(true);
     });
 
+    it('keeps market preview pure during ability resolution', async () => {
+        const { props } = createShellProps({
+            phase: 'BONUS_ACTION',
+            bonusGemTarget: GEM_TYPES.GREEN,
+            market: { ...EMPTY_MARKET, 2: [SAMPLE_CARD] },
+            inventories: {
+                p1: { ...EMPTY_COST, black: 2, green: 1 },
+                p2: EMPTY_COST,
+            },
+        });
+
+        await renderShell(props);
+
+        await clickElement(
+            document.body.querySelector('[data-market-slot="2-0"] [data-card-preview-click="true"]')
+        );
+
+        const buyAction = document.body.querySelector(
+            '[data-card-preview-action="buy"]'
+        ) as HTMLButtonElement | null;
+        const reserveAction = document.body.querySelector(
+            '[data-card-preview-action="reserve"]'
+        ) as HTMLButtonElement | null;
+
+        expect(document.body.querySelector('[data-card-preview-overlay="true"]')).not.toBeNull();
+        expect(buyAction).toBeNull();
+        expect(reserveAction).toBeNull();
+        expect(document.body.querySelectorAll('[data-card-preview-action]')).toHaveLength(0);
+    });
+
     it('routes deck reserve preview through a single centered shell action', async () => {
         const { props, handlers } = createShellProps({
             decks: { ...EMPTY_DECKS, 1: [SAMPLE_CARD] },
@@ -1346,6 +1376,35 @@ describe('card preview interactions', () => {
         await clickElement(document.body.querySelector('[data-card-preview-action="reserve"]'));
 
         expect(handlers.handleReserveDeck).toHaveBeenCalledWith(1);
+    });
+
+    it('keeps reserved-card preview pure during ability resolution', async () => {
+        const { props, handlers } = createShellProps({
+            phase: 'BONUS_ACTION',
+            bonusGemTarget: GEM_TYPES.GREEN,
+            playerReserved: {
+                p1: [SAMPLE_CARD],
+                p2: [],
+            },
+        });
+        handlers.checkAndInitiateBuyReserved.mockReturnValue(true);
+
+        await renderShell(props);
+
+        await clickElement(
+            document.body.querySelector(
+                '[data-reserved-slot="p1-0"] [data-card-preview-click="true"]'
+            )
+        );
+
+        const buyAction = document.body.querySelector(
+            '[data-card-preview-action-scope="card"][data-card-preview-action="buy"]'
+        ) as HTMLButtonElement | null;
+
+        expect(document.body.querySelector('[data-card-preview-overlay="true"]')).not.toBeNull();
+        expect(buyAction).toBeNull();
+        expect(document.body.querySelectorAll('[data-card-preview-action]')).toHaveLength(0);
+        expect(handlers.checkAndInitiateBuyReserved).not.toHaveBeenCalledWith(SAMPLE_CARD, true);
     });
 
     it('opens actionable revealed L1 cards from the player avatar trigger', async () => {

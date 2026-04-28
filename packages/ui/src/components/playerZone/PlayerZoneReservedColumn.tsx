@@ -18,7 +18,7 @@ interface PlayerZoneReservedColumnProps {
     reserved: CardType[];
     reservedRowRef: RefObject<HTMLDivElement | null>;
     reservedCardScale: number;
-    isActive: boolean;
+    canUseReservedActions: boolean;
     hasPuppetMaster: boolean;
     theme: 'light' | 'dark';
     onBuyReserved: (card: CardType, execute?: boolean) => boolean;
@@ -32,7 +32,7 @@ export function PlayerZoneReservedColumn({
     reserved,
     reservedRowRef,
     reservedCardScale,
-    isActive,
+    canUseReservedActions,
     hasPuppetMaster,
     theme,
     onBuyReserved,
@@ -50,8 +50,12 @@ export function PlayerZoneReservedColumn({
     const previewCardActions = useMemo(
         () =>
             previewCards.map((card) => {
+                if (!canUseReservedActions) {
+                    return createCardPreviewActions();
+                }
+
                 const canBuyReserved =
-                    isActive && !pendingReservedCardIdSet.has(card.id) && onBuyReserved(card);
+                    !pendingReservedCardIdSet.has(card.id) && onBuyReserved(card);
 
                 return createCardPreviewActions({
                     id: 'buy',
@@ -60,7 +64,7 @@ export function PlayerZoneReservedColumn({
                     onAction: () => onBuyReserved(card, true),
                 });
             }),
-        [isActive, locale, onBuyReserved, pendingReservedCardIdSet, previewCards]
+        [canUseReservedActions, locale, onBuyReserved, pendingReservedCardIdSet, previewCards]
     );
     const reservedMiniStackSlots = Math.min(
         Math.max(reserved.length, 1),
@@ -102,7 +106,9 @@ export function PlayerZoneReservedColumn({
                         {reserved.map((card, i) => {
                             const isPendingPresentation = pendingReservedCardIdSet.has(card.id);
                             const canBuyReserved =
-                                !isPendingPresentation && isActive && onBuyReserved(card);
+                                !isPendingPresentation &&
+                                canUseReservedActions &&
+                                onBuyReserved(card);
 
                             return (
                                 <div
@@ -142,7 +148,7 @@ export function PlayerZoneReservedColumn({
                                                 theme={theme}
                                                 className="transition-transform duration-200 ease-in-out"
                                             />
-                                            {hasPuppetMaster && isActive && (
+                                            {hasPuppetMaster && canUseReservedActions && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();

@@ -62,11 +62,12 @@ export const createGameShellCardPreviewModel = ({
     }
 
     const previewSurfacePolicy = getFsmPhaseSurfacePolicy(effectiveGameMode);
-    const canRunPreviewAction =
+    const shouldShowPreviewActions =
         previewSurfacePolicy.marketInteraction &&
         effectiveGameMode !== 'REVIEW' &&
         effectiveGameMode !== 'GAME_OVER' &&
         (!state.mode || state.mode !== 'ONLINE_MULTIPLAYER' || state.turn === localPlayer);
+    const canRunPreviewAction = shouldShowPreviewActions;
     const reserveRoomAvailable = state.playerReserved[state.turn].length < 3;
     const buyLabel = getLexiconLabel('buyCard', locale);
     const reserveLabel = getLexiconLabel('reserve', locale);
@@ -84,22 +85,24 @@ export const createGameShellCardPreviewModel = ({
             mode: 'single',
             cards: [cardPreview.card],
             title: cardPreview.title,
-            actions: createCardPreviewActions(
-                {
-                    id: 'buy',
-                    label: buyLabel,
-                    disabled: !canBuyPreviewCard,
-                    onAction: () =>
-                        handlers.initiateBuy(cardPreview.card, 'market', cardPreview.context),
-                },
-                {
-                    id: 'reserve',
-                    label: reserveLabel,
-                    disabled: !canReservePreviewCard,
-                    onAction: () =>
-                        handlers.handleReserveCard(cardPreview.card, cardPreview.context),
-                }
-            ),
+            actions: shouldShowPreviewActions
+                ? createCardPreviewActions(
+                      {
+                          id: 'buy',
+                          label: buyLabel,
+                          disabled: !canBuyPreviewCard,
+                          onAction: () =>
+                              handlers.initiateBuy(cardPreview.card, 'market', cardPreview.context),
+                      },
+                      {
+                          id: 'reserve',
+                          label: reserveLabel,
+                          disabled: !canReservePreviewCard,
+                          onAction: () =>
+                              handlers.handleReserveCard(cardPreview.card, cardPreview.context),
+                      }
+                  )
+                : createCardPreviewActions(),
             cardActions: [],
         };
     }
@@ -114,29 +117,31 @@ export const createGameShellCardPreviewModel = ({
             color: 'reveal',
             title: cardPreview.title ?? revealLabel,
             actions: createCardPreviewActions(),
-            cardActions: cardPreview.entries.map(({ card, context }) => {
-                const sourceCard = getPreviewSourceCard(state, context);
-                const sourceStillMatches = sourceCard?.id === card.id;
-                const canBuyPreviewCard =
-                    canRunPreviewAction && sourceStillMatches && canAfford(card, false);
-                const canReservePreviewCard =
-                    canRunPreviewAction && sourceStillMatches && reserveRoomAvailable;
+            cardActions: shouldShowPreviewActions
+                ? cardPreview.entries.map(({ card, context }) => {
+                      const sourceCard = getPreviewSourceCard(state, context);
+                      const sourceStillMatches = sourceCard?.id === card.id;
+                      const canBuyPreviewCard =
+                          canRunPreviewAction && sourceStillMatches && canAfford(card, false);
+                      const canReservePreviewCard =
+                          canRunPreviewAction && sourceStillMatches && reserveRoomAvailable;
 
-                return createCardPreviewActions(
-                    {
-                        id: 'buy',
-                        label: buyLabel,
-                        disabled: !canBuyPreviewCard,
-                        onAction: () => handlers.initiateBuy(card, 'market', context),
-                    },
-                    {
-                        id: 'reserve',
-                        label: reserveLabel,
-                        disabled: !canReservePreviewCard,
-                        onAction: () => handlers.handleReserveCard(card, context),
-                    }
-                );
-            }),
+                      return createCardPreviewActions(
+                          {
+                              id: 'buy',
+                              label: buyLabel,
+                              disabled: !canBuyPreviewCard,
+                              onAction: () => handlers.initiateBuy(card, 'market', context),
+                          },
+                          {
+                              id: 'reserve',
+                              label: reserveLabel,
+                              disabled: !canReservePreviewCard,
+                              onAction: () => handlers.handleReserveCard(card, context),
+                          }
+                      );
+                  })
+                : [],
         };
     }
 
@@ -166,12 +171,14 @@ export const createGameShellCardPreviewModel = ({
                     />
                 </div>
             ),
-            actions: createCardPreviewActions({
-                id: 'reserve',
-                label: reserveLabel,
-                disabled: !canReserveDeck,
-                onAction: () => handlers.handleReserveDeck(cardPreview.level),
-            }),
+            actions: shouldShowPreviewActions
+                ? createCardPreviewActions({
+                      id: 'reserve',
+                      label: reserveLabel,
+                      disabled: !canReserveDeck,
+                      onAction: () => handlers.handleReserveDeck(cardPreview.level),
+                  })
+                : createCardPreviewActions(),
             cardActions: [],
         };
     }

@@ -659,6 +659,50 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.bonusGemTarget).toBe(GEM_TYPES.RED);
     });
 
+    it('resolves a purchased bonus-gem card through the reducer and board-click path', () => {
+        const bonusCard = createCard({
+            id: 'bonus-full-flow',
+            ability: 'bonus_gem',
+            bonusColor: 'red',
+        });
+        const state = createState({
+            inventories: {
+                p1: { blue: 0, white: 0, green: 0, black: 0, red: 1, gold: 0, pearl: 0 },
+                p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            },
+            market: { 1: [bonusCard], 2: [], 3: [] },
+        });
+        state.board[0][0] = { type: GEM_TYPES.RED, uid: 'bonus-red-full-flow' };
+
+        const afterBuy = applyAction(state, {
+            type: 'BUY_CARD',
+            payload: {
+                card: bonusCard,
+                source: 'market',
+                marketInfo: { level: 1, idx: 0 },
+            },
+        });
+
+        expect(afterBuy?.phase).toBe(GAME_PHASES.BONUS_ACTION);
+        expect(afterBuy?.turn).toBe('p1');
+        expect(afterBuy?.bonusGemTarget).toBe(GEM_TYPES.RED);
+
+        const bonusSelection = processGemClick(afterBuy, 0, 0);
+        expect(bonusSelection.action).toEqual({
+            type: 'TAKE_BONUS_GEM',
+            payload: { r: 0, c: 0 },
+        });
+
+        const afterBonusGem = applyAction(afterBuy, bonusSelection.action!);
+
+        expect(afterBonusGem?.phase).toBe(GAME_PHASES.IDLE);
+        expect(afterBonusGem?.turn).toBe('p2');
+        expect(afterBonusGem?.bonusGemTarget).toBeNull();
+        expect(afterBonusGem?.abilityResolution).toBeNull();
+        expect(afterBonusGem?.board[0][0].type.id).toBe('empty');
+        expect(afterBonusGem?.inventories.p1.red).toBe(1);
+    });
+
     it('steals a privilege from the opponent when scroll resolves against a capped pool', () => {
         const scrollCard = createCard({
             id: 'scroll-transfer',

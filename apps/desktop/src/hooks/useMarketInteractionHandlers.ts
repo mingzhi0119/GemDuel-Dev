@@ -43,6 +43,10 @@ export const useMarketInteractionHandlers = ({
             }
 
             if (preselectedReserveGold) {
+                if (!canActionRunInPhase('RESERVE_CARD', gameState.phase)) {
+                    return false;
+                }
+
                 networkDispatch({
                     type: 'RESERVE_CARD',
                     payload: { card, ...marketInfo, goldCoords: preselectedReserveGold },
@@ -57,6 +61,10 @@ export const useMarketInteractionHandlers = ({
                 marketInfo,
                 gameState.board.flat().some((cell) => cell.type.id === 'gold')
             );
+            if (!canActionRunInPhase(reserveFlow.action.type, gameState.phase)) {
+                return false;
+            }
+
             networkDispatch(reserveFlow.action);
             if (reserveFlow.prompt) setErrorMsg(reserveFlow.prompt);
             return true;
@@ -65,6 +73,7 @@ export const useMarketInteractionHandlers = ({
             canLocalInteract,
             clearPreselectedReserveGold,
             gameState.board,
+            gameState.phase,
             gameState.playerReserved,
             gameState.turn,
             networkDispatch,
@@ -84,6 +93,10 @@ export const useMarketInteractionHandlers = ({
             }
 
             if (preselectedReserveGold) {
+                if (!canActionRunInPhase('RESERVE_DECK', gameState.phase)) {
+                    return false;
+                }
+
                 networkDispatch({
                     type: 'RESERVE_DECK',
                     payload: { level: level as 1 | 2 | 3, goldCoords: preselectedReserveGold },
@@ -97,6 +110,10 @@ export const useMarketInteractionHandlers = ({
                 level as 1 | 2 | 3,
                 gameState.board.flat().some((cell) => cell.type.id === 'gold')
             );
+            if (!canActionRunInPhase(reserveFlow.action.type, gameState.phase)) {
+                return false;
+            }
+
             networkDispatch(reserveFlow.action);
             if (reserveFlow.prompt) setErrorMsg(reserveFlow.prompt);
             return true;
@@ -106,6 +123,7 @@ export const useMarketInteractionHandlers = ({
             clearPreselectedReserveGold,
             gameState.board,
             gameState.decks,
+            gameState.phase,
             gameState.playerReserved,
             gameState.turn,
             networkDispatch,
@@ -122,6 +140,11 @@ export const useMarketInteractionHandlers = ({
         ) => {
             if (!canLocalInteract) return false;
 
+            const actionType = card.bonusColor === 'gold' ? 'INITIATE_BUY_JOKER' : 'BUY_CARD';
+            if (!canActionRunInPhase(actionType, gameState.phase)) {
+                return false;
+            }
+
             if (!canAfford(card, source === 'reserved')) {
                 setErrorMsg('Cannot afford!');
                 return false;
@@ -130,7 +153,7 @@ export const useMarketInteractionHandlers = ({
             networkDispatch(buildBuyAction(card, source, marketInfo, getRandomBasicGemColor()));
             return true;
         },
-        [canAfford, canLocalInteract, networkDispatch, setErrorMsg]
+        [canAfford, canLocalInteract, gameState.phase, networkDispatch, setErrorMsg]
     );
 
     const handleSelectBonusColor = useCallback(
@@ -169,22 +192,25 @@ export const useMarketInteractionHandlers = ({
     const checkAndInitiateBuyReserved = useCallback(
         (card: Card, execute: boolean = false) => {
             if (!canLocalInteract) return false;
+            const actionType = card.bonusColor === 'gold' ? 'INITIATE_BUY_JOKER' : 'BUY_CARD';
+            if (!canActionRunInPhase(actionType, gameState.phase)) return false;
+
             const affordable = canAfford(card, true);
             if (execute && affordable) {
                 initiateBuy(card, 'reserved');
             }
             return affordable;
         },
-        [canAfford, canLocalInteract, initiateBuy]
+        [canAfford, canLocalInteract, gameState.phase, initiateBuy]
     );
 
     const handleDiscardReserved = useCallback(
         (cardId: string) => {
-            if (canLocalInteract) {
+            if (canLocalInteract && canActionRunInPhase('DISCARD_RESERVED', gameState.phase)) {
                 networkDispatch({ type: 'DISCARD_RESERVED', payload: { cardId } });
             }
         },
-        [canLocalInteract, networkDispatch]
+        [canLocalInteract, gameState.phase, networkDispatch]
     );
 
     return useMemo(

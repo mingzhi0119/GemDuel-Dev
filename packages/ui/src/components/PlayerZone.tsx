@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { getFsmPhaseSurfacePolicy } from '@gemduel/shared/logic/fsm';
 import { FEATURED_CARD_SIZE, STANDARD_CARD_SIZE } from './Card';
 import {
     clamp,
@@ -104,6 +105,8 @@ export const PlayerZone = ({
 
     const hasPuppetMaster =
         buff?.effects?.active === 'discard_reserved' || buff?.id === 'puppet_master';
+    const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
+    const canUseReservedActions = isActive && surfacePolicy.marketInteraction;
     const handleSelectStack = (stack: PlayerZoneStackState) => {
         if (onPreviewStack) {
             onPreviewStack({ ...stack, player });
@@ -225,7 +228,7 @@ export const PlayerZone = ({
             reserved={reserved}
             reservedRowRef={reservedRowRef}
             reservedCardScale={reservedCardScale}
-            isActive={isActive}
+            canUseReservedActions={canUseReservedActions}
             hasPuppetMaster={hasPuppetMaster}
             theme={theme}
             onBuyReserved={onBuyReserved}
