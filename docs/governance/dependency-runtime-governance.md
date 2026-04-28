@@ -22,6 +22,12 @@ This file is the human-readable contract for dependency risk, runtime environmen
 - Canonical component ids replace raw `.pnpm` install paths so peer-suffix encoding differences do not create false drift between platforms.
 - Snapshot drift fails the gate.
 
+## Dependency Baseline And Cache Hygiene
+
+- `.vite/deps` is a local dependency cache and must not be tracked; `pnpm deps:check` fails on tracked `.vite/deps` files.
+- `apps/desktop/package.json` owns the app-owned Electron baseline for `electron` and `electron-builder`; the root workspace manifest mirrors that baseline so packaging and governance resolve the same toolchain.
+- `apps/desktop/package.json` `build.electronVersion` must match the app Electron exact version after removing the semver range prefix.
+
 ## CI Coverage
 
 - `dependency-governance.yml` covers scheduled and manual dependency review.

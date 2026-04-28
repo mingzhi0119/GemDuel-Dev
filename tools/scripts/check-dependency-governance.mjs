@@ -40,12 +40,23 @@ const readAuditReport = () => {
 };
 
 const packageJson = readJson('package.json');
+const desktopPackageJson = readJson('apps/desktop/package.json');
 const governanceDocumentText = readText(GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance);
 const auditReport = readAuditReport();
 const runtimeEnvNames = collectRuntimeEnvNamesFromRepo(repoRoot);
+const trackedFiles = execSync('git ls-files', {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    shell: true,
+})
+    .split(/\r?\n/)
+    .filter(Boolean);
 
 const errors = collectDependencyGovernanceErrors({
     packageJson,
+    desktopPackageJson,
+    trackedFiles,
     runtimeConfigPolicy: RUNTIME_CONFIG_POLICY,
     runtimeEnvNames,
     governanceDocumentText,

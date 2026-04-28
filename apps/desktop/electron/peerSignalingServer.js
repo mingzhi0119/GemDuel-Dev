@@ -1,4 +1,5 @@
 import net from 'node:net';
+import { createHash } from 'node:crypto';
 import { PeerServer } from 'peer';
 
 export const DEFAULT_PEER_SERVER_HOST = '0.0.0.0';
@@ -39,6 +40,12 @@ const recordPeerHealth = (recordMainHealth, payload) => {
         recordMainHealth(payload);
     }
 };
+
+export const createStableLogId = (value, prefix = 'id') =>
+    `${prefix}:${createHash('sha256')
+        .update(typeof value === 'string' ? value : String(value ?? 'unknown'))
+        .digest('hex')
+        .slice(0, 12)}`;
 
 /**
  * @param {{
@@ -105,14 +112,15 @@ export const startPeerSignalingServer = async ({
         },
     });
     peerApp.on('connection', (client) => {
-        logger?.info?.(`[P2P] Client connected: ${client.getId()}`);
+        const clientIdHash = createStableLogId(client.getId(), 'peer');
+        logger?.info?.(`[P2P] Client connected: ${clientIdHash}`);
         recordPeerHealth(recordMainHealth, {
             category: 'peer',
             name: 'PEER_SERVER_CLIENT_CONNECTED',
             severity: 'info',
             message: 'A client connected to the local signaling server.',
             context: {
-                clientId: client.getId(),
+                clientIdHash,
                 host,
                 port: selectedPort,
             },
@@ -120,14 +128,15 @@ export const startPeerSignalingServer = async ({
     });
 
     peerApp.on('disconnect', (client) => {
-        logger?.info?.(`[P2P] Client disconnected: ${client.getId()}`);
+        const clientIdHash = createStableLogId(client.getId(), 'peer');
+        logger?.info?.(`[P2P] Client disconnected: ${clientIdHash}`);
         recordPeerHealth(recordMainHealth, {
             category: 'peer',
             name: 'PEER_SERVER_CLIENT_DISCONNECTED',
             severity: 'info',
             message: 'A client disconnected from the local signaling server.',
             context: {
-                clientId: client.getId(),
+                clientIdHash,
                 host,
                 port: selectedPort,
             },

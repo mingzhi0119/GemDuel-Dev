@@ -7,14 +7,28 @@ describe('electron release health monitor', () => {
     it('redacts sensitive context values before persistence', () => {
         expect(
             sanitizeReleaseHealthContext({
+                clientId: 'client-123',
                 peerId: 'peer-123',
+                outputPath: 'C:\\Users\\developer\\Replay\\sample.json',
+                filePath: 'C:\\tmp\\sample.json',
+                localPath: 'E:\\replays\\sample.json',
                 requestId: 'request-123',
+                clientIdHash: 'peer:abcdef123456',
+                fileName: 'sample.json',
+                replayBytes: 123,
                 safeFlag: true,
                 note: 'ok',
             })
         ).toEqual({
+            clientId: '[REDACTED]',
             peerId: '[REDACTED]',
+            outputPath: '[REDACTED]',
+            filePath: '[REDACTED]',
+            localPath: '[REDACTED]',
             requestId: '[REDACTED]',
+            clientIdHash: 'peer:abcdef123456',
+            fileName: 'sample.json',
+            replayBytes: 123,
             safeFlag: true,
             note: 'ok',
         });

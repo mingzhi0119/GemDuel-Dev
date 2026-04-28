@@ -43,10 +43,10 @@ importers:
                 specifier: ^9.2.1
                 version: 9.2.1
             electron:
-                specifier: ^39.2.7
+                specifier: ^39.8.8
                 version: 39.8.8
             electron-builder:
-                specifier: ^26.0.12
+                specifier: ^26.8.1
                 version: 26.8.1(electron-builder-squirrel-windows@26.8.1)
             eslint:
                 specifier: ^9.21.0

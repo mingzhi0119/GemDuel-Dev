@@ -66,7 +66,7 @@ export const RELEASE_HEALTH_SNAPSHOT_SCHEMA = z.object({
 });
 
 const REDACTED_KEY_PATTERN =
-    /(peerid|remotepeerid|requestid|checksum|url|targetip|token|secret|password|credential)/i;
+    /(peerid|remotepeerid|requestid|checksum|url|targetip|token|secret|password|credential|outputpath|filepath|localpath)/i;
 const MAX_STRING_VALUE_LENGTH = 120;
 const MAX_RECENT_EVENTS = 25;
 
@@ -81,8 +81,17 @@ const defaultIndicators = () => ({
 
 const createReasonCodeCounts = () => ({});
 
+const shouldRedactContextKey = (key) => {
+    const normalizedKey = key.toLowerCase();
+    if (normalizedKey === 'clientidhash' || normalizedKey === 'peeridhash') {
+        return false;
+    }
+
+    return normalizedKey === 'clientid' || REDACTED_KEY_PATTERN.test(key);
+};
+
 const sanitizeContextValue = (key, value) => {
-    if (REDACTED_KEY_PATTERN.test(key)) {
+    if (shouldRedactContextKey(key)) {
         return '[REDACTED]';
     }
 

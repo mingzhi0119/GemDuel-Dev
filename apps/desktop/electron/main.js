@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -81,6 +82,9 @@ const getReplayExportDirectory = () =>
         ? path.resolve(__dirname, '../../..', 'Replay')
         : path.join(app.getPath('userData'), 'Replay');
 
+const createReplayArtifactId = (contents) =>
+    createHash('sha256').update(contents).digest('hex').slice(0, 12);
+
 const saveReplayToFolder = async (payload) => {
     const safeFileName = path.basename(payload.fileName);
     if (safeFileName !== payload.fileName || !safeFileName.endsWith('.json')) {
@@ -103,7 +107,8 @@ const saveReplayToFolder = async (payload) => {
         severity: 'info',
         message: 'Replay export was written to the governed replay folder.',
         context: {
-            outputPath,
+            fileName: safeFileName,
+            replayArtifactId: createReplayArtifactId(payload.contents),
             replayBytes,
         },
     });

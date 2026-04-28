@@ -17,6 +17,8 @@ export const REQUIRED_OVERRIDE_POLICY = Object.freeze({
     tinyglobby: Object.freeze({ picomatch: '4.0.4' }),
 });
 export const RETIRED_DEPENDENCY_WORKAROUNDS = Object.freeze(['tools/scripts/patch-peer.js']);
+export const TRACKED_DEPENDENCY_CACHE_PREFIXES = Object.freeze(['.vite/deps/']);
+export const ELECTRON_BASELINE_PACKAGES = Object.freeze(['electron', 'electron-builder']);
 const REQUIRED_POLICY_FIELDS = Object.freeze([
     'owner',
     'defaultValue',
@@ -55,6 +57,11 @@ const GOVERNANCE_SCAN_EXCLUDED_FILE_SUFFIXES = [
     '.spec.mjs',
 ];
 const normalizePathLike = (value) => value.split(path.sep).join('/');
+
+const getDependencySpec = (packageJson, dependencyName) =>
+    packageJson?.devDependencies?.[dependencyName] ?? packageJson?.dependencies?.[dependencyName];
+
+const stripRangePrefix = (versionSpec = '') => versionSpec.replace(/^[~^]/, '');
 
 const shouldScanFile = (relativePath, includeTests) => {
     const normalizedPath = normalizePathLike(relativePath);
@@ -184,6 +191,82 @@ const collectRetiredWorkaroundErrors = ({
     return errors;
 };
 
+/**
+ * @param {{ trackedFiles?: string[] }} options
+ */
+export const collectTrackedDependencyCacheErrors = ({ trackedFiles = [] }) => {
+    const trackedCacheFiles = Array.from(
+        new Set(
+            trackedFiles
+                .map(normalizePathLike)
+                .filter((trackedFile) =>
+                    TRACKED_DEPENDENCY_CACHE_PREFIXES.some((prefix) =>
+                        trackedFile.startsWith(prefix)
+                    )
+                )
+        )
+    ).sort((a, b) => a.localeCompare(b));
+
+    return trackedCacheFiles.map(
+        (trackedFile) => `Tracked dependency cache ${trackedFile} must be removed from git.`
+    );
+};
+
+/**
+ * @param {{
+ *   packageJson?: Record<string, any>,
+ *   desktopPackageJson?: Record<string, any> | null,
+ *   governanceDocumentText?: string,
+ * }} options
+ */
+export const collectElectronVersionBaselineErrors = ({
+    packageJson,
+    desktopPackageJson = null,
+    governanceDocumentText = '',
+}) => {
+    const errors = [];
+    if (!desktopPackageJson) {
+        return errors;
+    }
+
+    for (const dependencyName of ELECTRON_BASELINE_PACKAGES) {
+        const rootSpec = getDependencySpec(packageJson, dependencyName);
+        const desktopSpec = getDependencySpec(desktopPackageJson, dependencyName);
+
+        if (!rootSpec || !desktopSpec) {
+            errors.push(
+                `Electron baseline package ${dependencyName} must be declared in both root and apps/desktop package manifests.`
+            );
+            continue;
+        }
+
+        if (rootSpec !== desktopSpec) {
+            errors.push(
+                `Electron baseline package ${dependencyName} must match apps/desktop (${desktopSpec}); root currently declares ${rootSpec}.`
+            );
+        }
+    }
+
+    const desktopElectronSpec = getDependencySpec(desktopPackageJson, 'electron');
+    const expectedBuildVersion = stripRangePrefix(desktopElectronSpec);
+    const buildElectronVersion = desktopPackageJson?.build?.electronVersion;
+    if (buildElectronVersion !== expectedBuildVersion) {
+        errors.push(
+            `apps/desktop build.electronVersion must match app Electron exact version ${expectedBuildVersion}; found ${buildElectronVersion ?? '<missing>'}.`
+        );
+    }
+
+    for (const requiredToken of ['app-owned Electron baseline', 'tracked `.vite/deps`']) {
+        if (!governanceDocumentText.includes(requiredToken)) {
+            errors.push(
+                `${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance} must mention ${requiredToken}.`
+            );
+        }
+    }
+
+    return errors;
+};
+
 export const collectRuntimePolicyErrors = ({
     runtimeConfigPolicy,
     runtimeEnvNames,
@@ -243,6 +326,7 @@ export const collectGovernanceDocumentErrors = (governanceDocumentText) => {
     const requiredSections = [
         '## License Allowlist Policy',
         '## SBOM Policy',
+        '## Dependency Baseline And Cache Hygiene',
         '## Secret Scanning and Env Drift Policy',
         '## CI Coverage',
         'tools/governance/dependency-license-allowlist.json',
@@ -257,8 +341,22 @@ export const collectGovernanceDocumentErrors = (governanceDocumentText) => {
         );
 };
 
+/**
+ * @param {{
+ *   packageJson: Record<string, any>,
+ *   desktopPackageJson?: Record<string, any> | null,
+ *   trackedFiles?: string[],
+ *   runtimeConfigPolicy: Record<string, any>,
+ *   runtimeEnvNames: string[],
+ *   governanceDocumentText: string,
+ *   auditReport: Record<string, any>,
+ *   repoRoot?: string,
+ * }} options
+ */
 export const collectDependencyGovernanceErrors = ({
     packageJson,
+    desktopPackageJson = null,
+    trackedFiles = [],
     runtimeConfigPolicy,
     runtimeEnvNames,
     governanceDocumentText,
@@ -270,6 +368,12 @@ export const collectDependencyGovernanceErrors = ({
         packageJson,
         governanceDocumentText,
         repoRoot,
+    }),
+    ...collectTrackedDependencyCacheErrors({ trackedFiles }),
+    ...collectElectronVersionBaselineErrors({
+        packageJson,
+        desktopPackageJson,
+        governanceDocumentText,
     }),
     ...collectRuntimePolicyErrors({
         runtimeConfigPolicy,

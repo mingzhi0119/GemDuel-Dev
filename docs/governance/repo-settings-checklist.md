@@ -24,6 +24,12 @@ read-only drift report against the current GitHub repository.
 - Release tags must point to commits reachable from `origin/<default-branch>`.
 - Do not cut release tags from feature branches or detached local-only commits.
 
+## Workflow Permission And Action Pinning
+
+- Every external workflow `uses:` reference must be pinned to a 40-character commit SHA; update pinned action SHAs through an intentional governance PR that records the resolved upstream SHA.
+- `build.yml` keeps release gates in `release_gates`, desktop package and artifact evidence generation in `desktop_package`, and GitHub release creation in `publish_release`.
+- `publish_release` is the only job allowed to request `contents: write`; read-only gates and package jobs must keep `contents: read` and must not run inside a write-permission job.
+
 ## Artifact Retention
 
 - `governance.yml`, `build.yml`, and `governance-evidence.yml` must retain `governance-evidence` for `30` days.

@@ -2,9 +2,21 @@
 
 import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
-import { startPeerSignalingServer, stopPeerSignalingServer } from '../peerSignalingServer.js';
+import {
+    createStableLogId,
+    startPeerSignalingServer,
+    stopPeerSignalingServer,
+} from '../peerSignalingServer.js';
 
 describe('peer signaling server governance', () => {
+    it('creates stable short log ids without exposing raw peer ids', () => {
+        const logId = createStableLogId('peer-1', 'peer');
+
+        expect(logId).toMatch(/^peer:[a-f0-9]{12}$/);
+        expect(createStableLogId('peer-1', 'peer')).toBe(logId);
+        expect(logId).not.toContain('peer-1');
+    });
+
     it('starts PeerServer on an explicit LAN-capable host and records host/port health', async () => {
         const peerApp = new EventEmitter();
         const httpServer = {
@@ -61,11 +73,15 @@ describe('peer signaling server governance', () => {
             getId: () => 'peer-1',
         });
 
+        const clientIdHash = createStableLogId('peer-1', 'peer');
+        expect(logger.info).toHaveBeenCalledWith(`[P2P] Client connected: ${clientIdHash}`);
+        expect(logger.info).toHaveBeenCalledWith(`[P2P] Client disconnected: ${clientIdHash}`);
+        expect(logger.info).not.toHaveBeenCalledWith(expect.stringContaining('peer-1'));
         expect(recordMainHealth).toHaveBeenCalledWith(
             expect.objectContaining({
                 name: 'PEER_SERVER_CLIENT_CONNECTED',
                 context: expect.objectContaining({
-                    clientId: 'peer-1',
+                    clientIdHash,
                     host: '0.0.0.0',
                     port: 9100,
                 }),
@@ -75,7 +91,7 @@ describe('peer signaling server governance', () => {
             expect.objectContaining({
                 name: 'PEER_SERVER_CLIENT_DISCONNECTED',
                 context: expect.objectContaining({
-                    clientId: 'peer-1',
+                    clientIdHash,
                     host: '0.0.0.0',
                     port: 9100,
                 }),

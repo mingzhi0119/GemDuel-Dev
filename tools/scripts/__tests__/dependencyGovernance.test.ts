@@ -10,9 +10,11 @@ import {
     collectGovernanceDocumentErrors,
     REQUIRED_OVERRIDE_POLICY,
     RETIRED_DEPENDENCY_WORKAROUNDS,
+    collectElectronVersionBaselineErrors,
     collectDependencyGovernanceErrors,
     collectLicenseAllowlistErrors,
     formatAuditSummary,
+    collectTrackedDependencyCacheErrors,
     parseRuntimeEnvNames,
     collectRuntimeEnvNamesFromRepo,
     collectRuntimeEnvNamesFromEntries,
@@ -156,6 +158,72 @@ describe('dependency governance', () => {
         });
 
         expect(errors).toContain('Missing override anymatch -> picomatch@2.3.2.');
+    });
+
+    it('rejects tracked Vite dependency caches', () => {
+        expect(
+            collectTrackedDependencyCacheErrors({
+                trackedFiles: [
+                    '.vite/deps/_metadata.json',
+                    'apps/desktop/src/App.tsx',
+                    '.vite/deps/package.json',
+                ],
+            })
+        ).toEqual([
+            'Tracked dependency cache .vite/deps/_metadata.json must be removed from git.',
+            'Tracked dependency cache .vite/deps/package.json must be removed from git.',
+        ]);
+    });
+
+    it('requires the root Electron baseline to mirror the app package', () => {
+        expect(
+            collectElectronVersionBaselineErrors({
+                packageJson: {
+                    devDependencies: {
+                        electron: '^39.8.8',
+                        'electron-builder': '^26.8.1',
+                    },
+                },
+                desktopPackageJson: {
+                    devDependencies: {
+                        electron: '^39.8.8',
+                        'electron-builder': '^26.8.1',
+                    },
+                    build: {
+                        electronVersion: '39.8.8',
+                    },
+                },
+                governanceDocumentText: dependencyRuntimeGovernanceText,
+            })
+        ).toEqual([]);
+
+        expect(
+            collectElectronVersionBaselineErrors({
+                packageJson: {
+                    devDependencies: {
+                        electron: '^39.2.7',
+                        'electron-builder': '^26.0.12',
+                    },
+                },
+                desktopPackageJson: {
+                    devDependencies: {
+                        electron: '^39.8.8',
+                        'electron-builder': '^26.8.1',
+                    },
+                    build: {
+                        electronVersion: '39.2.7',
+                    },
+                },
+                governanceDocumentText: 'tracked `.vite/deps` only',
+            })
+        ).toEqual(
+            expect.arrayContaining([
+                'Electron baseline package electron must match apps/desktop (^39.8.8); root currently declares ^39.2.7.',
+                'Electron baseline package electron-builder must match apps/desktop (^26.8.1); root currently declares ^26.0.12.',
+                'apps/desktop build.electronVersion must match app Electron exact version 39.8.8; found 39.2.7.',
+                `${GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance} must mention app-owned Electron baseline.`,
+            ])
+        );
     });
 
     it('requires CI provenance env names to be documented and governed when scripts use them', () => {

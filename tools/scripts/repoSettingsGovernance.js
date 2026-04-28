@@ -10,7 +10,154 @@ const unique = (values) => Array.from(new Set(values));
 
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
-export const collectRepoSettingsSnapshotErrors = ({ snapshot, checklistText = '' }) => {
+const extractWorkflowJobBlocks = (workflowText) => {
+    const lines = workflowText.split(/\r?\n/);
+    const jobs = [];
+    let insideJobs = false;
+    let currentJob = null;
+
+    const flushCurrentJob = () => {
+        if (currentJob) {
+            jobs.push({
+                ...currentJob,
+                text: currentJob.lines.join('\n'),
+            });
+        }
+    };
+
+    for (const line of lines) {
+        if (/^jobs:\s*$/.test(line)) {
+            insideJobs = true;
+            continue;
+        }
+
+        if (!insideJobs) {
+            continue;
+        }
+
+        const jobMatch = line.match(/^ {4}([A-Za-z0-9_-]+):\s*$/);
+        if (jobMatch) {
+            flushCurrentJob();
+            currentJob = {
+                name: jobMatch[1],
+                lines: [line],
+            };
+            continue;
+        }
+
+        if (/^[^\s].+:\s*$/.test(line)) {
+            break;
+        }
+
+        currentJob?.lines.push(line);
+    }
+
+    flushCurrentJob();
+    return jobs;
+};
+
+/**
+ * @param {{
+ *   workflowEntries?: Array<{ relativePath: string, text: string }>,
+ *   checklistText?: string,
+ * }} options
+ */
+export const collectWorkflowSecurityErrors = ({ workflowEntries = [], checklistText = '' }) => {
+    const errors = [];
+
+    for (const { relativePath, text } of workflowEntries) {
+        const workflowHeaderText = text.split(/^jobs:\s*$/m)[0] ?? '';
+        if (/contents:\s*write\b/.test(workflowHeaderText)) {
+            errors.push(`${relativePath} must not request workflow-level contents: write.`);
+        }
+
+        for (const match of text.matchAll(/^\s*(?:-\s*)?uses:\s+([^\s#]+)\s*$/gm)) {
+            const actionRef = match[1];
+            if (
+                actionRef.startsWith('./') ||
+                actionRef.startsWith('../') ||
+                actionRef.startsWith('docker://')
+            ) {
+                continue;
+            }
+
+            const atIndex = actionRef.lastIndexOf('@');
+            const versionRef = atIndex >= 0 ? actionRef.slice(atIndex + 1) : '';
+            if (!/^[a-f0-9]{40}$/i.test(versionRef)) {
+                errors.push(`${relativePath} action ${actionRef} must be pinned to a 40-char SHA.`);
+            }
+        }
+
+        for (const job of extractWorkflowJobBlocks(text)) {
+            if (/contents:\s*write\b/.test(job.text)) {
+                if (
+                    relativePath !== '.github/workflows/build.yml' ||
+                    job.name !== 'publish_release'
+                ) {
+                    errors.push(
+                        `${relativePath} job ${job.name} must not request contents: write.`
+                    );
+                }
+            }
+
+            if (job.name === 'publish_release' && /\bpnpm\b/.test(job.text)) {
+                errors.push(
+                    `${relativePath} job publish_release must only publish verified artifacts and must not run pnpm gates.`
+                );
+            }
+        }
+    }
+
+    const buildWorkflow = workflowEntries.find(
+        (entry) => entry.relativePath === '.github/workflows/build.yml'
+    );
+    if (buildWorkflow) {
+        const jobs = Object.fromEntries(
+            extractWorkflowJobBlocks(buildWorkflow.text).map((job) => [job.name, job.text])
+        );
+
+        if (!jobs.release_gates) {
+            errors.push('.github/workflows/build.yml must define release_gates.');
+        }
+        if (!jobs.desktop_package) {
+            errors.push('.github/workflows/build.yml must define desktop_package.');
+        }
+        if (!jobs.publish_release) {
+            errors.push('.github/workflows/build.yml must define publish_release.');
+        }
+        if (jobs.desktop_package && !/needs:\s+release_gates\b/.test(jobs.desktop_package)) {
+            errors.push('.github/workflows/build.yml desktop_package must need release_gates.');
+        }
+        if (jobs.publish_release && !/needs:\s+desktop_package\b/.test(jobs.publish_release)) {
+            errors.push('.github/workflows/build.yml publish_release must need desktop_package.');
+        }
+    }
+
+    for (const requiredDocToken of [
+        '40-character commit SHA',
+        'publish_release',
+        '`contents: write`',
+    ]) {
+        if (!checklistText.includes(requiredDocToken)) {
+            errors.push(`Repo settings checklist must mention ${requiredDocToken}.`);
+        }
+    }
+
+    return errors;
+};
+
+/**
+ * @param {{
+ *   snapshot: Record<string, any>,
+ *   checklistText?: string,
+ *   workflowEntries?: Array<{ relativePath: string, text: string }>,
+ * }} options
+ */
+export const collectRepoSettingsSnapshotErrors = ({
+    snapshot,
+    checklistText = '',
+    workflowEntries = [],
+}) => {
     const errors = [];
 
     if (!isPlainObject(snapshot)) {
@@ -118,6 +265,8 @@ export const collectRepoSettingsSnapshotErrors = ({ snapshot, checklistText = ''
             errors.push(`Repo settings checklist must mention ${requiredDocToken}.`);
         }
     }
+
+    errors.push(...collectWorkflowSecurityErrors({ workflowEntries, checklistText }));
 
     return errors;
 };

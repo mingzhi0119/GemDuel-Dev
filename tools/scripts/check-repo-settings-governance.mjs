@@ -16,6 +16,19 @@ const parseArgs = (argv) => ({
     live: argv.includes('--live'),
 });
 
+const readWorkflowEntries = () =>
+    fs
+        .readdirSync(path.join(repoRoot, '.github', 'workflows'))
+        .filter((fileName) => /\.(ya?ml)$/i.test(fileName))
+        .sort((a, b) => a.localeCompare(b))
+        .map((fileName) => {
+            const relativePath = `.github/workflows/${fileName}`;
+            return {
+                relativePath,
+                text: fs.readFileSync(path.join(repoRoot, relativePath), 'utf8'),
+            };
+        });
+
 const main = () => {
     const args = parseArgs(process.argv.slice(2));
     const snapshotPath = path.join(repoRoot, 'tools', 'governance', 'repo-settings.snapshot.json');
@@ -27,6 +40,7 @@ const main = () => {
     const issues = collectRepoSettingsSnapshotErrors({
         snapshot,
         checklistText,
+        workflowEntries: readWorkflowEntries(),
     });
 
     if (args.live) {

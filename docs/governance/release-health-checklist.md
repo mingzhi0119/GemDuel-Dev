@@ -41,4 +41,5 @@ Use this list before packaging a desktop release or cutting a release candidate.
 - Clean smoke tests should keep all indicators at `0`, except `recoveryRequests`, which must stay explained if non-zero.
 - Public Windows release tags must retain `artifacts/governance/release-artifact-evidence.report.json` and `.md`, with SHA256 checksums and valid Authenticode status for NSIS installers.
 - Local non-tag validation does not require `CSC_LINK`, `WIN_CSC_LINK`, `CSC_KEY_PASSWORD`, or `WIN_CSC_KEY_PASSWORD`; missing local signing secrets are ignored as long as `pnpm release:artifacts:check` passes in non-tag mode.
+- Release-health context must not retain raw `clientId`, `peerId`, `outputPath`, `filePath`, or `localPath`; use short hashes, `fileName`, `replayBytes`, and short `replayArtifactId` evidence instead.
 - Export retained evidence when release-health behavior or governance assets change.
