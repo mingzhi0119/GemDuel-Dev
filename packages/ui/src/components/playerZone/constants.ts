@@ -11,7 +11,7 @@ export const RESERVED_CARD_MAX_SCALE = 1.32;
 export const RESERVED_CARD_TARGET_SLOTS = 3;
 export const RESERVED_CARD_GAP_PX = 8;
 export const RESERVED_MINI_STACK_OFFSET_X_PX = 34;
-export const RESERVED_MINI_STACK_OFFSET_Y_PX = 22;
+export const RESERVED_MINI_STACK_OFFSET_Y_PX = 44;
 
 export const PLAYER_ZONE_STACK_OFFSET_Y = Math.round((STANDARD_CARD_SIZE.height / 96) * -2);
 export const PLAYER_ZONE_STACK_OFFSET_X = Math.round((STANDARD_CARD_SIZE.width / 72) * 1);

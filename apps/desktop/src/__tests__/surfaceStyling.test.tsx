@@ -24,6 +24,10 @@ import { ReplayControls } from '@gemduel/ui/components/ReplayControls';
 import { RoyalCourt } from '@gemduel/ui/components/RoyalCourt';
 import { TopBar } from '@gemduel/ui/components/TopBar';
 import { MarketDeckBack } from '@gemduel/ui/components/market/MarketDeckBack';
+import {
+    RESERVED_CARD_FALLBACK_SCALE,
+    RESERVED_MINI_STACK_OFFSET_Y_PX,
+} from '@gemduel/ui/components/playerZone/constants';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
 import type { AppRouteProps, ResponsiveLayout } from '@app/types/ui';
@@ -556,6 +560,9 @@ describe('surface styling affordances', () => {
                 'data-tableau-special-royal-count'
             )
         ).toBe('1');
+        expect(
+            renderSpecialStack([])?.querySelector('[data-tableau-empty-color-orb="pure-royal"]')
+        ).toBeNull();
     });
 
     it('renders reserved cards as a stable diagonal mini-stack', () => {
@@ -596,6 +603,12 @@ describe('surface styling affordances', () => {
         expect(container.querySelector('[data-reserved-slot="p1-0"]')).not.toBeNull();
         expect(container.querySelector('[data-reserved-slot="p1-1"]')).not.toBeNull();
         expect(container.querySelector('[data-reserved-slot="p1-2"]')).not.toBeNull();
+        expect(container.querySelector<HTMLElement>('[data-reserved-slot="p1-1"]')?.style.top).toBe(
+            `${RESERVED_MINI_STACK_OFFSET_Y_PX * RESERVED_CARD_FALLBACK_SCALE}px`
+        );
+        expect(container.querySelector<HTMLElement>('[data-reserved-slot="p1-2"]')?.style.top).toBe(
+            `${RESERVED_MINI_STACK_OFFSET_Y_PX * 2 * RESERVED_CARD_FALLBACK_SCALE}px`
+        );
     });
 
     it('renders player-zone artwork as a separate mirrored fallback layer', () => {

@@ -221,11 +221,14 @@ export function PlayerZoneTableauStack({
                                 height: `${STANDARD_CARD_SIZE.height}px`,
                             }}
                         >
-                            <div
-                                className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} ${
-                                    theme === 'dark' ? 'opacity-20' : 'opacity-[0.07]'
-                                }`}
-                            />
+                            {!isSpecial && (
+                                <div
+                                    data-tableau-empty-color-orb={color}
+                                    className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} ${
+                                        theme === 'dark' ? 'opacity-20' : 'opacity-[0.07]'
+                                    }`}
+                                />
+                            )}
                         </div>
                     )}
                 </motion.div>

@@ -15,8 +15,8 @@ export const useViewportFitScale = <T extends HTMLElement>(
             return;
         }
 
-        const contentWidth = Math.max(ref.current.scrollWidth || ref.current.offsetWidth, 1);
-        const contentHeight = Math.max(ref.current.scrollHeight || ref.current.offsetHeight, 1);
+        const contentWidth = Math.max(ref.current.offsetWidth || ref.current.scrollWidth, 1);
+        const contentHeight = Math.max(ref.current.offsetHeight || ref.current.scrollHeight, 1);
         const availableWidth = Math.max(window.innerWidth - marginPx, 1);
         const availableHeight = Math.max(window.innerHeight - marginPx, 1);
         const nextScale = Math.min(
