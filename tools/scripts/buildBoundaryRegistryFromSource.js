@@ -236,7 +236,9 @@ const BOUNDARY_SOURCE_ENTRIES = Object.freeze([
         owner: 'Desktop Platform + Release Engineering',
         validatorRefs: [
             'tools/scripts/check-release-health.mjs',
+            'tools/scripts/check-release-artifacts.mjs',
             'tools/scripts/export-governance-artifacts.mjs',
+            'tools/scripts/releaseArtifactEvidence.js',
             'tools/scripts/releaseHealthChecklist.js',
             'tools/scripts/releaseHealthOperations.js',
         ],
@@ -256,10 +258,11 @@ const BOUNDARY_SOURCE_ENTRIES = Object.freeze([
         testRefs: [
             'tools/scripts/__tests__/releaseHealthChecklist.test.ts',
             'tools/scripts/__tests__/releaseHealthOperations.test.ts',
+            'tools/scripts/__tests__/releaseArtifactEvidence.test.ts',
             'tools/scripts/__tests__/exportGovernanceArtifacts.test.ts',
         ],
         failClosedBehavior:
-            'Checklist or SLO drift blocks release-health gates before build and publish.',
+            'Checklist, SLO, or release artifact evidence drift blocks release-health gates before build and publish.',
     },
     {
         id: 'dependency-governance',

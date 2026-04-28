@@ -44,6 +44,7 @@ describe('release health checklist governance', () => {
             'pnpm test:coverage',
             'pnpm desktop:check',
             'pnpm release:check',
+            'pnpm release:artifacts:check',
             'pnpm release:provenance:check',
             'pnpm repo-settings:check',
             'pnpm codeowners:check',
@@ -66,6 +67,7 @@ describe('release health checklist governance', () => {
         expect(errors).toContain(
             'Checklist must document the release-health report export script.'
         );
+        expect(errors).toContain('Checklist must document the release artifact evidence script.');
         expect(errors).toContain(
             'Checklist must document the retained governance artifact export script.'
         );
@@ -83,6 +85,7 @@ describe('release health checklist governance', () => {
             ...getReleaseHealthIndicatorKeys().map((indicatorKey) => `- \`${indicatorKey}\``),
             `- \`${GOVERNANCE_DOC_PATHS.operationsSlo}\``,
             `- \`${GOVERNANCE_DOC_PATHS.operationsFaultDrills}\``,
+            '- `tools/scripts/check-release-artifacts.mjs`',
             '- `tools/scripts/export-release-health-report.mjs`',
             '- `tools/scripts/export-governance-artifacts.mjs`',
             '- `window.electron.getReleaseHealthSnapshot()`',

@@ -89,6 +89,10 @@
         "release:check": {
             "cache": false
         },
+        "release:artifacts:check": {
+            "cache": false,
+            "outputs": ["artifacts/**"]
+        },
         "release:provenance:check": {
             "cache": false
         },

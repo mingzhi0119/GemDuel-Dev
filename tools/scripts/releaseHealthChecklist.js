@@ -9,6 +9,7 @@ export const REQUIRED_RELEASE_CHECKLIST_COMMANDS = Object.freeze([
     'pnpm test:coverage',
     'pnpm desktop:check',
     'pnpm release:check',
+    'pnpm release:artifacts:check',
     'pnpm release:provenance:check',
     'pnpm repo-settings:check',
     'pnpm codeowners:check',
@@ -59,6 +60,10 @@ export const collectReleaseHealthChecklistErrors = (checklistText) => {
 
     if (!checklistText.includes('`tools/scripts/export-release-health-report.mjs`')) {
         issues.push('Checklist must document the release-health report export script.');
+    }
+
+    if (!checklistText.includes('`tools/scripts/check-release-artifacts.mjs`')) {
+        issues.push('Checklist must document the release artifact evidence script.');
     }
 
     if (!checklistText.includes('`tools/scripts/export-governance-artifacts.mjs`')) {

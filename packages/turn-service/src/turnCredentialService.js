@@ -3,20 +3,28 @@ import { z } from 'zod';
 
 export const TURN_CREDENTIAL_SERVICE_POLICY_VERSION = 1;
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
+const DEFAULT_REQUEST_BODY_LIMIT_BYTES = 8 * 1024;
+const DEFAULT_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const DEFAULT_RATE_LIMIT_MAX_REQUESTS = 60;
+const TURN_SERVICE_ROUTES = Object.freeze({
+    '/turn/issue': 'issue',
+    '/turn/refresh': 'refresh',
+    '/turn/revoke': 'revoke',
+});
 
 const TURN_SERVICE_REQUEST_SCHEMA = z
     .object({
         subject: z.string().min(1).default('desktop-shell'),
         client: z.string().min(1).default('electron-main'),
     })
-    .passthrough();
+    .strict();
 
 const TURN_SERVICE_REFRESH_REQUEST_SCHEMA = z
     .object({
         leaseId: z.string().min(1),
         client: z.string().min(1).default('electron-main'),
     })
-    .passthrough();
+    .strict();
 
 const TURN_SERVICE_REVOKE_REQUEST_SCHEMA = z
     .object({
@@ -24,7 +32,16 @@ const TURN_SERVICE_REVOKE_REQUEST_SCHEMA = z
         client: z.string().min(1).default('electron-main'),
         reason: z.string().min(1).max(120).optional(),
     })
-    .passthrough();
+    .strict();
+
+const TURN_SERVICE_LEASE_PAYLOAD_SCHEMA = z.object({
+    policyVersion: z.literal(TURN_CREDENTIAL_SERVICE_POLICY_VERSION),
+    subject: z.string().min(1),
+    client: z.string().min(1),
+    issuedAtMs: z.number().int().nonnegative(),
+    expiresAtMs: z.number().int().positive(),
+    nonce: z.string().min(1),
+});
 
 const formatIso = (value) => new Date(value).toISOString();
 
@@ -38,11 +55,11 @@ const jsonResponse = (status, payload) =>
 
 const parseBearerToken = (authorization) => {
     if (typeof authorization !== 'string') {
-        return '';
+        return null;
     }
 
-    const match = authorization.match(/^Bearer\s+(.+)$/i);
-    return match ? match[1] : authorization.trim();
+    const match = authorization.match(/^Bearer\s+(\S+)$/i);
+    return match ? match[1] : null;
 };
 
 const matchesToken = (candidate, expected) => {
@@ -74,6 +91,72 @@ const createTurnUsername = ({ subject, expiresAtMs }) =>
 const createTurnCredential = ({ username, sharedSecret }) =>
     createHmac('sha1', sharedSecret).update(username).digest('base64');
 
+const signLeasePayload = ({ encodedPayload, sharedSecret }) =>
+    createHmac('sha256', sharedSecret).update(encodedPayload).digest('base64url');
+
+const createSignedLeaseId = ({ payload, sharedSecret }) => {
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const signature = signLeasePayload({
+        encodedPayload,
+        sharedSecret,
+    });
+
+    return `${encodedPayload}.${signature}`;
+};
+
+const verifyLeaseSignature = ({ encodedPayload, signature, sharedSecret }) => {
+    const expectedSignature = signLeasePayload({
+        encodedPayload,
+        sharedSecret,
+    });
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+
+    return (
+        signatureBuffer.length === expectedBuffer.length &&
+        timingSafeEqual(signatureBuffer, expectedBuffer)
+    );
+};
+
+const parseSignedLeaseId = ({ leaseId, sharedSecret, reasonCode }) => {
+    const [encodedPayload, signature, extra] =
+        typeof leaseId === 'string' ? leaseId.split('.') : [];
+
+    if (!encodedPayload || !signature || extra) {
+        throw new TurnCredentialServiceError({
+            status: 404,
+            reasonCode,
+            message: 'TURN credential lease was not found.',
+        });
+    }
+
+    if (
+        !verifyLeaseSignature({
+            encodedPayload,
+            signature,
+            sharedSecret,
+        })
+    ) {
+        throw new TurnCredentialServiceError({
+            status: 404,
+            reasonCode,
+            message: 'TURN credential lease was not found.',
+        });
+    }
+
+    try {
+        return TURN_SERVICE_LEASE_PAYLOAD_SCHEMA.parse(
+            JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'))
+        );
+    } catch {
+        throw new TurnCredentialServiceError({
+            status: 404,
+            reasonCode,
+            message: 'TURN credential lease was not found.',
+        });
+    }
+};
+
 const buildTurnBundle = ({ relayUrls, sharedSecret, subject, issuedAtMs, expiresAtMs }) => {
     const username = createTurnUsername({
         subject,
@@ -104,11 +187,26 @@ const buildLeaseSnapshot = ({ leaseId, bundle, refreshAfterAt }) => ({
     refreshAfterAt,
 });
 
+const parseServiceBody = (schema, body) => {
+    try {
+        return schema.parse(body);
+    } catch {
+        throw new TurnCredentialServiceError({
+            status: 400,
+            reasonCode: 'TURN_CREDENTIAL_BUNDLE_INVALID',
+            message: 'TURN credential request body did not match the governed contract.',
+        });
+    }
+};
+
 export const createTurnCredentialService = ({
     authTokens,
     relayUrls,
     sharedSecret,
     ttlMs = DEFAULT_TTL_MS,
+    maxRequestBodyBytes = DEFAULT_REQUEST_BODY_LIMIT_BYTES,
+    rateLimitWindowMs = DEFAULT_RATE_LIMIT_WINDOW_MS,
+    rateLimitMaxRequests = DEFAULT_RATE_LIMIT_MAX_REQUESTS,
     now = () => Date.now(),
     randomId = randomUUID,
 }) => {
@@ -125,7 +223,56 @@ export const createTurnCredentialService = ({
     }
 
     const normalizedTtlMs = Math.max(60_000, ttlMs);
-    const leases = new Map();
+    const revokedLeases = new Map();
+    const rateLimitBuckets = new Map();
+
+    const cleanupRevocations = () => {
+        const nowMs = now();
+        for (const [leaseId, revokedLease] of revokedLeases.entries()) {
+            if (revokedLease.expiresAtMs <= nowMs) {
+                revokedLeases.delete(leaseId);
+            }
+        }
+    };
+
+    const buildRateLimitKey = ({ authorization, route }) => {
+        const bearerToken = parseBearerToken(authorization) ?? 'anonymous';
+        const tokenHash = createHmac('sha256', sharedSecret)
+            .update(bearerToken)
+            .digest('base64url');
+        return `${route}:${tokenHash}`;
+    };
+
+    const enforceRateLimit = ({ authorization, route }) => {
+        if (rateLimitMaxRequests <= 0) {
+            return;
+        }
+
+        const windowMs = Math.max(1_000, rateLimitWindowMs);
+        const nowMs = now();
+        const bucketKey = buildRateLimitKey({
+            authorization,
+            route,
+        });
+        const currentBucket = rateLimitBuckets.get(bucketKey);
+
+        if (!currentBucket || currentBucket.resetAtMs <= nowMs) {
+            rateLimitBuckets.set(bucketKey, {
+                count: 1,
+                resetAtMs: nowMs + windowMs,
+            });
+            return;
+        }
+
+        currentBucket.count += 1;
+        if (currentBucket.count > rateLimitMaxRequests) {
+            throw new TurnCredentialServiceError({
+                status: 429,
+                reasonCode: 'TURN_CREDENTIAL_RATE_LIMITED',
+                message: 'TURN credential request rate limit was exceeded.',
+            });
+        }
+    };
 
     const authorize = (authorization) => {
         const token = parseBearerToken(authorization);
@@ -138,10 +285,34 @@ export const createTurnCredentialService = ({
         }
     };
 
-    const createLease = ({ leaseId, subject, client }) => {
+    const readLease = ({ leaseId, reasonCode }) =>
+        parseSignedLeaseId({
+            leaseId,
+            sharedSecret,
+            reasonCode,
+        });
+
+    const isLeaseRevoked = (leaseId) => {
+        cleanupRevocations();
+        return revokedLeases.has(leaseId);
+    };
+
+    const createLease = ({ subject, client }) => {
         const issuedAtMs = now();
         const expiresAtMs = issuedAtMs + normalizedTtlMs;
         const refreshAfterAtMs = issuedAtMs + Math.max(30_000, Math.floor(normalizedTtlMs * 0.6));
+        const payload = {
+            policyVersion: TURN_CREDENTIAL_SERVICE_POLICY_VERSION,
+            subject,
+            client,
+            issuedAtMs,
+            expiresAtMs,
+            nonce: randomId(),
+        };
+        const leaseId = createSignedLeaseId({
+            payload,
+            sharedSecret,
+        });
         const bundle = buildTurnBundle({
             relayUrls,
             sharedSecret,
@@ -161,36 +332,31 @@ export const createTurnCredentialService = ({
             revokeReason: null,
         };
 
-        leases.set(leaseId, lease);
         return lease;
     };
 
-    const issue = ({ authorization, body = {} }) => {
+    const issue = ({ authorization, body = {}, route = 'issue' }) => {
+        enforceRateLimit({ authorization, route });
         authorize(authorization);
-        const request = TURN_SERVICE_REQUEST_SCHEMA.parse(body);
+        const request = parseServiceBody(TURN_SERVICE_REQUEST_SCHEMA, body);
         return buildLeaseSnapshot(
             createLease({
-                leaseId: randomId(),
                 subject: request.subject,
                 client: request.client,
             })
         );
     };
 
-    const refresh = ({ authorization, body = {} }) => {
+    const refresh = ({ authorization, body = {}, route = 'refresh' }) => {
+        enforceRateLimit({ authorization, route });
         authorize(authorization);
-        const request = TURN_SERVICE_REFRESH_REQUEST_SCHEMA.parse(body);
-        const existingLease = leases.get(request.leaseId);
+        const request = parseServiceBody(TURN_SERVICE_REFRESH_REQUEST_SCHEMA, body);
+        const existingLease = readLease({
+            leaseId: request.leaseId,
+            reasonCode: 'TURN_CREDENTIAL_REFRESH_FAILED',
+        });
 
-        if (!existingLease) {
-            throw new TurnCredentialServiceError({
-                status: 404,
-                reasonCode: 'TURN_CREDENTIAL_REFRESH_FAILED',
-                message: 'TURN credential lease was not found.',
-            });
-        }
-
-        if (existingLease.revokedAt) {
+        if (isLeaseRevoked(request.leaseId)) {
             throw new TurnCredentialServiceError({
                 status: 410,
                 reasonCode: 'TURN_CREDENTIAL_REVOKED',
@@ -198,7 +364,7 @@ export const createTurnCredentialService = ({
             });
         }
 
-        if (Date.parse(existingLease.expiresAt) <= now()) {
+        if (existingLease.expiresAtMs <= now()) {
             throw new TurnCredentialServiceError({
                 status: 410,
                 reasonCode: 'TURN_CREDENTIAL_BUNDLE_EXPIRED',
@@ -208,26 +374,26 @@ export const createTurnCredentialService = ({
 
         return buildLeaseSnapshot(
             createLease({
-                leaseId: existingLease.leaseId,
                 subject: existingLease.subject,
                 client: request.client,
             })
         );
     };
 
-    const revoke = ({ authorization, body = {} }) => {
+    const revoke = ({ authorization, body = {}, route = 'revoke' }) => {
+        enforceRateLimit({ authorization, route });
         authorize(authorization);
-        const request = TURN_SERVICE_REVOKE_REQUEST_SCHEMA.parse(body);
+        const request = parseServiceBody(TURN_SERVICE_REVOKE_REQUEST_SCHEMA, body);
+        const existingLease = readLease({
+            leaseId: request.leaseId,
+            reasonCode: 'TURN_CREDENTIAL_REVOKE_FAILED',
+        });
         const revokedAt = formatIso(now());
-        const existingLease = leases.get(request.leaseId);
-
-        if (existingLease) {
-            leases.set(request.leaseId, {
-                ...existingLease,
-                revokedAt,
-                revokeReason: request.reason ?? 'client-dispose',
-            });
-        }
+        revokedLeases.set(request.leaseId, {
+            ...existingLease,
+            revokedAt,
+            revokeReason: request.reason ?? 'client-dispose',
+        });
 
         return {
             policyVersion: TURN_CREDENTIAL_SERVICE_POLICY_VERSION,
@@ -241,15 +407,50 @@ export const createTurnCredentialService = ({
         issue,
         refresh,
         revoke,
+        maxRequestBodyBytes,
         getLease(leaseId) {
-            return leases.get(leaseId) ?? null;
+            try {
+                const lease = readLease({
+                    leaseId,
+                    reasonCode: 'TURN_CREDENTIAL_REFRESH_FAILED',
+                });
+                return {
+                    ...lease,
+                    revokedAt: revokedLeases.get(leaseId)?.revokedAt ?? null,
+                    revokeReason: revokedLeases.get(leaseId)?.revokeReason ?? null,
+                };
+            } catch {
+                return null;
+            }
         },
     };
 };
 
-const readJsonBody = async (request) => {
+const readJsonBody = async (request, maxBodyBytes = DEFAULT_REQUEST_BODY_LIMIT_BYTES) => {
+    const contentLength = Number(request.headers.get('content-length') ?? 0);
+    if (Number.isFinite(contentLength) && contentLength > maxBodyBytes) {
+        throw new TurnCredentialServiceError({
+            status: 413,
+            reasonCode: 'TURN_CREDENTIAL_BODY_TOO_LARGE',
+            message: 'TURN credential request body exceeded the governed size limit.',
+        });
+    }
+
+    const text = await request.text();
+    if (Buffer.byteLength(text, 'utf8') > maxBodyBytes) {
+        throw new TurnCredentialServiceError({
+            status: 413,
+            reasonCode: 'TURN_CREDENTIAL_BODY_TOO_LARGE',
+            message: 'TURN credential request body exceeded the governed size limit.',
+        });
+    }
+
+    if (text.trim().length === 0) {
+        return {};
+    }
+
     try {
-        return await request.json();
+        return JSON.parse(text);
     } catch {
         throw new TurnCredentialServiceError({
             status: 400,
@@ -261,7 +462,8 @@ const readJsonBody = async (request) => {
 
 export const handleTurnCredentialServiceRequest = async ({ request, service }) => {
     const url = new URL(request.url);
-    const pathname = url.pathname.replace(/\/+$/, '');
+    const pathname = url.pathname.replace(/\/+$/, '') || '/';
+    const route = TURN_SERVICE_ROUTES[pathname] ?? null;
 
     if (request.method !== 'POST') {
         return jsonResponse(405, {
@@ -272,32 +474,35 @@ export const handleTurnCredentialServiceRequest = async ({ request, service }) =
     }
 
     try {
-        if (pathname.endsWith('/issue')) {
+        if (route === 'issue') {
             return jsonResponse(
                 200,
                 service.issue({
                     authorization: request.headers.get('authorization'),
-                    body: await readJsonBody(request),
+                    body: await readJsonBody(request, service.maxRequestBodyBytes),
+                    route,
                 })
             );
         }
 
-        if (pathname.endsWith('/refresh')) {
+        if (route === 'refresh') {
             return jsonResponse(
                 200,
                 service.refresh({
                     authorization: request.headers.get('authorization'),
-                    body: await readJsonBody(request),
+                    body: await readJsonBody(request, service.maxRequestBodyBytes),
+                    route,
                 })
             );
         }
 
-        if (pathname.endsWith('/revoke')) {
+        if (route === 'revoke') {
             return jsonResponse(
                 200,
                 service.revoke({
                     authorization: request.headers.get('authorization'),
-                    body: await readJsonBody(request),
+                    body: await readJsonBody(request, service.maxRequestBodyBytes),
+                    route,
                 })
             );
         }

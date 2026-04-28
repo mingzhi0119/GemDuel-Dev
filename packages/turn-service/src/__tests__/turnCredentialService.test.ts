@@ -29,7 +29,7 @@ describe('turn credential service', () => {
 
         expect(issued).toMatchObject({
             policyVersion: 1,
-            leaseId: '00000000-0000-4000-8000-000000000001',
+            leaseId: expect.stringContaining('.'),
             bundle: {
                 policyVersion: 1,
                 issuedAt: '2026-04-20T12:00:00.000Z',
@@ -44,12 +44,12 @@ describe('turn credential service', () => {
         const refreshed = service.refresh({
             authorization: 'Bearer service-token',
             body: {
-                leaseId: '00000000-0000-4000-8000-000000000001',
+                leaseId: issued.leaseId,
                 client: 'vitest',
             },
         });
 
-        expect(refreshed.leaseId).toBe('00000000-0000-4000-8000-000000000001');
+        expect(refreshed.leaseId).not.toBe(issued.leaseId);
         expect(refreshed.bundle.issuedAt).toBe('2026-04-20T12:00:20.000Z');
         expect(refreshed.bundle.expiresAt).toBe('2026-04-20T12:01:20.000Z');
         expect(refreshed.bundle.iceServers[0]?.credential).not.toBe(
@@ -68,7 +68,7 @@ describe('turn credential service', () => {
             randomId: () => '00000000-0000-4000-8000-000000000001',
         });
 
-        service.issue({
+        const issued = service.issue({
             authorization: 'Bearer service-token',
             body: {
                 subject: 'player-1',
@@ -78,7 +78,7 @@ describe('turn credential service', () => {
         service.revoke({
             authorization: 'Bearer service-token',
             body: {
-                leaseId: '00000000-0000-4000-8000-000000000001',
+                leaseId: issued.leaseId,
                 client: 'vitest',
             },
         });
@@ -87,7 +87,7 @@ describe('turn credential service', () => {
             service.refresh({
                 authorization: 'Bearer service-token',
                 body: {
-                    leaseId: '00000000-0000-4000-8000-000000000001',
+                    leaseId: issued.leaseId,
                     client: 'vitest',
                 },
             })
@@ -98,7 +98,7 @@ describe('turn credential service', () => {
                 service.refresh({
                     authorization: 'Bearer service-token',
                     body: {
-                        leaseId: '00000000-0000-4000-8000-000000000001',
+                        leaseId: issued.leaseId,
                         client: 'vitest',
                     },
                 });
@@ -119,7 +119,7 @@ describe('turn credential service', () => {
             randomId: () => '00000000-0000-4000-8000-000000000002',
         });
 
-        expiringService.issue({
+        const expiringLease = expiringService.issue({
             authorization: 'Bearer service-token',
             body: {
                 subject: 'player-2',
@@ -133,7 +133,7 @@ describe('turn credential service', () => {
                 expiringService.refresh({
                     authorization: 'Bearer service-token',
                     body: {
-                        leaseId: '00000000-0000-4000-8000-000000000002',
+                        leaseId: expiringLease.leaseId,
                         client: 'vitest',
                     },
                 });
@@ -192,8 +192,9 @@ describe('turn credential service', () => {
         });
 
         expect(issued.status).toBe(200);
-        await expect(issued.json()).resolves.toMatchObject({
-            leaseId: '00000000-0000-4000-8000-000000000001',
+        const issuedBody = await issued.json();
+        expect(issuedBody).toMatchObject({
+            leaseId: expect.stringContaining('.'),
         });
 
         nowMs += 10_000;
@@ -205,7 +206,7 @@ describe('turn credential service', () => {
                     'content-type': 'application/json',
                 },
                 body: JSON.stringify({
-                    leaseId: '00000000-0000-4000-8000-000000000001',
+                    leaseId: issuedBody.leaseId,
                     client: 'vitest',
                 }),
             }),
@@ -214,8 +215,97 @@ describe('turn credential service', () => {
 
         expect(revoked.status).toBe(200);
         await expect(revoked.json()).resolves.toMatchObject({
-            leaseId: '00000000-0000-4000-8000-000000000001',
+            leaseId: issuedBody.leaseId,
             revoked: true,
         });
+    });
+
+    it('requires Bearer auth, exact /turn routes, and governed JSON body size', async () => {
+        const service = createTurnCredentialService({
+            authTokens: ['service-token'],
+            relayUrls: ['turns:relay.example.com:443?transport=tcp'],
+            sharedSecret: 'shared-secret',
+            maxRequestBodyBytes: 64,
+        });
+
+        const nonBearer = await handleTurnCredentialServiceRequest({
+            request: new Request('https://relay.example.com/turn/issue', {
+                method: 'POST',
+                headers: {
+                    authorization: 'service-token',
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            }),
+            service,
+        });
+        expect(nonBearer.status).toBe(401);
+
+        const suffixRoute = await handleTurnCredentialServiceRequest({
+            request: new Request('https://relay.example.com/api/turn/issue', {
+                method: 'POST',
+                headers: {
+                    authorization: 'Bearer service-token',
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            }),
+            service,
+        });
+        expect(suffixRoute.status).toBe(404);
+
+        const oversizedBody = await handleTurnCredentialServiceRequest({
+            request: new Request('https://relay.example.com/turn/issue', {
+                method: 'POST',
+                headers: {
+                    authorization: 'Bearer service-token',
+                    'content-type': 'application/json',
+                },
+                body: JSON.stringify({
+                    subject: 'x'.repeat(120),
+                }),
+            }),
+            service,
+        });
+        expect(oversizedBody.status).toBe(413);
+        await expect(oversizedBody.json()).resolves.toMatchObject({
+            reasonCode: 'TURN_CREDENTIAL_BODY_TOO_LARGE',
+        });
+    });
+
+    it('rate-limits repeated credential requests before issuing more leases', () => {
+        const service = createTurnCredentialService({
+            authTokens: ['service-token'],
+            relayUrls: ['turns:relay.example.com:443?transport=tcp'],
+            sharedSecret: 'shared-secret',
+            rateLimitWindowMs: 60_000,
+            rateLimitMaxRequests: 1,
+        });
+
+        service.issue({
+            authorization: 'Bearer service-token',
+            body: {
+                subject: 'player-1',
+                client: 'vitest',
+            },
+        });
+
+        const limitedError = (() => {
+            try {
+                service.issue({
+                    authorization: 'Bearer service-token',
+                    body: {
+                        subject: 'player-2',
+                        client: 'vitest',
+                    },
+                });
+                return null;
+            } catch (error) {
+                return error as TurnCredentialServiceError;
+            }
+        })();
+
+        expect(limitedError?.status).toBe(429);
+        expect(limitedError?.reasonCode).toBe('TURN_CREDENTIAL_RATE_LIMITED');
     });
 });

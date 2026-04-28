@@ -28,8 +28,8 @@ Only the following renderer-visible capabilities may cross the Electron boundary
 ## Trusted Sender Policy
 
 - Only the trusted main BrowserWindow may call renderer-to-main channels.
-- Development origin: `http://localhost:5173`
-- Production origin: `file://...`
+- Development renderer URL must structurally match the configured `GEMDUEL_DEV_SERVER_URL` protocol, host, port, path, query, and hash.
+- Production renderer URL must structurally match the packaged `../dist/index.html` file entry and must not accept arbitrary `file://` paths.
 - Zero-argument channels must stay zero-argument.
 - Structured payload channels are fixed to their allowlisted schemas:
     - `report-release-health`

@@ -82,9 +82,17 @@ describe('electron desktop governance', () => {
             ok: false,
             reason: 'Unknown IPC channel unknown-channel.',
         });
-        expect(isAllowedRendererUrl('file:///E:/simonbb/GemDuel-Dev/dist/index.html', false)).toBe(
-            true
-        );
+        const packagedRendererUrl = 'file:///E:/simonbb/GemDuel-Dev/apps/desktop/dist/index.html';
+        expect(
+            isAllowedRendererUrl(packagedRendererUrl, false, {
+                packagedRendererUrl,
+            })
+        ).toBe(true);
+        expect(
+            isAllowedRendererUrl('file:///E:/simonbb/GemDuel-Dev/other/index.html', false, {
+                packagedRendererUrl,
+            })
+        ).toBe(false);
         expect(isAllowedRendererUrl('http://localhost:5173', false)).toBe(false);
     });
 
@@ -138,6 +146,35 @@ describe('electron desktop governance', () => {
                 process.env.GEMDUEL_DEV_SERVER_URL = previousDevServerUrl;
             }
         }
+    });
+
+    it('rejects renderer URL spoofing across dev and packaged renderer policies', () => {
+        const packagedRendererUrl = 'file:///E:/simonbb/GemDuel-Dev/apps/desktop/dist/index.html';
+
+        expect(isAllowedRendererUrl('http://localhost:5173.evil.example.com', true)).toBe(false);
+        expect(isAllowedRendererUrl('http://localhost:5173/other', true)).toBe(false);
+        expect(isAllowedRendererUrl('http://localhost:5173/%2fother', true)).toBe(false);
+        expect(
+            isAllowedRendererUrl('http://localhost:5173/?redirect=file:///tmp/index.html', true)
+        ).toBe(false);
+        expect(
+            isAllowedRendererUrl(
+                'file:///E:/simonbb/GemDuel-Dev/apps/desktop/dist/index.html?x=1',
+                false,
+                {
+                    packagedRendererUrl,
+                }
+            )
+        ).toBe(false);
+        expect(
+            isAllowedRendererUrl(
+                'file:///E:/simonbb/GemDuel-Dev/apps/desktop/dist/other.html',
+                false,
+                {
+                    packagedRendererUrl,
+                }
+            )
+        ).toBe(false);
     });
 
     it('validates payload shapes for governed IPC channels', () => {
@@ -346,7 +383,8 @@ describe('electron desktop governance', () => {
 
         expect(issues).toEqual(
             expect.arrayContaining([
-                '[Snapshot] Desktop governance policy version must remain 1.',
+                '[Snapshot] Desktop governance policy version must remain 2.',
+                '[Snapshot] Renderer trust policy drifted from the audited snapshot.',
                 '[Snapshot] BrowserWindow governance snapshot drifted.',
                 '[Snapshot] Bridge API surface drifted from the audited snapshot.',
                 '[Snapshot] IPC allowlist drifted from the audited snapshot.',

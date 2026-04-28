@@ -106,6 +106,45 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         secretHandling: 'Operational local profile routing only. Never store secrets here.',
         failureMode: 'Falls back to the default Electron userData directory when absent.',
     },
+    CSC_LINK: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation:
+            'Electron Builder code-signing certificate link or base64 payload in release CI.',
+        secretHandling:
+            'Secret signing material. Store only in CI secrets and never commit or log it.',
+        failureMode:
+            'Windows installer signing is unavailable and tag-release artifact evidence fails.',
+    },
+    CSC_KEY_PASSWORD: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'Password for the Electron Builder code-signing certificate material.',
+        secretHandling:
+            'Secret signing material. Store only in CI secrets and never commit or log it.',
+        failureMode:
+            'Windows installer signing is unavailable and tag-release artifact evidence fails.',
+    },
+    WIN_CSC_LINK: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation:
+            'Windows-specific Electron Builder code-signing certificate link or base64 payload in release CI.',
+        secretHandling:
+            'Secret signing material. Store only in CI secrets and never commit or log it.',
+        failureMode:
+            'Windows installer signing is unavailable and tag-release artifact evidence fails.',
+    },
+    WIN_CSC_KEY_PASSWORD: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation:
+            'Windows-specific password for Electron Builder code-signing certificate material.',
+        secretHandling:
+            'Secret signing material. Store only in CI secrets and never commit or log it.',
+        failureMode:
+            'Windows installer signing is unavailable and tag-release artifact evidence fails.',
+    },
     GITHUB_REPOSITORY: {
         owner: 'Release Engineering',
         defaultValue: 'unset',
@@ -161,5 +200,12 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         validation: 'GitHub Actions job name or unset outside CI.',
         secretHandling: 'CI provenance metadata only. Never store secrets here.',
         failureMode: 'Artifact provenance jobName field falls back to null.',
+    },
+    GITHUB_STEP_SUMMARY: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions step summary file path or unset outside CI.',
+        secretHandling: 'CI output path metadata only. Never store secrets here.',
+        failureMode: 'Release artifact evidence is still written to artifacts/governance.',
     },
 });

@@ -104,10 +104,39 @@ jobs:
             - name: Lifecycle Governance Report
               run: pnpm run governance:report
 
-            - name: Build and Publish
+            - name: Build Desktop Package
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              run: pnpm run electron:build -- -p always
+                  CSC_LINK: ${{ secrets.CSC_LINK }}
+                  CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+                  WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+                  WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+              run: |
+                  pnpm run build
+                  pnpm run bundle:check
+                  pnpm --dir apps/desktop run electron:build -- -p never
+
+            - name: Release Artifact Evidence
+              run: pnpm run release:artifacts:check
+
+            - name: Publish Release Artifacts
+              if: startsWith(github.ref, 'refs/tags/')
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              shell: pwsh
+              run: |
+                  $tag = $env:GITHUB_REF_NAME
+                  $dist = Join-Path $env:GITHUB_WORKSPACE 'apps/desktop/dist_electron'
+                  $artifacts = Get-ChildItem -LiteralPath $dist -File | Where-Object { @('.exe', '.blockmap', '.yml', '.yaml') -contains $_.Extension.ToLowerInvariant() }
+                  if ($artifacts.Count -eq 0) {
+                      throw "No desktop release artifacts were found in $dist."
+                  }
+                  gh release view $tag *> $null
+                  if ($LASTEXITCODE -ne 0) {
+                      gh release create $tag --verify-tag --title $tag --notes "GemDuel desktop release $tag"
+                  }
+                  $artifactPaths = $artifacts | ForEach-Object { $_.FullName }
+                  & gh release upload $tag @artifactPaths --clobber
 
             - name: Lifecycle Certification
               run: pnpm run lifecycle:certify

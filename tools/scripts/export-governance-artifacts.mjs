@@ -242,6 +242,16 @@ const main = () => {
     }
 
     const governanceAssets = buildGovernanceAssets();
+    const releaseArtifactEvidencePath = path.join(
+        outputDir,
+        'release-artifact-evidence.report.json'
+    );
+    const releaseArtifactEvidence = fs.existsSync(releaseArtifactEvidencePath)
+        ? {
+              path: toRepoRelativePath(releaseArtifactEvidencePath),
+              status: JSON.parse(fs.readFileSync(releaseArtifactEvidencePath, 'utf8')).status,
+          }
+        : null;
 
     const manifest = {
         manifestVersion: 3,
@@ -259,6 +269,7 @@ const main = () => {
         release: {
             releaseHealthReports: releaseHealthOutputs,
             bundleBudgetReport: bundleBudgetOutput,
+            artifactEvidenceReport: releaseArtifactEvidence,
         },
         dependency: {
             retiredWorkarounds: [],
@@ -354,6 +365,7 @@ const main = () => {
             repoSettingsSnapshot: 'tools/governance/repo-settings.snapshot.json',
             codeownersRoleMap: 'tools/governance/codeowners-role-map.snapshot.json',
             releaseChangelogSnapshot: 'tools/governance/release-changelog.snapshot.json',
+            releaseArtifactEvidence: 'artifacts/governance/release-artifact-evidence.report.json',
             benchmarkBaseline: 'tools/governance/benchmark-baselines.snapshot.json',
             auditGateSnapshot: 'tools/governance/audit-gates.snapshot.json',
             lifecycleDashboardSnapshot: 'tools/governance/lifecycle-dashboard.snapshot.json',

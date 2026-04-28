@@ -35,6 +35,7 @@
         "lifecycle:certify": "turbo run lifecycle:certify --filter=@gemduel/tools-scripts --",
         "lint": "turbo run lint",
         "preview": "pnpm --dir apps/desktop preview",
+        "release:artifacts:check": "turbo run release:artifacts:check --filter=@gemduel/tools-scripts --",
         "release:check": "turbo run release:check --filter=@gemduel/tools-scripts",
         "release:provenance:check": "turbo run release:provenance:check --filter=@gemduel/tools-scripts --",
         "repo-settings:check": "turbo run repo-settings:check --filter=@gemduel/tools-scripts --",

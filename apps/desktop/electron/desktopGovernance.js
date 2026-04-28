@@ -1,11 +1,13 @@
 import { z } from 'zod';
 import preloadContract from './preloadContract.cjs';
 import { RELEASE_HEALTH_EVENT_SCHEMA } from './releaseHealth.js';
+import { buildRendererTrustPolicySnapshot, isAllowedRendererUrl } from './rendererTrustPolicy.js';
 
 const { ELECTRON_BRIDGE_API_KEYS, IPC_INVOKE_CHANNELS, IPC_SEND_CHANNELS, UPDATE_CHANNELS } =
     preloadContract;
-export const DESKTOP_GOVERNANCE_POLICY_VERSION = 1;
+export const DESKTOP_GOVERNANCE_POLICY_VERSION = 2;
 export const DEFAULT_DESKTOP_ASPECT_RATIO = '16:10';
+export { buildRendererTrustPolicySnapshot, isAllowedRendererUrl } from './rendererTrustPolicy.js';
 export const DESKTOP_ASPECT_RATIO_OPTIONS = Object.freeze({
     '16:10': Object.freeze({
         ratio: '16:10',
@@ -203,24 +205,13 @@ export const validateIpcArgs = (channel, args) => {
     };
 };
 
-const getAllowedDevRendererPrefix = () => {
-    try {
-        const configuredUrl = new URL(
-            process.env.GEMDUEL_DEV_SERVER_URL ?? 'http://localhost:5173'
-        );
-        return configuredUrl.pathname === '/'
-            ? configuredUrl.origin
-            : `${configuredUrl.origin}${configuredUrl.pathname}`;
-    } catch {
-        return 'http://localhost:5173';
-    }
-};
-
-export const isAllowedRendererUrl = (url, isDev) =>
-    typeof url === 'string' &&
-    (isDev ? url.startsWith(getAllowedDevRendererPrefix()) : url.startsWith('file://'));
-
-export const authorizeIpcSender = ({ senderId, senderUrl, mainWindowId, isDev }) => {
+export const authorizeIpcSender = ({
+    senderId,
+    senderUrl,
+    mainWindowId,
+    isDev,
+    rendererTrust = undefined,
+}) => {
     if (!mainWindowId) {
         return { ok: false, reason: 'No trusted main window is registered.' };
     }
@@ -229,7 +220,7 @@ export const authorizeIpcSender = ({ senderId, senderUrl, mainWindowId, isDev })
         return { ok: false, reason: 'Unexpected renderer sender.' };
     }
 
-    if (!isAllowedRendererUrl(senderUrl, isDev)) {
+    if (!isAllowedRendererUrl(senderUrl, isDev, rendererTrust)) {
         return { ok: false, reason: 'Untrusted renderer origin.' };
     }
 
@@ -245,6 +236,7 @@ export const getAllowlistedChannelNames = () =>
 
 export const buildDesktopGovernanceSnapshot = ({ windowOptions, bridgeApiKeys }) => ({
     policyVersion: DESKTOP_GOVERNANCE_POLICY_VERSION,
+    rendererTrust: buildRendererTrustPolicySnapshot(),
     mainWindow: {
         autoHideMenuBar: windowOptions?.autoHideMenuBar ?? null,
         width: windowOptions?.width ?? null,
@@ -286,6 +278,13 @@ export const collectSnapshotDriftIssues = (expectedSnapshot, actualSnapshot) => 
         JSON.stringify(expectedSnapshot?.mainWindow) !== JSON.stringify(actualSnapshot.mainWindow)
     ) {
         issues.push('[Snapshot] BrowserWindow governance snapshot drifted.');
+    }
+
+    if (
+        JSON.stringify(expectedSnapshot?.rendererTrust) !==
+        JSON.stringify(actualSnapshot.rendererTrust)
+    ) {
+        issues.push('[Snapshot] Renderer trust policy drifted from the audited snapshot.');
     }
 
     if (

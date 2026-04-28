@@ -14,6 +14,7 @@
         "deps:check",
         "desktop:check",
         "release:check",
+        "release:artifacts:check",
         "repo-settings:check",
         "codeowners:check",
         "changelog:check",
@@ -37,6 +38,7 @@
             "pnpm run repo-settings:check",
             "pnpm run codeowners:check",
             "pnpm run changelog:check",
+            "pnpm run release:artifacts:check",
             "pnpm run audit:gates",
             "pnpm run bench",
             "pnpm run lifecycle:certify"
@@ -61,6 +63,8 @@
         "artifacts/governance/lifecycle-governance.dashboard.md",
         "artifacts/governance/lifecycle-certification.report.json",
         "artifacts/governance/lifecycle-certification.report.md",
+        "artifacts/governance/release-artifact-evidence.report.json",
+        "artifacts/governance/release-artifact-evidence.report.md",
         "artifacts/governance/lifecycle-benchmarks.report.json",
         "artifacts/governance/coverage-perfile-key-modules.report.json"
     ]

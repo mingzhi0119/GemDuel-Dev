@@ -79,7 +79,14 @@
         "win": {
             "target": [
                 "nsis"
-            ]
+            ],
+            "signAndEditExecutable": true,
+            "signtoolOptions": {
+                "signingHashAlgorithms": [
+                    "sha256"
+                ],
+                "rfc3161TimeStampServer": "http://timestamp.digicert.com"
+            }
         },
         "nsis": {
             "oneClick": false,

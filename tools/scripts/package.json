@@ -25,6 +25,7 @@
         "lifecycle:certify": "node check-lifecycle-certification.mjs",
         "lint": "eslint .",
         "release:check": "node check-release-health.mjs",
+        "release:artifacts:check": "node check-release-artifacts.mjs",
         "release:provenance:check": "node check-release-tag-provenance.mjs",
         "repo-settings:check": "node check-repo-settings-governance.mjs",
         "runtime:drills:check": "node check-runtime-drill-governance.mjs",

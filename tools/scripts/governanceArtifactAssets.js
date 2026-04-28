@@ -86,6 +86,14 @@ export const buildGovernanceAssets = () => [
         ],
     }),
     createGovernanceAsset({
+        id: 'release-artifact-evidence-script',
+        kind: 'release-artifact-evidence',
+        relativePath: 'tools/scripts/check-release-artifacts.mjs',
+        producedBy: 'tools/scripts/check-release-artifacts.mjs',
+        checkedBy: ['tools/scripts/__tests__/releaseArtifactEvidence.test.ts'],
+        sourceRefs: [GOVERNANCE_DOC_PATHS.releaseHealthChecklist],
+    }),
+    createGovernanceAsset({
         id: 'boundary-registry-snapshot',
         kind: 'boundary-registry',
         relativePath: 'tools/governance/boundary-registry.snapshot.json',

@@ -20,7 +20,7 @@ read-only drift report against the current GitHub repository.
 ## Tag And Release Rules
 
 - Only publish desktop releases from annotated or lightweight tags that match `v*`.
-- The `Build and Release` workflow must run `pnpm release:provenance:check` before `electron-builder -p always`.
+- The `Build and Release` workflow must run `pnpm release:provenance:check` before desktop packaging, then `pnpm release:artifacts:check` before GitHub release upload.
 - Release tags must point to commits reachable from `origin/<default-branch>`.
 - Do not cut release tags from feature branches or detached local-only commits.
 
@@ -39,4 +39,6 @@ read-only drift report against the current GitHub repository.
     - `lifecycle-governance.dashboard.md`
     - `lifecycle-certification.report.json`
     - `lifecycle-certification.report.md`
+    - `release-artifact-evidence.report.json`
+    - `release-artifact-evidence.report.md`
     - bundle budget output when `dist/` exists

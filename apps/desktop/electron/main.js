@@ -1,12 +1,10 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import fs from 'node:fs/promises';
-import net from 'node:net';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import isDev from 'electron-is-dev';
 import log from 'electron-log';
 import pkg from 'electron-updater';
-import { PeerServer } from 'peer';
 import preloadContract from './preloadContract.cjs';
 import { createLanDiscoveryService } from './lanDiscoveryService.js';
 import {
@@ -18,6 +16,11 @@ import {
     validateMainWindowOptions,
 } from './desktopGovernance.js';
 import { createReleaseHealthMonitor } from './releaseHealth.js';
+import {
+    DEFAULT_PEER_SERVER_HOST,
+    startPeerSignalingServer,
+    stopPeerSignalingServer,
+} from './peerSignalingServer.js';
 import {
     getAutoUpdaterPolicy,
     getRuntimeIceServersFromEnv,
@@ -32,7 +35,6 @@ const MAX_LOG_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_REPLAY_EXPORT_BYTES = 512 * 1024;
 const DEFAULT_DEV_SERVER_URL = process.env.GEMDUEL_DEV_SERVER_URL ?? 'http://localhost:5173';
 const DEFAULT_PEER_SERVER_PORT = Number(process.env.GEMDUEL_PEER_SERVER_PORT ?? 9000);
-const MAX_PEER_SERVER_PORT_CANDIDATES = 25;
 const DEV_USER_DATA_SUFFIX = process.env.GEMDUEL_USER_DATA_SUFFIX?.trim() ?? '';
 if (DEV_USER_DATA_SUFFIX) {
     app.setPath('userData', path.join(app.getPath('userData'), DEV_USER_DATA_SUFFIX));
@@ -112,84 +114,20 @@ const saveReplayToFolder = async (payload) => {
 };
 
 let mainWindow;
-let peerServer = null; // Keep reference to prevent garbage collection
+let peerSignalingServer = null;
 let peerServerPort = null;
 let lanDiscoveryService = null;
 let activeDesktopAspectRatio = DEFAULT_DESKTOP_ASPECT_RATIO;
 let isApplyingDesktopAspectRatio = false;
 
-const findAvailablePort = (startingPort) =>
-    new Promise((resolve, reject) => {
-        const tryPort = (candidatePort, remainingAttempts) => {
-            const probe = net.createServer();
-            probe.unref();
-            probe.once('error', (error) => {
-                probe.close();
-                if (error?.code === 'EADDRINUSE' && remainingAttempts > 0) {
-                    tryPort(candidatePort + 1, remainingAttempts - 1);
-                    return;
-                }
-                reject(error);
-            });
-            probe.once('listening', () => {
-                const { port } = probe.address();
-                probe.close(() => resolve(port));
-            });
-            probe.listen(candidatePort, '127.0.0.1');
-        };
-
-        tryPort(startingPort, MAX_PEER_SERVER_PORT_CANDIDATES);
-    });
-
-const startPeerSignalingServer = async () => {
-    const selectedPort = await findAvailablePort(DEFAULT_PEER_SERVER_PORT);
-    peerServer = PeerServer({
-        port: selectedPort,
-        path: '/gemduel',
-        proxied: true,
-    });
-    peerServerPort = selectedPort;
-
-    log.info(`[P2P] Local Signaling Server running on port ${selectedPort}`);
-    recordMainHealth({
-        category: 'peer',
-        name: 'PEER_SERVER_STARTED',
-        severity: 'info',
-        message: 'Local PeerJS signaling server started successfully.',
-        context: {
-            port: selectedPort,
-        },
-    });
-    if (isDev) {
-        console.log(`[P2P] Local Signaling Server running on port ${selectedPort}`);
-    }
-
-    peerServer.on('connection', (client) => {
-        log.info(`[P2P] Client connected: ${client.getId()}`);
-        recordMainHealth({
-            category: 'peer',
-            name: 'PEER_SERVER_CLIENT_CONNECTED',
-            severity: 'info',
-            message: 'A client connected to the local signaling server.',
-            context: {
-                clientId: client.getId(),
-                port: selectedPort,
-            },
-        });
-    });
-
-    peerServer.on('disconnect', (client) => {
-        log.info(`[P2P] Client disconnected: ${client.getId()}`);
-        recordMainHealth({
-            category: 'peer',
-            name: 'PEER_SERVER_CLIENT_DISCONNECTED',
-            severity: 'info',
-            message: 'A client disconnected from the local signaling server.',
-            context: {
-                clientId: client.getId(),
-                port: selectedPort,
-            },
-        });
+const stopActivePeerSignalingServer = (reason) => {
+    const activeServer = peerSignalingServer;
+    peerSignalingServer = null;
+    peerServerPort = null;
+    return stopPeerSignalingServer(activeServer, {
+        logger: log,
+        recordMainHealth,
+        reason,
     });
 };
 
@@ -331,7 +269,13 @@ app.whenReady().then(async () => {
 
     // Start Local PeerJS Signaling Server
     try {
-        await startPeerSignalingServer();
+        peerSignalingServer = await startPeerSignalingServer({
+            startingPort: DEFAULT_PEER_SERVER_PORT,
+            host: DEFAULT_PEER_SERVER_HOST,
+            logger: log,
+            recordMainHealth,
+        });
+        peerServerPort = peerSignalingServer.port;
     } catch (err) {
         log.error('[P2P] Failed to start PeerServer:', err);
         recordMainHealth({
@@ -360,18 +304,7 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
     lanDiscoveryService?.stop();
-
-    // Clean up PeerServer on exit
-    if (peerServer) {
-        log.info('[P2P] Shutting down PeerServer...');
-        recordMainHealth({
-            category: 'peer',
-            name: 'PEER_SERVER_SHUTDOWN',
-            severity: 'info',
-            message: 'Desktop process is shutting down the local signaling server.',
-        });
-        // PeerServer doesn't have explicit close method, node will clean up
-    }
+    void stopActivePeerSignalingServer('window-all-closed');
 
     if (process.platform !== 'darwin') {
         app.quit();
@@ -392,6 +325,7 @@ app.on('activate', () => {
 
 app.on('before-quit', () => {
     lanDiscoveryService?.stop();
+    void stopActivePeerSignalingServer('before-quit');
     void turnCredentialClient.revokeRuntimeRelayProfile({
         reason: 'app-quit',
     });

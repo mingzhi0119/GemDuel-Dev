@@ -161,6 +161,8 @@ describe('electron runtime config', () => {
 
     it('declares ownership and secret handling for every governed env var', () => {
         expect(Object.keys(RUNTIME_CONFIG_POLICY).sort()).toEqual([
+            'CSC_KEY_PASSWORD',
+            'CSC_LINK',
             'GEMDUEL_ALLOW_PRERELEASE',
             'GEMDUEL_ALLOW_VISUAL_LAB',
             'GEMDUEL_DEV_SERVER_URL',
@@ -180,7 +182,10 @@ describe('electron runtime config', () => {
             'GITHUB_RUN_ATTEMPT',
             'GITHUB_RUN_ID',
             'GITHUB_SHA',
+            'GITHUB_STEP_SUMMARY',
             'GITHUB_WORKFLOW',
+            'WIN_CSC_KEY_PASSWORD',
+            'WIN_CSC_LINK',
         ]);
         expect(RUNTIME_CONFIG_POLICY.GEMDUEL_ICE_SERVERS_JSON.secretHandling).toContain(
             'TURN credentials'
