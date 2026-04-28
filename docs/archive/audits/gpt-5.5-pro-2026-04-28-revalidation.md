@@ -104,7 +104,7 @@
 ## 与稿件差异说明
 
 - 与 GPT 5.5 Pro 的高风险向量基本一致；本复核未发现与其核心论断明显冲突、且与本地文件可复现的“错误指认”。
-- `coverage` 只在此前审计中作为历史阻塞点出现，本次复核重点不重复展开（见 `docs/archive/engineering-audit-report-2026-04-27.md`）。
+- `coverage` 只在此前审计中作为历史阻塞点出现，本次复核重点不重复展开（见 `docs/archive/audits/engineering-audit-report-2026-04-27.md`）。
 
 ## 建议治理动作（接入本次复核）
 
@@ -125,4 +125,4 @@
 ### 复核与交付
 
 - 本记录建议被纳入 `docs/README.md` 的治理档案入口；
-- 与 `docs/archive/engineering-audit-report-2026-04-27.md` 形成同一编号序列，避免与历史审计混淆。
+- 与 `docs/archive/audits/engineering-audit-report-2026-04-27.md` 形成同一编号序列，避免与历史审计混淆。

@@ -9,6 +9,7 @@ import {
     collectDesktopGovernanceErrors,
     collectSnapshotDriftIssues,
     createMainWindowOptions,
+    getDesktopAspectRatioConfig,
     isAllowedRendererUrl,
     validateIpcArgs,
     validateMainWindowOptions,
@@ -94,6 +95,30 @@ describe('electron desktop governance', () => {
             })
         ).toBe(false);
         expect(isAllowedRendererUrl('http://localhost:5173', false)).toBe(false);
+    });
+
+    it('keeps renderer trust URL parsing fail-closed with governed defaults', () => {
+        expect(isAllowedRendererUrl(5173, true)).toBe(false);
+        expect(isAllowedRendererUrl('not a url', true)).toBe(false);
+        expect(
+            isAllowedRendererUrl('http://localhost:5173', true, {
+                devServerUrl: 'not a url',
+            })
+        ).toBe(true);
+        expect(
+            isAllowedRendererUrl('https://localhost/', true, {
+                devServerUrl: 'https://LOCALHOST:443/',
+            })
+        ).toBe(true);
+        expect(
+            isAllowedRendererUrl(
+                'file:///E:/simonbb/GemDuel-Dev/apps/desktop/dist/index.html',
+                false,
+                {
+                    packagedRendererUrl: 'not a url',
+                }
+            )
+        ).toBe(false);
     });
 
     it('authorizes only the trusted renderer sender and origin', () => {
@@ -324,6 +349,71 @@ describe('electron desktop governance', () => {
         expect(window.setMinimumSize).toHaveBeenLastCalledWith(1280, 800);
         expect(window.setAspectRatio).toHaveBeenLastCalledWith(16 / 10);
         expect(window.setSize).toHaveBeenLastCalledWith(1600, 1000);
+    });
+
+    it('keeps aspect ratio and snapshot fallbacks explicit for governance checks', () => {
+        expect(() => getDesktopAspectRatioConfig('21:9')).toThrow(
+            'Desktop aspect ratio must be one of 16:10 or 16:9.'
+        );
+
+        expect(applyDesktopAspectRatioToWindow(undefined, '16:10')).toEqual({
+            ratio: '16:10',
+            width: 1280,
+            height: 800,
+            aspectRatio: 16 / 10,
+        });
+        expect(
+            applyDesktopAspectRatioToWindow(
+                {
+                    getBounds: vi.fn(() => ({ width: 0, height: 0 })),
+                },
+                '16:9'
+            )
+        ).toEqual({
+            ratio: '16:9',
+            width: 1280,
+            height: 720,
+            aspectRatio: 16 / 9,
+        });
+
+        expect(
+            validateMainWindowOptions({
+                webPreferences: {
+                    nodeIntegration: false,
+                    contextIsolation: true,
+                    webSecurity: true,
+                    allowRunningInsecureContent: false,
+                    preload: 'E:/simonbb/GemDuel-Dev/electron/preload.js',
+                },
+                autoHideMenuBar: true,
+                width: 1280,
+                height: 720,
+                minWidth: 1024,
+                minHeight: 640,
+            })
+        ).toEqual([
+            '[BrowserWindow] default size must stay locked to 16:10 at 1280x800.',
+            '[BrowserWindow] default minimum size must stay locked to 16:10 at 1280x800.',
+        ]);
+
+        expect(
+            buildDesktopGovernanceSnapshot({
+                windowOptions: undefined,
+                bridgeApiKeys: [],
+            }).mainWindow
+        ).toMatchObject({
+            autoHideMenuBar: null,
+            width: null,
+            height: null,
+            minWidth: null,
+            minHeight: null,
+            webPreferences: {
+                nodeIntegration: null,
+                contextIsolation: null,
+                webSecurity: null,
+                allowRunningInsecureContent: null,
+            },
+        });
     });
 
     it('fails the release governance check if the bridge surface or doc drifts', () => {

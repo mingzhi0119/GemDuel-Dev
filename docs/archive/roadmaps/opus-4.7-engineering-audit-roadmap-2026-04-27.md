@@ -1,6 +1,6 @@
 # GemDuel-Dev 工程审计改良建议与路线报告（Opus 4.7 第二轮）
 
-**配套审计:** [`docs/archive/opus-4.7-engineering-audit-report-2026-04-27.md`](./opus-4.7-engineering-audit-report-2026-04-27.md)
+**配套审计:** [`docs/archive/audits/opus-4.7-engineering-audit-report-2026-04-27.md`](../audits/opus-4.7-engineering-audit-report-2026-04-27.md)
 **仓库版本:** `5.2.11`
 **编写日期:** `2026-04-27`
 **目标态:** 让 **十维本地认证 (`pnpm lifecycle:certify`) 重新全绿**，并把覆盖率债务从"单次堆积"转为"持续小账本"，最终把整体分稳定在 **9.4 – 9.7**。
@@ -239,7 +239,7 @@ pnpm audit:gates
 
 **✅ 已落地（2026-04-28）:** `tools/scripts/draft-audit-report.mjs` + `draftAuditReport.js`；默认输出 `artifacts/governance/engineering-audit-draft-<UTC-date>.md`（与 `docs/archive/` 手工草稿等价关系见 ADR 0010）；`governance-evidence.yml` 仅在 `Lifecycle Certification` 步骤失败时生成；`pnpm audit:draft`；ADR 0010。
 
-**目标:** 当 `lifecycle-certification.report.json` 状态由 passed 转 failed 时，自动写一份 `docs/archive/engineering-audit-draft-<date>.md` 草稿。
+**目标:** 当 `lifecycle-certification.report.json` 状态由 passed 转 failed 时，自动写一份 `docs/archive/audits/engineering-audit-draft-<date>.md` 草稿。
 
 **实现:**
 

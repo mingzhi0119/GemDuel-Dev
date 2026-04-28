@@ -3,7 +3,7 @@
 **仓库：** `E:\simonbb\GemDuel-Dev`  
 **日期：** `2026-04-28`  
 **工作模式：** 只读核对源码与治理文件；除本 Markdown 外不修改任何文件。  
-**被审阅报告：** `docs/archive/gpt-5.5-pro-2026-04-28-revalidation.md`
+**被审阅报告：** `docs/archive/audits/gpt-5.5-pro-2026-04-28-revalidation.md`
 
 ## 总体判断
 

@@ -2,7 +2,7 @@
 
 ## Summary
 
-This certification records the post-remediation lifecycle governance target for GemDuel-Dev. It uses `docs/archive/engineering-audit-report-2026-04-25.md` as the original audit scope anchor and certifies repo-contained governance only.
+This certification records the post-remediation lifecycle governance target for GemDuel-Dev. It uses `docs/archive/audits/engineering-audit-report-2026-04-25.md` as the original audit scope anchor and certifies repo-contained governance only.
 
 Live GitHub repository settings are excluded from this local score for now. Branch protection, rulesets, and vulnerability-alert drift remain documented by `tools/governance/repo-settings.snapshot.json` and the optional read-only `pnpm repo-settings:check -- --live` command, but they are not blockers for this 10/10 local certification.
 

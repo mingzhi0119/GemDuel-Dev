@@ -3,7 +3,7 @@
     "source": "github-releases",
     "repository": "mingzhi0119/GemDuel-Dev",
     "capturedAt": "2026-04-25T00:00:00.000Z",
-    "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
+    "scopeAnchor": "docs/archive/audits/engineering-audit-report-2026-04-25.md",
     "publishedReleases": [
         {
             "tag": "v5.2.11",

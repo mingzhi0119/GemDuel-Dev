@@ -31,10 +31,9 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 
 ## Archive
 
-- [Engineering Governance Archive](archive/engineering-governance-archive.md)
-- [Engineering Audit Report 2026-04-25](archive/engineering-audit-report-2026-04-25.md)
-- [Engineering Governance Certification 2026-04-25](archive/engineering-governance-certification-2026-04-25.md)
-- [GPT-5.5 Pro Revalidation 2026-04-28](archive/gpt-5.5-pro-2026-04-28-revalidation.md)
-- [GPT-5.5 Pro Remediation Plan 2026-04-28](archive/gpt-5.5-pro-2026-04-28-remediation-plan.md)
-- [Independent Audit Prompt](archive/opus-4.7-independent-audit-prompt.md)
-- [Light/Dark Runtime Theme Retirement 2026-04-27](archive/theme-retirement-plan-2026-04-27.md)
+- [Archive Index](archive/README.md)
+- [Audit Reports and Revalidations](archive/README.md#audits-and-revalidations)
+- [Roadmaps and Implementation Plans](archive/README.md#roadmaps-and-implementation-plans)
+- [Certifications](archive/README.md#certifications)
+- [Prompts](archive/README.md#prompts)
+- [Timeline](archive/README.md#timeline)

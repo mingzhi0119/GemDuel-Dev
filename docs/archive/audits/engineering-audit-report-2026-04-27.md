@@ -124,7 +124,7 @@
 
 ## 与上一版审计（2026-04-25）对比
 
-对照 `docs/archive/engineering-audit-report-2026-04-25.md`：
+对照 `docs/archive/audits/engineering-audit-report-2026-04-25.md`：
 
 - **总分变化:** `8.55 -> 9.00`（`+0.45`）  
   说明：结构治理项（架构预算、治理脚本覆盖）提升明显，抵消了 coverage 的单点拖累。

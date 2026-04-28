@@ -9,7 +9,7 @@
         "mode": "code-only-desired-state",
         "liveMutationsAllowed": false,
         "externalCertificationRequired": true,
-        "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md"
+        "scopeAnchor": "docs/archive/audits/engineering-audit-report-2026-04-25.md"
     },
     "branchProtection": {
         "protected": true,

@@ -1,6 +1,6 @@
 {
     "schemaVersion": 1,
-    "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
+    "scopeAnchor": "docs/archive/audits/engineering-audit-report-2026-04-25.md",
     "sourcePath": "packages/config-vitest/sealExclusions.js",
     "baselineCount": 97,
     "maxReviewCadenceDays": 30,

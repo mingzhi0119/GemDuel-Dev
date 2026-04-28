@@ -22,7 +22,7 @@ Release coverage is governed by `pnpm changelog:check` and
 
 ### Notes
 
-- The 2026-04-25 audit in `docs/archive/engineering-audit-report-2026-04-25.md` is the current lifecycle remediation anchor.
+- The 2026-04-25 audit in `docs/archive/audits/engineering-audit-report-2026-04-25.md` is the current lifecycle remediation anchor.
 - Release notes should call out any change to `electron/`, networking contracts, `governance/` snapshots, `.github/workflows/`, lifecycle gate scripts, or published release coverage.
 
 ## v5.2.11 - 2025-12-31

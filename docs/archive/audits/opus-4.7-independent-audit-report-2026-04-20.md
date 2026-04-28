@@ -79,7 +79,7 @@ However, three hard problems downgrade the archived `9.9/10` self-assessment. Fi
 
 ### 6. Coverage thresholds are below the project's own stated 10/10 target
 
-- **Affected files:** `vitest.config.ts:49-54` (`statements: 85, lines: 85, functions: 90, branches: 80`), `docs/archive/engineering-governance-archive.md`
+- **Affected files:** `vitest.config.ts:49-54` (`statements: 85, lines: 85, functions: 90, branches: 80`), `docs/archive/timeline/engineering-governance-archive.md`
 - **Why it matters:** The archive explicitly calls out that thresholds are still below the `10.0/10` bar. Coverage is also narrowed to a hand-picked `include` list, so unlisted code (e.g. `src/hooks/useAIController.ts`, most components) can regress without moving the coverage number.
 - **Severity:** `Medium`
 - **Risk scenario:** Coverage numbers overstate protection; regressions in UI/AI code pass the gate.
@@ -88,7 +88,7 @@ However, three hard problems downgrade the archived `9.9/10` self-assessment. Fi
 ### 7. No file-size / ownership gate to match the architecture layer map
 
 - **Affected files:** `src/data/realCards.ts` 764 LOC, `src/components/PlayerZone.tsx` 711 LOC, `src/logic/contractSchemas.ts` 697 LOC, `src/components/CardAnatomyPage.tsx` 495 LOC, `src/components/Card.tsx` 454 LOC
-- **Why it matters:** `docs/archive/engineering-governance-archive.md` lists this as the last blocker to `10.0/10`. Without a mechanical ceiling, large files accumulate mixed responsibilities that are hard to review under the boundary contract.
+- **Why it matters:** `docs/archive/timeline/engineering-governance-archive.md` lists this as the last blocker to `10.0/10`. Without a mechanical ceiling, large files accumulate mixed responsibilities that are hard to review under the boundary contract.
 - **Severity:** `Medium`
 - **Risk scenario:** Cross-layer leaks (e.g. UI holding domain logic) re-appear as the codebase grows.
 - **Fix complexity:** `Medium` (a small `scripts/check-architecture-budgets.mjs` that walks the layer map and fails on size or owner rule breaches; wire into `governance.yml`).

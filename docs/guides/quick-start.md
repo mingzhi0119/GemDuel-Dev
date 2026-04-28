@@ -53,4 +53,4 @@ pnpm lifecycle:certify
 3. [`docs/guides/lexicon-copy-system.md`](lexicon-copy-system.md)
 4. [`docs/guides/frontend-layout-guide.md`](frontend-layout-guide.md)
 5. [`docs/governance/architecture-layer-map.md`](../governance/architecture-layer-map.md)
-6. [`docs/archive/engineering-governance-certification-2026-04-25.md`](../archive/engineering-governance-certification-2026-04-25.md)
+6. [`docs/archive/certifications/engineering-governance-certification-2026-04-25.md`](../archive/certifications/engineering-governance-certification-2026-04-25.md)

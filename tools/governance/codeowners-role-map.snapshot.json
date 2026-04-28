@@ -2,7 +2,7 @@
     "schemaVersion": 1,
     "mode": "single-maintainer-role-map",
     "maintainer": "@mingzhi0119",
-    "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
+    "scopeAnchor": "docs/archive/audits/engineering-audit-report-2026-04-25.md",
     "boundaryRoleMappings": [
         {
             "role": "Frontend + Domain Logic",

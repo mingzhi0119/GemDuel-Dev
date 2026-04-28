@@ -194,7 +194,7 @@ export const buildGovernanceAssets = () => [
         relativePath: 'tools/governance/lifecycle-certification.snapshot.json',
         producedBy: 'tools/governance/lifecycle-certification.snapshot.json',
         checkedBy: ['tools/scripts/check-lifecycle-certification.mjs'],
-        sourceRefs: ['docs/archive/engineering-audit-report-2026-04-25.md'],
+        sourceRefs: ['docs/archive/audits/engineering-audit-report-2026-04-25.md'],
     }),
     createGovernanceAsset({
         id: 'seal-exclusions-review-snapshot',

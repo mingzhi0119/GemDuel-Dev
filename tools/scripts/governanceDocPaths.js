@@ -3,9 +3,9 @@ export const GOVERNANCE_DOC_PATHS = Object.freeze({
     quickStart: 'docs/guides/quick-start.md',
     testing: 'docs/guides/testing.md',
     frontendLayoutGuide: 'docs/guides/frontend-layout-guide.md',
-    engineeringGovernanceArchive: 'docs/archive/engineering-governance-archive.md',
+    engineeringGovernanceArchive: 'docs/archive/timeline/engineering-governance-archive.md',
     engineeringGovernanceCertification:
-        'docs/archive/engineering-governance-certification-2026-04-25.md',
+        'docs/archive/certifications/engineering-governance-certification-2026-04-25.md',
     architectureLayerMap: 'docs/governance/architecture-layer-map.md',
     boundaryInventory: 'docs/governance/boundary-inventory.md',
     dependencyRuntimeGovernance: 'docs/governance/dependency-runtime-governance.md',
