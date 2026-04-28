@@ -106,6 +106,29 @@ describe('DraftScreen', () => {
         expect(html).toContain('Lvl 3');
     });
 
+    it('uses the same four-card scale reference for p1 and p2 draft cards', () => {
+        const p1Html = renderDraftScreen();
+        const p2Html = renderDraftScreen({
+            activePlayer: 'p2',
+            p2DraftPool: [
+                BUFFS.PRIVILEGE_FAVOR.id,
+                BUFFS.GREED_KING.id,
+                BUFFS.DOUBLE_AGENT.id,
+                BUFFS.ECHO_RESERVOIR.id,
+            ],
+            activeDraftLevel: 3,
+        });
+
+        expect(p1Html).toContain('data-draft-card-scale-reference="4"');
+        expect(p2Html).toContain('data-draft-card-scale-reference="4"');
+        expect(p1Html).toContain('w-[68.5rem]');
+        expect(p2Html).toContain('w-[68.5rem]');
+        expect(p1Html.match(/w-64 h-80/g)).toHaveLength(3);
+        expect(p2Html.match(/w-64 h-80/g)).toHaveLength(4);
+        expect(p2Html).toContain('Player 1&#x27;s Choice');
+        expect(p2Html).toContain('ring-2 ring-amber-400/50');
+    });
+
     it('shows reroll controls for the local player during solo roguelike drafts', () => {
         const html = renderDraftScreen({
             mode: 'PVE',

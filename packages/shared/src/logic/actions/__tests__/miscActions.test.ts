@@ -78,6 +78,47 @@ describe('miscActions', () => {
         expect(state.activeModal?.data.initiator).toBe(state.turn);
     });
 
+    it('opens the peek modal with L3, L2, and L1 top cards flattened in order', () => {
+        const state = stateFactory();
+        const createCard = (id: string, level: 1 | 2 | 3, points: number) =>
+            ({
+                id,
+                level,
+                cost: { blue: 0, white: 0, green: 0, black: 0, red: 0, pearl: 0, gold: 0 },
+                points,
+            }) as never;
+
+        state.decks[3] = [
+            createCard('l3-low', 3, 1),
+            createCard('l3-mid', 3, 2),
+            createCard('l3-top', 3, 3),
+        ];
+        state.decks[2] = [
+            createCard('l2-low', 2, 1),
+            createCard('l2-mid', 2, 2),
+            createCard('l2-top', 2, 3),
+        ];
+        state.decks[1] = [
+            createCard('l1-low', 1, 1),
+            createCard('l1-mid', 1, 2),
+            createCard('l1-top', 1, 3),
+        ];
+
+        handlePeekDeck(state, { levels: [3, 2, 1] });
+
+        expect(state.activeModal?.data.cards.map((card) => card.id)).toEqual([
+            'l3-top',
+            'l3-mid',
+            'l3-low',
+            'l2-top',
+            'l2-mid',
+            'l2-low',
+            'l1-top',
+            'l1-mid',
+            'l1-low',
+        ]);
+    });
+
     it('closes the active modal without mutating other state', () => {
         const state = stateFactory();
         state.activeModal = {

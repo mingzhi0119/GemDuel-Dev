@@ -246,8 +246,10 @@ export const selectRoyalPayloadSchema = z
 
 export const peekDeckPayloadSchema = z
     .object({
-        level: levelSchema,
+        level: levelSchema.optional(),
+        levels: z.array(levelSchema).min(1).optional(),
     })
+    .refine((payload) => payload.level !== undefined || payload.levels !== undefined)
     .passthrough();
 
 export const discardReservedPayloadSchema = z

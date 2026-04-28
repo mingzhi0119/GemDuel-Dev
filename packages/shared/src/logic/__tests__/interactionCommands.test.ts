@@ -142,6 +142,10 @@ describe('Interaction Commands', () => {
             type: 'PEEK_DECK',
             payload: { level: 3 },
         });
+        expect(buildPeekDeckAction('all')).toEqual({
+            type: 'PEEK_DECK',
+            payload: { levels: [3, 2, 1] },
+        });
         expect(buildRerollDraftPoolAction(2)).toEqual({
             type: 'REROLL_DRAFT_POOL',
             payload: { level: 2 },

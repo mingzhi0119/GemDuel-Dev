@@ -86,6 +86,7 @@ const createGame = (): AppRouteProps['game'] =>
             handleCancelReserve: vi.fn(),
             handleCancelPrivilege: vi.fn(),
             checkAndInitiateBuyReserved: vi.fn(),
+            clearPreselectedReserveGold: vi.fn(),
             handleDebugAddCrowns: vi.fn(),
             handleDebugAddPoints: vi.fn(),
             handleDebugAddPrivilege: vi.fn(),

@@ -43,14 +43,13 @@ export const handleDebugAddPrivilege = (state: GameState, payload: PlayerKey): G
  * Peek at top 3 cards of a deck (Intelligence ability)
  */
 export const handlePeekDeck = (draft: GameState, payload: PeekDeckPayload): void => {
-    const { level } = payload;
-    const deck = draft.decks[level];
-    const top3 = deck.slice(-3).reverse();
+    const levels = payload.levels?.length ? payload.levels : payload.level ? [payload.level] : [];
+    const cards = levels.flatMap((level) => draft.decks[level].slice(-3).reverse());
 
     draft.activeModal = {
         type: 'PEEK',
         data: {
-            cards: top3,
+            cards,
             initiator: draft.turn,
         },
     };

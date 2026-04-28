@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card, FEATURED_CARD_SIZE } from '../Card';
 import { CardPreviewOverlay } from '../CardPreviewOverlay';
+import { createCardPreviewActions } from '../cardPreviewActions';
 import { ScaledCardFrame } from './ScaledCardFrame';
 import { getLexiconLabel } from '@gemduel/shared';
 import { useLocale } from '../../i18n/LocaleProvider';
@@ -39,17 +40,28 @@ export function PlayerZoneReservedColumn({
     pendingReservedCardIds = [],
     dividerSide = 'left',
 }: PlayerZoneReservedColumnProps) {
-    const [previewCard, setPreviewCard] = useState<CardType | null>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const { locale } = useLocale();
     const pendingReservedCardIdSet = useMemo(
         () => new Set(pendingReservedCardIds),
         [pendingReservedCardIds]
     );
-    const previewCanBuy =
-        previewCard !== null &&
-        isActive &&
-        !pendingReservedCardIdSet.has(previewCard.id) &&
-        onBuyReserved(previewCard);
+    const previewCards = useMemo(() => reserved.slice(0, RESERVED_CARD_TARGET_SLOTS), [reserved]);
+    const previewCardActions = useMemo(
+        () =>
+            previewCards.map((card) => {
+                const canBuyReserved =
+                    isActive && !pendingReservedCardIdSet.has(card.id) && onBuyReserved(card);
+
+                return createCardPreviewActions({
+                    id: 'buy',
+                    label: getLexiconLabel('buyCard', locale),
+                    disabled: !canBuyReserved,
+                    onAction: () => onBuyReserved(card, true),
+                });
+            }),
+        [isActive, locale, onBuyReserved, pendingReservedCardIdSet, previewCards]
+    );
     const reservedMiniStackSlots = Math.min(
         Math.max(reserved.length, 1),
         RESERVED_CARD_TARGET_SLOTS
@@ -124,7 +136,7 @@ export function PlayerZoneReservedColumn({
                                                 card={card}
                                                 size="featured"
                                                 canBuy={canBuyReserved}
-                                                onClick={() => setPreviewCard(card)}
+                                                onClick={() => setIsPreviewOpen(true)}
                                                 allowUnavailableClick={true}
                                                 isReservedView={true}
                                                 theme={theme}
@@ -152,23 +164,12 @@ export function PlayerZoneReservedColumn({
                     </div>
                 )}
                 <CardPreviewOverlay
-                    isOpen={Boolean(previewCard)}
-                    mode="single"
-                    cards={previewCard ? [previewCard] : []}
+                    isOpen={isPreviewOpen}
+                    mode="collection"
+                    cards={previewCards}
                     theme={theme}
-                    onClose={() => setPreviewCard(null)}
-                    primaryActionLabel={
-                        previewCanBuy ? getLexiconLabel('buyCard', locale) : undefined
-                    }
-                    onPrimaryAction={
-                        previewCanBuy && previewCard
-                            ? () => {
-                                  if (onBuyReserved(previewCard, true)) {
-                                      setPreviewCard(null);
-                                  }
-                              }
-                            : undefined
-                    }
+                    onClose={() => setIsPreviewOpen(false)}
+                    cardActions={previewCardActions}
                 />
             </div>
         </div>

@@ -3,7 +3,7 @@ import { ArrowLeft, RotateCcw, Users } from 'lucide-react';
 import { GEM_TYPES, BONUS_COLORS } from '@gemduel/shared/constants';
 import { getGemLabel } from '@gemduel/shared';
 import { isBonusColorSelectionPhase } from '@gemduel/shared/logic/fsm';
-import type { ActiveModal, GameMode, GamePhase, GemColor, PlayerKey } from '@gemduel/shared/types';
+import type { GamePhase, GemColor, PlayerKey } from '@gemduel/shared/types';
 import type { ThemeName } from '@gemduel/shared/types';
 import { GemIcon } from '@gemduel/ui/components/GemIcon';
 import { useLocale, useT } from '@gemduel/ui/i18n/LocaleProvider';
@@ -12,11 +12,6 @@ import { LexiconTerm } from '@gemduel/ui/lexicon/LexiconTerm';
 const Rulebook = React.lazy(() =>
     import('@gemduel/ui/components/Rulebook').then((module) => ({ default: module.Rulebook }))
 );
-const DeckPeekModal = React.lazy(() =>
-    import('@gemduel/ui/components/DeckPeekModal').then((module) => ({
-        default: module.DeckPeekModal,
-    }))
-);
 const WinnerModal = React.lazy(() =>
     import('@gemduel/ui/components/WinnerModal').then((module) => ({ default: module.WinnerModal }))
 );
@@ -24,16 +19,12 @@ const WinnerModal = React.lazy(() =>
 interface AppOverlayStackProps {
     theme: ThemeName;
     showRulebook: boolean;
-    activeModal: ActiveModal | null;
-    mode: GameMode;
-    localPlayer: PlayerKey;
     persistentWinner: PlayerKey | null;
     isReviewing: boolean;
     showRestartConfirm: boolean;
     phase: GamePhase;
     isPeekingBoard: boolean;
     onCloseRulebook: () => void;
-    onCloseModal: () => void;
     onStartReview: () => void;
     onStopReview: () => void;
     onCancelRestart: () => void;
@@ -46,16 +37,12 @@ interface AppOverlayStackProps {
 export function AppOverlayStack({
     theme,
     showRulebook,
-    activeModal,
-    mode,
-    localPlayer,
     persistentWinner,
     isReviewing,
     showRestartConfirm,
     phase,
     isPeekingBoard,
     onCloseRulebook,
-    onCloseModal,
     onStartReview,
     onStopReview,
     onCancelRestart,
@@ -70,18 +57,6 @@ export function AppOverlayStack({
         <>
             <Suspense fallback={<div className="absolute inset-0 z-[200] bg-black/50" />}>
                 {showRulebook && <Rulebook onClose={onCloseRulebook} theme={theme} />}
-
-                {activeModal?.type === 'PEEK' &&
-                    !isReviewing &&
-                    (mode !== 'ONLINE_MULTIPLAYER' ||
-                        activeModal.data?.initiator === localPlayer) && (
-                        <DeckPeekModal
-                            isOpen={true}
-                            cards={activeModal.data.cards}
-                            onClose={onCloseModal}
-                            theme={theme}
-                        />
-                    )}
             </Suspense>
 
             {persistentWinner && !isReviewing && (

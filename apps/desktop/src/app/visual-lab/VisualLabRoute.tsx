@@ -235,19 +235,19 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
             </div>
 
             {onCloseToStartPage ? (
-                <div className="absolute right-3 top-3 z-[110]">
+                <div className="absolute right-5 top-0 z-[200] flex h-24 items-center lg:right-7 lg:h-[120px]">
                     <button
                         type="button"
                         data-app-restart-button="true"
                         onClick={() => {
                             onCloseToStartPage();
                         }}
-                        className={`group relative flex h-16 w-16 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-[4.25rem] lg:w-[4.25rem] ${restartIconButtonClass}`}
+                        className={`group relative flex h-20 w-20 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-24 lg:w-24 ${restartIconButtonClass}`}
                         style={restartIconStyle}
                         aria-label={t('settings.restart')}
                         aria-describedby={restartTooltipId}
                     >
-                        <GameGlyph variant="restart" size={34} />
+                        <GameGlyph variant="restart" size={48} />
                         <span
                             id={restartTooltipId}
                             role="tooltip"

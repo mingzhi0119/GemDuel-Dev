@@ -178,6 +178,46 @@ describe('PlayerZoneIdentityColumn echo reservoir memory', () => {
         expect(container?.querySelector('[data-player-avatar-fallback="shield"]')).not.toBeNull();
     });
 
+    it('renders a fixed buff preview trigger slot above the avatar', async () => {
+        const onClick = vi.fn();
+        const rendered = await renderColumn(BUFFS.INTELLIGENCE as unknown as Buff, {
+            buffPreviewAction: {
+                id: 'peek',
+                label: 'Peek',
+                onClick,
+            },
+        });
+        container = rendered.container;
+        root = rendered.root;
+
+        const slot = container?.querySelector('[data-player-buff-preview-slot="p1"]');
+        const trigger = container?.querySelector(
+            '[data-player-buff-preview-action="peek"]'
+        ) as HTMLButtonElement | null;
+        const avatar = container?.querySelector('[data-player-avatar="p1"]');
+
+        expect(slot).not.toBeNull();
+        expect(trigger).not.toBeNull();
+        expect(trigger?.textContent).toBe('Peek');
+        expect(trigger?.querySelector('svg')).toBeNull();
+        expect(trigger?.className).toContain('w-[95%]');
+        expect(trigger?.className).toContain('h-12');
+        expect(trigger?.className).toContain('rounded-md');
+        expect(trigger?.className).toContain('text-[20px]');
+        expect(trigger?.className).toContain('justify-center');
+        expect(slot?.className).toContain('h-14');
+        expect(slot?.compareDocumentPosition(avatar as Node)).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING
+        );
+
+        await act(async () => {
+            trigger?.click();
+            await Promise.resolve();
+        });
+
+        expect(onClick).toHaveBeenCalled();
+    });
+
     it('disables privilege scrolls outside the activate-privilege phase', async () => {
         const onUsePrivilege = vi.fn();
         const rendered = await renderColumn(BUFFS.NONE as unknown as Buff, {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -6,6 +6,7 @@ import { getGemLabel, getPlayerDisplayName } from '@gemduel/shared';
 import type { Card as CardType, GemColor, PlayerKey } from '@gemduel/shared/types';
 import { useLocale, useT } from '../i18n/LocaleProvider';
 import { Card, FEATURED_CARD_SAMPLE_SIZE, FEATURED_CARD_SIZE } from './Card';
+import type { CardPreviewAction } from './cardPreviewActions';
 
 const CARD_ASPECT_RATIO = FEATURED_CARD_SAMPLE_SIZE.height / FEATURED_CARD_SAMPLE_SIZE.width;
 const CARD_LAYOUT_COLUMNS = 4;
@@ -16,6 +17,9 @@ const MOBILE_CARD_GAP_PX = 12;
 const CARD_ROW_VIEWPORT_RATIO = 0.9;
 const MIN_CARD_WIDTH_PX = 72;
 const VERTICAL_CHROME_PX = 230;
+const GLOBAL_ACTION_BAND_BOTTOM = 'clamp(72px, 11vh, 150px)';
+const ACTION_BUTTON_CLASS =
+    'min-w-[148px] rounded border border-amber-200/70 bg-amber-400 px-6 py-2 text-sm font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_10px_28px_rgba(251,191,36,0.26)] transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:border-slate-500/50 disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none';
 
 type CardPreviewMode = 'single' | 'collection';
 
@@ -28,9 +32,9 @@ interface CardPreviewOverlayProps {
     title?: string;
     player?: PlayerKey;
     color?: string;
-    primaryActionLabel?: string;
-    primaryActionDisabled?: boolean;
-    onPrimaryAction?: () => void;
+    previewContent?: ReactNode;
+    actions?: CardPreviewAction[];
+    cardActions?: CardPreviewAction[][];
 }
 
 const getViewportSize = () => {
@@ -106,14 +110,19 @@ export function CardPreviewOverlay({
     title,
     player,
     color,
-    primaryActionLabel,
-    primaryActionDisabled = false,
-    onPrimaryAction,
+    previewContent,
+    actions = [],
+    cardActions = [],
 }: CardPreviewOverlayProps) {
     const { locale } = useLocale();
     const t = useT();
     const viewportSize = useViewportSize();
     const visibleCards = useMemo(() => cards.slice(0, CARD_LIMIT), [cards]);
+    const visibleCardActions = useMemo(
+        () => visibleCards.map((_, index) => cardActions[index] ?? []),
+        [cardActions, visibleCards]
+    );
+    const hasCardActions = visibleCardActions.some((cardActionSet) => cardActionSet.length > 0);
     const layout = useMemo(
         () => getPreviewLayout(visibleCards.length, viewportSize),
         [visibleCards.length, viewportSize]
@@ -141,13 +150,28 @@ export function CardPreviewOverlay({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    if (!isOpen || visibleCards.length === 0) {
+    const hasPreviewContent = Boolean(previewContent);
+    const hasVisiblePreview = visibleCards.length > 0 || hasPreviewContent;
+    const actionLayout = actions.length === 1 ? 'single' : actions.length > 1 ? 'pair' : 'none';
+    const actionAlign = actions.length === 1 ? 'center' : 'split';
+    const handleAction = (action: CardPreviewAction) => {
+        if (action.disabled || !action.onAction) {
+            return;
+        }
+
+        const result = action.onAction();
+        if (result !== false) {
+            onClose();
+        }
+    };
+
+    if (!isOpen || !hasVisiblePreview) {
         return null;
     }
 
     const overlay = (
         <AnimatePresence>
-            {isOpen && visibleCards.length > 0 && (
+            {isOpen && hasVisiblePreview && (
                 <motion.div
                     key="card-preview-overlay"
                     data-card-preview-overlay="true"
@@ -179,47 +203,39 @@ export function CardPreviewOverlay({
                         <X size={22} />
                     </button>
                     <motion.div
-                        className={`relative z-[156] flex max-h-[calc(100vh-48px)] max-w-[94vw] flex-col items-center justify-center overflow-visible rounded-2xl px-4 py-6 ${
+                        data-card-preview-panel="true"
+                        className={`pointer-events-none absolute inset-0 z-[156] overflow-visible rounded-2xl px-4 py-6 ${
                             theme === 'dark' ? 'text-slate-100' : 'text-stone-50'
                         }`}
-                        initial={{ y: 18, scale: 0.96 }}
-                        animate={{ y: 0, scale: 1 }}
-                        exit={{ y: 10, scale: 0.98 }}
+                        initial={{ opacity: 0.96 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0.98 }}
                         transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-                        onClick={(event) => event.stopPropagation()}
                     >
-                        <div className="mb-5 text-center">
+                        <div
+                            data-card-preview-title-band="true"
+                            className="absolute left-0 right-0 top-0 flex h-[168px] items-end justify-center px-16 pb-5 text-center"
+                        >
                             <h2 className="text-3xl font-black uppercase tracking-[0.15em] text-amber-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
                                 {heading}
                             </h2>
                             {cards.length > visibleCards.length && (
-                                <p className="mt-2 text-xs font-black uppercase tracking-[0.18em] text-amber-100/70">
+                                <p className="absolute bottom-1 text-xs font-black uppercase tracking-[0.18em] text-amber-100/70">
                                     Showing {visibleCards.length} / {cards.length}
                                 </p>
                             )}
                         </div>
                         <div
-                            data-card-preview-grid="true"
-                            className="grid justify-center overflow-visible"
-                            style={{
-                                gridTemplateColumns: `repeat(${layout.columns}, ${layout.width}px)`,
-                                gap: `${layout.gapPx}px`,
-                                width: `${layout.gridWidth}px`,
-                                minHeight: `${layout.gridHeight}px`,
-                            }}
+                            data-card-preview-card-band="true"
+                            className="pointer-events-auto absolute left-1/2 top-1/2 max-w-[94vw] -translate-x-1/2 -translate-y-1/2 overflow-visible"
                         >
-                            {visibleCards.map((card, index) => (
+                            {hasPreviewContent ? (
                                 <motion.div
-                                    key={card.id || index}
-                                    data-card-preview-card={card.id}
+                                    data-card-preview-content="custom"
                                     className="relative overflow-visible rounded-xl shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
                                     initial={{ opacity: 0, y: 18, scale: 0.96 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    transition={{
-                                        delay: index * 0.035,
-                                        duration: 0.2,
-                                        ease: 'easeOut',
-                                    }}
+                                    transition={{ duration: 0.2, ease: 'easeOut' }}
                                     style={{
                                         width: `${layout.width}px`,
                                         height: `${layout.height}px`,
@@ -234,26 +250,134 @@ export function CardPreviewOverlay({
                                             transformOrigin: 'top left',
                                         }}
                                     >
-                                        <Card
-                                            card={card}
-                                            canBuy={false}
-                                            theme={theme}
-                                            size="featured"
-                                        />
+                                        {previewContent}
                                     </div>
                                 </motion.div>
-                            ))}
+                            ) : (
+                                <div
+                                    data-card-preview-grid="true"
+                                    className="grid justify-center overflow-visible"
+                                    style={{
+                                        gridTemplateColumns: `repeat(${layout.columns}, ${layout.width}px)`,
+                                        gap: `${layout.gapPx}px`,
+                                        width: `${layout.gridWidth}px`,
+                                        minHeight: `${layout.gridHeight}px`,
+                                    }}
+                                >
+                                    {visibleCards.map((card, index) => (
+                                        <motion.div
+                                            key={card.id || index}
+                                            data-card-preview-card={card.id}
+                                            className="relative overflow-visible rounded-xl shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
+                                            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{
+                                                delay: index * 0.035,
+                                                duration: 0.2,
+                                                ease: 'easeOut',
+                                            }}
+                                            style={{
+                                                width: `${layout.width}px`,
+                                                height: `${layout.height}px`,
+                                            }}
+                                        >
+                                            <div
+                                                data-card-preview-card-frame={card.id}
+                                                className="relative"
+                                                style={{
+                                                    width: `${layout.width}px`,
+                                                    height: `${layout.height}px`,
+                                                }}
+                                            >
+                                                <div
+                                                    className="absolute left-0 top-0"
+                                                    style={{
+                                                        width: `${FEATURED_CARD_SIZE.width}px`,
+                                                        height: `${FEATURED_CARD_SIZE.height}px`,
+                                                        transform: `scale(${layout.scale})`,
+                                                        transformOrigin: 'top left',
+                                                    }}
+                                                >
+                                                    <Card
+                                                        card={card}
+                                                        canBuy={false}
+                                                        theme={theme}
+                                                        size="featured"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                        {primaryActionLabel && onPrimaryAction && (
-                            <button
-                                type="button"
-                                data-card-preview-primary-action="true"
-                                disabled={primaryActionDisabled}
-                                onClick={onPrimaryAction}
-                                className="mt-6 rounded border border-amber-200/70 bg-amber-400 px-6 py-2 text-sm font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_10px_28px_rgba(251,191,36,0.26)] transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:border-slate-500/50 disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none"
+                        {hasCardActions && !hasPreviewContent && (
+                            <div
+                                data-card-preview-card-actions-band="true"
+                                className="pointer-events-auto absolute left-1/2 grid -translate-x-1/2 justify-center overflow-visible px-4"
+                                style={{
+                                    bottom: GLOBAL_ACTION_BAND_BOTTOM,
+                                    gridTemplateColumns: `repeat(${layout.columns}, ${layout.width}px)`,
+                                    gap: `${layout.gapPx}px`,
+                                    width: `${layout.gridWidth}px`,
+                                    maxWidth: '94vw',
+                                }}
                             >
-                                {primaryActionLabel}
-                            </button>
+                                {visibleCards.map((card, index) => (
+                                    <div
+                                        key={`card-actions-${card.id || index}`}
+                                        data-card-preview-card-actions={card.id}
+                                        className="flex justify-center gap-3"
+                                    >
+                                        {visibleCardActions[index].map((action, actionIndex) => (
+                                            <button
+                                                key={`${card.id || index}-${action.id}-${actionIndex}`}
+                                                type="button"
+                                                data-card-preview-action={action.id}
+                                                data-card-preview-action-card={card.id}
+                                                data-card-preview-action-index={actionIndex}
+                                                data-card-preview-action-scope="card"
+                                                disabled={action.disabled}
+                                                onClick={() => handleAction(action)}
+                                                className={ACTION_BUTTON_CLASS}
+                                            >
+                                                {action.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {actions.length > 0 && (
+                            <div
+                                data-card-preview-actions-band="true"
+                                className="pointer-events-auto absolute bottom-8 left-1/2 flex w-full max-w-[520px] -translate-x-1/2 justify-center px-4"
+                                style={{ bottom: GLOBAL_ACTION_BAND_BOTTOM }}
+                            >
+                                <div
+                                    data-card-preview-actions="true"
+                                    data-card-preview-actions-layout={actionLayout}
+                                    data-card-preview-actions-align={actionAlign}
+                                    className="flex w-full justify-center gap-4"
+                                >
+                                    {actions.map((action, index) => (
+                                        <button
+                                            key={action.id}
+                                            type="button"
+                                            data-card-preview-action={action.id}
+                                            data-card-preview-action-index={index}
+                                            data-card-preview-primary-action={
+                                                index === 0 ? 'true' : undefined
+                                            }
+                                            disabled={action.disabled}
+                                            onClick={() => handleAction(action)}
+                                            className={ACTION_BUTTON_CLASS}
+                                        >
+                                            {action.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         )}
                     </motion.div>
                 </motion.div>

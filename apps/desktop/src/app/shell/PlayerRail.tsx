@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { PlayerZone } from '@gemduel/ui/components/PlayerZone';
 import type {
+    PlayerZoneBuffPreviewAction,
     PlayerZoneStackState,
     PlayerZoneSurfaceArtwork,
 } from '@gemduel/ui/components/playerZone/types';
@@ -29,6 +30,7 @@ interface PlayerRailProps {
     playerZoneSurfaceArtworkOverride?: (player: PlayerKey) => PlayerZoneSurfaceArtwork | undefined;
     pendingReservedCardIds?: string[];
     onPreviewStack?: (stack: PlayerZoneStackState & { player: PlayerKey }) => void;
+    buffPreviewActions?: Partial<Record<PlayerKey, PlayerZoneBuffPreviewAction>>;
 }
 
 export function PlayerRail({
@@ -44,6 +46,7 @@ export function PlayerRail({
     playerZoneSurfaceArtworkOverride,
     pendingReservedCardIds = [],
     onPreviewStack,
+    buffPreviewActions,
 }: PlayerRailProps) {
     const { state, handlers, getters } = game;
     const {
@@ -137,6 +140,7 @@ export function PlayerRail({
                         surfaceVariant={resolvedPlayerZoneSurfaceVariant}
                         pendingReservedCardIds={pendingReservedCardIds}
                         onPreviewStack={onPreviewStack}
+                        buffPreviewAction={buffPreviewActions?.p1}
                     />
                 </div>
             </div>
@@ -200,6 +204,7 @@ export function PlayerRail({
                         surfaceVariant={resolvedPlayerZoneSurfaceVariant}
                         pendingReservedCardIds={pendingReservedCardIds}
                         onPreviewStack={onPreviewStack}
+                        buffPreviewAction={buffPreviewActions?.p2}
                     />
                 </div>
             </div>

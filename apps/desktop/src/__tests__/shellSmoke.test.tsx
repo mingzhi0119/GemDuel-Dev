@@ -108,6 +108,7 @@ const createGameController = (): AppRouteProps['game'] => {
             handleDiscardReserved: vi.fn(),
             activatePrivilegeMode: vi.fn(),
             checkAndInitiateBuyReserved: vi.fn(),
+            clearPreselectedReserveGold: vi.fn(),
         },
         getters: {
             getPlayerScore: vi.fn(() => 7),
@@ -255,16 +256,12 @@ describe('shell smoke coverage', () => {
             <AppOverlayStack
                 theme="dark"
                 showRulebook={false}
-                activeModal={null}
-                mode="LOCAL_PVP"
-                localPlayer="p1"
                 persistentWinner={null}
                 isReviewing={false}
                 showRestartConfirm={false}
                 phase="IDLE"
                 isPeekingBoard={false}
                 onCloseRulebook={vi.fn()}
-                onCloseModal={vi.fn()}
                 onStartReview={vi.fn()}
                 onStopReview={vi.fn()}
                 onCancelRestart={vi.fn()}

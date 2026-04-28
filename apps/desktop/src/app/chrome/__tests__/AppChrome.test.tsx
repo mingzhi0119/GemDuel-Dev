@@ -117,6 +117,48 @@ describe('AppChrome locale controls', () => {
         expect(tooltip?.className).toContain('px-4');
     });
 
+    it('renders enlarged blurred top-right chrome actions', async () => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<ChromeHarness />);
+            await Promise.resolve();
+        });
+
+        const rulebookButton = container.querySelector<HTMLButtonElement>(
+            'button[data-app-rulebook-button="true"]'
+        );
+        const restartButton = container.querySelector<HTMLButtonElement>(
+            'button[data-app-restart-button="true"]'
+        );
+        const settingsButton = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
+        );
+
+        for (const button of [rulebookButton, restartButton, settingsButton]) {
+            expect(button).not.toBeNull();
+            expect(button?.className).toContain('h-[84px]');
+            expect(button?.className).toContain('w-[84px]');
+            expect(button?.className).toContain('lg:h-24');
+            expect(button?.className).toContain('lg:w-24');
+            expect(button?.className).toContain('backdrop-blur-md');
+            expect(button?.className).toContain('before:-inset-2');
+            expect(button?.className).toContain('before:backdrop-blur-lg');
+        }
+
+        expect(
+            container.querySelector<HTMLElement>('[data-game-glyph="rulebook"]')?.style.width
+        ).toBe('45px');
+        expect(
+            container.querySelector<HTMLElement>('[data-game-glyph="restart"]')?.style.width
+        ).toBe('45px');
+        expect(
+            container.querySelector<HTMLElement>('[data-game-glyph="settings"]')?.style.width
+        ).toBe('48px');
+    });
+
     it('renders restart as a white icon action outside the settings menu', async () => {
         const onRequestRestart = vi.fn();
         const RestartHarness = () => {

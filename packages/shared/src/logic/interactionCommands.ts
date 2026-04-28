@@ -152,10 +152,10 @@ export const buildSelectBuffAction = (
 };
 
 export const buildPeekDeckAction = (
-    level: 1 | 2 | 3
+    level: 1 | 2 | 3 | 'all' = 'all'
 ): Extract<GameAction, { type: 'PEEK_DECK' }> => ({
     type: 'PEEK_DECK',
-    payload: { level },
+    payload: level === 'all' ? { levels: [3, 2, 1] } : { level },
 });
 
 export const buildRerollDraftPoolAction = (

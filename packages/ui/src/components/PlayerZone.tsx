@@ -81,6 +81,7 @@ export const PlayerZone = ({
     surfaceVariant,
     pendingReservedCardIds = [],
     onPreviewStack,
+    buffPreviewAction,
 }: PlayerZoneProps) => {
     const safeCards = Array.isArray(cards) ? cards : [];
     const [selectedStack, setSelectedStack] = useState<PlayerZoneStackState | null>(null);
@@ -194,6 +195,7 @@ export const PlayerZone = ({
             theme={theme}
             onUsePrivilege={onUsePrivilege}
             dividerSide={player === 'p1' ? 'left' : 'right'}
+            buffPreviewAction={buffPreviewAction}
         />
     );
     const resourcesColumn = (

@@ -196,7 +196,7 @@ describe('useMarketInteractionHandlers', () => {
         });
     });
 
-    it('uses a preselected gold gem to complete card and deck reserve immediately', () => {
+    it('uses a preselected gold gem only for explicit card and deck reserve actions', () => {
         const card = { id: 'reserve-with-gold', bonusColor: 'blue' } as Card;
         const gameState = {
             turn: 'p1',
@@ -206,6 +206,8 @@ describe('useMarketInteractionHandlers', () => {
             decks: { 1: [{ id: 'deck-1' }], 2: [], 3: [] },
             pendingBuy: null,
         } as unknown as GameState;
+        const buyAction = { type: 'BUY_CARD', payload: {} } as GameAction;
+        mocks.buildBuyAction.mockReturnValue(buyAction);
 
         const Harness = () => {
             currentResult = useMarketInteractionHandlers({
@@ -240,14 +242,17 @@ describe('useMarketInteractionHandlers', () => {
             type: 'RESERVE_DECK',
             payload: { level: 1, goldCoords: { r: 2, c: 3 } },
         });
-        expect(networkDispatch).toHaveBeenCalledWith({
-            type: 'RESERVE_CARD',
-            payload: { card, level: 1, idx: 0, goldCoords: { r: 2, c: 3 } },
-        });
+        expect(networkDispatch).toHaveBeenCalledWith(buyAction);
         expect(networkDispatch).toHaveBeenCalledTimes(3);
         expect(mocks.buildReserveCardFlow).not.toHaveBeenCalled();
         expect(mocks.buildReserveDeckFlow).not.toHaveBeenCalled();
-        expect(clearPreselectedReserveGold).toHaveBeenCalledTimes(3);
+        expect(mocks.buildBuyAction).toHaveBeenCalledWith(
+            card,
+            'market',
+            { level: 1, idx: 0 },
+            'red'
+        );
+        expect(clearPreselectedReserveGold).toHaveBeenCalledTimes(2);
         expect(setErrorMsg).toHaveBeenCalledWith(null);
     });
 

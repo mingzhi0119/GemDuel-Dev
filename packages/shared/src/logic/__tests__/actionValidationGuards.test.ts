@@ -128,6 +128,8 @@ describe('actionValidation guards', () => {
             })
         ).toBe(true);
         expect(isPeekDeckPayload({ level: 1 })).toBe(true);
+        expect(isPeekDeckPayload({ levels: [3, 2, 1] })).toBe(true);
+        expect(isPeekDeckPayload({ levels: [] })).toBe(false);
         expect(
             isSelectBuffPayload({
                 buffId: 'test-buff',

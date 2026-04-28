@@ -38,7 +38,9 @@ export const useMarketInteractionHandlers = ({
 }: MarketInteractionParams) => {
     const handleReserveCard = useCallback(
         (card: Card, marketInfo: CardInteractionContext) => {
-            if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) return;
+            if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) {
+                return false;
+            }
 
             if (preselectedReserveGold) {
                 networkDispatch({
@@ -47,7 +49,7 @@ export const useMarketInteractionHandlers = ({
                 });
                 clearPreselectedReserveGold();
                 setErrorMsg(null);
-                return;
+                return true;
             }
 
             const reserveFlow = buildReserveCardFlow(
@@ -57,6 +59,7 @@ export const useMarketInteractionHandlers = ({
             );
             networkDispatch(reserveFlow.action);
             if (reserveFlow.prompt) setErrorMsg(reserveFlow.prompt);
+            return true;
         },
         [
             canLocalInteract,
@@ -72,9 +75,12 @@ export const useMarketInteractionHandlers = ({
 
     const handleReserveDeck = useCallback(
         (level: number) => {
-            if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) return;
+            if (!canLocalInteract || gameState.playerReserved[gameState.turn].length >= 3) {
+                return false;
+            }
             if (gameState.decks[level as 1 | 2 | 3].length === 0) {
-                return setErrorMsg('Deck empty!');
+                setErrorMsg('Deck empty!');
+                return false;
             }
 
             if (preselectedReserveGold) {
@@ -84,7 +90,7 @@ export const useMarketInteractionHandlers = ({
                 });
                 clearPreselectedReserveGold();
                 setErrorMsg(null);
-                return;
+                return true;
             }
 
             const reserveFlow = buildReserveDeckFlow(
@@ -93,6 +99,7 @@ export const useMarketInteractionHandlers = ({
             );
             networkDispatch(reserveFlow.action);
             if (reserveFlow.prompt) setErrorMsg(reserveFlow.prompt);
+            return true;
         },
         [
             canLocalInteract,
@@ -113,31 +120,17 @@ export const useMarketInteractionHandlers = ({
             source: InitiateBuyJokerPayload['source'] = 'market',
             marketInfo?: InitiateBuyJokerPayload['marketInfo']
         ) => {
-            if (!canLocalInteract) return;
-            if (preselectedReserveGold && source === 'market' && marketInfo) {
-                networkDispatch({
-                    type: 'RESERVE_CARD',
-                    payload: { card, ...marketInfo, goldCoords: preselectedReserveGold },
-                });
-                clearPreselectedReserveGold();
-                setErrorMsg(null);
-                return;
-            }
+            if (!canLocalInteract) return false;
 
             if (!canAfford(card, source === 'reserved')) {
-                return setErrorMsg('Cannot afford!');
+                setErrorMsg('Cannot afford!');
+                return false;
             }
 
             networkDispatch(buildBuyAction(card, source, marketInfo, getRandomBasicGemColor()));
+            return true;
         },
-        [
-            canAfford,
-            canLocalInteract,
-            clearPreselectedReserveGold,
-            networkDispatch,
-            preselectedReserveGold,
-            setErrorMsg,
-        ]
+        [canAfford, canLocalInteract, networkDispatch, setErrorMsg]
     );
 
     const handleSelectBonusColor = useCallback(
@@ -204,9 +197,11 @@ export const useMarketInteractionHandlers = ({
             handleCancelReserve,
             handleCancelPrivilege,
             checkAndInitiateBuyReserved,
+            clearPreselectedReserveGold,
         }),
         [
             checkAndInitiateBuyReserved,
+            clearPreselectedReserveGold,
             handleCancelPrivilege,
             handleCancelReserve,
             handleDiscardReserved,

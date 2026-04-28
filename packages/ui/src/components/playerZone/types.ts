@@ -38,6 +38,14 @@ export interface PlayerZoneProps {
     surfaceVariant?: string;
     pendingReservedCardIds?: string[];
     onPreviewStack?: (stack: PlayerZoneStackState & { player: PlayerKey }) => void;
+    buffPreviewAction?: PlayerZoneBuffPreviewAction;
+}
+
+export interface PlayerZoneBuffPreviewAction {
+    id: 'peek' | 'reveal' | string;
+    label: string;
+    disabled?: boolean;
+    onClick: () => void;
 }
 
 export interface PlayerZoneSurfaceArtwork {

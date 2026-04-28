@@ -25,6 +25,9 @@ const DebugPanel = React.lazy(() =>
     import('@gemduel/ui/components/DebugPanel').then((module) => ({ default: module.DebugPanel }))
 );
 
+const chromeActionButtonClass =
+    "group relative flex h-[84px] w-[84px] items-center justify-center overflow-visible rounded-full border-0 bg-slate-950/20 backdrop-blur-md transition-colors before:pointer-events-none before:absolute before:-inset-2 before:z-0 before:rounded-full before:bg-slate-950/18 before:backdrop-blur-lg before:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-24 lg:w-24";
+
 interface AppChromeProps {
     theme: ThemeName;
     showDebug: boolean;
@@ -126,12 +129,14 @@ export function AppChrome({
                         setShowSettingsMenu(false);
                         onShowRulebook();
                     }}
-                    className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
+                    className={`${chromeActionButtonClass} ${settingsIconButtonClass}`}
                     style={chromeIconStyle}
                     aria-label={t('settings.rules')}
                     aria-describedby={rulebookTooltipId}
                 >
-                    <GameGlyph variant="rulebook" size={30} />
+                    <span className="relative z-10 flex items-center justify-center">
+                        <GameGlyph variant="rulebook" size={45} />
+                    </span>
                     <span
                         id={rulebookTooltipId}
                         role="tooltip"
@@ -148,12 +153,14 @@ export function AppChrome({
                         setShowSettingsMenu(false);
                         onRequestRestart();
                     }}
-                    className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
+                    className={`${chromeActionButtonClass} ${settingsIconButtonClass}`}
                     style={chromeIconStyle}
                     aria-label={t('settings.restart')}
                     aria-describedby={restartTooltipId}
                 >
-                    <GameGlyph variant="restart" size={30} />
+                    <span className="relative z-10 flex items-center justify-center">
+                        <GameGlyph variant="restart" size={45} />
+                    </span>
                     <span
                         id={restartTooltipId}
                         role="tooltip"
@@ -168,13 +175,15 @@ export function AppChrome({
                         onClick={() => {
                             setShowSettingsMenu((value) => !value);
                         }}
-                        className={`group relative flex h-14 w-14 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-16 lg:w-16 ${settingsIconButtonClass}`}
+                        className={`${chromeActionButtonClass} ${settingsIconButtonClass}`}
                         style={chromeIconStyle}
                         aria-label={t('settings.title')}
                         aria-describedby={settingsTooltipId}
                         aria-expanded={showSettingsMenu}
                     >
-                        <GameGlyph variant="settings" size={32} />
+                        <span className="relative z-10 flex items-center justify-center">
+                            <GameGlyph variant="settings" size={48} />
+                        </span>
                         <span
                             id={settingsTooltipId}
                             role="tooltip"

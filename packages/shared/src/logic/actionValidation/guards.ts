@@ -258,7 +258,11 @@ export const isSelectRoyalPayload = (value: unknown): value is SelectRoyalPayloa
     isPlainObject(value) && isRoyalCardLike(value.card);
 
 export const isPeekDeckPayload = (value: unknown): value is PeekDeckPayload =>
-    isPlainObject(value) && isLevel(value.level);
+    isPlainObject(value) &&
+    (value.level === undefined || isLevel(value.level)) &&
+    (value.levels === undefined ||
+        (Array.isArray(value.levels) && value.levels.length > 0 && value.levels.every(isLevel))) &&
+    (value.level !== undefined || value.levels !== undefined);
 
 export const isSelectBuffPayload = (value: unknown): value is SelectBuffPayload =>
     selectBuffPayloadSchema.safeParse(value).success;

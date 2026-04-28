@@ -113,6 +113,7 @@ describe('useMetaInteractionHandlers', () => {
         currentResult?.handleCloseModal();
         currentResult?.handleRerollBuffs(3);
         currentResult?.handlePeekDeck(3);
+        currentResult?.handlePeekDeck('all');
 
         expect(mocks.buildGameStartAction).toHaveBeenCalledWith('PVE', {
             useBuffs: true,
@@ -124,6 +125,8 @@ describe('useMetaInteractionHandlers', () => {
         expect(networkDispatch).toHaveBeenCalledWith({ type: 'CLOSE_MODAL' });
         expect(networkDispatch).toHaveBeenCalledWith({ type: 'REROLL_DRAFT_POOL' });
         expect(networkDispatch).toHaveBeenCalledWith({ type: 'PEEK_DECK' });
+        expect(mocks.buildPeekDeckAction).toHaveBeenCalledWith(3);
+        expect(mocks.buildPeekDeckAction).toHaveBeenCalledWith('all');
     });
 
     it('allows draft rerolls in solo mode only on the local player draft turn', () => {

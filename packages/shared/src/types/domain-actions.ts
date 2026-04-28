@@ -97,7 +97,8 @@ export interface SelectBuffPayload {
 }
 
 export interface PeekDeckPayload {
-    level: 1 | 2 | 3;
+    level?: 1 | 2 | 3;
+    levels?: Array<1 | 2 | 3>;
 }
 
 export interface RerollDraftPoolPayload {

@@ -1,9 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CardPreviewOverlay } from '@gemduel/ui/components/CardPreviewOverlay';
 import { TopBar } from '@gemduel/ui/components/TopBar';
 import { UpdateNotification } from '@gemduel/ui/components/UpdateNotification';
-import type { PlayerZoneStackState } from '@gemduel/ui/components/playerZone/types';
-import type { Card as CardType, PlayerKey, RoyalCard } from '@gemduel/shared/types';
+import { useLocale, useT } from '@gemduel/ui/i18n/LocaleProvider';
 import type { AppRouteProps } from '@app/types/ui';
 import { AppChrome } from '../chrome/AppChrome';
 import { AppOverlayStack } from '../overlays/AppOverlayStack';
@@ -22,20 +21,7 @@ import {
     type PresentationPreviewStage,
 } from './presentationPreview';
 import { getShouldShowGemPanelCalibrationOverlay } from './surfacePreviewQuery';
-
-type CardPreviewState =
-    | {
-          mode: 'single';
-          cards: CardType[];
-          title?: string;
-      }
-    | {
-          mode: 'collection';
-          cards: CardType[];
-          player: PlayerKey;
-          color: string;
-          title?: string;
-      };
+import { useGameShellPreviewController } from './useGameShellPreviewController';
 
 export function GameShell({
     appVersion,
@@ -49,23 +35,17 @@ export function GameShell({
     callbacks,
 }: AppRouteProps) {
     const { state, handlers, getters, historyControls } = game;
-    const {
-        turn,
-        winner,
-        phase,
-        playerTurnCounts = { p1: 0, p2: 0 },
-        playerBuffs,
-        activeModal,
-    } = state;
+    const { turn, winner, phase, playerTurnCounts = { p1: 0, p2: 0 }, playerBuffs } = state;
     const {
         handleDebugAddCrowns,
         handleDebugAddPoints,
         handleDebugAddPrivilege,
         handleForceRoyal,
         handleSelectBonusColor,
-        handleCloseModal,
     } = handlers;
-    const { getPlayerScore, getCrownCount } = getters;
+    const { getPlayerScore, getCrownCount, canAfford } = getters;
+    const { locale } = useLocale();
+    const t = useT();
 
     const isP1ZoneActive = turn === 'p1' && !ui.isReviewing && !winner;
     const isP2ZoneActive = turn === 'p2' && !ui.isReviewing && !winner;
@@ -84,24 +64,6 @@ export function GameShell({
         useState<PresentationPreviewStage>(
             presentationPreviewMode === 'royal-unlock' ? 'intro' : null
         );
-    const [cardPreview, setCardPreview] = useState<CardPreviewState | null>(null);
-    const previewMarketCard = useCallback((card: CardType) => {
-        setCardPreview({ mode: 'single', cards: [card] });
-    }, []);
-    const previewRoyalCard = useCallback((card: RoyalCard) => {
-        setCardPreview({ mode: 'single', cards: [card as unknown as CardType] });
-    }, []);
-    const previewPlayerStack = useCallback(
-        (stack: PlayerZoneStackState & { player: PlayerKey }) => {
-            setCardPreview({
-                mode: 'collection',
-                cards: stack.cards,
-                player: stack.player,
-                color: stack.color,
-            });
-        },
-        []
-    );
     const previewPresentation = useMemo<PresentationController | null>(() => {
         if (!presentationPreviewMode) {
             return null;
@@ -194,6 +156,29 @@ export function GameShell({
         shellSurfaceVariant,
         topBarSurfaceVariant,
     } = createGameShellStyles(theme, layout, surfaceTheme);
+    const {
+        buffPreviewActions,
+        closeCardPreview,
+        handleClosePeekPreview,
+        isCardPreviewOpen,
+        peekPreviewModel,
+        previewDeckReserve,
+        previewMarketCard,
+        previewModel,
+        previewPlayerStack,
+        previewRoyalCard,
+    } = useGameShellPreviewController({
+        state,
+        handlers,
+        canAfford,
+        effectiveGameMode,
+        localPlayer,
+        locale,
+        t,
+        theme,
+        marketDeckBackArtwork,
+        isReviewing: ui.isReviewing,
+    });
 
     return (
         <div
@@ -252,16 +237,12 @@ export function GameShell({
             <AppOverlayStack
                 theme={theme}
                 showRulebook={ui.showRulebook}
-                activeModal={activeModal}
-                mode={state.mode}
-                localPlayer={localPlayer}
                 persistentWinner={ui.persistentWinner}
                 isReviewing={ui.isReviewing}
                 showRestartConfirm={ui.showRestartConfirm}
                 phase={phase}
                 isPeekingBoard={ui.isPeekingBoard}
                 onCloseRulebook={() => setters.setShowRulebook(false)}
-                onCloseModal={handleCloseModal}
                 onStartReview={() => setters.setIsReviewing(true)}
                 onStopReview={() => setters.setIsReviewing(false)}
                 onCancelRestart={() => setters.setShowRestartConfirm(false)}
@@ -272,14 +253,28 @@ export function GameShell({
             />
 
             <CardPreviewOverlay
-                isOpen={Boolean(cardPreview)}
-                mode={cardPreview?.mode ?? 'single'}
-                cards={cardPreview?.cards ?? []}
+                isOpen={isCardPreviewOpen}
+                mode={previewModel.mode}
+                cards={previewModel.cards}
                 theme={theme}
-                player={cardPreview?.mode === 'collection' ? cardPreview.player : undefined}
-                color={cardPreview?.mode === 'collection' ? cardPreview.color : undefined}
-                title={cardPreview?.title}
-                onClose={() => setCardPreview(null)}
+                player={previewModel.player}
+                color={previewModel.color}
+                title={previewModel.title}
+                previewContent={previewModel.previewContent}
+                actions={previewModel.actions}
+                cardActions={previewModel.cardActions}
+                onClose={closeCardPreview}
+            />
+
+            <CardPreviewOverlay
+                isOpen={peekPreviewModel.isOpen}
+                mode="collection"
+                cards={peekPreviewModel.cards}
+                theme={theme}
+                title={peekPreviewModel.title}
+                previewContent={peekPreviewModel.previewContent}
+                actions={[]}
+                onClose={handleClosePeekPreview}
             />
 
             <PresentationLayer
@@ -308,6 +303,7 @@ export function GameShell({
                 showGemPanelCalibrationOverlay={showGemPanelCalibrationOverlay}
                 pendingMarketRefillSlots={effectivePresentation.pendingMarketRefillSlots}
                 onPreviewCard={previewMarketCard}
+                onPreviewDeckReserve={previewDeckReserve}
                 onPreviewRoyal={previewRoyalCard}
             />
 
@@ -322,6 +318,7 @@ export function GameShell({
                 playerZoneSurfaceVariant={surfaceTheme?.playerZone}
                 pendingReservedCardIds={effectivePresentation.pendingReservedCardIds}
                 onPreviewStack={previewPlayerStack}
+                buffPreviewActions={buffPreviewActions}
             />
         </div>
     );

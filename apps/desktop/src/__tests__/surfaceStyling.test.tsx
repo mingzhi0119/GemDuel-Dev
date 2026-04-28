@@ -13,6 +13,7 @@ import type {
 } from '@gemduel/shared/types';
 import { Card } from '@gemduel/ui/components/Card';
 import { CardPreviewOverlay } from '@gemduel/ui/components/CardPreviewOverlay';
+import { createCardPreviewActions } from '@gemduel/ui/components/cardPreviewActions';
 import { DeckPeekModal } from '@gemduel/ui/components/DeckPeekModal';
 import { GemIcon } from '@gemduel/ui/components/GemIcon';
 import { GameActions } from '@gemduel/ui/components/GameActions';
@@ -24,6 +25,9 @@ import { RoyalCourt } from '@gemduel/ui/components/RoyalCourt';
 import { TopBar } from '@gemduel/ui/components/TopBar';
 import { MarketDeckBack } from '@gemduel/ui/components/market/MarketDeckBack';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
+import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
+import type { AppRouteProps, ResponsiveLayout } from '@app/types/ui';
+import { GameShell } from '../app/shell/GameShell';
 import { getGemPanelSkin } from '../app/shell/surfaceArtwork';
 import { SURFACE_THEME_VARIANTS } from '../app/shell/surfaceTheme';
 
@@ -326,9 +330,6 @@ describe('surface styling affordances', () => {
                             p1: BUFFS.NONE as unknown as Buff,
                             p2: BUFFS.NONE as unknown as Buff,
                         }}
-                        handleReserveDeck={() => undefined}
-                        initiateBuy={() => undefined}
-                        handleReserveCard={() => undefined}
                         theme="dark"
                     />
                 </LocaleProvider>
@@ -377,9 +378,7 @@ describe('surface styling affordances', () => {
                         p1: BUFFS.NONE as unknown as Buff,
                         p2: BUFFS.NONE as unknown as Buff,
                     }}
-                    handleReserveDeck={() => undefined}
-                    initiateBuy={() => undefined}
-                    handleReserveCard={() => undefined}
+                    onPreviewDeckReserve={() => undefined}
                     theme="dark"
                 />
             </LocaleProvider>
@@ -707,7 +706,7 @@ describe('surface styling affordances', () => {
         expect(html).toContain('data-topbar-crown-artwork="p2"');
         expect(html).toContain('data-topbar-points-artwork="p1"');
         expect(html).toContain('data-topbar-points-artwork="p2"');
-        expect(html).toContain('/assets/ui-icons/crown-badge-gold-one-crown.png');
+        expect(html).toContain('/assets/ui-icons/crown-gold-green-screen.png');
         expect(html).toContain('/assets/ui-icons/point-ribbon-silver-short.png');
         expect(html.indexOf('data-topbar-crown-group="p1"')).toBeLessThan(
             html.indexOf('data-topbar-points-group="p1"')
@@ -744,9 +743,6 @@ describe('surface styling affordances', () => {
                         p1: BUFFS.NONE as unknown as Buff,
                         p2: BUFFS.NONE as unknown as Buff,
                     }}
-                    handleReserveDeck={() => undefined}
-                    initiateBuy={() => undefined}
-                    handleReserveCard={() => undefined}
                     theme="light"
                 />
             </LocaleProvider>
@@ -842,9 +838,6 @@ describe('surface styling affordances', () => {
                         p1: BUFFS.NONE as unknown as Buff,
                         p2: BUFFS.NONE as unknown as Buff,
                     }}
-                    handleReserveDeck={() => undefined}
-                    initiateBuy={() => undefined}
-                    handleReserveCard={() => undefined}
                     pendingMarketRefillSlots={[{ level: 2, index: 0, nextCardId: SAMPLE_CARD.id }]}
                     theme="dark"
                 />
@@ -879,9 +872,6 @@ describe('surface styling affordances', () => {
                         p1: BUFFS.NONE as unknown as Buff,
                         p2: BUFFS.NONE as unknown as Buff,
                     }}
-                    handleReserveDeck={() => undefined}
-                    initiateBuy={() => undefined}
-                    handleReserveCard={() => undefined}
                     theme="dark"
                 />
             </LocaleProvider>
@@ -891,6 +881,38 @@ describe('surface styling affordances', () => {
         expect(html.match(/data-card-affordable="/g)).toHaveLength(12);
         expect(html).not.toContain('data-market-card-pending-refill="true"');
         expect(html).not.toContain('visibility:hidden');
+    });
+
+    it('adds hover scale feedback to market cards without scaling deck backs', () => {
+        const html = renderToStaticMarkup(
+            <LocaleProvider locale="en" setLocale={() => undefined}>
+                <Market
+                    market={{ ...EMPTY_MARKET, 2: [SAMPLE_CARD] }}
+                    decks={{ ...EMPTY_DECKS, 2: [SAMPLE_CARD] }}
+                    phase="IDLE"
+                    turn="p1"
+                    inventories={{ p1: EMPTY_COST, p2: EMPTY_COST }}
+                    playerTableau={{ p1: [], p2: [] }}
+                    playerBuffs={{
+                        p1: BUFFS.NONE as unknown as Buff,
+                        p2: BUFFS.NONE as unknown as Buff,
+                    }}
+                    theme="dark"
+                />
+            </LocaleProvider>
+        );
+        const host = document.createElement('div');
+        host.innerHTML = html;
+        const marketCardMotion = host.querySelector<HTMLElement>(
+            '[data-market-card-hover-motion="true"]'
+        );
+        const deckBack = host.querySelector<HTMLElement>('[data-market-deck="2"]');
+
+        expect(marketCardMotion).not.toBeNull();
+        expect(marketCardMotion?.className).toContain('hover:scale-[1.025]');
+        expect(marketCardMotion?.className).toContain('focus-within:scale-[1.025]');
+        expect(deckBack?.className).not.toContain('hover:scale-[1.025]');
+        expect(deckBack?.className).not.toContain('focus-within:scale-[1.025]');
     });
 
     it('renders deck peek cards larger than featured market cards', () => {
@@ -945,6 +967,150 @@ describe('card preview interactions', () => {
             points: index % 3,
         }));
 
+    const shellLayout: ResponsiveLayout = {
+        layoutMode: 'desktop-4k',
+        viewportWidth: 1920,
+        viewportHeight: 1080,
+        aspectRatio: 16 / 9,
+        stageCanvasWidthPx: 3840,
+        stageCanvasHeightPx: 2160,
+        stageScale: 0.5,
+        stageInsetXPx: 0,
+        stageInsetYPx: 0,
+        boardScale: 1,
+        deckScale: 1,
+        zoneScale: 1,
+        zoneHeightPx: 520,
+        mainGapPx: 24,
+    };
+
+    const createShellProps = (
+        stateOverrides: Partial<AppRouteProps['game']['state']> = {},
+        getterOverrides: Partial<AppRouteProps['game']['getters']> = {}
+    ) => {
+        const state = {
+            ...(JSON.parse(
+                JSON.stringify(INITIAL_STATE_SKELETON)
+            ) as AppRouteProps['game']['state']),
+            selectedGems: [],
+            reserveGoldSelection: null,
+            errorMsg: null,
+            ...stateOverrides,
+        };
+        const handlers = {
+            importHistory: vi.fn(),
+            startGame: vi.fn(),
+            handleSelectBuff: vi.fn(),
+            handleRerollBuffs: vi.fn(),
+            handleDebugAddCrowns: vi.fn(),
+            handleDebugAddPoints: vi.fn(),
+            handleDebugAddPrivilege: vi.fn(),
+            handleForceRoyal: vi.fn(),
+            handleSelectBonusColor: vi.fn(),
+            handleCloseModal: vi.fn(),
+            handleGemClick: vi.fn(),
+            handleGemDragSelection: vi.fn(),
+            handleConfirmTake: vi.fn(),
+            handleReplenish: vi.fn(),
+            handleSelectRoyal: vi.fn(),
+            handleCancelReserve: vi.fn(),
+            handleCancelPrivilege: vi.fn(),
+            handlePeekDeck: vi.fn(),
+            handleSelfGemClick: vi.fn(),
+            handleOpponentGemClick: vi.fn(),
+            handleDiscardReserved: vi.fn(),
+            activatePrivilegeMode: vi.fn(),
+            checkAndInitiateBuyReserved: vi.fn(() => false),
+            clearPreselectedReserveGold: vi.fn(),
+            handleReserveCard: vi.fn(() => true),
+            handleReserveDeck: vi.fn(() => true),
+            initiateBuy: vi.fn(() => true),
+        };
+        const game = {
+            state,
+            handlers,
+            getters: {
+                getPlayerScore: vi.fn(() => 0),
+                isSelected: vi.fn(() => false),
+                getCrownCount: vi.fn(() => 0),
+                canAfford: vi.fn(() => true),
+                isMyTurn: true,
+                ...getterOverrides,
+            },
+            historyControls: {
+                undo: vi.fn(),
+                redo: vi.fn(),
+                canUndo: false,
+                canRedo: false,
+                jumpToStep: vi.fn(),
+                importHistory: vi.fn(),
+                clearAndInit: vi.fn(),
+                currentIndex: 0,
+                historyLength: 0,
+                history: [],
+                historySource: 'live',
+            },
+            online: {
+                peerId: '',
+                remotePeerId: '',
+                connectionStatus: 'disconnected',
+                isHost: true,
+                connectToPeer: vi.fn(),
+                sendBootstrap: vi.fn(),
+                sendGuestIntent: vi.fn(),
+                sendHostDecision: vi.fn(),
+                sendState: vi.fn(),
+                requestRecovery: vi.fn(),
+                latency: 0,
+                isUnstable: false,
+                approvalLog: [],
+                statusNotice: null,
+                authoritativeReplayRecorder: null,
+            },
+            replay: {
+                currentReplay: null,
+            },
+        } satisfies AppRouteProps['game'];
+
+        return {
+            game,
+            handlers,
+            props: {
+                appVersion: 'test',
+                game,
+                lan: {} as AppRouteProps['lan'],
+                layout: shellLayout,
+                theme: 'dark',
+                ui: {
+                    showDebug: false,
+                    isReviewing: false,
+                    showRulebook: false,
+                    matchmakingRoute: 'none',
+                    isPeekingBoard: false,
+                    persistentWinner: null,
+                    showRestartConfirm: false,
+                },
+                setters: {
+                    setShowDebug: vi.fn(),
+                    setIsReviewing: vi.fn(),
+                    setShowRulebook: vi.fn(),
+                    setMatchmakingRoute: vi.fn(),
+                    setIsPeekingBoard: vi.fn(),
+                    setShowRestartConfirm: vi.fn(),
+                },
+                callbacks: {
+                    handleRestart: vi.fn(),
+                    handleDownloadReplay: vi.fn(),
+                    handleUploadReplay: vi.fn(),
+                },
+            } satisfies AppRouteProps,
+        };
+    };
+
+    const renderShell = async (props: AppRouteProps) => {
+        await renderInteractive(<GameShell {...props} />);
+    };
+
     afterEach(() => {
         act(() => {
             root?.unmount();
@@ -955,9 +1121,8 @@ describe('card preview interactions', () => {
         container = null;
     });
 
-    it('previews unaffordable market cards and still buys affordable market cards', async () => {
+    it('previews market cards instead of buying from the rail click', async () => {
         const onPreviewCard = vi.fn();
-        const initiateBuy = vi.fn();
         const market = { ...EMPTY_MARKET, 2: [SAMPLE_CARD] };
 
         await renderInteractive(
@@ -972,9 +1137,6 @@ describe('card preview interactions', () => {
                     p1: BUFFS.NONE as unknown as Buff,
                     p2: BUFFS.NONE as unknown as Buff,
                 }}
-                handleReserveDeck={() => undefined}
-                initiateBuy={initiateBuy}
-                handleReserveCard={() => undefined}
                 onPreviewCard={onPreviewCard}
                 theme="dark"
             />
@@ -985,7 +1147,6 @@ describe('card preview interactions', () => {
         );
 
         expect(onPreviewCard).toHaveBeenCalledWith(SAMPLE_CARD, { level: 2, idx: 0 });
-        expect(initiateBuy).not.toHaveBeenCalled();
 
         act(() => {
             root?.unmount();
@@ -1009,9 +1170,6 @@ describe('card preview interactions', () => {
                     p1: BUFFS.NONE as unknown as Buff,
                     p2: BUFFS.NONE as unknown as Buff,
                 }}
-                handleReserveDeck={() => undefined}
-                initiateBuy={initiateBuy}
-                handleReserveCard={() => undefined}
                 onPreviewCard={onPreviewCard}
                 theme="dark"
             />
@@ -1021,8 +1179,324 @@ describe('card preview interactions', () => {
             document.body.querySelector('[data-market-slot="2-0"] [data-card-affordable="true"]')
         );
 
-        expect(initiateBuy).toHaveBeenCalledWith(SAMPLE_CARD, 'market', { level: 2, idx: 0 });
-        expect(onPreviewCard).toHaveBeenCalledTimes(1);
+        expect(onPreviewCard).toHaveBeenCalledWith(SAMPLE_CARD, { level: 2, idx: 0 });
+        expect(onPreviewCard).toHaveBeenCalledTimes(2);
+    });
+
+    it('previews market deck reserve before executing the reserve action', async () => {
+        const onPreviewDeckReserve = vi.fn();
+
+        await renderInteractive(
+            <Market
+                market={EMPTY_MARKET}
+                decks={{ ...EMPTY_DECKS, 2: [SAMPLE_CARD] }}
+                phase="IDLE"
+                turn="p1"
+                inventories={{ p1: EMPTY_COST, p2: EMPTY_COST }}
+                playerTableau={{ p1: [], p2: [] }}
+                playerBuffs={{
+                    p1: BUFFS.NONE as unknown as Buff,
+                    p2: BUFFS.NONE as unknown as Buff,
+                }}
+                onPreviewDeckReserve={onPreviewDeckReserve}
+                theme="dark"
+            />
+        );
+
+        await clickElement(document.body.querySelector('[data-market-deck="2"]'));
+
+        expect(onPreviewDeckReserve).toHaveBeenCalledWith(2);
+    });
+
+    it('does not render reveal or peek buff controls from the market side area', async () => {
+        await renderInteractive(
+            <Market
+                market={EMPTY_MARKET}
+                decks={{
+                    ...EMPTY_DECKS,
+                    1: [{ ...SAMPLE_CARD, id: 'hidden-l1-reveal', level: 1 as const }],
+                    3: [
+                        { ...SAMPLE_CARD, id: 'hidden-l3-bottom', level: 3 as const },
+                        { ...SAMPLE_CARD, id: 'hidden-l3-extra-2', level: 3 as const },
+                        { ...SAMPLE_CARD, id: 'hidden-l3-extra-1', level: 3 as const },
+                        { ...SAMPLE_CARD, id: 'hidden-l3-top', level: 3 as const },
+                    ],
+                }}
+                phase="IDLE"
+                turn="p1"
+                inventories={{ p1: EMPTY_COST, p2: EMPTY_COST }}
+                playerTableau={{ p1: [], p2: [] }}
+                playerBuffs={{
+                    p1: BUFFS.INTELLIGENCE as unknown as Buff,
+                    p2: BUFFS.ALL_SEEING_EYE as unknown as Buff,
+                }}
+                theme="dark"
+            />
+        );
+
+        expect(document.body.textContent).not.toContain('Peek L');
+        expect(document.body.textContent).not.toContain('Insight');
+        expect(document.body.querySelector('[data-player-buff-preview-action]')).toBeNull();
+    });
+
+    it('routes market preview buy and reserve actions through the shell overlay', async () => {
+        const { props, handlers } = createShellProps({
+            market: { ...EMPTY_MARKET, 2: [SAMPLE_CARD] },
+            inventories: {
+                p1: { ...EMPTY_COST, black: 2, green: 1 },
+                p2: EMPTY_COST,
+            },
+        });
+
+        await renderShell(props);
+
+        await clickElement(
+            document.body.querySelector('[data-market-slot="2-0"] [data-card-preview-click="true"]')
+        );
+
+        expect(handlers.clearPreselectedReserveGold).toHaveBeenCalled();
+        expect(document.body.querySelector('[data-card-preview-action="buy"]')).not.toBeNull();
+        expect(document.body.querySelector('[data-card-preview-action="reserve"]')).not.toBeNull();
+
+        await clickElement(document.body.querySelector('[data-card-preview-action="buy"]'));
+
+        expect(handlers.initiateBuy).toHaveBeenCalledWith(SAMPLE_CARD, 'market', {
+            level: 2,
+            idx: 0,
+        });
+
+        await clickElement(
+            document.body.querySelector('[data-market-slot="2-0"] [data-card-preview-click="true"]')
+        );
+        await clickElement(document.body.querySelector('[data-card-preview-action="reserve"]'));
+
+        expect(handlers.handleReserveCard).toHaveBeenCalledWith(SAMPLE_CARD, {
+            level: 2,
+            idx: 0,
+        });
+    });
+
+    it('keeps market preview actions visible but disabled when unavailable', async () => {
+        const { props } = createShellProps(
+            {
+                market: { ...EMPTY_MARKET, 2: [SAMPLE_CARD] },
+                playerReserved: {
+                    p1: [
+                        { ...SAMPLE_CARD, id: 'reserved-full-1' },
+                        { ...SAMPLE_CARD, id: 'reserved-full-2' },
+                        { ...SAMPLE_CARD, id: 'reserved-full-3' },
+                    ],
+                    p2: [],
+                },
+            },
+            {
+                canAfford: vi.fn(() => false),
+            }
+        );
+
+        await renderShell(props);
+
+        await clickElement(
+            document.body.querySelector('[data-market-slot="2-0"] [data-card-preview-click="true"]')
+        );
+
+        const buyAction = document.body.querySelector(
+            '[data-card-preview-action="buy"]'
+        ) as HTMLButtonElement | null;
+        const reserveAction = document.body.querySelector(
+            '[data-card-preview-action="reserve"]'
+        ) as HTMLButtonElement | null;
+
+        expect(buyAction).not.toBeNull();
+        expect(reserveAction).not.toBeNull();
+        expect(buyAction?.disabled).toBe(true);
+        expect(reserveAction?.disabled).toBe(true);
+    });
+
+    it('routes deck reserve preview through a single centered shell action', async () => {
+        const { props, handlers } = createShellProps({
+            decks: { ...EMPTY_DECKS, 1: [SAMPLE_CARD] },
+        });
+
+        await renderShell(props);
+
+        await clickElement(document.body.querySelector('[data-market-deck="1"]'));
+
+        expect(document.body.querySelector('[data-card-preview-deck-reserve="1"]')).not.toBeNull();
+        expect(document.body.querySelectorAll('[data-card-preview-action]')).toHaveLength(1);
+        expect(
+            document.body
+                .querySelector('[data-card-preview-actions]')
+                ?.getAttribute('data-card-preview-actions-align')
+        ).toBe('center');
+
+        await clickElement(document.body.querySelector('[data-card-preview-action="reserve"]'));
+
+        expect(handlers.handleReserveDeck).toHaveBeenCalledWith(1);
+    });
+
+    it('opens actionable revealed L1 cards from the player avatar trigger', async () => {
+        const revealCard = { ...SAMPLE_CARD, id: 'avatar-l1-reveal', level: 1 as const };
+        const { props, handlers } = createShellProps({
+            decks: { ...EMPTY_DECKS, 1: [revealCard] },
+            playerBuffs: {
+                p1: BUFFS.INSIGHT as unknown as Buff,
+                p2: BUFFS.NONE as unknown as Buff,
+            },
+            inventories: {
+                p1: { ...EMPTY_COST, black: 2, green: 1 },
+                p2: EMPTY_COST,
+            },
+        });
+
+        await renderShell(props);
+
+        const trigger = document.body.querySelector(
+            '[data-player-buff-preview-action="reveal"][data-player-buff-preview-player="p1"]'
+        );
+        expect(trigger).not.toBeNull();
+
+        await clickElement(trigger);
+
+        expect(document.body.querySelectorAll('[data-card-preview-card]')).toHaveLength(1);
+        expect(
+            document.body.querySelectorAll(
+                '[data-card-preview-action-scope="card"][data-card-preview-action="buy"]'
+            )
+        ).toHaveLength(1);
+        expect(
+            document.body.querySelectorAll(
+                '[data-card-preview-action-scope="card"][data-card-preview-action="reserve"]'
+            )
+        ).toHaveLength(1);
+
+        await clickElement(
+            document.body.querySelector(
+                `[data-card-preview-action-card="${revealCard.id}"][data-card-preview-action="buy"]`
+            )
+        );
+
+        expect(handlers.initiateBuy).toHaveBeenCalledWith(revealCard, 'market', {
+            level: 1,
+            idx: 0,
+            isExtra: true,
+            extraIdx: 0,
+        });
+
+        await clickElement(trigger);
+        await clickElement(
+            document.body.querySelector(
+                `[data-card-preview-action-card="${revealCard.id}"][data-card-preview-action="reserve"]`
+            )
+        );
+
+        expect(handlers.handleReserveCard).toHaveBeenCalledWith(revealCard, {
+            level: 1,
+            idx: 0,
+            isExtra: true,
+            extraIdx: 0,
+        });
+    });
+
+    it('opens actionable All-Seeing Eye cards and keeps disabled reveal actions visible', async () => {
+        const hiddenCards = [
+            { ...SAMPLE_CARD, id: 'avatar-l3-bottom', level: 3 as const },
+            { ...SAMPLE_CARD, id: 'avatar-l3-extra-2', level: 3 as const },
+            { ...SAMPLE_CARD, id: 'avatar-l3-extra-1', level: 3 as const },
+            { ...SAMPLE_CARD, id: 'avatar-l3-top', level: 3 as const },
+        ];
+        const { props } = createShellProps(
+            {
+                decks: { ...EMPTY_DECKS, 3: hiddenCards },
+                playerBuffs: {
+                    p1: BUFFS.ALL_SEEING_EYE as unknown as Buff,
+                    p2: BUFFS.NONE as unknown as Buff,
+                },
+                playerReserved: {
+                    p1: [
+                        { ...SAMPLE_CARD, id: 'full-reserve-1' },
+                        { ...SAMPLE_CARD, id: 'full-reserve-2' },
+                        { ...SAMPLE_CARD, id: 'full-reserve-3' },
+                    ],
+                    p2: [],
+                },
+            },
+            { canAfford: vi.fn(() => false) }
+        );
+
+        await renderShell(props);
+
+        await clickElement(
+            document.body.querySelector(
+                '[data-player-buff-preview-action="reveal"][data-player-buff-preview-player="p1"]'
+            )
+        );
+
+        const buyActions = Array.from(
+            document.body.querySelectorAll<HTMLButtonElement>(
+                '[data-card-preview-action-scope="card"][data-card-preview-action="buy"]'
+            )
+        );
+        const reserveActions = Array.from(
+            document.body.querySelectorAll<HTMLButtonElement>(
+                '[data-card-preview-action-scope="card"][data-card-preview-action="reserve"]'
+            )
+        );
+
+        expect(document.body.querySelectorAll('[data-card-preview-card]')).toHaveLength(2);
+        expect(buyActions).toHaveLength(2);
+        expect(reserveActions).toHaveLength(2);
+        expect(buyActions.every((action) => action.disabled)).toBe(true);
+        expect(reserveActions.every((action) => action.disabled)).toBe(true);
+    });
+
+    it('routes Intelligence from the avatar trigger and renders peek cards read-only', async () => {
+        const peekCards = ([3, 2, 1] as const).flatMap((level) =>
+            [0, 1, 2].map((index) => ({
+                ...SAMPLE_CARD,
+                id: `peek-l${level}-${index}`,
+                level,
+            }))
+        );
+        const { props, handlers } = createShellProps({
+            playerBuffs: {
+                p1: BUFFS.INTELLIGENCE as unknown as Buff,
+                p2: BUFFS.NONE as unknown as Buff,
+            },
+        });
+
+        await renderShell(props);
+
+        await clickElement(
+            document.body.querySelector(
+                '[data-player-buff-preview-action="peek"][data-player-buff-preview-player="p1"]'
+            )
+        );
+
+        expect(handlers.handlePeekDeck).toHaveBeenCalledWith('all');
+
+        act(() => {
+            root?.unmount();
+        });
+        container?.remove();
+        root = null;
+        container = null;
+
+        const { props: modalProps } = createShellProps({
+            activeModal: {
+                type: 'PEEK',
+                data: {
+                    cards: peekCards,
+                    initiator: 'p1',
+                },
+            },
+        });
+
+        await renderShell(modalProps);
+
+        expect(document.body.querySelectorAll('[data-card-preview-card]')).toHaveLength(9);
+        expect(document.body.querySelector('[data-card-preview-action]')).toBeNull();
+        expect(document.body.textContent).toContain('Deck Intelligence');
     });
 
     it('previews royal cards outside SELECT_ROYAL and selects them during SELECT_ROYAL', async () => {
@@ -1197,7 +1671,93 @@ describe('card preview interactions', () => {
         expect(overlay?.getAttribute('data-card-preview-grid-columns')).toBe('4');
         expect(overlay?.getAttribute('data-card-preview-grid-rows')).toBe('3');
         expect(document.body.querySelectorAll('[data-card-preview-card]')).toHaveLength(12);
+        expect(document.body.querySelector('[data-card-preview-actions]')).toBeNull();
         expect(document.body.textContent).toContain('Showing 12 / 13');
+    });
+
+    it('supports custom preview content and centered single preview actions', async () => {
+        const onReserve = vi.fn(() => true);
+        const onClose = vi.fn();
+
+        await renderInteractive(
+            <CardPreviewOverlay
+                isOpen={true}
+                mode="single"
+                cards={[]}
+                previewContent={<div data-test-deck-back-preview="true">Deck Back</div>}
+                actions={createCardPreviewActions({
+                    id: 'reserve',
+                    label: 'Reserve',
+                    onAction: onReserve,
+                })}
+                theme="dark"
+                onClose={onClose}
+            />
+        );
+
+        const overlay = document.body.querySelector('[data-card-preview-overlay]');
+        const action = document.body.querySelector('[data-card-preview-action="reserve"]');
+
+        expect(overlay?.getAttribute('data-card-preview-count')).toBe('0');
+        expect(document.body.querySelector('[data-card-preview-content="custom"]')).not.toBeNull();
+        expect(document.body.querySelector('[data-test-deck-back-preview="true"]')).not.toBeNull();
+        expect(
+            document.body
+                .querySelector('[data-card-preview-actions]')
+                ?.getAttribute('data-card-preview-actions-align')
+        ).toBe('center');
+
+        await clickElement(action);
+
+        expect(onReserve).toHaveBeenCalled();
+        expect(onClose).toHaveBeenCalled();
+    });
+
+    it('renders paired preview actions and keeps the overlay open when an action returns false', async () => {
+        const onBuy = vi.fn(() => false);
+        const onReserve = vi.fn();
+        const onClose = vi.fn();
+
+        await renderInteractive(
+            <CardPreviewOverlay
+                isOpen={true}
+                mode="single"
+                cards={[SAMPLE_CARD]}
+                actions={createCardPreviewActions(
+                    {
+                        id: 'buy',
+                        label: 'Buy',
+                        onAction: onBuy,
+                    },
+                    {
+                        id: 'reserve',
+                        label: 'Reserve',
+                        disabled: true,
+                        onAction: onReserve,
+                    }
+                )}
+                theme="dark"
+                onClose={onClose}
+            />
+        );
+
+        const actions = Array.from(document.body.querySelectorAll('[data-card-preview-action]'));
+
+        expect(actions).toHaveLength(2);
+        expect(actions[0]?.getAttribute('data-card-preview-action')).toBe('buy');
+        expect(actions[1]?.getAttribute('data-card-preview-action')).toBe('reserve');
+        expect(
+            document.body
+                .querySelector('[data-card-preview-actions]')
+                ?.getAttribute('data-card-preview-actions-layout')
+        ).toBe('pair');
+
+        await clickElement(actions[0]);
+        await clickElement(actions[1]);
+
+        expect(onBuy).toHaveBeenCalled();
+        expect(onReserve).not.toHaveBeenCalled();
+        expect(onClose).not.toHaveBeenCalled();
     });
 
     it('labels the pure-royal collection preview as extra points', async () => {
@@ -1217,13 +1777,18 @@ describe('card preview interactions', () => {
         expect(document.body.textContent).not.toContain('COLOR: PURE-ROYAL');
     });
 
-    it('still opens a single-card preview for unavailable reserved cards', async () => {
+    it('opens the full reserved-card preview with one disabled buy action per card', async () => {
+        const reservedCards = [0, 1, 2].map((index) => ({
+            ...SAMPLE_CARD,
+            id: `reserved-preview-disabled-${index}`,
+        }));
+
         await renderInteractive(
             <PlayerZone
                 player="p1"
                 inventory={EMPTY_COST}
                 cards={[]}
-                reserved={[SAMPLE_CARD]}
+                reserved={reservedCards}
                 privileges={0}
                 isActive={true}
                 phase="IDLE"
@@ -1251,16 +1816,28 @@ describe('card preview interactions', () => {
             document.body
                 .querySelector('[data-card-preview-overlay]')
                 ?.getAttribute('data-card-preview-mode')
-        ).toBe('single');
-        expect(
-            document.body.querySelector(`[data-card-preview-card="${SAMPLE_CARD.id}"]`)
-        ).not.toBeNull();
-        expect(document.body.querySelector('[data-card-preview-primary-action]')).toBeNull();
+        ).toBe('collection');
+        expect(document.body.querySelectorAll('[data-card-preview-card]')).toHaveLength(3);
+        const actions = Array.from(
+            document.body.querySelectorAll(
+                '[data-card-preview-action-scope="card"][data-card-preview-action="buy"]'
+            )
+        ) as HTMLButtonElement[];
+        expect(actions).toHaveLength(3);
+        expect(actions.every((action) => action.disabled)).toBe(true);
+        expect(document.body.querySelector('[data-card-preview-card-actions-band]')).not.toBeNull();
+        expect(document.body.querySelector('[data-card-preview-actions]')).toBeNull();
     });
 
-    it('buys reserved cards from the large preview action instead of the rail card click', async () => {
+    it('buys reserved cards from each large preview card action instead of the rail card click', async () => {
+        const reservedCards = [0, 1, 2].map((index) => ({
+            ...SAMPLE_CARD,
+            id: `reserved-preview-buy-${index}`,
+        }));
         const onBuyReserved = vi.fn((card: CardType, execute?: boolean) =>
-            card.id === SAMPLE_CARD.id && execute === true ? true : card.id === SAMPLE_CARD.id
+            card.id === reservedCards[1].id && execute === true
+                ? true
+                : card.id === reservedCards[1].id
         );
 
         await renderInteractive(
@@ -1268,7 +1845,7 @@ describe('card preview interactions', () => {
                 player="p1"
                 inventory={EMPTY_COST}
                 cards={[]}
-                reserved={[SAMPLE_CARD]}
+                reserved={reservedCards}
                 privileges={0}
                 isActive={true}
                 phase="IDLE"
@@ -1288,15 +1865,20 @@ describe('card preview interactions', () => {
         );
 
         await clickElement(
-            container?.querySelector('[data-reserved-slot="p1-0"] [data-card-preview-click="true"]')
+            container?.querySelector('[data-reserved-slot="p1-1"] [data-card-preview-click="true"]')
         );
 
         expect(document.body.querySelector('[data-card-preview-overlay]')).not.toBeNull();
-        expect(onBuyReserved).not.toHaveBeenCalledWith(SAMPLE_CARD, true);
+        expect(document.body.querySelectorAll('[data-card-preview-card]')).toHaveLength(3);
+        expect(onBuyReserved).not.toHaveBeenCalledWith(reservedCards[1], true);
 
-        await clickElement(document.body.querySelector('[data-card-preview-primary-action]'));
+        await clickElement(
+            document.body.querySelector(
+                `[data-card-preview-action-card="${reservedCards[1].id}"][data-card-preview-action="buy"]`
+            )
+        );
 
-        expect(onBuyReserved).toHaveBeenCalledWith(SAMPLE_CARD, true);
+        expect(onBuyReserved).toHaveBeenCalledWith(reservedCards[1], true);
         expect(document.body.querySelector('[data-card-preview-overlay]')).toBeNull();
     });
 });

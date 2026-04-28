@@ -18,6 +18,7 @@ import type {
     MarketState,
     PlayerKey,
     Card as CardType,
+    CardInteractionContext,
     RoyalCard,
 } from '@gemduel/shared/types';
 
@@ -40,7 +41,8 @@ interface GamePlaySurfaceProps {
         index: number;
         nextCardId?: string | null;
     }>;
-    onPreviewCard?: (card: CardType) => void;
+    onPreviewCard?: (card: CardType, context: CardInteractionContext) => void;
+    onPreviewDeckReserve?: (level: 1 | 2 | 3) => void;
     onPreviewRoyal?: (card: RoyalCard) => void;
 }
 
@@ -69,6 +71,7 @@ export function GamePlaySurface({
     showGemPanelCalibrationOverlay = false,
     pendingMarketRefillSlots = [],
     onPreviewCard,
+    onPreviewDeckReserve,
     onPreviewRoyal,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
@@ -93,13 +96,9 @@ export function GamePlaySurface({
         handleGemDragSelection,
         handleConfirmTake,
         handleReplenish,
-        handleReserveCard,
-        handleReserveDeck,
-        initiateBuy,
         handleSelectRoyal,
         handleCancelReserve,
         handleCancelPrivilege,
-        handlePeekDeck,
     } = handlers;
     const { isMyTurn } = getters;
     const marketState: MarketState = market;
@@ -152,12 +151,8 @@ export function GamePlaySurface({
                                 inventories={inventories}
                                 playerTableau={playerTableau}
                                 playerBuffs={playerBuffs}
-                                handleReserveDeck={handleReserveDeck}
-                                initiateBuy={initiateBuy}
-                                handleReserveCard={handleReserveCard}
-                                onPeekDeck={handlePeekDeck}
+                                onPreviewDeckReserve={onPreviewDeckReserve}
                                 theme={theme}
-                                reserveModeActive={Boolean(reserveGoldSelection)}
                                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
                                 localPlayer={localPlayer}
                                 surfaceStyle={marketSurfaceStyle}

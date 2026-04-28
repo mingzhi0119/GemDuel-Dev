@@ -37,6 +37,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     surfaceVariant,
 }) => {
     const t = useT();
+    const topBarIconClass = 'h-[90%] w-auto max-h-[90%] min-h-0 object-contain';
     const getVictoryGoals = (pid: PlayerKey) => {
         const rawBuff = playerBuffs[pid];
         const buff = (Object.values(BUFFS).find((b) => b.id === rawBuff?.id) as Buff) || rawBuff;
@@ -65,7 +66,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
     const renderPoints = (pid: PlayerKey, score: number, pointGoal: number, isWinning: boolean) => (
         <div
-            className={`flex items-center gap-1 lg:gap-2 ${getWinningClass(isWinning)}`}
+            className={`flex h-full min-h-0 items-center gap-1 lg:gap-2 ${getWinningClass(isWinning)}`}
             data-topbar-points-group={pid}
             data-topbar-score-pressure={isWinning ? 'near-victory' : 'normal'}
             style={{
@@ -78,7 +79,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 alt=""
                 aria-hidden="true"
                 data-topbar-points-artwork={pid}
-                className="h-4 w-4 object-contain drop-shadow-lg lg:h-12 lg:w-12"
+                className={`${topBarIconClass} drop-shadow-lg`}
                 draggable={false}
             />
             <span data-topbar-score={pid} data-value={score}>
@@ -102,7 +103,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         return (
             <div
-                className="flex items-center gap-1 lg:gap-2"
+                className="flex h-full min-h-0 items-center gap-1 lg:gap-2"
                 data-topbar-crown-group={pid}
                 data-topbar-crown-pressure={isNearGoal ? 'near-victory' : 'normal'}
                 style={{ color: 'var(--gd-topbar-gold-text)', textShadow: topBarTextShadow }}
@@ -112,7 +113,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                     player={pid}
                     theme={theme}
                     isNearGoal={isNearGoal}
-                    iconClassName="h-4 w-4 lg:h-12 lg:w-12"
+                    iconClassName={topBarIconClass}
                     className="text-xl lg:text-[64px] font-black leading-none drop-shadow-lg"
                 />
                 <span
@@ -135,7 +136,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         return (
             <div
                 data-topbar-score-group={pid}
-                className={`flex items-center gap-3 lg:gap-8 transition-transform duration-500 ${
+                className={`flex h-full min-h-0 items-center gap-3 lg:gap-8 transition-transform duration-500 ${
                     activePlayer === pid ? 'scale-105 opacity-100' : 'opacity-100'
                 }`}
             >
@@ -199,7 +200,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <div className="relative h-full w-full">
                 <div
                     data-topbar-score-anchor="p1"
-                    className="absolute left-1/4 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                    className="absolute bottom-0 left-1/4 top-0 flex -translate-x-1/2 items-center justify-center"
                 >
                     {renderScoreGroup('p1')}
                 </div>
@@ -224,7 +225,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
                 <div
                     data-topbar-score-anchor="p2"
-                    className="absolute left-3/4 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+                    className="absolute bottom-0 left-3/4 top-0 flex -translate-x-1/2 items-center justify-center"
                 >
                     {renderScoreGroup('p2')}
                 </div>

@@ -39,13 +39,15 @@ export function AnimatedCrownMetric({
 
     return (
         <>
-            <span className="relative inline-flex items-center justify-center">
+            <span
+                className={`relative inline-flex h-full max-h-full min-h-0 flex-shrink-0 items-center justify-center ${glowClass}`}
+            >
                 <img
                     src={UI_ICON_ARTWORK.topbarCrown}
                     alt=""
                     aria-hidden="true"
                     data-topbar-crown-artwork={player}
-                    className={`object-contain ${iconClassName ?? ''} ${glowClass}`}
+                    className={`object-contain ${iconClassName ?? ''}`}
                     draggable={false}
                 />
                 <AnimatePresence>

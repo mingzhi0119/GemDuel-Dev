@@ -199,115 +199,117 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                 </div>
 
                 {/* Buff Cards */}
-                <div className="flex flex-wrap justify-center gap-6 max-w-7xl px-4">
-                    {currentPool.map((buff, idx) => {
-                        const { Icon, color: iconColor } = getBuffIcon(buff.category);
-                        const isP1ChoiceSlot = activePlayer === 'p2' && idx === 0;
-                        const goalAdjustment = getBuffGoalAdjustment(buff.id, locale);
-                        const buffCopy = getBuffText(buff.id, locale);
+                <div data-draft-card-scale-reference="4" className="w-[68.5rem] max-w-[68.5rem]">
+                    <div className="flex flex-wrap justify-center gap-6">
+                        {currentPool.map((buff, idx) => {
+                            const { Icon, color: iconColor } = getBuffIcon(buff.category);
+                            const isP1ChoiceSlot = activePlayer === 'p2' && idx === 0;
+                            const goalAdjustment = getBuffGoalAdjustment(buff.id, locale);
+                            const buffCopy = getBuffText(buff.id, locale);
 
-                        return (
-                            <button
-                                key={buff.id}
-                                id={`buff-select-${buff.id}`}
-                                name="buff-selection"
-                                disabled={!canInteract}
-                                onClick={() => canInteract && onSelectBuff(buff.id)}
-                                className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300
+                            return (
+                                <button
+                                    key={buff.id}
+                                    id={`buff-select-${buff.id}`}
+                                    name="buff-selection"
+                                    disabled={!canInteract}
+                                    onClick={() => canInteract && onSelectBuff(buff.id)}
+                                    className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300
                                     ${canInteract ? 'hover:scale-105 hover:-translate-y-2 hover:shadow-2xl cursor-pointer' : 'opacity-50 cursor-default'}
                                     ${theme === 'dark' ? BUFF_STYLES[buff.level] : 'bg-white border-slate-200 shadow-xl'}
                                     ${theme === 'dark' ? 'hover:shadow-purple-900/50' : 'hover:shadow-purple-200/50'}
                                     ${isP1ChoiceSlot ? 'border-amber-400 ring-2 ring-amber-400/50' : ''}
                                 `}
-                                style={{ animationDelay: `${idx * 100}ms` }}
-                            >
-                                {/* Card Header */}
-                                <div className="flex justify-between items-start mb-3">
-                                    <div
-                                        className={`p-2 rounded-xl backdrop-blur-sm ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-100'}`}
-                                    >
-                                        <Icon size={22} className={iconColor} />
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span
-                                            className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border
-                                        ${theme === 'dark' ? 'border-white/20 opacity-60' : 'border-slate-300 opacity-100 text-slate-600'}`}
+                                    style={{ animationDelay: `${idx * 100}ms` }}
+                                >
+                                    {/* Card Header */}
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div
+                                            className={`p-2 rounded-xl backdrop-blur-sm ${theme === 'dark' ? 'bg-white/10' : 'bg-slate-100'}`}
                                         >
-                                            Lvl {buff.level}
-                                        </span>
-                                        {buff.category && (
+                                            <Icon size={22} className={iconColor} />
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
                                             <span
-                                                className={`text-[8px] font-black uppercase tracking-tighter px-2
-                                            ${theme === 'dark' ? 'opacity-40' : 'text-slate-400 opacity-100'}`}
+                                                className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full border
+                                        ${theme === 'dark' ? 'border-white/20 opacity-60' : 'border-slate-300 opacity-100 text-slate-600'}`}
                                             >
-                                                {getBuffCategoryLabel(buff.category, locale)}
+                                                Lvl {buff.level}
                                             </span>
-                                        )}
+                                            {buff.category && (
+                                                <span
+                                                    className={`text-[8px] font-black uppercase tracking-tighter px-2
+                                            ${theme === 'dark' ? 'opacity-40' : 'text-slate-400 opacity-100'}`}
+                                                >
+                                                    {getBuffCategoryLabel(buff.category, locale)}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* P1 Choice Badge */}
-                                {isP1ChoiceSlot && (
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-amber-400 text-amber-950 text-[8px] font-black uppercase px-3 py-1 rounded-full shadow-lg z-20">
-                                        {t('draft.p1Choice')}
-                                    </div>
-                                )}
+                                    {/* P1 Choice Badge */}
+                                    {isP1ChoiceSlot && (
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-amber-400 text-amber-950 text-[8px] font-black uppercase px-3 py-1 rounded-full shadow-lg z-20">
+                                            {t('draft.p1Choice')}
+                                        </div>
+                                    )}
 
-                                {/* Title */}
-                                <h3
-                                    className={`text-xl font-black mb-3 leading-tight transition-colors
+                                    {/* Title */}
+                                    <h3
+                                        className={`text-xl font-black mb-3 leading-tight transition-colors
                                 ${theme === 'dark' ? 'group-hover:text-white' : 'text-slate-900 group-hover:text-amber-600'}`}
-                                >
-                                    {buffCopy.label}
-                                </h3>
-
-                                {/* Description */}
-                                <p
-                                    className={`text-xs font-medium leading-relaxed mb-4 flex-grow
-                                ${theme === 'dark' ? 'opacity-80' : 'text-slate-600'}`}
-                                >
-                                    <LexiconText
-                                        text={buffCopy.desc}
-                                        interaction="hover"
-                                        as="span"
-                                    />
-                                </p>
-
-                                {/* Win Condition Changes (if any) */}
-                                {goalAdjustment && (
-                                    <div
-                                        className={`mt-auto pt-3 border-t text-[10px] space-y-1 opacity-90
-                                        ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}
                                     >
-                                        <p
-                                            className={`font-bold uppercase mb-1 ${theme === 'dark' ? 'opacity-60' : 'text-slate-400'}`}
+                                        {buffCopy.label}
+                                    </h3>
+
+                                    {/* Description */}
+                                    <p
+                                        className={`text-xs font-medium leading-relaxed mb-4 flex-grow
+                                ${theme === 'dark' ? 'opacity-80' : 'text-slate-600'}`}
+                                    >
+                                        <LexiconText
+                                            text={buffCopy.desc}
+                                            interaction="hover"
+                                            as="span"
+                                        />
+                                    </p>
+
+                                    {/* Win Condition Changes (if any) */}
+                                    {goalAdjustment && (
+                                        <div
+                                            className={`mt-auto pt-3 border-t text-[10px] space-y-1 opacity-90
+                                        ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}
                                         >
-                                            {goalAdjustment.title}:
-                                        </p>
-                                        {goalAdjustment.items.map((item) => (
-                                            <div
-                                                key={`${buff.id}-${item.label}`}
-                                                className="flex justify-between"
+                                            <p
+                                                className={`font-bold uppercase mb-1 ${theme === 'dark' ? 'opacity-60' : 'text-slate-400'}`}
                                             >
-                                                <span
-                                                    className={
-                                                        theme === 'dark' ? '' : 'text-slate-700'
-                                                    }
+                                                {goalAdjustment.title}:
+                                            </p>
+                                            {goalAdjustment.items.map((item) => (
+                                                <div
+                                                    key={`${buff.id}-${item.label}`}
+                                                    className="flex justify-between"
                                                 >
-                                                    {item.label}:
-                                                </span>
-                                                <span
-                                                    className={`font-mono font-bold ${theme === 'dark' ? 'text-amber-300' : 'text-amber-600'}`}
-                                                >
-                                                    {item.value}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </button>
-                        );
-                    })}
+                                                    <span
+                                                        className={
+                                                            theme === 'dark' ? '' : 'text-slate-700'
+                                                        }
+                                                    >
+                                                        {item.label}:
+                                                    </span>
+                                                    <span
+                                                        className={`font-mono font-bold ${theme === 'dark' ? 'text-amber-300' : 'text-amber-600'}`}
+                                                    >
+                                                        {item.value}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 

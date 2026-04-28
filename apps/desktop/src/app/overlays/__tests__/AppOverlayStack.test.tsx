@@ -5,7 +5,6 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GAME_PHASES } from '@gemduel/shared';
-import type { ActiveModal } from '@gemduel/shared/types';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import { AppOverlayStack } from '../AppOverlayStack';
 
@@ -20,7 +19,6 @@ describe('AppOverlayStack', () => {
     const renderOverlay = async (
         locale: 'en' | 'zh',
         overrides: Partial<{
-            activeModal: ActiveModal | null;
             isReviewing: boolean;
             phase: (typeof GAME_PHASES)[keyof typeof GAME_PHASES];
         }> = {}
@@ -35,16 +33,12 @@ describe('AppOverlayStack', () => {
                     <AppOverlayStack
                         theme="dark"
                         showRulebook={false}
-                        activeModal={overrides.activeModal ?? null}
-                        mode="LOCAL_PVP"
-                        localPlayer="p1"
                         persistentWinner={null}
                         isReviewing={overrides.isReviewing ?? false}
                         showRestartConfirm={false}
                         phase={overrides.phase ?? GAME_PHASES.SELECT_CARD_COLOR}
                         isPeekingBoard={false}
                         onCloseRulebook={vi.fn()}
-                        onCloseModal={vi.fn()}
                         onStartReview={vi.fn()}
                         onStopReview={vi.fn()}
                         onCancelRestart={vi.fn()}
@@ -88,22 +82,6 @@ describe('AppOverlayStack', () => {
         await renderOverlay('en', { isReviewing: true });
 
         expect(container?.textContent).not.toContain('Select Card Color');
-    });
-
-    it('suppresses the peek modal while review mode is active', async () => {
-        await renderOverlay('en', {
-            isReviewing: true,
-            phase: GAME_PHASES.IDLE,
-            activeModal: {
-                type: 'PEEK',
-                data: {
-                    cards: [],
-                    initiator: 'p1',
-                },
-            },
-        });
-
-        expect(container?.textContent).not.toContain('Deck Intelligence');
     });
 
     it('renders five basic gem artwork buttons and excludes gold', async () => {

@@ -6,6 +6,7 @@ import { cn } from '@gemduel/shared/utils';
 import type { Buff, EffectiveCardAbility, GamePhase } from '@gemduel/shared/types';
 import { useLocale, useT } from '../../i18n/LocaleProvider';
 import { PlayerBuffIcon } from './PlayerBuffIcon';
+import type { PlayerZoneBuffPreviewAction } from './types';
 
 interface PlayerZoneIdentityColumnProps {
     player: 'p1' | 'p2';
@@ -18,6 +19,7 @@ interface PlayerZoneIdentityColumnProps {
     theme: 'light' | 'dark';
     onUsePrivilege: () => void;
     dividerSide?: 'left' | 'right';
+    buffPreviewAction?: PlayerZoneBuffPreviewAction;
 }
 
 const MEMORY_ICON_BY_ABILITY: Record<
@@ -75,6 +77,7 @@ export function PlayerZoneIdentityColumn({
     theme,
     onUsePrivilege,
     dividerSide = 'right',
+    buffPreviewAction,
 }: PlayerZoneIdentityColumnProps) {
     const { locale } = useLocale();
     const t = useT();
@@ -136,10 +139,32 @@ export function PlayerZoneIdentityColumn({
             className={`self-stretch flex flex-col gap-5 min-w-[128px] shrink-0 items-center justify-center transition-colors duration-500 ${
                 dividerSide === 'right' ? 'border-r pr-3' : 'border-l pl-3'
             }
-          ${theme === 'dark' ? 'border-slate-700' : 'border-stone-300'}
+            ${theme === 'dark' ? 'border-slate-700' : 'border-stone-300'}
       `}
         >
             <div className="flex flex-col items-center gap-2">
+                <div
+                    data-player-buff-preview-slot={player}
+                    className="flex h-14 w-full items-center justify-center"
+                >
+                    {buffPreviewAction ? (
+                        <button
+                            type="button"
+                            data-player-buff-preview-action={buffPreviewAction.id}
+                            data-player-buff-preview-player={player}
+                            disabled={buffPreviewAction.disabled}
+                            onClick={buffPreviewAction.onClick}
+                            className={`flex h-12 w-[95%] items-center justify-center rounded-md border px-2 py-0 text-center text-[20px] font-black uppercase leading-none tracking-[0.12em] transition-all ${
+                                theme === 'dark'
+                                    ? 'border-purple-300/45 bg-purple-500/18 text-purple-100 shadow-[0_0_18px_rgba(168,85,247,0.16)]'
+                                    : 'border-purple-500/30 bg-purple-50 text-purple-800'
+                            } enabled:hover:scale-105 enabled:hover:bg-purple-500/28 disabled:cursor-not-allowed disabled:opacity-45`}
+                            aria-label={buffPreviewAction.label}
+                        >
+                            <span>{buffPreviewAction.label}</span>
+                        </button>
+                    ) : null}
+                </div>
                 {echoReservoirMemory ? (
                     <div
                         data-echo-reservoir-memory={player}

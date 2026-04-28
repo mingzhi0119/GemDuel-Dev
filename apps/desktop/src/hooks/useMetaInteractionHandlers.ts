@@ -88,9 +88,11 @@ export const useMetaInteractionHandlers = ({
     );
 
     const handlePeekDeck = useCallback(
-        (level: number) => {
+        (level: number | 'all' = 'all') => {
             if (canLocalInteract && canActionRunInPhase('PEEK_DECK', gameState.phase)) {
-                networkDispatch(buildPeekDeckAction(level as 1 | 2 | 3));
+                networkDispatch(
+                    buildPeekDeckAction(level === 'all' ? 'all' : (level as 1 | 2 | 3))
+                );
             }
         },
         [canLocalInteract, gameState.phase, networkDispatch]
