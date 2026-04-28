@@ -102,11 +102,20 @@ jobs:
               run: pnpm run governance:report
 
             - name: Lifecycle Certification
+              id: certify
               run: pnpm run lifecycle:certify
+
+            - name: Draft engineering audit (certification failure only)
+              if: failure() && steps.certify.outcome == 'failure'
+              run: node tools/scripts/draft-audit-report.mjs --artifacts-dir artifacts/governance
 
             - name: Export Governance Artifacts
               if: always()
               run: pnpm run governance:artifacts -- --out-dir artifacts/governance
+
+            - name: Render governance dashboard HTML
+              if: always()
+              run: pnpm run governance:dashboard -- --artifacts-dir artifacts/governance
 
             - name: Governance Evidence Health Gate
               if: always()

@@ -9,7 +9,8 @@ import type {
     VisualLabMode,
 } from './surfaceLabTypes';
 import { SurfaceLabControls } from './SurfaceLabControls';
-import { MotionLabControls, getMotionLabel } from './MotionLabControls';
+import { MotionLabControls } from './MotionLabControls';
+import { getMotionLabel } from './motionLabLabels';
 import type { SurfaceLabMotionEventType, SurfaceLabMotionOptions } from './motionLabEvents';
 import type { VisualLabShellStyles } from './visualLabStyles';
 

@@ -9,6 +9,7 @@ import {
     SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
 } from '@gemduel/config-vitest/seal-exclusions';
 import { collectSealCoverageExclusionGovernanceErrors } from '../sealExclusionGovernance.js';
+import { collectSealMonthlySnapshotErrors } from '../sealExclusionMonthly.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,12 @@ const repoRoot = path.resolve(__dirname, '../../..');
 const reviewSnapshot = JSON.parse(
     fs.readFileSync(
         path.join(repoRoot, 'tools', 'governance', 'seal-exclusions-review.snapshot.json'),
+        'utf8'
+    )
+);
+const monthlySnapshot = JSON.parse(
+    fs.readFileSync(
+        path.join(repoRoot, 'tools', 'governance', 'seal-exclusions-monthly.snapshot.json'),
         'utf8'
     )
 );
@@ -178,5 +185,34 @@ describe('seal exclusion governance', () => {
         expect(errors).toContain(
             'Seal coverage exclusion ../../packages/ui/src/components/CardAnatomyPage.tsx has no owner role for category leaf.'
         );
+    });
+
+    it('rejects invalid ownerRole values', () => {
+        const errors = collectSealCoverageExclusionGovernanceErrors({
+            exclusions: [
+                {
+                    ...sampleLeafExclusion!,
+                    pattern: 'packages/ui/src/components/BadOwner.tsx',
+                    ownerRole: 'Unknown Team',
+                },
+            ],
+            policy: {
+                ...SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
+                baselineCount: 100,
+            },
+            repoRoot,
+            today,
+        });
+
+        expect(errors.some((line) => line.includes('must define ownerRole as one of:'))).toBe(true);
+    });
+
+    it('accepts the committed monthly snapshot totals', () => {
+        expect(
+            collectSealMonthlySnapshotErrors({
+                exclusions: SEAL_COVERAGE_EXCLUSIONS,
+                monthlySnapshot,
+            })
+        ).toEqual([]);
     });
 });

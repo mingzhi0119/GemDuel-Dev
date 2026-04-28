@@ -1,10 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { PresentationLayer } from '../presentation/PresentationLayer';
 import type { PresentationController } from '../presentation/usePresentationEvents';
 import type { PresentationEvent } from '../presentation/presentationTypes';
 import { GamePlaySurface } from '../shell/GamePlaySurface';
 import { PlayerRail } from '../shell/PlayerRail';
 import { TopBar } from '@gemduel/ui/components/TopBar';
+import { GameGlyph } from '@gemduel/ui/components/GameGlyph';
+import {
+    TOOLTIP_LABEL_CLASS,
+    getTooltipLabelThemeClass,
+} from '@gemduel/ui/components/tooltipStyles';
+import { useT } from '@gemduel/ui/i18n/LocaleProvider';
 import type { AppRouteProps, ThemeName } from '@app/types/ui';
 import { useSurfaceLabCatalog } from './useSurfaceLabCatalog';
 import { createVisualLabShellStyles } from './visualLabStyles';
@@ -24,6 +30,7 @@ import { VisualLabConsole } from './VisualLabConsole';
 
 interface VisualLabRouteProps extends AppRouteProps {
     mode: VisualLabMode;
+    onCloseToStartPage?: () => void;
 }
 
 const getAssetSlots = (
@@ -80,7 +87,8 @@ const getVisualLabEventTimeoutMs = (event: PresentationEvent, mode: VisualLabMod
 };
 
 export function VisualLabRoute(props: VisualLabRouteProps) {
-    const { mode, game, layout, appVersion } = props;
+    const { mode, game, layout, appVersion, onCloseToStartPage } = props;
+    const t = useT();
     const { state, handlers, getters, historyControls } = game;
     const didStartFixtureRef = useRef(false);
     const motionNonceRef = useRef(0);
@@ -131,6 +139,15 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         () => createVisualLabShellStyles(labTheme, layout, assetSlots, playerZoneSideSlots),
         [assetSlots, labTheme, layout, playerZoneSideSlots]
     );
+    const restartTooltipId = useId();
+    const restartIconButtonClass =
+        labTheme === 'dark'
+            ? 'hover:bg-slate-800/80 focus-visible:outline-slate-300'
+            : 'hover:bg-white/80 focus-visible:outline-stone-700';
+    const restartIconStyle = {
+        color: 'var(--gd-chrome-icon)',
+        textShadow: 'var(--gd-chrome-text-shadow)',
+    };
     const triggerMotion = useCallback(
         (type: SurfaceLabMotionEventType = motionType) => {
             motionNonceRef.current += 1;
@@ -216,6 +233,32 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
             <div className="absolute bottom-2 right-3 z-[100] pointer-events-none select-none font-mono text-[10px] opacity-60 text-slate-300">
                 v{appVersion} / Visual Lab
             </div>
+
+            {onCloseToStartPage ? (
+                <div className="absolute right-3 top-3 z-[110]">
+                    <button
+                        type="button"
+                        data-app-restart-button="true"
+                        onClick={() => {
+                            onCloseToStartPage();
+                        }}
+                        className={`group relative flex h-16 w-16 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-[4.25rem] lg:w-[4.25rem] ${restartIconButtonClass}`}
+                        style={restartIconStyle}
+                        aria-label={t('settings.restart')}
+                        aria-describedby={restartTooltipId}
+                    >
+                        <GameGlyph variant="restart" size={34} />
+                        <span
+                            id={restartTooltipId}
+                            role="tooltip"
+                            data-tooltip-size="standard-label"
+                            className={`pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${TOOLTIP_LABEL_CLASS} ${getTooltipLabelThemeClass(labTheme)}`}
+                        >
+                            {t('settings.restart')}
+                        </span>
+                    </button>
+                </div>
+            ) : null}
 
             <TopBar
                 p1Score={getters.getPlayerScore('p1')}

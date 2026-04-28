@@ -29,6 +29,15 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         secretHandling: 'Operational flag only. Never store secrets here.',
         failureMode: 'Falls back to false unless the app version is already a prerelease.',
     },
+    GEMDUEL_ALLOW_VISUAL_LAB: {
+        owner: 'Desktop Platform',
+        defaultValue: 'false',
+        validation:
+            'Boolean string: "true" or "false". When true at Vite build time, the visual-lab route chunk is emitted; when true at Electron runtime, the preload exposes allowVisualLab so `?visualLab=` is honored outside dev.',
+        secretHandling: 'Operational dev-tooling flag only. Never store secrets here.',
+        failureMode:
+            'Falls back to false: production bundles omit the visual-lab lazy chunk and the renderer ignores visual lab query params.',
+    },
     GEMDUEL_LOG_LEVEL: {
         owner: 'Desktop Platform',
         defaultValue: 'info',

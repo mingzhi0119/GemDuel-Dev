@@ -68,6 +68,10 @@
             "cache": false,
             "outputs": ["artifacts/**"]
         },
+        "governance:dashboard": {
+            "cache": false,
+            "outputs": ["artifacts/**"]
+        },
         "governance:evidence:check": {
             "cache": false
         },
@@ -98,6 +102,9 @@
             "cache": false
         },
         "seal-exclusions:check": {
+            "cache": false
+        },
+        "seal-exclusions:refresh-monthly": {
             "cache": false
         },
         "secrets:check": {

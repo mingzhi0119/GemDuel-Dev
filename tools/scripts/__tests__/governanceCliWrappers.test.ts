@@ -128,6 +128,20 @@ const writeGovernanceArtifacts = (outDir: string, sizeKb = 620) => {
             ),
             'utf8'
         );
+        fs.writeFileSync(
+            path.join(outDir, 'coverage-perfile-key-modules.report.json'),
+            JSON.stringify(
+                {
+                    schemaVersion: 1,
+                    status: 'passed',
+                    violations: [],
+                    generatedAt: new Date().toISOString(),
+                },
+                null,
+                2
+            ),
+            'utf8'
+        );
         execFileSync(
             'node',
             [

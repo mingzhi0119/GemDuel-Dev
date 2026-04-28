@@ -12,3 +12,5 @@ The ADR index tracks the irreversible architecture decisions that P3 governance 
 - [ADR-0006: Keep the Canonical Card Catalog as a Generated-in-repo Data File](0006-canonical-card-catalog.md)
 - [ADR-0007: Allow a Temporary Oversized Renderer Composition Surface](0007-renderer-composition-exceptions.md)
 - [ADR-0008: Govern Seal Coverage Exclusions as Reviewed Assets](0008-seal-coverage-exclusion-governance.md)
+- [ADR-0009: Visual Lab as Seal Shell Exclusions with Smoke Evidence](0009-visual-lab-shell-exclusion.md)
+- [ADR-0010: Engineering Audit Draft from Governance Artifacts](0010-engineering-audit-draft-from-governance.md)

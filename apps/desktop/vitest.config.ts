@@ -4,6 +4,9 @@ import path from 'path';
 import { createDesktopVitestSettings } from '@gemduel/config-vitest/desktop';
 
 export default defineConfig({
+    define: {
+        __GEMDUEL_INCLUDE_VISUAL_LAB_BUNDLE__: true,
+    },
     plugins: [react()],
     test: createDesktopVitestSettings(),
     resolve: {

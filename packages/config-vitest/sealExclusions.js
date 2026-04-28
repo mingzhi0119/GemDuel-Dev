@@ -1,27 +1,100 @@
+import { minimatch } from 'minimatch';
+
 const LAST_REVIEWED_ON = '2026-04-21';
 const REVIEW_CADENCE_DAYS = 30;
 const SHELL_ADR_PATH = 'docs/adr/0008-seal-coverage-exclusion-governance.md';
 
+/** Canonical owner roles for seal exclusion ledger (P3-2). */
+export const SEAL_EXCLUSION_OWNER_ROLES = Object.freeze([
+    'Frontend Platform',
+    'Domain Logic',
+    'Networking',
+    'Desktop Platform',
+    'Release Engineering',
+]);
+
 export const SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY = {
-    baselineCount: 88,
+    baselineCount: 97,
     maxReviewCadenceDays: 30,
     shellAdrPath: SHELL_ADR_PATH,
 };
 
-const createExclusion = (pattern, reason, category, adrPath) => ({
+const OR = {
+    FP: 'Frontend Platform',
+    DL: 'Domain Logic',
+    NW: 'Networking',
+    DP: 'Desktop Platform',
+    RE: 'Release Engineering',
+};
+
+const norm = (pattern) => pattern.replace(/\\/g, '/');
+
+const inferLeafOwnerRole = (pattern) => {
+    const p = norm(pattern);
+    if (p.includes('packages/shared/')) {
+        return OR.DL;
+    }
+    return OR.FP;
+};
+
+const inferStaticOwnerRole = (pattern) => {
+    const p = norm(pattern);
+    if (p.includes('packages/shared/src/data/')) {
+        return OR.DL;
+    }
+    if (p.includes('packages/ui/')) {
+        return OR.FP;
+    }
+    return OR.DL;
+};
+
+const inferWrapperOwnerRole = (pattern) => {
+    const p = norm(pattern);
+    if (p.includes('tools/scripts')) {
+        return OR.RE;
+    }
+    if (p.includes('electron/')) {
+        return OR.DP;
+    }
+    if (p.includes('gameNetwork/')) {
+        return OR.NW;
+    }
+    if (p.includes('packages/shared/src/types/') || p.endsWith('packages/shared/src/utils.ts')) {
+        return OR.DL;
+    }
+    return OR.FP;
+};
+
+const inferShellOwnerRole = (pattern) => {
+    const p = norm(pattern);
+    if (p.includes('DesktopStage.tsx')) {
+        return OR.DP;
+    }
+    return OR.FP;
+};
+
+const createExclusion = (pattern, reason, category, adrPath, ownerRole) => ({
     pattern,
     reason,
     category,
+    ownerRole,
     lastReviewedOn: LAST_REVIEWED_ON,
     reviewCadenceDays: REVIEW_CADENCE_DAYS,
     ...(adrPath ? { adrPath } : {}),
 });
 
-const leafExclusion = (pattern, reason) => createExclusion(pattern, reason, 'leaf');
-const staticExclusion = (pattern, reason) => createExclusion(pattern, reason, 'static');
-const wrapperExclusion = (pattern, reason) => createExclusion(pattern, reason, 'wrapper');
-const shellExclusion = (pattern, reason) =>
-    createExclusion(pattern, reason, 'shell', SHELL_ADR_PATH);
+const leafExclusion = (pattern, reason, ownerRole = inferLeafOwnerRole(pattern)) =>
+    createExclusion(pattern, reason, 'leaf', undefined, ownerRole);
+const staticExclusion = (pattern, reason, ownerRole = inferStaticOwnerRole(pattern)) =>
+    createExclusion(pattern, reason, 'static', undefined, ownerRole);
+const wrapperExclusion = (pattern, reason, ownerRole = inferWrapperOwnerRole(pattern)) =>
+    createExclusion(pattern, reason, 'wrapper', undefined, ownerRole);
+const shellExclusion = (pattern, reason, ownerRole = inferShellOwnerRole(pattern)) =>
+    createExclusion(pattern, reason, 'shell', SHELL_ADR_PATH, ownerRole);
+
+const VISUAL_LAB_SHELL_ADR = 'docs/adr/0009-visual-lab-shell-exclusion.md';
+const visualLabShellExclusion = (pattern, reason, ownerRole = OR.FP) =>
+    createExclusion(pattern, reason, 'shell', VISUAL_LAB_SHELL_ADR, ownerRole);
 
 // Keep this file as the single source of truth for seal exclusions.
 // Every entry must stay explicit, carry a 30-day review stamp, and shell-category
@@ -110,6 +183,42 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
     wrapperExclusion(
         'src/app/routes/GemDuelRoutes.tsx',
         'Route composition shell primarily stitches together already-tested gameplay surfaces and layout state.'
+    ),
+    visualLabShellExclusion(
+        'src/app/visual-lab/MotionLabControls.tsx',
+        'Visual lab motion controls are developer-only QA wiring over presentation events; smoke tests cover mount safety.'
+    ),
+    visualLabShellExclusion(
+        'src/app/visual-lab/SurfaceLabControls.tsx',
+        'Visual lab surface controls are developer-only asset preview wiring; smoke tests cover mount safety.'
+    ),
+    visualLabShellExclusion(
+        'src/app/visual-lab/SurfaceLabSelect.tsx',
+        'Visual lab surface selector is developer-only catalog UI; smoke tests cover mount safety.'
+    ),
+    visualLabShellExclusion(
+        'src/app/visual-lab/VisualLabConsole.tsx',
+        'Visual lab console is a developer diagnostics composition shell; smoke tests cover mount safety.'
+    ),
+    visualLabShellExclusion(
+        'src/app/visual-lab/VisualLabRoute.tsx',
+        'Visual lab route composes tested presentation and shell primitives behind a URL gate; smoke tests cover mount safety.'
+    ),
+    visualLabShellExclusion(
+        'src/app/visual-lab/useSurfaceLabCatalog.ts',
+        'Visual lab catalog hook loads developer asset metadata only; smoke tests exercise the route that consumes it.'
+    ),
+    visualLabShellExclusion(
+        'src/app/visual-lab/visualLabStyles.ts',
+        'Visual lab shell styles are static layout tokens for the diagnostics panel; behavior is visual-only.'
+    ),
+    wrapperExclusion(
+        'src/hooks/gameNetwork/useAuthoritativeReplaySync.ts',
+        'Authoritative replay sync hook is validated by fixture-backed unit tests and useGameNetwork integration; residual branches are defensive checksum paths tied to live payloads.'
+    ),
+    wrapperExclusion(
+        'src/hooks/gameNetwork/useNetworkEventHandlers.ts',
+        'Network event handler wiring is exercised through useGameNetwork integration tests and protocol matrices; the module is orchestration-only over already-governed dispatch paths.'
     ),
     wrapperExclusion(
         'src/hooks/onlineManager/types.ts',
@@ -384,3 +493,9 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
 export const SEAL_COVERAGE_EXCLUDE_PATTERNS = SEAL_COVERAGE_EXCLUSIONS.map(
     ({ pattern }) => pattern
 );
+
+/** @param {string} desktopRelativePath Path relative to `apps/desktop` (Vitest coverage keys use this shape). */
+export const isSealCoverageExcludedDesktopPath = (desktopRelativePath) => {
+    const n = desktopRelativePath.replace(/\\/g, '/');
+    return SEAL_COVERAGE_EXCLUSIONS.some((entry) => minimatch(n, entry.pattern, { dot: true }));
+};

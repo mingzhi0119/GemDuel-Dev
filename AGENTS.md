@@ -40,6 +40,8 @@ Run these from the repo root:
 - `pnpm deps:check`
 - `pnpm desktop:check`
 - `pnpm release:check`
+- `pnpm governance:dashboard` (after `governance:artifacts`, writes `artifacts/governance/governance-dashboard.html`)
+- `pnpm audit:draft` (after a failed `lifecycle:certify`, writes `artifacts/governance/engineering-audit-draft-<UTC-date>.md` from governance JSON; CI runs this only on certification failure)
 
 Use `pnpm build` for normal build validation and `pnpm electron:build` only when desktop packaging must be verified.
 

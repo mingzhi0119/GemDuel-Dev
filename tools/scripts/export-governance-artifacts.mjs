@@ -16,6 +16,7 @@ import {
     renderLifecycleGovernanceMarkdown,
 } from './lifecycleArtifactReports.js';
 import { buildGovernanceAssets } from './governanceArtifactAssets.js';
+import { printAndWriteLifecycleFailureSummary } from './lifecycleFailureSummary.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -200,6 +201,23 @@ const main = () => {
         certificationMarkdownPath,
         renderLifecycleCertificationMarkdown(certificationReport)
     );
+
+    const governanceLifecycleFailed =
+        auditGateReport.errors.length > 0 ||
+        lifecycleReport.status !== 'passed' ||
+        dashboardReport.status !== 'passed' ||
+        certificationReport.status !== 'passed';
+
+    if (governanceLifecycleFailed) {
+        printAndWriteLifecycleFailureSummary({
+            repoRoot,
+            absoluteOutDir: outputDir,
+            auditGateReport,
+            lifecycleReport,
+            dashboardReport,
+            certificationReport,
+        });
+    }
 
     if (auditGateReport.errors.length > 0) {
         throw new Error(`Audit gate report contains ${auditGateReport.errors.length} issue(s).`);

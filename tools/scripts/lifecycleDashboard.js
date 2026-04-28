@@ -61,6 +61,7 @@ export const buildLifecycleDashboardReport = ({
     benchmarkReport,
     bundleBudgetReport,
     coverageSummary,
+    coveragePerFileKeyModulesReport = null,
     architectureBudgetSummary,
     sealReviewSummary,
     dependencySbomSnapshot,
@@ -78,6 +79,20 @@ export const buildLifecycleDashboardReport = ({
         bundleBudgetReport == null
             ? 'not-collected'
             : metricStatus(bundleBudgetReport.status !== 'incident');
+
+    const perFileReport = coveragePerFileKeyModulesReport ?? null;
+    let keyModulePerFileDashboardStatus = 'not-collected';
+    let keyModulePerFileValue =
+        'Report not found; run pnpm run test:coverage or pnpm run coverage:perfile-modules';
+    if (perFileReport != null) {
+        const violated =
+            perFileReport.status === 'failed' || (perFileReport.violations?.length ?? 0) > 0;
+        keyModulePerFileDashboardStatus = violated ? 'failed' : 'passed';
+        keyModulePerFileValue = violated
+            ? `${perFileReport.violations.length} file(s) below line-coverage policy (first: ${perFileReport.violations[0]?.file ?? 'n/a'})`
+            : `0 key-module line-coverage violations (${perFileReport.status})`;
+    }
+
     const metrics = [
         {
             id: 'gate-status',
@@ -105,6 +120,13 @@ export const buildLifecycleDashboardReport = ({
             evidenceRefs: [
                 coverageSummary?.sourcePath ?? 'apps/desktop/coverage/coverage-final.json',
             ],
+        },
+        {
+            id: 'coverage-perfile-key-modules',
+            title: 'Key Module Per-File Line Coverage',
+            status: keyModulePerFileDashboardStatus,
+            value: keyModulePerFileValue,
+            evidenceRefs: ['artifacts/governance/coverage-perfile-key-modules.report.json'],
         },
         {
             id: 'architecture-warnings',

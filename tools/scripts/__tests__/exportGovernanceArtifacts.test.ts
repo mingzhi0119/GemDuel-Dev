@@ -70,6 +70,20 @@ describe('governance artifact exporter', () => {
         });
         fs.writeFileSync(path.join(assetsDir, 'index-main.js'), 'x'.repeat(650 * 1024), 'utf8');
         writeBenchmarkReport(outDir);
+        fs.writeFileSync(
+            path.join(outDir, 'coverage-perfile-key-modules.report.json'),
+            JSON.stringify(
+                {
+                    schemaVersion: 1,
+                    status: 'passed',
+                    violations: [],
+                    generatedAt: new Date().toISOString(),
+                },
+                null,
+                2
+            ),
+            'utf8'
+        );
 
         try {
             execFileSync(

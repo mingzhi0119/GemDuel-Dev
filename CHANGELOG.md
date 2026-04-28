@@ -9,6 +9,13 @@ Release coverage is governed by `pnpm changelog:check` and
 
 ### Added
 
+- Seal coverage exclusions carry a per-entry `ownerRole`, print an owner/category ledger during `pnpm seal-exclusions:check`, and drift-check against `tools/governance/seal-exclusions-monthly.snapshot.json` (`pnpm seal-exclusions:refresh-monthly` to refresh).
+- Lifecycle microbenchmarks cover `applyAction` hot paths (`BUY_CARD`, `TAKE_GEMS`, `STEAL_GEM`, `CLOSE_MODAL`) and `simulateAiVsAiReplay` at 100/500/1000 actions; baselines live in `tools/governance/benchmark-baselines.snapshot.json`.
+- `pnpm audit:draft` (and CI on certification failure only) writes `artifacts/governance/engineering-audit-draft-<UTC-date>.md` from governance JSON; see ADR `docs/adr/0010-engineering-audit-draft-from-governance.md`.
+- Lifecycle certification and governance artifact export failures now print a markdown summary (dimension, metric, evidence paths, suggested `pnpm` reruns) and write `artifacts/governance/lifecycle-failure-summary.md`.
+- Visual Lab query routing is gated for production desktop builds (`GEMDUEL_ALLOW_VISUAL_LAB` / `__GEMDUEL_RUNTIME_CONFIG__.allowVisualLab`); default release bundles omit the visual-lab chunk.
+- Visual Lab includes a **Back to Start Page** action that clears `?visualLab=` and returns to the start/config shell.
+- `pnpm governance:dashboard` writes `artifacts/governance/governance-dashboard.html` from exported governance JSON; the governance evidence workflow runs it after artifact export.
 - Repo-specific governance docs for security, contribution flow, architecture, PR review, and dependency automation.
 - CODEOWNERS routing for the frontend/domain, networking, desktop, and release areas.
 - Lifecycle pipeline checks for repo settings, CODEOWNERS role mapping, release changelog coverage, gate summaries, governance reports, and deterministic microbenchmarks.

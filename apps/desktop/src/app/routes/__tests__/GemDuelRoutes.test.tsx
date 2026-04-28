@@ -41,8 +41,23 @@ vi.mock('../../shell/GameShell', () => ({
 }));
 
 vi.mock('../../visual-lab/VisualLabRoute', () => ({
-    VisualLabRoute: ({ mode }: { mode: string }) => (
+    VisualLabRoute: ({
+        mode,
+        onCloseToStartPage,
+    }: {
+        mode: string;
+        onCloseToStartPage?: () => void;
+    }) => (
         <div data-testid="visual-lab-route" data-visual-lab-mode={mode}>
+            {onCloseToStartPage ? (
+                <button
+                    type="button"
+                    data-app-restart-button="true"
+                    onClick={() => onCloseToStartPage()}
+                >
+                    back
+                </button>
+            ) : null}
             visual lab
         </div>
     ),
@@ -221,6 +236,8 @@ const createProps = (overrides: Partial<AppRouteProps> = {}): AppRouteProps => (
         handleRestart: vi.fn(),
         handleDownloadReplay: vi.fn(),
         handleUploadReplay: vi.fn(),
+        openVisualLab: vi.fn(),
+        closeVisualLabToStartPage: vi.fn(),
         ...(overrides.callbacks ?? {}),
     },
     ...overrides,
@@ -369,14 +386,32 @@ describe('GemDuelRoutes desktop stage rendering', () => {
 
     it('mounts the visual lab route from the query string without entering normal game routes', async () => {
         window.history.replaceState(null, '', '/?visualLab=surfaces');
+        const closeVisualLabToStartPage = vi.fn();
 
-        const { container, root } = await renderRoutes(createProps());
+        const { container, root } = await renderRoutes(
+            createProps({
+                callbacks: {
+                    handleRestart: vi.fn(),
+                    handleDownloadReplay: vi.fn(),
+                    handleUploadReplay: vi.fn(),
+                    openVisualLab: vi.fn(),
+                    closeVisualLabToStartPage,
+                },
+            })
+        );
 
         const visualLab = container.querySelector('[data-testid="visual-lab-route"]');
 
         expect(visualLab).not.toBeNull();
         expect(visualLab?.getAttribute('data-visual-lab-mode')).toBe('surfaces');
         expect(container.querySelector('[data-testid="config-route"]')).toBeNull();
+
+        const back = container.querySelector('[data-app-restart-button="true"]');
+        expect(back).not.toBeNull();
+        await act(async () => {
+            (back as HTMLButtonElement).click();
+        });
+        expect(closeVisualLabToStartPage).toHaveBeenCalledTimes(1);
 
         act(() => {
             root.unmount();

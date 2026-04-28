@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ABILITIES, GEM_TYPES } from '../../constants';
 import type { Card } from '../../types';
 import { computeAiAction } from '../ai/aiPlayer';
+import { applyAction } from '../gameReducer';
 import { createMockState } from './testHelpers';
 
 describe('AI player phase routing', () => {
@@ -889,6 +890,74 @@ describe('AI player phase routing', () => {
                     { r: 1, c: 1 },
                     { r: 2, c: 2 },
                 ],
+            },
+        });
+    });
+});
+
+describe('Roadmap P3-3 AI and reducer surfaces', () => {
+    it('clears a peek modal via CLOSE_MODAL on the shared reducer path', () => {
+        const modalState = createMockState({
+            activeModal: {
+                type: 'PEEK',
+                data: {
+                    cards: [],
+                    initiator: 'p1',
+                },
+            },
+        });
+        const next = applyAction(modalState, { type: 'CLOSE_MODAL' });
+        expect(next?.activeModal).toBeNull();
+    });
+
+    it('returns null for privilege action phase until dedicated privilege heuristics exist', () => {
+        const privilegePhase = createMockState({
+            phase: 'PRIVILEGE_ACTION',
+            turn: 'p1',
+            extraPrivileges: { p1: 1, p2: 0 },
+        });
+        expect(computeAiAction(privilegePhase)).toBeNull();
+    });
+
+    it('selects BUY_CARD on a zero-cost high-value market card when inventory can afford it', () => {
+        const action = computeAiAction(
+            createMockState({
+                turn: 'p2',
+                inventories: {
+                    p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+                    p2: { blue: 5, white: 5, green: 5, black: 5, red: 5, gold: 0, pearl: 0 },
+                },
+                market: {
+                    1: [
+                        {
+                            id: 'roadmap-buy-target',
+                            level: 1,
+                            cost: {
+                                blue: 0,
+                                white: 0,
+                                green: 0,
+                                black: 0,
+                                red: 0,
+                                pearl: 0,
+                                gold: 0,
+                            },
+                            points: 5,
+                            bonusColor: 'blue',
+                        },
+                    ],
+                    2: [],
+                    3: [],
+                },
+                playerReserved: { p1: [], p2: [] },
+            })
+        );
+        expect(action).toEqual({
+            type: 'BUY_CARD',
+            payload: {
+                card: expect.objectContaining({ id: 'roadmap-buy-target' }),
+                source: 'market',
+                marketInfo: { level: 1, idx: 0 },
+                randoms: { bountyHunterColor: 'red' },
             },
         });
     });

@@ -5,6 +5,10 @@
     "type": "module",
     "exports": {
         "./desktop": "./desktop.js",
+        "./per-file-key-modules": "./perFileKeyModules.js",
         "./seal-exclusions": "./sealExclusions.js"
+    },
+    "dependencies": {
+        "minimatch": "^10.2.5"
     }
 }

@@ -21,12 +21,6 @@ const CALLOUT_OPTIONS: SurfaceLabMotionOptions['callout'][] = [
     'buff',
 ];
 
-export const getMotionLabel = (type: SurfaceLabMotionEventType): string =>
-    type
-        .split('-')
-        .map((part) => part[0].toUpperCase() + part.slice(1))
-        .join(' ');
-
 export function MotionLabControls({
     activeEvent,
     motionType,

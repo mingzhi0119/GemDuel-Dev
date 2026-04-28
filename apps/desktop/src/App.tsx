@@ -198,6 +198,14 @@ export default function GemDuelBoard() {
         window.location.assign(`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
     };
 
+    const handleCloseVisualLabToStartPage = () => {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.delete('visualLab');
+        const search = nextUrl.searchParams.toString();
+        const query = search.length > 0 ? `?${search}` : '';
+        window.location.assign(`${nextUrl.pathname}${query}${nextUrl.hash}`);
+    };
+
     useEffect(() => {
         if (matchmakingRoute === 'lan' && lan.state.phase === 'idle') {
             void lan.startSearch();
@@ -291,6 +299,7 @@ export default function GemDuelBoard() {
                     selectSurfaceTheme: handleSelectSurfaceTheme,
                     selectDesktopAspectRatio: setDesktopAspectRatio,
                     openVisualLab: handleOpenVisualLab,
+                    closeVisualLabToStartPage: handleCloseVisualLabToStartPage,
                 }}
             />
         </LocaleProvider>

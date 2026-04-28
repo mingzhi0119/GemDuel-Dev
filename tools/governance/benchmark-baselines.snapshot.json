@@ -31,6 +31,55 @@
             "owner": "Frontend Platform + Domain Logic",
             "maxMedianMs": 50,
             "maxP95Ms": 120
+        },
+        {
+            "id": "apply-action-buy-card",
+            "owner": "Domain Logic",
+            "maxMedianMs": 18,
+            "maxP95Ms": 22,
+            "iterations": 50
+        },
+        {
+            "id": "apply-action-take-gems",
+            "owner": "Domain Logic",
+            "maxMedianMs": 15,
+            "maxP95Ms": 18,
+            "iterations": 50
+        },
+        {
+            "id": "apply-action-steal-gem",
+            "owner": "Domain Logic",
+            "maxMedianMs": 15,
+            "maxP95Ms": 18,
+            "iterations": 50
+        },
+        {
+            "id": "apply-action-close-modal",
+            "owner": "Domain Logic",
+            "maxMedianMs": 10,
+            "maxP95Ms": 12,
+            "iterations": 50
+        },
+        {
+            "id": "replay-simulate-100",
+            "owner": "Domain Logic",
+            "maxMedianMs": 120,
+            "maxP95Ms": 180,
+            "iterations": 12
+        },
+        {
+            "id": "replay-simulate-500",
+            "owner": "Domain Logic",
+            "maxMedianMs": 120,
+            "maxP95Ms": 180,
+            "iterations": 8
+        },
+        {
+            "id": "replay-simulate-1000",
+            "owner": "Domain Logic",
+            "maxMedianMs": 130,
+            "maxP95Ms": 200,
+            "iterations": 4
         }
     ]
 }

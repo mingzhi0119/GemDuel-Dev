@@ -2,7 +2,7 @@
     "schemaVersion": 1,
     "scopeAnchor": "docs/archive/engineering-audit-report-2026-04-25.md",
     "sourcePath": "packages/config-vitest/sealExclusions.js",
-    "baselineCount": 88,
+    "baselineCount": 97,
     "maxReviewCadenceDays": 30,
     "reviewPolicy": {
         "mode": "category-owner-reviewed-baseline",
@@ -14,7 +14,8 @@
             "reason",
             "category",
             "lastReviewedOn",
-            "reviewCadenceDays"
+            "reviewCadenceDays",
+            "ownerRole"
         ]
     },
     "ownerRolesByCategory": {

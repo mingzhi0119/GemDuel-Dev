@@ -129,6 +129,9 @@ export const buildLifecycleArtifactReports = ({
             coverageFinal: JSON.parse(fs.readFileSync(coverageFile, 'utf8')),
             minimumPercent: auditGateSnapshot.coverage.branchMinimumPercent,
         }),
+        coveragePerFileKeyModulesReport: readOptionalJsonFile(
+            path.join(outputDir, 'coverage-perfile-key-modules.report.json')
+        ),
         architectureBudgetSummary: {
             errors: architectureBudgetSummary.errors.length,
             warnings: architectureBudgetSummary.warnings.length,

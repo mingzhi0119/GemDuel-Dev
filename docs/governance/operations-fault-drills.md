@@ -13,3 +13,9 @@ Machine-readable drill contract: `tools/governance/release-health-operations.sna
 ## Drill Rule
 
 Keep drills reproducible and keep the exported report alongside the drill result.
+
+## Visual Lab route bypass
+
+The desktop `?visualLab=surfaces|motion` route is **dev-tooling only**: it is gated by `import.meta.env.DEV` and, outside dev, by `window.__GEMDUEL_RUNTIME_CONFIG__.allowVisualLab` (set from `GEMDUEL_ALLOW_VISUAL_LAB` in the Electron preload). Release builds omit the visual-lab lazy chunk unless `GEMDUEL_ALLOW_VISUAL_LAB=true` at **Vite build** time, so the query string cannot load lab UI in a stock production bundle.
+
+This path is **not** part of normal player flows and is excluded from release-health drill denominators and operational SLOs. Operational drills should not treat visual-lab navigation as a gameplay or shell regression signal.

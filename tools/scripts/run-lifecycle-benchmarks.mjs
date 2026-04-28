@@ -58,6 +58,7 @@ const loadSharedRuntime = async () => {
     const importShared = (relativePath) => import(new URL(relativePath, import.meta.url).href);
     const [
         aiPlayer,
+        constants,
         gameReducer,
         gameSetup,
         initialState,
@@ -68,8 +69,10 @@ const loadSharedRuntime = async () => {
         replaySimulation,
         replayWriter,
         networkTypes,
+        testHelpers,
     ] = await Promise.all([
         importShared('../../packages/shared/src/logic/ai/aiPlayer.ts'),
+        importShared('../../packages/shared/src/constants.ts'),
         importShared('../../packages/shared/src/logic/gameReducer.ts'),
         importShared('../../packages/shared/src/logic/gameSetup.ts'),
         importShared('../../packages/shared/src/logic/initialState.ts'),
@@ -80,6 +83,7 @@ const loadSharedRuntime = async () => {
         importShared('../../packages/shared/src/replay/simulation.ts'),
         importShared('../../packages/shared/src/replay/writer.ts'),
         importShared('../../packages/shared/src/types/network.ts'),
+        importShared('../../packages/shared/src/logic/__tests__/testHelpers.ts'),
     ]);
 
     return {
@@ -94,6 +98,149 @@ const loadSharedRuntime = async () => {
         simulateAiVsAiReplay: replaySimulation.simulateAiVsAiReplay,
         saveReplayVNext: replayWriter.saveReplayVNext,
         NETWORK_PROTOCOL_VERSION: networkTypes.NETWORK_PROTOCOL_VERSION,
+        createMockState: testHelpers.createMockState,
+        GEM_TYPES: constants.GEM_TYPES,
+    };
+};
+
+const cloneGameState = (state) => structuredClone(state);
+
+const buildApplyActionHotPaths = (createMockState, GEM_TYPES) => {
+    const buyCardState = createMockState({
+        turn: 'p2',
+        inventories: {
+            p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            p2: { blue: 5, white: 5, green: 5, black: 5, red: 5, gold: 0, pearl: 0 },
+        },
+        market: {
+            1: [
+                {
+                    id: 'market-high',
+                    level: 1,
+                    cost: {
+                        blue: 0,
+                        white: 0,
+                        green: 0,
+                        black: 0,
+                        red: 0,
+                        pearl: 0,
+                        gold: 0,
+                    },
+                    points: 5,
+                    bonusColor: 'blue',
+                },
+            ],
+            2: [],
+            3: [],
+        },
+        playerReserved: {
+            p1: [],
+            p2: [
+                {
+                    id: 'reserved-low',
+                    level: 2,
+                    cost: {
+                        blue: 0,
+                        white: 0,
+                        green: 0,
+                        black: 0,
+                        red: 0,
+                        pearl: 0,
+                        gold: 0,
+                    },
+                    points: 1,
+                    bonusColor: 'green',
+                },
+            ],
+        },
+    });
+    const buyCardAction = {
+        type: 'BUY_CARD',
+        payload: {
+            card: buyCardState.market[1][0],
+            source: 'market',
+            marketInfo: { level: 1, idx: 0 },
+            randoms: { bountyHunterColor: 'red' },
+        },
+    };
+
+    const takeGemsState = createMockState({
+        turn: 'p2',
+        inventories: {
+            p1: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+            p2: { blue: 0, white: 0, green: 0, black: 0, red: 0, gold: 0, pearl: 0 },
+        },
+        board: [
+            [GEM_TYPES.RED, GEM_TYPES.GREEN, GEM_TYPES.BLUE, GEM_TYPES.EMPTY, GEM_TYPES.EMPTY],
+            Array.from({ length: 5 }, () => GEM_TYPES.EMPTY),
+            Array.from({ length: 5 }, () => GEM_TYPES.EMPTY),
+            Array.from({ length: 5 }, () => GEM_TYPES.EMPTY),
+            Array.from({ length: 5 }, () => GEM_TYPES.EMPTY),
+        ].map((row, r) =>
+            row.map((type, c) => ({
+                type,
+                uid: `${r}-${c}-${type.id}`,
+            }))
+        ),
+        bag: [],
+        market: { 1: [], 2: [], 3: [] },
+        playerReserved: { p1: [], p2: [] },
+    });
+    const takeGemsAction = {
+        type: 'TAKE_GEMS',
+        payload: {
+            coords: [
+                { r: 0, c: 0 },
+                { r: 0, c: 1 },
+                { r: 0, c: 2 },
+            ],
+        },
+    };
+
+    const stealGemState = createMockState({
+        phase: 'STEAL_ACTION',
+        turn: 'p1',
+        inventories: {
+            p1: {
+                blue: 0,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 0,
+                gold: 0,
+                pearl: 0,
+            },
+            p2: {
+                blue: 0,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 2,
+                gold: 0,
+                pearl: 0,
+            },
+        },
+    });
+    const stealGemAction = { type: 'STEAL_GEM', payload: { gemId: 'red' } };
+
+    const closeModalState = createMockState({
+        activeModal: {
+            type: 'PEEK',
+            data: {
+                cards: [],
+                initiator: 'p1',
+            },
+        },
+    });
+
+    return {
+        buyCardState,
+        buyCardAction,
+        takeGemsState,
+        takeGemsAction,
+        stealGemState,
+        stealGemAction,
+        closeModalState,
     };
 };
 
@@ -160,13 +307,17 @@ const runBenchmarks = ({ packageJson, baseline, sharedRuntime }) => {
     const {
         applyAction,
         computeAiAction,
+        createMockState,
+        GEM_TYPES,
         INITIAL_STATE_SKELETON,
         loadReplaySession,
         parseNetworkMessageBoundary,
         readReplayVNext,
         saveReplayVNext,
+        simulateAiVsAiReplay,
     } = sharedRuntime;
     const fixture = buildFixture(packageJson, sharedRuntime);
+    const hotPaths = buildApplyActionHotPaths(createMockState, GEM_TYPES);
     const benchmarkIterations = new Map(
         baseline.benchmarks.map((benchmark) => [
             benchmark.id,
@@ -176,6 +327,8 @@ const runBenchmarks = ({ packageJson, baseline, sharedRuntime }) => {
             ),
         ])
     );
+
+    const applyInnerRepeats = 48;
 
     return [
         measure({
@@ -211,6 +364,81 @@ const runBenchmarks = ({ packageJson, baseline, sharedRuntime }) => {
                     endReason: replay.summary.endReason,
                 });
             },
+        }),
+        measure({
+            id: 'apply-action-buy-card',
+            iterations: benchmarkIterations.get('apply-action-buy-card') ?? 50,
+            run: () => {
+                for (let index = 0; index < applyInnerRepeats; index += 1) {
+                    applyAction(cloneGameState(hotPaths.buyCardState), hotPaths.buyCardAction);
+                }
+            },
+        }),
+        measure({
+            id: 'apply-action-take-gems',
+            iterations: benchmarkIterations.get('apply-action-take-gems') ?? 50,
+            run: () => {
+                for (let index = 0; index < applyInnerRepeats; index += 1) {
+                    applyAction(cloneGameState(hotPaths.takeGemsState), hotPaths.takeGemsAction);
+                }
+            },
+        }),
+        measure({
+            id: 'apply-action-steal-gem',
+            iterations: benchmarkIterations.get('apply-action-steal-gem') ?? 50,
+            run: () => {
+                for (let index = 0; index < applyInnerRepeats; index += 1) {
+                    applyAction(cloneGameState(hotPaths.stealGemState), hotPaths.stealGemAction);
+                }
+            },
+        }),
+        measure({
+            id: 'apply-action-close-modal',
+            iterations: benchmarkIterations.get('apply-action-close-modal') ?? 50,
+            run: () => {
+                for (let index = 0; index < applyInnerRepeats; index += 1) {
+                    applyAction(cloneGameState(hotPaths.closeModalState), { type: 'CLOSE_MODAL' });
+                }
+            },
+        }),
+        measure({
+            id: 'replay-simulate-100',
+            iterations: benchmarkIterations.get('replay-simulate-100') ?? 12,
+            run: () =>
+                withDeterministicRandom(() => {
+                    simulateAiVsAiReplay({
+                        gameVersion: packageJson.version,
+                        useBuffs: false,
+                        maxActions: 100,
+                        createdAt: '2026-04-25T00:00:00.000Z',
+                    });
+                }),
+        }),
+        measure({
+            id: 'replay-simulate-500',
+            iterations: benchmarkIterations.get('replay-simulate-500') ?? 8,
+            run: () =>
+                withDeterministicRandom(() => {
+                    simulateAiVsAiReplay({
+                        gameVersion: packageJson.version,
+                        useBuffs: false,
+                        maxActions: 500,
+                        createdAt: '2026-04-25T00:00:00.000Z',
+                    });
+                }),
+        }),
+        measure({
+            id: 'replay-simulate-1000',
+            iterations: benchmarkIterations.get('replay-simulate-1000') ?? 4,
+            run: () =>
+                withDeterministicRandom(() => {
+                    simulateAiVsAiReplay({
+                        gameVersion: packageJson.version,
+                        useBuffs: false,
+                        maxActions: 1000,
+                        createdAt: '2026-04-25T00:00:00.000Z',
+                    });
+                }),
         }),
     ];
 };

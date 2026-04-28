@@ -39,6 +39,15 @@ const subscribe = (api, channel, callback) => {
     return () => ipcRenderer.removeListener(channel, listener);
 };
 
+const allowVisualLabRuntime = process.env.GEMDUEL_ALLOW_VISUAL_LAB === 'true';
+
+contextBridge.exposeInMainWorld(
+    '__GEMDUEL_RUNTIME_CONFIG__',
+    Object.freeze({
+        allowVisualLab: allowVisualLabRuntime,
+    })
+);
+
 contextBridge.exposeInMainWorld(
     'electron',
     Object.freeze({

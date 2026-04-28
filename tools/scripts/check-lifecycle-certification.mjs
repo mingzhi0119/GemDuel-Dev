@@ -23,6 +23,7 @@ import {
     buildLifecycleCertificationReport,
     renderLifecycleCertificationMarkdown,
 } from './lifecycleCertification.js';
+import { printAndWriteLifecycleFailureSummary } from './lifecycleFailureSummary.js';
 import {
     buildLifecycleGovernanceReport,
     renderLifecycleGovernanceMarkdown,
@@ -170,6 +171,9 @@ const main = () => {
         ),
         bundleBudgetReport,
         coverageSummary,
+        coveragePerFileKeyModulesReport: readOptionalJsonFile(
+            path.join(args.outDir, 'coverage-perfile-key-modules.report.json')
+        ),
         architectureBudgetSummary: {
             errors: architectureBudgetSummary.errors.length,
             warnings: architectureBudgetSummary.warnings.length,
@@ -234,6 +238,14 @@ const main = () => {
         ...certificationReport.errors,
     ];
     if (errors.length > 0) {
+        printAndWriteLifecycleFailureSummary({
+            repoRoot,
+            absoluteOutDir: args.outDir,
+            auditGateReport,
+            lifecycleReport,
+            dashboardReport,
+            certificationReport,
+        });
         console.error('Lifecycle certification failed:');
         for (const error of errors) {
             console.error(`- ${error}`);

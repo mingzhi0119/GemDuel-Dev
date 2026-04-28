@@ -23,6 +23,7 @@ import {
     collectRepoSettingsSnapshotErrors,
 } from '../repoSettingsGovernance.js';
 import { GOVERNANCE_DOC_PATHS } from '../governanceDocPaths.js';
+import { buildLifecycleFailureSummaryMarkdown } from '../lifecycleFailureSummary.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -276,6 +277,12 @@ describe('lifecycle governance', () => {
                 coverageFinal: coverageFixture,
                 minimumPercent: auditGateSnapshot.coverage.branchMinimumPercent,
             }),
+            coveragePerFileKeyModulesReport: {
+                schemaVersion: 1,
+                status: 'passed',
+                violations: [],
+                generatedAt: '2026-04-25T00:00:00.000Z',
+            } as never,
             architectureBudgetSummary: {
                 errors: 0,
                 warnings: 0,
@@ -302,5 +309,32 @@ describe('lifecycle governance', () => {
         expect(dashboard.completeness).toBe('complete');
         expect(certification.status).toBe('passed');
         expect(certification.localScore.score).toBe(10);
+    });
+
+    it('renders a failure summary markdown table with evidence refs and suggested commands', () => {
+        const markdown = buildLifecycleFailureSummaryMarkdown({
+            auditGateReport: { errors: ['Root package.json is missing script lint.'] },
+            lifecycleReport: { status: 'passed', issues: [] },
+            dashboardReport: {
+                metrics: [
+                    {
+                        id: 'coverage-branch',
+                        title: 'Branch Coverage',
+                        status: 'failed',
+                        value: '12% / minimum 40%',
+                        evidenceRefs: ['apps/desktop/coverage/coverage-final.json'],
+                    },
+                ],
+                errors: ['Lifecycle dashboard metric coverage-branch failed: 12% / minimum 40%.'],
+            },
+            certificationReport: { errors: [], scorecard: [] },
+        });
+
+        expect(markdown).toContain('artifacts/governance/audit-gates.report.json');
+        expect(markdown).toContain('apps/desktop/coverage/coverage-final.json');
+        expect(markdown).toContain('pnpm lifecycle:certify');
+        expect(markdown).toContain('pnpm governance:artifacts');
+        expect(markdown).toContain('pnpm test:coverage');
+        expect(markdown).toContain('coverage-branch');
     });
 });

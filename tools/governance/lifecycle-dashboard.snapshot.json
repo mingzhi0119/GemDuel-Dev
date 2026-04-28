@@ -10,6 +10,7 @@
     "requiredMetrics": [
         "gate-status",
         "coverage-branch",
+        "coverage-perfile-key-modules",
         "architecture-warnings",
         "seal-exclusions",
         "release-changelog",
@@ -22,6 +23,7 @@
         "artifacts/governance/audit-gates.report.json",
         "artifacts/governance/lifecycle-benchmarks.report.json",
         "artifacts/governance/bundle-budget.report.json",
+        "artifacts/governance/coverage-perfile-key-modules.report.json",
         "tools/governance/seal-exclusions-review.snapshot.json"
     ]
 }

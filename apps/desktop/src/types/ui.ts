@@ -62,6 +62,7 @@ export interface AppUiCallbacks {
     selectSurfaceTheme?: (variant: SurfaceThemeVariant) => void;
     selectDesktopAspectRatio?: (ratio: DesktopAspectRatio) => void;
     openVisualLab?: (mode: 'surfaces' | 'motion') => void;
+    closeVisualLabToStartPage?: () => void;
 }
 
 export interface AppRouteProps {

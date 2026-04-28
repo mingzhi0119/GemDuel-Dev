@@ -1,0 +1,21 @@
+{
+    "schemaVersion": 1,
+    "month": "2026-04",
+    "generatedAt": "2026-04-28T04:05:15.158Z",
+    "exclusionCount": 97,
+    "totals": {
+        "byOwnerRole": {
+            "Desktop Platform": 4,
+            "Domain Logic": 12,
+            "Frontend Platform": 65,
+            "Networking": 2,
+            "Release Engineering": 14
+        },
+        "byCategory": {
+            "leaf": 36,
+            "shell": 14,
+            "static": 15,
+            "wrapper": 32
+        }
+    }
+}

@@ -5,7 +5,11 @@ import {
     SEAL_COVERAGE_EXCLUSIONS,
     SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
 } from '@gemduel/config-vitest/seal-exclusions';
-import { collectSealCoverageExclusionGovernanceErrors } from './sealExclusionGovernance.js';
+import {
+    collectSealCoverageExclusionGovernanceErrors,
+    printSealExclusionLedgerSummary,
+} from './sealExclusionGovernance.js';
+import { collectSealMonthlySnapshotErrors } from './sealExclusionMonthly.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,13 +33,29 @@ const reviewSnapshot = JSON.parse(
     )
 );
 
-const errors = collectSealCoverageExclusionGovernanceErrors({
-    exclusions: SEAL_COVERAGE_EXCLUSIONS,
-    policy: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
-    reviewSnapshot,
+const monthlySnapshotPath = path.join(
     repoRoot,
-    ...(todayOverride ? { today: todayOverride } : {}),
-});
+    'tools',
+    'governance',
+    'seal-exclusions-monthly.snapshot.json'
+);
+const monthlySnapshot = JSON.parse(fs.readFileSync(monthlySnapshotPath, 'utf8'));
+
+printSealExclusionLedgerSummary(SEAL_COVERAGE_EXCLUSIONS);
+
+const errors = [
+    ...collectSealMonthlySnapshotErrors({
+        exclusions: SEAL_COVERAGE_EXCLUSIONS,
+        monthlySnapshot,
+    }),
+    ...collectSealCoverageExclusionGovernanceErrors({
+        exclusions: SEAL_COVERAGE_EXCLUSIONS,
+        policy: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
+        reviewSnapshot,
+        repoRoot,
+        ...(todayOverride ? { today: todayOverride } : {}),
+    }),
+];
 
 if (errors.length > 0) {
     console.error('Seal coverage exclusion governance check failed:');

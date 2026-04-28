@@ -22,11 +22,13 @@ const LanMenu = React.lazy(() =>
 const GameShell = React.lazy(() =>
     import('../shell/GameShell').then((module) => ({ default: module.GameShell }))
 );
-const VisualLabRoute = React.lazy(() =>
-    import('../visual-lab/VisualLabRoute').then((module) => ({
-        default: module.VisualLabRoute,
-    }))
-);
+const VisualLabRoute = __GEMDUEL_INCLUDE_VISUAL_LAB_BUNDLE__
+    ? React.lazy(() =>
+          import('../visual-lab/VisualLabRoute').then((module) => ({
+              default: module.VisualLabRoute,
+          }))
+      )
+    : null;
 
 type RouteKind = 'config' | 'online' | 'lan' | 'draft' | 'game';
 
@@ -70,9 +72,15 @@ export function GemDuelRoutes(props: AppRouteProps) {
     let routeContent: React.ReactNode;
     let routeKind: RouteKind;
 
-    if (visualLabMode) {
+    if (visualLabMode && VisualLabRoute) {
         routeKind = 'game';
-        routeContent = <VisualLabRoute {...props} mode={visualLabMode} />;
+        routeContent = (
+            <VisualLabRoute
+                {...props}
+                mode={visualLabMode}
+                onCloseToStartPage={props.callbacks.closeVisualLabToStartPage}
+            />
+        );
     } else if (isDraftSelectionPhase(state.phase)) {
         routeKind = 'draft';
         const activeDraftLevel =

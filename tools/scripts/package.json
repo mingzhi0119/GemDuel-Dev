@@ -7,6 +7,7 @@
         "ai:replays": "vite-node --script generate-ai-replays.mjs",
         "ai:replays:audit": "vite-node --script audit-ai-replays.mjs",
         "architecture:check": "node check-architecture-budgets.mjs",
+        "audit:draft": "node draft-audit-report.mjs",
         "audit:gates": "node check-audit-gates.mjs",
         "bench": "vite-node --script run-lifecycle-benchmarks.mjs",
         "bundle:check": "node check-build-budget.mjs",
@@ -17,6 +18,7 @@
         "desktop:check": "node check-electron-governance.mjs && node check-runtime-drill-governance.mjs",
         "electron:lan:verify": "node verify-local-lan-duel.mjs",
         "governance:artifacts": "node export-governance-artifacts.mjs",
+        "governance:dashboard": "node render-governance-dashboard.mjs",
         "governance:evidence:check": "node check-governance-evidence-health.mjs",
         "governance:report": "node generate-governance-report.mjs",
         "licenses:check": "node check-license-governance.mjs",
@@ -28,6 +30,7 @@
         "runtime:drills:check": "node check-runtime-drill-governance.mjs",
         "sbom:check": "node check-sbom-governance.mjs",
         "seal-exclusions:check": "node check-seal-exclusion-governance.mjs",
+        "seal-exclusions:refresh-monthly": "node refresh-seal-exclusions-monthly-snapshot.mjs",
         "secrets:check": "node check-secret-governance.mjs",
         "typecheck": "tsc --noEmit"
     },

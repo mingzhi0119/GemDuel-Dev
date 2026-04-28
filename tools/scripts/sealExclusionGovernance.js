@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { SEAL_EXCLUSION_OWNER_ROLES } from '@gemduel/config-vitest/seal-exclusions';
 
 const ALLOWED_EXCLUSION_CATEGORIES = new Set(['leaf', 'static', 'wrapper', 'shell']);
+const ALLOWED_OWNER_ROLES = new Set(SEAL_EXCLUSION_OWNER_ROLES);
 export const SEAL_EXCLUSION_REVIEW_SCHEMA_VERSION = 1;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -62,6 +64,7 @@ export const collectSealCoverageExclusionReviewSnapshotErrors = ({ reviewSnapsho
         'category',
         'lastReviewedOn',
         'reviewCadenceDays',
+        'ownerRole',
     ]) {
         if (!Array.isArray(requiredEntryFields) || !requiredEntryFields.includes(requiredField)) {
             errors.push(
@@ -80,6 +83,39 @@ export const collectSealCoverageExclusionReviewSnapshotErrors = ({ reviewSnapsho
     }
 
     return errors;
+};
+
+export const printSealExclusionLedgerSummary = (exclusions) => {
+    const byOwnerRole = {};
+    const byCategory = {};
+
+    for (const entry of exclusions) {
+        const role = typeof entry.ownerRole === 'string' ? entry.ownerRole : '<missing>';
+        const cat = typeof entry.category === 'string' ? entry.category : '<missing>';
+        byOwnerRole[role] = (byOwnerRole[role] ?? 0) + 1;
+        byCategory[cat] = (byCategory[cat] ?? 0) + 1;
+    }
+
+    const lines = [
+        '',
+        '## Seal exclusion ledger (ownerRole / category)',
+        '',
+        '| ownerRole | count |',
+        '| --- | ---: |',
+        ...Object.keys(byOwnerRole)
+            .sort()
+            .map((role) => `| ${role} | ${byOwnerRole[role]} |`),
+        '',
+        '| category | count |',
+        '| --- | ---: |',
+        ...Object.keys(byCategory)
+            .sort()
+            .map((cat) => `| ${cat} | ${byCategory[cat]} |`),
+        '',
+    ];
+
+    // eslint-disable-next-line no-console -- CLI ledger output for seal governance
+    console.log(lines.join('\n'));
 };
 
 export const collectSealCoverageExclusionGovernanceErrors = ({
@@ -135,6 +171,16 @@ export const collectSealCoverageExclusionGovernanceErrors = ({
         if (typeof exclusion.reason !== 'string' || exclusion.reason.trim().length === 0) {
             errors.push(
                 `Seal coverage exclusion ${exclusion.pattern ?? '<unknown>'} must define a non-empty reason.`
+            );
+        }
+
+        if (
+            typeof exclusion.ownerRole !== 'string' ||
+            exclusion.ownerRole.trim().length === 0 ||
+            !ALLOWED_OWNER_ROLES.has(exclusion.ownerRole)
+        ) {
+            errors.push(
+                `Seal coverage exclusion ${exclusion.pattern ?? '<unknown>'} must define ownerRole as one of: ${[...ALLOWED_OWNER_ROLES].join(', ')}.`
             );
         }
 

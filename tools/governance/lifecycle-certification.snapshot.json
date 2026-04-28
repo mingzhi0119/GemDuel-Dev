@@ -50,7 +50,11 @@
             "id": "tests-coverage",
             "title": "Testing strategy, coverage, and flake resistance",
             "targetScore": 10,
-            "requiredDashboardMetrics": ["coverage-branch", "seal-exclusions"]
+            "requiredDashboardMetrics": [
+                "coverage-branch",
+                "coverage-perfile-key-modules",
+                "seal-exclusions"
+            ]
         },
         {
             "id": "security-supply-chain",

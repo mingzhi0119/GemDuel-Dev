@@ -282,27 +282,35 @@ const createSurfaceLabPlugin = (): Plugin => ({
 });
 
 // https://vite.dev/config/
-export default defineConfig({
-    plugins: [react(), createSurfaceLabPlugin()],
-    base: './',
-    server: {
-        host: '127.0.0.1',
-        port: 5173,
-        strictPort: true,
-    },
-    build: {
-        rollupOptions: {
-            output: {
-                manualChunks: resolveManualChunk,
+export default defineConfig(({ mode }) => {
+    const includeVisualLabBundle =
+        mode === 'development' || process.env.GEMDUEL_ALLOW_VISUAL_LAB === 'true';
+
+    return {
+        define: {
+            __GEMDUEL_INCLUDE_VISUAL_LAB_BUNDLE__: JSON.stringify(includeVisualLabBundle),
+        },
+        plugins: [react(), createSurfaceLabPlugin()],
+        base: './',
+        server: {
+            host: '127.0.0.1',
+            port: 5173,
+            strictPort: true,
+        },
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks: resolveManualChunk,
+                },
             },
         },
-    },
-    resolve: {
-        alias: {
-            '@app': resolve(__dirname, './src'),
-            '@gemduel/shared': resolve(workspaceRoot, './packages/shared/src'),
-            '@gemduel/ui': resolve(workspaceRoot, './packages/ui/src'),
-            '@gemduel/turn-service': resolve(workspaceRoot, './packages/turn-service/src'),
+        resolve: {
+            alias: {
+                '@app': resolve(__dirname, './src'),
+                '@gemduel/shared': resolve(workspaceRoot, './packages/shared/src'),
+                '@gemduel/ui': resolve(workspaceRoot, './packages/ui/src'),
+                '@gemduel/turn-service': resolve(workspaceRoot, './packages/turn-service/src'),
+            },
         },
-    },
+    };
 });

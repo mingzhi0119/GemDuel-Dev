@@ -162,6 +162,7 @@ describe('electron runtime config', () => {
     it('declares ownership and secret handling for every governed env var', () => {
         expect(Object.keys(RUNTIME_CONFIG_POLICY).sort()).toEqual([
             'GEMDUEL_ALLOW_PRERELEASE',
+            'GEMDUEL_ALLOW_VISUAL_LAB',
             'GEMDUEL_DEV_SERVER_URL',
             'GEMDUEL_DISABLE_UPDATES',
             'GEMDUEL_ICE_SERVERS_JSON',

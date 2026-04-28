@@ -11,6 +11,8 @@ jobs:
         steps:
             - name: Checkout Code
               uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - name: Setup pnpm
               uses: pnpm/action-setup@v4
@@ -70,10 +72,42 @@ jobs:
               run: pnpm run test:security
 
             - name: Unit Test Suite
+              id: unit_tests
+              continue-on-error: true
               run: pnpm test
 
             - name: Coverage Seal Gate
+              id: desktop_coverage
+              continue-on-error: true
               run: pnpm run test:coverage
+
+            - name: Coverage PR diff summary
+              if: always()
+              env:
+                  COVERAGE_GIT_BASE: ${{ github.event.pull_request.base.sha || github.sha }}
+                  COVERAGE_GIT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+              run: |
+                  mkdir -p artifacts/governance
+                  pnpm run coverage:summary -- --base "${COVERAGE_GIT_BASE}" --head "${COVERAGE_GIT_HEAD}" --append-step-summary
+
+            - name: Key module per-file coverage report
+              if: always()
+              run: |
+                  mkdir -p artifacts/governance
+                  pnpm run coverage:perfile-modules
+
+            - name: Enforce unit tests and coverage
+              if: always()
+              shell: bash
+              run: |
+                  if [ "${{ steps.unit_tests.outcome }}" != "success" ]; then
+                    echo "::error::Unit test suite failed (see logs and job summary coverage diff)."
+                    exit 1
+                  fi
+                  if [ "${{ steps.desktop_coverage.outcome }}" != "success" ]; then
+                    echo "::error::Coverage seal gate failed (see logs and job summary coverage diff)."
+                    exit 1
+                  fi
 
             - name: Seal Exclusion Governance Gate
               run: pnpm run seal-exclusions:check

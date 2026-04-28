@@ -165,6 +165,9 @@ const main = () => {
             coverageFinal,
             minimumPercent: auditGateSnapshot.coverage.branchMinimumPercent,
         }),
+        coveragePerFileKeyModulesReport: readOptionalJson(
+            'artifacts/governance/coverage-perfile-key-modules.report.json'
+        ),
         architectureBudgetSummary: {
             errors: architectureBudgetSummary.errors.length,
             warnings: architectureBudgetSummary.warnings.length,
