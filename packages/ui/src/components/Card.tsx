@@ -1,10 +1,11 @@
 import React from 'react';
-import { Crown, Download } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import { GEM_TYPES } from '@gemduel/shared/constants';
 import { GemIcon } from './GemIcon';
 import { Card as CardType, CardInteractionContext, GemColor } from '@gemduel/shared/types';
 import { CardAbilityBadges } from './card/CardAbilityBadges';
 import { CardFacePattern } from './card/CardFacePattern';
+import { CardReserveActionButton } from './card/CardReserveActionButton';
 import { JokerBonusBadge } from './card/JokerBonusBadge';
 import { getCardArtworkPath, getRuntimeCardArtworkId } from './card/cardArtwork';
 import { getCardCostCountStyle } from './card/cardCostStyles';
@@ -370,17 +371,14 @@ export const Card: React.FC<CardProps> = React.memo(
                             className="absolute inset-x-0 flex items-start justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
                             style={{ top: `${scaleCardMetric(28, cardScale)}px` }}
                         >
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onReserve(card, context);
-                                }}
-                                className="bg-yellow-500 hover:bg-yellow-400 rounded-full text-white shadow-lg transition-transform hover:scale-110 active:scale-90"
-                                title={t('card.reserve')}
-                                style={{ padding: `${reserveButtonPaddingPx}px` }}
-                            >
-                                <Download size={reserveButtonIconSizePx} />
-                            </button>
+                            <CardReserveActionButton
+                                card={card}
+                                context={context}
+                                iconSizePx={reserveButtonIconSizePx}
+                                label={t('card.reserve')}
+                                onReserve={onReserve}
+                                paddingPx={reserveButtonPaddingPx}
+                            />
                         </div>
                     )}
                 </div>

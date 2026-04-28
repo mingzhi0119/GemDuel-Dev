@@ -42,6 +42,16 @@ describe('Card artwork rendering', () => {
         expect(html).not.toContain('data-card-face-pattern="true"');
     });
 
+    it('uses the reserve tray artwork for market reserve actions', () => {
+        const html = renderToStaticMarkup(
+            <Card card={realCard} theme="dark" onReserve={() => undefined} />
+        );
+
+        expect(html).toContain('data-card-reserve-artwork="card-tray"');
+        expect(html).toContain('/assets/ui-icons/reserve-card-tray.png');
+        expect(html).not.toContain('lucide-download');
+    });
+
     it('renders featured market and royal cards from high-resolution artwork at the same display size', () => {
         const featuredCardHtml = renderToStaticMarkup(
             <Card card={realCard} theme="dark" size="featured" />

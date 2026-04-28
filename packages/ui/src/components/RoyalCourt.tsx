@@ -110,17 +110,6 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                         />
                     )
                 )}
-                {royalDeck.length === 0 && (
-                    <div
-                        className="absolute inset-0 flex items-center justify-center text-xs italic"
-                        style={{
-                            color: 'var(--gd-shell-label-muted)',
-                            textShadow: 'var(--gd-shell-text-shadow)',
-                        }}
-                    >
-                        {t('royalCourt.empty')}
-                    </div>
-                )}
             </div>
         </div>
     );

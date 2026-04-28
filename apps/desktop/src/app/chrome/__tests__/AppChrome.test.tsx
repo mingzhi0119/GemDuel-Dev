@@ -164,6 +164,7 @@ describe('AppChrome locale controls', () => {
         expect(restartButton?.hasAttribute('title')).toBe(false);
         expect(restartButton?.style.color).toBe('var(--gd-chrome-icon)');
         expect(restartButton?.style.textShadow).toBe('var(--gd-chrome-text-shadow)');
+        expect(restartButton?.querySelector('[data-game-glyph="restart"]')).not.toBeNull();
         expect(restartTooltip?.textContent).toBe('Restart');
         expect(restartTooltip?.dataset.tooltipSize).toBe('standard-label');
 
@@ -209,6 +210,11 @@ describe('AppChrome locale controls', () => {
         expect(settingsMenu?.textContent).not.toContain('Market Background');
         expect(settingsMenu?.textContent).not.toContain('Player Zone');
         expect(settingsMenu?.className).toContain('w-[248px]');
+        expect(container.querySelector('[data-game-glyph="rulebook"]')).not.toBeNull();
+        expect(container.querySelector('[data-game-glyph="settings"]')).not.toBeNull();
+        expect(settingsMenu?.querySelector('[data-game-glyph="monitor"]')).not.toBeNull();
+        expect(settingsMenu?.querySelector('[data-game-glyph="save"]')).not.toBeNull();
+        expect(settingsMenu?.querySelector('[data-game-glyph="load"]')).not.toBeNull();
 
         const surfaceThemeSelect = container.querySelector<HTMLButtonElement>(
             'button[data-app-surface-theme-select="true"]'

@@ -12,9 +12,10 @@ interface StackOverlayProps {
     cards: CardType[];
     onClose: () => void;
     theme: 'light' | 'dark';
+    title?: string;
 }
 
-export function StackOverlay({ isOpen, color, cards, onClose, theme }: StackOverlayProps) {
+export function StackOverlay({ isOpen, color, cards, onClose, theme, title }: StackOverlayProps) {
     const { locale } = useLocale();
     const t = useT();
     if (!isOpen) return null;
@@ -31,6 +32,9 @@ export function StackOverlay({ isOpen, color, cards, onClose, theme }: StackOver
     };
 
     const textColor = colorMap[type.id] || '#94a3b8';
+    const heading =
+        title ??
+        `${t('labels.color')}: ${getGemLabel(type.id === 'empty' ? 'empty' : type.id, locale)}`;
 
     return (
         <motion.div
@@ -44,8 +48,7 @@ export function StackOverlay({ isOpen, color, cards, onClose, theme }: StackOver
                     className="text-sm font-black uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm"
                     style={{ color: textColor }}
                 >
-                    {t('labels.color')}:{' '}
-                    {getGemLabel(type.id === 'empty' ? 'empty' : type.id, locale)}
+                    {heading}
                 </span>
             </div>
 

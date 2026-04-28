@@ -5,9 +5,9 @@ import {
     clamp,
     PLAYER_ZONE_DISPLAY_COLORS,
     RESERVED_CARD_FALLBACK_SCALE,
-    RESERVED_CARD_GAP_PX,
     RESERVED_CARD_MAX_SCALE,
     RESERVED_CARD_MIN_SCALE,
+    RESERVED_MINI_STACK_OFFSET_X_PX,
     RESERVED_CARD_TARGET_SLOTS,
     TABLEAU_STACK_FALLBACK_SCALE,
     TABLEAU_STACK_GAP_PX,
@@ -23,23 +23,49 @@ import { usePlayerZoneMeasurements } from './playerZone/usePlayerZoneMeasurement
 import type {
     PlayerZoneColorStats,
     PlayerZoneProps,
+    PlayerZoneSpecialStackStats,
     PlayerZoneStackState,
 } from './playerZone/types';
+import type { Card as CardType, GemInventory, RoyalCard } from '@gemduel/shared/types';
 
 export type { PlayerZoneProps };
 
 const INVENTORY_GEM_SIZE_PX = Math.round(GEM_BOARD_GEM_SIZE_PX * 1.3);
 const INVENTORY_GEM_BADGE_SIZE_PX = Math.round(INVENTORY_GEM_SIZE_PX * 0.42);
 const INVENTORY_GEM_COUNT_FONT_PX = Math.round(INVENTORY_GEM_SIZE_PX * 0.24);
+const SPECIAL_TABLEAU_STACK_COUNT = PLAYER_ZONE_DISPLAY_COLORS.length + 1;
+
+const EMPTY_CARD_COST: GemInventory = {
+    blue: 0,
+    white: 0,
+    green: 0,
+    black: 0,
+    red: 0,
+    pearl: 0,
+    gold: 0,
+};
+
+const normalizeRoyalToPreviewCard = (royal: RoyalCard): CardType => ({
+    id: royal.id,
+    level: 3,
+    cost: { ...EMPTY_CARD_COST },
+    points: royal.points,
+    ability: royal.ability,
+    bonusColor: royal.bonusColor,
+    crowns: royal.crowns ?? 1,
+    bonusCount: 0,
+});
 
 export const PlayerZone = ({
     player,
     inventory,
     cards,
     reserved,
+    royals = [],
     privileges,
     extraPrivileges = 0,
     isActive,
+    phase,
     lastFeedback,
     onBuyReserved,
     onDiscardReserved,
@@ -98,6 +124,16 @@ export const PlayerZone = ({
         },
         {}
     );
+    const purePointCards = safeCards.filter((card) => card.bonusColor === 'null');
+    const royalPreviewCards = royals.map(normalizeRoyalToPreviewCard);
+    const specialStackCards = [...purePointCards, ...royalPreviewCards];
+    const specialStackStats: PlayerZoneSpecialStackStats = {
+        cards: specialStackCards,
+        bonusCount: specialStackCards.length,
+        points: specialStackCards.reduce((sum, card) => sum + card.points, 0),
+        purePointCount: purePointCards.length,
+        royalCount: royalPreviewCards.length,
+    };
     useEffect(() => {
         setSurfaceImage(
             surfaceArtwork
@@ -122,25 +158,26 @@ export const PlayerZone = ({
         : surfaceStyle;
 
     const tableauSummaryGapTotalPx =
-        Math.max(PLAYER_ZONE_DISPLAY_COLORS.length - 1, 0) * TABLEAU_STACK_GAP_PX;
+        Math.max(SPECIAL_TABLEAU_STACK_COUNT - 1, 0) * TABLEAU_STACK_GAP_PX;
     const tableauSummaryScale =
         tableauRowWidth > 0
             ? Math.max(
                   TABLEAU_STACK_MIN_SCALE,
                   (tableauRowWidth - tableauSummaryGapTotalPx) /
-                      (PLAYER_ZONE_DISPLAY_COLORS.length * STANDARD_CARD_SIZE.width)
+                      (SPECIAL_TABLEAU_STACK_COUNT * STANDARD_CARD_SIZE.width)
               )
             : TABLEAU_STACK_FALLBACK_SCALE;
     const summaryDisplayScale = clamp(tableauSummaryScale, TABLEAU_STACK_MIN_SCALE, 1);
     const summaryBadgeFontPx = Math.round(INVENTORY_GEM_COUNT_FONT_PX / summaryDisplayScale);
     const summaryBadgeSizePx = Math.round(INVENTORY_GEM_BADGE_SIZE_PX / summaryDisplayScale);
-    const reservedSlotCount = Math.max(reserved.length, RESERVED_CARD_TARGET_SLOTS);
-    const reservedGapTotalPx = Math.max(reservedSlotCount - 1, 0) * RESERVED_CARD_GAP_PX;
+    const reservedSlotCount = Math.min(Math.max(reserved.length, 1), RESERVED_CARD_TARGET_SLOTS);
+    const reservedMiniStackWidthPx =
+        FEATURED_CARD_SIZE.width +
+        Math.max(reservedSlotCount - 1, 0) * RESERVED_MINI_STACK_OFFSET_X_PX;
     const reservedCardScale =
         reserved.length > 0 && reservedRowWidth > 0
             ? clamp(
-                  (reservedRowWidth - reservedGapTotalPx) /
-                      (reservedSlotCount * FEATURED_CARD_SIZE.width),
+                  reservedRowWidth / reservedMiniStackWidthPx,
                   RESERVED_CARD_MIN_SCALE,
                   RESERVED_CARD_MAX_SCALE
               )
@@ -153,6 +190,7 @@ export const PlayerZone = ({
             buff={buff}
             isActive={isActive}
             isPrivilegeMode={isPrivilegeMode}
+            phase={phase}
             theme={theme}
             onUsePrivilege={onUsePrivilege}
             dividerSide={player === 'p1' ? 'left' : 'right'}
@@ -167,6 +205,7 @@ export const PlayerZone = ({
             isDiscardMode={isDiscardMode}
             theme={theme}
             colorStats={colorStats}
+            specialStackStats={specialStackStats}
             tableauRowRef={tableauRowRef}
             tableauSummaryScale={tableauSummaryScale}
             inventoryGemSizePx={INVENTORY_GEM_SIZE_PX}
@@ -252,6 +291,7 @@ export const PlayerZone = ({
                         cards={selectedStack.cards}
                         onClose={() => setSelectedStack(null)}
                         theme={theme}
+                        title={selectedStack.title}
                     />
                 )}
             </AnimatePresence>

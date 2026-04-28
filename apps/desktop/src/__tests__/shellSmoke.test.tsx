@@ -66,7 +66,7 @@ const layout: ResponsiveLayout = {
     boardScale: (3840 - 96) / 2000,
     deckScale: 1.12,
     zoneScale: 1,
-    zoneHeightPx: 440,
+    zoneHeightPx: 520,
     mainGapPx: 24,
 };
 

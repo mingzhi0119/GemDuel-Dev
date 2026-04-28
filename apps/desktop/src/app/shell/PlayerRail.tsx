@@ -104,6 +104,7 @@ export function PlayerRail({
                         crowns={getCrownCount('p1')}
                         lastFeedback={lastFeedback}
                         isActive={isP1ZoneActive}
+                        phase={effectiveGameMode}
                         onBuyReserved={checkAndInitiateBuyReserved}
                         onDiscardReserved={handleDiscardReserved}
                         onUsePrivilege={activatePrivilegeMode}
@@ -166,6 +167,7 @@ export function PlayerRail({
                         crowns={getCrownCount('p2')}
                         lastFeedback={lastFeedback}
                         isActive={isP2ZoneActive}
+                        phase={effectiveGameMode}
                         onBuyReserved={checkAndInitiateBuyReserved}
                         onDiscardReserved={handleDiscardReserved}
                         onUsePrivilege={activatePrivilegeMode}

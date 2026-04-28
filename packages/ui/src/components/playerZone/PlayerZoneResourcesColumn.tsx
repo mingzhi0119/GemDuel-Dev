@@ -1,21 +1,24 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { GEM_TYPES } from '@gemduel/shared/constants';
-import { Card, STANDARD_CARD_SIZE } from '../Card';
 import { GemIcon } from '../GemIcon';
 import { FloatingGem, FloatingText } from '../VisualFeedback';
-import { cn } from '@gemduel/shared/utils';
 import type { RefObject } from 'react';
 import type { GemColor, GemInventory, PlayerKey } from '@gemduel/shared/types';
 import {
     PLAYER_ZONE_DISPLAY_COLORS,
     PLAYER_ZONE_RESOURCE_COLORS,
-    PLAYER_ZONE_STACK_OFFSET_X,
-    PLAYER_ZONE_STACK_OFFSET_Y,
-    SUMMARY_TEXT_COLORS,
     TABLEAU_STACK_GAP_PX,
 } from './constants';
-import { ScaledCardFrame } from './ScaledCardFrame';
-import type { PlayerZoneColorStats, PlayerZoneFeedbackItem, PlayerZoneStackState } from './types';
+import { PlayerZoneTableauStack } from './PlayerZoneTableauStack';
+import type {
+    PlayerZoneColorStats,
+    PlayerZoneFeedbackItem,
+    PlayerZoneSpecialStackStats,
+    PlayerZoneStackState,
+} from './types';
+
+const SPECIAL_STACK_COLOR = 'pure-royal';
+const SPECIAL_STACK_TITLE = 'Pure / Royal';
 
 interface PlayerZoneResourcesColumnProps {
     player: PlayerKey;
@@ -25,6 +28,7 @@ interface PlayerZoneResourcesColumnProps {
     isDiscardMode: boolean;
     theme: 'light' | 'dark';
     colorStats: Record<string, PlayerZoneColorStats>;
+    specialStackStats: PlayerZoneSpecialStackStats;
     tableauRowRef: RefObject<HTMLDivElement | null>;
     tableauSummaryScale: number;
     inventoryGemSizePx: number;
@@ -44,6 +48,7 @@ export function PlayerZoneResourcesColumn({
     isDiscardMode,
     theme,
     colorStats,
+    specialStackStats,
     tableauRowRef,
     tableauSummaryScale,
     inventoryGemSizePx,
@@ -58,7 +63,7 @@ export function PlayerZoneResourcesColumn({
         <div
             data-player-zone-column="resources"
             className="self-stretch flex flex-col gap-3 shrink-0 justify-center"
-            style={{ flex: 58 }}
+            style={{ flex: 78 }}
         >
             <div className="flex gap-3 justify-center items-center">
                 {PLAYER_ZONE_RESOURCE_COLORS.map(
@@ -137,162 +142,34 @@ export function PlayerZoneResourcesColumn({
             >
                 {PLAYER_ZONE_DISPLAY_COLORS.map((color: string) => {
                     const stats = colorStats[color];
-                    const type = GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES];
-                    const summaryPointColor =
-                        SUMMARY_TEXT_COLORS[type.id] ?? SUMMARY_TEXT_COLORS.black;
 
                     return (
-                        <div
+                        <PlayerZoneTableauStack
                             key={color}
-                            data-tableau-stack={`${player}-${color}`}
-                            data-tableau-stack-color={color}
-                            data-tableau-card-count={stats.cards.length}
-                            className="flex shrink-0 flex-col items-center gap-1 min-w-[32px]"
-                            onClick={() =>
-                                stats.cards.length > 0 &&
-                                onSelectStack({ color, cards: stats.cards })
-                            }
-                        >
-                            <ScaledCardFrame scale={tableauSummaryScale}>
-                                <motion.div
-                                    animate={stats.cards.length > 0 ? { scale: [1, 1.1, 1] } : {}}
-                                    key={stats.cards.length}
-                                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                                    className="relative group/stack cursor-pointer transition-transform hover:scale-105 active:scale-95"
-                                    style={{
-                                        width: `${STANDARD_CARD_SIZE.width}px`,
-                                        height: `${STANDARD_CARD_SIZE.height}px`,
-                                    }}
-                                >
-                                    {stats.cards.length > 0 ? (
-                                        stats.cards.map((card, idx: number) => (
-                                            <div
-                                                key={idx}
-                                                className="absolute inset-0 z-10"
-                                                style={{
-                                                    top: `${idx * PLAYER_ZONE_STACK_OFFSET_Y}px`,
-                                                    left: `${idx * PLAYER_ZONE_STACK_OFFSET_X}px`,
-                                                }}
-                                            >
-                                                {idx === stats.cards.length - 1 ? (
-                                                    <Card
-                                                        card={card}
-                                                        canBuy={false}
-                                                        theme={theme}
-                                                        className="shadow-md"
-                                                    />
-                                                ) : (
-                                                    <div
-                                                        className={`rounded border ${type.border} bg-gradient-to-br ${type.color} shadow-sm transition-all duration-200 opacity-40`}
-                                                        style={{
-                                                            width: `${STANDARD_CARD_SIZE.width}px`,
-                                                            height: `${STANDARD_CARD_SIZE.height}px`,
-                                                        }}
-                                                    />
-                                                )}
-
-                                                {idx === stats.cards.length - 1 &&
-                                                    stats.points > 0 && (
-                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                                                            <motion.div
-                                                                animate={
-                                                                    stats.points >= 7
-                                                                        ? {
-                                                                              scale: [1, 1.1, 1],
-                                                                              filter: [
-                                                                                  'drop-shadow(0 0 2px #fbbf24)',
-                                                                                  'drop-shadow(0 0 8px #f59e0b)',
-                                                                                  'drop-shadow(0 0 2px #fbbf24)',
-                                                                              ],
-                                                                          }
-                                                                        : {}
-                                                                }
-                                                                transition={{
-                                                                    duration: 2,
-                                                                    repeat: Infinity,
-                                                                    ease: 'easeInOut',
-                                                                }}
-                                                                className={cn(
-                                                                    'px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-[2px] border shadow-xl transition-colors',
-                                                                    stats.points >= 7
-                                                                        ? 'border-amber-400 shadow-amber-500/20'
-                                                                        : 'border-white/20'
-                                                                )}
-                                                            >
-                                                                <span
-                                                                    className={cn(
-                                                                        'text-sm font-black drop-shadow-md',
-                                                                        stats.points >= 7 &&
-                                                                            'drop-shadow-[0_0_8px_rgba(255,255,255,0.28)]'
-                                                                    )}
-                                                                    style={{
-                                                                        color: summaryPointColor,
-                                                                        textShadow:
-                                                                            type.id === 'white'
-                                                                                ? '0 1px 3px rgba(15,23,42,0.95)'
-                                                                                : '0 1px 3px rgba(15,23,42,0.75)',
-                                                                    }}
-                                                                >
-                                                                    {stats.points}
-                                                                </span>
-                                                            </motion.div>
-                                                        </div>
-                                                    )}
-
-                                                {idx === stats.cards.length - 1 &&
-                                                    stats.bonusCount > 0 && (
-                                                        <div className="absolute -bottom-2 -right-2 z-40">
-                                                            <div
-                                                                className={`px-1.5 py-0.5 rounded-full border shadow-lg flex gap-0.5 items-center ${theme === 'dark' ? 'bg-slate-950 text-white border-slate-700' : 'bg-white text-stone-800 border-stone-300'}`}
-                                                                style={{
-                                                                    minWidth: `${summaryBadgeSizePx}px`,
-                                                                    minHeight: `${summaryBadgeSizePx}px`,
-                                                                    lineHeight: 1,
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
-                                                                }}
-                                                            >
-                                                                <span
-                                                                    className="font-black"
-                                                                    style={{
-                                                                        fontSize: `${summaryBadgeFontPx}px`,
-                                                                        lineHeight: 1,
-                                                                    }}
-                                                                >
-                                                                    {stats.bonusCount}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div
-                                            className={`rounded border border-dashed flex items-center justify-center ${
-                                                theme === 'dark'
-                                                    ? 'border-slate-600 bg-slate-800/35'
-                                                    : 'border-stone-400/10 bg-white/[0.04]'
-                                            }`}
-                                            style={{
-                                                width: `${STANDARD_CARD_SIZE.width}px`,
-                                                height: `${STANDARD_CARD_SIZE.height}px`,
-                                            }}
-                                        >
-                                            <div
-                                                className={`w-4 h-4 rounded-full bg-gradient-to-br ${type.color} ${
-                                                    theme === 'dark'
-                                                        ? 'opacity-20'
-                                                        : 'opacity-[0.07]'
-                                                }`}
-                                            />
-                                        </div>
-                                    )}
-                                </motion.div>
-                            </ScaledCardFrame>
-                        </div>
+                            player={player}
+                            color={color}
+                            stats={stats}
+                            theme={theme}
+                            tableauSummaryScale={tableauSummaryScale}
+                            summaryBadgeFontPx={summaryBadgeFontPx}
+                            summaryBadgeSizePx={summaryBadgeSizePx}
+                            onSelectStack={onSelectStack}
+                        />
                     );
                 })}
+                <PlayerZoneTableauStack
+                    player={player}
+                    color={SPECIAL_STACK_COLOR}
+                    stats={specialStackStats}
+                    theme={theme}
+                    tableauSummaryScale={tableauSummaryScale}
+                    summaryBadgeFontPx={summaryBadgeFontPx}
+                    summaryBadgeSizePx={summaryBadgeSizePx}
+                    onSelectStack={onSelectStack}
+                    title={SPECIAL_STACK_TITLE}
+                    purePointCount={specialStackStats.purePointCount}
+                    royalCount={specialStackStats.royalCount}
+                />
             </div>
         </div>
     );

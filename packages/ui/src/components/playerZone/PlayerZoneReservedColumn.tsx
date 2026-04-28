@@ -2,9 +2,15 @@ import { useMemo, useState } from 'react';
 import { Card, FEATURED_CARD_SIZE } from '../Card';
 import { CardPreviewOverlay } from '../CardPreviewOverlay';
 import { ScaledCardFrame } from './ScaledCardFrame';
+import { getLexiconLabel } from '@gemduel/shared';
+import { useLocale } from '../../i18n/LocaleProvider';
 import type { RefObject } from 'react';
 import type { Card as CardType, PlayerKey } from '@gemduel/shared/types';
-import { RESERVED_CARD_GAP_PX } from './constants';
+import {
+    RESERVED_CARD_TARGET_SLOTS,
+    RESERVED_MINI_STACK_OFFSET_X_PX,
+    RESERVED_MINI_STACK_OFFSET_Y_PX,
+} from './constants';
 
 interface PlayerZoneReservedColumnProps {
     player: PlayerKey;
@@ -34,30 +40,52 @@ export function PlayerZoneReservedColumn({
     dividerSide = 'left',
 }: PlayerZoneReservedColumnProps) {
     const [previewCard, setPreviewCard] = useState<CardType | null>(null);
+    const { locale } = useLocale();
     const pendingReservedCardIdSet = useMemo(
         () => new Set(pendingReservedCardIds),
         [pendingReservedCardIds]
     );
+    const previewCanBuy =
+        previewCard !== null &&
+        isActive &&
+        !pendingReservedCardIdSet.has(previewCard.id) &&
+        onBuyReserved(previewCard);
+    const reservedMiniStackSlots = Math.min(
+        Math.max(reserved.length, 1),
+        RESERVED_CARD_TARGET_SLOTS
+    );
+    const reservedMiniStackWidth =
+        (FEATURED_CARD_SIZE.width +
+            Math.max(reservedMiniStackSlots - 1, 0) * RESERVED_MINI_STACK_OFFSET_X_PX) *
+        reservedCardScale;
+    const reservedMiniStackHeight =
+        (FEATURED_CARD_SIZE.height +
+            Math.max(reservedMiniStackSlots - 1, 0) * RESERVED_MINI_STACK_OFFSET_Y_PX) *
+        reservedCardScale;
 
     return (
         <div
             data-player-zone-column="reserved"
             className={`self-stretch flex items-center min-w-0 transition-colors duration-500 ${
-                dividerSide === 'left' ? 'border-l pl-4' : 'border-r pr-4'
+                dividerSide === 'left' ? 'border-l pl-3' : 'border-r pr-3'
             }
           ${theme === 'dark' ? 'border-slate-700' : 'border-stone-300'}
       `}
-            style={{ flex: 42 }}
+            style={{ flex: 22 }}
         >
             <div
                 ref={reservedRowRef}
                 data-reserved-row={player}
-                className="w-full flex items-center justify-center overflow-hidden py-2 min-w-0"
+                className="w-full flex items-center justify-center overflow-visible py-2 min-w-0"
             >
                 {reserved.length > 0 && (
                     <div
-                        className="flex items-center justify-center min-w-0 max-w-full"
-                        style={{ gap: `${RESERVED_CARD_GAP_PX}px` }}
+                        data-reserved-mini-stack={player}
+                        className="relative shrink-0"
+                        style={{
+                            width: `${reservedMiniStackWidth}px`,
+                            height: `${reservedMiniStackHeight}px`,
+                        }}
                     >
                         {reserved.map((card, i) => {
                             const isPendingPresentation = pendingReservedCardIdSet.has(card.id);
@@ -65,62 +93,60 @@ export function PlayerZoneReservedColumn({
                                 !isPendingPresentation && isActive && onBuyReserved(card);
 
                             return (
-                                <ScaledCardFrame
+                                <div
                                     key={card.id || i}
-                                    scale={reservedCardScale}
-                                    baseSize={FEATURED_CARD_SIZE}
+                                    data-reserved-slot={`${player}-${i}`}
+                                    data-card-id={card.id}
+                                    data-reserved-card-scale={reservedCardScale.toFixed(3)}
+                                    data-reserved-card-pending={
+                                        isPendingPresentation ? 'true' : undefined
+                                    }
+                                    className="absolute group/card"
+                                    aria-hidden={isPendingPresentation ? 'true' : undefined}
+                                    style={{
+                                        left: `${i * RESERVED_MINI_STACK_OFFSET_X_PX * reservedCardScale}px`,
+                                        top: `${i * RESERVED_MINI_STACK_OFFSET_Y_PX * reservedCardScale}px`,
+                                        zIndex: i + 1,
+                                        ...(isPendingPresentation
+                                            ? {
+                                                  visibility: 'hidden',
+                                                  pointerEvents: 'none',
+                                              }
+                                            : {}),
+                                    }}
                                 >
-                                    <div
-                                        data-reserved-slot={`${player}-${i}`}
-                                        data-card-id={card.id}
-                                        data-reserved-card-scale={reservedCardScale.toFixed(3)}
-                                        data-reserved-card-pending={
-                                            isPendingPresentation ? 'true' : undefined
-                                        }
-                                        className="relative group/card"
-                                        aria-hidden={isPendingPresentation ? 'true' : undefined}
-                                        style={
-                                            isPendingPresentation
-                                                ? {
-                                                      visibility: 'hidden',
-                                                      pointerEvents: 'none',
-                                                  }
-                                                : undefined
-                                        }
+                                    <ScaledCardFrame
+                                        scale={reservedCardScale}
+                                        baseSize={FEATURED_CARD_SIZE}
                                     >
-                                        <Card
-                                            card={card}
-                                            size="featured"
-                                            canBuy={canBuyReserved}
-                                            onClick={() => {
-                                                if (canBuyReserved) {
-                                                    onBuyReserved(card, true);
-                                                    return;
-                                                }
-
-                                                setPreviewCard(card);
-                                            }}
-                                            allowUnavailableClick={true}
-                                            isReservedView={true}
-                                            theme={theme}
-                                            className="transition-transform duration-200 ease-in-out"
-                                        />
-                                        {hasPuppetMaster && isActive && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDiscardReserved(card.id);
-                                                }}
-                                                className="absolute -top-2 -right-2 w-8 h-8 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-rose-500 z-50"
-                                                title="Discard Card (Puppet Master)"
-                                            >
-                                                <span className="text-[15px] font-black leading-none">
-                                                    X
-                                                </span>
-                                            </button>
-                                        )}
-                                    </div>
-                                </ScaledCardFrame>
+                                        <div className="relative">
+                                            <Card
+                                                card={card}
+                                                size="featured"
+                                                canBuy={canBuyReserved}
+                                                onClick={() => setPreviewCard(card)}
+                                                allowUnavailableClick={true}
+                                                isReservedView={true}
+                                                theme={theme}
+                                                className="transition-transform duration-200 ease-in-out"
+                                            />
+                                            {hasPuppetMaster && isActive && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDiscardReserved(card.id);
+                                                    }}
+                                                    className="absolute -top-2 -right-2 w-8 h-8 bg-rose-600 text-white rounded-full flex items-center justify-center shadow-lg border border-white/20 opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-rose-500 z-50"
+                                                    title="Discard Card (Puppet Master)"
+                                                >
+                                                    <span className="text-[15px] font-black leading-none">
+                                                        X
+                                                    </span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </ScaledCardFrame>
+                                </div>
                             );
                         })}
                     </div>
@@ -131,6 +157,18 @@ export function PlayerZoneReservedColumn({
                     cards={previewCard ? [previewCard] : []}
                     theme={theme}
                     onClose={() => setPreviewCard(null)}
+                    primaryActionLabel={
+                        previewCanBuy ? getLexiconLabel('buyCard', locale) : undefined
+                    }
+                    onPrimaryAction={
+                        previewCanBuy && previewCard
+                            ? () => {
+                                  if (onBuyReserved(previewCard, true)) {
+                                      setPreviewCard(null);
+                                  }
+                              }
+                            : undefined
+                    }
                 />
             </div>
         </div>

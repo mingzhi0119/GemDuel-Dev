@@ -1,10 +1,10 @@
 import React from 'react';
-import { Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayerKey, Buff, BuffEffects } from '@gemduel/shared/types';
 import { BUFFS } from '@gemduel/shared/constants';
 import { AnimatedScore } from './topBar/AnimatedScore';
 import { AnimatedCrownMetric } from './topBar/AnimatedCrownMetric';
+import { UI_ICON_ARTWORK } from './uiIconArtwork';
 import { useT } from '../i18n/LocaleProvider';
 
 interface TopBarProps {
@@ -73,7 +73,14 @@ export const TopBar: React.FC<TopBarProps> = ({
                 textShadow: topBarTextShadow,
             }}
         >
-            <Trophy className="h-4 w-4 lg:h-12 lg:w-12" />
+            <img
+                src={UI_ICON_ARTWORK.topbarPoints}
+                alt=""
+                aria-hidden="true"
+                data-topbar-points-artwork={pid}
+                className="h-4 w-4 object-contain drop-shadow-lg lg:h-12 lg:w-12"
+                draggable={false}
+            />
             <span data-topbar-score={pid} data-value={score}>
                 <AnimatedScore
                     value={score}

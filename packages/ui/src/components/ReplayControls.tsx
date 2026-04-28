@@ -1,5 +1,5 @@
 import React from 'react';
-import { Undo2, Redo2 } from 'lucide-react';
+import { GameGlyph } from './GameGlyph';
 import { useT } from '../i18n/LocaleProvider';
 
 interface ReplayControlsProps {
@@ -46,7 +46,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                     }
                 `}
             >
-                <Undo2 size={26} />
+                <GameGlyph variant="replay-back" size={26} />
             </button>
 
             <div className="flex flex-col items-center min-w-[5.25rem]">
@@ -96,7 +96,7 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
                     }
                 `}
             >
-                <Redo2 size={26} />
+                <GameGlyph variant="replay-forward" size={26} />
             </button>
         </div>
     );

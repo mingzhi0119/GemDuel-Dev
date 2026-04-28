@@ -1,8 +1,9 @@
 import { Hand, Plus, RotateCcw, Scroll, Shield, Swords } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { getAbilityLabel, getGemLabel, getPlayerDisplayName } from '@gemduel/shared';
+import { canActionRunInPhase } from '@gemduel/shared/logic/fsm';
 import { cn } from '@gemduel/shared/utils';
-import type { Buff, EffectiveCardAbility } from '@gemduel/shared/types';
+import type { Buff, EffectiveCardAbility, GamePhase } from '@gemduel/shared/types';
 import { useLocale, useT } from '../../i18n/LocaleProvider';
 import { PlayerBuffIcon } from './PlayerBuffIcon';
 
@@ -13,6 +14,7 @@ interface PlayerZoneIdentityColumnProps {
     buff: Buff;
     isActive: boolean;
     isPrivilegeMode: boolean;
+    phase: GamePhase | string;
     theme: 'light' | 'dark';
     onUsePrivilege: () => void;
     dividerSide?: 'left' | 'right';
@@ -69,6 +71,7 @@ export function PlayerZoneIdentityColumn({
     buff,
     isActive,
     isPrivilegeMode,
+    phase,
     theme,
     onUsePrivilege,
     dividerSide = 'right',
@@ -77,6 +80,8 @@ export function PlayerZoneIdentityColumn({
     const t = useT();
     const total = privileges + extraPrivileges;
     const echoReservoirMemory = getEchoReservoirMemory(buff, locale);
+    const canUsePrivilege =
+        isActive && !isPrivilegeMode && canActionRunInPhase('ACTIVATE_PRIVILEGE', phase);
     const items: ReactElement[] = [];
     let currentIndex = 0;
 
@@ -85,11 +90,11 @@ export function PlayerZoneIdentityColumn({
         items.push(
             <button
                 key={`std-${i}`}
-                disabled={!isActive || isPrivilegeMode}
+                disabled={!canUsePrivilege}
                 onClick={onUsePrivilege}
                 className={cn(
                     'transition-all',
-                    isActive && !isPrivilegeMode
+                    canUsePrivilege
                         ? 'hover:scale-110 hover:text-amber-100 cursor-pointer animate-pulse'
                         : 'opacity-80 cursor-default',
                     (total === 1 || (total === 3 && idx === 2)) && 'col-span-2 justify-self-center'
@@ -109,11 +114,11 @@ export function PlayerZoneIdentityColumn({
         items.push(
             <button
                 key={`extra-${i}`}
-                disabled={!isActive || isPrivilegeMode}
+                disabled={!canUsePrivilege}
                 onClick={onUsePrivilege}
                 className={cn(
                     'transition-all',
-                    isActive && !isPrivilegeMode
+                    canUsePrivilege
                         ? 'hover:scale-110 hover:text-yellow-200 cursor-pointer animate-pulse'
                         : 'opacity-80 cursor-default',
                     (total === 1 || (total === 3 && idx === 2)) && 'col-span-2 justify-self-center'

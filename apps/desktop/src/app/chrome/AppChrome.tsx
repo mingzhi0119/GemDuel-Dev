@@ -6,8 +6,8 @@ import React, {
     useState,
     type ChangeEventHandler,
 } from 'react';
-import { BookOpen, Download, Monitor, RotateCcw, Settings, Upload } from 'lucide-react';
 import type { DesktopAspectRatio, ThemeName } from '@gemduel/shared/types';
+import { GameGlyph } from '@gemduel/ui/components/GameGlyph';
 import { LocaleSwitch } from '@gemduel/ui/components/LocaleSwitch';
 import {
     TOOLTIP_LABEL_CLASS,
@@ -131,7 +131,7 @@ export function AppChrome({
                     aria-label={t('settings.rules')}
                     aria-describedby={rulebookTooltipId}
                 >
-                    <BookOpen size={30} strokeWidth={2.4} />
+                    <GameGlyph variant="rulebook" size={30} />
                     <span
                         id={rulebookTooltipId}
                         role="tooltip"
@@ -153,7 +153,7 @@ export function AppChrome({
                     aria-label={t('settings.restart')}
                     aria-describedby={restartTooltipId}
                 >
-                    <RotateCcw size={30} strokeWidth={2.4} />
+                    <GameGlyph variant="restart" size={30} />
                     <span
                         id={restartTooltipId}
                         role="tooltip"
@@ -174,7 +174,7 @@ export function AppChrome({
                         aria-describedby={settingsTooltipId}
                         aria-expanded={showSettingsMenu}
                     >
-                        <Settings size={32} strokeWidth={2.4} />
+                        <GameGlyph variant="settings" size={32} />
                         <span
                             id={settingsTooltipId}
                             role="tooltip"
@@ -222,7 +222,7 @@ export function AppChrome({
                                                     : 'text-stone-500'
                                             }`}
                                         >
-                                            <Monitor size={13} aria-hidden="true" />
+                                            <GameGlyph variant="monitor" size={13} />
                                             <span>{t('settings.aspectRatio')}</span>
                                         </div>
                                         <div
@@ -269,7 +269,7 @@ export function AppChrome({
                                                 : t('settings.openDebug')
                                         }
                                     >
-                                        <Settings size={20} />
+                                        <GameGlyph variant="settings" size={20} />
                                         <span className="whitespace-nowrap text-[13px] font-black uppercase tracking-[0.14em]">
                                             {showDebug
                                                 ? t('settings.closeDebug')
@@ -287,7 +287,7 @@ export function AppChrome({
                                     title={t('settings.save')}
                                     aria-label={t('settings.save')}
                                 >
-                                    <Download size={20} />
+                                    <GameGlyph variant="save" size={20} />
                                     <span className="whitespace-nowrap text-[13px] font-black uppercase tracking-[0.14em]">
                                         {t('settings.save')}
                                     </span>
@@ -298,7 +298,7 @@ export function AppChrome({
                                     title={t('settings.load')}
                                     aria-label={t('settings.load')}
                                 >
-                                    <Upload size={20} />
+                                    <GameGlyph variant="load" size={20} />
                                     <span className="whitespace-nowrap text-[13px] font-black uppercase tracking-[0.14em]">
                                         {t('settings.load')}
                                     </span>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Crown } from 'lucide-react';
+import { UI_ICON_ARTWORK } from '../uiIconArtwork';
 
 interface AnimatedCrownMetricProps {
     value: number;
@@ -40,7 +40,14 @@ export function AnimatedCrownMetric({
     return (
         <>
             <span className="relative inline-flex items-center justify-center">
-                <Crown className={`${iconClassName ?? ''} ${glowClass}`} fill="currentColor" />
+                <img
+                    src={UI_ICON_ARTWORK.topbarCrown}
+                    alt=""
+                    aria-hidden="true"
+                    data-topbar-crown-artwork={player}
+                    className={`object-contain ${iconClassName ?? ''} ${glowClass}`}
+                    draggable={false}
+                />
                 <AnimatePresence>
                     {burstKey > 0 && (
                         <motion.span

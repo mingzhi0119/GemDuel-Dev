@@ -11,7 +11,6 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 - [Frontend Layout](guides/frontend-layout-guide.md)
 - [Animation and Motion Plan](guides/animation-motion-plan.md)
 - [Animation Library Strategy](guides/animation-library-strategy.md)
-- [Light/Dark Runtime Theme Retirement](theme-retirement-plan-2026-04-27.md)
 
 ## Architecture
 
@@ -36,3 +35,4 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 - [Engineering Audit Report 2026-04-25](archive/engineering-audit-report-2026-04-25.md)
 - [Engineering Governance Certification 2026-04-25](archive/engineering-governance-certification-2026-04-25.md)
 - [Independent Audit Prompt](archive/opus-4.7-independent-audit-prompt.md)
+- [Light/Dark Runtime Theme Retirement 2026-04-27](archive/theme-retirement-plan-2026-04-27.md)

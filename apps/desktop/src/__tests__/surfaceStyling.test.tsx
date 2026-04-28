@@ -66,6 +66,18 @@ const SAMPLE_GOLD_BONUS_CARD: CardType = {
     },
 };
 
+const SAMPLE_PURE_POINTS_CARD: CardType = {
+    ...SAMPLE_CARD,
+    id: 'surface-styling-card-pure-points',
+    bonusColor: 'null',
+    bonusCount: 0,
+    points: 3,
+    cost: {
+        ...EMPTY_COST,
+        white: 2,
+    },
+};
+
 const SAMPLE_PEARL_COST_CARD: CardType = {
     ...SAMPLE_CARD,
     id: 'surface-styling-card-pearl-cost',
@@ -390,6 +402,7 @@ describe('surface styling affordances', () => {
                     reserved={[SAMPLE_CARD]}
                     privileges={0}
                     isActive={true}
+                    phase="IDLE"
                     lastFeedback={null}
                     onBuyReserved={() => false}
                     onDiscardReserved={() => undefined}
@@ -421,6 +434,7 @@ describe('surface styling affordances', () => {
                         reserved={[SAMPLE_CARD]}
                         privileges={0}
                         isActive={true}
+                        phase="IDLE"
                         lastFeedback={null}
                         onBuyReserved={() => false}
                         onDiscardReserved={() => undefined}
@@ -448,6 +462,143 @@ describe('surface styling affordances', () => {
         expect(renderZone('p2')).toEqual(['identity', 'resources', 'reserved']);
     });
 
+    it('renders the five basic tableau stacks plus one pure-royal special stack', () => {
+        const html = renderToStaticMarkup(
+            <LocaleProvider locale="en" setLocale={() => undefined}>
+                <PlayerZone
+                    player="p1"
+                    inventory={EMPTY_COST}
+                    cards={[{ ...SAMPLE_CARD, bonusColor: 'red' }, SAMPLE_PURE_POINTS_CARD]}
+                    reserved={[]}
+                    royals={[ROYAL_CARDS[0]!]}
+                    privileges={0}
+                    isActive={true}
+                    phase="IDLE"
+                    lastFeedback={null}
+                    onBuyReserved={() => false}
+                    onDiscardReserved={() => undefined}
+                    onUsePrivilege={() => undefined}
+                    isPrivilegeMode={false}
+                    onGemClick={() => undefined}
+                    isStealMode={false}
+                    isDiscardMode={false}
+                    buff={BUFFS.NONE as unknown as Buff}
+                    theme="dark"
+                    score={0}
+                    crowns={0}
+                />
+            </LocaleProvider>
+        );
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        const stacks = Array.from(container.querySelectorAll('[data-tableau-stack]'));
+        const stackColors = stacks.map((element) =>
+            element.getAttribute('data-tableau-stack-color')
+        );
+        const specialStack = container.querySelector(
+            '[data-tableau-special-stack="p1-pure-royal"]'
+        );
+
+        expect(stacks).toHaveLength(6);
+        expect(stackColors).toEqual(['red', 'green', 'blue', 'white', 'black', 'pure-royal']);
+        expect(specialStack?.getAttribute('data-tableau-card-count')).toBe('2');
+        expect(specialStack?.getAttribute('data-tableau-special-pure-count')).toBe('1');
+        expect(specialStack?.getAttribute('data-tableau-special-royal-count')).toBe('1');
+        expect(container.querySelector('[data-tableau-point-summary="red"]')?.textContent).toBe(
+            '2/10'
+        );
+        expect(
+            container.querySelector('[data-tableau-point-summary="pure-royal"]')?.textContent
+        ).not.toContain('/10');
+        expect(specialStack?.textContent).not.toContain('/10');
+    });
+
+    it('tracks empty, pure-only, and royal-only special stack counts', () => {
+        const renderSpecialStack = (cards: CardType[], royals = [] as typeof ROYAL_CARDS) => {
+            const html = renderToStaticMarkup(
+                <LocaleProvider locale="en" setLocale={() => undefined}>
+                    <PlayerZone
+                        player="p1"
+                        inventory={EMPTY_COST}
+                        cards={cards}
+                        reserved={[]}
+                        royals={royals}
+                        privileges={0}
+                        isActive={true}
+                        phase="IDLE"
+                        lastFeedback={null}
+                        onBuyReserved={() => false}
+                        onDiscardReserved={() => undefined}
+                        onUsePrivilege={() => undefined}
+                        isPrivilegeMode={false}
+                        onGemClick={() => undefined}
+                        isStealMode={false}
+                        isDiscardMode={false}
+                        buff={BUFFS.NONE as unknown as Buff}
+                        theme="dark"
+                        score={0}
+                        crowns={0}
+                    />
+                </LocaleProvider>
+            );
+            const container = document.createElement('div');
+            container.innerHTML = html;
+            return container.querySelector('[data-tableau-special-stack="p1-pure-royal"]');
+        };
+
+        expect(renderSpecialStack([])?.getAttribute('data-tableau-card-count')).toBe('0');
+        expect(
+            renderSpecialStack([SAMPLE_PURE_POINTS_CARD])?.getAttribute(
+                'data-tableau-special-pure-count'
+            )
+        ).toBe('1');
+        expect(
+            renderSpecialStack([], [ROYAL_CARDS[0]!])?.getAttribute(
+                'data-tableau-special-royal-count'
+            )
+        ).toBe('1');
+    });
+
+    it('renders reserved cards as a stable diagonal mini-stack', () => {
+        const reservedCards = [0, 1, 2].map((index) => ({
+            ...SAMPLE_CARD,
+            id: `reserved-mini-stack-${index}`,
+        }));
+        const html = renderToStaticMarkup(
+            <LocaleProvider locale="en" setLocale={() => undefined}>
+                <PlayerZone
+                    player="p1"
+                    inventory={EMPTY_COST}
+                    cards={[]}
+                    reserved={reservedCards}
+                    privileges={0}
+                    isActive={true}
+                    phase="IDLE"
+                    lastFeedback={null}
+                    onBuyReserved={() => false}
+                    onDiscardReserved={() => undefined}
+                    onUsePrivilege={() => undefined}
+                    isPrivilegeMode={false}
+                    onGemClick={() => undefined}
+                    isStealMode={false}
+                    isDiscardMode={false}
+                    buff={BUFFS.NONE as unknown as Buff}
+                    theme="dark"
+                    score={0}
+                    crowns={0}
+                />
+            </LocaleProvider>
+        );
+        const container = document.createElement('div');
+        container.innerHTML = html;
+
+        expect(container.querySelector('[data-reserved-mini-stack="p1"]')).not.toBeNull();
+        expect(container.querySelectorAll('[data-reserved-slot]')).toHaveLength(3);
+        expect(container.querySelector('[data-reserved-slot="p1-0"]')).not.toBeNull();
+        expect(container.querySelector('[data-reserved-slot="p1-1"]')).not.toBeNull();
+        expect(container.querySelector('[data-reserved-slot="p1-2"]')).not.toBeNull();
+    });
+
     it('renders player-zone artwork as a separate mirrored fallback layer', () => {
         const html = renderToStaticMarkup(
             <LocaleProvider locale="en" setLocale={() => undefined}>
@@ -458,6 +609,7 @@ describe('surface styling affordances', () => {
                     reserved={[]}
                     privileges={0}
                     isActive={true}
+                    phase="IDLE"
                     lastFeedback={null}
                     onBuyReserved={() => false}
                     onDiscardReserved={() => undefined}
@@ -501,6 +653,7 @@ describe('surface styling affordances', () => {
                     reserved={[]}
                     privileges={0}
                     isActive={true}
+                    phase="IDLE"
                     lastFeedback={null}
                     onBuyReserved={() => false}
                     onDiscardReserved={() => undefined}
@@ -550,6 +703,12 @@ describe('surface styling affordances', () => {
         expect(html).toContain('data-topbar-turn-side="p2"');
         expect(html).toContain('data-topbar-score-anchor="p1"');
         expect(html).toContain('data-topbar-score-anchor="p2"');
+        expect(html).toContain('data-topbar-crown-artwork="p1"');
+        expect(html).toContain('data-topbar-crown-artwork="p2"');
+        expect(html).toContain('data-topbar-points-artwork="p1"');
+        expect(html).toContain('data-topbar-points-artwork="p2"');
+        expect(html).toContain('/assets/ui-icons/crown-badge-gold-one-crown.png');
+        expect(html).toContain('/assets/ui-icons/point-ribbon-silver-short.png');
         expect(html.indexOf('data-topbar-crown-group="p1"')).toBeLessThan(
             html.indexOf('data-topbar-points-group="p1"')
         );
@@ -646,6 +805,7 @@ describe('surface styling affordances', () => {
                     reserved={[SAMPLE_CARD]}
                     privileges={0}
                     isActive={true}
+                    phase="IDLE"
                     lastFeedback={null}
                     onBuyReserved={() => false}
                     onDiscardReserved={() => undefined}
@@ -906,6 +1066,21 @@ describe('card preview interactions', () => {
         expect(onPreviewRoyal).toHaveBeenCalledTimes(1);
     });
 
+    it('keeps the royal court empty state visual-only without fallback copy', async () => {
+        await renderInteractive(
+            <RoyalCourt
+                royalDeck={[]}
+                phase="IDLE"
+                handleSelectRoyal={() => undefined}
+                theme="dark"
+            />
+        );
+
+        expect(container?.querySelectorAll('[data-royal-court-empty-slot]')).toHaveLength(4);
+        expect(container?.textContent).toContain('Royal');
+        expect(container?.textContent).not.toContain('No Royal Cards Available');
+    });
+
     it('sends all cards from a player tableau color stack to the shared preview lane', async () => {
         const cards = collectionCards(5);
         const onPreviewStack = vi.fn();
@@ -918,6 +1093,7 @@ describe('card preview interactions', () => {
                 reserved={[]}
                 privileges={0}
                 isActive={true}
+                phase="IDLE"
                 lastFeedback={null}
                 onBuyReserved={() => false}
                 onDiscardReserved={() => undefined}
@@ -940,6 +1116,53 @@ describe('card preview interactions', () => {
             player: 'p1',
             color: 'green',
             cards,
+        });
+    });
+
+    it('sends pure-points and royal cards from the special stack to the shared preview lane', async () => {
+        const onPreviewStack = vi.fn();
+
+        await renderInteractive(
+            <PlayerZone
+                player="p1"
+                inventory={EMPTY_COST}
+                cards={[SAMPLE_PURE_POINTS_CARD]}
+                reserved={[]}
+                royals={[ROYAL_CARDS[0]!]}
+                privileges={0}
+                isActive={true}
+                phase="IDLE"
+                lastFeedback={null}
+                onBuyReserved={() => false}
+                onDiscardReserved={() => undefined}
+                onUsePrivilege={() => undefined}
+                isPrivilegeMode={false}
+                onGemClick={() => undefined}
+                isStealMode={false}
+                isDiscardMode={false}
+                buff={BUFFS.NONE as unknown as Buff}
+                onPreviewStack={onPreviewStack}
+                theme="dark"
+                score={0}
+                crowns={0}
+            />
+        );
+
+        await clickElement(
+            container?.querySelector('[data-tableau-special-stack="p1-pure-royal"]')
+        );
+
+        expect(onPreviewStack).toHaveBeenCalledWith({
+            player: 'p1',
+            color: 'pure-royal',
+            title: 'Pure / Royal',
+            cards: [
+                SAMPLE_PURE_POINTS_CARD,
+                expect.objectContaining({
+                    id: ROYAL_CARDS[0]!.id,
+                    points: ROYAL_CARDS[0]!.points,
+                }),
+            ],
         });
     });
 
@@ -977,6 +1200,23 @@ describe('card preview interactions', () => {
         expect(document.body.textContent).toContain('Showing 12 / 13');
     });
 
+    it('labels the pure-royal collection preview as extra points', async () => {
+        await renderInteractive(
+            <CardPreviewOverlay
+                isOpen={true}
+                mode="collection"
+                cards={[SAMPLE_PURE_POINTS_CARD]}
+                player="p1"
+                color="pure-royal"
+                theme="dark"
+                onClose={() => undefined}
+            />
+        );
+
+        expect(document.body.textContent).toContain('Player 1 - Extra Points');
+        expect(document.body.textContent).not.toContain('COLOR: PURE-ROYAL');
+    });
+
     it('still opens a single-card preview for unavailable reserved cards', async () => {
         await renderInteractive(
             <PlayerZone
@@ -986,6 +1226,7 @@ describe('card preview interactions', () => {
                 reserved={[SAMPLE_CARD]}
                 privileges={0}
                 isActive={true}
+                phase="IDLE"
                 lastFeedback={null}
                 onBuyReserved={() => false}
                 onDiscardReserved={() => undefined}
@@ -1014,6 +1255,49 @@ describe('card preview interactions', () => {
         expect(
             document.body.querySelector(`[data-card-preview-card="${SAMPLE_CARD.id}"]`)
         ).not.toBeNull();
+        expect(document.body.querySelector('[data-card-preview-primary-action]')).toBeNull();
+    });
+
+    it('buys reserved cards from the large preview action instead of the rail card click', async () => {
+        const onBuyReserved = vi.fn((card: CardType, execute?: boolean) =>
+            card.id === SAMPLE_CARD.id && execute === true ? true : card.id === SAMPLE_CARD.id
+        );
+
+        await renderInteractive(
+            <PlayerZone
+                player="p1"
+                inventory={EMPTY_COST}
+                cards={[]}
+                reserved={[SAMPLE_CARD]}
+                privileges={0}
+                isActive={true}
+                phase="IDLE"
+                lastFeedback={null}
+                onBuyReserved={onBuyReserved}
+                onDiscardReserved={() => undefined}
+                onUsePrivilege={() => undefined}
+                isPrivilegeMode={false}
+                onGemClick={() => undefined}
+                isStealMode={false}
+                isDiscardMode={false}
+                buff={BUFFS.NONE as unknown as Buff}
+                theme="dark"
+                score={0}
+                crowns={0}
+            />
+        );
+
+        await clickElement(
+            container?.querySelector('[data-reserved-slot="p1-0"] [data-card-preview-click="true"]')
+        );
+
+        expect(document.body.querySelector('[data-card-preview-overlay]')).not.toBeNull();
+        expect(onBuyReserved).not.toHaveBeenCalledWith(SAMPLE_CARD, true);
+
+        await clickElement(document.body.querySelector('[data-card-preview-primary-action]'));
+
+        expect(onBuyReserved).toHaveBeenCalledWith(SAMPLE_CARD, true);
+        expect(document.body.querySelector('[data-card-preview-overlay]')).toBeNull();
     });
 });
 
@@ -1024,9 +1308,13 @@ describe('game board drag interactions', () => {
     const renderBoard = ({
         selectedGems,
         handleGemDragSelection,
+        handleGemClick = () => undefined,
+        phase = 'IDLE',
     }: {
         selectedGems: Array<{ r: number; c: number }>;
         handleGemDragSelection: (coords: Array<{ r: number; c: number }>, intent?: string) => void;
+        handleGemClick?: (r: number, c: number) => void;
+        phase?: string;
     }) => {
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -1041,10 +1329,10 @@ describe('game board drag interactions', () => {
             root?.render(
                 <GameBoard
                     board={board}
-                    handleGemClick={() => undefined}
+                    handleGemClick={handleGemClick}
                     handleGemDragSelection={handleGemDragSelection}
                     selectedGems={selectedGems}
-                    phase="IDLE"
+                    phase={phase}
                     bonusGemTarget={null}
                     theme="dark"
                     canInteract={true}
@@ -1113,5 +1401,42 @@ describe('game board drag interactions', () => {
             ],
             'deselect'
         );
+    });
+
+    it('keeps reserve and privilege target gems clickable', () => {
+        const handleGemClick = vi.fn();
+        const handleGemDragSelection = vi.fn();
+        renderBoard({
+            selectedGems: [],
+            handleGemDragSelection,
+            handleGemClick,
+            phase: 'RESERVE_WAITING_GEM',
+        });
+
+        act(() => {
+            getCellButton('0-0')?.click();
+        });
+
+        expect(handleGemClick).toHaveBeenCalledWith(0, 0);
+
+        act(() => {
+            root?.unmount();
+        });
+        container?.remove();
+        root = null;
+        container = null;
+
+        renderBoard({
+            selectedGems: [],
+            handleGemDragSelection,
+            handleGemClick,
+            phase: 'PRIVILEGE_ACTION',
+        });
+
+        act(() => {
+            getCellButton('0-1')?.click();
+        });
+
+        expect(handleGemClick).toHaveBeenCalledWith(0, 1);
     });
 });

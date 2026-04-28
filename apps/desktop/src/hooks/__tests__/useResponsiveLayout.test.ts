@@ -8,7 +8,7 @@ import { calculateResponsiveLayout, useResponsiveLayout } from '../useResponsive
 const expectedDesktopBoardScale = (stageCanvasHeightPx: number) =>
     Math.min(
         Math.max(
-            Math.min((3840 - 96) / 2000, (stageCanvasHeightPx - 120 - 440 - 48 - 16) / 797),
+            Math.min((3840 - 96) / 2000, (stageCanvasHeightPx - 120 - 520 - 48 - 16) / 797),
             1.2
         ),
         2.08
@@ -18,7 +18,7 @@ const expectedDesktopSizing = (stageCanvasHeightPx: number) => ({
     boardScale: expectedDesktopBoardScale(stageCanvasHeightPx),
     deckScale: 1.12,
     zoneScale: 1,
-    zoneHeightPx: 440,
+    zoneHeightPx: 520,
     mainGapPx: 24,
 });
 
@@ -435,7 +435,7 @@ describe('Responsive layout adaptation', () => {
             );
             expect(layout.deckScale).toBe(1.12);
             expect(layout.zoneScale).toBe(1);
-            expect(layout.zoneHeightPx).toBe(440);
+            expect(layout.zoneHeightPx).toBe(520);
             expect(layout.mainGapPx).toBe(24);
             expect(layout.stageScale).toBeGreaterThan(0);
         });

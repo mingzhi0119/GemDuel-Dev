@@ -2,6 +2,7 @@ import type React from 'react';
 import type {
     Card as CardType,
     Buff,
+    GamePhase,
     GemInventory,
     PlayerKey,
     RoyalCard,
@@ -16,6 +17,7 @@ export interface PlayerZoneProps {
     privileges: number;
     extraPrivileges?: number;
     isActive: boolean;
+    phase: GamePhase | string;
     lastFeedback: {
         uid: string;
         items: Array<{ player: PlayerKey; type: string; diff: number }>;
@@ -47,6 +49,7 @@ export interface PlayerZoneSurfaceArtwork {
 export interface PlayerZoneStackState {
     color: string;
     cards: CardType[];
+    title?: string;
 }
 
 export interface PlayerZoneFeedbackItem {
@@ -60,6 +63,11 @@ export interface PlayerZoneColorStats {
     cards: CardType[];
     bonusCount: number;
     points: number;
+}
+
+export interface PlayerZoneSpecialStackStats extends PlayerZoneColorStats {
+    purePointCount: number;
+    royalCount: number;
 }
 
 export interface PlayerZoneScaledCardFrameProps {

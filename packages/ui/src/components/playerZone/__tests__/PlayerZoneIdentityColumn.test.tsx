@@ -13,7 +13,10 @@ import { PlayerZoneIdentityColumn } from '../PlayerZoneIdentityColumn';
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
-const renderColumn = async (buff: Buff) => {
+const renderColumn = async (
+    buff: Buff,
+    overrides: Partial<React.ComponentProps<typeof PlayerZoneIdentityColumn>> = {}
+) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);
@@ -27,9 +30,11 @@ const renderColumn = async (buff: Buff) => {
                     extraPrivileges={0}
                     buff={buff}
                     isActive={true}
+                    phase="IDLE"
                     isPrivilegeMode={false}
                     theme="dark"
                     onUsePrivilege={vi.fn()}
+                    {...overrides}
                 />
             </LocaleProvider>
         );
@@ -171,5 +176,21 @@ describe('PlayerZoneIdentityColumn echo reservoir memory', () => {
 
         expect(container?.querySelector('[data-player-buff-icon-trigger]')).toBeNull();
         expect(container?.querySelector('[data-player-avatar-fallback="shield"]')).not.toBeNull();
+    });
+
+    it('disables privilege scrolls outside the activate-privilege phase', async () => {
+        const onUsePrivilege = vi.fn();
+        const rendered = await renderColumn(BUFFS.NONE as unknown as Buff, {
+            privileges: 1,
+            phase: 'RESERVE_WAITING_GEM',
+            onUsePrivilege,
+        });
+        container = rendered.container;
+        root = rendered.root;
+
+        const button = container?.querySelector('button') as HTMLButtonElement | null;
+        expect(button?.disabled).toBe(true);
+        button?.click();
+        expect(onUsePrivilege).not.toHaveBeenCalled();
     });
 });

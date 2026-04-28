@@ -21,7 +21,7 @@ export const DESKTOP_BOARD_SCALE_MIN = 1.2;
 export const DESKTOP_BOARD_SCALE_MAX = 2.08;
 export const DESKTOP_DECK_SCALE = 1.12;
 export const DESKTOP_ZONE_SCALE = 1;
-export const DESKTOP_ZONE_HEIGHT_PX = 440;
+export const DESKTOP_ZONE_HEIGHT_PX = 520;
 export const DESKTOP_MAIN_GAP_PX = 24;
 
 const DESKTOP_PLAY_SURFACE_BASE_HEIGHT_PX = 797;

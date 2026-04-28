@@ -28,6 +28,9 @@ interface CardPreviewOverlayProps {
     title?: string;
     player?: PlayerKey;
     color?: string;
+    primaryActionLabel?: string;
+    primaryActionDisabled?: boolean;
+    onPrimaryAction?: () => void;
 }
 
 const getViewportSize = () => {
@@ -103,6 +106,9 @@ export function CardPreviewOverlay({
     title,
     player,
     color,
+    primaryActionLabel,
+    primaryActionDisabled = false,
+    onPrimaryAction,
 }: CardPreviewOverlayProps) {
     const { locale } = useLocale();
     const t = useT();
@@ -112,11 +118,13 @@ export function CardPreviewOverlay({
         () => getPreviewLayout(visibleCards.length, viewportSize),
         [visibleCards.length, viewportSize]
     );
-    const heading =
-        title ??
-        (mode === 'collection' && player && color
-            ? `${getPlayerDisplayName(player, locale)} - ${t('labels.color')}: ${formatColorLabel(color, locale)}`
-            : 'Card Preview');
+    const collectionHeading =
+        mode === 'collection' && player && color
+            ? color === 'pure-royal'
+                ? `${getPlayerDisplayName(player, locale)} - Extra Points`
+                : `${getPlayerDisplayName(player, locale)} - ${t('labels.color')}: ${formatColorLabel(color, locale)}`
+            : null;
+    const heading = title ?? collectionHeading ?? 'Card Preview';
 
     useEffect(() => {
         if (!isOpen || typeof window === 'undefined') {
@@ -236,6 +244,17 @@ export function CardPreviewOverlay({
                                 </motion.div>
                             ))}
                         </div>
+                        {primaryActionLabel && onPrimaryAction && (
+                            <button
+                                type="button"
+                                data-card-preview-primary-action="true"
+                                disabled={primaryActionDisabled}
+                                onClick={onPrimaryAction}
+                                className="mt-6 rounded border border-amber-200/70 bg-amber-400 px-6 py-2 text-sm font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_10px_28px_rgba(251,191,36,0.26)] transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:border-slate-500/50 disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none"
+                            >
+                                {primaryActionLabel}
+                            </button>
+                        )}
                     </motion.div>
                 </motion.div>
             )}
