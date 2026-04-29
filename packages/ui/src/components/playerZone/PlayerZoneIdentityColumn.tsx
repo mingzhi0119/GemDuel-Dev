@@ -93,6 +93,7 @@ export function PlayerZoneIdentityColumn({
         items.push(
             <button
                 key={`std-${i}`}
+                data-player-zone-privilege={`${player}-standard-${i}`}
                 disabled={!canUsePrivilege}
                 onClick={onUsePrivilege}
                 className={cn(
@@ -117,6 +118,7 @@ export function PlayerZoneIdentityColumn({
         items.push(
             <button
                 key={`extra-${i}`}
+                data-player-zone-privilege={`${player}-extra-${i}`}
                 disabled={!canUsePrivilege}
                 onClick={onUsePrivilege}
                 className={cn(

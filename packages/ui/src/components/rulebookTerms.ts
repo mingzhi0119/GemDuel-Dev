@@ -89,4 +89,8 @@ export const TERMS = {
         en: getLexiconLabel('cardColor', 'en'),
         zh: getLexiconLabel('cardColor', 'zh'),
     },
+    market: {
+        en: getLexiconLabel('market', 'en'),
+        zh: getLexiconLabel('market', 'zh'),
+    },
 } as const;

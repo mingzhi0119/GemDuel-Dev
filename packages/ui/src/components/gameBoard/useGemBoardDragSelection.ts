@@ -38,6 +38,17 @@ const hasCoord = (coords: GemCoord[], target: GemCoord) =>
 const isSelectableDragCell = (cell: BoardCell | undefined) =>
     Boolean(cell && cell.type.id !== 'empty' && cell.type.id !== 'gold');
 
+const canClickBoardGem = (boardInteractionMode: string) =>
+    boardInteractionMode === 'selection' ||
+    boardInteractionMode === 'bonus-target' ||
+    boardInteractionMode === 'reserve-gold' ||
+    boardInteractionMode === 'privilege-target';
+
+const shouldResolveOnPointerDown = (boardInteractionMode: string) =>
+    boardInteractionMode === 'bonus-target' ||
+    boardInteractionMode === 'reserve-gold' ||
+    boardInteractionMode === 'privilege-target';
+
 const suppressNextBoardClick = (
     dragStateRef: React.MutableRefObject<DragSelectionState>,
     suppressClickTimeoutRef: React.MutableRefObject<number | null>
@@ -207,18 +218,32 @@ export const useGemBoardDragSelection = ({
 
     const handleBoardGemClick = React.useCallback(
         (r: number, c: number) => {
-            if (dragStateRef.current.suppressClick) {
+            if (
+                !canInteract ||
+                !canClickBoardGem(boardInteractionMode) ||
+                dragStateRef.current.suppressClick
+            ) {
                 return;
             }
 
             handleGemClick(r, c);
         },
-        [handleGemClick]
+        [boardInteractionMode, canInteract, handleGemClick]
     );
 
     const handleBoardGemPointerDown = React.useCallback(
         (event: React.PointerEvent<HTMLButtonElement>, r: number, c: number) => {
-            if (event.button !== 0 || !canInteract || boardInteractionMode !== 'selection') {
+            if (event.button !== 0 || !canInteract) {
+                return;
+            }
+
+            if (shouldResolveOnPointerDown(boardInteractionMode)) {
+                handleGemClick(r, c);
+                suppressNextBoardClick(dragStateRef, suppressClickTimeoutRef);
+                return;
+            }
+
+            if (boardInteractionMode !== 'selection') {
                 return;
             }
 

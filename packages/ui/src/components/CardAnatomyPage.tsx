@@ -9,7 +9,7 @@ interface CardAnatomyPageProps {
 }
 
 export const CardAnatomyPage: React.FC<CardAnatomyPageProps> = ({ theme, lang }) => (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
         <CardAnatomyDiagram theme={theme} lang={lang} />
         <CardAnatomyGlossary theme={theme} lang={lang} />
     </div>

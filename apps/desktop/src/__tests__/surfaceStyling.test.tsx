@@ -1964,11 +1964,13 @@ describe('game board drag interactions', () => {
         handleGemDragSelection,
         handleGemClick = () => undefined,
         phase = 'IDLE',
+        bonusGemTarget = null,
     }: {
         selectedGems: Array<{ r: number; c: number }>;
         handleGemDragSelection: (coords: Array<{ r: number; c: number }>, intent?: string) => void;
         handleGemClick?: (r: number, c: number) => void;
         phase?: string;
+        bonusGemTarget?: (typeof GEM_TYPES)[keyof typeof GEM_TYPES] | null;
     }) => {
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -1987,7 +1989,7 @@ describe('game board drag interactions', () => {
                     handleGemDragSelection={handleGemDragSelection}
                     selectedGems={selectedGems}
                     phase={phase}
-                    bonusGemTarget={null}
+                    bonusGemTarget={bonusGemTarget}
                     theme="dark"
                     canInteract={true}
                     panelSkin={getGemPanelSkin('dark')}
@@ -2091,6 +2093,29 @@ describe('game board drag interactions', () => {
             getCellButton('0-1')?.click();
         });
 
+        expect(handleGemClick).toHaveBeenCalledWith(0, 1);
+    });
+
+    it('resolves bonus target gems on pointer down without waiting for a synthetic click', () => {
+        const handleGemClick = vi.fn();
+        const handleGemDragSelection = vi.fn();
+        renderBoard({
+            selectedGems: [],
+            handleGemDragSelection,
+            handleGemClick,
+            phase: 'BONUS_ACTION',
+            bonusGemTarget: GEM_TYPES.GREEN,
+        });
+
+        act(() => {
+            getCellButton('0-1')?.dispatchEvent(
+                new PointerEvent('pointerdown', { bubbles: true, button: 0 })
+            );
+            window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+            getCellButton('0-1')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+
+        expect(handleGemClick).toHaveBeenCalledTimes(1);
         expect(handleGemClick).toHaveBeenCalledWith(0, 1);
     });
 });

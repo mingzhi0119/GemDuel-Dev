@@ -187,6 +187,22 @@ describe('Card artwork rendering', () => {
         expect(html).not.toContain('shadow-xl');
     });
 
+    it('does not dim royal court cards when local interaction is disabled', () => {
+        const html = renderToStaticMarkup(
+            <RoyalCourt
+                royalDeck={[royalCard]}
+                phase="IDLE"
+                handleSelectRoyal={() => undefined}
+                theme="dark"
+                canInteract={false}
+            />
+        );
+
+        expect(html).toContain('/assets/cards/r92-ro.png');
+        expect(html).not.toContain('opacity-70');
+        expect(html).not.toContain('grayscale');
+    });
+
     it('keeps the royal court footprint fixed after royal cards are removed', () => {
         const html = renderToStaticMarkup(
             <RoyalCourt

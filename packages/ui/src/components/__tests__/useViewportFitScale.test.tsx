@@ -98,4 +98,39 @@ describe('useViewportFitScale', () => {
 
         expect(readScale(container!)).toBeCloseTo(1.257, 2);
     });
+
+    it('uses the parent stage layout instead of the raw window when fitting start-page scale', () => {
+        Object.defineProperty(window, 'innerWidth', {
+            configurable: true,
+            value: 1280,
+        });
+        Object.defineProperty(window, 'innerHeight', {
+            configurable: true,
+            value: 720,
+        });
+
+        const FitHarness = () => {
+            const fitScale = useViewportFitScale<HTMLDivElement>(3, 96);
+
+            return (
+                <div data-offset-width="3840" data-offset-height="2160">
+                    <div
+                        ref={fitScale.ref}
+                        data-testid="fit-target"
+                        data-offset-width="536"
+                        data-offset-height="560"
+                        data-scroll-width="1608"
+                        data-scroll-height="1680"
+                        style={fitScale.style}
+                    />
+                </div>
+            );
+        };
+
+        act(() => {
+            root?.render(<FitHarness />);
+        });
+
+        expect(readScale(container!)).toBe(3);
+    });
 });

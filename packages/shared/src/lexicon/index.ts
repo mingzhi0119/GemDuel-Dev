@@ -111,8 +111,8 @@ const LEXICON_TERM_LIST: readonly LexiconTermDefinition[] = [
         id: 'crowns',
         label: { en: 'Crowns', zh: '皇冠' },
         description: {
-            en: 'Crowns advance royal rewards and can also satisfy a victory condition.',
-            zh: '皇冠会推进皇室奖励，也可能直接满足获胜条件。',
+            en: 'Crowns advance Royal Area milestones and can also satisfy a victory condition.',
+            zh: '皇冠会推进皇室区里程碑，也可能直接满足获胜条件。',
         },
         aliases: {
             en: [whole('Crown'), whole('Crowns')],
@@ -122,14 +122,14 @@ const LEXICON_TERM_LIST: readonly LexiconTermDefinition[] = [
     },
     {
         id: 'royal',
-        label: { en: 'Royal', zh: '皇室' },
+        label: { en: 'Royal Area', zh: '皇室区' },
         description: {
-            en: 'Royal refers to the shared royal reward area and the milestone system tied to Crowns.',
-            zh: '皇室指与皇冠里程碑相连的共享皇室奖励区和整套机制。',
+            en: 'The Royal Area is the shared area beside the board where Royal Cards are chosen at Crown milestones.',
+            zh: '皇室区是盘面右侧的共享区域，会在皇冠里程碑时要求你选择皇室卡。',
         },
         aliases: {
-            en: [whole('Royal'), whole('Royals'), whole('Royal Court')],
-            zh: [exact('皇室'), exact('皇室庭院'), exact('皇室法院')],
+            en: [whole('Royal Area'), whole('Royal'), whole('Royals'), whole('Royal Court')],
+            zh: [exact('皇室区'), exact('皇室'), exact('皇室庭院'), exact('皇室法院')],
         },
         matchMode: { en: 'wholeTerm', zh: 'exactSubstring' },
     },
@@ -137,8 +137,8 @@ const LEXICON_TERM_LIST: readonly LexiconTermDefinition[] = [
         id: 'royalCard',
         label: { en: 'Royal Card', zh: '皇室卡' },
         description: {
-            en: 'A Royal Card is a free reward gained from Royal milestones instead of being purchased with gems.',
-            zh: '皇室卡是通过皇室里程碑获得的免费奖励卡，而不是用宝石购买的卡。',
+            en: 'A Royal Card is a free pure-points card gained from Royal Area milestones. It provides points and may provide a special ability, but it does not provide Bonus discounts or Crowns.',
+            zh: '皇室卡是通过皇室区里程碑获得的免费纯分数卡，提供分数且可能提供特殊能力，但不提供奖励折扣或皇冠。',
         },
         aliases: {
             en: [whole('Royal Card'), whole('Royal Cards')],
@@ -150,8 +150,8 @@ const LEXICON_TERM_LIST: readonly LexiconTermDefinition[] = [
         id: 'bonus',
         label: { en: 'Bonus', zh: '奖励' },
         description: {
-            en: 'Bonus is a permanent discount from cards you own. It is different from Bonus Gem.',
-            zh: '奖励是你已拥有卡牌提供的永久折扣，它和“奖励宝石”不是同一个概念。',
+            en: 'Bonus is a permanent discount from cards you own. If the Bonus is Wild, choose any basic color as its discount color. It is different from Bonus Gem.',
+            zh: '奖励是你已拥有卡牌提供的永久折扣。如果奖励是万能颜色，你可以任选一种基础颜色作为折扣颜色。它和“奖励宝石”不是同一个概念。',
         },
         aliases: {
             en: [whole('Bonus'), whole('Bonuses'), whole('Color Bonus'), whole('Color Bonuses')],
@@ -180,8 +180,8 @@ const LEXICON_TERM_LIST: readonly LexiconTermDefinition[] = [
             zh: '奖励宝石是购买卡牌后触发的效果，会让你从版图上获得一颗宝石。',
         },
         aliases: {
-            en: [whole('Bonus Gem'), whole('Bonus Gems'), whole('Take Gem')],
-            zh: [exact('奖励宝石'), exact('拿取宝石')],
+            en: [whole('Bonus Gem'), whole('Bonus Gems')],
+            zh: [exact('奖励宝石')],
         },
         matchMode: { en: 'wholeTerm', zh: 'exactSubstring' },
     },
@@ -449,8 +449,8 @@ const LEXICON_TERM_LIST: readonly LexiconTermDefinition[] = [
         id: 'singleColorPoints',
         label: { en: 'Single-Color Points', zh: '单色分数' },
         description: {
-            en: 'Single-Color Points are the total Prestige Points from cards that share the same Card Color.',
-            zh: '单色分数是来自同一种卡牌颜色的全部声望值总和。',
+            en: 'Single-Color Points are the total Prestige Points from cards that share the same Card Color. A card with no Bonus gem only counts toward total Prestige Points.',
+            zh: '单色分数是来自同一种卡牌颜色的全部声望值总和。没有折扣宝石的卡牌只计入总分，不计入任何单色分数。',
         },
         aliases: {
             en: [

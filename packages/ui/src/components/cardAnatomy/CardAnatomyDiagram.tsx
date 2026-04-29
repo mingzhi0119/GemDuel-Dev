@@ -1,8 +1,8 @@
 import React from 'react';
 import { Crown } from 'lucide-react';
 import { translate, type AppLocale, type LexiconTermId } from '@gemduel/shared';
-import { Card as CardComponent, STANDARD_CARD_SIZE } from '../Card';
-import { SAMPLE_CARD } from './cardAnatomyData';
+import { Card as CardComponent, FEATURED_CARD_SIZE } from '../Card';
+import { ANATOMY_LAYOUT_CARD } from './cardAnatomyData';
 import { LexiconTerm } from '../../lexicon/LexiconTerm';
 import { LexiconText } from '../../lexicon/LexiconText';
 
@@ -23,25 +23,27 @@ interface ConnectorTarget {
 }
 
 interface LabelConfig {
-    key: 'prestige' | 'bonus' | 'ability' | 'cost' | 'crowns';
+    key: 'prestige' | 'ability' | 'bonus' | 'cost' | 'crowns';
     termId?: LexiconTermId;
     align: 'left' | 'right';
+    anchor: string;
     top?: number;
     bottom?: number;
     left: number;
     width: number;
     titleKey:
         | 'anatomy.prestige.title'
-        | 'anatomy.bonus.title'
         | 'anatomy.ability.title'
+        | 'anatomy.bonus.title'
         | 'anatomy.cost.title'
         | 'anatomy.crowns.title';
     titleClassName: string;
     descKeys: ReadonlyArray<
         | 'anatomy.prestige.desc1'
         | 'anatomy.prestige.desc2'
-        | 'anatomy.bonus.desc'
         | 'anatomy.ability.desc'
+        | 'anatomy.bonus.desc'
+        | 'anatomy.bonus.desc2'
         | 'anatomy.cost.desc'
         | 'anatomy.crowns.desc'
     >;
@@ -50,10 +52,10 @@ interface LabelConfig {
 }
 
 const labelTitleClass = (colorClass: string) =>
-    `block text-base md:text-lg font-bold leading-tight ${colorClass}`;
+    `block text-[25px] md:text-[28px] font-bold leading-tight ${colorClass}`;
 
 const labelDescClass = (theme: Theme) =>
-    `block text-sm md:text-base leading-6 ${theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`;
+    `block text-[22px] md:text-[25px] leading-[1.35] ${theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`;
 
 const LabelBlock: React.FC<{ theme: Theme; lang: Lang; label: LabelConfig }> = ({
     theme,
@@ -61,6 +63,8 @@ const LabelBlock: React.FC<{ theme: Theme; lang: Lang; label: LabelConfig }> = (
     label,
 }) => (
     <div
+        data-card-anatomy-label={label.key}
+        data-card-anatomy-anchor={label.anchor}
         className={`absolute ${label.align === 'right' ? 'text-right' : 'text-left'}`}
         style={{
             top: label.top !== undefined ? `${label.top}px` : undefined,
@@ -72,7 +76,7 @@ const LabelBlock: React.FC<{ theme: Theme; lang: Lang; label: LabelConfig }> = (
         {label.crown ? (
             <div className="flex items-center gap-1">
                 <Crown
-                    size={16}
+                    size={24}
                     className={theme === 'dark' ? 'text-yellow-400' : 'text-yellow-500'}
                     fill="currentColor"
                 />
@@ -104,7 +108,7 @@ const LabelBlock: React.FC<{ theme: Theme; lang: Lang; label: LabelConfig }> = (
         ))}
         {label.strongDescKey && (
             <span
-                className={`block text-sm md:text-base font-bold leading-6 ${label.crown ? (theme === 'dark' ? 'text-yellow-500' : 'text-yellow-700') : theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`}
+                className={`block text-[22px] font-bold leading-[1.35] md:text-[25px] ${label.crown ? (theme === 'dark' ? 'text-yellow-500' : 'text-yellow-700') : theme === 'dark' ? 'text-slate-400' : 'text-stone-500'}`}
             >
                 <LexiconText text={translate(lang, label.strongDescKey)} />
             </span>
@@ -142,73 +146,56 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
         return () => window.removeEventListener('resize', updateDimensions);
     }, []);
 
-    const standardCardScale = STANDARD_CARD_SIZE.width / 96;
-    const scaleCardMetric = (value: number) => Math.max(1, Math.round(value * standardCardScale));
     const compactLayout = dimensions.width > 0 && dimensions.width < 920;
-    const cardScale = compactLayout ? 1.7 : dimensions.width < 1120 ? 1.85 : 1.95;
-    const cardWidthPx = STANDARD_CARD_SIZE.width * cardScale;
-    const cardHeightPx = STANDARD_CARD_SIZE.height * cardScale;
+    const cardScale = compactLayout ? 1.7 : dimensions.width < 1120 ? 2.2 : 2.95;
+    const cardWidthPx = FEATURED_CARD_SIZE.width * cardScale;
+    const cardHeightPx = FEATURED_CARD_SIZE.height * cardScale;
     const cardLeftPx = dimensions.width / 2 - cardWidthPx / 2;
     const cardTopPx = dimensions.height / 2 - cardHeightPx / 2;
-    const labelWidthPx = compactLayout ? 180 : 220;
-    const sideGapPx = compactLayout ? 46 : 74;
-    const topLabelTopPx = compactLayout ? 24 : 30;
-    const bottomLabelBottomPx = compactLayout ? 24 : 32;
-    const abilityLabelTopPx = Math.max(128, dimensions.height / 2 - (compactLayout ? 48 : 56));
-    const topInsetPx = scaleCardMetric(4);
-    const sideInsetPx = scaleCardMetric(6);
-    const topClusterGapPx = scaleCardMetric(4);
-    const pointFontSizePx = scaleCardMetric(18);
-    const abilityIconSizePx = scaleCardMetric(12);
-    const abilityBadgePaddingPx = scaleCardMetric(2);
-    const abilityBadgeSizePx = abilityIconSizePx + abilityBadgePaddingPx * 2;
-    const pointWidthPx =
-        Number(SAMPLE_CARD.points) > 0
-            ? Math.round(String(SAMPLE_CARD.points).length * pointFontSizePx * 0.62)
-            : 0;
-    const topClusterHeightPx = Math.max(pointFontSizePx, abilityBadgeSizePx);
-    const abilityAnchorXWithinCardPx =
-        sideInsetPx +
-        (pointWidthPx > 0 ? pointWidthPx + topClusterGapPx : 0) +
-        abilityBadgeSizePx / 2;
-    const abilityAnchorYWithinCardPx = topInsetPx + topClusterHeightPx / 2;
-    const strokeColor = isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(120, 113, 108, 0.5)';
+    const labelWidthPx = compactLayout ? 230 : 330;
+    const sideGapPx = compactLayout ? 36 : 104;
+    const topLabelTopPx = compactLayout ? 32 : 54;
+    const bottomLabelBottomPx = compactLayout ? 32 : 54;
+    const abilityLabelTopPx = compactLayout ? 232 : 250;
+    const bonusLabelTopPx = compactLayout ? 210 : 232;
+    const strokeColor = isDark ? '#f8fafc' : '#1f2937';
+    const strokeHaloColor = isDark ? 'rgba(2, 6, 23, 0.92)' : 'rgba(255, 255, 255, 0.92)';
     const anchorFill = isDark ? '#fbbf24' : '#d97706';
 
     const connectorTargets: Record<LabelConfig['key'], ConnectorTarget> = {
         prestige: {
             startX: cardLeftPx - 24,
             startY: topLabelTopPx + 42,
-            endX: cardLeftPx + 24,
-            endY: cardTopPx + 34,
+            endX: cardLeftPx + cardWidthPx * 0.16,
+            endY: cardTopPx + cardHeightPx * 0.09,
             fill: isDark ? '#fbbf24' : '#d97706',
+        },
+        ability: {
+            startX: cardLeftPx - 24,
+            startY: abilityLabelTopPx + 42,
+            endX: cardLeftPx + cardWidthPx * 0.14,
+            endY: cardTopPx + cardHeightPx * 0.17,
+            fill: isDark ? '#c084fc' : '#7c3aed',
         },
         bonus: {
             startX: cardLeftPx + cardWidthPx + 24,
-            startY: topLabelTopPx + 42,
-            endX: cardLeftPx + cardWidthPx - 24,
-            endY: cardTopPx + 34,
+            startY: bonusLabelTopPx + 42,
+            endX: cardLeftPx + cardWidthPx * 0.86,
+            endY: cardTopPx + cardHeightPx * 0.13,
             fill: isDark ? '#60a5fa' : '#2563eb',
-        },
-        ability: {
-            startX: cardLeftPx - 28,
-            startY: abilityLabelTopPx + 34,
-            endX: cardLeftPx + abilityAnchorXWithinCardPx * cardScale,
-            endY: cardTopPx + abilityAnchorYWithinCardPx * cardScale,
-            fill: isDark ? '#c084fc' : '#9333ea',
         },
         cost: {
             startX: cardLeftPx - 24,
             startY: dimensions.height - bottomLabelBottomPx - 42,
-            endX: cardLeftPx + 34,
-            endY: cardTopPx + cardHeightPx - 62,
+            endX: cardLeftPx + cardWidthPx * 0.14,
+            endY: cardTopPx + cardHeightPx * 0.78,
             fill: isDark ? '#34d399' : '#059669',
         },
         crowns: {
             startX: cardLeftPx + cardWidthPx + 24,
-            startY: dimensions.height - bottomLabelBottomPx - 42,
-            endX: cardLeftPx + cardWidthPx - 28,
-            endY: cardTopPx + cardHeightPx - 34,
+            startY: topLabelTopPx + 42,
+            endX: cardLeftPx + cardWidthPx * 0.52,
+            endY: cardTopPx + cardHeightPx * 0.11,
             fill: isDark ? '#facc15' : '#ca8a04',
         },
     };
@@ -217,6 +204,7 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
         {
             key: 'prestige',
             align: 'right',
+            anchor: 'top-left-score-ribbon',
             top: topLabelTopPx,
             left: cardLeftPx - sideGapPx - labelWidthPx,
             width: labelWidthPx,
@@ -226,29 +214,32 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
             descKeys: ['anatomy.prestige.desc1', 'anatomy.prestige.desc2'],
         },
         {
+            key: 'ability',
+            align: 'right',
+            anchor: 'left-ability-medallion',
+            top: abilityLabelTopPx,
+            left: cardLeftPx - sideGapPx - labelWidthPx,
+            width: labelWidthPx,
+            titleKey: 'anatomy.ability.title',
+            titleClassName: isDark ? 'text-purple-300' : 'text-purple-600',
+            descKeys: ['anatomy.ability.desc'],
+        },
+        {
             key: 'bonus',
             align: 'left',
-            top: topLabelTopPx,
+            anchor: 'top-right-wild-bonus',
+            top: bonusLabelTopPx,
             left: cardLeftPx + cardWidthPx + sideGapPx,
             width: labelWidthPx,
             titleKey: 'anatomy.bonus.title',
             termId: 'bonus',
             titleClassName: isDark ? 'text-blue-400' : 'text-blue-600',
-            descKeys: ['anatomy.bonus.desc'],
-        },
-        {
-            key: 'ability',
-            align: 'right',
-            top: abilityLabelTopPx,
-            left: cardLeftPx - sideGapPx - labelWidthPx - 14,
-            width: labelWidthPx + 14,
-            titleKey: 'anatomy.ability.title',
-            titleClassName: isDark ? 'text-purple-400' : 'text-purple-600',
-            descKeys: ['anatomy.ability.desc'],
+            descKeys: ['anatomy.bonus.desc', 'anatomy.bonus.desc2'],
         },
         {
             key: 'cost',
             align: 'right',
+            anchor: 'lower-left-gem-cost',
             bottom: bottomLabelBottomPx,
             left: cardLeftPx - sideGapPx - labelWidthPx,
             width: labelWidthPx,
@@ -259,7 +250,8 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
         {
             key: 'crowns',
             align: 'left',
-            bottom: bottomLabelBottomPx,
+            anchor: 'top-center-crowns',
+            top: topLabelTopPx,
             left: cardLeftPx + cardWidthPx + sideGapPx,
             width: labelWidthPx,
             titleKey: 'anatomy.crowns.title',
@@ -280,23 +272,24 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
     return (
         <section>
             <h4
-                className={`text-xl font-black uppercase tracking-wider mb-3 ${isDark ? 'text-slate-200' : 'text-stone-700'}`}
+                className={`mb-4 text-[34px] font-black uppercase tracking-wider ${isDark ? 'text-slate-200' : 'text-stone-700'}`}
             >
                 {translate(lang, 'anatomy.heading')}
             </h4>
             <div
                 ref={containerRef}
-                className="relative w-full h-[460px] lg:h-[500px] flex justify-center items-center select-none"
+                className="relative flex h-[680px] w-full select-none items-center justify-center lg:h-[760px]"
             >
                 <div
-                    className="z-10 origin-center shadow-2xl rounded-lg"
+                    data-card-anatomy-card-scale="preview"
+                    className="z-10 origin-center rounded-lg shadow-2xl"
                     style={{ transform: `scale(${cardScale})` }}
                 >
                     <CardComponent
-                        card={SAMPLE_CARD}
+                        card={ANATOMY_LAYOUT_CARD}
                         canBuy={false}
                         theme={theme}
-                        size="default"
+                        size="featured"
                         className="pointer-events-none"
                     />
                 </div>
@@ -305,10 +298,15 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
                     <LabelBlock key={label.key} theme={theme} lang={lang} label={label} />
                 ))}
 
-                <svg className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible">
+                <svg
+                    data-card-anatomy-connector-contrast="strong"
+                    data-card-anatomy-connector-stroke-width="4"
+                    data-card-anatomy-connector-halo-width="8"
+                    className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible"
+                >
                     <defs>
-                        <marker id="dot" markerWidth="6" markerHeight="6" refX="3" refY="3">
-                            <circle cx="3" cy="3" r="2" fill={anchorFill} />
+                        <marker id="dot" markerWidth="12" markerHeight="12" refX="6" refY="6">
+                            <circle cx="6" cy="6" r="4" fill={anchorFill} />
                         </marker>
                     </defs>
 
@@ -325,15 +323,29 @@ export const CardAnatomyDiagram: React.FC<CardAnatomyDiagramProps> = ({ theme, l
                                             target.endY
                                         )}
                                         fill="none"
+                                        stroke={strokeHaloColor}
+                                        strokeWidth="8"
+                                        strokeLinecap="round"
+                                    />
+                                    <path
+                                        d={createConnectorPath(
+                                            target.startX,
+                                            target.startY,
+                                            target.endX,
+                                            target.endY
+                                        )}
+                                        fill="none"
                                         stroke={strokeColor}
-                                        strokeWidth="1.5"
-                                        strokeDasharray="4 4"
+                                        strokeWidth="4"
+                                        strokeLinecap="round"
                                     />
                                     <circle
                                         cx={target.endX}
                                         cy={target.endY}
-                                        r="3"
+                                        r="7"
                                         fill={target.fill}
+                                        stroke={strokeHaloColor}
+                                        strokeWidth="3"
                                     />
                                 </React.Fragment>
                             );

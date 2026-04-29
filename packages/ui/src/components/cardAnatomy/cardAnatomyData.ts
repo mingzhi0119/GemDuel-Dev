@@ -1,31 +1,20 @@
-import { Hand, Plus, RotateCcw, Scroll } from 'lucide-react';
-import type { Card as CardType } from '@gemduel/shared/types';
+import { ROGUE_CARDS } from '@gemduel/shared/data/realCards';
 
-export const SAMPLE_CARD: CardType = {
-    id: 'anatomy-sample',
-    level: 2,
-    bonusColor: 'blue',
-    bonusCount: 1,
-    points: 2,
-    crowns: 1,
-    ability: 'again',
-    cost: {
-        blue: 0,
-        white: 3,
-        green: 2,
-        black: 0,
-        red: 0,
-        pearl: 0,
-        gold: 0,
-    },
+const findAnatomyCard = (id: string) => {
+    const card = ROGUE_CARDS.find((candidate) => candidate.id === id);
+    if (!card) {
+        throw new Error(`Expected ${id} to exist in ROGUE_CARDS.`);
+    }
+    return card;
 };
+
+export const ANATOMY_LAYOUT_CARD = findAnatomyCard('373-jo');
 
 export const ABILITIES = [
     {
         id: 'play_again',
         termId: 'extraTurn',
-        icon: RotateCcw,
-        color: 'bg-amber-500',
+        iconPath: '/assets/ui-icons/abilities/ability-extra-turn-medallion.png',
         label: { en: 'Extra Turn', zh: '额外回合' },
         desc: {
             en: 'Immediately take another turn after this one.',
@@ -35,8 +24,7 @@ export const ABILITIES = [
     {
         id: 'bonus_gem',
         termId: 'bonusGem',
-        icon: Plus,
-        color: 'bg-emerald-500',
+        iconPath: '/assets/ui-icons/abilities/ability-bonus-gem-medallion.png',
         label: { en: 'Bonus Gem', zh: '奖励宝石' },
         desc: {
             en: "Take 1 Gem of the card's color from the board.",
@@ -46,8 +34,7 @@ export const ABILITIES = [
     {
         id: 'steal',
         termId: 'steal',
-        icon: Hand,
-        color: 'bg-rose-500',
+        iconPath: '/assets/ui-icons/abilities/ability-steal-medallion.png',
         label: { en: 'Steal', zh: '掠夺' },
         desc: {
             en: 'Steal 1 non-Gold Gem from your opponent.',
@@ -57,8 +44,7 @@ export const ABILITIES = [
     {
         id: 'scroll',
         termId: 'privilege',
-        icon: Scroll,
-        color: 'bg-purple-500',
+        iconPath: '/assets/ui-icons/abilities/ability-privilege-medallion.png',
         label: { en: 'Privilege', zh: '特权' },
         desc: {
             en: 'Take 1 Privilege Scroll (or steal if supply is empty).',

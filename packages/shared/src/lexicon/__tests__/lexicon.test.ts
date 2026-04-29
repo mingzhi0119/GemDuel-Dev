@@ -31,6 +31,13 @@ describe('lexicon catalog', () => {
             expect(new Set(labels).size).toBe(labels.length);
         }
     });
+
+    it('uses Royal Area as the canonical area term', () => {
+        const royal = getLexiconTerm('royal');
+
+        expect(royal.label.en).toBe('Royal Area');
+        expect(royal.label.zh).toBe('皇室区');
+    });
 });
 
 describe('segmentLexiconText', () => {
@@ -65,6 +72,15 @@ describe('segmentLexiconText', () => {
             'singleColorPoints:单色分数',
             'royal:皇室',
             'bonus:奖励',
+        ]);
+    });
+
+    it('does not confuse Take Gems with Bonus Gem in Chinese', () => {
+        const segments = getTermSegments('拿取宝石，然后结算奖励宝石。', 'zh');
+
+        expect(segments.map((segment) => `${segment.termId}:${segment.value}`)).toEqual([
+            'takeGems:拿取宝石',
+            'bonusGem:奖励宝石',
         ]);
     });
 

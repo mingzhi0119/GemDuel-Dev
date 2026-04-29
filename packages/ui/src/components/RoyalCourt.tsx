@@ -45,9 +45,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
 
     return (
         <div
-            className={`flex flex-col gap-4 items-center p-1 shrink-0 transition-all duration-500
-            ${!canInteract ? 'opacity-70' : ''}
-        `}
+            className="flex flex-col gap-4 items-center p-1 shrink-0 transition-all duration-500"
             style={{ width: ROYAL_COURT_GRID_SIZE.width }}
         >
             <h2

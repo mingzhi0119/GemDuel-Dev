@@ -121,9 +121,47 @@ const clickPreviewElement = async (selector: string, context: string) => {
     await clickElement(getRequiredElement(selector, context));
 };
 
+const getElementClassName = (element: Element): string =>
+    typeof (element as HTMLElement).className === 'string'
+        ? (element as HTMLElement).className
+        : '';
+
+const assertFollowUpTargetCanReceivePointer = (element: Element, context: string) => {
+    if (element instanceof HTMLButtonElement) {
+        expect(element.disabled, `${context}: target button must be enabled`).toBe(false);
+    }
+
+    for (let current: Element | null = element; current; current = current.parentElement) {
+        expect(
+            getElementClassName(current),
+            `${context}: target must not sit under pointer-events-none`
+        ).not.toContain('pointer-events-none');
+
+        expect(
+            current.getAttribute('aria-disabled'),
+            `${context}: target must not sit under aria-disabled`
+        ).not.toBe('true');
+
+        if (current === document.body) {
+            break;
+        }
+    }
+};
+
+const clickElementLikeUser = async (element: Element) => {
+    await act(async () => {
+        element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }));
+        window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0 }));
+        element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        await Promise.resolve();
+    });
+};
+
 const clickRequiredFollowUpTarget = async (selector: string, context: string) => {
     assertNoBlockingPreview(context);
-    await clickElement(getRequiredElement(selector, context));
+    const element = getRequiredElement(selector, context);
+    assertFollowUpTargetCanReceivePointer(element, context);
+    await clickElementLikeUser(element);
 };
 
 const assertSinglePreviewOverlay = (context: string) => {

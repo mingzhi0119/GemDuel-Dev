@@ -46,6 +46,9 @@ export const GameActions: React.FC<GameActionsProps> = ({
                     {showCancel ? (
                         <motion.button
                             key="cancel"
+                            data-game-action={
+                                showReserveCancel ? 'cancel-reserve' : 'cancel-privilege'
+                            }
                             initial={{ opacity: 0, scale: 0.96 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.96 }}
@@ -61,6 +64,7 @@ export const GameActions: React.FC<GameActionsProps> = ({
                     ) : showConfirm ? (
                         <motion.button
                             key="confirm"
+                            data-game-action="confirm-take"
                             initial={{ opacity: 0, scale: 0.88 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.88 }}
@@ -74,6 +78,7 @@ export const GameActions: React.FC<GameActionsProps> = ({
                     ) : showRefill ? (
                         <motion.button
                             key="refill"
+                            data-game-action="replenish"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}

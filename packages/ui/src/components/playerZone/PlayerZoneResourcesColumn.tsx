@@ -78,6 +78,7 @@ export function PlayerZoneResourcesColumn({
                         <div
                             key={gem.id}
                             data-player-gem={`${player}-${gem.id}`}
+                            data-player-zone-gem={`${player}-${gem.id}`}
                             data-player-gem-color={gem.id}
                             data-player-gem-count={count}
                             onClick={() => isClickable && onGemClick && onGemClick(gem.id)}
