@@ -131,8 +131,9 @@ describe('surface lab catalog', () => {
     it('creates runtime fallback sets for all integrated themes', () => {
         const sets = createRuntimeSurfaceLabAssetSets('dark');
 
-        expect(sets).toHaveLength(4);
+        expect(sets).toHaveLength(5);
         expect(sets[0].source).toBe('runtime');
+        expect(sets.map((set) => set.style)).toContain('pearl-opaline');
         expect(sets[0].slots['market-card-back-l3'].archiveUrl).toContain(
             '/assets/surfaces/anime-themes/'
         );

@@ -25,7 +25,7 @@ Machine-readable budget contract: this document (`architecture-budget-contract`)
 
 ## Temporary ADR-backed Hard-limit Exceptions
 
-No active temporary hard-limit exceptions remain. Warnings between the review budget and the hard limit are expected refactor candidates. Hard-limit breaches must be backed by an ADR entry or the governance gate fails.
+`packages/ui/src/components/RulebookContent.ts` is exempted by ADR-0011 with an approved ceiling of 650 lines because it is static localized rulebook content rather than a renderer composition surface. Warnings between the review budget and the hard limit remain expected refactor candidates. Hard-limit breaches must be backed by an ADR entry or the governance gate fails.
 
 ## Machine-readable Budget Contract
 
@@ -129,7 +129,13 @@ No active temporary hard-limit exceptions remain. Warnings between the review bu
             "forbiddenImportPaths": []
         }
     ],
-    "approvedExceptions": []
+    "approvedExceptions": [
+        {
+            "path": "packages/ui/src/components/RulebookContent.ts",
+            "adrPath": "docs/adr/0011-rulebook-content-budget-exception.md",
+            "approvedMaxLines": 650
+        }
+    ]
 }
 ```
 

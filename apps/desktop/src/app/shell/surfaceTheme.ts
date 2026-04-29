@@ -2,7 +2,8 @@ export type SurfaceThemeVariant =
     | 'crystal-anime'
     | 'royal-luxury'
     | 'dark-arcane'
-    | 'clean-boardgame';
+    | 'clean-boardgame'
+    | 'pearl-opaline';
 export type SurfaceEffectsSkin = 'anime';
 
 export type SurfaceThemeSlot = 'gemPanel' | 'playerZone' | 'background' | 'topBar' | 'effects';
@@ -28,13 +29,14 @@ export const SURFACE_THEME_VARIANTS = [
     'royal-luxury',
     'dark-arcane',
     'clean-boardgame',
+    'pearl-opaline',
 ] as const satisfies readonly SurfaceThemeVariant[];
 
 export const DEFAULT_SURFACE_THEME_SELECTIONS: SurfaceThemeSelections = {
-    background: 'crystal-anime',
-    topBar: 'crystal-anime',
-    gemPanel: 'crystal-anime',
-    playerZone: 'crystal-anime',
+    background: 'royal-luxury',
+    topBar: 'royal-luxury',
+    gemPanel: 'royal-luxury',
+    playerZone: 'royal-luxury',
     effects: 'anime',
 };
 

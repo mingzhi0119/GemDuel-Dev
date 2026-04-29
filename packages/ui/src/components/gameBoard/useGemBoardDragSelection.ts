@@ -3,14 +3,11 @@ import { validateGemSelection } from '@gemduel/shared/logic/validators';
 import type { BoardCell, GemCoord } from '@gemduel/shared/types';
 import type { GemPanelFootprint } from './gemPanelLayout';
 import { findNearestGemCoordFromPointer } from './gemBoardPointerHitTest';
-
 export type GemDragSelectionIntent = 'select' | 'deselect';
-
 interface NormalizedCellCenter {
     x: number;
     y: number;
 }
-
 interface DragSelectionState {
     active: boolean;
     moved: boolean;
@@ -18,7 +15,6 @@ interface DragSelectionState {
     anchor: GemCoord | null;
     intent: GemDragSelectionIntent;
 }
-
 interface UseGemBoardDragSelectionParams {
     board: BoardCell[][];
     selectedGems: GemCoord[];
@@ -29,21 +25,16 @@ interface UseGemBoardDragSelectionParams {
     handleGemClick: (r: number, c: number) => void;
     handleGemDragSelection: (coords: GemCoord[], intent?: GemDragSelectionIntent) => void;
 }
-
 const areSameCoord = (left: GemCoord, right: GemCoord) => left.r === right.r && left.c === right.c;
-
 const hasCoord = (coords: GemCoord[], target: GemCoord) =>
     coords.some((coord) => areSameCoord(coord, target));
-
 const isSelectableDragCell = (cell: BoardCell | undefined) =>
     Boolean(cell && cell.type.id !== 'empty' && cell.type.id !== 'gold');
-
 const canClickBoardGem = (boardInteractionMode: string) =>
     boardInteractionMode === 'selection' ||
     boardInteractionMode === 'bonus-target' ||
     boardInteractionMode === 'reserve-gold' ||
     boardInteractionMode === 'privilege-target';
-
 const shouldResolveOnPointerDown = (boardInteractionMode: string) =>
     boardInteractionMode === 'bonus-target' ||
     boardInteractionMode === 'reserve-gold' ||

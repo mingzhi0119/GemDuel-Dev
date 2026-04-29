@@ -139,6 +139,51 @@ describe('useSettings', () => {
         });
     });
 
+    it('migrates the old all-crystal default surface selection to the royal runtime default', () => {
+        window.localStorage.setItem(
+            SETTINGS_STORAGE_KEY,
+            JSON.stringify({
+                surfaceTheme: {
+                    background: 'crystal-anime',
+                    topBar: 'crystal-anime',
+                    gemPanel: 'crystal-anime',
+                    playerZone: 'crystal-anime',
+                    effects: 'anime',
+                },
+            })
+        );
+
+        renderHarness();
+
+        expect(currentResult?.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
+
+        const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
+        expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
+        expect(stored.surfaceThemeDefaultVersion).toBe('royal-luxury-default-2026-04-29');
+    });
+
+    it('preserves current-version intentional all-crystal surface selections', () => {
+        const crystalSurfaceTheme = {
+            background: 'crystal-anime',
+            topBar: 'crystal-anime',
+            gemPanel: 'crystal-anime',
+            playerZone: 'crystal-anime',
+            effects: 'anime',
+        };
+
+        window.localStorage.setItem(
+            SETTINGS_STORAGE_KEY,
+            JSON.stringify({
+                surfaceTheme: crystalSurfaceTheme,
+                surfaceThemeDefaultVersion: 'royal-luxury-default-2026-04-29',
+            })
+        );
+
+        renderHarness();
+
+        expect(currentResult?.surfaceTheme).toEqual(crystalSurfaceTheme);
+    });
+
     it('falls back cleanly when stored settings JSON is invalid', () => {
         window.localStorage.setItem(SETTINGS_STORAGE_KEY, '{');
 

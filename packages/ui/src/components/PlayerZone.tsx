@@ -31,7 +31,7 @@ import type { Card as CardType, GemInventory, RoyalCard } from '@gemduel/shared/
 
 export type { PlayerZoneProps };
 
-const INVENTORY_GEM_SIZE_PX = Math.round(GEM_BOARD_GEM_SIZE_PX * 1.3);
+const INVENTORY_GEM_SIZE_PX = Math.round(GEM_BOARD_GEM_SIZE_PX * 1.56);
 const INVENTORY_GEM_BADGE_SIZE_PX = Math.round(INVENTORY_GEM_SIZE_PX * 0.42);
 const INVENTORY_GEM_COUNT_FONT_PX = Math.round(INVENTORY_GEM_SIZE_PX * 0.24);
 const SPECIAL_TABLEAU_STACK_COUNT = PLAYER_ZONE_DISPLAY_COLORS.length + 1;
@@ -218,6 +218,7 @@ export const PlayerZone = ({
             inventoryGemCountFontPx={INVENTORY_GEM_COUNT_FONT_PX}
             summaryBadgeFontPx={summaryBadgeFontPx}
             summaryBadgeSizePx={summaryBadgeSizePx}
+            surfaceVariant={surfaceVariant}
             onGemClick={onGemClick}
             onSelectStack={handleSelectStack}
         />

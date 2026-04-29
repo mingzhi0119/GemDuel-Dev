@@ -104,9 +104,9 @@ const createGemPanelGeometryFromGridLines = (
 // Grid lines are the detected 6x6 intersection lattice of each panel image.
 const GEM_PANEL_GEOMETRY_BY_SURFACE: Record<SurfaceThemeVariant, GemPanelGeometryConfig> = {
     'crystal-anime': createGemPanelGeometryFromGridLines(
-        [0.1116, 0.2665, 0.4214, 0.5762, 0.7311, 0.886],
-        [0.0726, 0.2341, 0.3957, 0.5573, 0.7188, 0.8804],
-        0.127
+        [0.048, 0.2265, 0.4003, 0.5837, 0.7576, 0.9529],
+        [0.0502, 0.2249, 0.3939, 0.5686, 0.7416, 0.9155],
+        0.132
     ),
     'royal-luxury': createGemPanelGeometryFromGridLines(
         [0.0941, 0.2561, 0.4182, 0.5802, 0.7423, 0.9043],
@@ -122,6 +122,11 @@ const GEM_PANEL_GEOMETRY_BY_SURFACE: Record<SurfaceThemeVariant, GemPanelGeometr
         [0.0805, 0.2477, 0.4148, 0.582, 0.7491, 0.9163],
         [0.0797, 0.2469, 0.414, 0.5812, 0.7483, 0.9155],
         0.1371
+    ),
+    'pearl-opaline': createGemPanelGeometryFromGridLines(
+        [0.0797, 0.2432, 0.4107, 0.5789, 0.748, 0.9099],
+        [0.0829, 0.2456, 0.4083, 0.5718, 0.7313, 0.9027],
+        0.132
     ),
 };
 

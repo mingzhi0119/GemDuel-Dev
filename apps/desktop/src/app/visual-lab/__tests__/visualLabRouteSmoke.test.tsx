@@ -13,6 +13,13 @@ import { SURFACE_LAB_SLOTS, type SurfaceLabCandidate } from '../surfaceLabTypes'
 import { createSurfaceLabAssetSets, normalizeSurfaceLabCandidates } from '../surfaceLabCatalog';
 import { createVisualLabShellStyles } from '../visualLabStyles';
 import type { SurfaceLabMotionOptions } from '../motionLabEvents';
+import {
+    SURFACE_LAB_RATINGS_STORAGE_KEY,
+    getNextSurfaceLabSelectedSetId,
+    matchesSurfaceLabRatingFilter,
+    useSurfaceLabRatings,
+    type SurfaceLabStyleRatings,
+} from '../useSurfaceLabRatings';
 
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -20,7 +27,10 @@ import type { SurfaceLabMotionOptions } from '../motionLabEvents';
 
 const noop = () => {};
 
-const createCandidate = (slot: SurfaceLabCandidate['slot']): SurfaceLabCandidate => ({
+const createCandidate = (
+    slot: SurfaceLabCandidate['slot'],
+    overrides: Partial<SurfaceLabCandidate> = {}
+): SurfaceLabCandidate => ({
     batch: 'surface-autonomous-luminous-styles-candidates',
     date: '2026-04-27',
     promptId: `SMOKE-${slot}`,
@@ -32,7 +42,17 @@ const createCandidate = (slot: SurfaceLabCandidate['slot']): SurfaceLabCandidate
     dimensions: { archive: [1254, 1254] },
     archiveUrl: `/__surface-lab/assets/test/${slot}.png`,
     source: 'candidate',
+    ...overrides,
 });
+
+const createCandidateSet = (style: string, variant: string) =>
+    SURFACE_LAB_SLOTS.map((slot) =>
+        createCandidate(slot, {
+            promptId: `SMOKE-${style}-${variant}-${slot}`,
+            style,
+            variant,
+        })
+    );
 
 const createLayout = (): AppRouteProps['layout'] => ({
     layoutMode: 'desktop-4k',
@@ -136,6 +156,20 @@ const createGame = (): AppRouteProps['game'] =>
         },
     }) as unknown as AppRouteProps['game'];
 
+const createMotionOptions = (): SurfaceLabMotionOptions => ({
+    player: 'p1',
+    marketLevel: 1,
+    marketIndex: 0,
+    deckLevel: 1,
+    gemColor: 'blue',
+    row: 2,
+    col: 2,
+    callout: 'ability-resolution',
+    message: 'Preview',
+    milestone: 'forced',
+    nonce: 0,
+});
+
 const flushMicrotasks = async () => {
     await act(async () => {
         await Promise.resolve();
@@ -152,6 +186,7 @@ describe('visual lab smoke', () => {
             root?.unmount();
         });
         container?.remove();
+        window.localStorage.clear();
         root = null;
         container = null;
         vi.restoreAllMocks();
@@ -266,19 +301,6 @@ describe('visual lab smoke', () => {
         const selectedSet = assetSets[0];
         const assetSlots = selectedSet.slots;
         const styles = createVisualLabShellStyles('dark', createLayout(), assetSlots, {});
-        const motionOptions: SurfaceLabMotionOptions = {
-            player: 'p1',
-            marketLevel: 1,
-            marketIndex: 0,
-            deckLevel: 1,
-            gemColor: 'blue',
-            row: 2,
-            col: 2,
-            callout: 'ability-resolution',
-            message: 'Preview',
-            milestone: 'forced',
-            nonce: 0,
-        };
 
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -290,9 +312,15 @@ describe('visual lab smoke', () => {
                     mode="surfaces"
                     catalogStatus="ready"
                     assetSets={assetSets}
+                    visibleAssetSets={assetSets}
                     selectedSet={selectedSet}
                     selectedSetId={selectedSet.id}
                     setSelectedSetId={vi.fn()}
+                    ratingFilter="All"
+                    setRatingFilter={vi.fn()}
+                    styleRatings={{}}
+                    styleRating={null}
+                    setStyleRating={vi.fn()}
                     slotOverrides={{}}
                     setSlotOverrides={vi.fn()}
                     assetSlots={assetSlots}
@@ -300,7 +328,7 @@ describe('visual lab smoke', () => {
                     activeEvent={null}
                     motionType="royal-unlock"
                     setMotionType={vi.fn()}
-                    motionOptions={motionOptions}
+                    motionOptions={createMotionOptions()}
                     setMotionOptions={vi.fn()}
                     holdRoyalIntro={false}
                     setHoldRoyalIntro={vi.fn()}
@@ -312,5 +340,212 @@ describe('visual lab smoke', () => {
         });
 
         expect(document.body.textContent).toContain('Visual Lab Console');
+    });
+
+    it('persists clicked style ratings in localStorage and restores them on remount', async () => {
+        const normalized = normalizeSurfaceLabCandidates(
+            SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot))
+        );
+        const assetSets = createSurfaceLabAssetSets(normalized, 'dark');
+        const selectedSet = assetSets[0];
+        const assetSlots = selectedSet.slots;
+        const styles = createVisualLabShellStyles('dark', createLayout(), assetSlots, {});
+        const RatingConsoleHarness = () => {
+            const { styleRatings, setStyleRating } = useSurfaceLabRatings();
+
+            return (
+                <VisualLabConsole
+                    mode="surfaces"
+                    catalogStatus="ready"
+                    assetSets={assetSets}
+                    visibleAssetSets={assetSets}
+                    selectedSet={selectedSet}
+                    selectedSetId={selectedSet.id}
+                    setSelectedSetId={vi.fn()}
+                    ratingFilter="All"
+                    setRatingFilter={vi.fn()}
+                    styleRatings={styleRatings}
+                    styleRating={styleRatings[selectedSet.id] ?? null}
+                    setStyleRating={(rating) => setStyleRating(selectedSet.id, rating)}
+                    slotOverrides={{}}
+                    setSlotOverrides={vi.fn()}
+                    assetSlots={assetSlots}
+                    styles={styles}
+                    activeEvent={null}
+                    motionType="royal-unlock"
+                    setMotionType={vi.fn()}
+                    motionOptions={createMotionOptions()}
+                    setMotionOptions={vi.fn()}
+                    holdRoyalIntro={false}
+                    setHoldRoyalIntro={vi.fn()}
+                    onTriggerMotion={vi.fn()}
+                    onRepeatMotion={vi.fn()}
+                    onClearMotion={vi.fn()}
+                />
+            );
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<RatingConsoleHarness />);
+        });
+
+        const rate10 = document.body.querySelector(
+            'button[aria-label="Rate current style 10"]'
+        ) as HTMLButtonElement | null;
+        expect(rate10).not.toBeNull();
+        expect(rate10?.getAttribute('aria-pressed')).toBe('false');
+
+        await act(async () => {
+            rate10?.click();
+        });
+
+        expect(
+            JSON.parse(window.localStorage.getItem(SURFACE_LAB_RATINGS_STORAGE_KEY) ?? '{}')
+        ).toMatchObject({
+            [selectedSet.id]: 10,
+        });
+        expect(rate10?.getAttribute('aria-pressed')).toBe('true');
+
+        await act(async () => {
+            root?.unmount();
+        });
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<RatingConsoleHarness />);
+        });
+
+        expect(
+            document.body
+                .querySelector('button[aria-label="Rate current style 10"]')
+                ?.getAttribute('aria-pressed')
+        ).toBe('true');
+    });
+
+    it('filters style selectors by manual rating category', async () => {
+        const normalized = normalizeSurfaceLabCandidates([
+            ...createCandidateSet('paper-lantern', 'A'),
+            ...createCandidateSet('onyx-archive', 'A'),
+        ]);
+        const assetSets = createSurfaceLabAssetSets(normalized, 'dark');
+        const paperSet = assetSets.find((set) => set.style === 'paper-lantern')!;
+        const onyxSet = assetSets.find((set) => set.style === 'onyx-archive')!;
+        const styleRatings: SurfaceLabStyleRatings = { [onyxSet.id]: 10 };
+        const ratedVisible = assetSets.filter((set) =>
+            matchesSurfaceLabRatingFilter(set, styleRatings, '10')
+        );
+        const styles = createVisualLabShellStyles('dark', createLayout(), onyxSet.slots, {});
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(
+                <VisualLabConsole
+                    mode="surfaces"
+                    catalogStatus="ready"
+                    assetSets={assetSets}
+                    visibleAssetSets={ratedVisible}
+                    selectedSet={onyxSet}
+                    selectedSetId={onyxSet.id}
+                    setSelectedSetId={vi.fn()}
+                    ratingFilter="10"
+                    setRatingFilter={vi.fn()}
+                    styleRatings={styleRatings}
+                    styleRating={10}
+                    setStyleRating={vi.fn()}
+                    slotOverrides={{}}
+                    setSlotOverrides={vi.fn()}
+                    assetSlots={onyxSet.slots}
+                    styles={styles}
+                    activeEvent={null}
+                    motionType="royal-unlock"
+                    setMotionType={vi.fn()}
+                    motionOptions={createMotionOptions()}
+                    setMotionOptions={vi.fn()}
+                    holdRoyalIntro={false}
+                    setHoldRoyalIntro={vi.fn()}
+                    onTriggerMotion={vi.fn()}
+                    onRepeatMotion={vi.fn()}
+                    onClearMotion={vi.fn()}
+                />
+            );
+        });
+
+        const styleSelect = Array.from(document.body.querySelectorAll('label'))
+            .find((label) => label.querySelector('span')?.textContent === 'Style')
+            ?.querySelector('select') as HTMLSelectElement | undefined;
+        expect(Array.from(styleSelect?.options ?? []).map((option) => option.value)).toEqual([
+            'onyx-archive',
+        ]);
+
+        await act(async () => {
+            root?.unmount();
+        });
+
+        const unratedVisible = assetSets.filter((set) =>
+            matchesSurfaceLabRatingFilter(set, styleRatings, 'Unrated')
+        );
+        const paperStyles = createVisualLabShellStyles('dark', createLayout(), paperSet.slots, {});
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(
+                <VisualLabConsole
+                    mode="surfaces"
+                    catalogStatus="ready"
+                    assetSets={assetSets}
+                    visibleAssetSets={unratedVisible}
+                    selectedSet={paperSet}
+                    selectedSetId={paperSet.id}
+                    setSelectedSetId={vi.fn()}
+                    ratingFilter="Unrated"
+                    setRatingFilter={vi.fn()}
+                    styleRatings={styleRatings}
+                    styleRating={null}
+                    setStyleRating={vi.fn()}
+                    slotOverrides={{}}
+                    setSlotOverrides={vi.fn()}
+                    assetSlots={paperSet.slots}
+                    styles={paperStyles}
+                    activeEvent={null}
+                    motionType="royal-unlock"
+                    setMotionType={vi.fn()}
+                    motionOptions={createMotionOptions()}
+                    setMotionOptions={vi.fn()}
+                    holdRoyalIntro={false}
+                    setHoldRoyalIntro={vi.fn()}
+                    onTriggerMotion={vi.fn()}
+                    onRepeatMotion={vi.fn()}
+                    onClearMotion={vi.fn()}
+                />
+            );
+        });
+
+        const unratedStyleSelect = Array.from(document.body.querySelectorAll('label'))
+            .find((label) => label.querySelector('span')?.textContent === 'Style')
+            ?.querySelector('select') as HTMLSelectElement | undefined;
+        expect(
+            Array.from(unratedStyleSelect?.options ?? []).map((option) => option.value)
+        ).toContain('paper-lantern');
+        expect(
+            Array.from(unratedStyleSelect?.options ?? []).map((option) => option.value)
+        ).not.toContain('onyx-archive');
+    });
+
+    it('selects the first matching set when the current set is hidden by rating filter', () => {
+        const normalized = normalizeSurfaceLabCandidates([
+            ...createCandidateSet('paper-lantern', 'A'),
+            ...createCandidateSet('onyx-archive', 'A'),
+        ]);
+        const assetSets = createSurfaceLabAssetSets(normalized, 'dark');
+        const paperSet = assetSets.find((set) => set.style === 'paper-lantern')!;
+        const onyxSet = assetSets.find((set) => set.style === 'onyx-archive')!;
+
+        expect(getNextSurfaceLabSelectedSetId(paperSet.id, assetSets, [onyxSet])).toBe(onyxSet.id);
     });
 });

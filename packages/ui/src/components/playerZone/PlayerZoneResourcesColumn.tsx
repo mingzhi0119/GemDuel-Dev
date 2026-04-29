@@ -36,6 +36,7 @@ interface PlayerZoneResourcesColumnProps {
     inventoryGemCountFontPx: number;
     summaryBadgeFontPx: number;
     summaryBadgeSizePx: number;
+    surfaceVariant?: string;
     onGemClick: (color: string) => void;
     onSelectStack: (stack: PlayerZoneStackState) => void;
 }
@@ -56,6 +57,7 @@ export function PlayerZoneResourcesColumn({
     inventoryGemCountFontPx,
     summaryBadgeFontPx,
     summaryBadgeSizePx,
+    surfaceVariant,
     onGemClick,
     onSelectStack,
 }: PlayerZoneResourcesColumnProps) {
@@ -154,6 +156,7 @@ export function PlayerZoneResourcesColumn({
                             tableauSummaryScale={tableauSummaryScale}
                             summaryBadgeFontPx={summaryBadgeFontPx}
                             summaryBadgeSizePx={summaryBadgeSizePx}
+                            surfaceVariant={surfaceVariant}
                             onSelectStack={onSelectStack}
                         />
                     );
@@ -166,6 +169,7 @@ export function PlayerZoneResourcesColumn({
                     tableauSummaryScale={tableauSummaryScale}
                     summaryBadgeFontPx={summaryBadgeFontPx}
                     summaryBadgeSizePx={summaryBadgeSizePx}
+                    surfaceVariant={surfaceVariant}
                     onSelectStack={onSelectStack}
                     title={SPECIAL_STACK_TITLE}
                     purePointCount={specialStackStats.purePointCount}

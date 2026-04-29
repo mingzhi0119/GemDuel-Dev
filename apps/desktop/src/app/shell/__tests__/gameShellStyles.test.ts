@@ -30,19 +30,19 @@ describe('createGameShellStyles', () => {
         const styles = createGameShellStyles('dark', TEST_LAYOUT);
 
         expect(String(styles.shellStyle.backgroundImage)).toContain(
-            '/assets/surfaces/anime-themes/crystal-anime/dark/shell-background.png'
+            '/assets/surfaces/anime-themes/royal-luxury/dark/shell-background.png'
         );
         expect(styles).not.toHaveProperty('playMatSurfaceStyle');
         expect(String(styles.gemBoardSurfaceStyle.backgroundImage)).toContain(
-            '/assets/surfaces/anime-themes/crystal-anime/dark/gem-panel.png'
+            '/assets/surfaces/anime-themes/royal-luxury/dark/gem-panel.png'
         );
         expect(styles.gemPanelSkin.id).toBe('square-dashboard');
         expect(styles.gemPanelSkin.artworkPath).toBe(
-            '/assets/surfaces/anime-themes/crystal-anime/dark/gem-panel.png'
+            '/assets/surfaces/anime-themes/royal-luxury/dark/gem-panel.png'
         );
         expect(styles.marketSurfaceStyle).toEqual({});
         expect(styles.gemPanelSkin.cellCentersNormalized).toHaveLength(25);
-        expect(styles.gemPanelSkin.gemDiameterNormalized).toBe(0.127);
+        expect(styles.gemPanelSkin.gemDiameterNormalized).toBe(0.1325);
         expect(styles.shellStyle['--gd-shell-control-text' as keyof typeof styles.shellStyle]).toBe(
             '#f8fafc'
         );
@@ -79,6 +79,8 @@ describe('createGameShellStyles', () => {
     });
 
     it('uses dedicated level card backs for every bundled surface theme', () => {
+        expect(SURFACE_THEME_VARIANTS).toContain('pearl-opaline');
+
         for (const variant of SURFACE_THEME_VARIANTS) {
             const surfaceTheme: SurfaceThemeSelections = {
                 background: variant,

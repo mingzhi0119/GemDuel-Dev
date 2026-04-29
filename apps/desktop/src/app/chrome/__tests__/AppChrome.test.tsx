@@ -241,13 +241,14 @@ describe('AppChrome locale controls', () => {
 
         expect(settingsMenu?.textContent).not.toContain('Restart');
         expect(settingsMenu?.textContent).not.toContain('Rules');
-        expect(settingsMenu?.textContent).toContain('Crystal Anime');
+        expect(settingsMenu?.textContent).toContain('Royal Luxury');
         expect(settingsMenu?.textContent).toContain('Aspect Ratio');
         expect(settingsMenu?.textContent).not.toContain('Dark');
         expect(settingsMenu?.textContent).not.toContain('Light');
-        expect(settingsMenu?.textContent).not.toContain('Royal Luxury');
+        expect(settingsMenu?.textContent).not.toContain('Crystal Anime');
         expect(settingsMenu?.textContent).not.toContain('Dark Arcane');
         expect(settingsMenu?.textContent).not.toContain('Clean Boardgame');
+        expect(settingsMenu?.textContent).not.toContain('Pearl Opaline');
         expect(settingsMenu?.textContent).not.toContain('Surface Theme');
         expect(settingsMenu?.textContent).not.toContain('Market Background');
         expect(settingsMenu?.textContent).not.toContain('Player Zone');
@@ -262,7 +263,7 @@ describe('AppChrome locale controls', () => {
             'button[data-app-surface-theme-select="true"]'
         );
 
-        expect(surfaceThemeSelect?.dataset.appSurfaceThemeValue).toBe('crystal-anime');
+        expect(surfaceThemeSelect?.dataset.appSurfaceThemeValue).toBe('royal-luxury');
 
         const aspectOptions = Array.from(
             container.querySelectorAll<HTMLButtonElement>(
@@ -300,6 +301,7 @@ describe('AppChrome locale controls', () => {
         expect(surfaceThemeDropdown?.textContent).toContain('Royal Luxury');
         expect(surfaceThemeDropdown?.textContent).toContain('Dark Arcane');
         expect(surfaceThemeDropdown?.textContent).toContain('Clean Boardgame');
+        expect(surfaceThemeDropdown?.textContent).toContain('Pearl Opaline');
 
         const royalLuxuryOption = container.querySelector<HTMLButtonElement>(
             '[data-app-surface-theme-option="royal-luxury"]'

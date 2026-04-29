@@ -174,9 +174,9 @@ describe('surface styling affordances', () => {
         expect(html).toContain('data-gem-panel-skin="square-dashboard"');
         expect(html).not.toContain('grid-cols-5');
         expect(html).toContain('width:452px');
-        expect(html).toContain('left:18.905%');
-        expect(html).toContain('top:15.335%');
-        expect(html).toContain('width:57px');
+        expect(html).toContain('left:17.510%');
+        expect(html).toContain('top:17.490%');
+        expect(html).toContain('width:60px');
     });
 
     it('keeps the gem board footprint stable across panel theme variants', () => {
@@ -516,6 +516,96 @@ describe('surface styling affordances', () => {
         expect(specialStack?.textContent).not.toContain('/10');
     });
 
+    it('applies runtime surface-specific tableau stack visuals', () => {
+        for (const variant of SURFACE_THEME_VARIANTS) {
+            const html = renderToStaticMarkup(
+                <LocaleProvider locale="en" setLocale={() => undefined}>
+                    <PlayerZone
+                        player="p1"
+                        inventory={EMPTY_COST}
+                        cards={[]}
+                        reserved={[]}
+                        privileges={0}
+                        isActive={true}
+                        phase="IDLE"
+                        lastFeedback={null}
+                        onBuyReserved={() => false}
+                        onDiscardReserved={() => undefined}
+                        onUsePrivilege={() => undefined}
+                        isPrivilegeMode={false}
+                        onGemClick={() => undefined}
+                        isStealMode={false}
+                        isDiscardMode={false}
+                        buff={BUFFS.NONE as unknown as Buff}
+                        theme="dark"
+                        score={0}
+                        crowns={0}
+                        surfaceVariant={variant}
+                    />
+                </LocaleProvider>
+            );
+            const container = document.createElement('div');
+            container.innerHTML = html;
+
+            expect(
+                container.querySelectorAll(`[data-tableau-stack-surface="${variant}"]`)
+            ).toHaveLength(6);
+            expect(
+                container.querySelector(`[data-tableau-empty-stack-surface="${variant}"]`)
+            ).not.toBeNull();
+        }
+    });
+
+    it('uses soft opaline stack chrome for the Pearl runtime player zone', () => {
+        const html = renderToStaticMarkup(
+            <LocaleProvider locale="en" setLocale={() => undefined}>
+                <PlayerZone
+                    player="p1"
+                    inventory={EMPTY_COST}
+                    cards={[
+                        { ...SAMPLE_CARD, id: 'pearl-stack-a', bonusColor: 'red' },
+                        { ...SAMPLE_CARD, id: 'pearl-stack-b', bonusColor: 'red' },
+                    ]}
+                    reserved={[]}
+                    privileges={0}
+                    isActive={true}
+                    phase="IDLE"
+                    lastFeedback={null}
+                    onBuyReserved={() => false}
+                    onDiscardReserved={() => undefined}
+                    onUsePrivilege={() => undefined}
+                    isPrivilegeMode={false}
+                    onGemClick={() => undefined}
+                    isStealMode={false}
+                    isDiscardMode={false}
+                    buff={BUFFS.NONE as unknown as Buff}
+                    theme="dark"
+                    score={0}
+                    crowns={0}
+                    surfaceVariant="pearl-opaline"
+                />
+            </LocaleProvider>
+        );
+        const container = document.createElement('div');
+        container.innerHTML = html;
+        const emptyStack = container.querySelector<HTMLElement>(
+            '[data-tableau-empty-stack-surface="pearl-opaline"]'
+        );
+        const stackBack = container.querySelector<HTMLElement>(
+            '[data-tableau-stack-back-surface="pearl-opaline"]'
+        );
+        const topCardLayer = container.querySelector<HTMLElement>(
+            '[data-tableau-top-card-surface="pearl-opaline"]'
+        );
+
+        expect(emptyStack).not.toBeNull();
+        expect(emptyStack?.className).not.toContain('bg-slate-800/35');
+        expect(emptyStack?.style.backgroundColor).toBe('rgba(255, 251, 247, 0.34)');
+        expect(emptyStack?.style.borderColor).toContain('rgba(253, 226, 226, 0.6');
+        expect(stackBack?.style.boxShadow).toContain('rgba(190,137,126,0.16)');
+        expect(topCardLayer?.style.filter).toContain('rgba(190,137,126,0.18)');
+    });
+
     it('tracks empty, pure-only, and royal-only special stack counts', () => {
         const renderSpecialStack = (cards: CardType[], royals = [] as typeof ROYAL_CARDS) => {
             const html = renderToStaticMarkup(
@@ -682,10 +772,10 @@ describe('surface styling affordances', () => {
             </LocaleProvider>
         );
 
-        expect(html).toContain('width:90px');
-        expect(html).toContain('height:90px');
-        expect(html).toContain('min-width:38px');
-        expect(html).toContain('font-size:22px');
+        expect(html).toContain('width:108px');
+        expect(html).toContain('height:108px');
+        expect(html).toContain('min-width:45px');
+        expect(html).toContain('font-size:26px');
         expect(html).not.toContain('No Reserved Cards');
     });
 

@@ -13,14 +13,49 @@ export interface StoredAppSettings {
     theme?: 'light' | ThemeName;
     locale?: AppLocale;
     surfaceTheme?: SurfaceThemeSelections;
+    surfaceThemeDefaultVersion?: string;
     desktopAspectRatio?: DesktopAspectRatio;
 }
 
 const DEFAULT_THEME: ThemeName = 'dark';
 export const DEFAULT_DESKTOP_ASPECT_RATIO: DesktopAspectRatio = '16:10';
+const SURFACE_THEME_DEFAULT_VERSION = 'royal-luxury-default-2026-04-29';
+const OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS: SurfaceThemeSelections = {
+    background: 'crystal-anime',
+    topBar: 'crystal-anime',
+    playerZone: 'crystal-anime',
+    gemPanel: 'crystal-anime',
+    effects: 'anime',
+};
 
 const normalizeDesktopAspectRatio = (value: unknown): DesktopAspectRatio =>
     value === '16:9' ? '16:9' : DEFAULT_DESKTOP_ASPECT_RATIO;
+
+const isOldCrystalDefaultSurfaceTheme = (value: unknown): boolean => {
+    const normalized = normalizeSurfaceThemeSelections(value);
+
+    return (
+        normalized.background === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.background &&
+        normalized.topBar === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.topBar &&
+        normalized.playerZone === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.playerZone &&
+        normalized.gemPanel === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.gemPanel &&
+        normalized.effects === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.effects
+    );
+};
+
+const normalizeStoredSurfaceTheme = (
+    value: unknown,
+    surfaceThemeDefaultVersion: unknown
+): SurfaceThemeSelections => {
+    if (
+        surfaceThemeDefaultVersion !== SURFACE_THEME_DEFAULT_VERSION &&
+        isOldCrystalDefaultSurfaceTheme(value)
+    ) {
+        return { ...DEFAULT_SURFACE_THEME_SELECTIONS };
+    }
+
+    return normalizeSurfaceThemeSelections(value);
+};
 
 const readStoredSettings = (): StoredAppSettings | null => {
     if (typeof window === 'undefined' || !window.localStorage) {
@@ -37,7 +72,11 @@ const readStoredSettings = (): StoredAppSettings | null => {
         return {
             theme: DEFAULT_THEME,
             locale: parsed.locale === 'zh' || parsed.locale === 'en' ? parsed.locale : undefined,
-            surfaceTheme: normalizeSurfaceThemeSelections(parsed.surfaceTheme),
+            surfaceTheme: normalizeStoredSurfaceTheme(
+                parsed.surfaceTheme,
+                parsed.surfaceThemeDefaultVersion
+            ),
+            surfaceThemeDefaultVersion: SURFACE_THEME_DEFAULT_VERSION,
             desktopAspectRatio: normalizeDesktopAspectRatio(parsed.desktopAspectRatio),
         };
     } catch {
@@ -81,6 +120,7 @@ export const useSettings = () => {
         const payload: Omit<StoredAppSettings, 'theme'> = {
             ...(hasExplicitLocalePreference ? { locale } : {}),
             surfaceTheme,
+            surfaceThemeDefaultVersion: SURFACE_THEME_DEFAULT_VERSION,
             desktopAspectRatio,
         };
 

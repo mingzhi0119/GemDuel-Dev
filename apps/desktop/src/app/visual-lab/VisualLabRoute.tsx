@@ -27,6 +27,12 @@ import {
     type SurfaceLabMotionOptions,
 } from './motionLabEvents';
 import { VisualLabConsole } from './VisualLabConsole';
+import {
+    getNextSurfaceLabSelectedSetId,
+    matchesSurfaceLabRatingFilter,
+    useSurfaceLabRatings,
+    type SurfaceLabRatingFilter,
+} from './useSurfaceLabRatings';
 
 interface VisualLabRouteProps extends AppRouteProps {
     mode: VisualLabMode;
@@ -97,6 +103,8 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
     const catalog = useSurfaceLabCatalog(labTheme);
     const [selectedSetId, setSelectedSetId] = useState('');
     const [slotOverrides, setSlotOverrides] = useState<Partial<Record<SurfaceLabSlot, string>>>({});
+    const [ratingFilter, setRatingFilter] = useState<SurfaceLabRatingFilter>('All');
+    const { styleRatings, setStyleRating } = useSurfaceLabRatings();
     const [activeEvent, setActiveEvent] = useState<PresentationEvent | null>(null);
     const [royalStage, setRoyalStage] = useState<'intro' | 'selection' | 'pulse'>('pulse');
     const [holdRoyalIntro, setHoldRoyalIntro] = useState(false);
@@ -114,14 +122,23 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         handlers.startGame('LOCAL_PVP', { useBuffs: false });
     }, [handlers, historyControls.historyLength]);
 
+    const visibleAssetSets = useMemo(
+        () =>
+            catalog.assetSets.filter((set) =>
+                matchesSurfaceLabRatingFilter(set, styleRatings, ratingFilter)
+            ),
+        [catalog.assetSets, ratingFilter, styleRatings]
+    );
+
     useEffect(() => {
-        if (
-            catalog.assetSets.length > 0 &&
-            !catalog.assetSets.some((set) => set.id === selectedSetId)
-        ) {
-            setSelectedSetId(catalog.assetSets[0].id);
+        if (catalog.assetSets.length === 0) {
+            return;
         }
-    }, [catalog.assetSets, selectedSetId]);
+
+        setSelectedSetId((currentSetId) =>
+            getNextSurfaceLabSelectedSetId(currentSetId, catalog.assetSets, visibleAssetSets)
+        );
+    }, [catalog.assetSets, visibleAssetSets]);
 
     const selectedSet =
         catalog.assetSets.find((set) => set.id === selectedSetId) ?? catalog.assetSets[0];
@@ -319,9 +336,15 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 catalogStatus={catalog.status}
                 catalogError={catalog.error}
                 assetSets={catalog.assetSets}
+                visibleAssetSets={visibleAssetSets}
                 selectedSet={selectedSet}
                 selectedSetId={selectedSet.id}
                 setSelectedSetId={setSelectedSetId}
+                ratingFilter={ratingFilter}
+                setRatingFilter={setRatingFilter}
+                styleRatings={styleRatings}
+                styleRating={styleRatings[selectedSet.id] ?? null}
+                setStyleRating={(rating) => setStyleRating(selectedSet.id, rating)}
                 slotOverrides={slotOverrides}
                 setSlotOverrides={setSlotOverrides}
                 assetSlots={assetSlots}

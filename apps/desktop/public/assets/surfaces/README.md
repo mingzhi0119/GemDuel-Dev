@@ -1,7 +1,7 @@
 # Surface Asset Slots
 
-这些静态资源已经接入桌面端游戏界面。设置菜单只暴露四套 Surface Style：
-`crystal-anime`、`royal-luxury`、`dark-arcane`、`clean-boardgame`。
+这些静态资源已经接入桌面端游戏界面。设置菜单暴露五套 Surface Style：
+`crystal-anime`、`royal-luxury`、`dark-arcane`、`clean-boardgame`、`pearl-opaline`。
 
 已接入的槽位：
 

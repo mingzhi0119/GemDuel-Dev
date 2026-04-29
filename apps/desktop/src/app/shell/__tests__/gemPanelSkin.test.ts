@@ -33,17 +33,17 @@ describe('gem panel skin geometry', () => {
         expect(skin.intrinsicWidthPx).toBe(1254);
         expect(skin.intrinsicHeightPx).toBe(1254);
         expect(skin.playfieldRectNormalized).toEqual({
-            left: 0.1116,
-            top: 0.0726,
-            right: 0.886,
-            bottom: 0.8804,
+            left: 0.0941,
+            top: 0.0941,
+            right: 0.9043,
+            bottom: 0.9019,
         });
         expect(skin.cellCentersNormalized).toHaveLength(25);
         expect(skin.cellGridLinesNormalized).toEqual({
-            x: [0.1116, 0.2665, 0.4214, 0.5762, 0.7311, 0.886],
-            y: [0.0726, 0.2341, 0.3957, 0.5573, 0.7188, 0.8804],
+            x: [0.0941, 0.2561, 0.4182, 0.5802, 0.7423, 0.9043],
+            y: [0.0941, 0.2557, 0.4172, 0.5788, 0.7404, 0.9019],
         });
-        expect(skin.gemDiameterNormalized).toBe(0.127);
+        expect(skin.gemDiameterNormalized).toBe(0.1325);
     });
 
     it('resolves normalized 5x5 cell centers and a fixed footprint from the calibrated skin', () => {
@@ -53,20 +53,20 @@ describe('gem panel skin geometry', () => {
 
         expect(centers).toHaveLength(25);
         expect(centers[0]).toEqual({
-            x: expect.closeTo(0.18905, 5),
-            y: expect.closeTo(0.15335, 5),
+            x: expect.closeTo(0.1751, 5),
+            y: expect.closeTo(0.1749, 5),
         });
         expect(centers[12]).toEqual({
-            x: expect.closeTo(0.4988, 5),
-            y: expect.closeTo(0.4765, 5),
+            x: expect.closeTo(0.4992, 5),
+            y: expect.closeTo(0.498, 5),
         });
         expect(centers[24]).toEqual({
-            x: expect.closeTo(0.80855, 5),
-            y: expect.closeTo(0.7996, 5),
+            x: expect.closeTo(0.8233, 5),
+            y: expect.closeTo(0.82115, 5),
         });
         expect(footprint.widthPx).toBe(452);
         expect(footprint.heightPx).toBe(452);
-        expect(calculateGemPanelGemDiameterPx(skin, footprint)).toBe(57);
+        expect(calculateGemPanelGemDiameterPx(skin, footprint)).toBe(60);
     });
 
     it('keeps every gem panel theme variant calibrated within the fixed layout footprint', () => {

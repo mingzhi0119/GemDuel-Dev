@@ -13,6 +13,12 @@ import { MotionLabControls } from './MotionLabControls';
 import { getMotionLabel } from './motionLabLabels';
 import type { SurfaceLabMotionEventType, SurfaceLabMotionOptions } from './motionLabEvents';
 import type { VisualLabShellStyles } from './visualLabStyles';
+import {
+    SURFACE_LAB_STYLE_RATINGS,
+    type SurfaceLabRatingFilter,
+    type SurfaceLabStyleRating,
+    type SurfaceLabStyleRatings,
+} from './useSurfaceLabRatings';
 
 const CONSOLE_WIDTH = 390;
 const CONSOLE_MARGIN = 12;
@@ -38,9 +44,15 @@ interface VisualLabConsoleProps {
     catalogStatus: string;
     catalogError?: string;
     assetSets: readonly SurfaceLabAssetSet[];
+    visibleAssetSets: readonly SurfaceLabAssetSet[];
     selectedSet: SurfaceLabAssetSet;
     selectedSetId: string;
     setSelectedSetId: (id: string) => void;
+    ratingFilter: SurfaceLabRatingFilter;
+    setRatingFilter: (filter: SurfaceLabRatingFilter) => void;
+    styleRatings: SurfaceLabStyleRatings;
+    styleRating: SurfaceLabStyleRating | null;
+    setStyleRating: (rating: SurfaceLabStyleRating) => void;
     slotOverrides: Partial<Record<SurfaceLabSlot, string>>;
     setSlotOverrides: (next: Partial<Record<SurfaceLabSlot, string>>) => void;
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>;
@@ -62,9 +74,15 @@ export function VisualLabConsole({
     catalogStatus,
     catalogError,
     assetSets,
+    visibleAssetSets,
     selectedSet,
     selectedSetId,
     setSelectedSetId,
+    ratingFilter,
+    setRatingFilter,
+    styleRatings,
+    styleRating,
+    setStyleRating,
     slotOverrides,
     setSlotOverrides,
     assetSlots,
@@ -186,9 +204,13 @@ export function VisualLabConsole({
                     catalogStatus={catalogStatus}
                     catalogError={catalogError}
                     assetSets={assetSets}
+                    visibleAssetSets={visibleAssetSets}
                     selectedSet={selectedSet}
                     selectedSetId={selectedSetId}
                     setSelectedSetId={setSelectedSetId}
+                    ratingFilter={ratingFilter}
+                    setRatingFilter={setRatingFilter}
+                    styleRatings={styleRatings}
                     slotOverrides={slotOverrides}
                     setSlotOverrides={setSlotOverrides}
                     assetSlots={assetSlots}
@@ -205,6 +227,37 @@ export function VisualLabConsole({
                         className="rounded-md object-cover"
                         style={FEATURED_CARD_SIZE}
                     />
+                </div>
+
+                <div className="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
+                    <div className="mb-2 flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                        <span>Style rating</span>
+                        <span className="font-mono text-cyan-100">
+                            {styleRating === null ? 'Unrated' : styleRating}
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                        {SURFACE_LAB_STYLE_RATINGS.map((rating) => {
+                            const isSelected = styleRating === rating;
+
+                            return (
+                                <button
+                                    key={rating}
+                                    type="button"
+                                    aria-label={`Rate current style ${rating}`}
+                                    aria-pressed={isSelected}
+                                    className={`min-h-8 rounded-md border px-2 text-[12px] font-black transition-colors ${
+                                        isSelected
+                                            ? 'border-cyan-200 bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(103,232,249,0.28)]'
+                                            : 'border-slate-600 bg-slate-950 text-slate-200 hover:border-cyan-300 hover:text-cyan-100'
+                                    }`}
+                                    onClick={() => setStyleRating(rating)}
+                                >
+                                    {rating}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {mode === 'motion' && (

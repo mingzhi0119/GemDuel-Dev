@@ -6,6 +6,11 @@ import {
     type VisualLabMode,
 } from './surfaceLabTypes';
 import { SurfaceLabSelect } from './SurfaceLabSelect';
+import {
+    SURFACE_LAB_RATING_FILTER_OPTIONS,
+    type SurfaceLabRatingFilter,
+    type SurfaceLabStyleRatings,
+} from './useSurfaceLabRatings';
 
 const SLOT_LABELS: Record<SurfaceLabSlot, string> = {
     'shell-background': 'Shell',
@@ -74,9 +79,13 @@ export function SurfaceLabControls({
     catalogStatus,
     catalogError,
     assetSets,
+    visibleAssetSets,
     selectedSet,
     selectedSetId,
     setSelectedSetId,
+    ratingFilter,
+    setRatingFilter,
+    styleRatings,
     slotOverrides,
     setSlotOverrides,
     assetSlots,
@@ -85,22 +94,28 @@ export function SurfaceLabControls({
     catalogStatus: string;
     catalogError?: string;
     assetSets: readonly SurfaceLabAssetSet[];
+    visibleAssetSets: readonly SurfaceLabAssetSet[];
     selectedSet: SurfaceLabAssetSet;
     selectedSetId: string;
     setSelectedSetId: (id: string) => void;
+    ratingFilter: SurfaceLabRatingFilter;
+    setRatingFilter: (filter: SurfaceLabRatingFilter) => void;
+    styleRatings: SurfaceLabStyleRatings;
     slotOverrides: Partial<Record<SurfaceLabSlot, string>>;
     setSlotOverrides: (next: Partial<Record<SurfaceLabSlot, string>>) => void;
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>;
 }) {
-    const batchOptions = getBatchOptions(assetSets);
+    const hasRatingMatches = visibleAssetSets.length > 0;
+    const selectableAssetSets = hasRatingMatches ? visibleAssetSets : assetSets;
+    const batchOptions = getBatchOptions(selectableAssetSets);
     const styleOptions = Array.from(
         new Set(
-            assetSets
+            selectableAssetSets
                 .filter((set) => set.batchLabel === selectedSet.batchLabel)
                 .map((set) => set.style)
         )
     );
-    const variantOptions = assetSets
+    const variantOptions = selectableAssetSets
         .filter(
             (set) => set.batchLabel === selectedSet.batchLabel && set.style === selectedSet.style
         )
@@ -129,7 +144,9 @@ export function SurfaceLabControls({
                     value={selectedSet.batchLabel}
                     options={batchOptions}
                     onChange={(batchLabel) => {
-                        const next = assetSets.find((set) => set.batchLabel === batchLabel);
+                        const next = selectableAssetSets.find(
+                            (set) => set.batchLabel === batchLabel
+                        );
                         if (next) setSelectedSetId(next.id);
                     }}
                 />
@@ -138,7 +155,7 @@ export function SurfaceLabControls({
                     value={selectedSet.style}
                     options={styleOptions}
                     onChange={(style) => {
-                        const next = assetSets.find(
+                        const next = selectableAssetSets.find(
                             (set) =>
                                 set.batchLabel === selectedSet.batchLabel && set.style === style
                         );
@@ -150,7 +167,7 @@ export function SurfaceLabControls({
                     value={selectedSet.variant}
                     options={variantOptions}
                     onChange={(variant) => {
-                        const next = assetSets.find(
+                        const next = selectableAssetSets.find(
                             (set) =>
                                 set.batchLabel === selectedSet.batchLabel &&
                                 set.style === selectedSet.style &&
@@ -159,7 +176,19 @@ export function SurfaceLabControls({
                         if (next) setSelectedSetId(next.id);
                     }}
                 />
+                <SurfaceLabSelect
+                    label="Rating"
+                    value={ratingFilter}
+                    options={SURFACE_LAB_RATING_FILTER_OPTIONS}
+                    onChange={(filter) => setRatingFilter(filter as SurfaceLabRatingFilter)}
+                />
             </div>
+
+            {!hasRatingMatches && ratingFilter !== 'All' ? (
+                <div className="rounded-md border border-amber-300/40 bg-amber-950/30 px-2 py-1.5 text-[11px] font-bold text-amber-100">
+                    No styles in this rating
+                </div>
+            ) : null}
 
             <details className="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
                 <summary className="cursor-pointer text-[11px] font-black uppercase tracking-[0.14em] text-slate-200">
@@ -205,6 +234,11 @@ export function SurfaceLabControls({
             <SurfaceLabSlotSummary assetSlots={assetSlots} />
             <div className="text-[11px] leading-5 text-slate-400">
                 Active set: <span className="font-mono text-slate-100">{selectedSetId}</span>
+                <br />
+                Manual rating:{' '}
+                <span className="font-mono text-cyan-100">
+                    {styleRatings[selectedSetId] ?? 'Unrated'}
+                </span>
             </div>
         </section>
     );
