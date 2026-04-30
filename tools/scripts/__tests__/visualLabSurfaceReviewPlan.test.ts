@@ -44,6 +44,33 @@ const createSetRecords = (style: string, variant: string, sideSpecific = false) 
         : [createRecord(style, variant, 'player-zone')]),
 ];
 
+const createRuntimeClientSet = (style = 'crystal-anime', theme = 'dark') => ({
+    id: `runtime:${style}:${theme}`,
+    source: 'runtime',
+    batch: 'runtime',
+    date: 'current',
+    style,
+    variant: theme.toUpperCase(),
+    slots: Object.fromEntries(
+        SURFACE_SLOTS.map((slot) => [
+            slot,
+            {
+                batch: 'runtime',
+                date: 'current',
+                promptId: `RUNTIME-${style}-${slot}`,
+                slot,
+                style,
+                variant: theme.toUpperCase(),
+                score: null,
+                risk: 'Runtime-integrated surface asset.',
+                dimensions: null,
+                archiveUrl: `/assets/surfaces/anime-themes/${style}/${theme}/${slot}.png`,
+                source: 'runtime',
+            },
+        ])
+    ),
+});
+
 const writeRepoFixture = () => {
     const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'surface-review-plan-'));
     const manifestDir = path.join(repoRoot, 'assets', 'art-library', batch, date, 'contact-sheets');
@@ -113,6 +140,54 @@ describe('Visual Lab surface review plan', () => {
             { setId: `${batch}:${date}:stale:A`, rating: 4 },
         ]);
         expect(plan.ignored.orphanRegenMarks[0].key).toBe(`${deleteSetId}:gem-panel`);
+    });
+
+    it('turns explicitly marked runtime slots into replacement targets', () => {
+        const { repoRoot } = writeRepoFixture();
+        const records = loadSurfaceManifestRecords({ repoRoot });
+        const runtimeSet = createRuntimeClientSet();
+        const runtimeRegenKey = 'runtime:current:crystal-anime:DARK:topbar';
+
+        const plan = buildSurfaceReviewPlan({
+            repoRoot,
+            records,
+            regenMarks: {
+                [runtimeRegenKey]: true,
+            },
+            clientAssetSets: [runtimeSet],
+        });
+
+        expect(plan.regenerateSlots).toHaveLength(1);
+        expect(plan.regenerateSlots[0]).toMatchObject({
+            source: 'runtime',
+            setId: 'runtime:current:crystal-anime:DARK',
+            slot: 'topbar',
+            regenKey: runtimeRegenKey,
+            rating: null,
+            targetDimensions: [3840, 360],
+        });
+        expect(plan.regenerateSlots[0].targets).toMatchObject([
+            {
+                archivePath:
+                    'apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/topbar.png',
+                manifestPath: '',
+            },
+        ]);
+        expect(plan.ignored.orphanRegenMarks).toEqual([]);
+        expect(plan.warnings).not.toContain(`Orphan regen mark ignored: ${runtimeRegenKey}`);
+
+        const files = writeSurfaceReviewPlan({ repoRoot, plan });
+        const prepared = prepareReplacements({ repoRoot, planPath: files.jsonPath });
+        const sourceMap = JSON.parse(
+            fs.readFileSync(path.join(repoRoot, prepared.sourceMapPath), 'utf8')
+        );
+        expect(prepared.sourceCount).toBe(1);
+        expect(sourceMap.sources[0]).toMatchObject({
+            regenKey: runtimeRegenKey,
+            archivePath:
+                'apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/topbar.png',
+            targetDimensions: [3840, 360],
+        });
     });
 
     it('applies delete-rating1 from the frozen JSON plan and validates pre/post states', () => {

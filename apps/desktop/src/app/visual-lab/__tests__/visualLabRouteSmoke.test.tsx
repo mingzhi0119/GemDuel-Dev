@@ -440,6 +440,32 @@ describe('visual lab smoke', () => {
                 [getSurfaceLabSlotRegenKey(selectedSet.slots['gem-panel'])]: true,
             },
         });
+        const exportedAssetSets =
+            (
+                exportRequests[0] as {
+                    assetSets?: Array<{
+                        id?: string;
+                        source?: string;
+                        slots?: Record<string, Partial<SurfaceLabCandidate>>;
+                    }>;
+                }
+            ).assetSets ?? [];
+        const exportedCandidateSet = exportedAssetSets.find((set) => set.id === selectedSet.id);
+        const exportedRuntimeSet = exportedAssetSets.find(
+            (set) => set.id === 'runtime:crystal-anime:dark'
+        );
+        expect(exportedCandidateSet?.slots?.['gem-panel']).toMatchObject({
+            source: 'candidate',
+            archiveUrl: selectedSet.slots['gem-panel'].archiveUrl,
+        });
+        expect(exportedRuntimeSet?.slots?.topbar).toMatchObject({
+            source: 'runtime',
+            batch: 'runtime',
+            date: 'current',
+            style: 'crystal-anime',
+            variant: 'DARK',
+            archiveUrl: '/assets/surfaces/anime-themes/crystal-anime/dark/topbar.png',
+        });
         expect(document.body.textContent).toContain('Review plan exported');
         expect(document.body.textContent).toContain('Plan: test');
         expect(document.body.textContent).toContain('Delete 1 / Regen 0 / Warnings 0');

@@ -18,6 +18,7 @@ import {
     getReplacementTargets,
     getTargetDimensions,
 } from './visual-lab-surface-review-entries.mjs';
+import { normalizeClientRuntimeSets } from './visual-lab-surface-review-runtime-sets.mjs';
 
 /**
  * @param {{
@@ -42,6 +43,8 @@ export const buildSurfaceReviewPlan = ({
     createdAt = new Date().toISOString(),
 }) => {
     const { completeSets, incompleteSets } = groupRecords(records);
+    const runtimeSets = normalizeClientRuntimeSets(clientAssetSets);
+    const runtimeSetCount = clientAssetSets.filter((set) => set?.source === 'runtime').length;
     const completeSetIds = new Set(completeSets.map((set) => set.id));
     const validRatings = Object.fromEntries(
         Object.entries(ratings).filter(([, rating]) => VALID_RATINGS.has(rating))
@@ -57,6 +60,7 @@ export const buildSurfaceReviewPlan = ({
     const completeSetById = new Map(completeSets.map((set) => [set.id, set]));
     const regenerateSlots = [];
     const matchedRegenKeys = new Set();
+    const runtimeSetIds = new Set(runtimeSets.map((set) => set.id));
 
     for (const keepSet of keepSets) {
         const sourceSet = completeSetById.get(keepSet.setId);
@@ -72,6 +76,7 @@ export const buildSurfaceReviewPlan = ({
 
             matchedRegenKeys.add(regenKey);
             regenerateSlots.push({
+                source: sourceSet.source ?? 'candidate',
                 setId: sourceSet.id,
                 batch: sourceSet.batch,
                 date: sourceSet.date,
@@ -86,6 +91,37 @@ export const buildSurfaceReviewPlan = ({
                         '-'
                     ),
                 targetDimensions: getTargetDimensions(sourceSet.slots[slot]),
+                targets: getReplacementTargets(sourceSet, slot),
+                promptConstraints: buildPromptConstraints(slot),
+            });
+        }
+    }
+
+    for (const sourceSet of runtimeSets) {
+        for (const slot of SURFACE_SLOTS) {
+            const regenKey = getSurfaceRegenKey({ ...sourceSet, slot });
+            const sourceRecord = sourceSet.slots[slot];
+            if (regenMarks[regenKey] !== true || !sourceRecord) {
+                continue;
+            }
+
+            matchedRegenKeys.add(regenKey);
+            regenerateSlots.push({
+                source: 'runtime',
+                setId: sourceSet.id,
+                batch: sourceSet.batch,
+                date: sourceSet.date,
+                style: sourceSet.style,
+                variant: sourceSet.variant,
+                rating: null,
+                slot,
+                regenKey,
+                promptId:
+                    `SURFACE-RUNTIME-REVIEW-${sourceSet.date}-${sourceSet.style}-${sourceSet.variant}-${slot}`.replace(
+                        /[^A-Za-z0-9_-]+/g,
+                        '-'
+                    ),
+                targetDimensions: getTargetDimensions(sourceRecord),
                 targets: getReplacementTargets(sourceSet, slot),
                 promptConstraints: buildPromptConstraints(slot),
             });
@@ -112,7 +148,9 @@ export const buildSurfaceReviewPlan = ({
                 key,
                 reason: keepSetIds.has(setId)
                     ? 'slot not present on kept complete set'
-                    : 'set is not a kept 4/7/10 complete candidate set',
+                    : runtimeSetIds.has(setId)
+                      ? 'slot not present on runtime set'
+                      : 'set is not a kept 4/7/10 complete candidate set or runtime set',
             };
         });
     const unratedSets = completeSets
@@ -152,10 +190,8 @@ export const buildSurfaceReviewPlan = ({
             regenHash: sha256(regenMarks),
         },
         summary: {
-            totalSets:
-                completeSets.length +
-                clientAssetSets.filter((set) => set.source === 'runtime').length,
-            runtimeSets: clientAssetSets.filter((set) => set.source === 'runtime').length,
+            totalSets: completeSets.length + runtimeSetCount,
+            runtimeSets: runtimeSetCount,
             candidateSets: completeSets.length,
             ratedCounts: ratingCounts,
             deleteSetCount: deleteSets.length,
@@ -178,7 +214,7 @@ export const buildSurfaceReviewPlan = ({
             assertions: [
                 'deleteSets are complete non-runtime candidate sets rated 1',
                 'keepSets are complete non-runtime candidate sets rated 4/7/10',
-                'regenerateSlots only belong to keepSets',
+                'regenerateSlots belong to kept candidate sets or explicitly marked runtime slots',
                 'player-zone side-specific sets expand to p1 and p2 targets',
                 'runtime assets are never deleted',
             ],
@@ -221,10 +257,12 @@ export const renderSurfaceReviewPlanMarkdown = (plan) => {
         '## Regenerate Slots',
         '',
         '| Prompt id | Slot | Rating | Targets |',
-        '| --- | --- | ---: | ---: |',
+        '| --- | --- | --- | ---: |',
         ...plan.regenerateSlots.map(
             (slot) =>
-                `| \`${escapeMarkdown(slot.promptId)}\` | \`${slot.slot}\` | ${slot.rating} | ${slot.targets.length} |`
+                `| \`${escapeMarkdown(slot.promptId)}\` | \`${slot.slot}\` | ${
+                    slot.rating ?? (slot.source === 'runtime' ? 'runtime' : '-')
+                } | ${slot.targets.length} |`
         ),
         '',
         '## Warnings',

@@ -1,0 +1,127 @@
+{
+    "schema": "gemduel.visualLab.surfaceReviewReplacementSources.v1",
+    "planPath": "docs/art/visual-lab-review-plans/2026-04-30T16-44-59-751Z/surface-review-plan.json",
+    "sources": [
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-crystal-anime-DARK-shell-background",
+            "regenKey": "runtime:current:crystal-anime:DARK:shell-background",
+            "setId": "runtime:current:crystal-anime:DARK",
+            "slot": "shell-background",
+            "rawSlot": "shell-background",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/shell-background.png",
+            "targetDimensions": [3840, 2160],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-crystal-anime-DARK-topbar",
+            "regenKey": "runtime:current:crystal-anime:DARK:topbar",
+            "setId": "runtime:current:crystal-anime:DARK",
+            "slot": "topbar",
+            "rawSlot": "topbar",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/topbar.png",
+            "targetDimensions": [3840, 360],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-crystal-anime-DARK-gem-panel",
+            "regenKey": "runtime:current:crystal-anime:DARK:gem-panel",
+            "setId": "runtime:current:crystal-anime:DARK",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-royal-luxury-DARK-shell-background",
+            "regenKey": "runtime:current:royal-luxury:DARK:shell-background",
+            "setId": "runtime:current:royal-luxury:DARK",
+            "slot": "shell-background",
+            "rawSlot": "shell-background",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/shell-background.png",
+            "targetDimensions": [3840, 2160],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-royal-luxury-DARK-player-zone",
+            "regenKey": "runtime:current:royal-luxury:DARK:player-zone",
+            "setId": "runtime:current:royal-luxury:DARK",
+            "slot": "player-zone",
+            "rawSlot": "player-zone",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/player-zone.png",
+            "targetDimensions": [3840, 520],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-royal-luxury-DARK-royal-card-back",
+            "regenKey": "runtime:current:royal-luxury:DARK:royal-card-back",
+            "setId": "runtime:current:royal-luxury:DARK",
+            "slot": "royal-card-back",
+            "rawSlot": "royal-card-back",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/royal-card-back.png",
+            "targetDimensions": [1086, 1448],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-dark-arcane-DARK-shell-background",
+            "regenKey": "runtime:current:dark-arcane:DARK:shell-background",
+            "setId": "runtime:current:dark-arcane:DARK",
+            "slot": "shell-background",
+            "rawSlot": "shell-background",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/dark-arcane/dark/shell-background.png",
+            "targetDimensions": [3840, 2160],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-clean-boardgame-DARK-shell-background",
+            "regenKey": "runtime:current:clean-boardgame:DARK:shell-background",
+            "setId": "runtime:current:clean-boardgame:DARK",
+            "slot": "shell-background",
+            "rawSlot": "shell-background",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/clean-boardgame/dark/shell-background.png",
+            "targetDimensions": [3840, 2160],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-clean-boardgame-DARK-player-zone",
+            "regenKey": "runtime:current:clean-boardgame:DARK:player-zone",
+            "setId": "runtime:current:clean-boardgame:DARK",
+            "slot": "player-zone",
+            "rawSlot": "player-zone",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/clean-boardgame/dark/player-zone.png",
+            "targetDimensions": [3840, 520],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-pearl-opaline-DARK-shell-background",
+            "regenKey": "runtime:current:pearl-opaline:DARK:shell-background",
+            "setId": "runtime:current:pearl-opaline:DARK",
+            "slot": "shell-background",
+            "rawSlot": "shell-background",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/pearl-opaline/dark/shell-background.png",
+            "targetDimensions": [3840, 2160],
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-pearl-opaline-DARK-player-zone",
+            "regenKey": "runtime:current:pearl-opaline:DARK:player-zone",
+            "setId": "runtime:current:pearl-opaline:DARK",
+            "slot": "player-zone",
+            "rawSlot": "player-zone",
+            "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/pearl-opaline/dark/player-zone.png",
+            "targetDimensions": [3840, 520],
+            "sourcePath": "",
+            "failure": ""
+        }
+    ]
+}

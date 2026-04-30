@@ -45,6 +45,12 @@ Run these from the repo root:
 
 Use `pnpm build` for normal build validation and `pnpm electron:build` only when desktop packaging must be verified.
 
+## Browser and Visual Verification
+
+- For frontend, UI, layout, and motion review in this WSL checkout, run the Vite renderer and use Browser Use / the in-app browser at `http://localhost:5173/`.
+- Do not use the WSL Linux Electron window as the default visual-review surface; WSLg can make it much slower than the browser and distort perceived performance.
+- Use Electron windows only when validating Electron-specific behavior such as main/preload IPC, native window behavior, packaging, installer output, or release artifacts.
+
 ## Change Discipline
 
 - Keep changes inside the correct workspace boundary.

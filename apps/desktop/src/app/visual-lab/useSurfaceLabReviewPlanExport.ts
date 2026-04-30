@@ -1,5 +1,9 @@
 import { useCallback, useState } from 'react';
-import type { SurfaceLabAssetSet } from './surfaceLabTypes';
+import {
+    SURFACE_LAB_SLOTS,
+    type SurfaceLabAssetSet,
+    type SurfaceLabCandidate,
+} from './surfaceLabTypes';
 import type { SurfaceLabStyleRatings } from './useSurfaceLabRatings';
 import type { SurfaceLabRegenMarks } from './useSurfaceLabRegenMarks';
 import type { SurfaceLabReviewPlanExportState } from './surfaceLabReviewPlanTypes';
@@ -14,6 +18,33 @@ type UseSurfaceLabReviewPlanExportInput = {
     clearSurfaceLabSlotRegenMarks: (keys: readonly string[]) => void;
     getLatestSurfaceLabReviewState: () => LatestReviewState;
 };
+
+const serializeSurfaceLabCandidate = (candidate: SurfaceLabCandidate) => ({
+    batch: candidate.batch,
+    date: candidate.date,
+    promptId: candidate.promptId,
+    slot: candidate.slot,
+    playerZoneSide: candidate.playerZoneSide,
+    style: candidate.style,
+    variant: candidate.variant,
+    score: candidate.score,
+    risk: candidate.risk,
+    dimensions: candidate.dimensions,
+    archiveUrl: candidate.archiveUrl,
+    source: candidate.source,
+});
+
+const serializeSurfaceLabAssetSet = (set: SurfaceLabAssetSet) => ({
+    id: set.id,
+    source: set.source,
+    batch: set.batch,
+    date: set.date,
+    style: set.style,
+    variant: set.variant,
+    slots: Object.fromEntries(
+        SURFACE_LAB_SLOTS.map((slot) => [slot, serializeSurfaceLabCandidate(set.slots[slot])])
+    ),
+});
 
 export function useSurfaceLabReviewPlanExport({
     assetSets,
@@ -42,14 +73,7 @@ export function useSurfaceLabReviewPlanExport({
                     href: window.location.href,
                     ratings: latestReviewState.ratings,
                     regenMarks: latestReviewState.regenMarks,
-                    assetSets: assetSets.map((set) => ({
-                        id: set.id,
-                        source: set.source,
-                        batch: set.batch,
-                        date: set.date,
-                        style: set.style,
-                        variant: set.variant,
-                    })),
+                    assetSets: assetSets.map(serializeSurfaceLabAssetSet),
                 }),
             });
             const payload = (await response.json()) as {
