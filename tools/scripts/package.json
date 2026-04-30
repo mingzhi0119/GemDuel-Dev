@@ -33,6 +33,7 @@
         "seal-exclusions:check": "node check-seal-exclusion-governance.mjs",
         "seal-exclusions:refresh-monthly": "node refresh-seal-exclusions-monthly-snapshot.mjs",
         "secrets:check": "node check-secret-governance.mjs",
+        "test": "vitest run",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

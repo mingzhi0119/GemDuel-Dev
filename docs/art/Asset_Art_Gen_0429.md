@@ -122,7 +122,7 @@ Use exact PNG dimensions unless the current repo source proves a newer target.
 
 | Slot | Required archive filename | Target | Key constraints |
 | --- | --- | ---: | --- |
-| Shell background | shell-background.png | 3840x2160 | One continuous full-board tabletop background for the whole game shell. This is a passive environment surface only: not a gameplay stage, not a playmat, not a tablecloth, and not a framed panel. Keep the whole image low-noise and readable through subtle continuous material texture; do not create a central rectangle, inset area, platform, mat, border, vignette box, gray overlay, or center/edge split. |
+| Shell background | shell-background.png | 3840x2160 | One continuous full-board background for the whole game shell. This may be a theme-related concrete landscape, environmental wonder, architectural distance view, natural wonder, or premium material surface, such as a storm court skyline, moon forge, rain harbor, goldleaf grove, crystal cavern, arcane observatory, or opal night forge. Distant architecture and quiet anime-style people are allowed when they remain part of the environment rather than foreground subjects. The image is still a passive environment only: not a gameplay stage, not a playmat, not a tablecloth, and not a framed panel. Keep the gameplay center low-contrast, low-noise, and readable; do not create a central rectangle, inset area, platform, mat, border, vignette box, gray overlay, or functional center/edge split. |
 | TopBar skin | topbar.png | 3840x360 | Panoramic strip for the 120px logical header. Keep quiet readable zones around 25%, 50%, and 75% width for React-rendered score/crown/turn UI. Ornament belongs at edges, corners, and thin borders. |
 | PlayerZone P1 skin | player-zone-p1.png | 1920x520 | Side-specific P1 player rail substrate. Quiet zones for reserved cards, card stacks, inventory gems, counters, badges, and active-player rings. No baked card frames, card slots, deck silhouettes, controls, labels, or numbers. |
 | PlayerZone P2 skin | player-zone-p2.png | 1920x520 | Side-specific P2 player rail substrate. It may differ from P1 while staying in the same Theme style language, or it may be a mirrored P1 composition. No baked gameplay UI. |
@@ -130,7 +130,7 @@ Use exact PNG dimensions unless the current repo source proves a newer target.
 | Market card back L1 | market-card-back-l1.png | 1086x1448 | Same family as L2/L3, visibly lowest tier, but the center must not be empty, blank, flat, or a large void. Include a restrained integrated central ornament, material emblem, medallion, crystal core, or equivalent motif that reads as a complete card back without becoming as ornate as L2/L3. No text, numerals, Roman numerals, level marks, labels, or UI elements. |
 | Market card back L2 | market-card-back-l2.png | 1086x1448 | Same family as L1/L3, visibly mid tier. More ornament than L1, mid-tier accent, and clearly more luxurious than the promoted L1 for the same style. No baked UI. |
 | Market card back L3 | market-card-back-l3.png | 1086x1448 | Same family as L1/L2, visibly most luxurious. Highest-prestige ornament, indigo/violet/deep jewel accent or equivalent. No baked UI. |
-| Royal card back | royal-card-back.png | 1086x1448 | Sovereign/prestige card back for royal-card previews. Stronger royal identity than market backs. No baked UI. |
+| Royal card back | royal-card-back.png | 1086x1448 | Sovereign/prestige card back for royal-card previews. Stronger royal identity than market backs, with a complete center composition. The center must not be empty, blank, flat, or a large void; include an integrated sovereign ornament, crown-like abstract material motif, ceremonial medallion, jewel core, royal crest-like non-readable geometry, or equivalent prestige focus. No text, numerals, Roman numerals, level marks, labels, or UI elements. |
 
 Card-back rule: L1, L2, and L3 must clearly read as a single set when placed
 next to each other, but they must progress from plain to luxurious by tier. Use
@@ -164,14 +164,26 @@ card faces, and do not add a market-only scale factor.
 - Surface bitmap paths are runtime dark paths: promoted files live under
   `apps/desktop/public/assets/surfaces/anime-themes/<style>/dark/`. Do not
   generate or promote separate light-directory runtime assets.
-- Keep overlays readable. For shell backgrounds, readability must come from
-  low-noise whole-image material texture, not from drawing a localized
-  functional zone, stage, edge frame, or center-vs-edge composition split.
-  For TopBar, PlayerZone, gem panels, and card backs, avoid busy functional
-  areas that sit under React-rendered UI.
+- Keep overlays readable. Shell backgrounds may use theme-related landscapes,
+  environmental wonders, architectural distance views, natural wonders, premium
+  material surfaces, distant buildings, or quiet anime-style people, but the
+  result must remain a low-contrast, low-noise wide environment behind the
+  gameplay UI. Do not put a strong central subject, foreground character,
+  monster, large tower, large sun or moon disk, bright focal glow, localized
+  stage, playmat, tablecloth, framed panel, central rectangle, gray mask,
+  platform, edge frame, or functional center-vs-edge composition split under
+  the React-rendered gameplay zones. For TopBar, PlayerZone, gem panels, and
+  card backs, avoid busy functional areas that sit under React-rendered UI.
+- For shell background review, mark pure repeating pattern or material-only
+  output as a low-creativity risk. Reject or mark for regeneration any concrete
+  shell background whose subject becomes a central stage/panel or harms
+  foreground readability.
 - For L1 market card backs, avoid blank or low-effort centers. The center must
   contain an integrated style-appropriate ornament or material motif, but no
   readable content or gameplay UI.
+- For Royal card backs, avoid large empty center fields. The center must feel
+  complete and sovereign, with an integrated prestige ornament or material motif
+  that remains non-readable and does not become baked UI.
 - Avoid baked card frames or placeholder rectangles in PlayerZone art.
 - Generate PlayerZone as `1920x520` side-specific art. Prefer both
   `player-zone-p1.png` and `player-zone-p2.png`; `player-zone.png` is only a

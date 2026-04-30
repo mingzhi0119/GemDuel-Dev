@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SurfaceLabAssetSet } from './surfaceLabTypes';
 
 export const SURFACE_LAB_RATINGS_STORAGE_KEY = 'gemduel.visualLab.surfaceStyleRatings.v1';
@@ -12,7 +12,7 @@ export type SurfaceLabStyleRatings = Record<string, SurfaceLabStyleRating>;
 const isSurfaceLabStyleRating = (value: unknown): value is SurfaceLabStyleRating =>
     SURFACE_LAB_STYLE_RATINGS.includes(value as SurfaceLabStyleRating);
 
-const normalizeStoredRatings = (value: unknown): SurfaceLabStyleRatings => {
+export const normalizeSurfaceLabStyleRatings = (value: unknown): SurfaceLabStyleRatings => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
         return {};
     }
@@ -31,7 +31,7 @@ export const readSurfaceLabRatings = (): SurfaceLabStyleRatings => {
     }
 
     try {
-        return normalizeStoredRatings(
+        return normalizeSurfaceLabStyleRatings(
             JSON.parse(window.localStorage.getItem(SURFACE_LAB_RATINGS_STORAGE_KEY) ?? '{}')
         );
     } catch {
@@ -39,7 +39,7 @@ export const readSurfaceLabRatings = (): SurfaceLabStyleRatings => {
     }
 };
 
-const writeSurfaceLabRatings = (ratings: SurfaceLabStyleRatings) => {
+export const writeSurfaceLabRatings = (ratings: SurfaceLabStyleRatings) => {
     if (typeof window === 'undefined' || !window.localStorage) {
         return;
     }
@@ -90,8 +90,15 @@ export const getNextSurfaceLabSelectedSetId = (
     return sameBatchSet?.id ?? visibleAssetSets[0].id;
 };
 
-export const useSurfaceLabRatings = () => {
+export const useSurfaceLabRatings = (options?: {
+    onChange?: (ratings: SurfaceLabStyleRatings) => void;
+}) => {
     const [styleRatings, setStyleRatings] = useState<SurfaceLabStyleRatings>(readSurfaceLabRatings);
+    const onChangeRef = useRef(options?.onChange);
+
+    useEffect(() => {
+        onChangeRef.current = options?.onChange;
+    }, [options?.onChange]);
 
     const setStyleRating = useCallback((setId: string, rating: SurfaceLabStyleRating) => {
         setStyleRatings((current) => {
@@ -100,12 +107,19 @@ export const useSurfaceLabRatings = () => {
                 [setId]: rating,
             };
             writeSurfaceLabRatings(next);
+            onChangeRef.current?.(next);
             return next;
         });
+    }, []);
+
+    const replaceSurfaceLabRatings = useCallback((ratings: SurfaceLabStyleRatings) => {
+        writeSurfaceLabRatings(ratings);
+        setStyleRatings(ratings);
     }, []);
 
     return {
         styleRatings,
         setStyleRating,
+        replaceSurfaceLabRatings,
     };
 };

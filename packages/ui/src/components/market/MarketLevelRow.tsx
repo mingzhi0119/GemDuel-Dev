@@ -51,6 +51,11 @@ export function MarketLevelRow({
     const t = useT();
     const deckArtwork = deckBackArtwork?.[lvl];
     const canPreviewDeckReserve = Boolean(onPreviewDeckReserve) && deck.length > 0;
+    const deckBackInteractivityClass = canPreviewDeckReserve
+        ? 'cursor-pointer hover:border-emerald-400 focus-visible:border-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 active:scale-[0.98]'
+        : deck.length === 0
+          ? 'cursor-default opacity-60'
+          : 'cursor-default';
     const canBuy = (card: CardType) =>
         marketInteraction &&
         canInteract &&
@@ -98,11 +103,7 @@ export function MarketLevelRow({
                         event.preventDefault();
                         onPreviewDeckReserve?.(lvl);
                     }}
-                    className={`shrink-0 rounded-lg border-2 border-transparent flex flex-col items-center justify-center shadow-md relative overflow-hidden ${
-                        canPreviewDeckReserve
-                            ? 'cursor-pointer hover:border-emerald-400 focus-visible:border-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 active:scale-[0.98]'
-                            : 'cursor-default opacity-60'
-                    }`}
+                    className={`shrink-0 rounded-lg border-2 border-transparent flex flex-col items-center justify-center shadow-md relative overflow-hidden ${deckBackInteractivityClass}`}
                     style={{
                         width: `${FEATURED_CARD_SIZE.width}px`,
                         height: `${FEATURED_CARD_SIZE.height}px`,

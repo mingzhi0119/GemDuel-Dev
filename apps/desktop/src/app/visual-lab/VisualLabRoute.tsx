@@ -30,9 +30,14 @@ import { VisualLabConsole } from './VisualLabConsole';
 import {
     getNextSurfaceLabSelectedSetId,
     matchesSurfaceLabRatingFilter,
-    useSurfaceLabRatings,
     type SurfaceLabRatingFilter,
 } from './useSurfaceLabRatings';
+import {
+    matchesSurfaceLabRegenFilter,
+    type SurfaceLabRegenFilter,
+} from './useSurfaceLabRegenMarks';
+import { useSurfaceLabReviewPlanExport } from './useSurfaceLabReviewPlanExport';
+import { useSurfaceLabSharedReviewState } from './useSurfaceLabSharedReviewState';
 
 interface VisualLabRouteProps extends AppRouteProps {
     mode: VisualLabMode;
@@ -104,7 +109,21 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
     const [selectedSetId, setSelectedSetId] = useState('');
     const [slotOverrides, setSlotOverrides] = useState<Partial<Record<SurfaceLabSlot, string>>>({});
     const [ratingFilter, setRatingFilter] = useState<SurfaceLabRatingFilter>('All');
-    const { styleRatings, setStyleRating } = useSurfaceLabRatings();
+    const [regenFilter, setRegenFilter] = useState<SurfaceLabRegenFilter>('All');
+    const {
+        styleRatings,
+        setStyleRating,
+        regenMarks,
+        toggleSurfaceLabSlotRegenMark,
+        clearSurfaceLabSlotRegenMarks,
+        getLatestSurfaceLabReviewState,
+    } = useSurfaceLabSharedReviewState();
+    const { reviewPlanExport, exportReviewPlan, syncLatestCompletion } =
+        useSurfaceLabReviewPlanExport({
+            assetSets: catalog.assetSets,
+            clearSurfaceLabSlotRegenMarks,
+            getLatestSurfaceLabReviewState,
+        });
     const [activeEvent, setActiveEvent] = useState<PresentationEvent | null>(null);
     const [royalStage, setRoyalStage] = useState<'intro' | 'selection' | 'pulse'>('pulse');
     const [holdRoyalIntro, setHoldRoyalIntro] = useState(false);
@@ -124,10 +143,12 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
 
     const visibleAssetSets = useMemo(
         () =>
-            catalog.assetSets.filter((set) =>
-                matchesSurfaceLabRatingFilter(set, styleRatings, ratingFilter)
+            catalog.assetSets.filter(
+                (set) =>
+                    matchesSurfaceLabRatingFilter(set, styleRatings, ratingFilter) &&
+                    matchesSurfaceLabRegenFilter(set, regenMarks, regenFilter)
             ),
-        [catalog.assetSets, ratingFilter, styleRatings]
+        [catalog.assetSets, ratingFilter, regenFilter, regenMarks, styleRatings]
     );
 
     useEffect(() => {
@@ -342,9 +363,13 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 setSelectedSetId={setSelectedSetId}
                 ratingFilter={ratingFilter}
                 setRatingFilter={setRatingFilter}
+                regenFilter={regenFilter}
+                setRegenFilter={setRegenFilter}
                 styleRatings={styleRatings}
                 styleRating={styleRatings[selectedSet.id] ?? null}
                 setStyleRating={(rating) => setStyleRating(selectedSet.id, rating)}
+                regenMarks={regenMarks}
+                toggleSurfaceLabSlotRegenMark={toggleSurfaceLabSlotRegenMark}
                 slotOverrides={slotOverrides}
                 setSlotOverrides={setSlotOverrides}
                 assetSlots={assetSlots}
@@ -359,6 +384,9 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 onTriggerMotion={() => triggerMotion()}
                 onRepeatMotion={() => triggerMotion(lastMotionTypeRef.current)}
                 onClearMotion={() => setActiveEvent(null)}
+                reviewPlanExport={reviewPlanExport}
+                onExportReviewPlan={exportReviewPlan}
+                onSyncLatestCompletion={syncLatestCompletion}
             />
         </div>
     );

@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import {
     SURFACE_LAB_SLOTS,
     type SurfaceLabAssetSet,
@@ -8,9 +9,18 @@ import {
 import { SurfaceLabSelect } from './SurfaceLabSelect';
 import {
     SURFACE_LAB_RATING_FILTER_OPTIONS,
+    matchesSurfaceLabRatingFilter,
     type SurfaceLabRatingFilter,
     type SurfaceLabStyleRatings,
 } from './useSurfaceLabRatings';
+import {
+    SURFACE_LAB_REGEN_FILTER_OPTIONS,
+    isSurfaceLabSlotMarkedForRegen,
+    matchesSurfaceLabRegenFilter,
+    type SurfaceLabRegenFilter,
+    type SurfaceLabRegenMarks,
+} from './useSurfaceLabRegenMarks';
+import type { SurfaceLabReviewPlanExportState } from './surfaceLabReviewPlanTypes';
 
 const SLOT_LABELS: Record<SurfaceLabSlot, string> = {
     'shell-background': 'Shell',
@@ -41,24 +51,61 @@ const formatDimensions = (candidate: SurfaceLabCandidate): string => {
     return 'runtime';
 };
 
+const getReviewPlanPathLabel = (jsonPath?: string): string => {
+    if (!jsonPath) {
+        return 'surface-review-plan.json';
+    }
+
+    const parts = jsonPath.replace(/\\/g, '/').split('/').filter(Boolean);
+    const fileName = parts[parts.length - 1] ?? 'surface-review-plan.json';
+    const directoryName = parts[parts.length - 2];
+
+    return fileName === 'surface-review-plan.json' && directoryName ? directoryName : fileName;
+};
+
+const getReviewPlanExportTitle = (reviewPlanExport: SurfaceLabReviewPlanExportState) =>
+    [
+        reviewPlanExport.jsonPath ? `JSON: ${reviewPlanExport.jsonPath}` : null,
+        reviewPlanExport.markdownPath ? `Markdown: ${reviewPlanExport.markdownPath}` : null,
+    ]
+        .filter(Boolean)
+        .join('\n');
+
 function SurfaceLabSlotSummary({
     assetSlots,
+    regenMarks,
+    toggleSurfaceLabSlotRegenMark,
 }: {
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>;
+    regenMarks: SurfaceLabRegenMarks;
+    toggleSurfaceLabSlotRegenMark: (candidate: SurfaceLabCandidate) => void;
 }) {
     return (
         <div className="grid gap-1.5">
             {SURFACE_LAB_SLOTS.map((slot) => {
                 const candidate = assetSlots[slot];
+                const markedForRegen = isSurfaceLabSlotMarkedForRegen(candidate, regenMarks);
+                const slotLabel = SLOT_LABELS[slot];
 
                 return (
                     <div
                         key={slot}
-                        className="grid grid-cols-[88px_1fr_auto] items-center gap-2 rounded-md border border-slate-700/80 bg-slate-950/70 px-2 py-1.5 text-[11px]"
+                        className="grid grid-cols-[26px_88px_1fr_auto] items-center gap-2 rounded-md border border-slate-700/80 bg-slate-950/70 px-2 py-1.5 text-[11px]"
                     >
-                        <span className="font-black uppercase text-slate-400">
-                            {SLOT_LABELS[slot]}
-                        </span>
+                        <button
+                            type="button"
+                            aria-label={`${markedForRegen ? 'Clear' : 'Mark'} ${slotLabel} for regeneration`}
+                            aria-pressed={markedForRegen}
+                            className={`flex h-6 w-6 items-center justify-center rounded border transition-colors ${
+                                markedForRegen
+                                    ? 'border-amber-200 bg-amber-300 text-slate-950 shadow-[0_0_14px_rgba(251,191,36,0.28)]'
+                                    : 'border-slate-600 bg-slate-950 text-slate-400 hover:border-amber-300 hover:text-amber-100'
+                            }`}
+                            onClick={() => toggleSurfaceLabSlotRegenMark(candidate)}
+                        >
+                            <RefreshCw size={13} aria-hidden="true" />
+                        </button>
+                        <span className="font-black uppercase text-slate-400">{slotLabel}</span>
                         <span className="min-w-0 truncate font-mono text-slate-100">
                             {candidate.promptId}
                         </span>
@@ -85,10 +132,17 @@ export function SurfaceLabControls({
     setSelectedSetId,
     ratingFilter,
     setRatingFilter,
+    regenFilter,
+    setRegenFilter,
     styleRatings,
+    regenMarks,
+    toggleSurfaceLabSlotRegenMark,
     slotOverrides,
     setSlotOverrides,
     assetSlots,
+    reviewPlanExport,
+    onExportReviewPlan,
+    onSyncLatestCompletion,
 }: {
     mode: VisualLabMode;
     catalogStatus: string;
@@ -100,13 +154,26 @@ export function SurfaceLabControls({
     setSelectedSetId: (id: string) => void;
     ratingFilter: SurfaceLabRatingFilter;
     setRatingFilter: (filter: SurfaceLabRatingFilter) => void;
+    regenFilter: SurfaceLabRegenFilter;
+    setRegenFilter: (filter: SurfaceLabRegenFilter) => void;
     styleRatings: SurfaceLabStyleRatings;
+    regenMarks: SurfaceLabRegenMarks;
+    toggleSurfaceLabSlotRegenMark: (candidate: SurfaceLabCandidate) => void;
     slotOverrides: Partial<Record<SurfaceLabSlot, string>>;
     setSlotOverrides: (next: Partial<Record<SurfaceLabSlot, string>>) => void;
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>;
+    reviewPlanExport?: SurfaceLabReviewPlanExportState;
+    onExportReviewPlan?: () => void;
+    onSyncLatestCompletion?: () => void;
 }) {
-    const hasRatingMatches = visibleAssetSets.length > 0;
-    const selectableAssetSets = hasRatingMatches ? visibleAssetSets : assetSets;
+    const hasFilterMatches = visibleAssetSets.length > 0;
+    const hasRatingMatches =
+        ratingFilter === 'All' ||
+        assetSets.some((set) => matchesSurfaceLabRatingFilter(set, styleRatings, ratingFilter));
+    const hasRegenMatches =
+        regenFilter === 'All' ||
+        assetSets.some((set) => matchesSurfaceLabRegenFilter(set, regenMarks, regenFilter));
+    const selectableAssetSets = hasFilterMatches ? visibleAssetSets : assetSets;
     const batchOptions = getBatchOptions(selectableAssetSets);
     const styleOptions = Array.from(
         new Set(
@@ -182,11 +249,27 @@ export function SurfaceLabControls({
                     options={SURFACE_LAB_RATING_FILTER_OPTIONS}
                     onChange={(filter) => setRatingFilter(filter as SurfaceLabRatingFilter)}
                 />
+                <SurfaceLabSelect
+                    label="Regen"
+                    value={regenFilter}
+                    options={SURFACE_LAB_REGEN_FILTER_OPTIONS}
+                    onChange={(filter) => setRegenFilter(filter as SurfaceLabRegenFilter)}
+                />
             </div>
 
-            {!hasRatingMatches && ratingFilter !== 'All' ? (
+            {!hasRatingMatches ? (
                 <div className="rounded-md border border-amber-300/40 bg-amber-950/30 px-2 py-1.5 text-[11px] font-bold text-amber-100">
                     No styles in this rating
+                </div>
+            ) : null}
+            {!hasRegenMatches ? (
+                <div className="rounded-md border border-amber-300/40 bg-amber-950/30 px-2 py-1.5 text-[11px] font-bold text-amber-100">
+                    No assets in this regeneration filter
+                </div>
+            ) : null}
+            {hasRatingMatches && hasRegenMatches && !hasFilterMatches ? (
+                <div className="rounded-md border border-amber-300/40 bg-amber-950/30 px-2 py-1.5 text-[11px] font-bold text-amber-100">
+                    No styles match the selected filters
                 </div>
             ) : null}
 
@@ -231,7 +314,72 @@ export function SurfaceLabControls({
                 </div>
             </details>
 
-            <SurfaceLabSlotSummary assetSlots={assetSlots} />
+            <SurfaceLabSlotSummary
+                assetSlots={assetSlots}
+                regenMarks={regenMarks}
+                toggleSurfaceLabSlotRegenMark={toggleSurfaceLabSlotRegenMark}
+            />
+            {reviewPlanExport && onExportReviewPlan ? (
+                <div className="grid min-w-0 max-w-full gap-2 rounded-lg border border-slate-700 bg-slate-950/70 p-2">
+                    <button
+                        type="button"
+                        className="rounded-md border border-cyan-300/70 bg-cyan-300 px-2 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-slate-950 hover:bg-cyan-200 disabled:cursor-not-allowed disabled:border-slate-600 disabled:bg-slate-800 disabled:text-slate-400"
+                        disabled={
+                            reviewPlanExport.status === 'exporting' ||
+                            reviewPlanExport.status === 'syncing'
+                        }
+                        onClick={onExportReviewPlan}
+                    >
+                        {reviewPlanExport.status === 'exporting'
+                            ? 'Exporting review plan'
+                            : 'Export review plan'}
+                    </button>
+                    {onSyncLatestCompletion ? (
+                        <button
+                            type="button"
+                            className="rounded-md border border-slate-600 px-2 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-slate-200 hover:border-cyan-300 hover:text-cyan-100 disabled:cursor-not-allowed disabled:text-slate-500"
+                            disabled={
+                                reviewPlanExport.status === 'exporting' ||
+                                reviewPlanExport.status === 'syncing'
+                            }
+                            onClick={onSyncLatestCompletion}
+                        >
+                            {reviewPlanExport.status === 'syncing'
+                                ? 'Syncing completion'
+                                : 'Sync latest completion'}
+                        </button>
+                    ) : null}
+                    {reviewPlanExport.status !== 'idle' ? (
+                        <div className="min-w-0 max-w-full space-y-1 text-[11px] leading-5 text-slate-400">
+                            {reviewPlanExport.message ? (
+                                <div className="min-w-0 max-w-full truncate font-bold text-slate-200">
+                                    {reviewPlanExport.message}
+                                </div>
+                            ) : null}
+                            {reviewPlanExport.jsonPath || reviewPlanExport.markdownPath ? (
+                                <div
+                                    className="min-w-0 max-w-full truncate font-mono text-cyan-100"
+                                    title={getReviewPlanExportTitle(reviewPlanExport)}
+                                >
+                                    Plan: {getReviewPlanPathLabel(reviewPlanExport.jsonPath)}
+                                </div>
+                            ) : null}
+                            {reviewPlanExport.status === 'exported' ? (
+                                <div className="min-w-0 max-w-full truncate">
+                                    Delete {reviewPlanExport.deleteSetCount ?? 0} / Regen{' '}
+                                    {reviewPlanExport.regenerateSlotCount ?? 0} / Warnings{' '}
+                                    {reviewPlanExport.warningCount ?? 0}
+                                </div>
+                            ) : null}
+                            {reviewPlanExport.status === 'synced' ? (
+                                <div className="min-w-0 max-w-full truncate">
+                                    Cleared {reviewPlanExport.syncedCount ?? 0} regen marks
+                                </div>
+                            ) : null}
+                        </div>
+                    ) : null}
+                </div>
+            ) : null}
             <div className="text-[11px] leading-5 text-slate-400">
                 Active set: <span className="font-mono text-slate-100">{selectedSetId}</span>
                 <br />

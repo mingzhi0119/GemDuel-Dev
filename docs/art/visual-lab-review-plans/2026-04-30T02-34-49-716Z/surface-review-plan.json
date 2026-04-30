@@ -1,0 +1,352 @@
+{
+    "schema": "gemduel.visualLab.surfaceReviewPlan.v1",
+    "source": {
+        "origin": "http://127.0.0.1:5173",
+        "href": "http://127.0.0.1:5173/?visualLab=surfaces",
+        "createdAt": "2026-04-30T02:34:49.716Z",
+        "repoRoot": "E:/simonbb/GemDuel-Dev",
+        "ratingsStorageKey": "gemduel.visualLab.surfaceStyleRatings.v1",
+        "regenMarksStorageKey": "gemduel.visualLab.surfaceSlotRegenMarks.v1",
+        "catalogHash": "9ec23d048e570fc94c1b772c7ee63d7863b9de386bb5be09b01b26a359b46755",
+        "ratingsHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "regenHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "summary": {
+        "totalSets": 48,
+        "runtimeSets": 5,
+        "candidateSets": 43,
+        "ratedCounts": {
+            "1": 0,
+            "4": 0,
+            "7": 0,
+            "10": 0
+        },
+        "deleteSetCount": 0,
+        "keepSetCount": 0,
+        "regenerateSlotCount": 0,
+        "warningCount": 0
+    },
+    "deleteSets": [],
+    "keepSets": [],
+    "regenerateSlots": [],
+    "ignored": {
+        "runtimeRated": [],
+        "incompleteSets": [],
+        "staleRatings": [],
+        "orphanRegenMarks": [],
+        "unratedSets": [
+            {
+                "setId": "surface-autonomous-artisan-styles-candidates:2026-04-27:prism-slate:B",
+                "batch": "surface-autonomous-artisan-styles-candidates",
+                "date": "2026-04-27",
+                "style": "prism-slate",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a",
+                "batch": "surface-autonomous-extra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "solar-enamel",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-extra-styles-candidates:2026-04-27:sakura-obsidian:b",
+                "batch": "surface-autonomous-extra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "sakura-obsidian",
+                "variant": "b"
+            },
+            {
+                "setId": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a",
+                "batch": "surface-autonomous-followup-candidates",
+                "date": "2026-04-27-round-01",
+                "style": "aurora-porcelain-court",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A",
+                "batch": "surface-autonomous-legendary-styles-candidates",
+                "date": "2026-04-27",
+                "style": "lapis-sunburst",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B",
+                "batch": "surface-autonomous-legendary-styles-candidates",
+                "date": "2026-04-27",
+                "style": "opal-rain",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:bamboo-ink:A",
+                "batch": "surface-autonomous-legendary-styles-candidates",
+                "date": "2026-04-27",
+                "style": "bamboo-ink",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-luminous-styles-candidates:2026-04-27:arctic-rosequartz:A",
+                "batch": "surface-autonomous-luminous-styles-candidates",
+                "date": "2026-04-27",
+                "style": "arctic-rosequartz",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-luminous-styles-candidates:2026-04-27:arctic-rosequartz:B",
+                "batch": "surface-autonomous-luminous-styles-candidates",
+                "date": "2026-04-27",
+                "style": "arctic-rosequartz",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-luminous-styles-candidates:2026-04-27:paper-lantern:B",
+                "batch": "surface-autonomous-luminous-styles-candidates",
+                "date": "2026-04-27",
+                "style": "paper-lantern",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-mythic-styles-candidates:2026-04-27:aurora-steel:B",
+                "batch": "surface-autonomous-mythic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "aurora-steel",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-mythic-styles-candidates:2026-04-27:basalt-aquamarine:B",
+                "batch": "surface-autonomous-mythic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "basalt-aquamarine",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-mythic-styles-candidates:2026-04-27:porcelain-cinnabar:A",
+                "batch": "surface-autonomous-mythic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "porcelain-cinnabar",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-mythic-styles-candidates:2026-04-27:astral-orchid:A",
+                "batch": "surface-autonomous-mythic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "astral-orchid",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-styles-candidates:2026-04-27:ember-forge:a",
+                "batch": "surface-autonomous-new-styles-candidates",
+                "date": "2026-04-27",
+                "style": "ember-forge",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-styles-candidates:2026-04-27:pearl-opaline:a",
+                "batch": "surface-autonomous-new-styles-candidates",
+                "date": "2026-04-27",
+                "style": "pearl-opaline",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-styles-candidates:2026-04-27:neon-noir:a",
+                "batch": "surface-autonomous-new-styles-candidates",
+                "date": "2026-04-27",
+                "style": "neon-noir",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-styles-candidates:2026-04-27:neon-noir:b",
+                "batch": "surface-autonomous-new-styles-candidates",
+                "date": "2026-04-27",
+                "style": "neon-noir",
+                "variant": "b"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-candidates:2026-04-29:aurora-citadel:A",
+                "batch": "surface-autonomous-new-themes-candidates",
+                "date": "2026-04-29",
+                "style": "aurora-citadel",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-candidates:2026-04-29:aurora-citadel:B",
+                "batch": "surface-autonomous-new-themes-candidates",
+                "date": "2026-04-29",
+                "style": "aurora-citadel",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-candidates:2026-04-29:lotus-porcelain:A",
+                "batch": "surface-autonomous-new-themes-candidates",
+                "date": "2026-04-29",
+                "style": "lotus-porcelain",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-candidates:2026-04-29:lotus-porcelain:B",
+                "batch": "surface-autonomous-new-themes-candidates",
+                "date": "2026-04-29",
+                "style": "lotus-porcelain",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-candidates:2026-04-29:astral-navigator:A",
+                "batch": "surface-autonomous-new-themes-candidates",
+                "date": "2026-04-29",
+                "style": "astral-navigator",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-candidates:2026-04-29:astral-navigator:B",
+                "batch": "surface-autonomous-new-themes-candidates",
+                "date": "2026-04-29",
+                "style": "astral-navigator",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r2-candidates:2026-04-29:sunken-opal:a",
+                "batch": "surface-autonomous-new-themes-r2-candidates",
+                "date": "2026-04-29",
+                "style": "sunken-opal",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r2-candidates:2026-04-29:storm-temple:a",
+                "batch": "surface-autonomous-new-themes-r2-candidates",
+                "date": "2026-04-29",
+                "style": "storm-temple",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r3-candidates:2026-04-29:ivory-rainharbor:B",
+                "batch": "surface-autonomous-new-themes-r3-candidates",
+                "date": "2026-04-29",
+                "style": "ivory-rainharbor",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:amber-icecourt:A",
+                "batch": "surface-autonomous-new-themes-r4-candidates",
+                "date": "2026-04-29",
+                "style": "amber-icecourt",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:amber-icecourt:B",
+                "batch": "surface-autonomous-new-themes-r4-candidates",
+                "date": "2026-04-29",
+                "style": "amber-icecourt",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+                "batch": "surface-autonomous-new-themes-r4-candidates",
+                "date": "2026-04-29",
+                "style": "velvet-sunharbor",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r5-candidates:2026-04-29:cobalt-embercourt:B",
+                "batch": "surface-autonomous-new-themes-r5-candidates",
+                "date": "2026-04-29",
+                "style": "cobalt-embercourt",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A",
+                "batch": "surface-autonomous-new-themes-r5-candidates",
+                "date": "2026-04-29",
+                "style": "moonstone-verdigris",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:platinum-stormcourt:A",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "platinum-stormcourt",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:platinum-stormcourt:B",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "platinum-stormcourt",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:teal-embergrove:A",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "teal-embergrove",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:crimson-moonarchive:B",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "crimson-moonarchive",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:opal-nightforge:A",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "opal-nightforge",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:opal-nightforge:B",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "opal-nightforge",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-prismatic-styles-candidates:2026-04-27:nocturne-pearl:A",
+                "batch": "surface-autonomous-prismatic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "nocturne-pearl",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-ultra-styles-candidates:2026-04-27:midnight-navigator:A",
+                "batch": "surface-autonomous-ultra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "midnight-navigator",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-ultra-styles-candidates:2026-04-27:glacier-silver:A",
+                "batch": "surface-autonomous-ultra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "glacier-silver",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-ultra-styles-candidates:2026-04-27:crimson-onyx:A",
+                "batch": "surface-autonomous-ultra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "crimson-onyx",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-ultra-styles-candidates:2026-04-27:crimson-onyx:B",
+                "batch": "surface-autonomous-ultra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "crimson-onyx",
+                "variant": "B"
+            }
+        ],
+        "clientMissingOnServer": []
+    },
+    "validation": {
+        "assertions": [
+            "deleteSets are complete non-runtime candidate sets rated 1",
+            "keepSets are complete non-runtime candidate sets rated 4/7/10",
+            "regenerateSlots only belong to keepSets",
+            "player-zone side-specific sets expand to p1 and p2 targets",
+            "runtime assets are never deleted"
+        ]
+    },
+    "warnings": []
+}

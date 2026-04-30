@@ -48,6 +48,10 @@
         "test:coverage": "turbo run test:coverage --filter=@gemduel/desktop && node tools/scripts/check-coverage-perfile-key-modules.mjs",
         "test:security": "turbo run test:security --filter=@gemduel/desktop",
         "test:ui": "pnpm --dir apps/desktop test:ui",
+        "visual-lab:surface:review:apply": "node tools/scripts/visual-lab-surface-review.mjs apply",
+        "visual-lab:surface:review:finalize-replacements": "node tools/scripts/visual-lab-surface-review.mjs finalize-replacements",
+        "visual-lab:surface:review:prepare-replacements": "node tools/scripts/visual-lab-surface-review.mjs prepare-replacements",
+        "visual-lab:surface:review:validate": "node tools/scripts/visual-lab-surface-review.mjs validate",
         "typecheck": "turbo run typecheck",
         "prepare": "husky"
     },

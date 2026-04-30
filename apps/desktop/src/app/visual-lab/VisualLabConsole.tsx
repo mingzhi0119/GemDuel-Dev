@@ -9,6 +9,7 @@ import type {
     VisualLabMode,
 } from './surfaceLabTypes';
 import { SurfaceLabControls } from './SurfaceLabControls';
+import type { SurfaceLabReviewPlanExportState } from './surfaceLabReviewPlanTypes';
 import { MotionLabControls } from './MotionLabControls';
 import { getMotionLabel } from './motionLabLabels';
 import type { SurfaceLabMotionEventType, SurfaceLabMotionOptions } from './motionLabEvents';
@@ -19,6 +20,7 @@ import {
     type SurfaceLabStyleRating,
     type SurfaceLabStyleRatings,
 } from './useSurfaceLabRatings';
+import type { SurfaceLabRegenFilter, SurfaceLabRegenMarks } from './useSurfaceLabRegenMarks';
 
 const CONSOLE_WIDTH = 390;
 const CONSOLE_MARGIN = 12;
@@ -50,9 +52,13 @@ interface VisualLabConsoleProps {
     setSelectedSetId: (id: string) => void;
     ratingFilter: SurfaceLabRatingFilter;
     setRatingFilter: (filter: SurfaceLabRatingFilter) => void;
+    regenFilter: SurfaceLabRegenFilter;
+    setRegenFilter: (filter: SurfaceLabRegenFilter) => void;
     styleRatings: SurfaceLabStyleRatings;
     styleRating: SurfaceLabStyleRating | null;
     setStyleRating: (rating: SurfaceLabStyleRating) => void;
+    regenMarks: SurfaceLabRegenMarks;
+    toggleSurfaceLabSlotRegenMark: (candidate: SurfaceLabCandidate) => void;
     slotOverrides: Partial<Record<SurfaceLabSlot, string>>;
     setSlotOverrides: (next: Partial<Record<SurfaceLabSlot, string>>) => void;
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>;
@@ -67,6 +73,9 @@ interface VisualLabConsoleProps {
     onTriggerMotion: () => void;
     onRepeatMotion: () => void;
     onClearMotion: () => void;
+    reviewPlanExport?: SurfaceLabReviewPlanExportState;
+    onExportReviewPlan?: () => void;
+    onSyncLatestCompletion?: () => void;
 }
 
 export function VisualLabConsole({
@@ -80,9 +89,13 @@ export function VisualLabConsole({
     setSelectedSetId,
     ratingFilter,
     setRatingFilter,
+    regenFilter,
+    setRegenFilter,
     styleRatings,
     styleRating,
     setStyleRating,
+    regenMarks,
+    toggleSurfaceLabSlotRegenMark,
     slotOverrides,
     setSlotOverrides,
     assetSlots,
@@ -97,6 +110,9 @@ export function VisualLabConsole({
     onTriggerMotion,
     onRepeatMotion,
     onClearMotion,
+    reviewPlanExport,
+    onExportReviewPlan,
+    onSyncLatestCompletion,
 }: VisualLabConsoleProps) {
     const consoleRef = useRef<HTMLElement | null>(null);
     const dragStateRef = useRef<ConsoleDragState | null>(null);
@@ -210,10 +226,17 @@ export function VisualLabConsole({
                     setSelectedSetId={setSelectedSetId}
                     ratingFilter={ratingFilter}
                     setRatingFilter={setRatingFilter}
+                    regenFilter={regenFilter}
+                    setRegenFilter={setRegenFilter}
                     styleRatings={styleRatings}
+                    regenMarks={regenMarks}
+                    toggleSurfaceLabSlotRegenMark={toggleSurfaceLabSlotRegenMark}
                     slotOverrides={slotOverrides}
                     setSlotOverrides={setSlotOverrides}
                     assetSlots={assetSlots}
+                    reviewPlanExport={reviewPlanExport}
+                    onExportReviewPlan={onExportReviewPlan}
+                    onSyncLatestCompletion={onSyncLatestCompletion}
                 />
 
                 <div className="rounded-lg border border-slate-700 bg-slate-950/70 p-2">

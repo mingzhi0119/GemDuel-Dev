@@ -1018,6 +1018,37 @@ describe('surface styling affordances', () => {
         expect(deckBack?.className).not.toContain('focus-within:scale-[1.025]');
     });
 
+    it('keeps non-clickable market deck backs opaque when cards remain', () => {
+        const html = renderToStaticMarkup(
+            <LocaleProvider locale="en" setLocale={() => undefined}>
+                <Market
+                    market={EMPTY_MARKET}
+                    decks={{ ...EMPTY_DECKS, 2: [SAMPLE_CARD] }}
+                    phase="IDLE"
+                    turn="p1"
+                    inventories={{ p1: EMPTY_COST, p2: EMPTY_COST }}
+                    playerTableau={{ p1: [], p2: [] }}
+                    playerBuffs={{
+                        p1: BUFFS.NONE as unknown as Buff,
+                        p2: BUFFS.NONE as unknown as Buff,
+                    }}
+                    theme="dark"
+                    deckBackArtwork={{
+                        2: { path: '/assets/test-card-back.png', variant: 'test-l2' },
+                    }}
+                />
+            </LocaleProvider>
+        );
+        const host = document.createElement('div');
+        host.innerHTML = html;
+        const deckBack = host.querySelector<HTMLElement>('[data-market-deck="2"]');
+
+        expect(deckBack).not.toBeNull();
+        expect(deckBack?.className).toContain('cursor-default');
+        expect(deckBack?.className).not.toContain('opacity-60');
+        expect(deckBack?.querySelector('[data-market-deck-back-img="true"]')).not.toBeNull();
+    });
+
     it('renders deck peek cards larger than featured market cards', () => {
         const html = renderToStaticMarkup(
             <LocaleProvider locale="zh" setLocale={() => undefined}>
