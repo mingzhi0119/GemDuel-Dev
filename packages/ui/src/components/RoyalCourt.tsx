@@ -6,6 +6,9 @@ import { RoyalCard, GamePhase, Card as CardType } from '@gemduel/shared/types';
 import { useT } from '../i18n/LocaleProvider';
 import { LexiconTerm } from '../lexicon/LexiconTerm';
 import { FEATURED_CARD_SIZE } from './card/cardSizing';
+import type { CardBackArtwork } from './card/cardBackArtwork';
+
+export type RoyalCourtDisplayMode = 'faces' | 'backs';
 
 interface RoyalCourtProps {
     royalDeck: RoyalCard[];
@@ -14,6 +17,8 @@ interface RoyalCourtProps {
     theme: 'light' | 'dark';
     canInteract?: boolean;
     onPreviewRoyal?: (card: RoyalCard) => void;
+    displayMode?: RoyalCourtDisplayMode;
+    royalCardBackArtwork?: CardBackArtwork;
 }
 
 const ROYAL_COURT_SLOT_COUNT = 4;
@@ -33,11 +38,14 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     theme,
     canInteract = true,
     onPreviewRoyal,
+    displayMode = 'faces',
+    royalCardBackArtwork,
 }) => {
     const t = useT();
     const isSelectingRoyal = isRoyalSelectionPhase(phase);
     const canSelectRoyal = isSelectingRoyal && canInteract;
     const canPreviewRoyal = !isSelectingRoyal && Boolean(onPreviewRoyal);
+    const showRoyalBacks = displayMode === 'backs' && Boolean(royalCardBackArtwork);
     const royalSlots = Array.from(
         { length: ROYAL_COURT_SLOT_COUNT },
         (_, index) => royalDeck[index] ?? null
@@ -88,12 +96,24 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                                 }
                             }}
                         >
-                            <Card
-                                card={card as unknown as CardType}
-                                isRoyal={true}
-                                theme={theme}
-                                size="featured"
-                            />
+                            {showRoyalBacks && royalCardBackArtwork ? (
+                                <img
+                                    data-royal-card-display="back"
+                                    data-royal-card-back-variant={royalCardBackArtwork.variant}
+                                    src={royalCardBackArtwork.path}
+                                    alt=""
+                                    draggable={false}
+                                    className="rounded-md object-cover"
+                                    style={FEATURED_CARD_SIZE}
+                                />
+                            ) : (
+                                <Card
+                                    card={card as unknown as CardType}
+                                    isRoyal={true}
+                                    theme={theme}
+                                    size="featured"
+                                />
+                            )}
                         </div>
                     ) : (
                         <div

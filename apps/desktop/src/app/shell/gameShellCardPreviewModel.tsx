@@ -38,6 +38,7 @@ interface GameShellCardPreviewModelOptions {
     t: Translate;
     theme: ThemeName;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
+    canInteract: boolean;
 }
 
 export const createGameShellCardPreviewModel = ({
@@ -51,6 +52,7 @@ export const createGameShellCardPreviewModel = ({
     t,
     theme,
     marketDeckBackArtwork,
+    canInteract,
 }: GameShellCardPreviewModelOptions): GameShellCardPreviewModel => {
     if (!cardPreview) {
         return {
@@ -67,7 +69,7 @@ export const createGameShellCardPreviewModel = ({
         effectiveGameMode !== 'REVIEW' &&
         effectiveGameMode !== 'GAME_OVER' &&
         (!state.mode || state.mode !== 'ONLINE_MULTIPLAYER' || state.turn === localPlayer);
-    const canRunPreviewAction = shouldShowPreviewActions;
+    const canRunPreviewAction = shouldShowPreviewActions && canInteract;
     const reserveRoomAvailable = state.playerReserved[state.turn].length < 3;
     const buyLabel = getLexiconLabel('buyCard', locale);
     const reserveLabel = getLexiconLabel('reserve', locale);

@@ -71,7 +71,7 @@ describe('electron preload contract', () => {
             }) => Promise<string>;
             startLanMatchmaking: () => Promise<string>;
             cancelLanMatchmaking: () => Promise<string>;
-            setDesktopAspectRatio: (payload: { ratio: '16:10' | '16:9' }) => Promise<string>;
+            setDesktopAspectRatio: (payload: { ratio: '16:9' }) => Promise<string>;
             selectLanPregameMode: (payload: {
                 roomId: string;
                 mode: 'classic' | 'roguelike';

@@ -41,8 +41,8 @@ export default function GemDuelBoard() {
         setLocale,
         surfaceTheme,
         setSurfaceTheme,
-        desktopAspectRatio,
-        setDesktopAspectRatio,
+        soundEnabled,
+        setSoundEnabled,
     } = useSettings();
     const initialSurfacePreviewVariant = useMemo(getSurfacePreviewVariant, []);
     const [surfacePreviewVariant, setSurfacePreviewVariant] = useState(
@@ -130,16 +130,6 @@ export default function GemDuelBoard() {
         document.documentElement.dataset.theme = theme;
         document.body.dataset.theme = theme;
     }, [theme]);
-
-    useEffect(() => {
-        const applyDesktopAspectRatio = window.electron?.setDesktopAspectRatio;
-
-        if (!applyDesktopAspectRatio) {
-            return;
-        }
-
-        void applyDesktopAspectRatio({ ratio: desktopAspectRatio }).catch(() => undefined);
-    }, [desktopAspectRatio]);
 
     useEffect(() => {
         const documentLanguage = getDocumentLanguage(locale);
@@ -274,7 +264,6 @@ export default function GemDuelBoard() {
                 layout={layout}
                 theme={theme}
                 surfaceTheme={effectiveSurfaceTheme}
-                desktopAspectRatio={desktopAspectRatio}
                 ui={{
                     showDebug,
                     isReviewing,
@@ -283,6 +272,7 @@ export default function GemDuelBoard() {
                     isPeekingBoard,
                     persistentWinner,
                     showRestartConfirm,
+                    soundEnabled,
                 }}
                 setters={{
                     setShowDebug,
@@ -291,13 +281,13 @@ export default function GemDuelBoard() {
                     setMatchmakingRoute,
                     setIsPeekingBoard,
                     setShowRestartConfirm,
+                    setSoundEnabled,
                 }}
                 callbacks={{
                     handleRestart,
                     handleDownloadReplay,
                     handleUploadReplay,
                     selectSurfaceTheme: handleSelectSurfaceTheme,
-                    selectDesktopAspectRatio: setDesktopAspectRatio,
                     openVisualLab: handleOpenVisualLab,
                     closeVisualLabToStartPage: handleCloseVisualLabToStartPage,
                 }}

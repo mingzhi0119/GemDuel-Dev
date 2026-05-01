@@ -82,16 +82,14 @@ export function PlayerRail({
             style={playerRailStyle}
         >
             <div
-                className={`flex-1 relative transition-all duration-500 border-2
+                data-player-zone-frame="p1"
+                data-player-zone-frame-active={isP1ZoneActive ? 'true' : 'false'}
+                className={`flex-1 relative transition-all duration-500 border-[3px]
                     overflow-hidden flex items-center justify-center
                     ${
                         isP1ZoneActive
-                            ? theme === 'dark'
-                                ? 'animate-breathe-emerald border-emerald-400/45'
-                                : 'animate-breathe-emerald border-emerald-500/45'
-                            : theme === 'dark'
-                              ? 'border-slate-400/18'
-                              : 'border-slate-500/24'
+                            ? 'animate-breathe-gold border-amber-200/95'
+                            : 'border-transparent'
                     }`}
             >
                 <div className="shrink-0" style={scaledZoneWrapperStyle}>
@@ -146,16 +144,14 @@ export function PlayerRail({
             </div>
 
             <div
-                className={`flex-1 relative transition-all duration-500 border-2
+                data-player-zone-frame="p2"
+                data-player-zone-frame-active={isP2ZoneActive ? 'true' : 'false'}
+                className={`flex-1 relative transition-all duration-500 border-[3px]
                     overflow-hidden flex items-center justify-center
                     ${
                         isP2ZoneActive
-                            ? theme === 'dark'
-                                ? 'animate-breathe-blue border-blue-400/45'
-                                : 'animate-breathe-blue border-blue-500/45'
-                            : theme === 'dark'
-                              ? 'border-slate-400/18'
-                              : 'border-slate-500/24'
+                            ? 'animate-breathe-gold border-amber-200/95'
+                            : 'border-transparent'
                     }`}
             >
                 <div className="shrink-0" style={scaledZoneWrapperStyle}>

@@ -82,19 +82,21 @@ const expectLayoutMatch = (
     expect(layout.mainGapPx).toBe(expected.mainGapPx);
 };
 
-const expectSharedDesktopCanvas = (
-    viewports: Array<readonly [number, number]>,
-    expectedHeightPx: number
-) => {
+const expectFixedDesktopCanvas = (viewports: Array<readonly [number, number]>) => {
     for (const [width, height] of viewports) {
         const layout = calculateResponsiveLayout(width, height);
+        const expectedScale = Math.min(width / 3840, height / 2160);
 
         expect(layout.layoutMode).toBe('desktop-4k');
         expect(layout.stageCanvasWidthPx).toBe(3840);
-        expect(layout.stageCanvasHeightPx).toBeCloseTo(expectedHeightPx, 5);
-        expect(layout.stageScale).toBeCloseTo(width / 3840, 5);
-        expect(layout.stageInsetXPx).toBe(0);
-        expect(layout.stageInsetYPx).toBe(0);
+        expect(layout.stageCanvasHeightPx).toBeCloseTo(2160, 5);
+        expect(layout.stageScale).toBeCloseTo(expectedScale, 5);
+        expect(layout.stageInsetXPx).toBe(
+            Math.max(0, Math.round((width - 3840 * expectedScale) / 2))
+        );
+        expect(layout.stageInsetYPx).toBe(
+            Math.max(0, Math.round((height - 2160 * expectedScale) / 2))
+        );
     }
 };
 
@@ -122,11 +124,11 @@ describe('Responsive layout adaptation', () => {
             viewportWidth: 3840,
             viewportHeight: 2400,
             stageCanvasWidthPx: 3840,
-            stageCanvasHeightPx: 2400,
+            stageCanvasHeightPx: 2160,
             stageScale: 1,
             stageInsetXPx: 0,
-            stageInsetYPx: 0,
-            ...expectedDesktopSizing(2400),
+            stageInsetYPx: 120,
+            ...expectedDesktopSizing(2160),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(2560, 1440), {
@@ -158,11 +160,11 @@ describe('Responsive layout adaptation', () => {
             viewportWidth: 1920,
             viewportHeight: 1200,
             stageCanvasWidthPx: 3840,
-            stageCanvasHeightPx: 2400,
+            stageCanvasHeightPx: 2160,
             stageScale: 0.5,
             stageInsetXPx: 0,
-            stageInsetYPx: 0,
-            ...expectedDesktopSizing(2400),
+            stageInsetYPx: 60,
+            ...expectedDesktopSizing(2160),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(1440, 900), {
@@ -170,11 +172,11 @@ describe('Responsive layout adaptation', () => {
             viewportWidth: 1440,
             viewportHeight: 900,
             stageCanvasWidthPx: 3840,
-            stageCanvasHeightPx: 2400,
+            stageCanvasHeightPx: 2160,
             stageScale: 0.375,
             stageInsetXPx: 0,
-            stageInsetYPx: 0,
-            ...expectedDesktopSizing(2400),
+            stageInsetYPx: 45,
+            ...expectedDesktopSizing(2160),
         });
 
         expectLayoutMatch(calculateResponsiveLayout(3440, 1440), {
@@ -245,9 +247,9 @@ describe('Responsive layout adaptation', () => {
 
         expect(getLastLayout()?.layoutMode).toBe('desktop-4k');
         expect(getLastLayout()?.stageCanvasWidthPx).toBe(3840);
-        expect(getLastLayout()?.stageCanvasHeightPx).toBe(2400);
+        expect(getLastLayout()?.stageCanvasHeightPx).toBe(2160);
         expect(getLastLayout()?.stageScale).toBeCloseTo(0.5, 5);
-        expect(getLastLayout()?.stageInsetYPx).toBe(0);
+        expect(getLastLayout()?.stageInsetYPx).toBe(60);
 
         act(() => {
             setViewport(375, 812);
@@ -307,35 +309,65 @@ describe('Responsive layout adaptation', () => {
                 viewportWidth: 1707,
                 viewportHeight: 1067,
                 stageCanvasWidthPx: 3840,
-                stageCanvasHeightPx: 2400,
+                stageCanvasHeightPx: 2160,
                 stageScale: 1707 / 3840,
                 stageInsetXPx: 0,
-                stageInsetYPx: 0,
-                ...expectedDesktopSizing(2400),
+                stageInsetYPx: 53,
+                ...expectedDesktopSizing(2160),
             }
         );
     });
 
-    it('keeps the same logical canvas for the two supported desktop aspect ratios', () => {
-        expectSharedDesktopCanvas(
-            [
-                [1440, 900],
-                [1920, 1200],
-                [3840, 2400],
-            ],
-            2400
-        );
-        expectSharedDesktopCanvas(
-            [
-                [1920, 1080],
-                [2560, 1440],
-                [3840, 2160],
-            ],
-            2160
-        );
+    it('keeps one fixed 16:9 logical canvas across desktop viewports', () => {
+        expectFixedDesktopCanvas([
+            [1440, 900],
+            [1920, 1200],
+            [3840, 2400],
+            [1920, 1080],
+            [2560, 1440],
+            [3840, 2160],
+        ]);
     });
 
-    it('snaps unsupported desktop stages to the nearest supported aspect ratio', () => {
+    it('adds black-bar insets for non-16:9 desktop viewports', () => {
+        expectLayoutMatch(calculateResponsiveLayout(1920, 1200), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 1920,
+            viewportHeight: 1200,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2160,
+            stageScale: 0.5,
+            stageInsetXPx: 0,
+            stageInsetYPx: 60,
+            ...expectedDesktopSizing(2160),
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(3440, 1440), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 3440,
+            viewportHeight: 1440,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2160,
+            stageScale: 1440 / 2160,
+            stageInsetXPx: 440,
+            stageInsetYPx: 0,
+            ...expectedDesktopSizing(2160),
+        });
+
+        expectLayoutMatch(calculateResponsiveLayout(1280, 1024), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 1280,
+            viewportHeight: 1024,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2160,
+            stageScale: 1280 / 3840,
+            stageInsetXPx: 0,
+            stageInsetYPx: 152,
+            ...expectedDesktopSizing(2160),
+        });
+    });
+
+    it('centers unsupported ultrawide desktop stages inside the fixed canvas', () => {
         expectLayoutMatch(calculateResponsiveLayout(3840, 1080), {
             layoutMode: 'desktop-4k',
             viewportWidth: 3840,
@@ -358,18 +390,6 @@ describe('Responsive layout adaptation', () => {
             stageInsetXPx: 1280,
             stageInsetYPx: 0,
             ...expectedDesktopSizing(2160),
-        });
-
-        expectLayoutMatch(calculateResponsiveLayout(1280, 1024), {
-            layoutMode: 'desktop-4k',
-            viewportWidth: 1280,
-            viewportHeight: 1024,
-            stageCanvasWidthPx: 3840,
-            stageCanvasHeightPx: 2400,
-            stageScale: 1280 / 3840,
-            stageInsetXPx: 0,
-            stageInsetYPx: 112,
-            ...expectedDesktopSizing(2400),
         });
     });
 
@@ -398,10 +418,10 @@ describe('Responsive layout adaptation', () => {
 
         expect(layout.layoutMode).toBe('desktop-4k');
         expect(layout.stageCanvasWidthPx).toBe(3840);
-        expect(layout.stageCanvasHeightPx).toBe(2400);
+        expect(layout.stageCanvasHeightPx).toBe(2160);
         expect(layout.stageScale).toBeCloseTo(0.25, 5);
         expect(layout.stageInsetXPx).toBe(0);
-        expect(layout.stageInsetYPx).toBe(0);
+        expect(layout.stageInsetYPx).toBe(30);
     });
 
     it('keeps coarse-pointer high-density screens on the mobile path', () => {

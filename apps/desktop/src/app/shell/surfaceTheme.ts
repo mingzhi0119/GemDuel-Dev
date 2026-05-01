@@ -6,11 +6,10 @@ export type SurfaceThemeVariant =
     | 'pearl-opaline';
 export type SurfaceEffectsSkin = 'anime';
 
-export type SurfaceThemeSlot = 'gemPanel' | 'playerZone' | 'background' | 'topBar' | 'effects';
+export type SurfaceThemeSlot = 'gemPanel' | 'playerZone' | 'background' | 'effects';
 
 export interface SurfaceThemeSelections {
     background: SurfaceThemeVariant;
-    topBar: SurfaceThemeVariant;
     playerZone: SurfaceThemeVariant;
     gemPanel: SurfaceThemeVariant;
     effects: SurfaceEffectsSkin;
@@ -21,7 +20,8 @@ type LegacySurfaceThemeSlot =
     | 'gemPanel'
     | 'playerZone'
     | 'tablecloth'
-    | 'shellBackground';
+    | 'shellBackground'
+    | 'topBar';
 type LegacySurfaceThemeVariant = 'default' | 'wood' | 'royal' | 'minimal' | 'geek';
 
 export const SURFACE_THEME_VARIANTS = [
@@ -34,7 +34,6 @@ export const SURFACE_THEME_VARIANTS = [
 
 export const DEFAULT_SURFACE_THEME_SELECTIONS: SurfaceThemeSelections = {
     background: 'royal-luxury',
-    topBar: 'royal-luxury',
     gemPanel: 'royal-luxury',
     playerZone: 'royal-luxury',
     effects: 'anime',
@@ -100,7 +99,6 @@ export const normalizeSurfaceThemeSelections = (value: unknown): SurfaceThemeSel
                     candidate.gemPanel,
                     candidate.playerZone,
                     candidate.tablecloth,
-                    candidate.topBar,
                 ].find(isSurfaceThemeVariant),
                 DEFAULT_SURFACE_THEME_SELECTIONS.background
             )
@@ -111,10 +109,6 @@ export const normalizeSurfaceThemeSelections = (value: unknown): SurfaceThemeSel
         background: normalizeSurfaceThemeVariant(
             candidate.background,
             DEFAULT_SURFACE_THEME_SELECTIONS.background
-        ),
-        topBar: normalizeSurfaceThemeVariant(
-            candidate.topBar,
-            DEFAULT_SURFACE_THEME_SELECTIONS.topBar
         ),
         playerZone: normalizeSurfaceThemeVariant(
             candidate.playerZone,
@@ -134,7 +128,6 @@ export const createSurfaceThemeSelections = (
     variant: SurfaceThemeVariant
 ): SurfaceThemeSelections => ({
     background: variant,
-    topBar: variant,
     playerZone: variant,
     gemPanel: variant,
     effects: 'anime',

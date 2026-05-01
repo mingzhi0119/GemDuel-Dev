@@ -188,6 +188,7 @@ function ReplayRoundtripHarness() {
                     isPeekingBoard,
                     persistentWinner,
                     showRestartConfirm,
+                    soundEnabled: true,
                 }}
                 setters={{
                     setShowDebug,
@@ -196,6 +197,7 @@ function ReplayRoundtripHarness() {
                     setMatchmakingRoute,
                     setIsPeekingBoard,
                     setShowRestartConfirm,
+                    setSoundEnabled: () => undefined,
                 }}
                 callbacks={{
                     handleRestart: () => {

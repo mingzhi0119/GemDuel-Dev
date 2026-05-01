@@ -36,14 +36,12 @@ import {
     matchesSurfaceLabRegenFilter,
     type SurfaceLabRegenFilter,
 } from './useSurfaceLabRegenMarks';
-import { useSurfaceLabReviewPlanExport } from './useSurfaceLabReviewPlanExport';
 import { useSurfaceLabSharedReviewState } from './useSurfaceLabSharedReviewState';
 
 interface VisualLabRouteProps extends AppRouteProps {
     mode: VisualLabMode;
     onCloseToStartPage?: () => void;
 }
-
 const getAssetSlots = (
     selectedSet: SurfaceLabAssetSet,
     assetSets: readonly SurfaceLabAssetSet[],
@@ -57,7 +55,6 @@ const getAssetSlots = (
         },
         {} as Record<SurfaceLabSlot, SurfaceLabCandidate>
     );
-
 const createInitialMotionOptions = (): SurfaceLabMotionOptions => ({
     player: 'p1',
     marketLevel: 1,
@@ -71,7 +68,6 @@ const createInitialMotionOptions = (): SurfaceLabMotionOptions => ({
     milestone: 'forced',
     nonce: 0,
 });
-
 const getVisualLabEventTimeoutMs = (event: PresentationEvent, mode: VisualLabMode): number => {
     if (mode !== 'motion') {
         return event.type === 'turn-handoff' ? 3400 : event.type === 'market-refill' ? 1600 : 1400;
@@ -115,15 +111,10 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         setStyleRating,
         regenMarks,
         toggleSurfaceLabSlotRegenMark,
-        clearSurfaceLabSlotRegenMarks,
-        getLatestSurfaceLabReviewState,
-    } = useSurfaceLabSharedReviewState();
-    const { reviewPlanExport, exportReviewPlan, syncLatestCompletion } =
-        useSurfaceLabReviewPlanExport({
-            assetSets: catalog.assetSets,
-            clearSurfaceLabSlotRegenMarks,
-            getLatestSurfaceLabReviewState,
-        });
+        styleComments,
+        setStyleComment,
+        reviewStateStatus,
+    } = useSurfaceLabSharedReviewState(catalog.assetSets);
     const [activeEvent, setActiveEvent] = useState<PresentationEvent | null>(null);
     const [royalStage, setRoyalStage] = useState<'intro' | 'selection' | 'pulse'>('pulse');
     const [holdRoyalIntro, setHoldRoyalIntro] = useState(false);
@@ -197,7 +188,6 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
             if (!event) {
                 return;
             }
-
             lastMotionTypeRef.current = type;
             setActiveEvent(event);
             setRoyalStage(event.type === 'royal-unlock' ? 'intro' : 'pulse');
@@ -214,10 +204,8 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         const timeout = window.setTimeout(() => {
             setActiveEvent((current) => (current?.id === activeEvent.id ? null : current));
         }, timeoutMs);
-
         return () => window.clearTimeout(timeout);
     }, [activeEvent, mode]);
-
     const presentation = useMemo<PresentationController>(
         () => ({
             activeEvent:
@@ -260,18 +248,17 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
             </div>
         );
     }
-
     return (
         <div
             data-testid="visual-lab-route"
             data-visual-lab-mode={mode}
+            data-visual-lab-chrome-mode="shell-fill"
             className="relative grid h-full w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden font-sans text-slate-200"
             style={styles.shellStyle}
         >
             <div className="absolute bottom-2 right-3 z-[100] pointer-events-none select-none font-mono text-[10px] opacity-60 text-slate-300">
                 v{appVersion} / Visual Lab
             </div>
-
             {onCloseToStartPage ? (
                 <div className="absolute right-5 top-0 z-[200] flex h-24 items-center lg:right-7 lg:h-[120px]">
                     <button
@@ -324,6 +311,8 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                     gemPanelSkin={styles.gemPanelSkin}
                     marketSurfaceStyle={styles.marketSurfaceStyle}
                     marketDeckBackArtwork={styles.marketDeckBackArtwork}
+                    royalDisplayMode="backs"
+                    royalCardBackArtwork={styles.royalCardBackArtwork}
                     isRoyalSelectionBlocked={presentation.isBlockingRoyalSelection}
                     pendingMarketRefillSlots={presentation.pendingMarketRefillSlots}
                 />
@@ -368,6 +357,8 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 styleRatings={styleRatings}
                 styleRating={styleRatings[selectedSet.id] ?? null}
                 setStyleRating={(rating) => setStyleRating(selectedSet.id, rating)}
+                styleComment={styleComments[selectedSet.id] ?? ''}
+                setStyleComment={(comment) => setStyleComment(selectedSet.id, comment)}
                 regenMarks={regenMarks}
                 toggleSurfaceLabSlotRegenMark={toggleSurfaceLabSlotRegenMark}
                 slotOverrides={slotOverrides}
@@ -384,9 +375,7 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 onTriggerMotion={() => triggerMotion()}
                 onRepeatMotion={() => triggerMotion(lastMotionTypeRef.current)}
                 onClearMotion={() => setActiveEvent(null)}
-                reviewPlanExport={reviewPlanExport}
-                onExportReviewPlan={exportReviewPlan}
-                onSyncLatestCompletion={syncLatestCompletion}
+                reviewStateStatus={reviewStateStatus}
             />
         </div>
     );

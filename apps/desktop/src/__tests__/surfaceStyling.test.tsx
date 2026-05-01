@@ -1223,6 +1223,7 @@ describe('card preview interactions', () => {
                     isPeekingBoard: false,
                     persistentWinner: null,
                     showRestartConfirm: false,
+                    soundEnabled: true,
                 },
                 setters: {
                     setShowDebug: vi.fn(),
@@ -1231,6 +1232,7 @@ describe('card preview interactions', () => {
                     setMatchmakingRoute: vi.fn(),
                     setIsPeekingBoard: vi.fn(),
                     setShowRestartConfirm: vi.fn(),
+                    setSoundEnabled: vi.fn(),
                 },
                 callbacks: {
                     handleRestart: vi.fn(),
@@ -1445,6 +1447,45 @@ describe('card preview interactions', () => {
         expect(reserveAction).not.toBeNull();
         expect(buyAction?.disabled).toBe(true);
         expect(reserveAction?.disabled).toBe(true);
+    });
+
+    it('keeps market preview actions disabled while shell interactions are locked', async () => {
+        const { props, handlers } = createShellProps(
+            {
+                market: { ...EMPTY_MARKET, 2: [SAMPLE_CARD] },
+                inventories: {
+                    p1: { ...EMPTY_COST, black: 2, green: 1 },
+                    p2: EMPTY_COST,
+                },
+            },
+            {
+                isMyTurn: false,
+            }
+        );
+
+        await renderShell(props);
+
+        await clickElement(
+            document.body.querySelector('[data-market-slot="2-0"] [data-card-preview-click="true"]')
+        );
+
+        const buyAction = document.body.querySelector(
+            '[data-card-preview-action="buy"]'
+        ) as HTMLButtonElement | null;
+        const reserveAction = document.body.querySelector(
+            '[data-card-preview-action="reserve"]'
+        ) as HTMLButtonElement | null;
+
+        expect(buyAction).not.toBeNull();
+        expect(reserveAction).not.toBeNull();
+        expect(buyAction?.disabled).toBe(true);
+        expect(reserveAction?.disabled).toBe(true);
+
+        await clickElement(buyAction);
+        await clickElement(reserveAction);
+
+        expect(handlers.initiateBuy).not.toHaveBeenCalled();
+        expect(handlers.handleReserveCard).not.toHaveBeenCalled();
     });
 
     it('keeps market preview pure during ability resolution', async () => {
@@ -1939,6 +1980,9 @@ describe('card preview interactions', () => {
         expect(actions).toHaveLength(2);
         expect(actions[0]?.getAttribute('data-card-preview-action')).toBe('buy');
         expect(actions[1]?.getAttribute('data-card-preview-action')).toBe('reserve');
+        expect(actions[0]?.className).toContain('min-h-[52px]');
+        expect(actions[0]?.className).toContain('sm:min-h-[56px]');
+        expect(actions[0]?.className).toContain('sm:min-w-[184px]');
         expect(
             document.body
                 .querySelector('[data-card-preview-actions]')

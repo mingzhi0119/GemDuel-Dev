@@ -64,10 +64,10 @@ const createElectronBridgeMock = (overrides: Partial<ElectronBridge> = {}): Elec
     ),
     cancelLanMatchmaking: vi.fn(async () => createLanMatchmakingState()),
     setDesktopAspectRatio: vi.fn(async () => ({
-        ratio: '16:10' as const,
+        ratio: '16:9' as const,
         width: 1280,
-        height: 800,
-        aspectRatio: 16 / 10,
+        height: 720,
+        aspectRatio: 16 / 9,
     })),
     selectLanPregameMode: vi.fn(
         async () =>

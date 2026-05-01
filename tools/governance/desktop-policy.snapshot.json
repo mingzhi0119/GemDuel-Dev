@@ -15,17 +15,11 @@
     "mainWindow": {
         "autoHideMenuBar": true,
         "width": 1280,
-        "height": 800,
+        "height": 720,
         "minWidth": 1280,
-        "minHeight": 800,
-        "defaultAspectRatio": "16:10",
+        "minHeight": 720,
+        "defaultAspectRatio": "16:9",
         "supportedAspectRatios": [
-            {
-                "ratio": "16:10",
-                "width": 1280,
-                "height": 800,
-                "aspectRatio": 1.6
-            },
             {
                 "ratio": "16:9",
                 "width": 1280,

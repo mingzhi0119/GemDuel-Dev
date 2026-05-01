@@ -71,10 +71,10 @@ const createLayout = (
     viewportHeight: 1200,
     aspectRatio: 1.6,
     stageCanvasWidthPx: 3840,
-    stageCanvasHeightPx: 2400,
+    stageCanvasHeightPx: 2160,
     stageScale: 0.5,
     stageInsetXPx: 0,
-    stageInsetYPx: 0,
+    stageInsetYPx: 60,
     boardScale: (3840 - 96) / 2000,
     deckScale: 1.12,
     zoneScale: 1,
@@ -222,6 +222,7 @@ const createProps = (overrides: Partial<AppRouteProps> = {}): AppRouteProps => (
         isPeekingBoard: false,
         persistentWinner: null,
         showRestartConfirm: false,
+        soundEnabled: true,
         ...(overrides.ui ?? {}),
     },
     setters: {
@@ -231,6 +232,7 @@ const createProps = (overrides: Partial<AppRouteProps> = {}): AppRouteProps => (
         setMatchmakingRoute: vi.fn(),
         setIsPeekingBoard: vi.fn(),
         setShowRestartConfirm: vi.fn(),
+        setSoundEnabled: vi.fn(),
         ...(overrides.setters ?? {}),
     },
     callbacks: {
@@ -288,6 +290,7 @@ describe('GemDuelRoutes desktop stage rendering', () => {
                     isPeekingBoard: false,
                     persistentWinner: null,
                     showRestartConfirm: false,
+                    soundEnabled: true,
                 },
             }),
         },
@@ -303,6 +306,7 @@ describe('GemDuelRoutes desktop stage rendering', () => {
                     isPeekingBoard: false,
                     persistentWinner: null,
                     showRestartConfirm: false,
+                    soundEnabled: true,
                 },
             }),
         },
@@ -344,10 +348,11 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         expect(canvas).not.toBeNull();
         expect(route).not.toBeNull();
         expect(canvas?.style.width).toBe('3840px');
-        expect(canvas?.style.height).toBe('2400px');
+        expect(canvas?.style.height).toBe('2160px');
         expect(canvas?.style.transform).toBe('scale(0.5)');
         expect(canvas?.style.left).toBe('0px');
-        expect(canvas?.style.top).toBe('0px');
+        expect(canvas?.style.top).toBe('60px');
+        expect(viewport?.className).toContain('bg-black');
         expect(canvas?.contains(route as Node)).toBe(true);
 
         act(() => {
@@ -427,10 +432,10 @@ describe('GemDuelRoutes desktop stage rendering', () => {
                     viewportHeight: 1067,
                     aspectRatio: 1707 / 1067,
                     stageCanvasWidthPx: 3840,
-                    stageCanvasHeightPx: 2400,
+                    stageCanvasHeightPx: 2160,
                     stageScale: 1707 / 3840,
                     stageInsetXPx: 0,
-                    stageInsetYPx: 0,
+                    stageInsetYPx: 53,
                 }),
             })
         );
@@ -441,9 +446,9 @@ describe('GemDuelRoutes desktop stage rendering', () => {
 
         expect(canvas).not.toBeNull();
         expect(canvas?.style.width).toBe('3840px');
-        expect(canvas?.style.height).toBe('2400px');
+        expect(canvas?.style.height).toBe('2160px');
         expect(canvas?.style.transform).toBe(`scale(${1707 / 3840})`);
-        expect(canvas?.style.top).toBe('0px');
+        expect(canvas?.style.top).toBe('53px');
 
         act(() => {
             root.unmount();

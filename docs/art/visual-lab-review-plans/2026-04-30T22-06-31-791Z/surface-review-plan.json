@@ -1,0 +1,880 @@
+{
+    "schema": "gemduel.visualLab.surfaceReviewPlan.v1",
+    "source": {
+        "origin": "http://localhost:5173",
+        "href": "http://localhost:5173/?visualLab=surfaces",
+        "createdAt": "2026-04-30T22:06:31.791Z",
+        "repoRoot": "/home/sange/projects/GemDuel-Dev",
+        "ratingsStorageKey": "gemduel.visualLab.surfaceStyleRatings.v1",
+        "regenMarksStorageKey": "gemduel.visualLab.surfaceSlotRegenMarks.v1",
+        "catalogHash": "9ec23d048e570fc94c1b772c7ee63d7863b9de386bb5be09b01b26a359b46755",
+        "ratingsHash": "5d8624015966c662b8a5ca216688d29267917b81ec0314633cdc5781052249ef",
+        "regenHash": "b8e58b1c7827e8e9f9126e39d312a4cae67d9efd275a7f1147fd062059f7fe77",
+        "commentsStorageKey": "gemduel.visualLab.surfaceStyleComments.v1",
+        "commentsHash": "315f9bdecf0f444a54dca94f8d65b3f7484e996bde650c49bf96a602ebd38054"
+    },
+    "summary": {
+        "totalSets": 48,
+        "runtimeSets": 5,
+        "candidateSets": 43,
+        "ratedCounts": {
+            "1": 0,
+            "4": 0,
+            "7": 6,
+            "10": 3
+        },
+        "deleteSetCount": 0,
+        "keepSetCount": 4,
+        "regenerateSlotCount": 7,
+        "commentCount": 4,
+        "warningCount": 0
+    },
+    "comments": {
+        "runtime:current:pearl-opaline:DARK": "替换素材时 以珍珠白为主要配色，去掉城堡",
+        "runtime:current:crystal-anime:DARK": "背景太亮，皇室卡卡背中心空",
+        "runtime:current:royal-luxury:DARK": "背景要夜间的金碧辉煌的皇宫，目前宫殿黑色元素太多",
+        "runtime:current:dark-arcane:DARK": "背景不要城堡"
+    },
+    "deleteSets": [],
+    "keepSets": [
+        {
+            "setId": "surface-autonomous-new-themes-candidates:2026-04-29:aurora-citadel:A",
+            "batch": "surface-autonomous-new-themes-candidates",
+            "date": "2026-04-29",
+            "style": "aurora-citadel",
+            "variant": "A",
+            "rating": 7,
+            "manifestPaths": [
+                "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json"
+            ],
+            "assets": [
+                {
+                    "slot": "shell-background",
+                    "rawSlot": "shell-background",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-shell-background-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/aurora-citadel/shell-background-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/aurora-citadel/shell-background-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [3840, 2160]
+                },
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone-p1",
+                    "playerZoneSide": "p1",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-player-zone-p1-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p1/aurora-citadel/player-zone-p1-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p1/aurora-citadel/player-zone-p1-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1920, 520]
+                },
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone-p2",
+                    "playerZoneSide": "p2",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-player-zone-p2-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p2/aurora-citadel/player-zone-p2-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p2/aurora-citadel/player-zone-p2-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1920, 520]
+                },
+                {
+                    "slot": "gem-panel",
+                    "rawSlot": "gem-panel",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-gem-panel-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/aurora-citadel/gem-panel-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/aurora-citadel/gem-panel-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1254, 1254]
+                },
+                {
+                    "slot": "market-card-back-l1",
+                    "rawSlot": "market-card-back-l1",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-market-card-back-l1-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l1/aurora-citadel/market-card-back-l1-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l1/aurora-citadel/market-card-back-l1-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "market-card-back-l2",
+                    "rawSlot": "market-card-back-l2",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-market-card-back-l2-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l2/aurora-citadel/market-card-back-l2-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l2/aurora-citadel/market-card-back-l2-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "market-card-back-l3",
+                    "rawSlot": "market-card-back-l3",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-market-card-back-l3-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l3/aurora-citadel/market-card-back-l3-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l3/aurora-citadel/market-card-back-l3-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "royal-card-back",
+                    "rawSlot": "royal-card-back",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-royal-card-back-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/royal-card-back/aurora-citadel/royal-card-back-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/royal-card-back/aurora-citadel/royal-card-back-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                }
+            ]
+        },
+        {
+            "setId": "surface-autonomous-new-themes-candidates:2026-04-29:aurora-citadel:B",
+            "batch": "surface-autonomous-new-themes-candidates",
+            "date": "2026-04-29",
+            "style": "aurora-citadel",
+            "variant": "B",
+            "rating": 7,
+            "manifestPaths": [
+                "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json"
+            ],
+            "assets": [
+                {
+                    "slot": "shell-background",
+                    "rawSlot": "shell-background",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-shell-background-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/aurora-citadel/shell-background-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/aurora-citadel/shell-background-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [3840, 2160]
+                },
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone-p1",
+                    "playerZoneSide": "p1",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-player-zone-p1-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p1/aurora-citadel/player-zone-p1-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p1/aurora-citadel/player-zone-p1-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1920, 520]
+                },
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone-p2",
+                    "playerZoneSide": "p2",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-player-zone-p2-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p2/aurora-citadel/player-zone-p2-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p2/aurora-citadel/player-zone-p2-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1920, 520]
+                },
+                {
+                    "slot": "gem-panel",
+                    "rawSlot": "gem-panel",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-gem-panel-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/aurora-citadel/gem-panel-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/aurora-citadel/gem-panel-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1254, 1254]
+                },
+                {
+                    "slot": "market-card-back-l1",
+                    "rawSlot": "market-card-back-l1",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-market-card-back-l1-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l1/aurora-citadel/market-card-back-l1-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l1/aurora-citadel/market-card-back-l1-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "market-card-back-l2",
+                    "rawSlot": "market-card-back-l2",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-market-card-back-l2-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l2/aurora-citadel/market-card-back-l2-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l2/aurora-citadel/market-card-back-l2-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "market-card-back-l3",
+                    "rawSlot": "market-card-back-l3",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-market-card-back-l3-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l3/aurora-citadel/market-card-back-l3-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l3/aurora-citadel/market-card-back-l3-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "royal-card-back",
+                    "rawSlot": "royal-card-back",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-royal-card-back-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/royal-card-back/aurora-citadel/royal-card-back-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/royal-card-back/aurora-citadel/royal-card-back-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                }
+            ]
+        },
+        {
+            "setId": "surface-autonomous-new-themes-candidates:2026-04-29:astral-navigator:A",
+            "batch": "surface-autonomous-new-themes-candidates",
+            "date": "2026-04-29",
+            "style": "astral-navigator",
+            "variant": "A",
+            "rating": 10,
+            "manifestPaths": [
+                "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json"
+            ],
+            "assets": [
+                {
+                    "slot": "shell-background",
+                    "rawSlot": "shell-background",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-shell-background-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/astral-navigator/shell-background-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/astral-navigator/shell-background-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [3840, 2160]
+                },
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone-p1",
+                    "playerZoneSide": "p1",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-player-zone-p1-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p1/astral-navigator/player-zone-p1-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p1/astral-navigator/player-zone-p1-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1920, 520]
+                },
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone-p2",
+                    "playerZoneSide": "p2",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-player-zone-p2-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p2/astral-navigator/player-zone-p2-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p2/astral-navigator/player-zone-p2-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1920, 520]
+                },
+                {
+                    "slot": "gem-panel",
+                    "rawSlot": "gem-panel",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-gem-panel-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/astral-navigator/gem-panel-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/astral-navigator/gem-panel-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1254, 1254]
+                },
+                {
+                    "slot": "market-card-back-l1",
+                    "rawSlot": "market-card-back-l1",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-market-card-back-l1-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l1/astral-navigator/market-card-back-l1-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l1/astral-navigator/market-card-back-l1-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "market-card-back-l2",
+                    "rawSlot": "market-card-back-l2",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-market-card-back-l2-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l2/astral-navigator/market-card-back-l2-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l2/astral-navigator/market-card-back-l2-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "market-card-back-l3",
+                    "rawSlot": "market-card-back-l3",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-market-card-back-l3-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l3/astral-navigator/market-card-back-l3-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l3/astral-navigator/market-card-back-l3-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "royal-card-back",
+                    "rawSlot": "royal-card-back",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-royal-card-back-a",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/royal-card-back/astral-navigator/royal-card-back-a.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/royal-card-back/astral-navigator/royal-card-back-a.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                }
+            ]
+        },
+        {
+            "setId": "surface-autonomous-new-themes-candidates:2026-04-29:astral-navigator:B",
+            "batch": "surface-autonomous-new-themes-candidates",
+            "date": "2026-04-29",
+            "style": "astral-navigator",
+            "variant": "B",
+            "rating": 7,
+            "manifestPaths": [
+                "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json"
+            ],
+            "assets": [
+                {
+                    "slot": "shell-background",
+                    "rawSlot": "shell-background",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-shell-background-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/astral-navigator/shell-background-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/astral-navigator/shell-background-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [3840, 2160]
+                },
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone-p1",
+                    "playerZoneSide": "p1",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-player-zone-p1-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p1/astral-navigator/player-zone-p1-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p1/astral-navigator/player-zone-p1-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1920, 520]
+                },
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone-p2",
+                    "playerZoneSide": "p2",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-player-zone-p2-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p2/astral-navigator/player-zone-p2-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/player-zone-p2/astral-navigator/player-zone-p2-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1920, 520]
+                },
+                {
+                    "slot": "gem-panel",
+                    "rawSlot": "gem-panel",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-gem-panel-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/astral-navigator/gem-panel-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/astral-navigator/gem-panel-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1254, 1254]
+                },
+                {
+                    "slot": "market-card-back-l1",
+                    "rawSlot": "market-card-back-l1",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-market-card-back-l1-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l1/astral-navigator/market-card-back-l1-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l1/astral-navigator/market-card-back-l1-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "market-card-back-l2",
+                    "rawSlot": "market-card-back-l2",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-market-card-back-l2-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l2/astral-navigator/market-card-back-l2-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l2/astral-navigator/market-card-back-l2-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "market-card-back-l3",
+                    "rawSlot": "market-card-back-l3",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-market-card-back-l3-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l3/astral-navigator/market-card-back-l3-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/market-card-back-l3/astral-navigator/market-card-back-l3-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                },
+                {
+                    "slot": "royal-card-back",
+                    "rawSlot": "royal-card-back",
+                    "promptId": "SA-NEW-2026-04-29-astral-navigator-royal-card-back-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/royal-card-back/astral-navigator/royal-card-back-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/royal-card-back/astral-navigator/royal-card-back-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1086, 1448]
+                }
+            ]
+        }
+    ],
+    "regenerateSlots": [
+        {
+            "source": "candidate",
+            "setId": "surface-autonomous-new-themes-candidates:2026-04-29:aurora-citadel:B",
+            "batch": "surface-autonomous-new-themes-candidates",
+            "date": "2026-04-29",
+            "style": "aurora-citadel",
+            "variant": "B",
+            "rating": 7,
+            "slot": "gem-panel",
+            "regenKey": "surface-autonomous-new-themes-candidates:2026-04-29:aurora-citadel:B:gem-panel",
+            "promptId": "SURFACE-REVIEW-2026-04-29-aurora-citadel-B-gem-panel",
+            "targetDimensions": [1254, 1254],
+            "targets": [
+                {
+                    "slot": "gem-panel",
+                    "rawSlot": "gem-panel",
+                    "promptId": "SA-NEW-2026-04-29-aurora-citadel-gem-panel-b",
+                    "archivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/aurora-citadel/gem-panel-b.png",
+                    "archiveUrl": "/__surface-lab/assets/surface-autonomous-new-themes-candidates/2026-04-29/gem-panel/aurora-citadel/gem-panel-b.png",
+                    "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+                    "targetDimensions": [1254, 1254]
+                }
+            ],
+            "promptConstraints": "No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells."
+        },
+        {
+            "source": "runtime",
+            "setId": "runtime:current:crystal-anime:DARK",
+            "batch": "runtime",
+            "date": "current",
+            "style": "crystal-anime",
+            "variant": "DARK",
+            "rating": null,
+            "slot": "shell-background",
+            "regenKey": "runtime:current:crystal-anime:DARK:shell-background",
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-crystal-anime-DARK-shell-background",
+            "targetDimensions": [3840, 1640],
+            "targets": [
+                {
+                    "slot": "shell-background",
+                    "rawSlot": "shell-background",
+                    "promptId": "RUNTIME-crystal-anime-shell-background",
+                    "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/shell-background.png",
+                    "archiveUrl": "/assets/surfaces/anime-themes/crystal-anime/dark/shell-background.png",
+                    "manifestPath": "",
+                    "targetDimensions": [3840, 1640]
+                }
+            ],
+            "promptConstraints": "No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Shell covers the upper 3840x1640 region only: TopBar plus center play area, with PlayerZone generated separately. Shell may use theme-related landscapes, distant architecture, environment wonders, or natural wonders, but must stay one low-contrast, low-noise wide global background with no strong focal subject, framed panel, tablecloth, playmat, center rectangle, platform, giant sun/moon disk, character, or monster."
+        },
+        {
+            "source": "runtime",
+            "setId": "runtime:current:crystal-anime:DARK",
+            "batch": "runtime",
+            "date": "current",
+            "style": "crystal-anime",
+            "variant": "DARK",
+            "rating": null,
+            "slot": "royal-card-back",
+            "regenKey": "runtime:current:crystal-anime:DARK:royal-card-back",
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-crystal-anime-DARK-royal-card-back",
+            "targetDimensions": [1086, 1448],
+            "targets": [
+                {
+                    "slot": "royal-card-back",
+                    "rawSlot": "royal-card-back",
+                    "promptId": "RUNTIME-crystal-anime-royal-card-back",
+                    "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/royal-card-back.png",
+                    "archiveUrl": "/assets/surfaces/anime-themes/crystal-anime/dark/royal-card-back.png",
+                    "manifestPath": "",
+                    "targetDimensions": [1086, 1448]
+                }
+            ],
+            "promptConstraints": "No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Royal card back must have a complete prestige center focus such as sovereign ornament, crown-like abstract motif, ceremonial medallion, jewel core, or crest-like non-readable geometry; no large empty center."
+        },
+        {
+            "source": "runtime",
+            "setId": "runtime:current:royal-luxury:DARK",
+            "batch": "runtime",
+            "date": "current",
+            "style": "royal-luxury",
+            "variant": "DARK",
+            "rating": null,
+            "slot": "shell-background",
+            "regenKey": "runtime:current:royal-luxury:DARK:shell-background",
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-royal-luxury-DARK-shell-background",
+            "targetDimensions": [3840, 1640],
+            "targets": [
+                {
+                    "slot": "shell-background",
+                    "rawSlot": "shell-background",
+                    "promptId": "RUNTIME-royal-luxury-shell-background",
+                    "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/shell-background.png",
+                    "archiveUrl": "/assets/surfaces/anime-themes/royal-luxury/dark/shell-background.png",
+                    "manifestPath": "",
+                    "targetDimensions": [3840, 1640]
+                }
+            ],
+            "promptConstraints": "No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Shell covers the upper 3840x1640 region only: TopBar plus center play area, with PlayerZone generated separately. Shell may use theme-related landscapes, distant architecture, environment wonders, or natural wonders, but must stay one low-contrast, low-noise wide global background with no strong focal subject, framed panel, tablecloth, playmat, center rectangle, platform, giant sun/moon disk, character, or monster."
+        },
+        {
+            "source": "runtime",
+            "setId": "runtime:current:dark-arcane:DARK",
+            "batch": "runtime",
+            "date": "current",
+            "style": "dark-arcane",
+            "variant": "DARK",
+            "rating": null,
+            "slot": "shell-background",
+            "regenKey": "runtime:current:dark-arcane:DARK:shell-background",
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-dark-arcane-DARK-shell-background",
+            "targetDimensions": [3840, 1640],
+            "targets": [
+                {
+                    "slot": "shell-background",
+                    "rawSlot": "shell-background",
+                    "promptId": "RUNTIME-dark-arcane-shell-background",
+                    "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/dark-arcane/dark/shell-background.png",
+                    "archiveUrl": "/assets/surfaces/anime-themes/dark-arcane/dark/shell-background.png",
+                    "manifestPath": "",
+                    "targetDimensions": [3840, 1640]
+                }
+            ],
+            "promptConstraints": "No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Shell covers the upper 3840x1640 region only: TopBar plus center play area, with PlayerZone generated separately. Shell may use theme-related landscapes, distant architecture, environment wonders, or natural wonders, but must stay one low-contrast, low-noise wide global background with no strong focal subject, framed panel, tablecloth, playmat, center rectangle, platform, giant sun/moon disk, character, or monster."
+        },
+        {
+            "source": "runtime",
+            "setId": "runtime:current:pearl-opaline:DARK",
+            "batch": "runtime",
+            "date": "current",
+            "style": "pearl-opaline",
+            "variant": "DARK",
+            "rating": null,
+            "slot": "shell-background",
+            "regenKey": "runtime:current:pearl-opaline:DARK:shell-background",
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-pearl-opaline-DARK-shell-background",
+            "targetDimensions": [3840, 1640],
+            "targets": [
+                {
+                    "slot": "shell-background",
+                    "rawSlot": "shell-background",
+                    "promptId": "RUNTIME-pearl-opaline-shell-background",
+                    "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/pearl-opaline/dark/shell-background.png",
+                    "archiveUrl": "/assets/surfaces/anime-themes/pearl-opaline/dark/shell-background.png",
+                    "manifestPath": "",
+                    "targetDimensions": [3840, 1640]
+                }
+            ],
+            "promptConstraints": "No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Shell covers the upper 3840x1640 region only: TopBar plus center play area, with PlayerZone generated separately. Shell may use theme-related landscapes, distant architecture, environment wonders, or natural wonders, but must stay one low-contrast, low-noise wide global background with no strong focal subject, framed panel, tablecloth, playmat, center rectangle, platform, giant sun/moon disk, character, or monster."
+        },
+        {
+            "source": "runtime",
+            "setId": "runtime:current:pearl-opaline:DARK",
+            "batch": "runtime",
+            "date": "current",
+            "style": "pearl-opaline",
+            "variant": "DARK",
+            "rating": null,
+            "slot": "player-zone",
+            "regenKey": "runtime:current:pearl-opaline:DARK:player-zone",
+            "promptId": "SURFACE-RUNTIME-REVIEW-current-pearl-opaline-DARK-player-zone",
+            "targetDimensions": [3840, 520],
+            "targets": [
+                {
+                    "slot": "player-zone",
+                    "rawSlot": "player-zone",
+                    "promptId": "RUNTIME-pearl-opaline-player-zone",
+                    "archivePath": "apps/desktop/public/assets/surfaces/anime-themes/pearl-opaline/dark/player-zone.png",
+                    "archiveUrl": "/assets/surfaces/anime-themes/pearl-opaline/dark/player-zone.png",
+                    "manifestPath": "",
+                    "targetDimensions": [3840, 520]
+                }
+            ],
+            "promptConstraints": "No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances."
+        }
+    ],
+    "ignored": {
+        "runtimeRated": [
+            {
+                "setId": "runtime:crystal-anime:dark",
+                "rating": 7
+            },
+            {
+                "setId": "runtime:dark-arcane:dark",
+                "rating": 7
+            },
+            {
+                "setId": "runtime:clean-boardgame:dark",
+                "rating": 10
+            },
+            {
+                "setId": "runtime:pearl-opaline:dark",
+                "rating": 7
+            },
+            {
+                "setId": "runtime:royal-luxury:dark",
+                "rating": 10
+            }
+        ],
+        "incompleteSets": [],
+        "staleRatings": [],
+        "orphanRegenMarks": [],
+        "staleComments": [],
+        "unratedSets": [
+            {
+                "setId": "surface-autonomous-artisan-styles-candidates:2026-04-27:prism-slate:B",
+                "batch": "surface-autonomous-artisan-styles-candidates",
+                "date": "2026-04-27",
+                "style": "prism-slate",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a",
+                "batch": "surface-autonomous-extra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "solar-enamel",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-extra-styles-candidates:2026-04-27:sakura-obsidian:b",
+                "batch": "surface-autonomous-extra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "sakura-obsidian",
+                "variant": "b"
+            },
+            {
+                "setId": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a",
+                "batch": "surface-autonomous-followup-candidates",
+                "date": "2026-04-27-round-01",
+                "style": "aurora-porcelain-court",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A",
+                "batch": "surface-autonomous-legendary-styles-candidates",
+                "date": "2026-04-27",
+                "style": "lapis-sunburst",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B",
+                "batch": "surface-autonomous-legendary-styles-candidates",
+                "date": "2026-04-27",
+                "style": "opal-rain",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:bamboo-ink:A",
+                "batch": "surface-autonomous-legendary-styles-candidates",
+                "date": "2026-04-27",
+                "style": "bamboo-ink",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-luminous-styles-candidates:2026-04-27:arctic-rosequartz:A",
+                "batch": "surface-autonomous-luminous-styles-candidates",
+                "date": "2026-04-27",
+                "style": "arctic-rosequartz",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-luminous-styles-candidates:2026-04-27:arctic-rosequartz:B",
+                "batch": "surface-autonomous-luminous-styles-candidates",
+                "date": "2026-04-27",
+                "style": "arctic-rosequartz",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-luminous-styles-candidates:2026-04-27:paper-lantern:B",
+                "batch": "surface-autonomous-luminous-styles-candidates",
+                "date": "2026-04-27",
+                "style": "paper-lantern",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-mythic-styles-candidates:2026-04-27:aurora-steel:B",
+                "batch": "surface-autonomous-mythic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "aurora-steel",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-mythic-styles-candidates:2026-04-27:basalt-aquamarine:B",
+                "batch": "surface-autonomous-mythic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "basalt-aquamarine",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-mythic-styles-candidates:2026-04-27:porcelain-cinnabar:A",
+                "batch": "surface-autonomous-mythic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "porcelain-cinnabar",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-mythic-styles-candidates:2026-04-27:astral-orchid:A",
+                "batch": "surface-autonomous-mythic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "astral-orchid",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-styles-candidates:2026-04-27:ember-forge:a",
+                "batch": "surface-autonomous-new-styles-candidates",
+                "date": "2026-04-27",
+                "style": "ember-forge",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-styles-candidates:2026-04-27:pearl-opaline:a",
+                "batch": "surface-autonomous-new-styles-candidates",
+                "date": "2026-04-27",
+                "style": "pearl-opaline",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-styles-candidates:2026-04-27:neon-noir:a",
+                "batch": "surface-autonomous-new-styles-candidates",
+                "date": "2026-04-27",
+                "style": "neon-noir",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-styles-candidates:2026-04-27:neon-noir:b",
+                "batch": "surface-autonomous-new-styles-candidates",
+                "date": "2026-04-27",
+                "style": "neon-noir",
+                "variant": "b"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-candidates:2026-04-29:lotus-porcelain:A",
+                "batch": "surface-autonomous-new-themes-candidates",
+                "date": "2026-04-29",
+                "style": "lotus-porcelain",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-candidates:2026-04-29:lotus-porcelain:B",
+                "batch": "surface-autonomous-new-themes-candidates",
+                "date": "2026-04-29",
+                "style": "lotus-porcelain",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r2-candidates:2026-04-29:sunken-opal:a",
+                "batch": "surface-autonomous-new-themes-r2-candidates",
+                "date": "2026-04-29",
+                "style": "sunken-opal",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r2-candidates:2026-04-29:storm-temple:a",
+                "batch": "surface-autonomous-new-themes-r2-candidates",
+                "date": "2026-04-29",
+                "style": "storm-temple",
+                "variant": "a"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r3-candidates:2026-04-29:ivory-rainharbor:B",
+                "batch": "surface-autonomous-new-themes-r3-candidates",
+                "date": "2026-04-29",
+                "style": "ivory-rainharbor",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:amber-icecourt:A",
+                "batch": "surface-autonomous-new-themes-r4-candidates",
+                "date": "2026-04-29",
+                "style": "amber-icecourt",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:amber-icecourt:B",
+                "batch": "surface-autonomous-new-themes-r4-candidates",
+                "date": "2026-04-29",
+                "style": "amber-icecourt",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+                "batch": "surface-autonomous-new-themes-r4-candidates",
+                "date": "2026-04-29",
+                "style": "velvet-sunharbor",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r5-candidates:2026-04-29:cobalt-embercourt:B",
+                "batch": "surface-autonomous-new-themes-r5-candidates",
+                "date": "2026-04-29",
+                "style": "cobalt-embercourt",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A",
+                "batch": "surface-autonomous-new-themes-r5-candidates",
+                "date": "2026-04-29",
+                "style": "moonstone-verdigris",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:platinum-stormcourt:A",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "platinum-stormcourt",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:platinum-stormcourt:B",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "platinum-stormcourt",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:teal-embergrove:A",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "teal-embergrove",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:crimson-moonarchive:B",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "crimson-moonarchive",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:opal-nightforge:A",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "opal-nightforge",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:opal-nightforge:B",
+                "batch": "surface-autonomous-new-themes-r6-candidates",
+                "date": "2026-04-29",
+                "style": "opal-nightforge",
+                "variant": "B"
+            },
+            {
+                "setId": "surface-autonomous-prismatic-styles-candidates:2026-04-27:nocturne-pearl:A",
+                "batch": "surface-autonomous-prismatic-styles-candidates",
+                "date": "2026-04-27",
+                "style": "nocturne-pearl",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-ultra-styles-candidates:2026-04-27:midnight-navigator:A",
+                "batch": "surface-autonomous-ultra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "midnight-navigator",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-ultra-styles-candidates:2026-04-27:glacier-silver:A",
+                "batch": "surface-autonomous-ultra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "glacier-silver",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-ultra-styles-candidates:2026-04-27:crimson-onyx:A",
+                "batch": "surface-autonomous-ultra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "crimson-onyx",
+                "variant": "A"
+            },
+            {
+                "setId": "surface-autonomous-ultra-styles-candidates:2026-04-27:crimson-onyx:B",
+                "batch": "surface-autonomous-ultra-styles-candidates",
+                "date": "2026-04-27",
+                "style": "crimson-onyx",
+                "variant": "B"
+            }
+        ],
+        "clientMissingOnServer": []
+    },
+    "validation": {
+        "assertions": [
+            "deleteSets are complete non-runtime candidate sets rated 1",
+            "keepSets are complete non-runtime candidate sets rated 4/7/10",
+            "regenerateSlots belong to kept candidate sets or explicitly marked runtime slots",
+            "player-zone side-specific sets expand to p1 and p2 targets",
+            "runtime assets are never deleted"
+        ]
+    },
+    "warnings": []
+}

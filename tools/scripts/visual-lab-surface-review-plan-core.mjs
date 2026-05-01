@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
     SURFACE_REVIEW_PLAN_SCHEMA,
+    SURFACE_COMMENTS_STORAGE_KEY,
     SURFACE_RATINGS_STORAGE_KEY,
     SURFACE_REGEN_STORAGE_KEY,
     SURFACE_SLOTS,
@@ -19,13 +20,13 @@ import {
     getTargetDimensions,
 } from './visual-lab-surface-review-entries.mjs';
 import { normalizeClientRuntimeSets } from './visual-lab-surface-review-runtime-sets.mjs';
-
 /**
  * @param {{
  *   repoRoot: string;
  *   records: Array<Record<string, any>>;
  *   ratings?: Record<string, number>;
  *   regenMarks?: Record<string, boolean>;
+ *   comments?: Record<string, string>;
  *   origin?: string;
  *   href?: string;
  *   clientAssetSets?: Array<Record<string, any>>;
@@ -37,6 +38,7 @@ export const buildSurfaceReviewPlan = ({
     records,
     ratings = {},
     regenMarks = {},
+    comments = {},
     origin = '',
     href = '',
     clientAssetSets = [],
@@ -46,34 +48,52 @@ export const buildSurfaceReviewPlan = ({
     const runtimeSets = normalizeClientRuntimeSets(clientAssetSets);
     const runtimeSetCount = clientAssetSets.filter((set) => set?.source === 'runtime').length;
     const completeSetIds = new Set(completeSets.map((set) => set.id));
+    const runtimeSetIds = new Set(runtimeSets.map((set) => set.id));
+    const knownSetIds = new Set([...completeSetIds, ...runtimeSetIds]);
     const validRatings = Object.fromEntries(
         Object.entries(ratings).filter(([, rating]) => VALID_RATINGS.has(rating))
     );
+    const normalizedComments = Object.fromEntries(
+        Object.entries(comments)
+            .map(([setId, comment]) => [
+                setId,
+                typeof comment === 'string' ? comment.replace(/\r\n/g, '\n').trim() : '',
+            ])
+            .filter(
+                ([setId, comment]) => typeof setId === 'string' && knownSetIds.has(setId) && comment
+            )
+    );
+    const staleComments = Object.entries(comments)
+        .map(([setId, comment]) => ({
+            setId,
+            comment: typeof comment === 'string' ? comment.replace(/\r\n/g, '\n').trim() : '',
+        }))
+        .filter((item) => item.comment && !knownSetIds.has(item.setId));
+    const attachComment = (entry) => ({
+        ...entry,
+        ...(normalizedComments[entry.setId] ? { comment: normalizedComments[entry.setId] } : {}),
+    });
     const candidateRatings = completeSets.map((set) => [set, validRatings[set.id]]);
     const deleteSets = candidateRatings
         .filter(([, rating]) => rating === 1)
-        .map(([set, rating]) => createSetEntry(set, rating));
+        .map(([set, rating]) => attachComment(createSetEntry(set, rating)));
     const keepSets = candidateRatings
         .filter(([, rating]) => rating === 4 || rating === 7 || rating === 10)
-        .map(([set, rating]) => createSetEntry(set, rating));
+        .map(([set, rating]) => attachComment(createSetEntry(set, rating)));
     const keepSetIds = new Set(keepSets.map((set) => set.setId));
     const completeSetById = new Map(completeSets.map((set) => [set.id, set]));
     const regenerateSlots = [];
     const matchedRegenKeys = new Set();
-    const runtimeSetIds = new Set(runtimeSets.map((set) => set.id));
-
     for (const keepSet of keepSets) {
         const sourceSet = completeSetById.get(keepSet.setId);
         if (!sourceSet) {
             continue;
         }
-
         for (const slot of SURFACE_SLOTS) {
             const regenKey = getSurfaceRegenKey({ ...sourceSet, slot });
             if (regenMarks[regenKey] !== true) {
                 continue;
             }
-
             matchedRegenKeys.add(regenKey);
             regenerateSlots.push({
                 source: sourceSet.source ?? 'candidate',
@@ -96,7 +116,6 @@ export const buildSurfaceReviewPlan = ({
             });
         }
     }
-
     for (const sourceSet of runtimeSets) {
         for (const slot of SURFACE_SLOTS) {
             const regenKey = getSurfaceRegenKey({ ...sourceSet, slot });
@@ -170,6 +189,7 @@ export const buildSurfaceReviewPlan = ({
 
     const warnings = [
         ...staleRatings.map((item) => `Stale rating ignored: ${item.setId}`),
+        ...staleComments.map((item) => `Stale comment ignored: ${item.setId}`),
         ...orphanRegenMarks.map((item) => `Orphan regen mark ignored: ${item.key}`),
         ...clientMissingOnServer.map(
             (setId) => `Client set missing on server manifest scan: ${setId}`
@@ -188,6 +208,8 @@ export const buildSurfaceReviewPlan = ({
             catalogHash: sha256(completeSets.map((set) => set.id).sort()),
             ratingsHash: sha256(validRatings),
             regenHash: sha256(regenMarks),
+            commentsStorageKey: SURFACE_COMMENTS_STORAGE_KEY,
+            commentsHash: sha256(normalizedComments),
         },
         summary: {
             totalSets: completeSets.length + runtimeSetCount,
@@ -197,8 +219,10 @@ export const buildSurfaceReviewPlan = ({
             deleteSetCount: deleteSets.length,
             keepSetCount: keepSets.length,
             regenerateSlotCount: regenerateSlots.length,
+            commentCount: Object.keys(normalizedComments).length,
             warningCount: warnings.length,
         },
+        comments: normalizedComments,
         deleteSets,
         keepSets,
         regenerateSlots,
@@ -207,6 +231,7 @@ export const buildSurfaceReviewPlan = ({
             incompleteSets,
             staleRatings,
             orphanRegenMarks,
+            staleComments,
             unratedSets,
             clientMissingOnServer,
         },
@@ -224,6 +249,8 @@ export const buildSurfaceReviewPlan = ({
 };
 
 const escapeMarkdown = (value) => String(value).replace(/\|/g, '\\|');
+const formatMarkdownCell = (value) =>
+    value ? escapeMarkdown(value).replace(/\r?\n/g, '<br>') : '-';
 
 export const renderSurfaceReviewPlanMarkdown = (plan) => {
     const lines = [
@@ -238,21 +265,41 @@ export const renderSurfaceReviewPlanMarkdown = (plan) => {
         `- Delete rating-1 sets: ${plan.summary.deleteSetCount}`,
         `- Kept rated sets: ${plan.summary.keepSetCount}`,
         `- Regenerate marked slots: ${plan.summary.regenerateSlotCount}`,
+        `- Style comments: ${plan.summary.commentCount ?? Object.keys(plan.comments ?? {}).length}`,
         `- Warnings: ${plan.summary.warningCount}`,
         '',
         '## Delete Sets',
         '',
-        '| Set id | Rating | Assets |',
-        '| --- | ---: | ---: |',
+        '| Set id | Rating | Assets | Comment |',
+        '| --- | ---: | ---: | --- |',
         ...plan.deleteSets.map(
-            (set) => `| \`${escapeMarkdown(set.setId)}\` | ${set.rating} | ${set.assets.length} |`
+            (set) =>
+                `| \`${escapeMarkdown(set.setId)}\` | ${set.rating} | ${set.assets.length} | ${formatMarkdownCell(
+                    set.comment
+                )} |`
         ),
         '',
         '## Keep Sets',
         '',
-        '| Set id | Rating |',
-        '| --- | ---: |',
-        ...plan.keepSets.map((set) => `| \`${escapeMarkdown(set.setId)}\` | ${set.rating} |`),
+        '| Set id | Rating | Comment |',
+        '| --- | ---: | --- |',
+        ...plan.keepSets.map(
+            (set) =>
+                `| \`${escapeMarkdown(set.setId)}\` | ${set.rating} | ${formatMarkdownCell(
+                    set.comment
+                )} |`
+        ),
+        '',
+        '## Style Comments',
+        '',
+        '| Set id | Comment |',
+        '| --- | --- |',
+        ...(Object.entries(plan.comments ?? {}).length
+            ? Object.entries(plan.comments).map(
+                  ([setId, comment]) =>
+                      `| \`${escapeMarkdown(setId)}\` | ${formatMarkdownCell(comment)} |`
+              )
+            : ['| - | - |']),
         '',
         '## Regenerate Slots',
         '',

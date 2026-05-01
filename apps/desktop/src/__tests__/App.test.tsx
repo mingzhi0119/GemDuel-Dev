@@ -15,7 +15,6 @@ const mocks = vi.hoisted(() => ({
     layout: null as ResponsiveLayout | null,
     setLocale: vi.fn(),
     setSurfaceTheme: vi.fn(),
-    setDesktopAspectRatio: vi.fn(),
     useReplayAutoSave: vi.fn(),
     useLanDevVerification: vi.fn(),
 }));
@@ -44,14 +43,11 @@ vi.mock('../hooks/useSettings', () => ({
         setLocale: mocks.setLocale,
         surfaceTheme: {
             background: 'crystal-anime',
-            topBar: 'crystal-anime',
             gemPanel: 'crystal-anime',
             playerZone: 'crystal-anime',
             effects: 'anime',
         },
         setSurfaceTheme: mocks.setSurfaceTheme,
-        desktopAspectRatio: '16:10' as const,
-        setDesktopAspectRatio: mocks.setDesktopAspectRatio,
     }),
 }));
 
@@ -178,7 +174,6 @@ describe('GemDuelBoard replay review state', () => {
         mocks.game = createGameController();
         mocks.setLocale.mockReset();
         mocks.setSurfaceTheme.mockReset();
-        mocks.setDesktopAspectRatio.mockReset();
         mocks.useReplayAutoSave.mockReset();
         mocks.useLanDevVerification.mockReset();
         delete window.electron;
@@ -205,10 +200,6 @@ describe('GemDuelBoard replay review state', () => {
 
         expect(mocks.routeProps?.ui.isReviewing).toBe(true);
         expect(mocks.routeProps?.ui.persistentWinner).toBeNull();
-        expect(mocks.routeProps?.desktopAspectRatio).toBe('16:10');
-        expect(mocks.routeProps?.callbacks.selectDesktopAspectRatio).toBe(
-            mocks.setDesktopAspectRatio
-        );
     });
 
     it('keeps the winner overlay for the latest live match state', async () => {
@@ -223,21 +214,5 @@ describe('GemDuelBoard replay review state', () => {
 
         expect(mocks.routeProps?.ui.isReviewing).toBe(false);
         expect(mocks.routeProps?.ui.persistentWinner).toBe('p1');
-    });
-
-    it('applies the stored desktop aspect ratio through the Electron bridge when available', async () => {
-        const setDesktopAspectRatio = vi.fn(async () => ({
-            ratio: '16:10' as const,
-            width: 1280,
-            height: 800,
-            aspectRatio: 16 / 10,
-        }));
-        window.electron = {
-            setDesktopAspectRatio,
-        } as unknown as typeof window.electron;
-
-        await renderBoard();
-
-        expect(setDesktopAspectRatio).toHaveBeenCalledWith({ ratio: '16:10' });
     });
 });

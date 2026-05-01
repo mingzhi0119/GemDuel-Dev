@@ -359,6 +359,7 @@ export const createGameShellHarness = (
                 isPeekingBoard: false,
                 persistentWinner: null,
                 showRestartConfirm: false,
+                soundEnabled: true,
             },
             setters: {
                 setShowDebug: vi.fn(),
@@ -367,6 +368,7 @@ export const createGameShellHarness = (
                 setMatchmakingRoute: vi.fn(),
                 setIsPeekingBoard: vi.fn(),
                 setShowRestartConfirm: vi.fn(),
+                setSoundEnabled: vi.fn(),
             },
             callbacks: {
                 handleRestart: vi.fn(),
@@ -734,6 +736,7 @@ export const renderStatefulGameShellHarness = async (
                 isPeekingBoard: false,
                 persistentWinner: null,
                 showRestartConfirm: false,
+                soundEnabled: true,
             },
             setters: {
                 setShowDebug: vi.fn(),
@@ -742,6 +745,7 @@ export const renderStatefulGameShellHarness = async (
                 setMatchmakingRoute: vi.fn(),
                 setIsPeekingBoard: vi.fn(),
                 setShowRestartConfirm: vi.fn(),
+                setSoundEnabled: vi.fn(),
             },
             callbacks: {
                 handleRestart: vi.fn(),

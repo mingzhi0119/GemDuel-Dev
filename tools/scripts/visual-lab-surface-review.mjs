@@ -7,6 +7,7 @@ import {
     finalizeReplacements,
     prepareReplacements,
     validateSurfaceReviewPlan,
+    validateSurfaceReviewState,
 } from './visual-lab-surface-review-core.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,6 +24,8 @@ const getArg = (name) => {
 
 const hasFlag = (name) => args.includes(name);
 
+const getPlan = () => getArg('--plan');
+
 const requirePlan = () => {
     const planPath = getArg('--plan');
     if (!planPath) {
@@ -33,10 +36,13 @@ const requirePlan = () => {
 
 try {
     if (command === 'validate') {
-        const result = validateSurfaceReviewPlan({
-            repoRoot,
-            planPath: requirePlan(),
-        });
+        const planPath = getPlan();
+        const result = planPath
+            ? validateSurfaceReviewPlan({
+                  repoRoot,
+                  planPath,
+              })
+            : validateSurfaceReviewState({ repoRoot });
         console.log(JSON.stringify(result, null, 2));
         process.exit(result.ok ? 0 : 1);
     }
@@ -58,7 +64,7 @@ try {
     if (command === 'prepare-replacements') {
         const result = prepareReplacements({
             repoRoot,
-            planPath: requirePlan(),
+            planPath: getPlan(),
         });
         console.log(JSON.stringify(result, null, 2));
         process.exit(0);
@@ -71,7 +77,7 @@ try {
         }
         const result = finalizeReplacements({
             repoRoot,
-            planPath: requirePlan(),
+            planPath: getPlan(),
             sourcesPath,
         });
         console.log(JSON.stringify(result, null, 2));
@@ -79,7 +85,7 @@ try {
     }
 
     throw new Error(
-        'Usage: visual-lab-surface-review.mjs <validate|apply|prepare-replacements|finalize-replacements> --plan <path>'
+        'Usage: visual-lab-surface-review.mjs <validate|apply|prepare-replacements|finalize-replacements> [--plan <legacy-plan>] [--sources <source-map>]'
     );
 } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

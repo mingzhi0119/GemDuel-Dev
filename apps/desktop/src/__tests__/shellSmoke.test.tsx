@@ -139,6 +139,7 @@ const uiState: AppRouteProps['ui'] = {
     isPeekingBoard: false,
     persistentWinner: null,
     showRestartConfirm: false,
+    soundEnabled: true,
 };
 
 const uiSetters: AppRouteProps['setters'] = {
@@ -148,6 +149,7 @@ const uiSetters: AppRouteProps['setters'] = {
     setMatchmakingRoute: vi.fn(),
     setIsPeekingBoard: vi.fn(),
     setShowRestartConfirm: vi.fn(),
+    setSoundEnabled: vi.fn(),
 };
 
 const lanController: AppRouteProps['lan'] = {
@@ -221,6 +223,8 @@ describe('shell smoke coverage', () => {
                 onAddPrivilege={vi.fn()}
                 onForceRoyal={vi.fn()}
                 showDebugPanels={false}
+                soundEnabled={true}
+                onToggleSound={vi.fn()}
             />
         );
 
@@ -306,6 +310,17 @@ describe('shell smoke coverage', () => {
         );
 
         expect(container?.querySelectorAll('[data-testid="player-zone-smoke"]').length).toBe(2);
+        const p1Frame = container?.querySelector('[data-player-zone-frame="p1"]');
+        const p2Frame = container?.querySelector('[data-player-zone-frame="p2"]');
+
+        expect(p1Frame?.getAttribute('data-player-zone-frame-active')).toBe('true');
+        expect(p1Frame?.className).toContain('border-[3px]');
+        expect(p1Frame?.className).toContain('animate-breathe-gold');
+        expect(p1Frame?.className).toContain('border-amber-200/95');
+        expect(p2Frame?.getAttribute('data-player-zone-frame-active')).toBe('false');
+        expect(p2Frame?.className).toContain('border-[3px]');
+        expect(p2Frame?.className).toContain('border-transparent');
+        expect(p2Frame?.className).not.toContain('border-slate');
     });
 
     it('renders GameShell without throwing through the excluded composition shell', () => {

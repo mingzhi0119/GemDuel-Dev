@@ -20,7 +20,8 @@ The app is a single game shell with four top-level states:
 
 ## Surface Backgrounds
 
-- The shell background is the single full-board table surface. Do not add a separate tablecloth, playmat, or center-panel background slot.
+- The desktop shell uses one fixed `3840x2160` 16:9 logical stage. Non-16:9 desktop viewports must use black bars from stage insets plus uniform scaling, not alternate layout ratios.
+- The shell background is the upper `3840x1640` surface behind the `120px` TopBar and `1520px` center play area. Do not add a separate tablecloth, playmat, center-panel, or TopBar bitmap slot.
 - Center playfield and player rail separation should use border lines and dividers only. Avoid gray overlays, gradient bands, or color-difference panels to separate these areas.
 - Light and Dark surface variants describe the artwork's tonal direction only. Do not add generic white or black masks to force a bright or dark mode; the bitmap should carry the visual tone and React should preserve readable foreground styling.
 - Player-zone artwork is rendered directly from the selected Surface Theme; React-rendered controls and cards must remain readable over the artwork without baking labels, card frames, card slots, fake controls, or numbers into the bitmap.
@@ -30,10 +31,9 @@ The app is a single game shell with four top-level states:
 
 - Major gameplay shell placement changes start in `apps/desktop/src/app/shell/GameShell.tsx`.
 - Scaling and shell sizing live in `apps/desktop/src/hooks/useResponsiveLayout.ts`.
-- Desktop stage composition is aspect-driven. The supported desktop envelope is `16:10` through the common ultrawide `12:5` family; wider or taller desktop viewports clamp to the nearest supported aspect and center the stage over the app background.
-- Same-aspect desktop viewports must produce the same logical canvas and differ only by `stageScale`.
-- `GameShell.tsx` owns the three-row gameplay structure: `TopBar`, bounded play surface, and player rail. On the desktop stage, the header uses a `120px` logical height, the player rail uses `440px`, and the center play surface scales until it hits either the row height or the logical stage width, whichever comes first.
-- `TopBar.tsx` owns the header content and must stay in normal shell flow.
+- Desktop stage composition is fixed-ratio: every desktop viewport uses the same `3840x2160` canvas and differs only by `stageScale`, `stageInsetXPx`, and `stageInsetYPx`.
+- `GameShell.tsx` owns the three-row gameplay structure: `TopBar`, bounded play surface, and player rail. On the desktop stage, the rows resolve to `120px 1520px 520px`.
+- `TopBar.tsx` owns the header content and must stay in normal shell flow; it must remain transparent over Shell Fill artwork except for the divider treatment.
 - `PlayerZone.tsx` owns internal player-panel composition.
 
 ## Card Artwork Sizing

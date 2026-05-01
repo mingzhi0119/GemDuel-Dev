@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { GameGlyph } from './GameGlyph';
 import { useT } from '../i18n/LocaleProvider';
+
+const REDO_HOLD_FAST_FORWARD_MS = 450;
 
 interface ReplayControlsProps {
     undo: () => void;
     redo: () => void;
+    fastForward?: () => void;
     canUndo: boolean;
     canRedo: boolean;
     currentIndex: number;
@@ -15,6 +18,7 @@ interface ReplayControlsProps {
 export const ReplayControls: React.FC<ReplayControlsProps> = ({
     undo,
     redo,
+    fastForward,
     canUndo,
     canRedo,
     currentIndex,
@@ -24,6 +28,71 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
     const t = useT();
     const safeIndex = Math.min(currentIndex, historyLength - 1);
     const currentStep = historyLength === 0 ? 0 : safeIndex + 1;
+    const redoRef = useRef(redo);
+    const fastForwardRef = useRef(fastForward);
+    const canRedoRef = useRef(canRedo);
+    const redoHoldTimeoutRef = useRef<number | null>(null);
+    const suppressNextRedoClickRef = useRef(false);
+
+    useEffect(() => {
+        redoRef.current = redo;
+        fastForwardRef.current = fastForward;
+        canRedoRef.current = canRedo;
+    }, [canRedo, fastForward, redo]);
+
+    const clearRedoHoldTimeout = useCallback(() => {
+        if (redoHoldTimeoutRef.current !== null) {
+            window.clearTimeout(redoHoldTimeoutRef.current);
+            redoHoldTimeoutRef.current = null;
+        }
+    }, []);
+
+    const handleRedoFastForward = useCallback(() => {
+        redoHoldTimeoutRef.current = null;
+        if (!canRedoRef.current) {
+            return;
+        }
+
+        suppressNextRedoClickRef.current = true;
+        if (fastForwardRef.current) {
+            fastForwardRef.current();
+            return;
+        }
+
+        redoRef.current();
+    }, []);
+
+    const startRedoHold = useCallback(
+        (event: React.PointerEvent<HTMLButtonElement>) => {
+            if (event.button !== 0 || !canRedoRef.current) {
+                return;
+            }
+
+            clearRedoHoldTimeout();
+            redoHoldTimeoutRef.current = window.setTimeout(
+                handleRedoFastForward,
+                REDO_HOLD_FAST_FORWARD_MS
+            );
+        },
+        [clearRedoHoldTimeout, handleRedoFastForward]
+    );
+
+    const handleRedoClick = useCallback(() => {
+        if (suppressNextRedoClickRef.current) {
+            suppressNextRedoClickRef.current = false;
+            return;
+        }
+
+        redo();
+    }, [redo]);
+
+    useEffect(() => {
+        if (!canRedo) {
+            clearRedoHoldTimeout();
+        }
+    }, [canRedo, clearRedoHoldTimeout]);
+
+    useEffect(() => clearRedoHoldTimeout, [clearRedoHoldTimeout]);
 
     return (
         <div className="flex items-center gap-4 transition-all duration-500">
@@ -78,7 +147,11 @@ export const ReplayControls: React.FC<ReplayControlsProps> = ({
             </div>
 
             <button
-                onClick={redo}
+                onClick={handleRedoClick}
+                onPointerDown={startRedoHold}
+                onPointerUp={clearRedoHoldTimeout}
+                onPointerLeave={clearRedoHoldTimeout}
+                onPointerCancel={clearRedoHoldTimeout}
                 disabled={!canRedo}
                 aria-label={t('replay.stepForward')}
                 data-replay-control="redo"

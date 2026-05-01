@@ -7,6 +7,10 @@ import type {
 } from '@gemduel/ui/components/card/cardBackArtwork';
 import type { PlayerZoneSurfaceArtwork } from '@gemduel/ui/components/playerZone/types';
 import { createGameShellStyles, type GameShellStyles } from '../shell/gameShellStyles';
+import {
+    DESKTOP_SHELL_ARTWORK_HEIGHT_PX,
+    DESKTOP_TOP_BAR_HEIGHT_PX,
+} from '../layout/desktopLayoutContract';
 import type { SurfaceLabCandidate, SurfaceLabSlot } from './surfaceLabTypes';
 
 const CANDIDATE_GEM_PANEL_GRID_LINES = {
@@ -70,6 +74,15 @@ const createImageSurfaceStyle = (
     boxShadow: options.boxShadow,
 });
 
+const createTransparentTopBarSurfaceStyle = (): CSSProperties => ({
+    backgroundColor: 'transparent',
+    backgroundImage: 'none',
+    backgroundRepeat: 'no-repeat',
+    height: `${DESKTOP_TOP_BAR_HEIGHT_PX}px`,
+    borderColor: 'rgba(250,204,21,0.18)',
+    boxShadow: 'inset 0 -1px 0 rgba(250,204,21,0.12)',
+});
+
 export const createVisualLabShellStyles = (
     theme: ThemeName,
     layout: ResponsiveLayout,
@@ -98,12 +111,11 @@ export const createVisualLabShellStyles = (
             ...base.shellStyle,
             ...createImageSurfaceStyle(getSlotArtwork(assetSlots, 'shell-background'), {
                 backgroundColor: '#020617',
+                backgroundPosition: 'top center',
+                backgroundSize: `100% ${DESKTOP_SHELL_ARTWORK_HEIGHT_PX}px`,
             }),
         },
-        topBarSurfaceStyle: createImageSurfaceStyle(getSlotArtwork(assetSlots, 'topbar'), {
-            backgroundSize: 'cover',
-            boxShadow: '0 12px 30px rgba(0,0,0,0.36), inset 0 -1px 0 rgba(250,204,21,0.12)',
-        }),
+        topBarSurfaceStyle: createTransparentTopBarSurfaceStyle(),
         gemBoardSurfaceStyle: createImageSurfaceStyle(getSlotArtwork(assetSlots, 'gem-panel'), {
             backgroundSize: '100% 100%',
             boxShadow: '0 18px 36px rgba(0,0,0,0.32)',
@@ -129,6 +141,6 @@ export const createVisualLabShellStyles = (
             variant: assetSlots['royal-card-back'].promptId,
         },
         shellSurfaceVariant: `${assetSlots['shell-background'].style}-${assetSlots['shell-background'].variant}`,
-        topBarSurfaceVariant: `${assetSlots.topbar.style}-${assetSlots.topbar.variant}`,
+        topBarSurfaceVariant: `${assetSlots['shell-background'].style}-${assetSlots['shell-background'].variant}-shell-fill`,
     };
 };

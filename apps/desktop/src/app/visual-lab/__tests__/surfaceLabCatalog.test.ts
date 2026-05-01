@@ -54,8 +54,8 @@ describe('surface lab catalog', () => {
                 score: 8.5,
                 risks: ['upscaled source', 'verify center calmness'],
                 source_dimensions: '1672x941',
-                target_dimensions: '3840x2160',
-                dimensions: '3840x2160',
+                target_dimensions: '3840x1640',
+                dimensions: '3840x1640',
             },
         ]);
 
@@ -67,13 +67,13 @@ describe('surface lab catalog', () => {
             risk: 'upscaled source; verify center calmness',
             dimensions: {
                 source: [1672, 941],
-                target: [3840, 2160],
-                archive: [3840, 2160],
+                target: [3840, 1640],
+                archive: [3840, 1640],
             },
         });
     });
 
-    it('builds complete 8-slot asset sets and filters incomplete styles', () => {
+    it('builds complete shell-fill asset sets and filters incomplete styles', () => {
         const complete = SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot));
         const incomplete = SURFACE_LAB_SLOTS.slice(0, -1).map((slot) =>
             createCandidate(slot, {

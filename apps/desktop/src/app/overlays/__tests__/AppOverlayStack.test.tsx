@@ -93,10 +93,13 @@ describe('AppOverlayStack', () => {
         const bonusButtons = Array.from(
             container?.querySelectorAll('button[data-bonus-color] [data-gem-artwork="true"]') ?? []
         );
+        const firstColorButton = container?.querySelector('button[data-bonus-color]');
         const gemIds = bonusButtons.map((node) => node.getAttribute('data-gem-id'));
 
         expect(artworkNodes.length).toBeGreaterThanOrEqual(5);
         expect(gemIds).toEqual(['red', 'green', 'blue', 'white', 'black']);
         expect(gemIds).not.toContain('gold');
+        expect(firstColorButton?.className).toContain('h-20');
+        expect(firstColorButton?.className).toContain('md:h-24');
     });
 });

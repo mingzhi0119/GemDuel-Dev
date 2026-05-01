@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { FEATURED_CARD_SIZE } from '@gemduel/ui/components/Card';
+import { Eye, EyeOff } from 'lucide-react';
 import type { PresentationEvent } from '../presentation/presentationTypes';
 import type {
     SurfaceLabAssetSet,
@@ -9,11 +9,11 @@ import type {
     VisualLabMode,
 } from './surfaceLabTypes';
 import { SurfaceLabControls } from './SurfaceLabControls';
-import type { SurfaceLabReviewPlanExportState } from './surfaceLabReviewPlanTypes';
 import { MotionLabControls } from './MotionLabControls';
 import { getMotionLabel } from './motionLabLabels';
 import type { SurfaceLabMotionEventType, SurfaceLabMotionOptions } from './motionLabEvents';
 import type { VisualLabShellStyles } from './visualLabStyles';
+import type { SurfaceLabReviewStateStatus } from './surfaceLabReviewStateTypes';
 import {
     SURFACE_LAB_STYLE_RATINGS,
     type SurfaceLabRatingFilter,
@@ -57,6 +57,8 @@ interface VisualLabConsoleProps {
     styleRatings: SurfaceLabStyleRatings;
     styleRating: SurfaceLabStyleRating | null;
     setStyleRating: (rating: SurfaceLabStyleRating) => void;
+    styleComment?: string;
+    setStyleComment?: (comment: string) => void;
     regenMarks: SurfaceLabRegenMarks;
     toggleSurfaceLabSlotRegenMark: (candidate: SurfaceLabCandidate) => void;
     slotOverrides: Partial<Record<SurfaceLabSlot, string>>;
@@ -73,9 +75,7 @@ interface VisualLabConsoleProps {
     onTriggerMotion: () => void;
     onRepeatMotion: () => void;
     onClearMotion: () => void;
-    reviewPlanExport?: SurfaceLabReviewPlanExportState;
-    onExportReviewPlan?: () => void;
-    onSyncLatestCompletion?: () => void;
+    reviewStateStatus?: SurfaceLabReviewStateStatus;
 }
 
 export function VisualLabConsole({
@@ -94,12 +94,13 @@ export function VisualLabConsole({
     styleRatings,
     styleRating,
     setStyleRating,
+    styleComment = '',
+    setStyleComment = () => undefined,
     regenMarks,
     toggleSurfaceLabSlotRegenMark,
     slotOverrides,
     setSlotOverrides,
     assetSlots,
-    styles,
     activeEvent,
     motionType,
     setMotionType,
@@ -110,13 +111,12 @@ export function VisualLabConsole({
     onTriggerMotion,
     onRepeatMotion,
     onClearMotion,
-    reviewPlanExport,
-    onExportReviewPlan,
-    onSyncLatestCompletion,
+    reviewStateStatus,
 }: VisualLabConsoleProps) {
     const consoleRef = useRef<HTMLElement | null>(null);
     const dragStateRef = useRef<ConsoleDragState | null>(null);
     const [position, setPosition] = useState<ConsolePosition | null>(null);
+    const [isHidden, setIsHidden] = useState(false);
     const maxHeight =
         position === null
             ? `calc(100vh - ${CONSOLE_DEFAULT_TOP + CONSOLE_MARGIN}px)`
@@ -191,9 +191,31 @@ export function VisualLabConsole({
         return null;
     }
 
+    if (isHidden) {
+        return createPortal(
+            <button
+                type="button"
+                data-visual-lab-console-show="true"
+                aria-label="Show visual lab console"
+                className="fixed z-[999] flex min-h-9 items-center gap-2 rounded-lg border border-cyan-300/70 bg-slate-950/92 px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-cyan-100 shadow-[0_18px_45px_rgba(0,0,0,0.4)] backdrop-blur-xl hover:bg-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
+                style={{
+                    top: position?.top ?? CONSOLE_DEFAULT_TOP,
+                    left: position?.left,
+                    right: position === null ? CONSOLE_MARGIN : undefined,
+                }}
+                onClick={() => setIsHidden(false)}
+            >
+                <Eye size={14} aria-hidden="true" />
+                Show Console
+            </button>,
+            document.body
+        );
+    }
+
     return createPortal(
         <aside
             ref={consoleRef}
+            data-visual-lab-console="true"
             className="fixed z-[999] flex flex-col gap-3 overflow-hidden rounded-lg border border-slate-700 bg-slate-950/92 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.46)] backdrop-blur-xl"
             style={{
                 width: `min(${CONSOLE_WIDTH}px, calc(100vw - ${CONSOLE_MARGIN * 2}px))`,
@@ -203,16 +225,27 @@ export function VisualLabConsole({
                 right: position === null ? CONSOLE_MARGIN : undefined,
             }}
         >
-            <button
-                type="button"
-                aria-label="Drag visual lab console"
-                className="-m-1 mb-0 flex cursor-move select-none items-center justify-between rounded-md border border-slate-700/80 bg-slate-900/80 px-2 py-1.5 text-left text-[11px] font-black uppercase tracking-[0.16em] text-slate-300 hover:border-cyan-300 hover:text-cyan-100"
-                style={{ touchAction: 'none' }}
-                onMouseDown={beginDrag}
-            >
-                <span>Visual Lab Console</span>
-                <span className="font-mono text-[10px] text-slate-500">drag</span>
-            </button>
+            <div className="-m-1 mb-0 flex select-none items-center justify-between gap-2 rounded-md border border-slate-700/80 bg-slate-900/80 px-2 py-1.5 text-left text-[11px] font-black uppercase tracking-[0.16em] text-slate-300">
+                <button
+                    type="button"
+                    aria-label="Drag visual lab console"
+                    className="flex min-w-0 flex-1 cursor-move items-center justify-between gap-2 rounded-sm text-left hover:text-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
+                    style={{ touchAction: 'none' }}
+                    onMouseDown={beginDrag}
+                >
+                    <span>Visual Lab Console</span>
+                    <span className="font-mono text-[10px] text-slate-500">drag</span>
+                </button>
+                <button
+                    type="button"
+                    data-visual-lab-console-hide="true"
+                    aria-label="Hide visual lab console"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-slate-600 bg-slate-950 text-slate-300 hover:border-cyan-300 hover:text-cyan-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200"
+                    onClick={() => setIsHidden(true)}
+                >
+                    <EyeOff size={14} aria-hidden="true" />
+                </button>
+            </div>
 
             <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
                 <SurfaceLabControls
@@ -234,23 +267,8 @@ export function VisualLabConsole({
                     slotOverrides={slotOverrides}
                     setSlotOverrides={setSlotOverrides}
                     assetSlots={assetSlots}
-                    reviewPlanExport={reviewPlanExport}
-                    onExportReviewPlan={onExportReviewPlan}
-                    onSyncLatestCompletion={onSyncLatestCompletion}
+                    reviewStateStatus={reviewStateStatus}
                 />
-
-                <div className="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
-                    <div className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
-                        Royal back display box
-                    </div>
-                    <img
-                        src={styles.royalCardBackArtwork.path}
-                        alt=""
-                        draggable={false}
-                        className="rounded-md object-cover"
-                        style={FEATURED_CARD_SIZE}
-                    />
-                </div>
 
                 <div className="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
                     <div className="mb-2 flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
@@ -281,6 +299,17 @@ export function VisualLabConsole({
                             );
                         })}
                     </div>
+                    <label className="mt-2 grid gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-slate-300">
+                        <span>Style comment</span>
+                        <textarea
+                            aria-label="Style comment"
+                            value={styleComment}
+                            rows={3}
+                            className="min-h-20 resize-y rounded-md border border-slate-600 bg-slate-950 px-2 py-1.5 font-sans text-[12px] normal-case leading-5 tracking-normal text-slate-100 outline-none placeholder:text-slate-600 focus:border-cyan-300"
+                            placeholder="What to change"
+                            onChange={(event) => setStyleComment(event.currentTarget.value)}
+                        />
+                    </label>
                 </div>
 
                 {mode === 'motion' && (

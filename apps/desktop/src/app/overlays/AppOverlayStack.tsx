@@ -88,13 +88,13 @@ export function AppOverlayStack({
                                     </>
                                 )}
                             </h2>
-                            <div className="flex gap-4 p-8 bg-white/5 rounded-3xl backdrop-blur-md border border-white/10 shadow-2xl animate-in slide-in-from-bottom-4">
+                            <div className="flex flex-wrap justify-center gap-4 p-6 bg-white/5 rounded-3xl backdrop-blur-md border border-white/10 shadow-2xl animate-in slide-in-from-bottom-4 md:flex-nowrap md:gap-5 md:p-8">
                                 {BONUS_COLORS.map((color) => (
                                     <button
                                         key={color}
                                         onClick={() => onSelectBonusColor(color)}
                                         data-bonus-color={color}
-                                        className="w-16 h-16 rounded-full hover:scale-110 active:scale-95 transition-all"
+                                        className="h-20 w-20 rounded-full transition-all hover:scale-110 active:scale-95 md:h-24 md:w-24"
                                         aria-label={t('overlays.selectColor', {
                                             color: getGemLabel(color, locale),
                                         })}

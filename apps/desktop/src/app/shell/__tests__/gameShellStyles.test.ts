@@ -21,7 +21,7 @@ const TEST_LAYOUT: ResponsiveLayout = {
     boardScale: 1,
     deckScale: 1,
     zoneScale: 1,
-    zoneHeightPx: 420,
+    zoneHeightPx: 520,
     mainGapPx: 24,
 };
 
@@ -32,6 +32,9 @@ describe('createGameShellStyles', () => {
         expect(String(styles.shellStyle.backgroundImage)).toContain(
             '/assets/surfaces/anime-themes/royal-luxury/dark/shell-background.png'
         );
+        expect(styles.shellStyle.gridTemplateRows).toBe('120px 1520px 520px');
+        expect(styles.shellStyle.backgroundSize).toBe('cover, 100% 1640px');
+        expect(styles.shellStyle.backgroundPosition).toBe('center, top center');
         expect(styles).not.toHaveProperty('playMatSurfaceStyle');
         expect(String(styles.gemBoardSurfaceStyle.backgroundImage)).toContain(
             '/assets/surfaces/anime-themes/royal-luxury/dark/gem-panel.png'
@@ -46,13 +49,15 @@ describe('createGameShellStyles', () => {
         expect(styles.shellStyle['--gd-shell-control-text' as keyof typeof styles.shellStyle]).toBe(
             '#f8fafc'
         );
+        expect(styles.topBarSurfaceStyle.backgroundImage).toBe('none');
+        expect(styles.topBarSurfaceStyle.height).toBe('120px');
+        expect(styles.playerRailStyle.height).toBe('520px');
         expect(styles.effectsSkin).toBe('anime');
     });
 
     it('wires the bundled surface theme slots without resizing fixed surfaces', () => {
         const surfaceTheme: SurfaceThemeSelections = {
             background: 'dark-arcane',
-            topBar: 'royal-luxury',
             gemPanel: 'clean-boardgame',
             playerZone: 'crystal-anime',
             effects: 'anime',
@@ -72,9 +77,8 @@ describe('createGameShellStyles', () => {
         expect(styles.marketSurfaceStyle).toEqual({});
         expect(styles.gemPanelSkin.cellCentersNormalized).toHaveLength(25);
         expect(styles.gemPanelSkin.gemDiameterNormalized).toBe(0.1371);
-        expect(String(styles.topBarSurfaceStyle.backgroundImage)).toContain(
-            '/assets/surfaces/anime-themes/royal-luxury/dark/topbar.png'
-        );
+        expect(styles.topBarSurfaceStyle.backgroundImage).toBe('none');
+        expect(styles.topBarSurfaceVariant).toBe('dark-arcane-shell-fill');
         expect(styles.effectsSkin).toBe('anime');
     });
 
@@ -84,7 +88,6 @@ describe('createGameShellStyles', () => {
         for (const variant of SURFACE_THEME_VARIANTS) {
             const surfaceTheme: SurfaceThemeSelections = {
                 background: variant,
-                topBar: variant,
                 gemPanel: variant,
                 playerZone: variant,
                 effects: 'anime',

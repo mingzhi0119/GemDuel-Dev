@@ -29,8 +29,6 @@ const getRuntimeSlotFileName = (slot: SurfaceLabSlot): string => {
     switch (slot) {
         case 'shell-background':
             return 'shell-background.png';
-        case 'topbar':
-            return 'topbar.png';
         case 'player-zone':
             return 'player-zone.png';
         case 'gem-panel':

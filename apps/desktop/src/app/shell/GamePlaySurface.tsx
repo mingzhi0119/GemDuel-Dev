@@ -5,10 +5,13 @@ import { GameBoard } from '@gemduel/ui/components/GameBoard';
 import { calculateGemPanelFootprintPx } from '@gemduel/ui/components/gameBoard/gemPanelLayout';
 import { Market } from '@gemduel/ui/components/Market';
 import { ReplayControls } from '@gemduel/ui/components/ReplayControls';
-import { RoyalCourt } from '@gemduel/ui/components/RoyalCourt';
+import { RoyalCourt, type RoyalCourtDisplayMode } from '@gemduel/ui/components/RoyalCourt';
 import { StatusBar } from '@gemduel/ui/components/StatusBar';
 import { FEATURED_CARD_SIZE } from '@gemduel/ui/components/card/cardSizing';
-import type { MarketDeckBackArtworkMap } from '@gemduel/ui/components/card/cardBackArtwork';
+import type {
+    CardBackArtwork,
+    MarketDeckBackArtworkMap,
+} from '@gemduel/ui/components/card/cardBackArtwork';
 import { SHARED_PRIVILEGE_SUPPLY_SIZE } from '@gemduel/shared/logic/stateHelpers';
 import type { AppRouteProps } from '@app/types/ui';
 import type {
@@ -34,6 +37,8 @@ interface GamePlaySurfaceProps {
     gemPanelSkin: GemPanelSkin;
     marketSurfaceStyle: CSSProperties;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
+    royalDisplayMode?: RoyalCourtDisplayMode;
+    royalCardBackArtwork?: CardBackArtwork;
     isRoyalSelectionBlocked?: boolean;
     showGemPanelCalibrationOverlay?: boolean;
     pendingMarketRefillSlots?: Array<{
@@ -67,6 +72,8 @@ export function GamePlaySurface({
     gemPanelSkin,
     marketSurfaceStyle,
     marketDeckBackArtwork,
+    royalDisplayMode = 'faces',
+    royalCardBackArtwork,
     isRoyalSelectionBlocked = false,
     showGemPanelCalibrationOverlay = false,
     pendingMarketRefillSlots = [],
@@ -248,11 +255,18 @@ export function GamePlaySurface({
                                 theme={theme}
                                 canInteract={isMyTurn && !isRoyalSelectionBlocked}
                                 onPreviewRoyal={onPreviewRoyal}
+                                displayMode={royalDisplayMode}
+                                royalCardBackArtwork={royalCardBackArtwork}
                             />
                             <div className="flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500">
                                 <ReplayControls
                                     undo={historyControls.undo}
                                     redo={historyControls.redo}
+                                    fastForward={() =>
+                                        historyControls.jumpToStep(
+                                            historyControls.historyLength - 1
+                                        )
+                                    }
                                     canUndo={
                                         state.mode !== 'ONLINE_MULTIPLAYER' &&
                                         historyControls.canUndo

@@ -1,5 +1,5 @@
 import { createReadStream, existsSync } from 'fs';
-import { mkdir, readdir, readFile, stat, writeFile } from 'fs/promises';
+import { readdir, readFile, stat } from 'fs/promises';
 import { dirname, extname, join, relative, resolve, sep } from 'path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -10,12 +10,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const workspaceRoot = resolve(__dirname, '../..');
 const artLibraryRoot = resolve(workspaceRoot, 'assets/art-library');
-const surfaceReviewStatePath = resolve(
-    workspaceRoot,
-    'tmp',
-    'visual-lab',
-    'surface-review-state.json'
-);
 const surfaceReviewCorePath = resolve(
     workspaceRoot,
     'tools',
@@ -25,7 +19,6 @@ const surfaceReviewCorePath = resolve(
 
 const SURFACE_LAB_SLOT_SET = new Set([
     'shell-background',
-    'topbar',
     'player-zone',
     'player-zone-p1',
     'player-zone-p2',
@@ -44,32 +37,6 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 type SurfaceLabManifestRecord = Record<string, unknown>;
-type SurfaceLabReviewStateSourceKind = 'electron' | 'browser';
-type SurfaceLabReviewStateFile = {
-    schema: 'gemduel.visualLab.surfaceReviewState.v1';
-    updatedAt: string;
-    revision: number;
-    source: {
-        kind: SurfaceLabReviewStateSourceKind;
-        origin: string;
-        href: string;
-    };
-    storageKeys: {
-        ratings: 'gemduel.visualLab.surfaceStyleRatings.v1';
-        regenMarks: 'gemduel.visualLab.surfaceSlotRegenMarks.v1';
-    };
-    counts: {
-        ratings: Record<'1' | '4' | '7' | '10', number>;
-        regenMarks: number;
-    };
-    ratings: Record<string, 1 | 4 | 7 | 10>;
-    regenMarks: Record<string, true>;
-};
-
-const SURFACE_REVIEW_STATE_SCHEMA = 'gemduel.visualLab.surfaceReviewState.v1';
-const SURFACE_RATINGS_STORAGE_KEY = 'gemduel.visualLab.surfaceStyleRatings.v1';
-const SURFACE_REGEN_MARKS_STORAGE_KEY = 'gemduel.visualLab.surfaceSlotRegenMarks.v1';
-const SURFACE_RATING_VALUES = new Set([1, 4, 7, 10]);
 
 const isInsideDirectory = (root: string, target: string) => {
     const relativePath = relative(root, target);
@@ -223,122 +190,6 @@ const readJsonBody = async (request: import('http').IncomingMessage): Promise<un
         request.on('error', rejectBody);
     });
 
-const normalizeSurfaceReviewRatings = (value: unknown): Record<string, 1 | 4 | 7 | 10> => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        return {};
-    }
-
-    return Object.entries(value as Record<string, unknown>).reduce<Record<string, 1 | 4 | 7 | 10>>(
-        (acc, [setId, rating]) => {
-            if (typeof setId === 'string' && SURFACE_RATING_VALUES.has(Number(rating))) {
-                acc[setId] = Number(rating) as 1 | 4 | 7 | 10;
-            }
-            return acc;
-        },
-        {}
-    );
-};
-
-const normalizeSurfaceReviewRegenMarks = (value: unknown): Record<string, true> => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-        return {};
-    }
-
-    return Object.entries(value as Record<string, unknown>).reduce<Record<string, true>>(
-        (acc, [regenKey, marked]) => {
-            if (typeof regenKey === 'string' && marked === true) {
-                acc[regenKey] = true;
-            }
-            return acc;
-        },
-        {}
-    );
-};
-
-const countSurfaceReviewRatings = (ratings: Record<string, 1 | 4 | 7 | 10>) => {
-    const counts: Record<'1' | '4' | '7' | '10', number> = {
-        '1': 0,
-        '4': 0,
-        '7': 0,
-        '10': 0,
-    };
-
-    Object.values(ratings).forEach((rating) => {
-        counts[String(rating) as keyof typeof counts] += 1;
-    });
-
-    return counts;
-};
-
-const readSurfaceReviewStateFile = async (): Promise<SurfaceLabReviewStateFile | null> => {
-    if (!existsSync(surfaceReviewStatePath)) {
-        return null;
-    }
-
-    const parsed = JSON.parse(
-        await readFile(surfaceReviewStatePath, 'utf8')
-    ) as Partial<SurfaceLabReviewStateFile>;
-
-    if (parsed.schema !== SURFACE_REVIEW_STATE_SCHEMA) {
-        return null;
-    }
-
-    return {
-        schema: SURFACE_REVIEW_STATE_SCHEMA,
-        updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : '',
-        revision: Number.isFinite(parsed.revision) ? Number(parsed.revision) : 0,
-        source: {
-            kind: parsed.source?.kind === 'electron' ? 'electron' : 'browser',
-            origin: typeof parsed.source?.origin === 'string' ? parsed.source.origin : '',
-            href: typeof parsed.source?.href === 'string' ? parsed.source.href : '',
-        },
-        storageKeys: {
-            ratings: SURFACE_RATINGS_STORAGE_KEY,
-            regenMarks: SURFACE_REGEN_MARKS_STORAGE_KEY,
-        },
-        counts: {
-            ratings: countSurfaceReviewRatings(normalizeSurfaceReviewRatings(parsed.ratings)),
-            regenMarks: Object.keys(normalizeSurfaceReviewRegenMarks(parsed.regenMarks)).length,
-        },
-        ratings: normalizeSurfaceReviewRatings(parsed.ratings),
-        regenMarks: normalizeSurfaceReviewRegenMarks(parsed.regenMarks),
-    };
-};
-
-const createSurfaceReviewStateFile = (
-    payload: Record<string, unknown>,
-    previous: SurfaceLabReviewStateFile | null
-): SurfaceLabReviewStateFile => {
-    const ratings = normalizeSurfaceReviewRatings(payload.ratings);
-    const regenMarks = normalizeSurfaceReviewRegenMarks(payload.regenMarks);
-
-    return {
-        schema: SURFACE_REVIEW_STATE_SCHEMA,
-        updatedAt: new Date().toISOString(),
-        revision: (previous?.revision ?? 0) + 1,
-        source: {
-            kind: payload.sourceKind === 'electron' ? 'electron' : 'browser',
-            origin: typeof payload.origin === 'string' ? payload.origin : '',
-            href: typeof payload.href === 'string' ? payload.href : '',
-        },
-        storageKeys: {
-            ratings: SURFACE_RATINGS_STORAGE_KEY,
-            regenMarks: SURFACE_REGEN_MARKS_STORAGE_KEY,
-        },
-        counts: {
-            ratings: countSurfaceReviewRatings(ratings),
-            regenMarks: Object.keys(regenMarks).length,
-        },
-        ratings,
-        regenMarks,
-    };
-};
-
-const writeSurfaceReviewStateFile = async (state: SurfaceLabReviewStateFile) => {
-    await mkdir(dirname(surfaceReviewStatePath), { recursive: true });
-    await writeFile(surfaceReviewStatePath, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
-};
-
 const loadSurfaceReviewCore = async () =>
     import(pathToFileURL(surfaceReviewCorePath).href) as Promise<{
         loadSurfaceManifestRecords: (input: { repoRoot: string }) => unknown[];
@@ -347,6 +198,7 @@ const loadSurfaceReviewCore = async () =>
             records: unknown[];
             ratings?: Record<string, unknown>;
             regenMarks?: Record<string, unknown>;
+            comments?: Record<string, unknown>;
             origin?: string;
             href?: string;
             clientAssetSets?: Array<Record<string, unknown>>;
@@ -356,6 +208,12 @@ const loadSurfaceReviewCore = async () =>
             plan: Record<string, unknown>;
         }) => Record<string, unknown>;
         findLatestCompletion: (input: { repoRoot: string }) => unknown | null;
+        readSurfaceReviewStateFile: (input: { repoRoot: string }) => unknown | null;
+        writeSurfaceReviewStatePayload: (input: {
+            repoRoot: string;
+            payload: Record<string, unknown>;
+        }) => unknown;
+        getSurfaceReviewStateRelativePath: (input: { repoRoot: string }) => string;
     }>;
 
 const createSurfaceLabPlugin = (): Plugin => ({
@@ -443,8 +301,13 @@ const createSurfaceLabPlugin = (): Plugin => ({
 
         server.middlewares.use('/__surface-lab/review-state.json', async (request, response) => {
             try {
+                const core = await loadSurfaceReviewCore();
+                const statePath = core.getSurfaceReviewStateRelativePath({
+                    repoRoot: workspaceRoot,
+                });
+
                 if (request.method === 'GET') {
-                    const state = await readSurfaceReviewStateFile();
+                    const state = core.readSurfaceReviewStateFile({ repoRoot: workspaceRoot });
 
                     if (!state) {
                         response.statusCode = 404;
@@ -459,16 +322,13 @@ const createSurfaceLabPlugin = (): Plugin => ({
                         JSON.stringify({
                             ok: true,
                             state,
-                            path: relative(workspaceRoot, surfaceReviewStatePath).replace(
-                                /\\/g,
-                                '/'
-                            ),
+                            path: statePath,
                         })
                     );
                     return;
                 }
 
-                if (request.method !== 'POST' && request.method !== 'PUT') {
+                if (request.method !== 'PUT') {
                     response.statusCode = 405;
                     response.setHeader('Content-Type', 'application/json; charset=utf-8');
                     response.end(JSON.stringify({ ok: false, error: 'Method not allowed' }));
@@ -476,9 +336,10 @@ const createSurfaceLabPlugin = (): Plugin => ({
                 }
 
                 const payload = (await readJsonBody(request)) as Record<string, unknown>;
-                const previous = await readSurfaceReviewStateFile();
-                const state = createSurfaceReviewStateFile(payload, previous);
-                await writeSurfaceReviewStateFile(state);
+                const state = core.writeSurfaceReviewStatePayload({
+                    repoRoot: workspaceRoot,
+                    payload,
+                });
 
                 response.statusCode = 200;
                 response.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -486,7 +347,7 @@ const createSurfaceLabPlugin = (): Plugin => ({
                     JSON.stringify({
                         ok: true,
                         state,
-                        path: relative(workspaceRoot, surfaceReviewStatePath).replace(/\\/g, '/'),
+                        path: statePath,
                     })
                 );
             } catch (error) {
@@ -515,6 +376,7 @@ const createSurfaceLabPlugin = (): Plugin => ({
                     href?: string;
                     ratings?: Record<string, unknown>;
                     regenMarks?: Record<string, unknown>;
+                    comments?: Record<string, unknown>;
                     assetSets?: Array<Record<string, unknown>>;
                 };
                 const core = await loadSurfaceReviewCore();
@@ -524,6 +386,7 @@ const createSurfaceLabPlugin = (): Plugin => ({
                     records,
                     ratings: payload.ratings ?? {},
                     regenMarks: payload.regenMarks ?? {},
+                    comments: payload.comments ?? {},
                     origin: payload.origin ?? '',
                     href: payload.href ?? '',
                     clientAssetSets: payload.assetSets ?? [],

@@ -18,8 +18,10 @@ const CARD_ROW_VIEWPORT_RATIO = 0.9;
 const MIN_CARD_WIDTH_PX = 72;
 const VERTICAL_CHROME_PX = 230;
 const GLOBAL_ACTION_BAND_BOTTOM = 'clamp(72px, 11vh, 150px)';
-const ACTION_BUTTON_CLASS =
-    'min-w-[148px] rounded border border-amber-200/70 bg-amber-400 px-6 py-2 text-sm font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_10px_28px_rgba(251,191,36,0.26)] transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:border-slate-500/50 disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none';
+const ACTION_BUTTON_BASE_CLASS =
+    'rounded border border-amber-200/70 bg-amber-400 font-black uppercase tracking-[0.16em] text-slate-950 shadow-[0_10px_28px_rgba(251,191,36,0.26)] transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:border-slate-500/50 disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none';
+const GLOBAL_ACTION_BUTTON_CLASS = `${ACTION_BUTTON_BASE_CLASS} min-h-[52px] min-w-[156px] px-5 py-3 text-[15px] sm:min-h-[56px] sm:min-w-[184px] sm:px-8 sm:text-base`;
+const CARD_ACTION_BUTTON_CLASS = `${ACTION_BUTTON_BASE_CLASS} min-h-[46px] min-w-[132px] px-4 py-2.5 text-sm`;
 
 type CardPreviewMode = 'single' | 'collection';
 
@@ -327,7 +329,7 @@ export function CardPreviewOverlay({
                                     <div
                                         key={`card-actions-${card.id || index}`}
                                         data-card-preview-card-actions={card.id}
-                                        className="flex justify-center gap-3"
+                                        className="flex flex-wrap justify-center gap-2.5"
                                     >
                                         {visibleCardActions[index].map((action, actionIndex) => (
                                             <button
@@ -339,7 +341,7 @@ export function CardPreviewOverlay({
                                                 data-card-preview-action-scope="card"
                                                 disabled={action.disabled}
                                                 onClick={() => handleAction(action)}
-                                                className={ACTION_BUTTON_CLASS}
+                                                className={CARD_ACTION_BUTTON_CLASS}
                                             >
                                                 {action.label}
                                             </button>
@@ -371,7 +373,7 @@ export function CardPreviewOverlay({
                                             }
                                             disabled={action.disabled}
                                             onClick={() => handleAction(action)}
-                                            className={ACTION_BUTTON_CLASS}
+                                            className={GLOBAL_ACTION_BUTTON_CLASS}
                                         >
                                             {action.label}
                                         </button>

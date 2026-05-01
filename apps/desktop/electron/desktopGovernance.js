@@ -6,15 +6,9 @@ import { buildRendererTrustPolicySnapshot, isAllowedRendererUrl } from './render
 const { ELECTRON_BRIDGE_API_KEYS, IPC_INVOKE_CHANNELS, IPC_SEND_CHANNELS, UPDATE_CHANNELS } =
     preloadContract;
 export const DESKTOP_GOVERNANCE_POLICY_VERSION = 2;
-export const DEFAULT_DESKTOP_ASPECT_RATIO = '16:10';
+export const DEFAULT_DESKTOP_ASPECT_RATIO = '16:9';
 export { buildRendererTrustPolicySnapshot, isAllowedRendererUrl } from './rendererTrustPolicy.js';
 export const DESKTOP_ASPECT_RATIO_OPTIONS = Object.freeze({
-    '16:10': Object.freeze({
-        ratio: '16:10',
-        width: 1280,
-        height: 800,
-        aspectRatio: 16 / 10,
-    }),
     '16:9': Object.freeze({
         ratio: '16:9',
         width: 1280,
@@ -32,7 +26,7 @@ const MAIN_WINDOW_WEB_PREFERENCES_SCHEMA = z.object({
 });
 
 const NO_ARGS_SCHEMA = z.tuple([]);
-const DESKTOP_ASPECT_RATIO_SCHEMA = z.enum(['16:10', '16:9']);
+const DESKTOP_ASPECT_RATIO_SCHEMA = z.literal('16:9');
 const DESKTOP_ASPECT_RATIO_TUPLE_SCHEMA = z.tuple([
     z.object({
         ratio: DESKTOP_ASPECT_RATIO_SCHEMA,
@@ -112,7 +106,7 @@ export const getDesktopAspectRatioConfig = (ratio) => {
     const parsed = DESKTOP_ASPECT_RATIO_SCHEMA.safeParse(ratio);
 
     if (!parsed.success) {
-        throw new Error('Desktop aspect ratio must be one of 16:10 or 16:9.');
+        throw new Error('Desktop aspect ratio must be 16:9.');
     }
 
     return DESKTOP_ASPECT_RATIO_OPTIONS[parsed.data];
@@ -161,14 +155,14 @@ export const validateMainWindowOptions = (options) => {
         options?.width !== defaultAspectConfig.width ||
         options?.height !== defaultAspectConfig.height
     ) {
-        issues.push('[BrowserWindow] default size must stay locked to 16:10 at 1280x800.');
+        issues.push('[BrowserWindow] default size must stay locked to 16:9 at 1280x720.');
     }
 
     if (
         options?.minWidth !== defaultAspectConfig.width ||
         options?.minHeight !== defaultAspectConfig.height
     ) {
-        issues.push('[BrowserWindow] default minimum size must stay locked to 16:10 at 1280x800.');
+        issues.push('[BrowserWindow] default minimum size must stay locked to 16:9 at 1280x720.');
     }
 
     return issues;

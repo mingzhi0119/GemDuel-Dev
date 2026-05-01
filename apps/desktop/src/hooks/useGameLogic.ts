@@ -65,12 +65,13 @@ export const useGameLogic = (
 
     const isViewingHistory =
         historyControls.historyLength > 0 &&
-        historyControls.currentIndex < historyControls.historyLength - 1;
+        historyControls.currentIndex !== historyControls.historyLength - 1;
     const isTurnHandoffInteractionLocked = useTurnHandoffInteractionLock(
         gameState,
         isReviewing,
         isViewingHistory
     );
+    const isInteractionLocked = isViewingHistory || isTurnHandoffInteractionLocked;
 
     // 3. User Interaction Handlers
     const interactions = useGameInteractions(
@@ -78,11 +79,11 @@ export const useGameLogic = (
         networkDispatch,
         historyControls.currentIndex,
         isReviewing,
-        isTurnHandoffInteractionLocked
+        isInteractionLocked
     );
 
     // 4. AI Controller
-    useAIController(gameState, networkDispatch, isViewingHistory, isTurnHandoffInteractionLocked);
+    useAIController(gameState, networkDispatch, isViewingHistory, isInteractionLocked);
 
     // 5. History Flattening
     useHistoryFlattening(gameState, historyControls, historyControls.historySource === 'live');

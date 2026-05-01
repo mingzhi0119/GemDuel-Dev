@@ -4,6 +4,7 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ROYAL_CARDS } from '@gemduel/shared/constants';
 import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
 import type { AppRouteProps } from '@app/types/ui';
 import type { GameAction } from '@gemduel/shared/types';
@@ -27,6 +28,7 @@ import {
     useSurfaceLabRegenMarks,
     type SurfaceLabRegenMarks,
 } from '../useSurfaceLabRegenMarks';
+import { SURFACE_LAB_COMMENTS_STORAGE_KEY, useSurfaceLabComments } from '../useSurfaceLabComments';
 
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -67,10 +69,10 @@ const createLayout = (): AppRouteProps['layout'] => ({
     viewportHeight: 1200,
     aspectRatio: 1.6,
     stageCanvasWidthPx: 3840,
-    stageCanvasHeightPx: 2400,
+    stageCanvasHeightPx: 2160,
     stageScale: 0.5,
     stageInsetXPx: 0,
-    stageInsetYPx: 0,
+    stageInsetYPx: 60,
     boardScale: (3840 - 96) / 2000,
     deckScale: 1.12,
     zoneScale: 1,
@@ -224,12 +226,19 @@ describe('visual lab smoke', () => {
         document.body.appendChild(container);
 
         const game = createGame();
+        const gameWithRoyalDeck = {
+            ...game,
+            state: {
+                ...game.state,
+                royalDeck: ROYAL_CARDS.slice(0, 1),
+            },
+        } as AppRouteProps['game'];
         await act(async () => {
             root = createRoot(container!);
             root.render(
                 <VisualLabRoute
                     appVersion="0.test"
-                    game={game}
+                    game={gameWithRoyalDeck}
                     layout={createLayout()}
                     theme="dark"
                     ui={{
@@ -240,6 +249,7 @@ describe('visual lab smoke', () => {
                         isPeekingBoard: false,
                         persistentWinner: null,
                         showRestartConfirm: false,
+                        soundEnabled: true,
                     }}
                     setters={{
                         setShowDebug: vi.fn(),
@@ -248,6 +258,7 @@ describe('visual lab smoke', () => {
                         setMatchmakingRoute: vi.fn(),
                         setIsPeekingBoard: vi.fn(),
                         setShowRestartConfirm: vi.fn(),
+                        setSoundEnabled: vi.fn(),
                     }}
                     callbacks={{
                         handleRestart: vi.fn(),
@@ -290,7 +301,14 @@ describe('visual lab smoke', () => {
             }
         }
 
-        expect(container?.querySelector('[data-testid="visual-lab-route"]')).toBeTruthy();
+        const visualLabRoute = container?.querySelector('[data-testid="visual-lab-route"]');
+        expect(visualLabRoute).toBeTruthy();
+        expect(visualLabRoute?.getAttribute('data-visual-lab-chrome-mode')).toBe('shell-fill');
+        const royalBack = document.body.querySelector(
+            '[data-royal-card-display="back"]'
+        ) as HTMLImageElement | null;
+        expect(royalBack).toBeTruthy();
+        expect(royalBack?.getAttribute('src')).toContain('royal-card-back.png');
         const back = container?.querySelector(
             '[data-app-restart-button="true"]'
         ) as HTMLButtonElement | null;
@@ -301,19 +319,34 @@ describe('visual lab smoke', () => {
         expect(onCloseToStartPage).toHaveBeenCalledTimes(1);
     });
 
-    it('exports a surface review plan from the current Visual Lab origin state', async () => {
+    it('writes persistent review state and removes cleared marks/comments on the next save', async () => {
         const candidatesPayload = SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot));
         const normalized = normalizeSurfaceLabCandidates(candidatesPayload);
         const assetSets = createSurfaceLabAssetSets(normalized, 'dark');
-        const selectedSet = assetSets[0];
-        const exportRequests: unknown[] = [];
+        const selectedSet = createSurfaceLabAssetSets([], 'dark')[0];
+        const candidateSet = assetSets.find((set) => set.source === 'candidate')!;
+        const gemPanelKey = getSurfaceLabSlotRegenKey(selectedSet.slots['gem-panel']);
+        const reviewStateWrites: Array<{
+            ratings?: SurfaceLabStyleRatings;
+            regenMarks?: SurfaceLabRegenMarks;
+            comments?: Record<string, string>;
+            assetSets?: Array<{
+                id?: string;
+                source?: string;
+                slots?: Record<string, Partial<SurfaceLabCandidate>>;
+            }>;
+        }> = [];
         window.localStorage.setItem(
             SURFACE_LAB_RATINGS_STORAGE_KEY,
             JSON.stringify({ [selectedSet.id]: 1 })
         );
         window.localStorage.setItem(
             SURFACE_LAB_REGEN_MARKS_STORAGE_KEY,
-            JSON.stringify({ [getSurfaceLabSlotRegenKey(selectedSet.slots['gem-panel'])]: true })
+            JSON.stringify({ [gemPanelKey]: true })
+        );
+        window.localStorage.setItem(
+            SURFACE_LAB_COMMENTS_STORAGE_KEY,
+            JSON.stringify({ [selectedSet.id]: 'Brighten the gem panel and simplify the shell.' })
         );
         vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
             const url =
@@ -329,25 +362,59 @@ describe('visual lab smoke', () => {
                     json: async () => ({ candidates: candidatesPayload }),
                 } as Response;
             }
-            if (url.includes('/__surface-lab/review-plan')) {
-                exportRequests.push(JSON.parse(String(init?.body ?? '{}')));
+            if (url.includes('/__surface-lab/review-state.json')) {
+                if (init?.method !== 'PUT') {
+                    return {
+                        ok: false,
+                        status: 404,
+                        json: async () => ({ ok: false, error: 'No review state found' }),
+                    } as Response;
+                }
+                const body = JSON.parse(String(init.body ?? '{}')) as {
+                    ratings?: SurfaceLabStyleRatings;
+                    regenMarks?: SurfaceLabRegenMarks;
+                    comments?: Record<string, string>;
+                    assetSets?: Array<{
+                        id?: string;
+                        source?: string;
+                        slots?: Record<string, Partial<SurfaceLabCandidate>>;
+                    }>;
+                    sourceKind?: string;
+                };
+                reviewStateWrites.push(body);
+                const counts = {
+                    ratings: {
+                        '1': Object.values(body.ratings ?? {}).filter((rating) => rating === 1)
+                            .length,
+                        '4': Object.values(body.ratings ?? {}).filter((rating) => rating === 4)
+                            .length,
+                        '7': Object.values(body.ratings ?? {}).filter((rating) => rating === 7)
+                            .length,
+                        '10': Object.values(body.ratings ?? {}).filter((rating) => rating === 10)
+                            .length,
+                    },
+                    regenMarks: Object.keys(body.regenMarks ?? {}).length,
+                    comments: Object.keys(body.comments ?? {}).length,
+                    assetSets: body.assetSets?.length ?? 0,
+                    pendingReplacements: Object.keys(body.regenMarks ?? {}).length,
+                    pendingComments: Object.keys(body.comments ?? {}).length,
+                };
                 return {
                     ok: true,
                     status: 200,
                     json: async () => ({
                         ok: true,
-                        files: {
-                            jsonPath:
-                                'docs/art/visual-lab-review-plans/test/surface-review-plan.json',
-                            markdownPath:
-                                'docs/art/visual-lab-review-plans/test/surface-review-plan.md',
-                        },
-                        plan: {
-                            summary: {
-                                deleteSetCount: 1,
-                                regenerateSlotCount: 0,
-                                warningCount: 0,
-                            },
+                        path: 'tmp/visual-lab/surface-review-state.json',
+                        state: {
+                            schema: 'gemduel.visualLab.surfaceReviewState.v2',
+                            revision: reviewStateWrites.length,
+                            updatedAt: '2026-04-30T00:00:00.000Z',
+                            source: { kind: body.sourceKind ?? 'browser' },
+                            counts,
+                            ratings: body.ratings ?? {},
+                            regenMarks: body.regenMarks ?? {},
+                            comments: body.comments ?? {},
+                            assetSets: body.assetSets ?? [],
                         },
                     }),
                 } as Response;
@@ -374,6 +441,7 @@ describe('visual lab smoke', () => {
                         isPeekingBoard: false,
                         persistentWinner: null,
                         showRestartConfirm: false,
+                        soundEnabled: true,
                     }}
                     setters={{
                         setShowDebug: vi.fn(),
@@ -382,6 +450,7 @@ describe('visual lab smoke', () => {
                         setMatchmakingRoute: vi.fn(),
                         setIsPeekingBoard: vi.fn(),
                         setShowRestartConfirm: vi.fn(),
+                        setSoundEnabled: vi.fn(),
                     }}
                     callbacks={{
                         handleRestart: vi.fn(),
@@ -418,73 +487,98 @@ describe('visual lab smoke', () => {
 
         for (let attempt = 0; attempt < 30; attempt += 1) {
             await flushMicrotasks();
-            if (document.body.textContent?.includes('Export review plan')) {
+            if (
+                reviewStateWrites.length > 0 &&
+                document.body.textContent?.includes('Review state')
+            ) {
                 break;
             }
         }
 
-        await act(async () => {
-            (
-                Array.from(document.body.querySelectorAll('button')).find(
-                    (button) => button.textContent === 'Export review plan'
-                ) as HTMLButtonElement
-            )?.click();
-            await Promise.resolve();
-        });
-        await flushMicrotasks();
+        const persistedWrite =
+            reviewStateWrites.find((write) =>
+                write.assetSets?.some((set) => set.id === candidateSet.id)
+            ) ?? reviewStateWrites[0];
 
-        expect(exportRequests).toHaveLength(1);
-        expect(exportRequests[0]).toMatchObject({
+        expect(persistedWrite).toMatchObject({
             ratings: { [selectedSet.id]: 1 },
             regenMarks: {
-                [getSurfaceLabSlotRegenKey(selectedSet.slots['gem-panel'])]: true,
+                [gemPanelKey]: true,
+            },
+            comments: {
+                [selectedSet.id]: 'Brighten the gem panel and simplify the shell.',
             },
         });
-        const exportedAssetSets =
-            (
-                exportRequests[0] as {
-                    assetSets?: Array<{
-                        id?: string;
-                        source?: string;
-                        slots?: Record<string, Partial<SurfaceLabCandidate>>;
-                    }>;
-                }
-            ).assetSets ?? [];
-        const exportedCandidateSet = exportedAssetSets.find((set) => set.id === selectedSet.id);
+        const exportedAssetSets = persistedWrite.assetSets ?? [];
+        const exportedCandidateSet = exportedAssetSets.find((set) => set.id === candidateSet.id);
         const exportedRuntimeSet = exportedAssetSets.find(
             (set) => set.id === 'runtime:crystal-anime:dark'
         );
         expect(exportedCandidateSet?.slots?.['gem-panel']).toMatchObject({
             source: 'candidate',
-            archiveUrl: selectedSet.slots['gem-panel'].archiveUrl,
+            archiveUrl: candidateSet.slots['gem-panel'].archiveUrl,
         });
-        expect(exportedRuntimeSet?.slots?.topbar).toMatchObject({
+        expect(exportedRuntimeSet?.slots).not.toHaveProperty('topbar');
+        expect(exportedRuntimeSet?.slots?.['shell-background']).toMatchObject({
             source: 'runtime',
             batch: 'runtime',
             date: 'current',
             style: 'crystal-anime',
             variant: 'DARK',
-            archiveUrl: '/assets/surfaces/anime-themes/crystal-anime/dark/topbar.png',
+            archiveUrl: '/assets/surfaces/anime-themes/crystal-anime/dark/shell-background.png',
         });
-        expect(document.body.textContent).toContain('Review plan exported');
-        expect(document.body.textContent).toContain('Plan: test');
-        expect(document.body.textContent).toContain('Delete 1 / Regen 0 / Warnings 0');
-        expect(document.body.textContent).not.toContain(
-            'docs/art/visual-lab-review-plans/test/surface-review-plan.json'
-        );
-        expect(document.body.textContent).not.toContain(
-            'docs/art/visual-lab-review-plans/test/surface-review-plan.md'
-        );
+        expect(document.body.textContent).toContain('tmp/visual-lab/surface-review-state.json');
+        expect(document.body.textContent).not.toContain('Export review plan');
+        expect(document.body.textContent).not.toContain('Sync latest completion');
 
-        const compactPlanLine = Array.from(document.body.querySelectorAll('[title]')).find(
-            (element) => element.textContent?.includes('Plan: test')
-        );
-        expect(compactPlanLine?.getAttribute('title')).toContain(
-            'docs/art/visual-lab-review-plans/test/surface-review-plan.json'
-        );
-        expect(compactPlanLine?.getAttribute('title')).toContain(
-            'docs/art/visual-lab-review-plans/test/surface-review-plan.md'
-        );
+        await act(async () => {
+            (
+                document.body.querySelector(
+                    'button[aria-label="Rate current style 10"]'
+                ) as HTMLButtonElement | null
+            )?.click();
+        });
+        for (let attempt = 0; attempt < 30; attempt += 1) {
+            await flushMicrotasks();
+            if (reviewStateWrites.at(-1)?.ratings?.[selectedSet.id] === 10) {
+                break;
+            }
+        }
+        expect(reviewStateWrites.at(-1)?.ratings).toMatchObject({ [selectedSet.id]: 10 });
+
+        await act(async () => {
+            (
+                document.body.querySelector(
+                    'button[aria-label="Clear Gem panel for regeneration"]'
+                ) as HTMLButtonElement | null
+            )?.click();
+        });
+        for (let attempt = 0; attempt < 30; attempt += 1) {
+            await flushMicrotasks();
+            if (!reviewStateWrites.at(-1)?.regenMarks?.[gemPanelKey]) {
+                break;
+            }
+        }
+        expect(reviewStateWrites.at(-1)?.regenMarks).not.toHaveProperty(gemPanelKey);
+
+        const textarea = document.body.querySelector(
+            'textarea[aria-label="Style comment"]'
+        ) as HTMLTextAreaElement | null;
+        const valueSetter = Object.getOwnPropertyDescriptor(
+            HTMLTextAreaElement.prototype,
+            'value'
+        )?.set;
+        await act(async () => {
+            valueSetter?.call(textarea, '   ');
+            textarea?.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        for (let attempt = 0; attempt < 30; attempt += 1) {
+            await flushMicrotasks();
+            if (!reviewStateWrites.at(-1)?.comments?.[selectedSet.id]) {
+                break;
+            }
+        }
+        expect(reviewStateWrites.at(-1)?.comments).not.toHaveProperty(selectedSet.id);
     });
 
     it('seeds shared review state from Electron localStorage when the preload bridge is present', async () => {
@@ -501,6 +595,10 @@ describe('visual lab smoke', () => {
             SURFACE_LAB_REGEN_MARKS_STORAGE_KEY,
             JSON.stringify({ [shellKey]: true })
         );
+        window.localStorage.setItem(
+            SURFACE_LAB_COMMENTS_STORAGE_KEY,
+            JSON.stringify({ [selectedSet.id]: 'Keep composition, replace shell texture.' })
+        );
         vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
             const url =
                 typeof input === 'string'
@@ -516,9 +614,17 @@ describe('visual lab smoke', () => {
                 } as Response;
             }
             if (url.includes('/__surface-lab/review-state.json')) {
+                if (init?.method !== 'PUT') {
+                    return {
+                        ok: false,
+                        status: 404,
+                        json: async () => ({ ok: false, error: 'No review state found' }),
+                    } as Response;
+                }
                 const body = JSON.parse(String(init?.body ?? '{}')) as {
                     ratings?: SurfaceLabStyleRatings;
                     regenMarks?: SurfaceLabRegenMarks;
+                    comments?: Record<string, string>;
                     sourceKind?: string;
                 };
                 reviewStateRequests.push(body);
@@ -527,11 +633,22 @@ describe('visual lab smoke', () => {
                     status: 200,
                     json: async () => ({
                         ok: true,
+                        path: 'tmp/visual-lab/surface-review-state.json',
                         state: {
+                            schema: 'gemduel.visualLab.surfaceReviewState.v2',
                             revision: reviewStateRequests.length,
                             source: { kind: body.sourceKind },
+                            counts: {
+                                ratings: { '1': 0, '4': 0, '7': 0, '10': 1 },
+                                regenMarks: Object.keys(body.regenMarks ?? {}).length,
+                                comments: Object.keys(body.comments ?? {}).length,
+                                assetSets: 0,
+                                pendingReplacements: Object.keys(body.regenMarks ?? {}).length,
+                                pendingComments: Object.keys(body.comments ?? {}).length,
+                            },
                             ratings: body.ratings ?? {},
                             regenMarks: body.regenMarks ?? {},
+                            comments: body.comments ?? {},
                         },
                     }),
                 } as Response;
@@ -558,6 +675,7 @@ describe('visual lab smoke', () => {
                         isPeekingBoard: false,
                         persistentWinner: null,
                         showRestartConfirm: false,
+                        soundEnabled: true,
                     }}
                     setters={{
                         setShowDebug: vi.fn(),
@@ -566,6 +684,7 @@ describe('visual lab smoke', () => {
                         setMatchmakingRoute: vi.fn(),
                         setIsPeekingBoard: vi.fn(),
                         setShowRestartConfirm: vi.fn(),
+                        setSoundEnabled: vi.fn(),
                     }}
                     callbacks={{
                         handleRestart: vi.fn(),
@@ -611,6 +730,7 @@ describe('visual lab smoke', () => {
             sourceKind: 'electron',
             ratings: { [selectedSet.id]: 10 },
             regenMarks: { [shellKey]: true },
+            comments: { [selectedSet.id]: 'Keep composition, replace shell texture.' },
         });
     });
 
@@ -642,11 +762,22 @@ describe('visual lab smoke', () => {
                     status: 200,
                     json: async () => ({
                         ok: true,
+                        path: 'tmp/visual-lab/surface-review-state.json',
                         state: {
+                            schema: 'gemduel.visualLab.surfaceReviewState.v2',
                             revision: 7,
                             source: { kind: 'electron' },
+                            counts: {
+                                ratings: { '1': 0, '4': 0, '7': 1, '10': 0 },
+                                regenMarks: 1,
+                                comments: 1,
+                                assetSets: 0,
+                                pendingReplacements: 1,
+                                pendingComments: 1,
+                            },
                             ratings: { [selectedSet.id]: 7 },
                             regenMarks: { [shellKey]: true },
+                            comments: { [selectedSet.id]: 'Needs clearer edge separation.' },
                         },
                     }),
                 } as Response;
@@ -673,6 +804,7 @@ describe('visual lab smoke', () => {
                         isPeekingBoard: false,
                         persistentWinner: null,
                         showRestartConfirm: false,
+                        soundEnabled: true,
                     }}
                     setters={{
                         setShowDebug: vi.fn(),
@@ -681,6 +813,7 @@ describe('visual lab smoke', () => {
                         setMatchmakingRoute: vi.fn(),
                         setIsPeekingBoard: vi.fn(),
                         setShowRestartConfirm: vi.fn(),
+                        setSoundEnabled: vi.fn(),
                     }}
                     callbacks={{
                         handleRestart: vi.fn(),
@@ -735,6 +868,9 @@ describe('visual lab smoke', () => {
         expect(
             JSON.parse(window.localStorage.getItem(SURFACE_LAB_REGEN_MARKS_STORAGE_KEY) ?? '{}')
         ).toMatchObject({ [shellKey]: true });
+        expect(
+            JSON.parse(window.localStorage.getItem(SURFACE_LAB_COMMENTS_STORAGE_KEY) ?? '{}')
+        ).toMatchObject({ [selectedSet.id]: 'Needs clearer edge separation.' });
         expect(
             document.body
                 .querySelector('button[aria-label="Rate current style 7"]')
@@ -798,6 +934,105 @@ describe('visual lab smoke', () => {
         });
 
         expect(document.body.textContent).toContain('Visual Lab Console');
+        expect(document.body.textContent).not.toContain('Royal back display box');
+        expect(document.body.querySelector('[data-visual-lab-console]')).toBeTruthy();
+    });
+
+    it('uses shell-fill topbar styling as the only Visual Lab chrome art mode', () => {
+        const normalized = normalizeSurfaceLabCandidates(
+            SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot))
+        );
+        const assetSets = createSurfaceLabAssetSets(normalized, 'dark');
+        const selectedSet = assetSets[0];
+        const styles = createVisualLabShellStyles('dark', createLayout(), selectedSet.slots, {});
+
+        expect(Object.keys(selectedSet.slots)).not.toContain('topbar');
+        expect(String(styles.shellStyle.backgroundImage)).toContain(
+            '/__surface-lab/assets/test/shell-background.png'
+        );
+        expect(styles.shellStyle.gridTemplateRows).toBe('120px 1520px 520px');
+        expect(styles.shellStyle.backgroundSize).toBe('100% 1640px');
+        expect(styles.shellStyle.backgroundPosition).toBe('top center');
+        expect(String(styles.topBarSurfaceStyle.backgroundImage)).not.toContain(
+            '/__surface-lab/assets/test/topbar.png'
+        );
+        expect(styles.topBarSurfaceStyle.backgroundImage).toBe('none');
+        expect(styles.topBarSurfaceStyle.backgroundColor).toBe('transparent');
+        expect(styles.topBarSurfaceStyle.height).toBe('120px');
+        expect(styles.topBarSurfaceVariant).toContain('shell-fill');
+    });
+
+    it('hides and restores the floating Visual Lab console', async () => {
+        const normalized = normalizeSurfaceLabCandidates(
+            SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot))
+        );
+        const assetSets = createSurfaceLabAssetSets(normalized, 'dark');
+        const selectedSet = assetSets[0];
+        const assetSlots = selectedSet.slots;
+        const styles = createVisualLabShellStyles('dark', createLayout(), assetSlots, {});
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(
+                <VisualLabConsole
+                    mode="surfaces"
+                    catalogStatus="ready"
+                    assetSets={assetSets}
+                    visibleAssetSets={assetSets}
+                    selectedSet={selectedSet}
+                    selectedSetId={selectedSet.id}
+                    setSelectedSetId={vi.fn()}
+                    ratingFilter="All"
+                    setRatingFilter={vi.fn()}
+                    regenFilter="All"
+                    setRegenFilter={vi.fn()}
+                    styleRatings={{}}
+                    styleRating={null}
+                    setStyleRating={vi.fn()}
+                    regenMarks={{}}
+                    toggleSurfaceLabSlotRegenMark={vi.fn()}
+                    slotOverrides={{}}
+                    setSlotOverrides={vi.fn()}
+                    assetSlots={assetSlots}
+                    styles={styles}
+                    activeEvent={null}
+                    motionType="royal-unlock"
+                    setMotionType={vi.fn()}
+                    motionOptions={createMotionOptions()}
+                    setMotionOptions={vi.fn()}
+                    holdRoyalIntro={false}
+                    setHoldRoyalIntro={vi.fn()}
+                    onTriggerMotion={vi.fn()}
+                    onRepeatMotion={vi.fn()}
+                    onClearMotion={vi.fn()}
+                />
+            );
+        });
+
+        const hide = document.body.querySelector(
+            '[data-visual-lab-console-hide="true"]'
+        ) as HTMLButtonElement | null;
+        expect(hide).not.toBeNull();
+
+        await act(async () => {
+            hide?.click();
+        });
+
+        expect(document.body.querySelector('[data-visual-lab-console]')).toBeNull();
+        expect(document.body.querySelector('[data-visual-lab-console-show="true"]')).toBeTruthy();
+
+        await act(async () => {
+            (
+                document.body.querySelector(
+                    '[data-visual-lab-console-show="true"]'
+                ) as HTMLButtonElement | null
+            )?.click();
+        });
+
+        expect(document.body.querySelector('[data-visual-lab-console]')).toBeTruthy();
     });
 
     it('persists clicked style ratings in localStorage and restores them on remount', async () => {
@@ -887,6 +1122,96 @@ describe('visual lab smoke', () => {
         ).toBe('true');
     });
 
+    it('persists style comments in localStorage and deletes blank comments', async () => {
+        const normalized = normalizeSurfaceLabCandidates(
+            SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot))
+        );
+        const assetSets = createSurfaceLabAssetSets(normalized, 'dark');
+        const selectedSet = assetSets[0];
+        const assetSlots = selectedSet.slots;
+        const styles = createVisualLabShellStyles('dark', createLayout(), assetSlots, {});
+        const CommentConsoleHarness = () => {
+            const { styleComments, setStyleComment } = useSurfaceLabComments();
+
+            return (
+                <VisualLabConsole
+                    mode="surfaces"
+                    catalogStatus="ready"
+                    assetSets={assetSets}
+                    visibleAssetSets={assetSets}
+                    selectedSet={selectedSet}
+                    selectedSetId={selectedSet.id}
+                    setSelectedSetId={vi.fn()}
+                    ratingFilter="All"
+                    setRatingFilter={vi.fn()}
+                    regenFilter="All"
+                    setRegenFilter={vi.fn()}
+                    styleRatings={{}}
+                    styleRating={null}
+                    setStyleRating={vi.fn()}
+                    styleComment={styleComments[selectedSet.id] ?? ''}
+                    setStyleComment={(comment) => setStyleComment(selectedSet.id, comment)}
+                    regenMarks={{}}
+                    toggleSurfaceLabSlotRegenMark={vi.fn()}
+                    slotOverrides={{}}
+                    setSlotOverrides={vi.fn()}
+                    assetSlots={assetSlots}
+                    styles={styles}
+                    activeEvent={null}
+                    motionType="royal-unlock"
+                    setMotionType={vi.fn()}
+                    motionOptions={createMotionOptions()}
+                    setMotionOptions={vi.fn()}
+                    holdRoyalIntro={false}
+                    setHoldRoyalIntro={vi.fn()}
+                    onTriggerMotion={vi.fn()}
+                    onRepeatMotion={vi.fn()}
+                    onClearMotion={vi.fn()}
+                />
+            );
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<CommentConsoleHarness />);
+        });
+
+        const textarea = document.body.querySelector(
+            'textarea[aria-label="Style comment"]'
+        ) as HTMLTextAreaElement | null;
+        expect(textarea).not.toBeNull();
+
+        const setTextareaValue = (value: string) => {
+            const valueSetter = Object.getOwnPropertyDescriptor(
+                HTMLTextAreaElement.prototype,
+                'value'
+            )?.set;
+            valueSetter?.call(textarea, value);
+            textarea!.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        await act(async () => {
+            setTextareaValue('Move contrast out of the shell background.');
+        });
+
+        expect(
+            JSON.parse(window.localStorage.getItem(SURFACE_LAB_COMMENTS_STORAGE_KEY) ?? '{}')
+        ).toMatchObject({
+            [selectedSet.id]: 'Move contrast out of the shell background.',
+        });
+
+        await act(async () => {
+            setTextareaValue('   ');
+        });
+
+        expect(
+            JSON.parse(window.localStorage.getItem(SURFACE_LAB_COMMENTS_STORAGE_KEY) ?? '{}')
+        ).not.toHaveProperty(selectedSet.id);
+    });
+
     it('persists toggled slot regeneration marks in localStorage and restores them on remount', async () => {
         const normalized = normalizeSurfaceLabCandidates(
             SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot))
@@ -943,7 +1268,9 @@ describe('visual lab smoke', () => {
             root.render(<RegenConsoleHarness />);
         });
 
-        expect(document.body.querySelectorAll('button[aria-label^="Mark "]')).toHaveLength(8);
+        expect(document.body.querySelectorAll('button[aria-label^="Mark "]')).toHaveLength(
+            SURFACE_LAB_SLOTS.length
+        );
 
         const markShell = document.body.querySelector(
             'button[aria-label="Mark Shell for regeneration"]'

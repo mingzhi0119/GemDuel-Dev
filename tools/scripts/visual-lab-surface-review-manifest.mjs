@@ -5,10 +5,10 @@ import path from 'node:path';
 export const SURFACE_REVIEW_PLAN_SCHEMA = 'gemduel.visualLab.surfaceReviewPlan.v1';
 export const SURFACE_RATINGS_STORAGE_KEY = 'gemduel.visualLab.surfaceStyleRatings.v1';
 export const SURFACE_REGEN_STORAGE_KEY = 'gemduel.visualLab.surfaceSlotRegenMarks.v1';
+export const SURFACE_COMMENTS_STORAGE_KEY = 'gemduel.visualLab.surfaceStyleComments.v1';
 
 export const SURFACE_SLOTS = [
     'shell-background',
-    'topbar',
     'player-zone',
     'gem-panel',
     'market-card-back-l1',
@@ -18,8 +18,7 @@ export const SURFACE_SLOTS = [
 ];
 
 export const SURFACE_SLOT_TARGET_DIMENSIONS = {
-    'shell-background': [3840, 2160],
-    topbar: [3840, 360],
+    'shell-background': [3840, 1640],
     'player-zone': [3840, 520],
     'player-zone-p1': [1920, 520],
     'player-zone-p2': [1920, 520],

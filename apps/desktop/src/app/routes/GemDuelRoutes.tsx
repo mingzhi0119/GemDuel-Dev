@@ -36,19 +36,18 @@ const getDesktopViewportPresentation = (routeKind: RouteKind, theme: ThemeName) 
     void theme;
     if (routeKind === 'game') {
         return {
-            viewportClassName:
-                'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f111a] to-black text-slate-200 transition-colors duration-500',
+            viewportClassName: 'bg-black text-slate-200 transition-colors duration-500',
         };
     }
 
     if (routeKind === 'online' || routeKind === 'lan') {
         return {
-            viewportClassName: 'bg-slate-950 text-slate-100 transition-colors duration-500',
+            viewportClassName: 'bg-black text-slate-100 transition-colors duration-500',
         };
     }
 
     return {
-        viewportClassName: 'bg-slate-950 text-slate-100 transition-colors duration-500',
+        viewportClassName: 'bg-black text-slate-100 transition-colors duration-500',
     };
 };
 

@@ -3,7 +3,6 @@ import type { PlayerKey } from '@gemduel/shared/types';
 
 export const SURFACE_LAB_SLOTS = [
     'shell-background',
-    'topbar',
     'player-zone',
     'gem-panel',
     'market-card-back-l1',

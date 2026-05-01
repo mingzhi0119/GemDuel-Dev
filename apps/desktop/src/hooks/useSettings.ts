@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { AppLocale, DesktopAspectRatio, ThemeName } from '@gemduel/shared';
+import type { AppLocale, ThemeName } from '@gemduel/shared';
 import { getPlayerDisplayName, resolveSystemAppLocale } from '@gemduel/shared';
 import {
     DEFAULT_SURFACE_THEME_SELECTIONS,
@@ -14,29 +14,24 @@ export interface StoredAppSettings {
     locale?: AppLocale;
     surfaceTheme?: SurfaceThemeSelections;
     surfaceThemeDefaultVersion?: string;
-    desktopAspectRatio?: DesktopAspectRatio;
+    soundEnabled?: boolean;
 }
 
 const DEFAULT_THEME: ThemeName = 'dark';
-export const DEFAULT_DESKTOP_ASPECT_RATIO: DesktopAspectRatio = '16:10';
+const DEFAULT_SOUND_ENABLED = true;
 const SURFACE_THEME_DEFAULT_VERSION = 'royal-luxury-default-2026-04-29';
 const OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS: SurfaceThemeSelections = {
     background: 'crystal-anime',
-    topBar: 'crystal-anime',
     playerZone: 'crystal-anime',
     gemPanel: 'crystal-anime',
     effects: 'anime',
 };
-
-const normalizeDesktopAspectRatio = (value: unknown): DesktopAspectRatio =>
-    value === '16:9' ? '16:9' : DEFAULT_DESKTOP_ASPECT_RATIO;
 
 const isOldCrystalDefaultSurfaceTheme = (value: unknown): boolean => {
     const normalized = normalizeSurfaceThemeSelections(value);
 
     return (
         normalized.background === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.background &&
-        normalized.topBar === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.topBar &&
         normalized.playerZone === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.playerZone &&
         normalized.gemPanel === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.gemPanel &&
         normalized.effects === OLD_CRYSTAL_DEFAULT_SURFACE_THEME_SELECTIONS.effects
@@ -77,7 +72,10 @@ const readStoredSettings = (): StoredAppSettings | null => {
                 parsed.surfaceThemeDefaultVersion
             ),
             surfaceThemeDefaultVersion: SURFACE_THEME_DEFAULT_VERSION,
-            desktopAspectRatio: normalizeDesktopAspectRatio(parsed.desktopAspectRatio),
+            soundEnabled:
+                typeof parsed.soundEnabled === 'boolean'
+                    ? parsed.soundEnabled
+                    : DEFAULT_SOUND_ENABLED,
         };
     } catch {
         return null;
@@ -94,7 +92,7 @@ const resolveInitialSettings = () => {
         theme: DEFAULT_THEME,
         locale: resolvedInitialLocale,
         surfaceTheme: stored?.surfaceTheme ?? DEFAULT_SURFACE_THEME_SELECTIONS,
-        desktopAspectRatio: stored?.desktopAspectRatio ?? DEFAULT_DESKTOP_ASPECT_RATIO,
+        soundEnabled: stored?.soundEnabled ?? DEFAULT_SOUND_ENABLED,
         hasExplicitLocalePreference: Boolean(stored?.locale),
         resolvedInitialLocale,
     };
@@ -105,9 +103,7 @@ export const useSettings = () => {
     const theme = DEFAULT_THEME;
     const [locale, setLocaleState] = useState<AppLocale>(initial.locale);
     const [surfaceTheme, setSurfaceTheme] = useState<SurfaceThemeSelections>(initial.surfaceTheme);
-    const [desktopAspectRatio, setDesktopAspectRatio] = useState<DesktopAspectRatio>(
-        initial.desktopAspectRatio
-    );
+    const [soundEnabled, setSoundEnabled] = useState(initial.soundEnabled);
     const [hasExplicitLocalePreference, setHasExplicitLocalePreference] = useState(
         initial.hasExplicitLocalePreference
     );
@@ -121,11 +117,11 @@ export const useSettings = () => {
             ...(hasExplicitLocalePreference ? { locale } : {}),
             surfaceTheme,
             surfaceThemeDefaultVersion: SURFACE_THEME_DEFAULT_VERSION,
-            desktopAspectRatio,
+            soundEnabled,
         };
 
         window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload));
-    }, [desktopAspectRatio, hasExplicitLocalePreference, locale, surfaceTheme]);
+    }, [hasExplicitLocalePreference, locale, soundEnabled, surfaceTheme]);
 
     const setLocale = (value: AppLocale | ((current: AppLocale) => AppLocale)) => {
         setHasExplicitLocalePreference(true);
@@ -149,8 +145,8 @@ export const useSettings = () => {
         setLocale,
         surfaceTheme,
         setSurfaceTheme,
-        desktopAspectRatio,
-        setDesktopAspectRatio,
+        soundEnabled,
+        setSoundEnabled,
         hasExplicitLocalePreference,
         resolvedInitialLocale: initial.resolvedInitialLocale,
         GAME_CONFIG,

@@ -1,79 +1,67 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { SurfaceLabAssetSet } from './surfaceLabTypes';
 import {
-    normalizeSurfaceLabStyleRatings,
     readSurfaceLabRatings,
     useSurfaceLabRatings,
     type SurfaceLabStyleRatings,
 } from './useSurfaceLabRatings';
 import {
-    normalizeSurfaceLabRegenMarks,
     readSurfaceLabRegenMarks,
     useSurfaceLabRegenMarks,
     type SurfaceLabRegenMarks,
 } from './useSurfaceLabRegenMarks';
+import {
+    readSurfaceLabComments,
+    useSurfaceLabComments,
+    type SurfaceLabStyleComments,
+} from './useSurfaceLabComments';
+import {
+    SURFACE_LAB_REVIEW_STATE_ENDPOINT,
+    createReviewStateStatus,
+    getSurfaceLabReviewStateSourceKind,
+    readSurfaceLabSharedReviewStatePayload,
+    serializeSurfaceLabAssetSet,
+    type SurfaceLabSerializedAssetSet,
+    type SurfaceLabSharedReviewState,
+} from './surfaceLabReviewStateClient';
+import {
+    SURFACE_LAB_REVIEW_STATE_FILE_PATH,
+    type SurfaceLabReviewStateStatus,
+} from './surfaceLabReviewStateTypes';
 
 const SURFACE_LAB_REVIEW_STATE_SYNC_INTERVAL_MS = 2000;
-const SURFACE_LAB_REVIEW_STATE_ENDPOINT = '/__surface-lab/review-state.json';
 
-type SurfaceLabReviewStateSourceKind = 'electron' | 'browser';
-
-type SurfaceLabSharedReviewState = {
-    revision: number;
-    ratings: SurfaceLabStyleRatings;
-    regenMarks: SurfaceLabRegenMarks;
-    source?: {
-        kind?: SurfaceLabReviewStateSourceKind;
-        origin?: string;
-        href?: string;
-    };
-};
-
-const getSurfaceLabReviewStateSourceKind = (): SurfaceLabReviewStateSourceKind =>
-    typeof window !== 'undefined' && window.electron ? 'electron' : 'browser';
-
-const normalizeSurfaceLabSharedReviewState = (
-    value: unknown
-): SurfaceLabSharedReviewState | null => {
-    if (!value || typeof value !== 'object') {
-        return null;
-    }
-
-    const record = value as Record<string, unknown>;
-    const source =
-        record.source && typeof record.source === 'object'
-            ? (record.source as Record<string, unknown>)
-            : {};
-    const revision = Number(record.revision);
-
-    return {
-        revision: Number.isFinite(revision) ? revision : 0,
-        ratings: normalizeSurfaceLabStyleRatings(record.ratings),
-        regenMarks: normalizeSurfaceLabRegenMarks(record.regenMarks),
-        source: {
-            kind: source.kind === 'electron' ? 'electron' : 'browser',
-            origin: typeof source.origin === 'string' ? source.origin : '',
-            href: typeof source.href === 'string' ? source.href : '',
-        },
-    };
-};
-
-const readSurfaceLabSharedReviewStatePayload = async (
-    response: Response
-): Promise<SurfaceLabSharedReviewState | null> => {
-    const payload = (await response.json()) as { state?: unknown };
-    return normalizeSurfaceLabSharedReviewState(payload.state);
-};
-
-export function useSurfaceLabSharedReviewState() {
-    const latestReviewStateRevisionRef = useRef(0);
+export function useSurfaceLabSharedReviewState(assetSets: readonly SurfaceLabAssetSet[] = []) {
+    const latestReviewStateRevisionRef = useRef(-1);
     const isApplyingSharedReviewStateRef = useRef(false);
+    const hasBootstrappedReviewStateRef = useRef(false);
     const latestStyleRatingsRef = useRef<SurfaceLabStyleRatings>(readSurfaceLabRatings());
     const latestRegenMarksRef = useRef<SurfaceLabRegenMarks>(readSurfaceLabRegenMarks());
+    const latestStyleCommentsRef = useRef<SurfaceLabStyleComments>(readSurfaceLabComments());
+    const latestAssetSetsRef = useRef<SurfaceLabSerializedAssetSet[]>(
+        assetSets.map(serializeSurfaceLabAssetSet)
+    );
+    const [reviewStateStatus, setReviewStateStatus] = useState<SurfaceLabReviewStateStatus>({
+        status: 'loading',
+        path: SURFACE_LAB_REVIEW_STATE_FILE_PATH,
+        message: 'Checking review state file',
+    });
 
     const publishSharedReviewState = useCallback(
-        async (next: { ratings?: SurfaceLabStyleRatings; regenMarks?: SurfaceLabRegenMarks }) => {
+        async (next: {
+            ratings?: SurfaceLabStyleRatings;
+            regenMarks?: SurfaceLabRegenMarks;
+            comments?: SurfaceLabStyleComments;
+        }) => {
             const ratings = next.ratings ?? latestStyleRatingsRef.current;
             const regenMarks = next.regenMarks ?? latestRegenMarksRef.current;
+            const comments = next.comments ?? latestStyleCommentsRef.current;
+
+            setReviewStateStatus((current) => ({
+                ...current,
+                status: 'saving',
+                message: 'Writing review state file',
+            }));
 
             try {
                 const response = await fetch(SURFACE_LAB_REVIEW_STATE_ENDPOINT, {
@@ -87,22 +75,36 @@ export function useSurfaceLabSharedReviewState() {
                         href: window.location.href,
                         ratings,
                         regenMarks,
+                        comments,
+                        assetSets: latestAssetSetsRef.current,
                     }),
                 });
+                const payload = await readSurfaceLabSharedReviewStatePayload(response);
 
-                if (!response.ok) {
-                    return;
+                if (!response.ok || !payload.state) {
+                    throw new Error(payload.error ?? `State write failed (${response.status})`);
                 }
 
-                const state = await readSurfaceLabSharedReviewStatePayload(response);
-                if (state) {
-                    latestReviewStateRevisionRef.current = Math.max(
-                        latestReviewStateRevisionRef.current,
-                        state.revision
-                    );
-                }
-            } catch {
-                // Shared review state is dev-only coordination; localStorage remains the fallback.
+                latestReviewStateRevisionRef.current = Math.max(
+                    latestReviewStateRevisionRef.current,
+                    payload.state.revision
+                );
+                setReviewStateStatus(
+                    createReviewStateStatus(
+                        payload.state,
+                        payload.path,
+                        'Review state saved',
+                        'saved'
+                    )
+                );
+                return payload.state;
+            } catch (error) {
+                setReviewStateStatus((current) => ({
+                    ...current,
+                    status: 'error',
+                    message: error instanceof Error ? error.message : 'Review state write failed',
+                }));
+                return null;
             }
         },
         []
@@ -130,6 +132,17 @@ export function useSurfaceLabSharedReviewState() {
         [publishSharedReviewState]
     );
 
+    const handleStyleCommentsChange = useCallback(
+        (comments: SurfaceLabStyleComments) => {
+            latestStyleCommentsRef.current = comments;
+
+            if (!isApplyingSharedReviewStateRef.current) {
+                void publishSharedReviewState({ comments });
+            }
+        },
+        [publishSharedReviewState]
+    );
+
     const { styleRatings, setStyleRating, replaceSurfaceLabRatings } = useSurfaceLabRatings({
         onChange: handleStyleRatingsChange,
     });
@@ -141,22 +154,31 @@ export function useSurfaceLabSharedReviewState() {
     } = useSurfaceLabRegenMarks({
         onChange: handleRegenMarksChange,
     });
+    const { styleComments, setStyleComment, replaceSurfaceLabComments } = useSurfaceLabComments({
+        onChange: handleStyleCommentsChange,
+    });
 
     const applySharedReviewState = useCallback(
-        (state: SurfaceLabSharedReviewState) => {
-            if (state.revision <= latestReviewStateRevisionRef.current) {
+        (state: SurfaceLabSharedReviewState, path: string) => {
+            if (state.revision < latestReviewStateRevisionRef.current) {
+                setReviewStateStatus(
+                    createReviewStateStatus(state, path, 'Review state already current')
+                );
                 return;
             }
 
             latestReviewStateRevisionRef.current = state.revision;
             latestStyleRatingsRef.current = state.ratings;
             latestRegenMarksRef.current = state.regenMarks;
+            latestStyleCommentsRef.current = state.comments;
             isApplyingSharedReviewStateRef.current = true;
             replaceSurfaceLabRatings(state.ratings);
             replaceSurfaceLabRegenMarks(state.regenMarks);
+            replaceSurfaceLabComments(state.comments);
             isApplyingSharedReviewStateRef.current = false;
+            setReviewStateStatus(createReviewStateStatus(state, path, 'Review state loaded'));
         },
-        [replaceSurfaceLabRatings, replaceSurfaceLabRegenMarks]
+        [replaceSurfaceLabComments, replaceSurfaceLabRatings, replaceSurfaceLabRegenMarks]
     );
 
     useEffect(() => {
@@ -168,48 +190,63 @@ export function useSurfaceLabSharedReviewState() {
     }, [regenMarks]);
 
     useEffect(() => {
+        latestStyleCommentsRef.current = styleComments;
+    }, [styleComments]);
+
+    useEffect(() => {
+        latestAssetSetsRef.current = assetSets.map(serializeSurfaceLabAssetSet);
+
+        if (hasBootstrappedReviewStateRef.current) {
+            void publishSharedReviewState({});
+        }
+    }, [assetSets, publishSharedReviewState]);
+
+    useEffect(() => {
         let disposed = false;
 
         const bootstrapReviewState = async () => {
             try {
-                if (getSurfaceLabReviewStateSourceKind() === 'electron') {
-                    const response = await fetch(SURFACE_LAB_REVIEW_STATE_ENDPOINT, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            sourceKind: 'electron',
-                            origin: window.location.origin,
-                            href: window.location.href,
-                            ratings: readSurfaceLabRatings(),
-                            regenMarks: readSurfaceLabRegenMarks(),
-                        }),
-                    });
-
-                    if (!response.ok || disposed) {
-                        return;
-                    }
-
-                    const state = await readSurfaceLabSharedReviewStatePayload(response);
-                    if (state && !disposed) {
-                        applySharedReviewState(state);
-                    }
-                    return;
-                }
-
                 const response = await fetch(SURFACE_LAB_REVIEW_STATE_ENDPOINT);
 
-                if (!response.ok || disposed) {
+                if (disposed) {
                     return;
                 }
 
-                const state = await readSurfaceLabSharedReviewStatePayload(response);
-                if (state && !disposed) {
-                    applySharedReviewState(state);
+                if (response.ok) {
+                    const payload = await readSurfaceLabSharedReviewStatePayload(response);
+                    if (payload.state && !disposed) {
+                        applySharedReviewState(payload.state, payload.path);
+                        hasBootstrappedReviewStateRef.current = true;
+                        void publishSharedReviewState({});
+                    }
+                    return;
                 }
-            } catch {
-                // The review-state endpoint exists only in Vite dev; localStorage remains usable.
+
+                if (response.status === 404) {
+                    hasBootstrappedReviewStateRef.current = true;
+                    await publishSharedReviewState({
+                        ratings: readSurfaceLabRatings(),
+                        regenMarks: readSurfaceLabRegenMarks(),
+                        comments: readSurfaceLabComments(),
+                    });
+                    return;
+                }
+
+                const payload = await readSurfaceLabSharedReviewStatePayload(response);
+                throw new Error(
+                    payload.error ?? `Review state endpoint failed (${response.status})`
+                );
+            } catch (error) {
+                if (!disposed) {
+                    setReviewStateStatus((current) => ({
+                        ...current,
+                        status: 'unavailable',
+                        message:
+                            error instanceof Error
+                                ? error.message
+                                : 'Review state file unavailable',
+                    }));
+                }
             }
         };
 
@@ -218,7 +255,7 @@ export function useSurfaceLabSharedReviewState() {
         return () => {
             disposed = true;
         };
-    }, [applySharedReviewState]);
+    }, [applySharedReviewState, publishSharedReviewState]);
 
     useEffect(() => {
         let disposed = false;
@@ -231,9 +268,9 @@ export function useSurfaceLabSharedReviewState() {
                     return;
                 }
 
-                const state = await readSurfaceLabSharedReviewStatePayload(response);
-                if (state && !disposed) {
-                    applySharedReviewState(state);
+                const payload = await readSurfaceLabSharedReviewStatePayload(response);
+                if (payload.state && !disposed) {
+                    applySharedReviewState(payload.state, payload.path);
                 }
             } catch {
                 // Polling is best-effort; user actions still persist locally and retry on change.
@@ -255,6 +292,7 @@ export function useSurfaceLabSharedReviewState() {
         () => ({
             ratings: latestStyleRatingsRef.current,
             regenMarks: latestRegenMarksRef.current,
+            comments: latestStyleCommentsRef.current,
         }),
         []
     );
@@ -265,6 +303,9 @@ export function useSurfaceLabSharedReviewState() {
         regenMarks,
         toggleSurfaceLabSlotRegenMark,
         clearSurfaceLabSlotRegenMarks,
+        styleComments,
+        setStyleComment,
+        reviewStateStatus,
         getLatestSurfaceLabReviewState,
     };
 }

@@ -11,8 +11,12 @@ export const SURFACE_LAB_REGEN_FILTER_OPTIONS = ['All', 'Needs regen', 'Clean'] 
 export type SurfaceLabRegenFilter = (typeof SURFACE_LAB_REGEN_FILTER_OPTIONS)[number];
 export type SurfaceLabRegenMarks = Record<string, true>;
 
+const SURFACE_LAB_SLOT_SET = new Set<string>(SURFACE_LAB_SLOTS);
+
 export const getSurfaceLabSlotRegenKey = (candidate: SurfaceLabCandidate): string =>
     `${candidate.batch}:${candidate.date}:${candidate.style}:${candidate.variant}:${candidate.slot}`;
+
+const getSurfaceLabSlotFromRegenKey = (key: string): string => key.split(':').at(-1) ?? '';
 
 export const normalizeSurfaceLabRegenMarks = (value: unknown): SurfaceLabRegenMarks => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -20,7 +24,7 @@ export const normalizeSurfaceLabRegenMarks = (value: unknown): SurfaceLabRegenMa
     }
 
     return Object.entries(value).reduce<SurfaceLabRegenMarks>((acc, [key, marked]) => {
-        if (marked === true) {
+        if (marked === true && SURFACE_LAB_SLOT_SET.has(getSurfaceLabSlotFromRegenKey(key))) {
             acc[key] = true;
         }
         return acc;

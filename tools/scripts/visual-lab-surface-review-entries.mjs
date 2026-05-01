@@ -33,7 +33,7 @@ export const buildPromptConstraints = (slot) => {
         'No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances.';
 
     if (slot === 'shell-background') {
-        return `${common} Shell may use theme-related landscapes, distant architecture, environment wonders, or natural wonders, but must stay one low-contrast, low-noise wide global background with no strong focal subject, framed panel, tablecloth, playmat, center rectangle, platform, giant sun/moon disk, character, or monster.`;
+        return `${common} Shell covers the upper 3840x1640 region only: TopBar plus center play area, with PlayerZone generated separately. Shell may use theme-related landscapes, distant architecture, environment wonders, or natural wonders, but must stay one low-contrast, low-noise wide global background with no strong focal subject, framed panel, tablecloth, playmat, center rectangle, platform, giant sun/moon disk, character, or monster.`;
     }
 
     if (slot === 'royal-card-back') {

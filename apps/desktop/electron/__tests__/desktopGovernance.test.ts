@@ -41,9 +41,9 @@ describe('electron desktop governance', () => {
         });
         expect(options).toMatchObject({
             width: 1280,
-            height: 800,
+            height: 720,
             minWidth: 1280,
-            minHeight: 800,
+            minHeight: 720,
         });
     });
 
@@ -338,29 +338,18 @@ describe('electron desktop governance', () => {
         expect(window.setMinimumSize).toHaveBeenCalledWith(1280, 720);
         expect(window.setAspectRatio).toHaveBeenCalledWith(16 / 9);
         expect(window.setSize).toHaveBeenCalledWith(1600, 900);
-
-        window.getBounds.mockReturnValue({ width: 1600, height: 900 });
-        expect(applyDesktopAspectRatioToWindow(window, '16:10')).toEqual({
-            ratio: '16:10',
-            width: 1600,
-            height: 1000,
-            aspectRatio: 16 / 10,
-        });
-        expect(window.setMinimumSize).toHaveBeenLastCalledWith(1280, 800);
-        expect(window.setAspectRatio).toHaveBeenLastCalledWith(16 / 10);
-        expect(window.setSize).toHaveBeenLastCalledWith(1600, 1000);
     });
 
     it('keeps aspect ratio and snapshot fallbacks explicit for governance checks', () => {
         expect(() => getDesktopAspectRatioConfig('21:9')).toThrow(
-            'Desktop aspect ratio must be one of 16:10 or 16:9.'
+            'Desktop aspect ratio must be 16:9.'
         );
 
-        expect(applyDesktopAspectRatioToWindow(undefined, '16:10')).toEqual({
-            ratio: '16:10',
+        expect(applyDesktopAspectRatioToWindow(undefined, '16:9')).toEqual({
+            ratio: '16:9',
             width: 1280,
-            height: 800,
-            aspectRatio: 16 / 10,
+            height: 720,
+            aspectRatio: 16 / 9,
         });
         expect(
             applyDesktopAspectRatioToWindow(
@@ -387,13 +376,13 @@ describe('electron desktop governance', () => {
                 },
                 autoHideMenuBar: true,
                 width: 1280,
-                height: 720,
+                height: 800,
                 minWidth: 1024,
                 minHeight: 640,
             })
         ).toEqual([
-            '[BrowserWindow] default size must stay locked to 16:10 at 1280x800.',
-            '[BrowserWindow] default minimum size must stay locked to 16:10 at 1280x800.',
+            '[BrowserWindow] default size must stay locked to 16:9 at 1280x720.',
+            '[BrowserWindow] default minimum size must stay locked to 16:9 at 1280x720.',
         ]);
 
         expect(

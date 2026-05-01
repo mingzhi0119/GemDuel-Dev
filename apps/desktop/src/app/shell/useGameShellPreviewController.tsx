@@ -37,6 +37,7 @@ interface GameShellPreviewControllerOptions {
     theme: ThemeName;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     isReviewing: boolean;
+    canInteract: boolean;
 }
 
 interface PeekPreviewModel {
@@ -57,6 +58,7 @@ export const useGameShellPreviewController = ({
     theme,
     marketDeckBackArtwork,
     isReviewing,
+    canInteract,
 }: GameShellPreviewControllerOptions) => {
     const { activeModal, playerBuffs } = state;
     const { clearPreselectedReserveGold, handleCloseModal } = handlers;
@@ -139,9 +141,11 @@ export const useGameShellPreviewController = ({
                 t,
                 theme,
                 marketDeckBackArtwork,
+                canInteract,
             }),
         [
             canAfford,
+            canInteract,
             cardPreview,
             effectiveGameMode,
             handlers,
@@ -158,7 +162,7 @@ export const useGameShellPreviewController = ({
         Partial<Record<PlayerKey, PlayerZoneBuffPreviewAction>>
     >(() => {
         const surfacePolicy = getFsmPhaseSurfacePolicy(effectiveGameMode);
-        const localCanInteract = canPlayerInteract(state, isReviewing);
+        const localCanInteract = canInteract && canPlayerInteract(state, isReviewing);
         const canUseBuffPreview = (player: PlayerKey) =>
             state.turn === player && surfacePolicy.marketInteraction && localCanInteract;
         const buildAction = (player: PlayerKey): PlayerZoneBuffPreviewAction | undefined => {
@@ -200,6 +204,7 @@ export const useGameShellPreviewController = ({
         };
     }, [
         clearPreselectedReserveGold,
+        canInteract,
         effectiveGameMode,
         handlers,
         isReviewing,

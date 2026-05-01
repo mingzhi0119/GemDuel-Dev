@@ -4,6 +4,8 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 
 ## Guides
 
+- [OMX Workflow for WSL Codex](omx-workflow.md)
+- [OMX Managed Prompt Templates](prompts/README.md)
 - [Quick Start](guides/quick-start.md)
 - [Testing](guides/testing.md)
 - [Contributor Conduct](../CODE_OF_CONDUCT.md)

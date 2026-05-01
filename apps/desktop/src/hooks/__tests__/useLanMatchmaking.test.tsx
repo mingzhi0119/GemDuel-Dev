@@ -77,10 +77,10 @@ describe('useLanMatchmaking', () => {
             })),
             cancelLanMatchmaking: vi.fn(async () => idleState),
             setDesktopAspectRatio: vi.fn(async () => ({
-                ratio: '16:10',
+                ratio: '16:9',
                 width: 1280,
-                height: 800,
-                aspectRatio: 16 / 10,
+                height: 720,
+                aspectRatio: 16 / 9,
             })),
             selectLanPregameMode: vi.fn(async () => ({
                 ...idleState,

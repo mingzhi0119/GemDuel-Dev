@@ -82,6 +82,37 @@ describe('Card artwork rendering', () => {
         expect(royalCourtHtml).toContain(`height="${CARD_ARTWORK_SOURCE_SIZE.height}"`);
     });
 
+    it('can render royal court backs without changing the default face rendering', () => {
+        const defaultHtml = renderToStaticMarkup(
+            <RoyalCourt
+                royalDeck={[royalCard]}
+                phase="IDLE"
+                handleSelectRoyal={() => undefined}
+                theme="dark"
+            />
+        );
+        const backHtml = renderToStaticMarkup(
+            <RoyalCourt
+                royalDeck={[royalCard]}
+                phase="IDLE"
+                handleSelectRoyal={() => undefined}
+                theme="dark"
+                displayMode="backs"
+                royalCardBackArtwork={{
+                    path: '/assets/surfaces/anime-themes/test/dark/royal-card-back.png',
+                    variant: 'test-royal-back',
+                }}
+            />
+        );
+
+        expect(defaultHtml).toContain('data-card-sample-canvas="featured"');
+        expect(defaultHtml).not.toContain('data-royal-card-display="back"');
+        expect(backHtml).toContain('data-royal-card-display="back"');
+        expect(backHtml).toContain('data-royal-card-back-variant="test-royal-back"');
+        expect(backHtml).toContain('/assets/surfaces/anime-themes/test/dark/royal-card-back.png');
+        expect(backHtml).not.toContain('data-card-sample-canvas="featured"');
+    });
+
     it('normalizes generated runtime card IDs to their full-card artwork asset', () => {
         const generatedRuntimeCard: CardType = {
             ...realCard,

@@ -15,6 +15,11 @@ import type {
     SurfaceThemeSelections,
     SurfaceThemeVariant,
 } from './surfaceTheme';
+import {
+    DESKTOP_CENTER_HEIGHT_PX,
+    DESKTOP_TOP_BAR_HEIGHT_PX,
+    DESKTOP_ZONE_HEIGHT_PX,
+} from '../layout/desktopLayoutContract';
 
 interface SurfaceTextPalette {
     primary: string;
@@ -29,6 +34,22 @@ interface SurfaceTextPalette {
 }
 
 type SurfaceTextVariableStyle = CSSProperties & Record<`--gd-${string}`, string>;
+
+const DESKTOP_SHELL_GRID_ROWS = `${DESKTOP_TOP_BAR_HEIGHT_PX}px ${DESKTOP_CENTER_HEIGHT_PX}px ${DESKTOP_ZONE_HEIGHT_PX}px`;
+
+const createDesktopShellGridStyle = (layout: ResponsiveLayout): CSSProperties =>
+    layout.layoutMode === 'desktop-4k'
+        ? {
+              gridTemplateRows: DESKTOP_SHELL_GRID_ROWS,
+          }
+        : {};
+
+const createDesktopTopBarContractStyle = (layout: ResponsiveLayout): CSSProperties =>
+    layout.layoutMode === 'desktop-4k'
+        ? {
+              height: `${DESKTOP_TOP_BAR_HEIGHT_PX}px`,
+          }
+        : {};
 
 const DARK_FIELD_PALETTE: SurfaceTextPalette = {
     primary: '#f8fafc',
@@ -123,11 +144,15 @@ export const createGameShellStyles = (
     const shellStyle = {
         ...createShellSurfaceStyle(theme, resolvedSurfaceTheme.background),
         ...createSurfaceTextVariableStyle(theme, shellVariant),
+        ...createDesktopShellGridStyle(layout),
     } as CSSProperties;
 
     return {
         shellStyle,
-        topBarSurfaceStyle: createTopBarSurfaceStyle(theme, resolvedSurfaceTheme.topBar),
+        topBarSurfaceStyle: {
+            ...createTopBarSurfaceStyle(theme),
+            ...createDesktopTopBarContractStyle(layout),
+        } as CSSProperties,
         scaledZoneWrapperStyle: {
             width: `${100 / layout.zoneScale}%`,
             height: `${100 / layout.zoneScale}%`,
@@ -149,6 +174,6 @@ export const createGameShellStyles = (
         ),
         effectsSkin: resolvedSurfaceTheme.effects,
         shellSurfaceVariant: resolvedSurfaceTheme.background,
-        topBarSurfaceVariant: resolvedSurfaceTheme.topBar,
+        topBarSurfaceVariant: `${resolvedSurfaceTheme.background}-shell-fill`,
     };
 };

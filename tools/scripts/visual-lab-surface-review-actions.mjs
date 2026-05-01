@@ -5,7 +5,13 @@ import {
     toPosix,
     updateManifestRecords,
 } from './visual-lab-surface-review-manifest.mjs';
-import { readPlan } from './visual-lab-surface-review-plan-core.mjs';
+import { buildSurfaceReviewPlan, readPlan } from './visual-lab-surface-review-plan-core.mjs';
+import { loadSurfaceManifestRecords } from './visual-lab-surface-review-manifest.mjs';
+import {
+    clearSurfaceReviewStateReplacementNotes,
+    getSurfaceReviewStatePath,
+    readSurfaceReviewStateFile,
+} from './visual-lab-surface-review-state.mjs';
 
 const ensureInside = (root, target) => {
     const relative = path.relative(root, target);
@@ -81,6 +87,63 @@ export const applyDeleteRatingOne = ({ repoRoot, planPath, confirm }) => {
     return { report, reportPath: toPosix(path.relative(repoRoot, reportPath)) };
 };
 
+/** @param {{ repoRoot: string; planPath?: string }} input */
+const readReviewWorkItem = ({ repoRoot, planPath }) => {
+    if (planPath) {
+        return {
+            ...readPlan(repoRoot, planPath),
+            source: 'plan',
+        };
+    }
+
+    const state = readSurfaceReviewStateFile({ repoRoot });
+    if (!state) {
+        throw new Error('Missing tmp/visual-lab/surface-review-state.json. Open Visual Lab first.');
+    }
+
+    const records = loadSurfaceManifestRecords({ repoRoot });
+    return {
+        plan: buildSurfaceReviewPlan({
+            repoRoot,
+            records,
+            ratings: state.ratings,
+            regenMarks: state.regenMarks,
+            comments: state.comments,
+            origin: state.source.origin,
+            href: state.source.href,
+            clientAssetSets: state.assetSets,
+        }),
+        absolutePath: getSurfaceReviewStatePath({ repoRoot }),
+        source: 'state',
+        state,
+    };
+};
+
+export const validateSurfaceReviewState = ({ repoRoot }) => {
+    const state = readSurfaceReviewStateFile({ repoRoot });
+    if (!state) {
+        return {
+            ok: false,
+            stage: 'state-missing',
+            errors: ['Missing tmp/visual-lab/surface-review-state.json.'],
+        };
+    }
+
+    const { plan } = readReviewWorkItem({ repoRoot });
+    return {
+        ok: true,
+        stage: 'state',
+        errors: [],
+        revision: state.revision,
+        updatedAt: state.updatedAt,
+        counts: state.counts,
+        deleteSetCount: plan.deleteSets.length,
+        keepSetCount: plan.keepSets.length,
+        regenerateSlotCount: plan.regenerateSlots.length,
+        warningCount: plan.warnings.length,
+    };
+};
+
 const pruneDocsArtRows = (repoRoot, assets) => {
     const docsArt = path.join(repoRoot, 'docs', 'art');
     const needles = new Set(
@@ -130,8 +193,9 @@ const pruneDocsArtRows = (repoRoot, assets) => {
     return updated;
 };
 
+/** @param {{ repoRoot: string; planPath?: string }} input */
 export const prepareReplacements = ({ repoRoot, planPath }) => {
-    const { plan, absolutePath } = readPlan(repoRoot, planPath);
+    const { plan, absolutePath, source } = readReviewWorkItem({ repoRoot, planPath });
     const planDir = path.dirname(absolutePath);
     const promptManifestPath = path.join(planDir, 'surface-review-replacement-prompts.md');
     const sourceMapPath = path.join(planDir, 'surface-review-source-map-template.json');
@@ -162,6 +226,7 @@ export const prepareReplacements = ({ repoRoot, planPath }) => {
     const sourceMap = {
         schema: 'gemduel.visualLab.surfaceReviewReplacementSources.v1',
         planPath: toPosix(path.relative(repoRoot, absolutePath)),
+        reviewSource: source,
         sources: plan.regenerateSlots.flatMap((item) =>
             item.targets.map((target) => ({
                 promptId: item.promptId,
@@ -196,8 +261,9 @@ const readPngDimensions = (filePath) => {
     return [buffer.readUInt32BE(16), buffer.readUInt32BE(20)];
 };
 
+/** @param {{ repoRoot: string; planPath?: string; sourcesPath: string }} input */
 export const finalizeReplacements = ({ repoRoot, planPath, sourcesPath }) => {
-    const { plan, absolutePath } = readPlan(repoRoot, planPath);
+    const { plan, absolutePath, source } = readReviewWorkItem({ repoRoot, planPath });
     const planDir = path.dirname(absolutePath);
     const sourceMap = JSON.parse(fs.readFileSync(path.resolve(repoRoot, sourcesPath), 'utf8'));
     const sources = Array.isArray(sourceMap) ? sourceMap : (sourceMap.sources ?? []);
@@ -289,6 +355,7 @@ export const finalizeReplacements = ({ repoRoot, planPath, sourcesPath }) => {
     const completion = {
         schema: 'gemduel.visualLab.surfaceReviewCompletion.v1',
         planPath: toPosix(path.relative(repoRoot, absolutePath)),
+        reviewSource: source,
         completedAt: new Date().toISOString(),
         completedRegenKeys: Array.from(completedRegenKeys).sort(),
         replacements,
@@ -297,9 +364,13 @@ export const finalizeReplacements = ({ repoRoot, planPath, sourcesPath }) => {
     const completionPath = path.join(planDir, 'surface-review-completion.json');
     fs.writeFileSync(completionPath, `${JSON.stringify(completion, null, 2)}\n`, 'utf8');
 
+    const clearedState =
+        failures.length === 0 ? clearSurfaceReviewStateReplacementNotes({ repoRoot }) : null;
+
     return {
         completion,
         completionPath: toPosix(path.relative(repoRoot, completionPath)),
+        clearedState,
     };
 };
 

@@ -1,5 +1,31 @@
 import { useEffect, useState } from 'react';
 import type { ResponsiveLayout } from '@gemduel/shared/types';
+import {
+    DESKTOP_BOARD_SCALE_MAX,
+    DESKTOP_BOARD_SCALE_MIN,
+    DESKTOP_DECK_SCALE,
+    DESKTOP_MAIN_GAP_PX,
+    DESKTOP_STAGE_HEIGHT_PX,
+    DESKTOP_STAGE_WIDTH_PX,
+    DESKTOP_TOP_BAR_HEIGHT_PX,
+    DESKTOP_ZONE_HEIGHT_PX,
+    DESKTOP_ZONE_SCALE,
+} from '../app/layout/desktopLayoutContract';
+
+export {
+    DESKTOP_ASPECT_16_9,
+    DESKTOP_BOARD_SCALE_MAX,
+    DESKTOP_BOARD_SCALE_MIN,
+    DESKTOP_CENTER_HEIGHT_PX,
+    DESKTOP_DECK_SCALE,
+    DESKTOP_MAIN_GAP_PX,
+    DESKTOP_SHELL_ARTWORK_HEIGHT_PX,
+    DESKTOP_STAGE_HEIGHT_PX,
+    DESKTOP_STAGE_WIDTH_PX,
+    DESKTOP_TOP_BAR_HEIGHT_PX,
+    DESKTOP_ZONE_HEIGHT_PX,
+    DESKTOP_ZONE_SCALE,
+} from '../app/layout/desktopLayoutContract';
 
 const MOBILE_BREAKPOINT = 1024;
 const FALLBACK_VIEWPORT = { width: 1280, height: 800 };
@@ -11,18 +37,6 @@ const MOBILE_BOARD_SCALE = 0.45;
 const MOBILE_DECK_SCALE = 0.55;
 const MOBILE_ZONE_SCALE = 0.55;
 const MOBILE_MAIN_GAP_PX = 16;
-
-export const DESKTOP_STAGE_WIDTH_PX = 3840;
-export const DESKTOP_ASPECT_16_10 = 16 / 10;
-export const DESKTOP_ASPECT_16_9 = 16 / 9;
-export const DESKTOP_ASPECT_SELECTION_THRESHOLD = (DESKTOP_ASPECT_16_10 + DESKTOP_ASPECT_16_9) / 2;
-export const DESKTOP_TOP_BAR_HEIGHT_PX = 120;
-export const DESKTOP_BOARD_SCALE_MIN = 1.2;
-export const DESKTOP_BOARD_SCALE_MAX = 2.08;
-export const DESKTOP_DECK_SCALE = 1.12;
-export const DESKTOP_ZONE_SCALE = 1;
-export const DESKTOP_ZONE_HEIGHT_PX = 520;
-export const DESKTOP_MAIN_GAP_PX = 24;
 
 const DESKTOP_PLAY_SURFACE_BASE_HEIGHT_PX = 797;
 const DESKTOP_PLAY_SURFACE_BASE_WIDTH_PX = 2000;
@@ -75,9 +89,6 @@ const calculateStageInsetPx = (viewportSpan: number, scaledStageSpan: number) =>
     Math.max(0, Math.round((viewportSpan - scaledStageSpan) / 2));
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-
-const resolveSupportedDesktopAspect = (aspectRatio: number) =>
-    aspectRatio >= DESKTOP_ASPECT_SELECTION_THRESHOLD ? DESKTOP_ASPECT_16_9 : DESKTOP_ASPECT_16_10;
 
 const calculateDesktopStageScale = (
     viewportWidth: number,
@@ -135,9 +146,8 @@ export const calculateResponsiveLayout = (
         };
     }
 
-    const desktopAspect = resolveSupportedDesktopAspect(aspectRatio);
     const stageCanvasWidthPx = DESKTOP_STAGE_WIDTH_PX;
-    const stageCanvasHeightPx = stageCanvasWidthPx / desktopAspect;
+    const stageCanvasHeightPx = DESKTOP_STAGE_HEIGHT_PX;
     const stageScale = calculateDesktopStageScale(
         safeWidth,
         safeHeight,

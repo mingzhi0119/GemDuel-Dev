@@ -22,6 +22,7 @@ import {
     type SurfaceThemeSelections,
     type SurfaceThemeVariant,
 } from './surfaceTheme';
+import { DESKTOP_SHELL_ARTWORK_HEIGHT_PX } from '../layout/desktopLayoutContract';
 
 type SurfaceArtworkSlot = 'shellBackground' | 'gemPanel' | 'marketBackground';
 type GemPanelSkinId = 'dashboard' | 'square-dashboard';
@@ -215,7 +216,11 @@ const getSurfaceArtworkAsset = (
                   position: 'center center',
                   skinId: 'square-dashboard' as const,
               }
-            : {}),
+            : {
+                  size: `100% ${DESKTOP_SHELL_ARTWORK_HEIGHT_PX}px`,
+                  position: 'top center',
+                  repeat: 'no-repeat',
+              }),
     };
 };
 
@@ -248,19 +253,6 @@ const buildSurfaceStyle = ({
         backgroundRepeat: `no-repeat, ${asset.repeat ?? 'no-repeat'}`,
         border,
         boxShadow,
-    };
-};
-
-const createTopBarArtworkSurfaceStyle = (theme: ThemeName, asset: string): CSSProperties => {
-    void theme;
-    return {
-        backgroundColor: 'transparent',
-        backgroundImage: `url("${asset}")`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        borderColor: 'rgba(250,204,21,0.18)',
-        boxShadow: '0 12px 30px rgba(0,0,0,0.36), inset 0 -1px 0 rgba(250,204,21,0.12)',
     };
 };
 
@@ -300,12 +292,17 @@ export const createShellSurfaceStyle = (
 
 export const createTopBarSurfaceStyle = (
     theme: ThemeName,
-    variant: SurfaceThemeVariant = DEFAULT_SURFACE_THEME_SELECTIONS.topBar
+    _variant?: SurfaceThemeVariant
 ): CSSProperties => {
-    return createTopBarArtworkSurfaceStyle(
-        theme,
-        getSurfaceThemeAssetPath(theme, variant, 'topbar')
-    );
+    void theme;
+    void _variant;
+    return {
+        backgroundColor: 'transparent',
+        backgroundImage: 'none',
+        backgroundRepeat: 'no-repeat',
+        borderColor: 'rgba(250,204,21,0.18)',
+        boxShadow: 'inset 0 -1px 0 rgba(250,204,21,0.12)',
+    };
 };
 
 export const createGemPanelSurfaceStyle = (

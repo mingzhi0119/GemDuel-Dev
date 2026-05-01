@@ -5,8 +5,7 @@
 
 已接入的槽位：
 
-- `anime-themes/<style>/dark/shell-background.png`: 整体背景
-- `anime-themes/<style>/dark/topbar.png`: 顶栏背景
+- `anime-themes/<style>/dark/shell-background.png`: Shell 上半区背景（TopBar + 中间区，推荐新规格 3840x1640）
 - `anime-themes/<style>/dark/player-zone-p1.png`: P1 玩家区背景（推荐新规格，1920x520）
 - `anime-themes/<style>/dark/player-zone-p2.png`: P2 玩家区背景（推荐新规格，1920x520）
 - `anime-themes/<style>/dark/player-zone.png`: legacy 玩家区背景 fallback；没有 P1/P2 独立图时继续使用
@@ -21,7 +20,9 @@
 - 目前代码路径定义在 [surfaceArtwork.ts](/E:/simonbb/GemDuel-Dev/apps/desktop/src/app/shell/surfaceArtwork.ts)。
 - Light/Dark runtime 已退役；运行时只读取 `dark` 目录。
 - 历史 Light 素材仅可作为归档候选存在，不再作为桌面端运行时资源路径接入。
-- 不再接入独立桌布 / playmat 槽位；`shell-background.png` 是整张游戏桌面的唯一大背景，中心区和玩家区靠线条分隔，不靠灰色面板或色差分区。
+- 桌面端固定 `3840x2160` 的 16:9 逻辑舞台；非 16:9 视口只通过黑边和整体缩放适配，不改变区域比例。
+- 区域合同：TopBar `3840x120`，中间区 `3840x1520`，PlayerZone rail `3840x520`；P1/P2 PlayerZone 各 `1920x520`。
+- 不再接入独立桌布 / playmat / TopBar 美术槽位；`shell-background.png` 覆盖 TopBar + 中间区的 `3840x1640` 上半区，TopBar 只保留 React 内容层和底部分割线。PlayerZone 由独立素材覆盖，区域之间靠线条分隔，不靠灰色面板或色差分区。
 - PlayerZone 新素材目标尺寸是 `1920x520`，按玩家侧分别输出 `player-zone-p1.png` 与 `player-zone-p2.png`。双方图片可以不同，但同 Theme 下必须风格一致；也可以让 P2 使用 P1 的镜像构图。
 - `player-zone.png` 是 legacy / mirror fallback，现有主题和候选库仍可使用；没有侧向独立图时，前端可复用该图并对 P2 fallback 镜像。
 - PlayerZone 素材只能作为玩家区环境底图，不要包含卡框、卡槽、预留牌背、假 UI 控件、文字或数字；这些都由 React 渲染。

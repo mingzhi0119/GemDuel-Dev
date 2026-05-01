@@ -16,10 +16,10 @@ import {
 
 const ChromeHarness = ({ theme = 'dark' }: { theme?: 'dark' }) => {
     const [locale, setLocale] = useState<'en' | 'zh'>('en');
-    const [desktopAspectRatio, setDesktopAspectRatio] = useState<'16:10' | '16:9'>('16:10');
     const [surfaceTheme, setSurfaceTheme] = useState<SurfaceThemeSelections>(
         DEFAULT_SURFACE_THEME_SELECTIONS
     );
+    const [soundEnabled, setSoundEnabled] = useState(true);
 
     return (
         <LocaleProvider locale={locale} setLocale={setLocale}>
@@ -38,12 +38,11 @@ const ChromeHarness = ({ theme = 'dark' }: { theme?: 'dark' }) => {
                 onForceRoyal={vi.fn()}
                 showDebugPanels={false}
                 surfaceTheme={surfaceTheme}
-                desktopAspectRatio={desktopAspectRatio}
-                onSelectDesktopAspectRatio={setDesktopAspectRatio}
+                soundEnabled={soundEnabled}
+                onToggleSound={() => setSoundEnabled((current) => !current)}
                 onSelectSurfaceTheme={(variant: SurfaceThemeVariant) =>
                     setSurfaceTheme({
                         background: variant,
-                        topBar: variant,
                         playerZone: variant,
                         gemPanel: variant,
                         effects: 'anime',
@@ -180,6 +179,8 @@ describe('AppChrome locale controls', () => {
                         onAddPrivilege={vi.fn()}
                         onForceRoyal={vi.fn()}
                         showDebugPanels={false}
+                        soundEnabled={true}
+                        onToggleSound={vi.fn()}
                     />
                 </LocaleProvider>
             );
@@ -218,6 +219,45 @@ describe('AppChrome locale controls', () => {
         expect(onRequestRestart).toHaveBeenCalledTimes(1);
     });
 
+    it('toggles sound feedback from the settings menu', async () => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<ChromeHarness />);
+            await Promise.resolve();
+        });
+
+        const settingsButton = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
+        );
+
+        await act(async () => {
+            settingsButton?.click();
+            await Promise.resolve();
+        });
+
+        const soundToggle = container.querySelector<HTMLButtonElement>(
+            'button[data-app-sound-toggle="true"]'
+        );
+
+        expect(soundToggle?.textContent).toContain('Sound');
+        expect(soundToggle?.getAttribute('aria-pressed')).toBe('true');
+        expect(soundToggle?.getAttribute('aria-label')).toBe('Disable sound');
+
+        await act(async () => {
+            soundToggle?.click();
+            await Promise.resolve();
+        });
+
+        const disabledSoundToggle = container.querySelector<HTMLButtonElement>(
+            'button[data-app-sound-toggle="true"]'
+        );
+        expect(disabledSoundToggle?.getAttribute('aria-pressed')).toBe('false');
+        expect(disabledSoundToggle?.getAttribute('aria-label')).toBe('Enable sound');
+    });
+
     it('shows shell actions and a surface theme dropdown inside the settings menu', async () => {
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -242,7 +282,9 @@ describe('AppChrome locale controls', () => {
         expect(settingsMenu?.textContent).not.toContain('Restart');
         expect(settingsMenu?.textContent).not.toContain('Rules');
         expect(settingsMenu?.textContent).toContain('Royal Luxury');
-        expect(settingsMenu?.textContent).toContain('Aspect Ratio');
+        expect(settingsMenu?.textContent).not.toContain('Aspect Ratio');
+        expect(settingsMenu?.textContent).not.toContain('16:10');
+        expect(settingsMenu?.textContent).not.toContain('16:9');
         expect(settingsMenu?.textContent).not.toContain('Dark');
         expect(settingsMenu?.textContent).not.toContain('Light');
         expect(settingsMenu?.textContent).not.toContain('Crystal Anime');
@@ -255,7 +297,7 @@ describe('AppChrome locale controls', () => {
         expect(settingsMenu?.className).toContain('w-[248px]');
         expect(container.querySelector('[data-game-glyph="rulebook"]')).not.toBeNull();
         expect(container.querySelector('[data-game-glyph="settings"]')).not.toBeNull();
-        expect(settingsMenu?.querySelector('[data-game-glyph="monitor"]')).not.toBeNull();
+        expect(settingsMenu?.querySelector('[data-game-glyph="monitor"]')).toBeNull();
         expect(settingsMenu?.querySelector('[data-game-glyph="save"]')).not.toBeNull();
         expect(settingsMenu?.querySelector('[data-game-glyph="load"]')).not.toBeNull();
 
@@ -265,28 +307,7 @@ describe('AppChrome locale controls', () => {
 
         expect(surfaceThemeSelect?.dataset.appSurfaceThemeValue).toBe('royal-luxury');
 
-        const aspectOptions = Array.from(
-            container.querySelectorAll<HTMLButtonElement>(
-                'button[data-desktop-aspect-ratio-option]'
-            )
-        );
-
-        expect(aspectOptions.map((button) => button.dataset.desktopAspectRatioOption)).toEqual([
-            '16:10',
-            '16:9',
-        ]);
-        expect(aspectOptions[0]?.getAttribute('aria-pressed')).toBe('true');
-
-        await act(async () => {
-            aspectOptions[1]?.click();
-            await Promise.resolve();
-        });
-
-        expect(
-            container
-                .querySelector<HTMLButtonElement>('button[data-desktop-aspect-ratio-option="16:9"]')
-                ?.getAttribute('aria-pressed')
-        ).toBe('true');
+        expect(container.querySelector('button[data-desktop-aspect-ratio-option]')).toBeNull();
 
         await act(async () => {
             surfaceThemeSelect?.click();

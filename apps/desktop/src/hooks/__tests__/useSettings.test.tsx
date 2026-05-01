@@ -64,7 +64,7 @@ describe('useSettings', () => {
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
-        expect(currentResult?.desktopAspectRatio).toBe('16:10');
+        expect(currentResult?.soundEnabled).toBe(true);
         expect(currentResult?.resolvedInitialLocale).toBe('en');
         expect(currentResult?.GAME_CONFIG).toMatchObject({
             difficulty: 'NORMAL',
@@ -74,7 +74,8 @@ describe('useSettings', () => {
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored.theme).toBeUndefined();
         expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
-        expect(stored.desktopAspectRatio).toBe('16:10');
+        expect(stored.soundEnabled).toBe(true);
+        expect(stored.desktopAspectRatio).toBeUndefined();
         expect(stored.locale).toBeUndefined();
     });
 
@@ -93,23 +94,27 @@ describe('useSettings', () => {
     it('normalizes legacy theme preferences to dark and persists explicit changes', () => {
         window.localStorage.setItem(
             SETTINGS_STORAGE_KEY,
-            JSON.stringify({ theme: 'light', locale: 'zh', desktopAspectRatio: '16:9' })
+            JSON.stringify({
+                theme: 'light',
+                locale: 'zh',
+                soundEnabled: false,
+                desktopAspectRatio: '16:9',
+            })
         );
 
         renderHarness();
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('zh');
-        expect(currentResult?.desktopAspectRatio).toBe('16:9');
+        expect(currentResult?.soundEnabled).toBe(false);
         expect(currentResult?.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
 
         act(() => {
             currentResult?.setLocale('en');
-            currentResult?.setDesktopAspectRatio('16:10');
+            currentResult?.setSoundEnabled(true);
             currentResult?.setSurfaceTheme((current) => ({
                 ...current,
                 background: 'royal-luxury',
-                topBar: 'royal-luxury',
                 gemPanel: 'royal-luxury',
                 playerZone: 'dark-arcane',
             }));
@@ -117,22 +122,21 @@ describe('useSettings', () => {
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
-        expect(currentResult?.desktopAspectRatio).toBe('16:10');
+        expect(currentResult?.soundEnabled).toBe(true);
         expect(currentResult?.surfaceTheme.playerZone).toBe('dark-arcane');
         expect(currentResult?.surfaceTheme.background).toBe('royal-luxury');
-        expect(currentResult?.surfaceTheme.topBar).toBe('royal-luxury');
         expect(currentResult?.surfaceTheme.gemPanel).toBe('royal-luxury');
         expect(currentResult?.surfaceTheme.effects).toBe('anime');
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored).toMatchObject({
             locale: 'en',
-            desktopAspectRatio: '16:10',
+            soundEnabled: true,
         });
         expect(stored.theme).toBeUndefined();
+        expect(stored.desktopAspectRatio).toBeUndefined();
         expect(stored.surfaceTheme).toMatchObject({
             background: 'royal-luxury',
-            topBar: 'royal-luxury',
             gemPanel: 'royal-luxury',
             playerZone: 'dark-arcane',
             effects: 'anime',
@@ -159,13 +163,13 @@ describe('useSettings', () => {
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
+        expect(stored.soundEnabled).toBe(true);
         expect(stored.surfaceThemeDefaultVersion).toBe('royal-luxury-default-2026-04-29');
     });
 
     it('preserves current-version intentional all-crystal surface selections', () => {
         const crystalSurfaceTheme = {
             background: 'crystal-anime',
-            topBar: 'crystal-anime',
             gemPanel: 'crystal-anime',
             playerZone: 'crystal-anime',
             effects: 'anime',
@@ -191,12 +195,14 @@ describe('useSettings', () => {
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.soundEnabled).toBe(true);
         expect(currentResult?.hasExplicitLocalePreference).toBe(false);
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored.theme).toBeUndefined();
         expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
-        expect(stored.desktopAspectRatio).toBe('16:10');
+        expect(stored.soundEnabled).toBe(true);
+        expect(stored.desktopAspectRatio).toBeUndefined();
         expect(stored.locale).toBeUndefined();
     });
 
@@ -206,6 +212,7 @@ describe('useSettings', () => {
             JSON.stringify({
                 theme: 'neon',
                 locale: 'fr',
+                soundEnabled: 'yes',
                 surfaceTheme: { playerZone: 'geek', tablecloth: 'sparkle' },
                 desktopAspectRatio: '21:9',
             })
@@ -215,9 +222,9 @@ describe('useSettings', () => {
 
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.soundEnabled).toBe(true);
         expect(currentResult?.hasExplicitLocalePreference).toBe(false);
         expect(currentResult?.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
-        expect(currentResult?.desktopAspectRatio).toBe('16:10');
 
         act(() => {
             currentResult?.setLocale((current) => (current === 'en' ? 'zh' : 'en'));
@@ -228,7 +235,9 @@ describe('useSettings', () => {
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored).toMatchObject({ locale: 'zh' });
+        expect(stored.soundEnabled).toBe(true);
         expect(stored.theme).toBeUndefined();
+        expect(stored.desktopAspectRatio).toBeUndefined();
     });
 
     it('skips storage persistence when localStorage is unavailable', () => {
@@ -249,5 +258,28 @@ describe('useSettings', () => {
 
         expect(currentResult?.locale).toBe('en');
         expect(currentResult?.theme).toBe('dark');
+        expect(currentResult?.soundEnabled).toBe(true);
+    });
+
+    it('persists explicit sound preference changes', () => {
+        renderHarness();
+
+        act(() => {
+            currentResult?.setSoundEnabled(false);
+        });
+
+        expect(currentResult?.soundEnabled).toBe(false);
+
+        let stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
+        expect(stored.soundEnabled).toBe(false);
+
+        act(() => {
+            currentResult?.setSoundEnabled((current) => !current);
+        });
+
+        expect(currentResult?.soundEnabled).toBe(true);
+
+        stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
+        expect(stored.soundEnabled).toBe(true);
     });
 });

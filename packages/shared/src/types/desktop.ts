@@ -48,7 +48,7 @@ export interface SaveReplayToFolderResult {
     path: string;
 }
 
-export type DesktopAspectRatio = '16:10' | '16:9';
+export type DesktopAspectRatio = '16:9';
 
 export interface SetDesktopAspectRatioPayload {
     ratio: DesktopAspectRatio;

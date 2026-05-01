@@ -163,9 +163,9 @@ describe('useGameLogic', () => {
             networkDispatch,
             0,
             true,
-            false
+            true
         );
-        expect(mocks.useAIController).toHaveBeenCalledWith(gameState, networkDispatch, true, false);
+        expect(mocks.useAIController).toHaveBeenCalledWith(gameState, networkDispatch, true, true);
         expect(mocks.useHistoryFlattening).toHaveBeenCalledWith(gameState, historyControls, true);
         expect(mocks.usePlayableHistoryControls).toHaveBeenCalledWith(
             gameState.mode,
@@ -185,6 +185,57 @@ describe('useGameLogic', () => {
         expect(currentResult?.historyControls).toBe(playableHistoryControls);
         expect(currentResult?.online).toBe(online);
         expect(currentResult?.replay.currentReplay).toEqual({ schemaVersion: '1.0' });
+    });
+
+    it('locks gameplay interactions while the replay counter is not on the latest step', () => {
+        const gameState = {
+            mode: 'LOCAL_PVP',
+            phase: 'MAIN_PHASE',
+            turn: 'p1',
+        } as unknown as GameState;
+        const dispatch = vi.fn<(action: GameAction) => void>();
+        const historyControls = {
+            clearAndInit: vi.fn(),
+            importHistory: vi.fn(),
+            currentIndex: 0,
+            historyLength: 2,
+            history: [{ type: 'INIT' } as GameAction, { type: 'CLOSE_MODAL' } as GameAction],
+            historySource: 'live' as const,
+        };
+        const networkDispatch = vi.fn<(action: GameAction) => void>();
+
+        mocks.useGameState.mockReturnValue({
+            gameState,
+            dispatch,
+            historyControls,
+        });
+        mocks.buildReplayRecorderFromHistory.mockReturnValue({ init: { actionType: 'INIT' } });
+        mocks.buildReplayFullSync.mockReturnValue({ replay: { schemaVersion: '1.0' } });
+        mocks.useGameNetwork.mockReturnValue({
+            online: {
+                statusNotice: null,
+                authoritativeReplayRecorder: null,
+            },
+            networkDispatch,
+        });
+        mocks.useGameInteractions.mockReturnValue({
+            selectedGems: [],
+            errorMsg: null,
+            handlers: {},
+            getters: {},
+        });
+        mocks.usePlayableHistoryControls.mockReturnValue(historyControls);
+
+        renderHarness(false, 'localhost', false);
+
+        expect(mocks.useGameInteractions).toHaveBeenCalledWith(
+            gameState,
+            networkDispatch,
+            0,
+            false,
+            true
+        );
+        expect(mocks.useAIController).toHaveBeenCalledWith(gameState, networkDispatch, true, true);
     });
 
     it('falls back to the online status notice when interactions do not expose an error', () => {

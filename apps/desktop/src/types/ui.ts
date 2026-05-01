@@ -2,7 +2,7 @@ import type { ChangeEventHandler, Dispatch, SetStateAction } from 'react';
 import type { useGameLogic } from '../hooks/useGameLogic';
 import type { useLanMatchmaking } from '../hooks/useLanMatchmaking';
 import type { SurfaceThemeSelections, SurfaceThemeVariant } from '../app/shell/surfaceTheme';
-import type { DesktopAspectRatio, PlayerKey, ThemeName } from '@gemduel/shared/types';
+import type { PlayerKey, ThemeName } from '@gemduel/shared/types';
 import type { AppReasonCode } from '@gemduel/shared/types/reason';
 
 export type { ThemeName } from '@gemduel/shared/types';
@@ -44,6 +44,7 @@ export interface AppUiState {
     isPeekingBoard: boolean;
     persistentWinner: PlayerKey | null;
     showRestartConfirm: boolean;
+    soundEnabled: boolean;
 }
 
 export interface AppUiSetters {
@@ -53,6 +54,7 @@ export interface AppUiSetters {
     setMatchmakingRoute: Dispatch<SetStateAction<MatchmakingRoute>>;
     setIsPeekingBoard: Dispatch<SetStateAction<boolean>>;
     setShowRestartConfirm: Dispatch<SetStateAction<boolean>>;
+    setSoundEnabled: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface AppUiCallbacks {
@@ -60,7 +62,6 @@ export interface AppUiCallbacks {
     handleDownloadReplay: () => void;
     handleUploadReplay: ChangeEventHandler<HTMLInputElement>;
     selectSurfaceTheme?: (variant: SurfaceThemeVariant) => void;
-    selectDesktopAspectRatio?: (ratio: DesktopAspectRatio) => void;
     openVisualLab?: (mode: 'surfaces' | 'motion') => void;
     closeVisualLabToStartPage?: () => void;
 }
@@ -72,7 +73,6 @@ export interface AppRouteProps {
     layout: ResponsiveLayout;
     theme: ThemeName;
     surfaceTheme?: SurfaceThemeSelections;
-    desktopAspectRatio?: DesktopAspectRatio;
     ui: AppUiState;
     setters: AppUiSetters;
     callbacks: AppUiCallbacks;

@@ -4,6 +4,7 @@ import { TopBar } from '@gemduel/ui/components/TopBar';
 import { UpdateNotification } from '@gemduel/ui/components/UpdateNotification';
 import { useLocale, useT } from '@gemduel/ui/i18n/LocaleProvider';
 import type { AppRouteProps } from '@app/types/ui';
+import { useGameSoundEffects } from '../audio/useGameSoundEffects';
 import { AppChrome } from '../chrome/AppChrome';
 import { AppOverlayStack } from '../overlays/AppOverlayStack';
 import { PresentationLayer } from '../presentation/PresentationLayer';
@@ -29,7 +30,6 @@ export function GameShell({
     layout,
     theme,
     surfaceTheme,
-    desktopAspectRatio = '16:10',
     ui,
     setters,
     callbacks,
@@ -43,7 +43,7 @@ export function GameShell({
         handleForceRoyal,
         handleSelectBonusColor,
     } = handlers;
-    const { getPlayerScore, getCrownCount, canAfford } = getters;
+    const { getPlayerScore, getCrownCount, canAfford, isMyTurn } = getters;
     const { locale } = useLocale();
     const t = useT();
 
@@ -56,6 +56,13 @@ export function GameShell({
         currentIndex: historyControls.currentIndex,
         historySource: historyControls.historySource,
         isReviewing: ui.isReviewing,
+    });
+    useGameSoundEffects({
+        state,
+        currentIndex: historyControls.currentIndex,
+        historySource: historyControls.historySource,
+        isReviewing: ui.isReviewing,
+        enabled: ui.soundEnabled,
     });
     const presentationPreviewMode = useMemo(getPresentationPreviewMode, []);
     const shouldHoldPresentationPreviewIntro = useMemo(getShouldHoldPresentationPreviewIntro, []);
@@ -178,6 +185,7 @@ export function GameShell({
         theme,
         marketDeckBackArtwork,
         isReviewing: ui.isReviewing,
+        canInteract: isMyTurn,
     });
 
     return (
@@ -230,8 +238,8 @@ export function GameShell({
                 showDebugPanels={ui.showDebug && state.mode !== 'ONLINE_MULTIPLAYER'}
                 surfaceTheme={surfaceTheme}
                 onSelectSurfaceTheme={callbacks.selectSurfaceTheme}
-                desktopAspectRatio={desktopAspectRatio}
-                onSelectDesktopAspectRatio={callbacks.selectDesktopAspectRatio}
+                soundEnabled={ui.soundEnabled}
+                onToggleSound={() => setters.setSoundEnabled((current) => !current)}
             />
 
             <AppOverlayStack

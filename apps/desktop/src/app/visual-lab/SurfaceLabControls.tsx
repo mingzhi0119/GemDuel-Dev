@@ -20,11 +20,13 @@ import {
     type SurfaceLabRegenFilter,
     type SurfaceLabRegenMarks,
 } from './useSurfaceLabRegenMarks';
-import type { SurfaceLabReviewPlanExportState } from './surfaceLabReviewPlanTypes';
+import {
+    SURFACE_LAB_REVIEW_STATE_FILE_PATH,
+    type SurfaceLabReviewStateStatus,
+} from './surfaceLabReviewStateTypes';
 
 const SLOT_LABELS: Record<SurfaceLabSlot, string> = {
     'shell-background': 'Shell',
-    topbar: 'TopBar',
     'player-zone': 'PlayerZone',
     'gem-panel': 'Gem panel',
     'market-card-back-l1': 'L1 back',
@@ -35,41 +37,21 @@ const SLOT_LABELS: Record<SurfaceLabSlot, string> = {
 
 const getBatchOptions = (assetSets: readonly SurfaceLabAssetSet[]) =>
     Array.from(new Map(assetSets.map((set) => [set.batchLabel, set.batchLabel])).values());
-
 const formatDimensions = (candidate: SurfaceLabCandidate): string => {
     const archive = candidate.dimensions?.archive;
     const target = candidate.dimensions?.target;
-
     if (archive) {
         return `${archive[0]}x${archive[1]}`;
     }
-
     if (target) {
         return `${target[0]}x${target[1]}`;
     }
-
     return 'runtime';
 };
-
-const getReviewPlanPathLabel = (jsonPath?: string): string => {
-    if (!jsonPath) {
-        return 'surface-review-plan.json';
-    }
-
-    const parts = jsonPath.replace(/\\/g, '/').split('/').filter(Boolean);
-    const fileName = parts[parts.length - 1] ?? 'surface-review-plan.json';
-    const directoryName = parts[parts.length - 2];
-
-    return fileName === 'surface-review-plan.json' && directoryName ? directoryName : fileName;
-};
-
-const getReviewPlanExportTitle = (reviewPlanExport: SurfaceLabReviewPlanExportState) =>
-    [
-        reviewPlanExport.jsonPath ? `JSON: ${reviewPlanExport.jsonPath}` : null,
-        reviewPlanExport.markdownPath ? `Markdown: ${reviewPlanExport.markdownPath}` : null,
-    ]
-        .filter(Boolean)
-        .join('\n');
+const getRatingCount = (reviewStateStatus: SurfaceLabReviewStateStatus | undefined): number =>
+    reviewStateStatus?.counts
+        ? Object.values(reviewStateStatus.counts.ratings).reduce((total, count) => total + count, 0)
+        : 0;
 
 function SurfaceLabSlotSummary({
     assetSlots,
@@ -140,9 +122,7 @@ export function SurfaceLabControls({
     slotOverrides,
     setSlotOverrides,
     assetSlots,
-    reviewPlanExport,
-    onExportReviewPlan,
-    onSyncLatestCompletion,
+    reviewStateStatus,
 }: {
     mode: VisualLabMode;
     catalogStatus: string;
@@ -162,9 +142,7 @@ export function SurfaceLabControls({
     slotOverrides: Partial<Record<SurfaceLabSlot, string>>;
     setSlotOverrides: (next: Partial<Record<SurfaceLabSlot, string>>) => void;
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>;
-    reviewPlanExport?: SurfaceLabReviewPlanExportState;
-    onExportReviewPlan?: () => void;
-    onSyncLatestCompletion?: () => void;
+    reviewStateStatus?: SurfaceLabReviewStateStatus;
 }) {
     const hasFilterMatches = visibleAssetSets.length > 0;
     const hasRatingMatches =
@@ -189,6 +167,14 @@ export function SurfaceLabControls({
         .map((set) => set.variant);
     const setOptions = assetSets.map((set) => set.id);
     const setLabelById = new Map(assetSets.map((set) => [set.id, set.label]));
+    const statePath = reviewStateStatus?.path ?? SURFACE_LAB_REVIEW_STATE_FILE_PATH;
+    const ratingCount = getRatingCount(reviewStateStatus) || Object.keys(styleRatings).length;
+    const pendingReplacementCount =
+        reviewStateStatus?.counts?.pendingReplacements ??
+        reviewStateStatus?.counts?.regenMarks ??
+        Object.keys(regenMarks).length;
+    const commentCount =
+        reviewStateStatus?.counts?.pendingComments ?? reviewStateStatus?.counts?.comments ?? 0;
 
     return (
         <section className="flex flex-col gap-3">
@@ -319,67 +305,43 @@ export function SurfaceLabControls({
                 regenMarks={regenMarks}
                 toggleSurfaceLabSlotRegenMark={toggleSurfaceLabSlotRegenMark}
             />
-            {reviewPlanExport && onExportReviewPlan ? (
-                <div className="grid min-w-0 max-w-full gap-2 rounded-lg border border-slate-700 bg-slate-950/70 p-2">
-                    <button
-                        type="button"
-                        className="rounded-md border border-cyan-300/70 bg-cyan-300 px-2 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-slate-950 hover:bg-cyan-200 disabled:cursor-not-allowed disabled:border-slate-600 disabled:bg-slate-800 disabled:text-slate-400"
-                        disabled={
-                            reviewPlanExport.status === 'exporting' ||
-                            reviewPlanExport.status === 'syncing'
-                        }
-                        onClick={onExportReviewPlan}
-                    >
-                        {reviewPlanExport.status === 'exporting'
-                            ? 'Exporting review plan'
-                            : 'Export review plan'}
-                    </button>
-                    {onSyncLatestCompletion ? (
-                        <button
-                            type="button"
-                            className="rounded-md border border-slate-600 px-2 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-slate-200 hover:border-cyan-300 hover:text-cyan-100 disabled:cursor-not-allowed disabled:text-slate-500"
-                            disabled={
-                                reviewPlanExport.status === 'exporting' ||
-                                reviewPlanExport.status === 'syncing'
-                            }
-                            onClick={onSyncLatestCompletion}
-                        >
-                            {reviewPlanExport.status === 'syncing'
-                                ? 'Syncing completion'
-                                : 'Sync latest completion'}
-                        </button>
-                    ) : null}
-                    {reviewPlanExport.status !== 'idle' ? (
-                        <div className="min-w-0 max-w-full space-y-1 text-[11px] leading-5 text-slate-400">
-                            {reviewPlanExport.message ? (
-                                <div className="min-w-0 max-w-full truncate font-bold text-slate-200">
-                                    {reviewPlanExport.message}
-                                </div>
-                            ) : null}
-                            {reviewPlanExport.jsonPath || reviewPlanExport.markdownPath ? (
-                                <div
-                                    className="min-w-0 max-w-full truncate font-mono text-cyan-100"
-                                    title={getReviewPlanExportTitle(reviewPlanExport)}
-                                >
-                                    Plan: {getReviewPlanPathLabel(reviewPlanExport.jsonPath)}
-                                </div>
-                            ) : null}
-                            {reviewPlanExport.status === 'exported' ? (
-                                <div className="min-w-0 max-w-full truncate">
-                                    Delete {reviewPlanExport.deleteSetCount ?? 0} / Regen{' '}
-                                    {reviewPlanExport.regenerateSlotCount ?? 0} / Warnings{' '}
-                                    {reviewPlanExport.warningCount ?? 0}
-                                </div>
-                            ) : null}
-                            {reviewPlanExport.status === 'synced' ? (
-                                <div className="min-w-0 max-w-full truncate">
-                                    Cleared {reviewPlanExport.syncedCount ?? 0} regen marks
-                                </div>
-                            ) : null}
-                        </div>
+            <div className="grid min-w-0 max-w-full gap-2 rounded-lg border border-slate-700 bg-slate-950/70 p-2">
+                <div className="flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                    <span>Review state</span>
+                    <span className="font-mono text-cyan-100">
+                        {reviewStateStatus?.status ?? 'loading'}
+                    </span>
+                </div>
+                <div
+                    className="min-w-0 max-w-full truncate font-mono text-[11px] text-cyan-100"
+                    title={statePath}
+                >
+                    {statePath}
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 text-center text-[11px]">
+                    <div className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5">
+                        <div className="font-mono text-cyan-100">{ratingCount}</div>
+                        <div className="font-black uppercase text-slate-500">Ratings</div>
+                    </div>
+                    <div className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5">
+                        <div className="font-mono text-amber-100">{pendingReplacementCount}</div>
+                        <div className="font-black uppercase text-slate-500">Pending</div>
+                    </div>
+                    <div className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1.5">
+                        <div className="font-mono text-slate-100">{commentCount}</div>
+                        <div className="font-black uppercase text-slate-500">Comments</div>
+                    </div>
+                </div>
+                <div className="min-w-0 max-w-full truncate text-[11px] leading-5 text-slate-400">
+                    {reviewStateStatus?.message ?? 'Waiting for state file'}
+                    {reviewStateStatus?.revision !== undefined ? (
+                        <span className="font-mono text-slate-500">
+                            {' '}
+                            / rev {reviewStateStatus.revision}
+                        </span>
                     ) : null}
                 </div>
-            ) : null}
+            </div>
             <div className="text-[11px] leading-5 text-slate-400">
                 Active set: <span className="font-mono text-slate-100">{selectedSetId}</span>
                 <br />
