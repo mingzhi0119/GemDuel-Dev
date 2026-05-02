@@ -4,10 +4,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
     applyDeleteRatingOne,
+    consolidateSurfaceReviewThemes,
     finalizeReplacements,
     prepareReplacements,
+    repairSurfaceReviewManifestMetadata,
     validateSurfaceReviewPlan,
     validateSurfaceReviewState,
+    writeCurrentSurfaceReviewPlan,
 } from './visual-lab-surface-review-core.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -47,6 +50,21 @@ try {
         process.exit(result.ok ? 0 : 1);
     }
 
+    if (command === 'repair-manifests') {
+        const result = repairSurfaceReviewManifestMetadata({ repoRoot });
+        console.log(JSON.stringify(result, null, 2));
+        process.exit(0);
+    }
+
+    if (command === 'write-plan') {
+        const result = writeCurrentSurfaceReviewPlan({
+            repoRoot,
+            repair: !hasFlag('--no-repair'),
+        });
+        console.log(JSON.stringify(result, null, 2));
+        process.exit(result.warnings.length <= 1 ? 0 : 1);
+    }
+
     if (command === 'apply') {
         const phase = getArg('--phase');
         if (phase !== 'delete-rating1') {
@@ -84,8 +102,18 @@ try {
         process.exit(result.completion.failures.length === 0 ? 0 : 1);
     }
 
+    if (command === 'consolidate') {
+        const result = consolidateSurfaceReviewThemes({
+            repoRoot,
+            planPath: requirePlan(),
+            runTimestamp: getArg('--run-timestamp'),
+        });
+        console.log(JSON.stringify(result, null, 2));
+        process.exit(0);
+    }
+
     throw new Error(
-        'Usage: visual-lab-surface-review.mjs <validate|apply|prepare-replacements|finalize-replacements> [--plan <legacy-plan>] [--sources <source-map>]'
+        'Usage: visual-lab-surface-review.mjs <validate|repair-manifests|write-plan|apply|prepare-replacements|finalize-replacements|consolidate> [--plan <surface-review-plan.json>] [--sources <source-map>]'
     );
 } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

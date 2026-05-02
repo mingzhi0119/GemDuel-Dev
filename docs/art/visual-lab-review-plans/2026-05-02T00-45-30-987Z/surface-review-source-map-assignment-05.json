@@ -1,0 +1,128 @@
+{
+    "schema": "gemduel.visualLab.surfaceReviewReplacementAssignment.v1",
+    "assignment": "05",
+    "planPath": "docs/art/visual-lab-review-plans/2026-05-02T00-45-30-987Z/surface-review-plan.json",
+    "sourceMapPath": "docs/art/visual-lab-review-plans/2026-05-02T00-45-30-987Z/surface-review-source-map-template.json",
+    "sources": [
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-amber-icecourt-B-gem-panel",
+            "regenKey": "surface-autonomous-new-themes-r4-candidates:2026-04-29:amber-icecourt:B:gem-panel",
+            "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:amber-icecourt:B",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/gem-panel/amber-icecourt/gem-panel-b.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-amber-icecourt-B-gem-panel. Source kind: candidate. Style set: surface-autonomous-new-themes-r4-candidates:2026-04-29:amber-icecourt:B. Style: amber-icecourt. Former variant: B. Human rating: 7. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/gem-panel/amber-icecourt/gem-panel-b.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/gem-panel/amber-icecourt/gem-panel-b.png. Human review instruction, mandatory: 盘面去除橙色元素只以冰蓝为主题. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-player-zone",
+            "regenKey": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A:player-zone",
+            "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+            "slot": "player-zone",
+            "rawSlot": "player-zone-p1",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/player-zone-p1/velvet-sunharbor/player-zone-p1-a.png",
+            "targetDimensions": [1920, 520],
+            "promptText": "Create one exact 1920x520 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-player-zone. Source kind: candidate. Style set: surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A. Style: velvet-sunharbor. Former variant: A. Human rating: 4. Slot: player-zone-p1; target archive path: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/player-zone-p1/velvet-sunharbor/player-zone-p1-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/player-zone-p1/velvet-sunharbor/player-zone-p1-a.png. Human review instruction, mandatory: 跟Shell风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-player-zone",
+            "regenKey": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A:player-zone",
+            "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+            "slot": "player-zone",
+            "rawSlot": "player-zone-p2",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/player-zone-p2/velvet-sunharbor/player-zone-p2-a.png",
+            "targetDimensions": [1920, 520],
+            "promptText": "Create one exact 1920x520 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-player-zone. Source kind: candidate. Style set: surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A. Style: velvet-sunharbor. Former variant: A. Human rating: 4. Slot: player-zone-p2; target archive path: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/player-zone-p2/velvet-sunharbor/player-zone-p2-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/player-zone-p2/velvet-sunharbor/player-zone-p2-a.png. Human review instruction, mandatory: 跟Shell风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-gem-panel",
+            "regenKey": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A:gem-panel",
+            "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/gem-panel/velvet-sunharbor/gem-panel-a.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-gem-panel. Source kind: candidate. Style set: surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A. Style: velvet-sunharbor. Former variant: A. Human rating: 4. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/gem-panel/velvet-sunharbor/gem-panel-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/gem-panel/velvet-sunharbor/gem-panel-a.png. Human review instruction, mandatory: 跟Shell风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-market-card-back-l1",
+            "regenKey": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A:market-card-back-l1",
+            "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+            "slot": "market-card-back-l1",
+            "rawSlot": "market-card-back-l1",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l1/velvet-sunharbor/market-card-back-l1-a.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-market-card-back-l1. Source kind: candidate. Style set: surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A. Style: velvet-sunharbor. Former variant: A. Human rating: 4. Slot: market-card-back-l1; target archive path: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l1/velvet-sunharbor/market-card-back-l1-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l1/velvet-sunharbor/market-card-back-l1-a.png. Human review instruction, mandatory: 跟Shell风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-market-card-back-l2",
+            "regenKey": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A:market-card-back-l2",
+            "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+            "slot": "market-card-back-l2",
+            "rawSlot": "market-card-back-l2",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l2/velvet-sunharbor/market-card-back-l2-a.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-market-card-back-l2. Source kind: candidate. Style set: surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A. Style: velvet-sunharbor. Former variant: A. Human rating: 4. Slot: market-card-back-l2; target archive path: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l2/velvet-sunharbor/market-card-back-l2-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l2/velvet-sunharbor/market-card-back-l2-a.png. Human review instruction, mandatory: 跟Shell风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-market-card-back-l3",
+            "regenKey": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A:market-card-back-l3",
+            "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+            "slot": "market-card-back-l3",
+            "rawSlot": "market-card-back-l3",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l3/velvet-sunharbor/market-card-back-l3-a.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-market-card-back-l3. Source kind: candidate. Style set: surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A. Style: velvet-sunharbor. Former variant: A. Human rating: 4. Slot: market-card-back-l3; target archive path: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l3/velvet-sunharbor/market-card-back-l3-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/market-card-back-l3/velvet-sunharbor/market-card-back-l3-a.png. Human review instruction, mandatory: 跟Shell风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-royal-card-back",
+            "regenKey": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A:royal-card-back",
+            "setId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+            "slot": "royal-card-back",
+            "rawSlot": "royal-card-back",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/royal-card-back/velvet-sunharbor/royal-card-back-a.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-velvet-sunharbor-A-royal-card-back. Source kind: candidate. Style set: surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A. Style: velvet-sunharbor. Former variant: A. Human rating: 4. Slot: royal-card-back; target archive path: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/royal-card-back/velvet-sunharbor/royal-card-back-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/royal-card-back/velvet-sunharbor/royal-card-back-a.png. Human review instruction, mandatory: 跟Shell风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Royal card back must have a complete prestige center focus such as sovereign ornament, crown-like abstract motif, ceremonial medallion, jewel core, or crest-like non-readable geometry; no large empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-moonstone-verdigris-A-player-zone",
+            "regenKey": "surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A:player-zone",
+            "setId": "surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A",
+            "slot": "player-zone",
+            "rawSlot": "player-zone-p1",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/player-zone-p1/moonstone-verdigris/player-zone-p1-a.png",
+            "targetDimensions": [1920, 520],
+            "promptText": "Create one exact 1920x520 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-moonstone-verdigris-A-player-zone. Source kind: candidate. Style set: surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A. Style: moonstone-verdigris. Former variant: A. Human rating: 4. Slot: player-zone-p1; target archive path: assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/player-zone-p1/moonstone-verdigris/player-zone-p1-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/player-zone-p1/moonstone-verdigris/player-zone-p1-a.png. Human review instruction, mandatory: 再简约一点配色不错. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-29-moonstone-verdigris-A-player-zone",
+            "regenKey": "surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A:player-zone",
+            "setId": "surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A",
+            "slot": "player-zone",
+            "rawSlot": "player-zone-p2",
+            "archivePath": "assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/player-zone-p2/moonstone-verdigris/player-zone-p2-a.png",
+            "targetDimensions": [1920, 520],
+            "promptText": "Create one exact 1920x520 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-29-moonstone-verdigris-A-player-zone. Source kind: candidate. Style set: surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A. Style: moonstone-verdigris. Former variant: A. Human rating: 4. Slot: player-zone-p2; target archive path: assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/player-zone-p2/moonstone-verdigris/player-zone-p2-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/player-zone-p2/moonstone-verdigris/player-zone-p2-a.png. Human review instruction, mandatory: 再简约一点配色不错. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        }
+    ]
+}

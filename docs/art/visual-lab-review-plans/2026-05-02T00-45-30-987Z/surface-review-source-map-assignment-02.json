@@ -1,0 +1,128 @@
+{
+    "schema": "gemduel.visualLab.surfaceReviewReplacementAssignment.v1",
+    "assignment": "02",
+    "planPath": "docs/art/visual-lab-review-plans/2026-05-02T00-45-30-987Z/surface-review-plan.json",
+    "sourceMapPath": "docs/art/visual-lab-review-plans/2026-05-02T00-45-30-987Z/surface-review-source-map-template.json",
+    "sources": [
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-solar-enamel-a-market-card-back-l2",
+            "regenKey": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a:market-card-back-l2",
+            "setId": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a",
+            "slot": "market-card-back-l2",
+            "rawSlot": "market-card-back-l2",
+            "archivePath": "assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l2/solar-enamel/a/market-card-back-l2.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-solar-enamel-a-market-card-back-l2. Source kind: candidate. Style set: surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a. Style: solar-enamel. Former variant: a. Human rating: 7. Slot: market-card-back-l2; target archive path: assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l2/solar-enamel/a/market-card-back-l2.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l2/solar-enamel/a/market-card-back-l2.png. Human review instruction, mandatory: 卡背不要蓝色 跟皇室卡背风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-solar-enamel-a-market-card-back-l3",
+            "regenKey": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a:market-card-back-l3",
+            "setId": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a",
+            "slot": "market-card-back-l3",
+            "rawSlot": "market-card-back-l3",
+            "archivePath": "assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l3/solar-enamel/a/market-card-back-l3.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-solar-enamel-a-market-card-back-l3. Source kind: candidate. Style set: surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a. Style: solar-enamel. Former variant: a. Human rating: 7. Slot: market-card-back-l3; target archive path: assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l3/solar-enamel/a/market-card-back-l3.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l3/solar-enamel/a/market-card-back-l3.png. Human review instruction, mandatory: 卡背不要蓝色 跟皇室卡背风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-round-01-aurora-porcelain-court-a-market-card-back-l1",
+            "regenKey": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a:market-card-back-l1",
+            "setId": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a",
+            "slot": "market-card-back-l1",
+            "rawSlot": "market-card-back-l1",
+            "archivePath": "assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l1/aurora-porcelain-court/a/market-card-back-l1.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-round-01-aurora-porcelain-court-a-market-card-back-l1. Source kind: candidate. Style set: surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a. Style: aurora-porcelain-court. Former variant: a. Human rating: 10. Slot: market-card-back-l1; target archive path: assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l1/aurora-porcelain-court/a/market-card-back-l1.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l1/aurora-porcelain-court/a/market-card-back-l1.png. Human review instruction, mandatory: 统一卡背风格后可考虑擢升为Runtime. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-round-01-aurora-porcelain-court-a-market-card-back-l2",
+            "regenKey": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a:market-card-back-l2",
+            "setId": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a",
+            "slot": "market-card-back-l2",
+            "rawSlot": "market-card-back-l2",
+            "archivePath": "assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l2/aurora-porcelain-court/a/market-card-back-l2.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-round-01-aurora-porcelain-court-a-market-card-back-l2. Source kind: candidate. Style set: surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a. Style: aurora-porcelain-court. Former variant: a. Human rating: 10. Slot: market-card-back-l2; target archive path: assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l2/aurora-porcelain-court/a/market-card-back-l2.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l2/aurora-porcelain-court/a/market-card-back-l2.png. Human review instruction, mandatory: 统一卡背风格后可考虑擢升为Runtime. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-round-01-aurora-porcelain-court-a-market-card-back-l3",
+            "regenKey": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a:market-card-back-l3",
+            "setId": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a",
+            "slot": "market-card-back-l3",
+            "rawSlot": "market-card-back-l3",
+            "archivePath": "assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l3/aurora-porcelain-court/a/market-card-back-l3.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-round-01-aurora-porcelain-court-a-market-card-back-l3. Source kind: candidate. Style set: surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a. Style: aurora-porcelain-court. Former variant: a. Human rating: 10. Slot: market-card-back-l3; target archive path: assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l3/aurora-porcelain-court/a/market-card-back-l3.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/market-card-back-l3/aurora-porcelain-court/a/market-card-back-l3.png. Human review instruction, mandatory: 统一卡背风格后可考虑擢升为Runtime. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-lapis-sunburst-A-market-card-back-l2",
+            "regenKey": "surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A:market-card-back-l2",
+            "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A",
+            "slot": "market-card-back-l2",
+            "rawSlot": "market-card-back-l2",
+            "archivePath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l2/lapis-sunburst/market-card-back-l2-a.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-lapis-sunburst-A-market-card-back-l2. Source kind: candidate. Style set: surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A. Style: lapis-sunburst. Former variant: A. Human rating: 7. Slot: market-card-back-l2; target archive path: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l2/lapis-sunburst/market-card-back-l2-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l2/lapis-sunburst/market-card-back-l2-a.png. Human review instruction, mandatory: 改为类L1的蓝色主色调 金色点缀. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-lapis-sunburst-A-market-card-back-l3",
+            "regenKey": "surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A:market-card-back-l3",
+            "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A",
+            "slot": "market-card-back-l3",
+            "rawSlot": "market-card-back-l3",
+            "archivePath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l3/lapis-sunburst/market-card-back-l3-a.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-lapis-sunburst-A-market-card-back-l3. Source kind: candidate. Style set: surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A. Style: lapis-sunburst. Former variant: A. Human rating: 7. Slot: market-card-back-l3; target archive path: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l3/lapis-sunburst/market-card-back-l3-a.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l3/lapis-sunburst/market-card-back-l3-a.png. Human review instruction, mandatory: 改为类L1的蓝色主色调 金色点缀. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-opal-rain-B-shell-background",
+            "regenKey": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B:shell-background",
+            "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B",
+            "slot": "shell-background",
+            "rawSlot": "shell-background",
+            "archivePath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/shell-background/opal-rain/shell-background-b.png",
+            "targetDimensions": [3840, 2160],
+            "promptText": "Create one exact 3840x2160 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-opal-rain-B-shell-background. Source kind: candidate. Style set: surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B. Style: opal-rain. Former variant: B. Human rating: 7. Slot: shell-background; target archive path: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/shell-background/opal-rain/shell-background-b.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/shell-background/opal-rain/shell-background-b.png. Human review instruction, mandatory: 跟Shell配色看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Shell covers the upper 3840x1640 region only: TopBar plus center play area, with PlayerZone generated separately. Shell may use theme-related landscapes, distant architecture, environment wonders, or natural wonders, but must stay one low-contrast, low-noise wide global background with no strong focal subject, framed panel, tablecloth, playmat, center rectangle, platform, giant sun/moon disk, character, or monster. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-opal-rain-B-market-card-back-l1",
+            "regenKey": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B:market-card-back-l1",
+            "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B",
+            "slot": "market-card-back-l1",
+            "rawSlot": "market-card-back-l1",
+            "archivePath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l1/opal-rain/market-card-back-l1-b.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-opal-rain-B-market-card-back-l1. Source kind: candidate. Style set: surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B. Style: opal-rain. Former variant: B. Human rating: 7. Slot: market-card-back-l1; target archive path: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l1/opal-rain/market-card-back-l1-b.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l1/opal-rain/market-card-back-l1-b.png. Human review instruction, mandatory: 跟Shell配色看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-opal-rain-B-market-card-back-l2",
+            "regenKey": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B:market-card-back-l2",
+            "setId": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B",
+            "slot": "market-card-back-l2",
+            "rawSlot": "market-card-back-l2",
+            "archivePath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l2/opal-rain/market-card-back-l2-b.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-opal-rain-B-market-card-back-l2. Source kind: candidate. Style set: surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B. Style: opal-rain. Former variant: B. Human rating: 7. Slot: market-card-back-l2; target archive path: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l2/opal-rain/market-card-back-l2-b.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/market-card-back-l2/opal-rain/market-card-back-l2-b.png. Human review instruction, mandatory: 跟Shell配色看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        }
+    ]
+}

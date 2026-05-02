@@ -27,6 +27,10 @@ This archive keeps historical audit, remediation, certification, and planning ar
 
 - [Opus 4.7 Independent Audit Prompt](prompts/opus-4.7-independent-audit-prompt.md)
 
+## Art Assets
+
+- [Surface Theme History 2026-05-02](art/surface-theme-history-2026-05-02/README.md)
+
 ## Timeline
 
 - [Engineering Governance Archive](timeline/engineering-governance-archive.md)

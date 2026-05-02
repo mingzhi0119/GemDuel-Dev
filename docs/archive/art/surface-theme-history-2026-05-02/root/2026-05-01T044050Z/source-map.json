@@ -1,0 +1,1428 @@
+{
+    "schema": "gemduel.visualLab.surfaceCandidateSourceMap.v1",
+    "batch": "surface-autonomous-candidates",
+    "date": "2026-05-01T044050Z",
+    "archiveRoot": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z",
+    "sources": [
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-shell-background-a",
+            "style": "cryo-qilin-adeptus",
+            "variant": "A",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f42f5e5834819bbb9103b6751ff859.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/cryo-qilin-adeptus/A/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-player-zone-a",
+            "style": "cryo-qilin-adeptus",
+            "variant": "A",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f42f8f14fc819b9c2bbb54a820151f.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/cryo-qilin-adeptus/A/player-zone.png",
+            "sourceDimensions": [1979, 794],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1979x794 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-gem-panel-a",
+            "style": "cryo-qilin-adeptus",
+            "variant": "A",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f42fb8eb7c819b8d5bdbc9518b7793.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/cryo-qilin-adeptus/A/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-market-card-back-l1-a",
+            "style": "cryo-qilin-adeptus",
+            "variant": "A",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f42ff84760819badfa21186ab301d2.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/cryo-qilin-adeptus/A/market-card-back-l1.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-market-card-back-l2-a",
+            "style": "cryo-qilin-adeptus",
+            "variant": "A",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f4303676d8819bb53df74a2e8fff86.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/cryo-qilin-adeptus/A/market-card-back-l2.png",
+            "sourceDimensions": [1086, 1448],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-market-card-back-l3-a",
+            "style": "cryo-qilin-adeptus",
+            "variant": "A",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f430785ec0819b9b21f0ddcec9c8d5.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/cryo-qilin-adeptus/A/market-card-back-l3.png",
+            "sourceDimensions": [1085, 1450],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1450 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-royal-card-back-a",
+            "style": "cryo-qilin-adeptus",
+            "variant": "A",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f430ba75ac819b8e87f3ac5bfcae8d.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/cryo-qilin-adeptus/A/royal-card-back.png",
+            "sourceDimensions": [1086, 1448],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-shell-background-b",
+            "style": "cryo-qilin-adeptus",
+            "variant": "B",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f430fae3b4819bba72630ac2a92a02.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/cryo-qilin-adeptus/B/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-player-zone-b",
+            "style": "cryo-qilin-adeptus",
+            "variant": "B",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f4312133ec819b89531efa7a24bc4e.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/cryo-qilin-adeptus/B/player-zone.png",
+            "sourceDimensions": [1942, 809],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1942x809 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-gem-panel-b",
+            "style": "cryo-qilin-adeptus",
+            "variant": "B",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f4314ddd58819b8f1608a17b2cc073.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/cryo-qilin-adeptus/B/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-market-card-back-l1-b",
+            "style": "cryo-qilin-adeptus",
+            "variant": "B",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f432156324819bb7454bd6728911ba.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/cryo-qilin-adeptus/B/market-card-back-l1.png",
+            "sourceDimensions": [1086, 1448],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-market-card-back-l2-b",
+            "style": "cryo-qilin-adeptus",
+            "variant": "B",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f432530c6c819b95cb162adca7385c.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/cryo-qilin-adeptus/B/market-card-back-l2.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-market-card-back-l3-b",
+            "style": "cryo-qilin-adeptus",
+            "variant": "B",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f432911710819bae0173a5aec8187f.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/cryo-qilin-adeptus/B/market-card-back-l3.png",
+            "sourceDimensions": [1085, 1450],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1450 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-cryo-qilin-adeptus-royal-card-back-b",
+            "style": "cryo-qilin-adeptus",
+            "variant": "B",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-faeb-7282-89cc-a22762e766d1/ig_0fc9f1a5bc211d5d0169f432dcaa5c819b84c9e9b6c509a188.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/cryo-qilin-adeptus/B/royal-card-back.png",
+            "sourceDimensions": [1085, 1450],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1450 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-shell-background-a",
+            "style": "spark-mask-carnival",
+            "variant": "A",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f42f5f2f9081988790ddd214994a20.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/spark-mask-carnival/A/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-player-zone-a",
+            "style": "spark-mask-carnival",
+            "variant": "A",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f42f8b64b0819891b8722ee3917f67.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/spark-mask-carnival/A/player-zone.png",
+            "sourceDimensions": [1974, 797],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1974x797 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-gem-panel-a",
+            "style": "spark-mask-carnival",
+            "variant": "A",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f42fb58bdc8198a17dbf8b2545a116.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/spark-mask-carnival/A/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-market-card-back-l1-a",
+            "style": "spark-mask-carnival",
+            "variant": "A",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f42ffeb5988198a24119ab3094756b.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/spark-mask-carnival/A/market-card-back-l1.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-market-card-back-l2-a",
+            "style": "spark-mask-carnival",
+            "variant": "A",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f4303e2c748198a823f33a43742538.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/spark-mask-carnival/A/market-card-back-l2.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-market-card-back-l3-a",
+            "style": "spark-mask-carnival",
+            "variant": "A",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f4307b94ec8198b608edfefab1684c.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/spark-mask-carnival/A/market-card-back-l3.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-royal-card-back-a",
+            "style": "spark-mask-carnival",
+            "variant": "A",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f430c4c4f0819886d085f04c0e0592.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/spark-mask-carnival/A/royal-card-back.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-shell-background-b",
+            "style": "spark-mask-carnival",
+            "variant": "B",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f431075df4819890043f361e959c70.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/spark-mask-carnival/B/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-player-zone-b",
+            "style": "spark-mask-carnival",
+            "variant": "B",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f43135c28c81988afdeaff16930317.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/spark-mask-carnival/B/player-zone.png",
+            "sourceDimensions": [1971, 798],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1971x798 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-gem-panel-b",
+            "style": "spark-mask-carnival",
+            "variant": "B",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f4316166b88198ad7546eeeaa11e92.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/spark-mask-carnival/B/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-market-card-back-l1-b",
+            "style": "spark-mask-carnival",
+            "variant": "B",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f431ac57a481989599ddb9bce24d64.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/spark-mask-carnival/B/market-card-back-l1.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-market-card-back-l2-b",
+            "style": "spark-mask-carnival",
+            "variant": "B",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f431f26a70819889e40eb3bdef5b11.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/spark-mask-carnival/B/market-card-back-l2.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-market-card-back-l3-b",
+            "style": "spark-mask-carnival",
+            "variant": "B",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f432462b5c81988f5b3415933c5773.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/spark-mask-carnival/B/market-card-back-l3.png",
+            "sourceDimensions": [1086, 1448],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-spark-mask-carnival-royal-card-back-b",
+            "style": "spark-mask-carnival",
+            "variant": "B",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fb3b-7242-938e-e22a2d1890f0/ig_0bc2e62c245d612e0169f43289712c81989b4a5d203515ed4a.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/spark-mask-carnival/B/royal-card-back.png",
+            "sourceDimensions": [1086, 1448],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-shell-background-a",
+            "style": "tarnished-elden-reliquary",
+            "variant": "A",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f42f5e4140819a93531c7843f21901.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/tarnished-elden-reliquary/A/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-player-zone-a",
+            "style": "tarnished-elden-reliquary",
+            "variant": "A",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f42f8780d4819a9456ce56f98bba59.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/tarnished-elden-reliquary/A/player-zone.png",
+            "sourceDimensions": [1969, 799],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1969x799 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-gem-panel-a",
+            "style": "tarnished-elden-reliquary",
+            "variant": "A",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f42faf17f8819aae7eb9df01b974bc.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/tarnished-elden-reliquary/A/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-market-card-back-l1-a",
+            "style": "tarnished-elden-reliquary",
+            "variant": "A",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f42ff27a10819a8107d40172102a80.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/tarnished-elden-reliquary/A/market-card-back-l1.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-market-card-back-l2-a",
+            "style": "tarnished-elden-reliquary",
+            "variant": "A",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f430303574819ab0eab09070adbe68.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/tarnished-elden-reliquary/A/market-card-back-l2.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-market-card-back-l3-a",
+            "style": "tarnished-elden-reliquary",
+            "variant": "A",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f4307c8c5c819aab310c05c847016a.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/tarnished-elden-reliquary/A/market-card-back-l3.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-royal-card-back-a",
+            "style": "tarnished-elden-reliquary",
+            "variant": "A",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f430b44d70819aa688c6691231bcf5.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/tarnished-elden-reliquary/A/royal-card-back.png",
+            "sourceDimensions": [1086, 1448],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-shell-background-b",
+            "style": "tarnished-elden-reliquary",
+            "variant": "B",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f430edaf40819a8425d547002a81b2.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/tarnished-elden-reliquary/B/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-player-zone-b",
+            "style": "tarnished-elden-reliquary",
+            "variant": "B",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f4311a3da0819a9cf456393d6db0d6.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/tarnished-elden-reliquary/B/player-zone.png",
+            "sourceDimensions": [1971, 798],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1971x798 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-gem-panel-b",
+            "style": "tarnished-elden-reliquary",
+            "variant": "B",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f4314797d0819a91296a5dee8f0d5c.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/tarnished-elden-reliquary/B/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-market-card-back-l1-b",
+            "style": "tarnished-elden-reliquary",
+            "variant": "B",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f4318b44d8819aac21403e24fb9e23.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/tarnished-elden-reliquary/B/market-card-back-l1.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-market-card-back-l2-b",
+            "style": "tarnished-elden-reliquary",
+            "variant": "B",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f431d1bb58819a9b034e267ccee9f3.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/tarnished-elden-reliquary/B/market-card-back-l2.png",
+            "sourceDimensions": [1085, 1450],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1450 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-market-card-back-l3-b",
+            "style": "tarnished-elden-reliquary",
+            "variant": "B",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f43211ac60819a80e27e74ce65fc8f.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/tarnished-elden-reliquary/B/market-card-back-l3.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-tarnished-elden-reliquary-royal-card-back-b",
+            "style": "tarnished-elden-reliquary",
+            "variant": "B",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fbb9-7220-a9f9-484480cddb94/ig_038dc3faa5e1d6d40169f43250dfd4819a92da79cf4da07d21.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/tarnished-elden-reliquary/B/royal-card-back.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review",
+                "portrait/IP-inspired direction; verify no logo or game text before any promotion"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-shell-background-a",
+            "style": "opal-koi-pavilion",
+            "variant": "A",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f42f60a274819990900f54e4331bdd.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/opal-koi-pavilion/A/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-player-zone-a",
+            "style": "opal-koi-pavilion",
+            "variant": "A",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f42f883ce0819988dabacc4edaab73.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/opal-koi-pavilion/A/player-zone.png",
+            "sourceDimensions": [1983, 793],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1983x793 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-gem-panel-a",
+            "style": "opal-koi-pavilion",
+            "variant": "A",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f42fb2cbc08199a1f7e1fec99365af.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/opal-koi-pavilion/A/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-market-card-back-l1-a",
+            "style": "opal-koi-pavilion",
+            "variant": "A",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f42ff6d5648199bcaf25624707424c.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/opal-koi-pavilion/A/market-card-back-l1.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-market-card-back-l2-a",
+            "style": "opal-koi-pavilion",
+            "variant": "A",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f4303579a48199a4c750834c8fb5c9.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/opal-koi-pavilion/A/market-card-back-l2.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-market-card-back-l3-a",
+            "style": "opal-koi-pavilion",
+            "variant": "A",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f43074b9b481998dd2d2ef49699f46.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/opal-koi-pavilion/A/market-card-back-l3.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-royal-card-back-a",
+            "style": "opal-koi-pavilion",
+            "variant": "A",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f430ba817c8199a2535b14450bbb87.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/opal-koi-pavilion/A/royal-card-back.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-shell-background-b",
+            "style": "opal-koi-pavilion",
+            "variant": "B",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f4310100688199917d40f3198b2e4e.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/opal-koi-pavilion/B/shell-background.png",
+            "sourceDimensions": [1916, 821],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1916x821 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-player-zone-b",
+            "style": "opal-koi-pavilion",
+            "variant": "B",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f4312f99748199baa025e1acf5e36b.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/opal-koi-pavilion/B/player-zone.png",
+            "sourceDimensions": [1971, 798],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1971x798 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-gem-panel-b",
+            "style": "opal-koi-pavilion",
+            "variant": "B",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f431612de481998e7816c68c8dedd3.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/opal-koi-pavilion/B/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-market-card-back-l1-b",
+            "style": "opal-koi-pavilion",
+            "variant": "B",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f43209938081998647c158c9924317.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/opal-koi-pavilion/B/market-card-back-l1.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-market-card-back-l2-b",
+            "style": "opal-koi-pavilion",
+            "variant": "B",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f43275f6e4819984f7964a9dc255c9.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/opal-koi-pavilion/B/market-card-back-l2.png",
+            "sourceDimensions": [1086, 1448],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-market-card-back-l3-b",
+            "style": "opal-koi-pavilion",
+            "variant": "B",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f432b72af481998f96d972cb94b342.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/opal-koi-pavilion/B/market-card-back-l3.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-opal-koi-pavilion-royal-card-back-b",
+            "style": "opal-koi-pavilion",
+            "variant": "B",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fc2c-72b3-bf68-522566cfc676/ig_0a0a4a9a6a5d61cf0169f4330176b881998af8da2a057be95f.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/opal-koi-pavilion/B/royal-card-back.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-shell-background-a",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "A",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f42f5ea2648198a50d1b7d006a42a9.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/amethyst-clockwork-bloom/A/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-player-zone-a",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "A",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f42f88befc8198b1f5d641b450b19b.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/amethyst-clockwork-bloom/A/player-zone.png",
+            "sourceDimensions": [1915, 821],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1915x821 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-gem-panel-a",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "A",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f42fb048cc81988dbf97b000925d2f.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/amethyst-clockwork-bloom/A/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-market-card-back-l1-a",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "A",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f42ff643c081988a40e441ef2b16a0.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/amethyst-clockwork-bloom/A/market-card-back-l1.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-market-card-back-l2-a",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "A",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f4303e4de48198a33f7e75fade420c.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/amethyst-clockwork-bloom/A/market-card-back-l2.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-market-card-back-l3-a",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "A",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f4307ccde08198a55dd2976c11f331.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/amethyst-clockwork-bloom/A/market-card-back-l3.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-royal-card-back-a",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "A",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f430be98b48198a36448db3704e83a.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/amethyst-clockwork-bloom/A/royal-card-back.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-shell-background-b",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "B",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f43101493c819889e2e1516bbcb102.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/amethyst-clockwork-bloom/B/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-player-zone-b",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "B",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f4312dac888198aa71eb2452e7de9e.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/amethyst-clockwork-bloom/B/player-zone.png",
+            "sourceDimensions": [2087, 753],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 2087x753 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-gem-panel-b",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "B",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f4315bca4c81989135d2b095f3336c.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/amethyst-clockwork-bloom/B/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-market-card-back-l1-b",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "B",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f431a7cb008198a089a96e14b11e77.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/amethyst-clockwork-bloom/B/market-card-back-l1.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-market-card-back-l2-b",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "B",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f431eb71fc819880b5bd173f2308f9.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/amethyst-clockwork-bloom/B/market-card-back-l2.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-market-card-back-l3-b",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "B",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f4322bbdc08198bcbd938846910b56.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/amethyst-clockwork-bloom/B/market-card-back-l3.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-amethyst-clockwork-bloom-royal-card-back-b",
+            "style": "amethyst-clockwork-bloom",
+            "variant": "B",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fcad-7e81-8ba7-a77b461fc737/ig_05d1302b96b586a50169f4326f3c008198b6ccde4955a41110.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/amethyst-clockwork-bloom/B/royal-card-back.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-shell-background-a",
+            "style": "sunken-pearl-forge",
+            "variant": "A",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f42f64bd248198b3a923c4aea69064.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/sunken-pearl-forge/A/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-player-zone-a",
+            "style": "sunken-pearl-forge",
+            "variant": "A",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f42f8a7de081988cab2e40692617a6.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/sunken-pearl-forge/A/player-zone.png",
+            "sourceDimensions": [1942, 809],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1942x809 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-gem-panel-a",
+            "style": "sunken-pearl-forge",
+            "variant": "A",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f42fa87b8c8198b6f0207f75de5f1c.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/sunken-pearl-forge/A/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-market-card-back-l1-a",
+            "style": "sunken-pearl-forge",
+            "variant": "A",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f42fd8757081989460d3ecc20f62f1.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/sunken-pearl-forge/A/market-card-back-l1.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-market-card-back-l2-a",
+            "style": "sunken-pearl-forge",
+            "variant": "A",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f43012e41c81988d3aac78c6c0a78b.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/sunken-pearl-forge/A/market-card-back-l2.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-market-card-back-l3-a",
+            "style": "sunken-pearl-forge",
+            "variant": "A",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f43059e4d881989e76b040560539af.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/sunken-pearl-forge/A/market-card-back-l3.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-royal-card-back-a",
+            "style": "sunken-pearl-forge",
+            "variant": "A",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f4309a1e5881988a54297ab1da8058.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/sunken-pearl-forge/A/royal-card-back.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-shell-background-b",
+            "style": "sunken-pearl-forge",
+            "variant": "B",
+            "slot": "shell-background",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f430df6be08198889b523587ed0cd4.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/shell-background/sunken-pearl-forge/B/shell-background.png",
+            "sourceDimensions": [1918, 820],
+            "targetDimensions": [3840, 1640],
+            "archiveDimensions": [3840, 1640],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1918x820 to 3840x1640",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-player-zone-b",
+            "style": "sunken-pearl-forge",
+            "variant": "B",
+            "slot": "player-zone",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f4310d89a48198a499ae2e45592930.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/player-zone/sunken-pearl-forge/B/player-zone.png",
+            "sourceDimensions": [1971, 798],
+            "targetDimensions": [3840, 520],
+            "archiveDimensions": [3840, 520],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1971x798 to 3840x520",
+                "aspect-ratio crop risk; inspect composition in Visual Lab",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-gem-panel-b",
+            "style": "sunken-pearl-forge",
+            "variant": "B",
+            "slot": "gem-panel",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f4313ab99081988f048129e454a3f5.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/gem-panel/sunken-pearl-forge/B/gem-panel.png",
+            "sourceDimensions": [1254, 1254],
+            "targetDimensions": [1254, 1254],
+            "archiveDimensions": [1254, 1254],
+            "operation": "copied-exact",
+            "risks": [
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-market-card-back-l1-b",
+            "style": "sunken-pearl-forge",
+            "variant": "B",
+            "slot": "market-card-back-l1",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f431844b708198af2a443f5476b778.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l1/sunken-pearl-forge/B/market-card-back-l1.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-market-card-back-l2-b",
+            "style": "sunken-pearl-forge",
+            "variant": "B",
+            "slot": "market-card-back-l2",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f431c6fba88198b81c4aa08f01a1af.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l2/sunken-pearl-forge/B/market-card-back-l2.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-market-card-back-l3-b",
+            "style": "sunken-pearl-forge",
+            "variant": "B",
+            "slot": "market-card-back-l3",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f432094f5481988aae91ab3f745328.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/market-card-back-l3/sunken-pearl-forge/B/market-card-back-l3.png",
+            "sourceDimensions": [1085, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1085x1449 to 1086x1448",
+                "upscaled source; inspect sharpness before promotion",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        },
+        {
+            "promptId": "SA-R7-2026-05-01T044050Z-sunken-pearl-forge-royal-card-back-b",
+            "style": "sunken-pearl-forge",
+            "variant": "B",
+            "slot": "royal-card-back",
+            "sourcePath": "/home/sange/.codex/generated_images/019de1d8-fd39-7950-bd2a-615dd304afc9/ig_0c750c626d77f7830169f4324fe00081988a27a19523bc7adc.png",
+            "archivePath": "assets/art-library/surface-autonomous-candidates/2026-05-01T044050Z/royal-card-back/sunken-pearl-forge/B/royal-card-back.png",
+            "sourceDimensions": [1086, 1449],
+            "targetDimensions": [1086, 1448],
+            "archiveDimensions": [1086, 1448],
+            "operation": "center-crop-resize",
+            "risks": [
+                "normalized from 1086x1449 to 1086x1448",
+                "script cannot prove absence of small text/logos/watermarks; requires human Visual Lab review"
+            ]
+        }
+    ]
+}

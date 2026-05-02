@@ -103,6 +103,7 @@ export const buildSurfaceReviewPlan = ({
                 style: sourceSet.style,
                 variant: sourceSet.variant,
                 rating: keepSet.rating,
+                comment: keepSet.comment ?? '',
                 slot,
                 regenKey,
                 promptId:
@@ -133,6 +134,7 @@ export const buildSurfaceReviewPlan = ({
                 style: sourceSet.style,
                 variant: sourceSet.variant,
                 rating: null,
+                comment: normalizedComments[sourceSet.id] ?? '',
                 slot,
                 regenKey,
                 promptId:
@@ -369,10 +371,9 @@ export const validateSurfaceReviewPlan = ({ repoRoot, planPath }) => {
     const deletePresent = plan.deleteSets.filter((set) => currentSetIds.has(set.setId));
     const deleteMissing = plan.deleteSets.filter((set) => !currentSetIds.has(set.setId));
     const keptMissing = plan.keepSets.filter((set) => !currentSetIds.has(set.setId));
-    const partialDeleteState = deletePresent.length > 0 && deleteMissing.length > 0;
     const errors = [];
 
-    if (partialDeleteState) {
+    if (deletePresent.length > 0 && deleteMissing.length > 0) {
         errors.push(
             'Delete phase is partial: some deleteSets are still present and some are missing.'
         );

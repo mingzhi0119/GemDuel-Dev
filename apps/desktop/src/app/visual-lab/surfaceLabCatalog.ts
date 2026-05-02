@@ -88,6 +88,9 @@ export const createRuntimeSurfaceLabAssetSets = (theme: ThemeName): SurfaceLabAs
 const getCandidateSetId = (candidate: SurfaceLabCandidate): string =>
     `${candidate.batch}:${candidate.date}:${candidate.style}:${candidate.variant}`;
 
+const getCandidateLabel = (candidate: SurfaceLabCandidate): string =>
+    candidate.variant === 'main' ? candidate.style : `${candidate.style} ${candidate.variant}`;
+
 const getBatchLabel = (batch: string, date: string): string =>
     `${batch.replace(/^surface-autonomous-/, '').replace(/-candidates$/, '')} / ${date}`;
 
@@ -292,7 +295,7 @@ export const normalizeSurfaceLabAssetSets = (
                     date: first.date,
                     style: first.style,
                     variant: first.variant,
-                    label: `${first.style} ${first.variant}`,
+                    label: getCandidateLabel(first),
                     slots: slots as Record<SurfaceLabSlot, SurfaceLabCandidate>,
                     playerZoneSideSlots,
                 },

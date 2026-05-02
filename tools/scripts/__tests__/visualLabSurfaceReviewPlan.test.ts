@@ -6,13 +6,16 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
     SURFACE_SLOTS,
+    SURFACE_SLOT_TARGET_DIMENSIONS,
     applyDeleteRatingOne,
     buildSurfaceReviewPlan,
+    consolidateSurfaceReviewThemes,
     finalizeReplacements,
     getSurfaceReviewStatePath,
     loadSurfaceManifestRecords,
     prepareReplacements,
     readSurfaceReviewStateFile,
+    repairSurfaceReviewManifestMetadata,
     validateSurfaceReviewPlan,
     validateSurfaceReviewState,
     writeSurfaceReviewStatePayload,
@@ -23,6 +26,11 @@ const batch = 'surface-autonomous-fixture-candidates';
 const date = '2026-04-30';
 const FS_TEST_TIMEOUT_MS = 20_000;
 
+const getFixtureDimensions = (slot: string) =>
+    SURFACE_SLOT_TARGET_DIMENSIONS[slot as keyof typeof SURFACE_SLOT_TARGET_DIMENSIONS] ?? [
+        1254, 1254,
+    ];
+
 const createRecord = (style: string, variant: string, slot: string, archiveSlot = slot) => ({
     promptId: `${style}-${variant}-${slot}`,
     slot,
@@ -30,10 +38,7 @@ const createRecord = (style: string, variant: string, slot: string, archiveSlot 
     variant,
     archivePath: `assets/art-library/${batch}/${date}/${archiveSlot}/${style}/${variant}/${archiveSlot}.png`,
     dimensions: {
-        archive:
-            slot.startsWith('market-card-back') || slot === 'royal-card-back'
-                ? [1086, 1448]
-                : [1254, 1254],
+        archive: getFixtureDimensions(slot),
     },
 });
 
@@ -91,8 +96,7 @@ const writeRepoFixture = () => {
     );
     records.forEach((record) => {
         const absolutePath = path.join(repoRoot, record.archivePath);
-        fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
-        fs.writeFileSync(absolutePath, 'asset');
+        writePngHeader(absolutePath, record.dimensions.archive[0], record.dimensions.archive[1]);
     });
     return { repoRoot };
 };
@@ -345,6 +349,12 @@ describe('Visual Lab surface review plan', () => {
                 slot: 'royal-card-back',
                 targetDimensions: [1086, 1448],
             });
+            expect(sourceMap.sources[0].promptText).toContain(
+                'Human review instruction, mandatory: Regenerate the royal back with the same palette.'
+            );
+            expect(
+                fs.readFileSync(path.join(repoRoot, prepared.promptManifestPath), 'utf8')
+            ).toContain('Human instruction: Regenerate the royal back with the same palette.');
         },
         FS_TEST_TIMEOUT_MS
     );
@@ -522,6 +532,126 @@ describe('Visual Lab surface review plan', () => {
 
             expect(result.completion.completedRegenKeys).toEqual([`${keepSetId}:royal-card-back`]);
             expect(result.completion.failures).toEqual([]);
+        },
+        FS_TEST_TIMEOUT_MS
+    );
+
+    it(
+        'repairs character theme manifest metadata for stale Visual Lab state ids',
+        () => {
+            const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'surface-review-repair-'));
+            const manifestDir = path.join(
+                repoRoot,
+                'assets',
+                'art-library',
+                'surface-autonomous-character-theme-candidates',
+                '2026-05-01T074505Z',
+                'contact-sheets'
+            );
+            fs.mkdirSync(manifestDir, { recursive: true });
+            fs.writeFileSync(
+                path.join(manifestDir, 'preview-manifest.json'),
+                `${JSON.stringify(
+                    {
+                        batch: '2026-05-01T074505Z',
+                        records: [
+                            {
+                                ...createRecord('genshin-navia', 'A', 'gem-panel'),
+                                batch: '2026-05-01T074505Z',
+                            },
+                        ],
+                    },
+                    null,
+                    2
+                )}\n`
+            );
+
+            const result = repairSurfaceReviewManifestMetadata({ repoRoot });
+            const manifest = JSON.parse(
+                fs.readFileSync(path.join(manifestDir, 'preview-manifest.json'), 'utf8')
+            );
+
+            expect(result.repaired).toHaveLength(1);
+            expect(manifest.batch).toBe('surface-autonomous-character-theme-candidates');
+            expect(manifest.date).toBe('2026-05-01T074505Z');
+            expect(manifest.records[0]).toMatchObject({
+                batch: 'surface-autonomous-character-theme-candidates',
+                date: '2026-05-01T074505Z',
+            });
+        },
+        FS_TEST_TIMEOUT_MS
+    );
+
+    it(
+        'consolidates kept themes into a curated library and migrates ratings',
+        () => {
+            const { repoRoot } = writeRepoFixture();
+            const records = loadSurfaceManifestRecords({ repoRoot });
+            const deleteSetId = `${batch}:${date}:delete-me:A`;
+            const keepSetId = `${batch}:${date}:keep-me:B`;
+            const plan = buildSurfaceReviewPlan({
+                repoRoot,
+                records,
+                ratings: {
+                    [deleteSetId]: 1,
+                    [keepSetId]: 10,
+                    'runtime:clean-boardgame:dark': 7,
+                },
+            });
+            const files = writeSurfaceReviewPlan({ repoRoot, plan });
+            writeSurfaceReviewStatePayload({
+                repoRoot,
+                payload: {
+                    ratings: {
+                        [deleteSetId]: 1,
+                        [keepSetId]: 10,
+                        'runtime:clean-boardgame:dark': 7,
+                    },
+                    regenMarks: {},
+                    comments: {},
+                    assetSets: [],
+                },
+            });
+
+            applyDeleteRatingOne({ repoRoot, planPath: files.jsonPath, confirm: true });
+            const result = consolidateSurfaceReviewThemes({
+                repoRoot,
+                planPath: files.jsonPath,
+                runTimestamp: '2026-05-02T000000Z',
+            });
+            const state = readSurfaceReviewStateFile({ repoRoot });
+            const curatedSetId =
+                'surface-autonomous-curated-theme-candidates:2026-05-02T000000Z:keep-me:main';
+            const manifest = JSON.parse(
+                fs.readFileSync(
+                    path.join(
+                        repoRoot,
+                        'assets',
+                        'art-library',
+                        'surface-autonomous-curated-theme-candidates',
+                        '2026-05-02T000000Z',
+                        'contact-sheets',
+                        'preview-manifest.json'
+                    ),
+                    'utf8'
+                )
+            );
+
+            expect(result.report.keptSetCount).toBe(1);
+            expect(manifest.records).toHaveLength(8);
+            expect(manifest.records[0]).toMatchObject({
+                batch: 'surface-autonomous-curated-theme-candidates',
+                date: '2026-05-02T000000Z',
+                style: 'keep-me',
+                variant: 'main',
+            });
+            expect(state?.ratings).toMatchObject({
+                [curatedSetId]: 10,
+                'runtime:clean-boardgame:dark': 7,
+            });
+            expect(state?.assetSets.map((set) => set?.id)).toContain(curatedSetId);
+            expect(state?.ratings).not.toHaveProperty(keepSetId);
+            expect(state?.ratings).not.toHaveProperty(deleteSetId);
         },
         FS_TEST_TIMEOUT_MS
     );

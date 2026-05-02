@@ -1,0 +1,128 @@
+{
+    "schema": "gemduel.visualLab.surfaceReviewReplacementAssignment.v1",
+    "assignment": "01",
+    "planPath": "docs/art/visual-lab-review-plans/2026-05-02T00-45-30-987Z/surface-review-plan.json",
+    "sourceMapPath": "docs/art/visual-lab-review-plans/2026-05-02T00-45-30-987Z/surface-review-source-map-template.json",
+    "sources": [
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T055019Z-fengjin-A-gem-panel",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T055019Z:fengjin:A:gem-panel",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T055019Z:fengjin:A",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/gem-panel/fengjin/A/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T055019Z-fengjin-A-gem-panel. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T055019Z:fengjin:A. Style: fengjin. Former variant: A. Human rating: 7. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/gem-panel/fengjin/A/gem-panel.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/gem-panel/fengjin/A/gem-panel.png. Human review instruction, mandatory: 盘面边缘ta太大且有无关元素没扣掉（盘面的天空）. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T055019Z-xilian-A-gem-panel",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T055019Z:xilian:A:gem-panel",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T055019Z:xilian:A",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/gem-panel/xilian/A/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T055019Z-xilian-A-gem-panel. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T055019Z:xilian:A. Style: xilian. Former variant: A. Human rating: 7. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/gem-panel/xilian/A/gem-panel.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/gem-panel/xilian/A/gem-panel.png. Human review instruction, mandatory: 盘面边缘太大且内部方格不够方形. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T064230Z-fengjin-A-gem-panel",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:fengjin:A:gem-panel",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:fengjin:A",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/fengjin/A/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T064230Z-fengjin-A-gem-panel. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T064230Z:fengjin:A. Style: fengjin. Former variant: A. Human rating: 4. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/fengjin/A/gem-panel.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/fengjin/A/gem-panel.png. Human review instruction, mandatory: 盘面边缘太大. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T064230Z-xilian-A-gem-panel",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:xilian:A:gem-panel",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:xilian:A",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/xilian/A/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T064230Z-xilian-A-gem-panel. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T064230Z:xilian:A. Style: xilian. Former variant: A. Human rating: 7. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/xilian/A/gem-panel.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/xilian/A/gem-panel.png. Human review instruction, mandatory: 盘面完全错误. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T064230Z-xilian-B-gem-panel",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:xilian:B:gem-panel",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:xilian:B",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/xilian/B/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T064230Z-xilian-B-gem-panel. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T064230Z:xilian:B. Style: xilian. Former variant: B. Human rating: 7. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/xilian/B/gem-panel.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/gem-panel/xilian/B/gem-panel.png. No extra human review instruction for this slot. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T074505Z-hsr-castorice-B-gem-panel",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-castorice:B:gem-panel",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-castorice:B",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-castorice/B/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T074505Z-hsr-castorice-B-gem-panel. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-castorice:B. Style: hsr-castorice. Former variant: B. Human rating: 4. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-castorice/B/gem-panel.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-castorice/B/gem-panel.png. No extra human review instruction for this slot. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T074505Z-hsr-robin-A-gem-panel",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-robin:A:gem-panel",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-robin:A",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-robin/A/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T074505Z-hsr-robin-A-gem-panel. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-robin:A. Style: hsr-robin. Former variant: A. Human rating: 7. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-robin/A/gem-panel.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-robin/A/gem-panel.png. Human review instruction, mandatory: 盘面边框太突兀了要绿幕的音符边框，后期抠图放进去跟Shell背景融合才好看. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T074505Z-hsr-firefly-A-gem-panel",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-firefly:A:gem-panel",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-firefly:A",
+            "slot": "gem-panel",
+            "rawSlot": "gem-panel",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-firefly/A/gem-panel.png",
+            "targetDimensions": [1254, 1254],
+            "promptText": "Create one exact 1254x1254 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T074505Z-hsr-firefly-A-gem-panel. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-firefly:A. Style: hsr-firefly. Former variant: A. Human rating: 4. Slot: gem-panel; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-firefly/A/gem-panel.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/gem-panel/hsr-firefly/A/gem-panel.png. No extra human review instruction for this slot. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Gem panel must be a straight, front-facing, calibratable 5x5 grid of empty wells. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-05-01T083328Z-genshin-navia-B-shell-background",
+            "regenKey": "surface-autonomous-character-theme-candidates:2026-05-01T083328Z:genshin-navia:B:shell-background",
+            "setId": "surface-autonomous-character-theme-candidates:2026-05-01T083328Z:genshin-navia:B",
+            "slot": "shell-background",
+            "rawSlot": "shell-background",
+            "archivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/shell-background/genshin-navia/B/shell-background.png",
+            "targetDimensions": [3840, 1640],
+            "promptText": "Create one exact 3840x1640 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-05-01T083328Z-genshin-navia-B-shell-background. Source kind: candidate. Style set: surface-autonomous-character-theme-candidates:2026-05-01T083328Z:genshin-navia:B. Style: genshin-navia. Former variant: B. Human rating: 7. Slot: shell-background; target archive path: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/shell-background/genshin-navia/B/shell-background.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/shell-background/genshin-navia/B/shell-background.png. Human review instruction, mandatory: 背景挡完了背景可以不要人物就娜维娅元素就行了. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Shell covers the upper 3840x1640 region only: TopBar plus center play area, with PlayerZone generated separately. Shell may use theme-related landscapes, distant architecture, environment wonders, or natural wonders, but must stay one low-contrast, low-noise wide global background with no strong focal subject, framed panel, tablecloth, playmat, center rectangle, platform, giant sun/moon disk, character, or monster. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        },
+        {
+            "promptId": "SURFACE-REVIEW-2026-04-27-solar-enamel-a-market-card-back-l1",
+            "regenKey": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a:market-card-back-l1",
+            "setId": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a",
+            "slot": "market-card-back-l1",
+            "rawSlot": "market-card-back-l1",
+            "archivePath": "assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l1/solar-enamel/a/market-card-back-l1.png",
+            "targetDimensions": [1086, 1448],
+            "promptText": "Create one exact 1086x1448 PNG for GemDuel Visual Lab replacement prompt SURFACE-REVIEW-2026-04-27-solar-enamel-a-market-card-back-l1. Source kind: candidate. Style set: surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a. Style: solar-enamel. Former variant: a. Human rating: 7. Slot: market-card-back-l1; target archive path: assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l1/solar-enamel/a/market-card-back-l1.png. Original candidate asset path to improve: assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/market-card-back-l1/solar-enamel/a/market-card-back-l1.png. Human review instruction, mandatory: 卡背不要蓝色 跟皇室卡背风格看齐. Obey this even if it conflicts with the prior candidate image. No text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake glyphs, UI labels, baked cards, baked counters, gameplay controls, hover rings, or selection states. React renders all labels, counts, icons, levels, gems, buttons, and gameplay affordances. Market L1/L2/L3 must remain a coherent tiered card-back family; L1 must still include a restrained center ornament and may not have an empty center. Preserve the successful style identity from the original set, but fix the marked slot according to the human instruction. Do not include text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake readable glyphs, UI labels, counters, cards, buttons, hover rings, selection states, screenshots, contact-sheet layouts, or app chrome. React renders all labels, counts, icons, levels, gems, buttons, cards, hover rings, selection states, and gameplay affordances. Return a single clean game asset image only.",
+            "sourcePath": "",
+            "failure": ""
+        }
+    ]
+}

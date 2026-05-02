@@ -1,0 +1,880 @@
+{
+    "schema": "gemduel.visualLab.surfaceReviewConsolidation.v1",
+    "planPath": "docs/art/visual-lab-review-plans/2026-05-02T00-45-30-987Z/surface-review-plan.json",
+    "completedAt": "2026-05-02T01:33:25.747Z",
+    "batch": "surface-autonomous-curated-theme-candidates",
+    "date": "2026-05-02T00-45-30-987Z",
+    "manifestPath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/contact-sheets/preview-manifest.json",
+    "keptSetCount": 47,
+    "recordCount": 363,
+    "normalizedAssetCount": 85,
+    "normalizedAssets": [
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/genshin-ganyu/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/shell-background/genshin-ganyu/B/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/genshin-ganyu/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/player-zone-p1/genshin-ganyu/B/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/genshin-ganyu/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/player-zone-p2/genshin-ganyu/B/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1705x922 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/damselette-columbina/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/shell-background/damselette-columbina/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/damselette-columbina/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/player-zone-p1/damselette-columbina/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/damselette-columbina/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/player-zone-p2/damselette-columbina/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 2087x753 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/fengjin-1/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/shell-background/fengjin/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/fengjin-1/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/player-zone-p1/fengjin/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 2087x753 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/fengjin-1/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/player-zone-p2/fengjin/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/fengjin-2/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/shell-background/fengjin/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/fengjin-2/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/player-zone-p1/fengjin/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 2057x765 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/fengjin-2/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/player-zone-p2/fengjin/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/xilian-1/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/shell-background/xilian/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/xilian-1/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/player-zone-p1/xilian/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 2045x769 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/xilian-1/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/player-zone-p2/xilian/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/xilian-2/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/shell-background/xilian/B/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/xilian-2/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/player-zone-p1/xilian/B/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/xilian-2/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/player-zone-p2/xilian/B/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1683x935 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/xilian-3/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/shell-background/xilian/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/xilian-3/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/player-zone-p1/xilian/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 2025x777 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/xilian-3/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/player-zone-p2/xilian/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 2006x784 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/genshin-furina-1/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/shell-background/genshin-furina/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/genshin-furina-1/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p1/genshin-furina/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/genshin-furina-1/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p2/genshin-furina/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/genshin-furina-2/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/shell-background/genshin-furina/B/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/genshin-furina-2/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p1/genshin-furina/B/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/genshin-furina-2/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p2/genshin-furina/B/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/genshin-kokomi-1/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/shell-background/genshin-kokomi/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/genshin-kokomi-1/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p1/genshin-kokomi/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1870x841 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/genshin-kokomi-1/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p2/genshin-kokomi/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/genshin-kokomi-2/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/shell-background/genshin-kokomi/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/genshin-kokomi-2/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p1/genshin-kokomi/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1705x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/genshin-kokomi-2/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p2/genshin-kokomi/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1774x887 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/hsr-castorice-1/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/shell-background/hsr-castorice/B/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/hsr-castorice-1/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p1/hsr-castorice/B/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/hsr-castorice-1/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p2/hsr-castorice/B/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1703x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/hsr-castorice-2/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/shell-background/hsr-castorice/A/shell-background.png",
+            "normalization": "center-crop-resize from 1919x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/hsr-castorice-2/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p1/hsr-castorice/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/hsr-castorice-2/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p2/hsr-castorice/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1774x887 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/hsr-castorice-3/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/shell-background/hsr-castorice/B/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/hsr-castorice-3/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p1/hsr-castorice/B/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/hsr-castorice-3/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p2/hsr-castorice/B/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/hsr-robin/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/shell-background/hsr-robin/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/hsr-robin/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p1/hsr-robin/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1983x793 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/hsr-robin/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p2/hsr-robin/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/hsr-firefly-1/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/shell-background/hsr-firefly/B/shell-background.png",
+            "normalization": "center-crop-resize from 1919x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/hsr-firefly-1/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p1/hsr-firefly/B/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/hsr-firefly-1/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p2/hsr-firefly/B/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/hsr-firefly-2/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/shell-background/hsr-firefly/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/hsr-firefly-2/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p1/hsr-firefly/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/hsr-firefly-2/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/player-zone-p2/hsr-firefly/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 2065x761 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/royal-card-back/hsr-firefly-2/main/royal-card-back.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/royal-card-back/hsr-firefly/A/royal-card-back.png",
+            "normalization": "center-crop-resize from 1055x1491 to 1086x1448"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/genshin-navia-1/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p1/genshin-navia/B/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/genshin-navia-1/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p2/genshin-navia/B/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/genshin-navia-2/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/shell-background/genshin-navia/A/shell-background.png",
+            "normalization": "center-crop-resize from 1918x820 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p1/genshin-navia-2/main/player-zone-p1.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p1/genshin-navia/A/player-zone-p1.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/player-zone-p2/genshin-navia-2/main/player-zone-p2.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/player-zone-p2/genshin-navia/A/player-zone-p2.png",
+            "normalization": "center-crop-resize from 1704x923 to 1920x520"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/solar-enamel/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/shell-background/solar-enamel/a/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/aurora-porcelain-court/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/shell-background/aurora-porcelain-court/a/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/lapis-sunburst/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/shell-background/lapis-sunburst/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/opal-rain/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/shell-background/opal-rain/shell-background-b.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/bamboo-ink/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/shell-background/bamboo-ink/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/arctic-rosequartz/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-luminous-styles-candidates/2026-04-27/shell-background/arctic-rosequartz/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/aurora-steel/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-mythic-styles-candidates/2026-04-27/shell-background/aurora-steel/B/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/porcelain-cinnabar/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-mythic-styles-candidates/2026-04-27/shell-background/porcelain-cinnabar/A/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/astral-orchid/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-mythic-styles-candidates/2026-04-27/shell-background/astral-orchid/A/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/pearl-opaline/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-styles-candidates/2026-04-27/shell-background/pearl-opaline/a/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/neon-noir/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-styles-candidates/2026-04-27/shell-background/neon-noir/a/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/aurora-citadel/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/aurora-citadel/shell-background-b.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/lotus-porcelain/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/lotus-porcelain/shell-background-b.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/astral-navigator-1/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/astral-navigator/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/astral-navigator-2/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/shell-background/astral-navigator/shell-background-b.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/sunken-opal/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r2-candidates/2026-04-29/shell-background/sunken-opal/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/storm-temple/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r2-candidates/2026-04-29/shell-background/storm-temple/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/ivory-rainharbor/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r3-candidates/2026-04-29/shell-background/ivory-rainharbor/shell-background-b.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/amber-icecourt/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/shell-background/amber-icecourt/shell-background-b.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/velvet-sunharbor/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/shell-background/velvet-sunharbor/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/cobalt-embercourt/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/shell-background/cobalt-embercourt/shell-background-b.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/moonstone-verdigris/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/shell-background/moonstone-verdigris/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/platinum-stormcourt/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r6-candidates/2026-04-29/shell-background/platinum-stormcourt/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/teal-embergrove/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r6-candidates/2026-04-29/shell-background/teal-embergrove/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/opal-nightforge/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-new-themes-r6-candidates/2026-04-29/shell-background/opal-nightforge/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/nocturne-pearl/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-prismatic-styles-candidates/2026-04-27/shell-background/nocturne-pearl/shell-background-a.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/midnight-navigator/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-ultra-styles-candidates/2026-04-27/shell-background/midnight-navigator/A/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        },
+        {
+            "archivePath": "assets/art-library/surface-autonomous-curated-theme-candidates/2026-05-02T00-45-30-987Z/shell-background/crimson-onyx/main/shell-background.png",
+            "sourceArchivePath": "assets/art-library/surface-autonomous-ultra-styles-candidates/2026-04-27/shell-background/crimson-onyx/A/shell-background.png",
+            "normalization": "center-crop-resize from 3840x2160 to 3840x1640"
+        }
+    ],
+    "mapping": [
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T055019Z:genshin-ganyu:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:genshin-ganyu:main",
+            "rating": 7,
+            "oldStyle": "genshin-ganyu",
+            "curatedStyle": "genshin-ganyu"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T055019Z:damselette-columbina:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:damselette-columbina:main",
+            "rating": 7,
+            "oldStyle": "damselette-columbina",
+            "curatedStyle": "damselette-columbina"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T055019Z:fengjin:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:fengjin-1:main",
+            "rating": 7,
+            "oldStyle": "fengjin",
+            "curatedStyle": "fengjin-1"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:fengjin:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:fengjin-2:main",
+            "rating": 4,
+            "oldStyle": "fengjin",
+            "curatedStyle": "fengjin-2"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:xilian:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:xilian-1:main",
+            "rating": 7,
+            "oldStyle": "xilian",
+            "curatedStyle": "xilian-1"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T064230Z:xilian:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:xilian-2:main",
+            "rating": 7,
+            "oldStyle": "xilian",
+            "curatedStyle": "xilian-2"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T055019Z:xilian:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:xilian-3:main",
+            "rating": 7,
+            "oldStyle": "xilian",
+            "curatedStyle": "xilian-3"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:genshin-furina:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:genshin-furina-1:main",
+            "rating": 4,
+            "oldStyle": "genshin-furina",
+            "curatedStyle": "genshin-furina-1"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:genshin-furina:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:genshin-furina-2:main",
+            "rating": 4,
+            "oldStyle": "genshin-furina",
+            "curatedStyle": "genshin-furina-2"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T083328Z:genshin-kokomi:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:genshin-kokomi-1:main",
+            "rating": 4,
+            "oldStyle": "genshin-kokomi",
+            "curatedStyle": "genshin-kokomi-1"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:genshin-kokomi:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:genshin-kokomi-2:main",
+            "rating": 4,
+            "oldStyle": "genshin-kokomi",
+            "curatedStyle": "genshin-kokomi-2"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T083328Z:hsr-castorice:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:hsr-castorice-1:main",
+            "rating": 4,
+            "oldStyle": "hsr-castorice",
+            "curatedStyle": "hsr-castorice-1"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-castorice:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:hsr-castorice-2:main",
+            "rating": 4,
+            "oldStyle": "hsr-castorice",
+            "curatedStyle": "hsr-castorice-2"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-castorice:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:hsr-castorice-3:main",
+            "rating": 4,
+            "oldStyle": "hsr-castorice",
+            "curatedStyle": "hsr-castorice-3"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-robin:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:hsr-robin:main",
+            "rating": 7,
+            "oldStyle": "hsr-robin",
+            "curatedStyle": "hsr-robin"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T083328Z:hsr-firefly:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:hsr-firefly-1:main",
+            "rating": 4,
+            "oldStyle": "hsr-firefly",
+            "curatedStyle": "hsr-firefly-1"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T074505Z:hsr-firefly:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:hsr-firefly-2:main",
+            "rating": 4,
+            "oldStyle": "hsr-firefly",
+            "curatedStyle": "hsr-firefly-2"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T083328Z:genshin-navia:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:genshin-navia-1:main",
+            "rating": 7,
+            "oldStyle": "genshin-navia",
+            "curatedStyle": "genshin-navia-1"
+        },
+        {
+            "oldSetId": "surface-autonomous-character-theme-candidates:2026-05-01T083328Z:genshin-navia:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:genshin-navia-2:main",
+            "rating": 4,
+            "oldStyle": "genshin-navia",
+            "curatedStyle": "genshin-navia-2"
+        },
+        {
+            "oldSetId": "surface-autonomous-extra-styles-candidates:2026-04-27:solar-enamel:a",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:solar-enamel:main",
+            "rating": 7,
+            "oldStyle": "solar-enamel",
+            "curatedStyle": "solar-enamel"
+        },
+        {
+            "oldSetId": "surface-autonomous-followup-candidates:2026-04-27-round-01:aurora-porcelain-court:a",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:aurora-porcelain-court:main",
+            "rating": 10,
+            "oldStyle": "aurora-porcelain-court",
+            "curatedStyle": "aurora-porcelain-court"
+        },
+        {
+            "oldSetId": "surface-autonomous-legendary-styles-candidates:2026-04-27:lapis-sunburst:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:lapis-sunburst:main",
+            "rating": 7,
+            "oldStyle": "lapis-sunburst",
+            "curatedStyle": "lapis-sunburst"
+        },
+        {
+            "oldSetId": "surface-autonomous-legendary-styles-candidates:2026-04-27:opal-rain:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:opal-rain:main",
+            "rating": 7,
+            "oldStyle": "opal-rain",
+            "curatedStyle": "opal-rain"
+        },
+        {
+            "oldSetId": "surface-autonomous-legendary-styles-candidates:2026-04-27:bamboo-ink:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:bamboo-ink:main",
+            "rating": 7,
+            "oldStyle": "bamboo-ink",
+            "curatedStyle": "bamboo-ink"
+        },
+        {
+            "oldSetId": "surface-autonomous-luminous-styles-candidates:2026-04-27:arctic-rosequartz:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:arctic-rosequartz:main",
+            "rating": 7,
+            "oldStyle": "arctic-rosequartz",
+            "curatedStyle": "arctic-rosequartz"
+        },
+        {
+            "oldSetId": "surface-autonomous-mythic-styles-candidates:2026-04-27:aurora-steel:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:aurora-steel:main",
+            "rating": 7,
+            "oldStyle": "aurora-steel",
+            "curatedStyle": "aurora-steel"
+        },
+        {
+            "oldSetId": "surface-autonomous-mythic-styles-candidates:2026-04-27:porcelain-cinnabar:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:porcelain-cinnabar:main",
+            "rating": 7,
+            "oldStyle": "porcelain-cinnabar",
+            "curatedStyle": "porcelain-cinnabar"
+        },
+        {
+            "oldSetId": "surface-autonomous-mythic-styles-candidates:2026-04-27:astral-orchid:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:astral-orchid:main",
+            "rating": 4,
+            "oldStyle": "astral-orchid",
+            "curatedStyle": "astral-orchid"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-styles-candidates:2026-04-27:pearl-opaline:a",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:pearl-opaline:main",
+            "rating": 7,
+            "oldStyle": "pearl-opaline",
+            "curatedStyle": "pearl-opaline"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-styles-candidates:2026-04-27:neon-noir:a",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:neon-noir:main",
+            "rating": 7,
+            "oldStyle": "neon-noir",
+            "curatedStyle": "neon-noir"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-candidates:2026-04-29:aurora-citadel:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:aurora-citadel:main",
+            "rating": 7,
+            "oldStyle": "aurora-citadel",
+            "curatedStyle": "aurora-citadel"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-candidates:2026-04-29:lotus-porcelain:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:lotus-porcelain:main",
+            "rating": 10,
+            "oldStyle": "lotus-porcelain",
+            "curatedStyle": "lotus-porcelain"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-candidates:2026-04-29:astral-navigator:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:astral-navigator-1:main",
+            "rating": 10,
+            "oldStyle": "astral-navigator",
+            "curatedStyle": "astral-navigator-1"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-candidates:2026-04-29:astral-navigator:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:astral-navigator-2:main",
+            "rating": 7,
+            "oldStyle": "astral-navigator",
+            "curatedStyle": "astral-navigator-2"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r2-candidates:2026-04-29:sunken-opal:a",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:sunken-opal:main",
+            "rating": 4,
+            "oldStyle": "sunken-opal",
+            "curatedStyle": "sunken-opal"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r2-candidates:2026-04-29:storm-temple:a",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:storm-temple:main",
+            "rating": 4,
+            "oldStyle": "storm-temple",
+            "curatedStyle": "storm-temple"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r3-candidates:2026-04-29:ivory-rainharbor:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:ivory-rainharbor:main",
+            "rating": 7,
+            "oldStyle": "ivory-rainharbor",
+            "curatedStyle": "ivory-rainharbor"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:amber-icecourt:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:amber-icecourt:main",
+            "rating": 7,
+            "oldStyle": "amber-icecourt",
+            "curatedStyle": "amber-icecourt"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r4-candidates:2026-04-29:velvet-sunharbor:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:velvet-sunharbor:main",
+            "rating": 4,
+            "oldStyle": "velvet-sunharbor",
+            "curatedStyle": "velvet-sunharbor"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r5-candidates:2026-04-29:cobalt-embercourt:B",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:cobalt-embercourt:main",
+            "rating": 7,
+            "oldStyle": "cobalt-embercourt",
+            "curatedStyle": "cobalt-embercourt"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r5-candidates:2026-04-29:moonstone-verdigris:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:moonstone-verdigris:main",
+            "rating": 4,
+            "oldStyle": "moonstone-verdigris",
+            "curatedStyle": "moonstone-verdigris"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:platinum-stormcourt:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:platinum-stormcourt:main",
+            "rating": 7,
+            "oldStyle": "platinum-stormcourt",
+            "curatedStyle": "platinum-stormcourt"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:teal-embergrove:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:teal-embergrove:main",
+            "rating": 4,
+            "oldStyle": "teal-embergrove",
+            "curatedStyle": "teal-embergrove"
+        },
+        {
+            "oldSetId": "surface-autonomous-new-themes-r6-candidates:2026-04-29:opal-nightforge:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:opal-nightforge:main",
+            "rating": 7,
+            "oldStyle": "opal-nightforge",
+            "curatedStyle": "opal-nightforge"
+        },
+        {
+            "oldSetId": "surface-autonomous-prismatic-styles-candidates:2026-04-27:nocturne-pearl:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:nocturne-pearl:main",
+            "rating": 4,
+            "oldStyle": "nocturne-pearl",
+            "curatedStyle": "nocturne-pearl"
+        },
+        {
+            "oldSetId": "surface-autonomous-ultra-styles-candidates:2026-04-27:midnight-navigator:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:midnight-navigator:main",
+            "rating": 4,
+            "oldStyle": "midnight-navigator",
+            "curatedStyle": "midnight-navigator"
+        },
+        {
+            "oldSetId": "surface-autonomous-ultra-styles-candidates:2026-04-27:crimson-onyx:A",
+            "newSetId": "surface-autonomous-curated-theme-candidates:2026-05-02T00-45-30-987Z:crimson-onyx:main",
+            "rating": 7,
+            "oldStyle": "crimson-onyx",
+            "curatedStyle": "crimson-onyx"
+        }
+    ],
+    "sourceManifestResults": [
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T055019Z/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T064230Z/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T074505Z/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-character-theme-candidates/2026-05-01T083328Z/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-extra-styles-candidates/2026-04-27/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-followup-candidates/2026-04-27-round-01/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-legendary-styles-candidates/2026-04-27/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-luminous-styles-candidates/2026-04-27/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-mythic-styles-candidates/2026-04-27/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-new-styles-candidates/2026-04-27/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-new-themes-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-new-themes-r2-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-new-themes-r3-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-new-themes-r4-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-new-themes-r5-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-new-themes-r6-candidates/2026-04-29/contact-sheets/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-prismatic-styles-candidates/2026-04-27/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        },
+        {
+            "manifestPath": "assets/art-library/surface-autonomous-ultra-styles-candidates/2026-04-27/preview-manifest.json",
+            "before": 0,
+            "after": 0,
+            "removed": 0
+        }
+    ],
+    "stateUpdated": true
+}

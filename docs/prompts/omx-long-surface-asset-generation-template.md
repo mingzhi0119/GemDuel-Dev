@@ -35,16 +35,23 @@ Hard limits:
 Current project constraints to inspect before writing prompts:
 - AGENTS.md
 - docs/omx-workflow.md
-- docs/art/Asset_Art_Gen_0429.md
-- docs/art/long-autonomous-surface-asset-generation-codex-prompt-2026-04-27.md
-- docs/art/surface-asset-autonomous-new-themes-r6-prompts-2026-04-29.md
-- docs/art/surface-asset-autonomous-new-themes-r6-library-2026-04-29.md
+- docs/art/README.md
+- docs/prompts/omx-visual-lab-cleanup-template.md if this generation will later
+  be reviewed in Visual Lab
+- latest docs/art/visual-lab-review-plans/*/surface-review-plan.md if extending
+  or comparing against reviewed Themes
 - apps/desktop/public/assets/surfaces/README.md
 - packages/shared/src/lexicon/index.ts only if player-facing terms are referenced
 - current source files defining surface style names, runtime surface paths, featured card sizes, gem-panel dimensions, and Visual Lab manifest contracts
 
 Default task shape:
 - Candidate-only new Theme/library pass unless the user explicitly asks for runtime replacement.
+- For production candidate Theme libraries, prefer one stable style id and
+  `variant: main`; do not create A/B Theme variant labels unless the user
+  explicitly asks for a comparison batch.
+- If multiple candidates for the same base style are intentionally kept after
+  review, the cleanup/consolidation pass should rename them `<style>-1`,
+  `<style>-2`, `<style>-3` by rating/date/source order.
 - React renders all labels, counts, icons, levels, gems, cards, buttons, hover rings, selection states, and gameplay affordances.
 - Do not bake text, numbers, Chinese, English, Roman numerals, logos, watermarks, fake alphabets, readable glyphs, UI labels, counters, controls, cards, hover rings, resource icons, or gameplay affordances into generated images.
 
@@ -75,6 +82,8 @@ Known dimension contracts to verify against current code/docs before use:
 - shell background: 3840x1640
 - player-zone-p1/player-zone-p2: 1920x520
 - gem panel: 1254x1254
+- market-card-back-l1/l2/l3: 1086x1448
+- royal-card-back: 1086x1448
 
 Deliverables:
 - prompt manifest under docs/art/ with a date and batch name

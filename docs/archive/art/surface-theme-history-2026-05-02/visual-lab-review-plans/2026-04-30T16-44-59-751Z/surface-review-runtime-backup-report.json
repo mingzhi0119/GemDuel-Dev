@@ -1,0 +1,86 @@
+{
+    "schema": "gemduel.visualLab.runtimeSurfaceBackup.v1",
+    "planPath": "docs/art/visual-lab-review-plans/2026-04-30T16-44-59-751Z/surface-review-plan.json",
+    "backupRoot": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z",
+    "createdAt": "2026-04-30T17:02:00.900Z",
+    "count": 11,
+    "entries": [
+        {
+            "regenKey": "runtime:current:crystal-anime:DARK:shell-background",
+            "slot": "shell-background",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/shell-background.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/shell-background.png",
+            "bytes": 14529793
+        },
+        {
+            "regenKey": "runtime:current:crystal-anime:DARK:topbar",
+            "slot": "topbar",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/topbar.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/topbar.png",
+            "bytes": 1203333
+        },
+        {
+            "regenKey": "runtime:current:crystal-anime:DARK:gem-panel",
+            "slot": "gem-panel",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/gem-panel.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/crystal-anime/dark/gem-panel.png",
+            "bytes": 2236932
+        },
+        {
+            "regenKey": "runtime:current:royal-luxury:DARK:shell-background",
+            "slot": "shell-background",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/shell-background.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/shell-background.png",
+            "bytes": 13617714
+        },
+        {
+            "regenKey": "runtime:current:royal-luxury:DARK:player-zone",
+            "slot": "player-zone",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/player-zone.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/player-zone.png",
+            "bytes": 2578037
+        },
+        {
+            "regenKey": "runtime:current:royal-luxury:DARK:royal-card-back",
+            "slot": "royal-card-back",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/royal-card-back.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/royal-luxury/dark/royal-card-back.png",
+            "bytes": 3220765
+        },
+        {
+            "regenKey": "runtime:current:dark-arcane:DARK:shell-background",
+            "slot": "shell-background",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/dark-arcane/dark/shell-background.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/dark-arcane/dark/shell-background.png",
+            "bytes": 13213136
+        },
+        {
+            "regenKey": "runtime:current:clean-boardgame:DARK:shell-background",
+            "slot": "shell-background",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/clean-boardgame/dark/shell-background.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/clean-boardgame/dark/shell-background.png",
+            "bytes": 15916484
+        },
+        {
+            "regenKey": "runtime:current:clean-boardgame:DARK:player-zone",
+            "slot": "player-zone",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/clean-boardgame/dark/player-zone.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/clean-boardgame/dark/player-zone.png",
+            "bytes": 2123863
+        },
+        {
+            "regenKey": "runtime:current:pearl-opaline:DARK:shell-background",
+            "slot": "shell-background",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/pearl-opaline/dark/shell-background.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/pearl-opaline/dark/shell-background.png",
+            "bytes": 10357329
+        },
+        {
+            "regenKey": "runtime:current:pearl-opaline:DARK:player-zone",
+            "slot": "player-zone",
+            "sourcePath": "apps/desktop/public/assets/surfaces/anime-themes/pearl-opaline/dark/player-zone.png",
+            "backupPath": "assets/art-library/runtime-surface-backups/2026-04-30T16-44-59-751Z/apps/desktop/public/assets/surfaces/anime-themes/pearl-opaline/dark/player-zone.png",
+            "bytes": 1576470
+        }
+    ]
+}
