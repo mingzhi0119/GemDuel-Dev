@@ -27,6 +27,7 @@ This archive keeps historical audit, remediation, certification, and planning ar
 ## Prompts
 
 - [Opus 4.7 Independent Audit Prompt](prompts/opus-4.7-independent-audit-prompt.md)
+- [Six-Subagent Engineering Audit Prompt 2026-05-02](prompts/six-subagent-engineering-audit-prompt-2026-05-02.md)
 
 ## Art Assets
 
