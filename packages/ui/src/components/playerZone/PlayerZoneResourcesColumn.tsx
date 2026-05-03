@@ -39,6 +39,7 @@ interface PlayerZoneResourcesColumnProps {
     surfaceVariant?: string;
     onGemClick: (color: string) => void;
     onSelectStack: (stack: PlayerZoneStackState) => void;
+    readabilityTreatment?: boolean;
 }
 
 export function PlayerZoneResourcesColumn({
@@ -60,6 +61,7 @@ export function PlayerZoneResourcesColumn({
     surfaceVariant,
     onGemClick,
     onSelectStack,
+    readabilityTreatment = false,
 }: PlayerZoneResourcesColumnProps) {
     return (
         <div
@@ -67,7 +69,10 @@ export function PlayerZoneResourcesColumn({
             className="self-stretch flex flex-col gap-3 shrink-0 justify-center"
             style={{ flex: 78 }}
         >
-            <div className="flex gap-3 justify-center items-center">
+            <div
+                data-readability-hud-chip={readabilityTreatment ? 'player-resources' : undefined}
+                className="flex gap-3 justify-center items-center"
+            >
                 {PLAYER_ZONE_RESOURCE_COLORS.map(
                     (color) => GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES]
                 ).map((gem) => {
@@ -143,6 +148,7 @@ export function PlayerZoneResourcesColumn({
             <div
                 ref={tableauRowRef}
                 data-tableau-row={player}
+                data-readability-hud-chip={readabilityTreatment ? 'player-tableau-row' : undefined}
                 className="flex w-full shrink-0 items-start justify-start mt-1 overflow-hidden py-2 max-w-full min-w-0"
                 style={{ gap: `${TABLEAU_STACK_GAP_PX}px` }}
             >
@@ -161,6 +167,7 @@ export function PlayerZoneResourcesColumn({
                             summaryBadgeSizePx={summaryBadgeSizePx}
                             surfaceVariant={surfaceVariant}
                             onSelectStack={onSelectStack}
+                            readabilityTreatment={readabilityTreatment}
                         />
                     );
                 })}
@@ -177,6 +184,7 @@ export function PlayerZoneResourcesColumn({
                     title={SPECIAL_STACK_TITLE}
                     purePointCount={specialStackStats.purePointCount}
                     royalCount={specialStackStats.royalCount}
+                    readabilityTreatment={readabilityTreatment}
                 />
             </div>
         </div>

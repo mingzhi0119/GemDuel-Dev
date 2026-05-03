@@ -36,6 +36,7 @@ export interface PlayerZoneProps {
     surfaceStyle?: React.CSSProperties;
     surfaceArtwork?: PlayerZoneSurfaceArtwork;
     surfaceVariant?: string;
+    readabilityTreatment?: boolean;
     pendingReservedCardIds?: string[];
     onPreviewStack?: (stack: PlayerZoneStackState & { player: PlayerKey }) => void;
     buffPreviewAction?: PlayerZoneBuffPreviewAction;

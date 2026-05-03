@@ -202,7 +202,7 @@ describe('visual lab smoke', () => {
         vi.restoreAllMocks();
     });
 
-    it('mounts VisualLabRoute (surfaces) without throwing after catalog load', async () => {
+    it('mounts VisualLabRoute (readability) with opt-in HUD treatment after catalog load', async () => {
         const onCloseToStartPage = vi.fn();
         const candidatesPayload = SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot));
         vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
@@ -289,7 +289,7 @@ describe('visual lab smoke', () => {
                         reportPeerReady: vi.fn(),
                         clearLaunch: vi.fn(),
                     }}
-                    mode="surfaces"
+                    mode="readability"
                 />
             );
         });
@@ -304,6 +304,8 @@ describe('visual lab smoke', () => {
         const visualLabRoute = container?.querySelector('[data-testid="visual-lab-route"]');
         expect(visualLabRoute).toBeTruthy();
         expect(visualLabRoute?.getAttribute('data-visual-lab-chrome-mode')).toBe('shell-fill');
+        expect(visualLabRoute?.getAttribute('data-visual-lab-readability')).toBe('porcelain-glass');
+        expect(container?.querySelector('[data-readability-hud="porcelain-glass"]')).toBeTruthy();
         const royalBack = document.body.querySelector(
             '[data-royal-card-display="back"]'
         ) as HTMLImageElement | null;

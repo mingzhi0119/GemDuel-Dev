@@ -123,6 +123,7 @@ export function VisualLabConsole({
         position === null
             ? `calc(100vh - ${CONSOLE_DEFAULT_TOP + CONSOLE_MARGIN}px)`
             : `calc(100vh - ${Math.max(CONSOLE_MARGIN * 2, position.top + CONSOLE_MARGIN)}px)`;
+    const reviewReadOnly = mode === 'readability';
 
     const beginDrag = useCallback((event: MouseEvent<HTMLButtonElement>) => {
         const element = consoleRef.current;
@@ -296,58 +297,68 @@ export function VisualLabConsole({
                     setSlotOverrides={setSlotOverrides}
                     assetSlots={assetSlots}
                     reviewStateStatus={reviewStateStatus}
+                    reviewReadOnly={reviewReadOnly}
                 />
 
-                <div className="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
-                    <div className="mb-2 flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
-                        <span>Style rating</span>
-                        <span className="font-mono text-cyan-100">
-                            {styleRating === null ? 'Unrated' : styleRating}
-                        </span>
+                {reviewReadOnly ? (
+                    <div className="rounded-lg border border-cyan-300/35 bg-cyan-950/24 p-2 text-[11px] font-bold leading-5 text-cyan-100">
+                        Readability mode previews HUD contrast only. Review ratings, style comments,
+                        and regeneration marks stay read-only here.
                     </div>
-                    <div className="grid grid-cols-4 gap-1.5">
-                        {SURFACE_LAB_STYLE_RATINGS.map((rating) => {
-                            const isSelected = styleRating === rating;
+                ) : (
+                    <div className="rounded-lg border border-slate-700 bg-slate-950/70 p-2">
+                        <div className="mb-2 flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">
+                            <span>Style rating</span>
+                            <span className="font-mono text-cyan-100">
+                                {styleRating === null ? 'Unrated' : styleRating}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {SURFACE_LAB_STYLE_RATINGS.map((rating) => {
+                                const isSelected = styleRating === rating;
 
-                            return (
-                                <button
-                                    key={rating}
-                                    type="button"
-                                    aria-label={`Rate current style ${rating}`}
-                                    aria-pressed={isSelected}
-                                    className={`min-h-8 rounded-md border px-2 text-[12px] font-black transition-colors ${
-                                        isSelected
-                                            ? 'border-cyan-200 bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(103,232,249,0.28)]'
-                                            : 'border-slate-600 bg-slate-950 text-slate-200 hover:border-cyan-300 hover:text-cyan-100'
-                                    }`}
-                                    onClick={() => setStyleRating(rating)}
-                                >
-                                    {rating}
-                                </button>
-                            );
-                        })}
+                                return (
+                                    <button
+                                        key={rating}
+                                        type="button"
+                                        aria-label={`Rate current style ${rating}`}
+                                        aria-pressed={isSelected}
+                                        className={`min-h-8 rounded-md border px-2 text-[12px] font-black transition-colors ${
+                                            isSelected
+                                                ? 'border-cyan-200 bg-cyan-300 text-slate-950 shadow-[0_0_18px_rgba(103,232,249,0.28)]'
+                                                : 'border-slate-600 bg-slate-950 text-slate-200 hover:border-cyan-300 hover:text-cyan-100'
+                                        }`}
+                                        onClick={() => setStyleRating(rating)}
+                                    >
+                                        {rating}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <label className="mt-2 grid gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-slate-300">
+                            <span>Style comment</span>
+                            <textarea
+                                aria-label="Style comment"
+                                value={styleCommentDraft}
+                                rows={3}
+                                className="min-h-20 resize-y rounded-md border border-slate-600 bg-slate-950 px-2 py-1.5 font-sans text-[12px] normal-case leading-5 tracking-normal text-slate-100 outline-none placeholder:text-slate-600 focus:border-cyan-300"
+                                placeholder="What to change"
+                                onBeforeInput={(event) => event.stopPropagation()}
+                                onKeyDown={(event) => event.stopPropagation()}
+                                onKeyUp={(event) => event.stopPropagation()}
+                                onCompositionStart={() => {
+                                    isComposingStyleCommentRef.current = true;
+                                }}
+                                onCompositionEnd={(event) =>
+                                    commitStyleCommentDraft(event.currentTarget.value)
+                                }
+                                onChange={(event) =>
+                                    updateStyleCommentDraft(event.currentTarget.value)
+                                }
+                            />
+                        </label>
                     </div>
-                    <label className="mt-2 grid gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-slate-300">
-                        <span>Style comment</span>
-                        <textarea
-                            aria-label="Style comment"
-                            value={styleCommentDraft}
-                            rows={3}
-                            className="min-h-20 resize-y rounded-md border border-slate-600 bg-slate-950 px-2 py-1.5 font-sans text-[12px] normal-case leading-5 tracking-normal text-slate-100 outline-none placeholder:text-slate-600 focus:border-cyan-300"
-                            placeholder="What to change"
-                            onBeforeInput={(event) => event.stopPropagation()}
-                            onKeyDown={(event) => event.stopPropagation()}
-                            onKeyUp={(event) => event.stopPropagation()}
-                            onCompositionStart={() => {
-                                isComposingStyleCommentRef.current = true;
-                            }}
-                            onCompositionEnd={(event) =>
-                                commitStyleCommentDraft(event.currentTarget.value)
-                            }
-                            onChange={(event) => updateStyleCommentDraft(event.currentTarget.value)}
-                        />
-                    </label>
-                </div>
+                )}
 
                 {mode === 'motion' && (
                     <MotionLabControls

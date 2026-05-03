@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { canActionRunInPhase } from '@gemduel/shared/logic/fsm';
 import { GamePhase, BagItem, Buff, GemCoord } from '@gemduel/shared/types';
 import { useT } from '../i18n/LocaleProvider';
+import { READABILITY_HUD_TEXT_STYLE } from './readabilityHudStyles';
 
 interface GameActionsProps {
     handleReplenish: () => void;
@@ -15,6 +16,7 @@ interface GameActionsProps {
     handleCancelPrivilege: () => void;
     theme: 'light' | 'dark';
     canInteract?: boolean;
+    readabilityTreatment?: boolean;
 }
 
 export const GameActions: React.FC<GameActionsProps> = ({
@@ -27,6 +29,7 @@ export const GameActions: React.FC<GameActionsProps> = ({
     handleCancelPrivilege,
     theme,
     canInteract = true,
+    readabilityTreatment = false,
 }) => {
     const t = useT();
     const bagCount = bag ? bag.length : 0;
@@ -39,7 +42,9 @@ export const GameActions: React.FC<GameActionsProps> = ({
 
     return (
         <div
+            data-readability-hud-chip={readabilityTreatment ? 'game-actions' : undefined}
             className={`flex flex-col gap-4 items-center z-50 justify-start ${!canInteract ? 'opacity-50 pointer-events-none' : ''}`}
+            style={readabilityTreatment ? READABILITY_HUD_TEXT_STYLE : undefined}
         >
             <div className="flex min-h-[48px] items-center justify-center">
                 <AnimatePresence mode="wait" initial={false}>

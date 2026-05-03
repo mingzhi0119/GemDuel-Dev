@@ -25,6 +25,7 @@ interface PlayerZoneReservedColumnProps {
     onDiscardReserved: (cardId: string) => void;
     pendingReservedCardIds?: string[];
     dividerSide?: 'left' | 'right';
+    readabilityTreatment?: boolean;
 }
 
 export function PlayerZoneReservedColumn({
@@ -39,6 +40,7 @@ export function PlayerZoneReservedColumn({
     onDiscardReserved,
     pendingReservedCardIds = [],
     dividerSide = 'left',
+    readabilityTreatment = false,
 }: PlayerZoneReservedColumnProps) {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const { locale } = useLocale();
@@ -82,6 +84,7 @@ export function PlayerZoneReservedColumn({
     return (
         <div
             data-player-zone-column="reserved"
+            data-readability-hud-chip={readabilityTreatment ? 'player-reserved' : undefined}
             className={`self-stretch flex items-center min-w-0 transition-colors duration-500 ${
                 dividerSide === 'left' ? 'border-l pl-3' : 'border-r pr-3'
             }

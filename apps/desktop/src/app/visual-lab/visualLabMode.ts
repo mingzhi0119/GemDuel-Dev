@@ -19,5 +19,7 @@ export const getVisualLabMode = (): VisualLabMode | null => {
 
     const rawMode = new URLSearchParams(window.location.search).get('visualLab');
 
-    return rawMode === 'surfaces' || rawMode === 'motion' ? rawMode : null;
+    return rawMode === 'surfaces' || rawMode === 'motion' || rawMode === 'readability'
+        ? rawMode
+        : null;
 };

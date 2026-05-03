@@ -8,12 +8,15 @@ describe('getVisualLabMode', () => {
         window.history.replaceState({}, '', '/');
     });
 
-    it('reads surfaces and motion modes from the query string', () => {
+    it('reads known visual lab modes from the query string', () => {
         window.history.replaceState({}, '', '/?visualLab=surfaces');
         expect(getVisualLabMode()).toBe('surfaces');
 
         window.history.replaceState({}, '', '/?visualLab=motion');
         expect(getVisualLabMode()).toBe('motion');
+
+        window.history.replaceState({}, '', '/?visualLab=readability');
+        expect(getVisualLabMode()).toBe('readability');
     });
 
     it('returns null for unknown or missing visual lab params', () => {

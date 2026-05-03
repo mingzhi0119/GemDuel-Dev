@@ -35,6 +35,7 @@ export interface ResponsiveLayout {
 export type GameLogicController = ReturnType<typeof useGameLogic>;
 export type LanMatchmakingController = ReturnType<typeof useLanMatchmaking>;
 export type MatchmakingRoute = 'none' | 'online' | 'lan';
+export type AppVisualLabMode = 'surfaces' | 'motion' | 'readability';
 
 export interface AppUiState {
     showDebug: boolean;
@@ -62,7 +63,7 @@ export interface AppUiCallbacks {
     handleDownloadReplay: () => void;
     handleUploadReplay: ChangeEventHandler<HTMLInputElement>;
     selectSurfaceTheme?: (variant: SurfaceThemeVariant) => void;
-    openVisualLab?: (mode: 'surfaces' | 'motion') => void;
+    openVisualLab?: (mode: AppVisualLabMode) => void;
     closeVisualLabToStartPage?: () => void;
 }
 

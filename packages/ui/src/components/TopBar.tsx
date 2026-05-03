@@ -6,6 +6,11 @@ import { AnimatedScore } from './topBar/AnimatedScore';
 import { AnimatedCrownMetric } from './topBar/AnimatedCrownMetric';
 import { UI_ICON_ARTWORK } from './uiIconArtwork';
 import { useT } from '../i18n/LocaleProvider';
+import {
+    READABILITY_HUD_GLASS_CLASS,
+    READABILITY_HUD_TEXT_STYLE,
+    READABILITY_HUD_TREATMENT,
+} from './readabilityHudStyles';
 
 interface TopBarProps {
     p1Score: number;
@@ -20,6 +25,7 @@ interface TopBarProps {
     isOnline?: boolean;
     surfaceStyle?: React.CSSProperties;
     surfaceVariant?: string;
+    readabilityTreatment?: boolean;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -35,9 +41,13 @@ export const TopBar: React.FC<TopBarProps> = ({
     isOnline,
     surfaceStyle,
     surfaceVariant,
+    readabilityTreatment = false,
 }) => {
     const t = useT();
     const topBarIconClass = 'h-[90%] w-auto max-h-[90%] min-h-0 object-contain';
+    const readabilityChipClass = readabilityTreatment
+        ? `${READABILITY_HUD_GLASS_CLASS} rounded-full px-4 py-1 lg:px-6 lg:py-1.5`
+        : '';
     const getVictoryGoals = (pid: PlayerKey) => {
         const rawBuff = playerBuffs[pid];
         const buff = (Object.values(BUFFS).find((b) => b.id === rawBuff?.id) as Buff) || rawBuff;
@@ -55,7 +65,13 @@ export const TopBar: React.FC<TopBarProps> = ({
     const isP1Winning = p1Score >= p1Goals.points * 0.75 || p1Crowns >= p1Goals.crowns * 0.7;
     const isP2Winning = p2Score >= p2Goals.points * 0.75 || p2Crowns >= p2Goals.crowns * 0.7;
     const isMyTurn = isOnline && localPlayer === activePlayer;
-    const topBarTextShadow = 'var(--gd-topbar-text-shadow)';
+    const topBarTextShadow = readabilityTreatment
+        ? READABILITY_HUD_TEXT_STYLE.textShadow
+        : 'var(--gd-topbar-text-shadow)';
+    const readabilityTextStyle = readabilityTreatment ? READABILITY_HUD_TEXT_STYLE : {};
+    const topBarGoalClass = readabilityTreatment
+        ? 'mt-1 text-[20px] font-black leading-none lg:mt-3 lg:text-[34px]'
+        : 'mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl';
 
     const getWinningClass = (isWinning: boolean) => {
         if (!isWinning) return '';
@@ -70,6 +86,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             data-topbar-points-group={pid}
             data-topbar-score-pressure={isWinning ? 'near-victory' : 'normal'}
             style={{
+                ...readabilityTextStyle,
                 color: isWinning ? 'var(--gd-topbar-gold-text)' : 'var(--gd-topbar-label-primary)',
                 textShadow: topBarTextShadow,
             }}
@@ -90,8 +107,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                 />
             </span>
             <span
-                className="mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl"
-                style={{ color: 'var(--gd-topbar-goal-text)', textShadow: topBarTextShadow }}
+                className={topBarGoalClass}
+                style={{
+                    ...readabilityTextStyle,
+                    color: 'var(--gd-topbar-goal-text)',
+                    textShadow: topBarTextShadow,
+                }}
             >
                 /{pointGoal}
             </span>
@@ -106,7 +127,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                 className="flex h-full min-h-0 items-center gap-1 lg:gap-2"
                 data-topbar-crown-group={pid}
                 data-topbar-crown-pressure={isNearGoal ? 'near-victory' : 'normal'}
-                style={{ color: 'var(--gd-topbar-gold-text)', textShadow: topBarTextShadow }}
+                style={{
+                    ...readabilityTextStyle,
+                    color: 'var(--gd-topbar-gold-text)',
+                    textShadow: topBarTextShadow,
+                }}
             >
                 <AnimatedCrownMetric
                     value={crowns}
@@ -117,8 +142,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                     className="text-xl lg:text-[64px] font-black leading-none drop-shadow-lg"
                 />
                 <span
-                    className="mt-1.5 text-[15px] font-bold lg:mt-4 lg:text-2xl"
-                    style={{ color: 'var(--gd-topbar-goal-text)', textShadow: topBarTextShadow }}
+                    className={topBarGoalClass}
+                    style={{
+                        ...readabilityTextStyle,
+                        color: 'var(--gd-topbar-goal-text)',
+                        textShadow: topBarTextShadow,
+                    }}
                 >
                     /{crownGoal}
                 </span>
@@ -136,7 +165,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         return (
             <div
                 data-topbar-score-group={pid}
-                className={`flex h-full min-h-0 items-center gap-3 lg:gap-8 transition-transform duration-500 ${
+                data-readability-hud-chip={readabilityTreatment ? 'score-group' : undefined}
+                className={`flex h-full min-h-0 items-center gap-3 lg:gap-8 transition-transform duration-500 ${readabilityChipClass} ${
                     activePlayer === pid ? 'scale-105 opacity-100' : 'opacity-100'
                 }`}
             >
@@ -155,6 +185,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <div
                 data-topbar-turn-side={pid}
                 className={`flex items-baseline gap-3 lg:gap-6 ${isP1 ? '' : 'flex-row-reverse'}`}
+                style={readabilityTextStyle}
             >
                 <span
                     className={`text-[16px] font-black uppercase tracking-widest lg:text-[42px] ${
@@ -171,8 +202,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                     }`}
                     style={
                         activePlayer === pid
-                            ? { textShadow: topBarTextShadow }
+                            ? { ...readabilityTextStyle, textShadow: topBarTextShadow }
                             : {
+                                  ...readabilityTextStyle,
                                   color: 'var(--gd-topbar-label-primary)',
                                   textShadow: topBarTextShadow,
                               }
@@ -182,7 +214,11 @@ export const TopBar: React.FC<TopBarProps> = ({
                 </span>
                 <span
                     className="text-[9px] font-black uppercase tracking-tighter lg:text-2xl"
-                    style={{ color: 'var(--gd-topbar-label-muted)', textShadow: topBarTextShadow }}
+                    style={{
+                        ...readabilityTextStyle,
+                        color: 'var(--gd-topbar-label-muted)',
+                        textShadow: topBarTextShadow,
+                    }}
                 >
                     {t('topBar.turn')}
                 </span>
@@ -194,6 +230,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div
             data-presentation-anchor="topbar"
             data-topbar-surface-variant={surfaceVariant}
+            data-readability-hud={readabilityTreatment ? READABILITY_HUD_TREATMENT : undefined}
             className="relative z-[60] h-24 w-full shrink-0 border-b transition-colors duration-500 lg:h-[120px]"
             style={surfaceStyle}
         >
@@ -211,7 +248,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                 >
                     <div
                         data-topbar-turn-core="true"
-                        className="flex min-w-[190px] items-center justify-center gap-4 lg:min-w-[430px] lg:gap-10"
+                        data-readability-hud-chip={readabilityTreatment ? 'turn-core' : undefined}
+                        className={`flex min-w-[190px] items-center justify-center gap-4 lg:min-w-[430px] lg:gap-10 ${readabilityChipClass}`}
                     >
                         {renderTurnSide('p1')}
                         <div

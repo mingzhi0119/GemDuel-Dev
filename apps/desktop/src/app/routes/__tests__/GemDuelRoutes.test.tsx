@@ -406,7 +406,7 @@ describe('GemDuelRoutes desktop stage rendering', () => {
     });
 
     it('mounts the visual lab route from the query string without entering normal game routes', async () => {
-        window.history.replaceState(null, '', '/?visualLab=surfaces');
+        window.history.replaceState(null, '', '/?visualLab=readability');
         const closeVisualLabToStartPage = vi.fn();
 
         const { container, root } = await renderRoutes(
@@ -424,7 +424,7 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         const visualLab = container.querySelector('[data-testid="visual-lab-route"]');
 
         expect(visualLab).not.toBeNull();
-        expect(visualLab?.getAttribute('data-visual-lab-mode')).toBe('surfaces');
+        expect(visualLab?.getAttribute('data-visual-lab-mode')).toBe('readability');
         expect(container.querySelector('[data-testid="config-route"]')).toBeNull();
 
         const back = container.querySelector('[data-app-restart-button="true"]');

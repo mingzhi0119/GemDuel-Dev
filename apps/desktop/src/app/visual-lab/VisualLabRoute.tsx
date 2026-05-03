@@ -5,11 +5,7 @@ import type { PresentationEvent } from '../presentation/presentationTypes';
 import { GamePlaySurface } from '../shell/GamePlaySurface';
 import { PlayerRail } from '../shell/PlayerRail';
 import { TopBar } from '@gemduel/ui/components/TopBar';
-import { GameGlyph } from '@gemduel/ui/components/GameGlyph';
-import {
-    TOOLTIP_LABEL_CLASS,
-    getTooltipLabelThemeClass,
-} from '@gemduel/ui/components/tooltipStyles';
+import { READABILITY_HUD_TREATMENT } from '@gemduel/ui/components/readabilityHudStyles';
 import { useT } from '@gemduel/ui/i18n/LocaleProvider';
 import type { AppRouteProps, ThemeName } from '@app/types/ui';
 import { useSurfaceLabCatalog } from './useSurfaceLabCatalog';
@@ -27,6 +23,7 @@ import {
     type SurfaceLabMotionOptions,
 } from './motionLabEvents';
 import { VisualLabConsole } from './VisualLabConsole';
+import { VisualLabRestartButton } from './VisualLabRestartButton';
 import {
     getNextSurfaceLabSelectedSetId,
     matchesSurfaceLabRatingFilter,
@@ -101,6 +98,7 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
     const motionNonceRef = useRef(0);
     const lastMotionTypeRef = useRef<SurfaceLabMotionEventType>('royal-unlock');
     const labTheme: ThemeName = props.theme;
+    const readabilityTreatment = mode === 'readability';
     const catalog = useSurfaceLabCatalog(labTheme);
     const [selectedSetId, setSelectedSetId] = useState('');
     const [slotOverrides, setSlotOverrides] = useState<Partial<Record<SurfaceLabSlot, string>>>({});
@@ -114,7 +112,7 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         styleComments,
         setStyleComment,
         reviewStateStatus,
-    } = useSurfaceLabSharedReviewState(catalog.assetSets);
+    } = useSurfaceLabSharedReviewState(catalog.assetSets, { readOnly: readabilityTreatment });
     const [activeEvent, setActiveEvent] = useState<PresentationEvent | null>(null);
     const [royalStage, setRoyalStage] = useState<'intro' | 'selection' | 'pulse'>('pulse');
     const [holdRoyalIntro, setHoldRoyalIntro] = useState(false);
@@ -169,14 +167,6 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         [assetSlots, labTheme, layout, playerZoneSideSlots]
     );
     const restartTooltipId = useId();
-    const restartIconButtonClass =
-        labTheme === 'dark'
-            ? 'hover:bg-slate-800/80 focus-visible:outline-slate-300'
-            : 'hover:bg-white/80 focus-visible:outline-stone-700';
-    const restartIconStyle = {
-        color: 'var(--gd-chrome-icon)',
-        textShadow: 'var(--gd-chrome-text-shadow)',
-    };
     const triggerMotion = useCallback(
         (type: SurfaceLabMotionEventType = motionType) => {
             motionNonceRef.current += 1;
@@ -252,6 +242,9 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         <div
             data-testid="visual-lab-route"
             data-visual-lab-mode={mode}
+            data-visual-lab-readability={
+                readabilityTreatment ? READABILITY_HUD_TREATMENT : undefined
+            }
             data-visual-lab-chrome-mode="shell-fill"
             className="relative grid h-full w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden font-sans text-slate-200"
             style={styles.shellStyle}
@@ -260,29 +253,13 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 v{appVersion} / Visual Lab
             </div>
             {onCloseToStartPage ? (
-                <div className="absolute right-5 top-0 z-[200] flex h-24 items-center lg:right-7 lg:h-[120px]">
-                    <button
-                        type="button"
-                        data-app-restart-button="true"
-                        onClick={() => {
-                            onCloseToStartPage();
-                        }}
-                        className={`group relative flex h-20 w-20 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-24 lg:w-24 ${restartIconButtonClass}`}
-                        style={restartIconStyle}
-                        aria-label={t('settings.restart')}
-                        aria-describedby={restartTooltipId}
-                    >
-                        <GameGlyph variant="restart" size={48} />
-                        <span
-                            id={restartTooltipId}
-                            role="tooltip"
-                            data-tooltip-size="standard-label"
-                            className={`pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${TOOLTIP_LABEL_CLASS} ${getTooltipLabelThemeClass(labTheme)}`}
-                        >
-                            {t('settings.restart')}
-                        </span>
-                    </button>
-                </div>
+                <VisualLabRestartButton
+                    theme={labTheme}
+                    label={t('settings.restart')}
+                    tooltipId={restartTooltipId}
+                    readabilityTreatment={readabilityTreatment}
+                    onCloseToStartPage={onCloseToStartPage}
+                />
             ) : null}
 
             <TopBar
@@ -298,6 +275,7 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 surfaceVariant={styles.topBarSurfaceVariant}
                 localPlayer={state.localPlayer}
                 isOnline={false}
+                readabilityTreatment={readabilityTreatment}
             />
 
             <div className="min-h-0">
@@ -315,6 +293,7 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                     royalCardBackArtwork={styles.royalCardBackArtwork}
                     isRoyalSelectionBlocked={presentation.isBlockingRoyalSelection}
                     pendingMarketRefillSlots={presentation.pendingMarketRefillSlots}
+                    readabilityTreatment={readabilityTreatment}
                 />
             </div>
 
@@ -330,6 +309,7 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 playerZoneSurfaceStyleOverride={styles.playerZoneSurfaceStyle}
                 playerZoneSurfaceArtworkOverride={styles.playerZoneSurfaceArtwork}
                 pendingReservedCardIds={presentation.pendingReservedCardIds}
+                readabilityTreatment={readabilityTreatment}
             />
 
             <PresentationLayer

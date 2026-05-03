@@ -6,6 +6,7 @@ import { cn } from '../../utils';
 import type { Buff, EffectiveCardAbility, GamePhase } from '@gemduel/shared/types';
 import { useLocale, useT } from '../../i18n/LocaleProvider';
 import { PlayerBuffIcon } from './PlayerBuffIcon';
+import { READABILITY_HUD_TEXT_STYLE } from '../readabilityHudStyles';
 import type { PlayerZoneBuffPreviewAction } from './types';
 
 interface PlayerZoneIdentityColumnProps {
@@ -20,6 +21,7 @@ interface PlayerZoneIdentityColumnProps {
     onUsePrivilege: () => void;
     dividerSide?: 'left' | 'right';
     buffPreviewAction?: PlayerZoneBuffPreviewAction;
+    readabilityTreatment?: boolean;
 }
 
 const MEMORY_ICON_BY_ABILITY: Record<
@@ -78,6 +80,7 @@ export function PlayerZoneIdentityColumn({
     onUsePrivilege,
     dividerSide = 'right',
     buffPreviewAction,
+    readabilityTreatment = false,
 }: PlayerZoneIdentityColumnProps) {
     const { locale } = useLocale();
     const t = useT();
@@ -138,11 +141,13 @@ export function PlayerZoneIdentityColumn({
     return (
         <div
             data-player-zone-column="identity"
+            data-readability-hud-chip={readabilityTreatment ? 'player-identity' : undefined}
             className={`self-stretch flex flex-col gap-5 min-w-[128px] shrink-0 items-center justify-center transition-colors duration-500 ${
                 dividerSide === 'right' ? 'border-r pr-3' : 'border-l pl-3'
             }
             ${theme === 'dark' ? 'border-slate-700' : 'border-stone-300'}
       `}
+            style={readabilityTreatment ? READABILITY_HUD_TEXT_STYLE : undefined}
         >
             <div className="flex flex-col items-center gap-2">
                 <div
@@ -237,6 +242,7 @@ export function PlayerZoneIdentityColumn({
                               ? 'text-slate-300'
                               : 'text-stone-600'
                     }`}
+                    style={readabilityTreatment ? READABILITY_HUD_TEXT_STYLE : undefined}
                 >
                     {getPlayerDisplayName(player, locale)}
                 </h3>

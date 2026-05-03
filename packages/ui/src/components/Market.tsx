@@ -13,6 +13,7 @@ import {
 import { useT } from '../i18n/LocaleProvider';
 import { LexiconTerm } from '../lexicon/LexiconTerm';
 import { MarketLevelRow } from './market/MarketLevelRow';
+import { READABILITY_HUD_GLASS_CLASS, READABILITY_HUD_TEXT_STYLE } from './readabilityHudStyles';
 import type { MarketDeckBackArtworkMap } from './card/cardBackArtwork';
 
 interface MarketProps {
@@ -35,6 +36,7 @@ interface MarketProps {
         nextCardId?: string | null;
     }>;
     onPreviewCard?: (card: CardType, context: CardInteractionContext) => void;
+    readabilityTreatment?: boolean;
 }
 
 export const Market: React.FC<MarketProps> = React.memo(
@@ -54,6 +56,7 @@ export const Market: React.FC<MarketProps> = React.memo(
         deckBackArtwork,
         pendingMarketRefillSlots = [],
         onPreviewCard,
+        readabilityTreatment = false,
     }) => {
         const t = useT();
         const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
@@ -85,10 +88,20 @@ export const Market: React.FC<MarketProps> = React.memo(
 
                 <div className="relative z-10 flex flex-col gap-2.5 items-center">
                     <h2
-                        className="mb-1 text-center text-[13px] font-black uppercase tracking-[0.34em]"
+                        data-readability-hud-chip={
+                            readabilityTreatment ? 'market-label' : undefined
+                        }
+                        className={`mb-1 text-center text-[13px] font-black uppercase tracking-[0.34em] ${
+                            readabilityTreatment
+                                ? `${READABILITY_HUD_GLASS_CLASS} rounded-full px-5 py-1.5`
+                                : ''
+                        }`}
                         style={{
+                            ...(readabilityTreatment ? READABILITY_HUD_TEXT_STYLE : {}),
                             color: 'var(--gd-shell-label-primary)',
-                            textShadow: 'var(--gd-shell-text-shadow)',
+                            textShadow: readabilityTreatment
+                                ? READABILITY_HUD_TEXT_STYLE.textShadow
+                                : 'var(--gd-shell-text-shadow)',
                         }}
                     >
                         <LexiconTerm termId="market" className="normal-case" underline={false}>

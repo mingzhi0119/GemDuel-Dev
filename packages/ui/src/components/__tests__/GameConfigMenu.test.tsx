@@ -71,7 +71,7 @@ describe('GameConfigMenu', () => {
         );
         expect(launcher).not.toBeNull();
         expect(launcher?.textContent).toContain('Visual Lab');
-        expect(launcher?.textContent).toContain('Surfaces / Motion');
+        expect(launcher?.textContent).toContain('Surfaces / Motion / Readability');
 
         await act(async () => {
             launcher?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -80,14 +80,17 @@ describe('GameConfigMenu', () => {
         const buttons = Array.from(container.querySelectorAll('button'));
         const surfaces = buttons.find((button) => button.textContent === 'Surfaces');
         const motion = buttons.find((button) => button.textContent === 'Motion');
+        const readability = buttons.find((button) => button.textContent === 'Readability');
 
         await act(async () => {
             surfaces?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             motion?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            readability?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
 
         expect(onOpenVisualLab).toHaveBeenNthCalledWith(1, 'surfaces');
         expect(onOpenVisualLab).toHaveBeenNthCalledWith(2, 'motion');
+        expect(onOpenVisualLab).toHaveBeenNthCalledWith(3, 'readability');
 
         act(() => {
             root?.unmount();

@@ -80,6 +80,7 @@ export const PlayerZone = ({
     surfaceStyle,
     surfaceArtwork,
     surfaceVariant,
+    readabilityTreatment = false,
     pendingReservedCardIds = [],
     onPreviewStack,
     buffPreviewAction,
@@ -201,6 +202,7 @@ export const PlayerZone = ({
             onUsePrivilege={onUsePrivilege}
             dividerSide={player === 'p1' ? 'left' : 'right'}
             buffPreviewAction={buffPreviewAction}
+            readabilityTreatment={readabilityTreatment}
         />
     );
     const resourcesColumn = (
@@ -223,6 +225,7 @@ export const PlayerZone = ({
             surfaceVariant={surfaceVariant}
             onGemClick={onGemClick}
             onSelectStack={handleSelectStack}
+            readabilityTreatment={readabilityTreatment}
         />
     );
     const reservedColumn = (
@@ -238,6 +241,7 @@ export const PlayerZone = ({
             onDiscardReserved={onDiscardReserved}
             pendingReservedCardIds={pendingReservedCardIds}
             dividerSide={player === 'p1' ? 'right' : 'left'}
+            readabilityTreatment={readabilityTreatment}
         />
     );
 
@@ -245,6 +249,7 @@ export const PlayerZone = ({
         <div
             data-player-zone={player}
             data-player-zone-bg={surfaceVariant ?? 'none'}
+            data-readability-hud={readabilityTreatment ? 'porcelain-glass' : undefined}
             data-reserved-count={reserved.length}
             className={`relative w-full h-full overflow-hidden p-4 transition-all duration-500 bg-transparent
         ${isStealMode ? 'ring-2 ring-rose-500 animate-pulse' : ''}
