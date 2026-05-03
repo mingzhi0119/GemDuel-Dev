@@ -160,6 +160,8 @@ export const PlayerZone = ({
               backgroundSize: undefined,
           }
         : surfaceStyle;
+    const surfaceImageObjectPosition =
+        surfaceArtwork?.objectPosition ?? (player === 'p1' ? 'left center' : 'right center');
 
     const tableauSummaryGapTotalPx =
         Math.max(SPECIAL_TABLEAU_STACK_COUNT - 1, 0) * TABLEAU_STACK_GAP_PX;
@@ -267,10 +269,12 @@ export const PlayerZone = ({
                             ? 'true'
                             : undefined
                     }
+                    data-player-zone-surface-position={surfaceImageObjectPosition}
                     draggable={false}
                     decoding="async"
                     className="pointer-events-none absolute inset-0 z-0 h-full w-full select-none object-cover"
                     style={{
+                        objectPosition: surfaceImageObjectPosition,
                         transform:
                             surfaceImage.isFallback && surfaceArtwork.mirrorFallback
                                 ? 'scaleX(-1)'

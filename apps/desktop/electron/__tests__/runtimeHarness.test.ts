@@ -454,7 +454,7 @@ describe('electron runtime harness', () => {
         expect(window.webContents.send).toHaveBeenCalledWith('update_downloaded');
     });
 
-    it('allows restart_app to reach quitAndInstall only for authorized senders', () => {
+    it('allows restart_app to reach quitAndInstall only after an updater download is complete', () => {
         const log = createLogger();
         const recordMainHealth = createRecordMainHealth();
         const ipcMain = createIpcMainStub();
@@ -485,9 +485,21 @@ describe('electron runtime harness', () => {
         });
 
         runtime.attachWindowLifecycle(createWindowStub({ id: 7 }));
+        runtime.attachAutoUpdaterLifecycle();
         runtime.registerGovernedIpcHandlers({
             sendHandlers: {
                 restart_app: () => {
+                    if (!runtime.canQuitAndInstall()) {
+                        recordMainHealth({
+                            category: 'updater',
+                            name: 'UPDATER_INSTALL_REJECTED',
+                            severity: 'warn',
+                            message:
+                                'Renderer requested restart-and-install before an update was downloaded.',
+                        });
+                        return;
+                    }
+
                     recordMainHealth({
                         category: 'updater',
                         name: 'UPDATER_INSTALL_REQUESTED',
@@ -506,6 +518,20 @@ describe('electron runtime harness', () => {
             url: 'http://localhost:5173',
         });
 
+        restartApp?.(authorizedEvent);
+
+        expect(autoUpdater.quitAndInstall).not.toHaveBeenCalled();
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'updater',
+                name: 'UPDATER_INSTALL_REJECTED',
+                severity: 'warn',
+            })
+        );
+
+        autoUpdater.emit('update-downloaded', {
+            version: '5.2.12',
+        });
         restartApp?.(authorizedEvent);
 
         expect(autoUpdater.quitAndInstall).toHaveBeenCalledTimes(1);

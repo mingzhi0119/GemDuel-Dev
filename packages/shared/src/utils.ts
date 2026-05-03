@@ -4,28 +4,82 @@ import { isColorPreferenceBonusCardId } from './data/colorPreferenceProxyCards';
 import { CLASSIC_CARDS, ROGUE_CARDS } from './data/realCards';
 import { Card, GemInventory, GemInventoryKey, Buff, BoardCell, GemColor } from './types';
 
+export interface RandomSource {
+    next: () => number;
+    nextId?: (scope: string, index: number) => string;
+}
+
+type RandomInput = RandomSource | (() => number);
+
+const normalizeRandomSource = (randomSource?: RandomInput): RandomSource => {
+    if (typeof randomSource === 'function') {
+        return { next: randomSource };
+    }
+
+    if (randomSource) {
+        return randomSource;
+    }
+
+    return {
+        next: Math.random,
+        nextId: (scope, index) => `${scope}-${index}-${Date.now()}`,
+    };
+};
+
+const hashSeed = (seed: string | number): number => {
+    const text = String(seed);
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+};
+
+export const createSeededRandomSource = (seed: string | number): RandomSource => {
+    let state = hashSeed(seed) || 0x9e3779b9;
+    let counter = 0;
+
+    const next = () => {
+        state = Math.imul(state, 1664525) + 1013904223;
+        return ((state >>> 0) + 0.5) / 4294967296;
+    };
+
+    return {
+        next,
+        nextId: (scope, index) => {
+            counter += 1;
+            return `${scope}-${index}-${counter}-${Math.floor(next() * 0xffffffff).toString(36)}`;
+        },
+    };
+};
+
 // 洗牌算法
-export const shuffleArray = <T>(array: T[]): T[] => {
+export const shuffleArray = <T>(array: T[], randomSource?: RandomInput): T[] => {
+    const random = normalizeRandomSource(randomSource);
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(random.next() * (i + 1));
         [newArray[i], newArray[j]] = [newArray[j] as T, newArray[i] as T];
     }
     return newArray;
 };
 
 // 生成初始宝石袋
-export const generateGemPool = (): BoardCell[] => {
+export const generateGemPool = (randomSource?: RandomInput): BoardCell[] => {
+    const random = normalizeRandomSource(randomSource);
     const pool: BoardCell[] = [];
     Object.entries(INITIAL_COUNTS).forEach(([typeKey, count]) => {
         for (let i = 0; i < count; i++) {
             pool.push({
-                uid: `${typeKey}-${i}-${Date.now()}`,
+                uid:
+                    random.nextId?.(`gem-${typeKey}`, i) ??
+                    `${typeKey}-${i}-${Date.now()}-${Math.floor(random.next() * 0xffffffff).toString(36)}`,
                 type: GEM_TYPES[typeKey.toUpperCase() as keyof typeof GEM_TYPES],
             });
         }
     });
-    return shuffleArray(pool);
+    return shuffleArray(pool, random);
 };
 
 // 检查相邻
@@ -41,16 +95,23 @@ export const getDirection = (r1: number, c1: number, r2: number, c2: number) => 
 };
 
 // 🟢 生成卡组
-export const generateDeck = (level: number, isRogue: boolean = false): Card[] => {
+export const generateDeck = (
+    level: number,
+    isRogue: boolean = false,
+    randomSource?: RandomInput
+): Card[] => {
+    const random = normalizeRandomSource(randomSource);
     const cardPool = isRogue ? ROGUE_CARDS : CLASSIC_CARDS;
     const levelCards = cardPool.filter((c) => c.level === level);
 
     const deck = levelCards.map((card) => ({
         ...(card as Card),
-        id: `${card.id}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        id:
+            random.nextId?.(card.id, level) ??
+            `${card.id}-${Date.now()}-${random.next().toString(36).slice(2, 7)}`,
     }));
 
-    return shuffleArray(deck);
+    return shuffleArray(deck, random);
 };
 
 // 🟢 Unified Transaction Calculator (Used by Hook and Reducer)
@@ -138,10 +199,3 @@ export const calculateTransaction = (
 
     return { affordable, goldCost, gemsPaid };
 };
-
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}

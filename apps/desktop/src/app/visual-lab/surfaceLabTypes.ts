@@ -63,6 +63,7 @@ export const RUNTIME_SURFACE_LAB_THEMES = [
     'dark-arcane',
     'clean-boardgame',
     'pearl-opaline',
+    'lotus-porcelain',
 ] as const;
 
 export type RuntimeSurfaceLabTheme = (typeof RUNTIME_SURFACE_LAB_THEMES)[number];

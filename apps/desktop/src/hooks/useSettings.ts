@@ -6,6 +6,7 @@ import {
     normalizeSurfaceThemeSelections,
     type SurfaceThemeSelections,
 } from '../app/shell/surfaceTheme';
+import { reportRendererEvent } from '../observability/rendererLogger';
 
 export const SETTINGS_STORAGE_KEY = 'gemduel.preferences.v1';
 
@@ -120,7 +121,22 @@ export const useSettings = () => {
             soundEnabled,
         };
 
-        window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload));
+        try {
+            window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload));
+        } catch (error) {
+            reportRendererEvent(
+                {
+                    category: 'runtime',
+                    name: 'SETTINGS_PERSIST_FAILED',
+                    severity: 'warn',
+                    message: 'Renderer settings could not be persisted.',
+                },
+                {
+                    consoleMessage: '[SETTINGS] Failed to persist preferences.',
+                    consoleDetails: error,
+                }
+            );
+        }
     }, [hasExplicitLocalePreference, locale, soundEnabled, surfaceTheme]);
 
     const setLocale = (value: AppLocale | ((current: AppLocale) => AppLocale)) => {

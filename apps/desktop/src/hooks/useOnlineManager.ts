@@ -61,7 +61,32 @@ export const useOnlineManager = (
         [conn]
     );
 
-    const { latency, isUnstable, handleHeartbeat } = useConnectionHealth(conn, sendMessage);
+    const requestRecovery = useCallback(
+        (reason: RecoveryReason, requestId?: string) => {
+            reportRendererEvent({
+                category: 'recovery',
+                name: 'RECOVERY_REQUEST_SENT',
+                severity: 'warn',
+                message: 'Client requested an authoritative recovery snapshot.',
+                context: createReasonTelemetryContext(reason, {
+                    requestId,
+                }),
+            });
+            sendMessage({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'RECOVERY_REQUEST',
+                reason,
+                requestId,
+            });
+        },
+        [sendMessage]
+    );
+
+    const { latency, isUnstable, handleHeartbeat } = useConnectionHealth(
+        conn,
+        sendMessage,
+        requestRecovery
+    );
 
     const setupConnection = useCallback(
         (connection: DataConnection) => {
@@ -200,27 +225,6 @@ export const useOnlineManager = (
                 snapshot: state,
                 reason,
                 replaySync,
-            });
-        },
-        [sendMessage]
-    );
-
-    const requestRecovery = useCallback(
-        (reason: RecoveryReason, requestId?: string) => {
-            reportRendererEvent({
-                category: 'recovery',
-                name: 'RECOVERY_REQUEST_SENT',
-                severity: 'warn',
-                message: 'Client requested an authoritative recovery snapshot.',
-                context: createReasonTelemetryContext(reason, {
-                    requestId,
-                }),
-            });
-            sendMessage({
-                version: NETWORK_PROTOCOL_VERSION,
-                type: 'RECOVERY_REQUEST',
-                reason,
-                requestId,
             });
         },
         [sendMessage]

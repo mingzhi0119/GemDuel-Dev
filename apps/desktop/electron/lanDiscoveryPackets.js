@@ -39,6 +39,7 @@ export const createMatchAckPacket = ({ appVersion, instanceId, roomSession }) =>
     roomId: roomSession.roomId,
     hostInstanceId: roomSession.hostInstanceId,
     guestInstanceId: roomSession.guestInstanceId,
+    hostNonce: roomSession.hostNonce,
     guestNonce: roomSession.guestNonce,
 });
 
@@ -49,6 +50,8 @@ export const createStartReadyPacket = ({ appVersion, instanceId, mode, roomSessi
     guestInstanceId: roomSession.guestInstanceId,
     hostAddress: roomSession.hostAddress,
     hostPort: roomSession.hostPort,
+    hostNonce: roomSession.hostNonce,
+    guestNonce: roomSession.guestNonce,
     hostPeerId: roomSession.hostPeerId,
     hostPlayer: roomSession.hostPlayer,
     mode,
@@ -59,6 +62,8 @@ export const createSelectModePacket = ({ appVersion, instanceId, mode, roomSessi
     roomId: roomSession.roomId,
     hostInstanceId: roomSession.hostInstanceId,
     guestInstanceId: roomSession.guestInstanceId,
+    hostNonce: roomSession.hostNonce,
+    guestNonce: roomSession.guestNonce,
     mode,
 });
 
@@ -67,15 +72,15 @@ export const createStartRequestPacket = ({ appVersion, instanceId, roomSession }
     roomId: roomSession.roomId,
     hostInstanceId: roomSession.hostInstanceId,
     guestInstanceId: roomSession.guestInstanceId,
+    hostNonce: roomSession.hostNonce,
+    guestNonce: roomSession.guestNonce,
 });
 
 export const createCancelPacket = ({ appVersion, instanceId, roomSession }) => ({
     ...createBasePacket({ appVersion, instanceId, kind: 'CANCEL' }),
     roomId: roomSession.roomId,
-    ...(roomSession.hostInstanceId
-        ? {
-              hostInstanceId: roomSession.hostInstanceId,
-              guestInstanceId: roomSession.guestInstanceId,
-          }
-        : {}),
+    hostInstanceId: roomSession.hostInstanceId,
+    guestInstanceId: roomSession.guestInstanceId,
+    hostNonce: roomSession.hostNonce,
+    guestNonce: roomSession.guestNonce,
 });

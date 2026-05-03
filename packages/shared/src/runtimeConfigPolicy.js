@@ -75,9 +75,10 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
     GEMDUEL_TURN_SERVICE_URL: {
         owner: 'Networking',
         defaultValue: 'unset',
-        validation: 'Absolute http/https URL for the short-lived TURN credential service.',
+        validation:
+            'Absolute HTTPS URL for the short-lived TURN credential service. HTTP is allowed only for loopback development hosts.',
         secretHandling:
-            'Service endpoint metadata only. Keep bearer tokens separate and never emit the resolved URL in release-health payloads.',
+            'Service endpoint metadata only. Use HTTPS outside loopback because bearer tokens authenticate credential issuance.',
         failureMode:
             'Disables online TURN credential fetch and falls back to governed runtime relay sources.',
     },

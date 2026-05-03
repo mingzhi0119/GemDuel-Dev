@@ -95,6 +95,23 @@ describe('network message boundary contracts', () => {
         });
     });
 
+    it('rejects unknown top-level fields on inbound network messages', () => {
+        expect(
+            parseNetworkMessageBoundary({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'HEARTBEAT_PING',
+                timestamp: 123,
+                unexpected: true,
+            })
+        ).toEqual({
+            ok: false,
+            boundaryId: 'network-message-parsing',
+            code: 'NETWORK_MESSAGE_INVALID_ENVELOPE',
+            message: 'HEARTBEAT_PING requires a numeric timestamp payload.',
+            runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+        });
+    });
+
     it('validates bootstrap and guest-intent payload contracts', () => {
         expect(
             parseNetworkMessageBoundary({
@@ -163,6 +180,24 @@ describe('network message boundary contracts', () => {
                 requestId: '',
                 command: {
                     kind: 'CLOSE_MODAL',
+                },
+            })
+        ).toEqual({
+            ok: false,
+            boundaryId: 'network-message-parsing',
+            code: 'NETWORK_MESSAGE_INVALID_GUEST_INTENT',
+            message: 'Inbound guest intent failed schema validation.',
+            runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+        });
+
+        expect(
+            parseNetworkMessageBoundary({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'GUEST_INTENT',
+                requestId: 'req-extra-command',
+                command: {
+                    kind: 'CLOSE_MODAL',
+                    unexpected: true,
                 },
             })
         ).toEqual({

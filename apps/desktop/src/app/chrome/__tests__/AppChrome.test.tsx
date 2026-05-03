@@ -323,6 +323,7 @@ describe('AppChrome locale controls', () => {
         expect(surfaceThemeDropdown?.textContent).toContain('Dark Arcane');
         expect(surfaceThemeDropdown?.textContent).toContain('Clean Boardgame');
         expect(surfaceThemeDropdown?.textContent).toContain('Pearl Opaline');
+        expect(surfaceThemeDropdown?.textContent).toContain('Lotus Porcelain');
 
         const royalLuxuryOption = container.querySelector<HTMLButtonElement>(
             '[data-app-surface-theme-option="royal-luxury"]'

@@ -240,6 +240,17 @@ runtimeHarness.registerGovernedIpcHandlers({
     },
     sendHandlers: {
         [IPC_SEND_CHANNELS.restartApp]: () => {
+            if (!runtimeHarness.canQuitAndInstall()) {
+                recordMainHealth({
+                    category: 'updater',
+                    name: 'UPDATER_INSTALL_REJECTED',
+                    severity: 'warn',
+                    message:
+                        'Renderer requested restart-and-install before an update was downloaded.',
+                });
+                return;
+            }
+
             recordMainHealth({
                 category: 'updater',
                 name: 'UPDATER_INSTALL_REQUESTED',

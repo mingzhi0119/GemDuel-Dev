@@ -225,6 +225,58 @@ describe('electron runtime config', () => {
         expect(logger.warn).toHaveBeenCalled();
     });
 
+    it('rejects non-loopback HTTP TURN service URLs while allowing loopback development URLs', () => {
+        const logger = createLogger();
+
+        expect(
+            getTurnCredentialServiceConfig({
+                serviceUrlEnv: 'http://relay.example.com/turn',
+                serviceTokenEnv: 'service-token',
+                fallbackModeEnv: 'deny-runtime-ice',
+                logger,
+            })
+        ).toEqual({
+            enabled: false,
+            serviceUrl: null,
+            serviceToken: null,
+            fallbackMode: 'deny-runtime-ice',
+        });
+
+        expect(
+            getTurnCredentialServiceConfig({
+                serviceUrlEnv: 'http://localhost:8787/turn/',
+                serviceTokenEnv: 'service-token',
+                fallbackModeEnv: 'allow-runtime-ice',
+                logger,
+            })
+        ).toEqual({
+            enabled: true,
+            serviceUrl: 'http://localhost:8787/turn',
+            serviceToken: 'service-token',
+            fallbackMode: 'allow-runtime-ice',
+        });
+
+        expect(
+            getTurnCredentialServiceConfig({
+                serviceUrlEnv: 'http://127.0.0.1:8787/turn',
+                serviceTokenEnv: 'service-token',
+                fallbackModeEnv: 'allow-runtime-ice',
+                logger,
+            }).enabled
+        ).toBe(true);
+
+        expect(
+            getTurnCredentialServiceConfig({
+                serviceUrlEnv: 'http://[::1]:8787/turn',
+                serviceTokenEnv: 'service-token',
+                fallbackModeEnv: 'allow-runtime-ice',
+                logger,
+            }).enabled
+        ).toBe(true);
+
+        expect(logger.warn).toHaveBeenCalled();
+    });
+
     it('prefers a valid ephemeral TURN bundle over the legacy runtime ICE list', () => {
         const logger = createLogger();
 

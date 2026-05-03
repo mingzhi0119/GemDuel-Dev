@@ -9,6 +9,12 @@ import type {
 } from '@gemduel/shared/types/lan';
 import { useLanMatchmaking } from '../useLanMatchmaking';
 
+const reportRendererEvent = vi.fn();
+
+vi.mock('../../observability/rendererLogger', () => ({
+    reportRendererEvent: (...args: unknown[]) => reportRendererEvent(...args),
+}));
+
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -124,6 +130,7 @@ describe('useLanMatchmaking', () => {
         root = null;
         container = null;
         currentResult = null;
+        reportRendererEvent.mockReset();
         vi.restoreAllMocks();
     });
 
@@ -302,5 +309,52 @@ describe('useLanMatchmaking', () => {
 
         expect(bridge.selectLanPregameMode).not.toHaveBeenCalled();
         expect(bridge.confirmLanPregameStart).not.toHaveBeenCalled();
+    });
+
+    it('reports rejected bridge promises and returns a safe idle state', async () => {
+        (bridge.startLanMatchmaking as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+            new Error('ipc unavailable')
+        );
+
+        await renderHarness();
+
+        act(() => {
+            listener?.({
+                type: 'launch',
+                launch: {
+                    roomId: 'room-1',
+                    targetIP: '192.168.1.10',
+                    targetPort: 9001,
+                    hostPeerId: 'peer-host',
+                    transportHost: false,
+                    hostPlayer: 'p1',
+                    mode: 'classic',
+                },
+            });
+        });
+        expect(currentResult?.launch).not.toBeNull();
+
+        await act(async () => {
+            await expect(currentResult?.startSearch()).resolves.toMatchObject({
+                phase: 'idle',
+                errorMessage: 'LAN matchmaking is temporarily unavailable.',
+                statusMessage: 'LAN matchmaking request failed.',
+            });
+        });
+
+        expect(currentResult?.launch).toBeNull();
+        expect(reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'LAN_MATCHMAKING_IPC_REJECTED',
+                severity: 'warn',
+                context: {
+                    operation: 'startSearch',
+                },
+            }),
+            expect.objectContaining({
+                consoleDetails: expect.any(Error),
+            })
+        );
     });
 });

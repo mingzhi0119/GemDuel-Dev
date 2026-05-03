@@ -195,6 +195,7 @@ describe('useReplayIO', () => {
         const replay = createReplayFixture();
         const session = loadReplaySession(replay);
         const importHistory = vi.fn();
+        const onReplayImportSuccess = vi.fn();
         const file = new File(['{}'], 'replay.json', { type: 'application/json' });
         const input = document.createElement('input');
         input.value = 'fake-path';
@@ -215,6 +216,7 @@ describe('useReplayIO', () => {
         const { handleUploadReplay } = useReplayIO({
             replay,
             importHistory,
+            onReplayImportSuccess,
         });
 
         await handleUploadReplay({
@@ -222,6 +224,10 @@ describe('useReplayIO', () => {
         } as Parameters<typeof handleUploadReplay>[0]);
 
         expect(importReplayFromFile).toHaveBeenCalledWith(file);
+        expect(onReplayImportSuccess).toHaveBeenCalledTimes(1);
+        expect(onReplayImportSuccess.mock.invocationCallOrder[0]).toBeLessThan(
+            importHistory.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
+        );
         expect(importHistory).toHaveBeenCalledWith(session.history);
         expect(input.value).toBe('');
         expect(reportRendererEvent).not.toHaveBeenCalled();

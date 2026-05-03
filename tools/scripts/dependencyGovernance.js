@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 export {
+    DEPENDENCY_SBOM_SNAPSHOT_OPTIONS,
     buildDependencySbomSnapshot,
     collectLicenseAllowlistErrors,
     collectSbomSnapshotErrors,

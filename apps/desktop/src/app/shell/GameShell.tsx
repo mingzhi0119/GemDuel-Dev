@@ -282,6 +282,8 @@ export function GameShell({
                 title={peekPreviewModel.title}
                 previewContent={peekPreviewModel.previewContent}
                 actions={[]}
+                collectionLayout={peekPreviewModel.collectionLayout}
+                deckBackArtwork={marketDeckBackArtwork}
                 onClose={handleClosePeekPreview}
             />
 

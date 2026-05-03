@@ -57,4 +57,34 @@ describe('gameSetup branch coverage', () => {
         expect(payload.board).toHaveLength(5);
         expect(payload.market[1]).toHaveLength(5);
     });
+
+    it('supports seeded setup generation without ambient time or randomness', () => {
+        const firstPayload = createGameSetupPayload('LOCAL_PVP', {
+            useBuffs: true,
+            seed: 'seed-a',
+        });
+        const secondPayload = createGameSetupPayload('LOCAL_PVP', {
+            useBuffs: true,
+            seed: 'seed-a',
+        });
+        const differentPayload = createGameSetupPayload('LOCAL_PVP', {
+            useBuffs: true,
+            seed: 'seed-b',
+        });
+
+        expect(secondPayload).toEqual(firstPayload);
+        expect(differentPayload).not.toEqual(firstPayload);
+
+        expect(
+            buildStartGameAction('LOCAL_PVP', {
+                useBuffs: true,
+                seed: 'action-seed',
+            })
+        ).toEqual(
+            buildStartGameAction('LOCAL_PVP', {
+                useBuffs: true,
+                seed: 'action-seed',
+            })
+        );
+    });
 });

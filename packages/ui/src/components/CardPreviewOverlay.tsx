@@ -6,6 +6,7 @@ import { getGemLabel, getPlayerDisplayName } from '@gemduel/shared';
 import type { Card as CardType, GemColor, PlayerKey } from '@gemduel/shared/types';
 import { useLocale, useT } from '../i18n/LocaleProvider';
 import { Card, FEATURED_CARD_SAMPLE_SIZE, FEATURED_CARD_SIZE } from './Card';
+import type { MarketDeckBackArtworkMap } from './card/cardBackArtwork';
 import type { CardPreviewAction } from './cardPreviewActions';
 
 const CARD_ASPECT_RATIO = FEATURED_CARD_SAMPLE_SIZE.height / FEATURED_CARD_SAMPLE_SIZE.width;
@@ -16,6 +17,14 @@ const DESKTOP_CARD_GAP_PX = 24;
 const MOBILE_CARD_GAP_PX = 12;
 const CARD_ROW_VIEWPORT_RATIO = 0.9;
 const MIN_CARD_WIDTH_PX = 72;
+const DECK_PEEK_MAX_CARD_WIDTH_PX = 220;
+const DECK_PEEK_COLUMNS = 3;
+const DECK_PEEK_LEVELS = [3, 2, 1] as const;
+const DECK_PEEK_ORDER_KEYS = [
+    'deckPeek.order.first',
+    'deckPeek.order.second',
+    'deckPeek.order.third',
+] as const;
 const VERTICAL_CHROME_PX = 230;
 const GLOBAL_ACTION_BAND_BOTTOM = 'clamp(72px, 11vh, 150px)';
 const ACTION_BUTTON_BASE_CLASS =
@@ -24,6 +33,7 @@ const GLOBAL_ACTION_BUTTON_CLASS = `${ACTION_BUTTON_BASE_CLASS} min-h-[52px] min
 const CARD_ACTION_BUTTON_CLASS = `${ACTION_BUTTON_BASE_CLASS} min-h-[46px] min-w-[132px] px-4 py-2.5 text-sm`;
 
 type CardPreviewMode = 'single' | 'collection';
+type CardPreviewCollectionLayout = 'grid' | 'deck-peek';
 
 interface CardPreviewOverlayProps {
     isOpen: boolean;
@@ -37,6 +47,8 @@ interface CardPreviewOverlayProps {
     previewContent?: ReactNode;
     actions?: CardPreviewAction[];
     cardActions?: CardPreviewAction[][];
+    collectionLayout?: CardPreviewCollectionLayout;
+    deckBackArtwork?: MarketDeckBackArtworkMap;
 }
 
 const getViewportSize = () => {
@@ -95,6 +107,50 @@ const getPreviewLayout = (cardCount: number, viewportSize: { width: number; heig
     };
 };
 
+const getDeckPeekLayout = (rowCount: number, viewportSize: { width: number; height: number }) => {
+    const rows = Math.max(1, rowCount);
+    const isMobile = viewportSize.width < 768;
+    const columnGapPx = isMobile ? 10 : 18;
+    const rowGapPx = isMobile ? 12 : 20;
+    const orderLabelHeightPx = isMobile ? 34 : 42;
+    const topPx = Math.round(Math.max(108, Math.min(164, viewportSize.height * 0.13)));
+    const bottomPx = isMobile ? 34 : 52;
+    const maxRowWidth = viewportSize.width * (isMobile ? 0.94 : 0.9);
+    const widthByColumns =
+        (maxRowWidth - columnGapPx * DECK_PEEK_COLUMNS) / (DECK_PEEK_COLUMNS + 1);
+    const availableHeight = Math.max(240, viewportSize.height - topPx - bottomPx);
+    const widthByRows =
+        (availableHeight - rowGapPx * Math.max(0, rows - 1) - orderLabelHeightPx) /
+        rows /
+        CARD_ASPECT_RATIO;
+    const width = Math.max(
+        MIN_CARD_WIDTH_PX,
+        Math.min(DECK_PEEK_MAX_CARD_WIDTH_PX, widthByColumns, widthByRows)
+    );
+    const height = width * CARD_ASPECT_RATIO;
+
+    return {
+        columnGapPx,
+        gridHeight: Math.round(height * rows + rowGapPx * rows + orderLabelHeightPx),
+        gridWidth: Math.round(width * (DECK_PEEK_COLUMNS + 1) + columnGapPx * DECK_PEEK_COLUMNS),
+        height: Math.round(height),
+        levelLabelHeightPx: Math.round(height),
+        levelLabelWidthPx: Math.round(width),
+        orderLabelHeightPx,
+        rowGapPx,
+        scale: width / FEATURED_CARD_SIZE.width,
+        titleBandHeightPx: Math.max(88, topPx - 18),
+        topPx,
+        width: Math.round(width),
+    };
+};
+
+const getDeckPeekGroups = (cards: CardType[]) =>
+    DECK_PEEK_LEVELS.map((level) => ({
+        level,
+        cards: cards.filter((card) => card.level === level).slice(0, DECK_PEEK_COLUMNS),
+    })).filter((group) => group.cards.length > 0);
+
 const formatColorLabel = (color: string, locale: 'en' | 'zh') => {
     try {
         return getGemLabel(color as GemColor, locale);
@@ -115,11 +171,25 @@ export function CardPreviewOverlay({
     previewContent,
     actions = [],
     cardActions = [],
+    collectionLayout = 'grid',
+    deckBackArtwork,
 }: CardPreviewOverlayProps) {
     const { locale } = useLocale();
     const t = useT();
     const viewportSize = useViewportSize();
     const visibleCards = useMemo(() => cards.slice(0, CARD_LIMIT), [cards]);
+    const hasPreviewContent = Boolean(previewContent);
+    const usesDeckPeekLayout =
+        mode === 'collection' && collectionLayout === 'deck-peek' && !hasPreviewContent;
+    const deckPeekGroups = useMemo(
+        () => (usesDeckPeekLayout ? getDeckPeekGroups(visibleCards) : []),
+        [usesDeckPeekLayout, visibleCards]
+    );
+    const deckPeekLayout = useMemo(
+        () => getDeckPeekLayout(deckPeekGroups.length, viewportSize),
+        [deckPeekGroups.length, viewportSize]
+    );
+    const deckPeekOrderLabels = useMemo(() => DECK_PEEK_ORDER_KEYS.map((key) => t(key)), [t]);
     const visibleCardActions = useMemo(
         () => visibleCards.map((_, index) => cardActions[index] ?? []),
         [cardActions, visibleCards]
@@ -152,7 +222,6 @@ export function CardPreviewOverlay({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
-    const hasPreviewContent = Boolean(previewContent);
     const hasVisiblePreview = visibleCards.length > 0 || hasPreviewContent;
     const actionLayout = actions.length === 1 ? 'single' : actions.length > 1 ? 'pair' : 'none';
     const actionAlign = actions.length === 1 ? 'center' : 'split';
@@ -178,9 +247,14 @@ export function CardPreviewOverlay({
                     key="card-preview-overlay"
                     data-card-preview-overlay="true"
                     data-card-preview-mode={mode}
+                    data-card-preview-layout={usesDeckPeekLayout ? 'deck-peek' : collectionLayout}
                     data-card-preview-count={visibleCards.length}
-                    data-card-preview-grid-columns={layout.columns}
-                    data-card-preview-grid-rows={layout.rows}
+                    data-card-preview-grid-columns={
+                        usesDeckPeekLayout ? DECK_PEEK_COLUMNS : layout.columns
+                    }
+                    data-card-preview-grid-rows={
+                        usesDeckPeekLayout ? deckPeekGroups.length : layout.rows
+                    }
                     className="fixed inset-0 z-[155] flex items-center justify-center overflow-hidden bg-black/82 p-4 backdrop-blur-sm"
                     role="dialog"
                     aria-modal="true"
@@ -216,9 +290,20 @@ export function CardPreviewOverlay({
                     >
                         <div
                             data-card-preview-title-band="true"
-                            className="absolute left-0 right-0 top-0 flex h-[168px] items-end justify-center px-16 pb-5 text-center"
+                            className={`absolute left-0 right-0 top-0 flex items-end justify-center text-center ${
+                                usesDeckPeekLayout ? 'px-20 pb-3' : 'h-[168px] px-16 pb-5'
+                            }`}
+                            style={
+                                usesDeckPeekLayout
+                                    ? { height: `${deckPeekLayout.titleBandHeightPx}px` }
+                                    : undefined
+                            }
                         >
-                            <h2 className="text-3xl font-black uppercase tracking-[0.15em] text-amber-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
+                            <h2
+                                className={`font-black uppercase tracking-[0.15em] text-amber-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)] ${
+                                    usesDeckPeekLayout ? 'text-2xl' : 'text-3xl'
+                                }`}
+                            >
                                 {heading}
                             </h2>
                             {cards.length > visibleCards.length && (
@@ -229,7 +314,14 @@ export function CardPreviewOverlay({
                         </div>
                         <div
                             data-card-preview-card-band="true"
-                            className="pointer-events-auto absolute left-1/2 top-1/2 max-w-[94vw] -translate-x-1/2 -translate-y-1/2 overflow-visible"
+                            className={`pointer-events-auto absolute left-1/2 max-w-[94vw] -translate-x-1/2 overflow-visible ${
+                                usesDeckPeekLayout ? '' : 'top-1/2 -translate-y-1/2'
+                            }`}
+                            style={
+                                usesDeckPeekLayout
+                                    ? { top: `${deckPeekLayout.topPx}px` }
+                                    : undefined
+                            }
                         >
                             {hasPreviewContent ? (
                                 <motion.div
@@ -255,6 +347,126 @@ export function CardPreviewOverlay({
                                         {previewContent}
                                     </div>
                                 </motion.div>
+                            ) : usesDeckPeekLayout ? (
+                                <div
+                                    data-card-preview-deck-grid="true"
+                                    className="grid overflow-visible"
+                                    style={{
+                                        gap: `${deckPeekLayout.rowGapPx}px`,
+                                        width: `${deckPeekLayout.gridWidth}px`,
+                                        minHeight: `${deckPeekLayout.gridHeight}px`,
+                                    }}
+                                >
+                                    {deckPeekGroups.map((group, groupIndex) => (
+                                        <div
+                                            key={`deck-peek-level-${group.level}`}
+                                            data-card-preview-deck-row={group.level}
+                                            className="grid items-center overflow-visible"
+                                            style={{
+                                                columnGap: `${deckPeekLayout.columnGapPx}px`,
+                                                gridTemplateColumns: `${deckPeekLayout.levelLabelWidthPx}px repeat(${DECK_PEEK_COLUMNS}, ${deckPeekLayout.width}px)`,
+                                            }}
+                                        >
+                                            <div
+                                                data-card-preview-deck-back={group.level}
+                                                className="relative overflow-hidden rounded-md border border-amber-100/30 bg-slate-950/70 shadow-[0_16px_34px_rgba(0,0,0,0.35)]"
+                                                style={{
+                                                    width: `${deckPeekLayout.levelLabelWidthPx}px`,
+                                                    height: `${deckPeekLayout.levelLabelHeightPx}px`,
+                                                }}
+                                            >
+                                                {deckBackArtwork?.[group.level] ? (
+                                                    <img
+                                                        src={deckBackArtwork[group.level]?.path}
+                                                        alt=""
+                                                        aria-hidden="true"
+                                                        draggable={false}
+                                                        data-card-preview-deck-back-img={
+                                                            group.level
+                                                        }
+                                                        data-card-back-variant={
+                                                            deckBackArtwork[group.level]?.variant
+                                                        }
+                                                        className="absolute inset-0 h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-violet-950 to-black text-xl font-black uppercase tracking-[0.18em] text-amber-100/80 sm:text-2xl">
+                                                        L{group.level}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {group.cards.map((card, index) => (
+                                                <motion.div
+                                                    key={card.id || `${group.level}-${index}`}
+                                                    data-card-preview-card={card.id}
+                                                    className="relative overflow-visible rounded-xl"
+                                                    initial={{ opacity: 0, y: 18, scale: 0.96 }}
+                                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                    transition={{
+                                                        delay:
+                                                            (groupIndex * DECK_PEEK_COLUMNS +
+                                                                index) *
+                                                            0.035,
+                                                        duration: 0.2,
+                                                        ease: 'easeOut',
+                                                    }}
+                                                    style={{
+                                                        width: `${deckPeekLayout.width}px`,
+                                                        height: `${deckPeekLayout.height}px`,
+                                                    }}
+                                                >
+                                                    <div
+                                                        data-card-preview-card-frame={card.id}
+                                                        className="relative overflow-visible rounded-xl shadow-[0_22px_56px_rgba(0,0,0,0.42)]"
+                                                        style={{
+                                                            width: `${deckPeekLayout.width}px`,
+                                                            height: `${deckPeekLayout.height}px`,
+                                                        }}
+                                                    >
+                                                        <div
+                                                            className="absolute left-0 top-0"
+                                                            style={{
+                                                                width: `${FEATURED_CARD_SIZE.width}px`,
+                                                                height: `${FEATURED_CARD_SIZE.height}px`,
+                                                                transform: `scale(${deckPeekLayout.scale})`,
+                                                                transformOrigin: 'top left',
+                                                            }}
+                                                        >
+                                                            <Card
+                                                                card={card}
+                                                                canBuy={false}
+                                                                theme={theme}
+                                                                size="featured"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                    ))}
+                                    <div
+                                        data-card-preview-deck-order-row="true"
+                                        className="grid items-start overflow-visible"
+                                        style={{
+                                            columnGap: `${deckPeekLayout.columnGapPx}px`,
+                                            gridTemplateColumns: `${deckPeekLayout.levelLabelWidthPx}px repeat(${DECK_PEEK_COLUMNS}, ${deckPeekLayout.width}px)`,
+                                        }}
+                                    >
+                                        <div aria-hidden="true" />
+                                        {deckPeekOrderLabels.map((orderLabel) => (
+                                            <div
+                                                key={orderLabel}
+                                                data-card-preview-card-order-label={orderLabel}
+                                                className="flex items-start justify-center text-xl font-black uppercase tracking-[0.18em] text-amber-100/85 sm:text-2xl"
+                                                style={{
+                                                    height: `${deckPeekLayout.orderLabelHeightPx}px`,
+                                                }}
+                                            >
+                                                {orderLabel}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             ) : (
                                 <div
                                     data-card-preview-grid="true"
@@ -313,7 +525,7 @@ export function CardPreviewOverlay({
                                 </div>
                             )}
                         </div>
-                        {hasCardActions && !hasPreviewContent && (
+                        {hasCardActions && !hasPreviewContent && !usesDeckPeekLayout && (
                             <div
                                 data-card-preview-card-actions-band="true"
                                 className="pointer-events-auto absolute left-1/2 grid -translate-x-1/2 justify-center overflow-visible px-4"

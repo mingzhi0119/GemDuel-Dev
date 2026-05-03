@@ -15,6 +15,7 @@ const SURFACE_THEME_VARIANT_LABEL_KEYS = {
     'dark-arcane': 'settings.surface.variant.darkArcane',
     'clean-boardgame': 'settings.surface.variant.cleanBoardgame',
     'pearl-opaline': 'settings.surface.variant.pearlOpaline',
+    'lotus-porcelain': 'settings.surface.variant.lotusPorcelain',
 } as const satisfies Record<SurfaceThemeVariant, string>;
 
 interface AppChromeSurfaceMenuProps {

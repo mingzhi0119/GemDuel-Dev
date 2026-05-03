@@ -112,6 +112,7 @@ describe('renderer observability', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.unstubAllEnvs();
         delete window.electron;
     });
 
@@ -188,6 +189,12 @@ describe('renderer observability', () => {
             '[RELEASE_HEALTH] Failed to forward renderer event.',
             expect.any(Error)
         );
+    });
+
+    it('suppresses info logs outside the dev runtime', () => {
+        logRendererMessage('info', 'hidden production info', undefined, false);
+
+        expect(console.info).not.toHaveBeenCalledWith('hidden production info');
     });
 
     it('returns early when the window bridge is unavailable', () => {

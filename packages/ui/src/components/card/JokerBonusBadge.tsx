@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { cn } from '@gemduel/shared/utils';
+import { cn } from '../../utils';
 
 interface JokerBonusBadgeProps {
     className?: string;

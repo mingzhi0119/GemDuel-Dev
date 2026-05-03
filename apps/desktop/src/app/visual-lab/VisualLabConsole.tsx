@@ -117,6 +117,8 @@ export function VisualLabConsole({
     const dragStateRef = useRef<ConsoleDragState | null>(null);
     const [position, setPosition] = useState<ConsolePosition | null>(null);
     const [isHidden, setIsHidden] = useState(false);
+    const [styleCommentDraft, setStyleCommentDraft] = useState(styleComment);
+    const isComposingStyleCommentRef = useRef(false);
     const maxHeight =
         position === null
             ? `calc(100vh - ${CONSOLE_DEFAULT_TOP + CONSOLE_MARGIN}px)`
@@ -147,6 +149,32 @@ export function VisualLabConsole({
         };
         event.preventDefault();
     }, []);
+
+    useEffect(() => {
+        if (!isComposingStyleCommentRef.current) {
+            setStyleCommentDraft(styleComment);
+        }
+    }, [styleComment]);
+
+    const updateStyleCommentDraft = useCallback(
+        (value: string) => {
+            setStyleCommentDraft(value);
+
+            if (!isComposingStyleCommentRef.current) {
+                setStyleComment(value);
+            }
+        },
+        [setStyleComment]
+    );
+
+    const commitStyleCommentDraft = useCallback(
+        (value: string) => {
+            isComposingStyleCommentRef.current = false;
+            setStyleCommentDraft(value);
+            setStyleComment(value);
+        },
+        [setStyleComment]
+    );
 
     useEffect(() => {
         const update = (clientX: number, clientY: number) => {
@@ -303,11 +331,20 @@ export function VisualLabConsole({
                         <span>Style comment</span>
                         <textarea
                             aria-label="Style comment"
-                            value={styleComment}
+                            value={styleCommentDraft}
                             rows={3}
                             className="min-h-20 resize-y rounded-md border border-slate-600 bg-slate-950 px-2 py-1.5 font-sans text-[12px] normal-case leading-5 tracking-normal text-slate-100 outline-none placeholder:text-slate-600 focus:border-cyan-300"
                             placeholder="What to change"
-                            onChange={(event) => setStyleComment(event.currentTarget.value)}
+                            onBeforeInput={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}
+                            onKeyUp={(event) => event.stopPropagation()}
+                            onCompositionStart={() => {
+                                isComposingStyleCommentRef.current = true;
+                            }}
+                            onCompositionEnd={(event) =>
+                                commitStyleCommentDraft(event.currentTarget.value)
+                            }
+                            onChange={(event) => updateStyleCommentDraft(event.currentTarget.value)}
                         />
                     </label>
                 </div>

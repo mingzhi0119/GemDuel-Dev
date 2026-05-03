@@ -36,6 +36,7 @@ const TURN_SERVICE_REVOKE_REQUEST_SCHEMA = z
 
 const TURN_SERVICE_LEASE_PAYLOAD_SCHEMA = z.object({
     policyVersion: z.literal(TURN_CREDENTIAL_SERVICE_POLICY_VERSION),
+    principal: z.string().min(1).default('default'),
     subject: z.string().min(1),
     client: z.string().min(1),
     issuedAtMs: z.number().int().nonnegative(),
@@ -74,6 +75,24 @@ const matchesToken = (candidate, expected) => {
     }
 
     return timingSafeEqual(candidateBuffer, expectedBuffer);
+};
+
+const normalizeAuthTokenRecord = (entry, index) => {
+    if (typeof entry === 'string') {
+        return {
+            token: entry,
+            principal: 'default',
+        };
+    }
+
+    if (entry && typeof entry === 'object') {
+        return {
+            token: entry.token,
+            principal: entry.principal ?? entry.subject ?? `principal-${index + 1}`,
+        };
+    }
+
+    return null;
 };
 
 export class TurnCredentialServiceError extends Error {
@@ -222,6 +241,20 @@ export const createTurnCredentialService = ({
         throw new Error('TURN credential service requires a shared secret.');
     }
 
+    const normalizedAuthTokens = authTokens.map(normalizeAuthTokenRecord).filter(Boolean);
+    if (
+        normalizedAuthTokens.length !== authTokens.length ||
+        normalizedAuthTokens.some(
+            (entry) =>
+                typeof entry.token !== 'string' ||
+                entry.token.length === 0 ||
+                typeof entry.principal !== 'string' ||
+                entry.principal.length === 0
+        )
+    ) {
+        throw new Error('TURN credential service requires auth tokens with non-empty principals.');
+    }
+
     const normalizedTtlMs = Math.max(60_000, ttlMs);
     const revokedLeases = new Map();
     const rateLimitBuckets = new Map();
@@ -274,15 +307,21 @@ export const createTurnCredentialService = ({
         }
     };
 
-    const authorize = (authorization) => {
+    const authorize = (authorization, reasonCode = 'TURN_CREDENTIAL_FETCH_FAILED') => {
         const token = parseBearerToken(authorization);
-        if (!authTokens.some((expectedToken) => matchesToken(token, expectedToken))) {
+        const record = normalizedAuthTokens.find((expectedToken) =>
+            matchesToken(token, expectedToken.token)
+        );
+
+        if (!record) {
             throw new TurnCredentialServiceError({
                 status: 401,
-                reasonCode: 'TURN_CREDENTIAL_FETCH_FAILED',
+                reasonCode,
                 message: 'TURN credential request did not satisfy the authorization policy.',
             });
         }
+
+        return record;
     };
 
     const readLease = ({ leaseId, reasonCode }) =>
@@ -297,12 +336,23 @@ export const createTurnCredentialService = ({
         return revokedLeases.has(leaseId);
     };
 
-    const createLease = ({ subject, client }) => {
+    const assertLeasePrincipal = ({ lease, principal, reasonCode }) => {
+        if (lease.principal !== principal) {
+            throw new TurnCredentialServiceError({
+                status: 403,
+                reasonCode,
+                message: 'TURN credential lease is not owned by the authenticated principal.',
+            });
+        }
+    };
+
+    const createLease = ({ principal, subject, client }) => {
         const issuedAtMs = now();
         const expiresAtMs = issuedAtMs + normalizedTtlMs;
         const refreshAfterAtMs = issuedAtMs + Math.max(30_000, Math.floor(normalizedTtlMs * 0.6));
         const payload = {
             policyVersion: TURN_CREDENTIAL_SERVICE_POLICY_VERSION,
+            principal,
             subject,
             client,
             issuedAtMs,
@@ -322,6 +372,7 @@ export const createTurnCredentialService = ({
         });
         const lease = {
             leaseId,
+            principal,
             subject,
             client,
             bundle,
@@ -337,10 +388,11 @@ export const createTurnCredentialService = ({
 
     const issue = ({ authorization, body = {}, route = 'issue' }) => {
         enforceRateLimit({ authorization, route });
-        authorize(authorization);
+        const { principal } = authorize(authorization, 'TURN_CREDENTIAL_FETCH_FAILED');
         const request = parseServiceBody(TURN_SERVICE_REQUEST_SCHEMA, body);
         return buildLeaseSnapshot(
             createLease({
+                principal,
                 subject: request.subject,
                 client: request.client,
             })
@@ -349,10 +401,15 @@ export const createTurnCredentialService = ({
 
     const refresh = ({ authorization, body = {}, route = 'refresh' }) => {
         enforceRateLimit({ authorization, route });
-        authorize(authorization);
+        const { principal } = authorize(authorization, 'TURN_CREDENTIAL_REFRESH_FAILED');
         const request = parseServiceBody(TURN_SERVICE_REFRESH_REQUEST_SCHEMA, body);
         const existingLease = readLease({
             leaseId: request.leaseId,
+            reasonCode: 'TURN_CREDENTIAL_REFRESH_FAILED',
+        });
+        assertLeasePrincipal({
+            lease: existingLease,
+            principal,
             reasonCode: 'TURN_CREDENTIAL_REFRESH_FAILED',
         });
 
@@ -374,6 +431,7 @@ export const createTurnCredentialService = ({
 
         return buildLeaseSnapshot(
             createLease({
+                principal,
                 subject: existingLease.subject,
                 client: request.client,
             })
@@ -382,10 +440,15 @@ export const createTurnCredentialService = ({
 
     const revoke = ({ authorization, body = {}, route = 'revoke' }) => {
         enforceRateLimit({ authorization, route });
-        authorize(authorization);
+        const { principal } = authorize(authorization, 'TURN_CREDENTIAL_REVOKE_FAILED');
         const request = parseServiceBody(TURN_SERVICE_REVOKE_REQUEST_SCHEMA, body);
         const existingLease = readLease({
             leaseId: request.leaseId,
+            reasonCode: 'TURN_CREDENTIAL_REVOKE_FAILED',
+        });
+        assertLeasePrincipal({
+            lease: existingLease,
+            principal,
             reasonCode: 'TURN_CREDENTIAL_REVOKE_FAILED',
         });
         const revokedAt = formatIso(now());

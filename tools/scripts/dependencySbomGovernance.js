@@ -6,6 +6,11 @@ const PLATFORM_SCOPED_BINARY_PATTERNS = Object.freeze([
     /^@turbo\/(darwin|linux|windows)-/i,
 ]);
 
+export const DEPENDENCY_SBOM_SNAPSHOT_OPTIONS = Object.freeze({
+    excludePlatformScopedBinaries: true,
+    normalizeInstallPaths: true,
+});
+
 const normalizeRelativePath = (repoRoot, absolutePath) =>
     path.relative(repoRoot, absolutePath).split(path.sep).join('/');
 

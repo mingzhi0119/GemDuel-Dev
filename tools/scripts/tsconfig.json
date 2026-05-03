@@ -10,5 +10,5 @@
             "@gemduel/turn-service/*": ["../../packages/turn-service/src/*"]
         }
     },
-    "include": [".", "../../packages/shared/src/build/**/*.ts"]
+    "include": [".", "../../apps/desktop/viteManualChunks.ts"]
 }

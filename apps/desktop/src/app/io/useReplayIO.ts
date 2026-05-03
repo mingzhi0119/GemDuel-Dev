@@ -13,6 +13,7 @@ import { importReplayFromFile } from './safeReplayImport';
 interface UseReplayIOOptions {
     replay: ReplayVNext | null;
     importHistory: GameLogicController['handlers']['importHistory'];
+    onReplayImportSuccess?: () => void;
 }
 
 const buildReplayExportFileName = (
@@ -74,7 +75,11 @@ const reportReplayExportFailure = (fileName: string, error: unknown) => {
     );
 };
 
-export const useReplayIO = ({ replay, importHistory }: UseReplayIOOptions) => {
+export const useReplayIO = ({
+    replay,
+    importHistory,
+    onReplayImportSuccess,
+}: UseReplayIOOptions) => {
     const persistReplayToProjectFolder = async (targetReplay: ReplayVNext | null = replay) => {
         if (!targetReplay || !window.electron?.saveReplayToFolder) {
             return null;
@@ -139,6 +144,7 @@ export const useReplayIO = ({ replay, importHistory }: UseReplayIOOptions) => {
             return;
         }
 
+        onReplayImportSuccess?.();
         importHistory(replayImport.session.history);
         event.target.value = '';
     };

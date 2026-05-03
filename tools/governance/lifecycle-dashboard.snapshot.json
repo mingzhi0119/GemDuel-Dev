@@ -24,6 +24,11 @@
         "artifacts/governance/lifecycle-benchmarks.report.json",
         "artifacts/governance/bundle-budget.report.json",
         "artifacts/governance/coverage-perfile-key-modules.report.json",
-        "tools/governance/seal-exclusions-review.snapshot.json"
+        "tools/governance/seal-exclusions-review.snapshot.json",
+        "tools/governance/dependency-sbom.snapshot.json",
+        "tools/governance/dependency-license-allowlist.json",
+        "tools/scripts/check-sbom-governance.mjs",
+        "tools/scripts/check-license-governance.mjs",
+        "tools/scripts/check-secret-governance.mjs"
     ]
 }

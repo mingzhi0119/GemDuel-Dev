@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@gemduel/shared/utils';
+import { cn } from '../../utils';
 import { withGameAnimation } from '../../hoc/withGameAnimation';
 import { BoardCell } from '@gemduel/shared/types';
 import { GemArtwork } from '../GemArtwork';

@@ -78,11 +78,14 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
             >
                 {royalSlots.map((card, index) =>
                     card ? (
-                        <div
+                        <button
+                            type="button"
                             key={card.id}
                             data-royal-card={card.id}
                             data-royal-card-preview={canPreviewRoyal ? 'true' : undefined}
-                            className={`relative ${
+                            disabled={!canSelectRoyal && !canPreviewRoyal}
+                            aria-label={`${canSelectRoyal ? 'Select' : 'Preview'} royal card ${card.label ?? card.id}`}
+                            className={`relative appearance-none border-0 bg-transparent p-0 text-left ${
                                 canSelectRoyal || canPreviewRoyal ? 'cursor-pointer z-50' : ''
                             }`}
                             onClick={() => {
@@ -114,7 +117,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
                                     size="featured"
                                 />
                             )}
-                        </div>
+                        </button>
                     ) : (
                         <div
                             key={`royal-empty-slot-${index}`}

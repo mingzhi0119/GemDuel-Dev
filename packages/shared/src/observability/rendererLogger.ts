@@ -1,8 +1,4 @@
-import {
-    reportReleaseHealth,
-    type ReleaseHealthEvent,
-    type ReleaseHealthSeverity,
-} from './releaseHealth';
+import { type ReleaseHealthEvent, type ReleaseHealthSeverity } from './releaseHealth';
 
 const isDevRuntime = () =>
     typeof import.meta !== 'undefined' &&
@@ -49,5 +45,5 @@ export const reportRendererEvent = (
         options.consoleMessage ?? event.message,
         options.consoleDetails
     );
-    reportReleaseHealth(event);
+    void event;
 };

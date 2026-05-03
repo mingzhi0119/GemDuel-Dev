@@ -1122,7 +1122,7 @@ describe('visual lab smoke', () => {
         ).toBe('true');
     });
 
-    it('persists style comments in localStorage and deletes blank comments', async () => {
+    it('persists style comments without trimming text and deletes blank comments', async () => {
         const normalized = normalizeSurfaceLabCandidates(
             SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot))
         );
@@ -1194,13 +1194,13 @@ describe('visual lab smoke', () => {
         };
 
         await act(async () => {
-            setTextareaValue('Move contrast out of the shell background.');
+            setTextareaValue('中文 空格 test  ');
         });
 
         expect(
             JSON.parse(window.localStorage.getItem(SURFACE_LAB_COMMENTS_STORAGE_KEY) ?? '{}')
         ).toMatchObject({
-            [selectedSet.id]: 'Move contrast out of the shell background.',
+            [selectedSet.id]: '中文 空格 test  ',
         });
 
         await act(async () => {
@@ -1210,6 +1210,109 @@ describe('visual lab smoke', () => {
         expect(
             JSON.parse(window.localStorage.getItem(SURFACE_LAB_COMMENTS_STORAGE_KEY) ?? '{}')
         ).not.toHaveProperty(selectedSet.id);
+    });
+
+    it('keeps style comments local during IME composition and shields space key events', async () => {
+        const normalized = normalizeSurfaceLabCandidates(
+            SURFACE_LAB_SLOTS.map((slot) => createCandidate(slot))
+        );
+        const assetSets = createSurfaceLabAssetSets(normalized, 'dark');
+        const selectedSet = assetSets[0];
+        const assetSlots = selectedSet.slots;
+        const styles = createVisualLabShellStyles('dark', createLayout(), assetSlots, {});
+        let parentKeyDowns = 0;
+        const CommentConsoleHarness = () => {
+            const { styleComments, setStyleComment } = useSurfaceLabComments();
+
+            return (
+                <div
+                    onKeyDown={() => {
+                        parentKeyDowns += 1;
+                    }}
+                >
+                    <VisualLabConsole
+                        mode="surfaces"
+                        catalogStatus="ready"
+                        assetSets={assetSets}
+                        visibleAssetSets={assetSets}
+                        selectedSet={selectedSet}
+                        selectedSetId={selectedSet.id}
+                        setSelectedSetId={vi.fn()}
+                        ratingFilter="All"
+                        setRatingFilter={vi.fn()}
+                        regenFilter="All"
+                        setRegenFilter={vi.fn()}
+                        styleRatings={{}}
+                        styleRating={null}
+                        setStyleRating={vi.fn()}
+                        styleComment={styleComments[selectedSet.id] ?? ''}
+                        setStyleComment={(comment) => setStyleComment(selectedSet.id, comment)}
+                        regenMarks={{}}
+                        toggleSurfaceLabSlotRegenMark={vi.fn()}
+                        slotOverrides={{}}
+                        setSlotOverrides={vi.fn()}
+                        assetSlots={assetSlots}
+                        styles={styles}
+                        activeEvent={null}
+                        motionType="royal-unlock"
+                        setMotionType={vi.fn()}
+                        motionOptions={createMotionOptions()}
+                        setMotionOptions={vi.fn()}
+                        holdRoyalIntro={false}
+                        setHoldRoyalIntro={vi.fn()}
+                        onTriggerMotion={vi.fn()}
+                        onRepeatMotion={vi.fn()}
+                        onClearMotion={vi.fn()}
+                    />
+                </div>
+            );
+        };
+
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<CommentConsoleHarness />);
+        });
+
+        const textarea = document.body.querySelector(
+            'textarea[aria-label="Style comment"]'
+        ) as HTMLTextAreaElement | null;
+        expect(textarea).not.toBeNull();
+
+        const valueSetter = Object.getOwnPropertyDescriptor(
+            HTMLTextAreaElement.prototype,
+            'value'
+        )?.set;
+        const setTextareaValue = (value: string) => {
+            valueSetter?.call(textarea, value);
+            textarea!.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        await act(async () => {
+            textarea!.dispatchEvent(new Event('compositionstart', { bubbles: true }));
+            setTextareaValue('中文 ');
+        });
+
+        expect(
+            JSON.parse(window.localStorage.getItem(SURFACE_LAB_COMMENTS_STORAGE_KEY) ?? '{}')
+        ).not.toHaveProperty(selectedSet.id);
+
+        await act(async () => {
+            textarea!.dispatchEvent(new Event('compositionend', { bubbles: true }));
+        });
+
+        expect(
+            JSON.parse(window.localStorage.getItem(SURFACE_LAB_COMMENTS_STORAGE_KEY) ?? '{}')
+        ).toMatchObject({
+            [selectedSet.id]: '中文 ',
+        });
+
+        await act(async () => {
+            textarea!.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        });
+        expect(parentKeyDowns).toBe(0);
     });
 
     it('persists toggled slot regeneration marks in localStorage and restores them on remount', async () => {

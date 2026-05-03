@@ -4,6 +4,7 @@ export const REASON_UI_KEYS: Record<AppReasonCode, `reason.${AppReasonCode}`> = 
     AUTHORITY_REJECTED: 'reason.AUTHORITY_REJECTED',
     CHECKSUM_UNAVAILABLE: 'reason.CHECKSUM_UNAVAILABLE',
     CHECKSUM_MISMATCH: 'reason.CHECKSUM_MISMATCH',
+    HEARTBEAT_TIMEOUT: 'reason.HEARTBEAT_TIMEOUT',
     MANUAL: 'reason.MANUAL',
     STALE_PACKET: 'reason.STALE_PACKET',
     NON_PROTOCOL_ACTION: 'reason.NON_PROTOCOL_ACTION',
@@ -41,6 +42,8 @@ export const enReasonMessages = {
     'reason.AUTHORITY_REJECTED': 'The host rejected that multiplayer action.',
     'reason.CHECKSUM_UNAVAILABLE': 'The host could not verify that action safely.',
     'reason.CHECKSUM_MISMATCH': 'The multiplayer session drifted and is requesting a resync.',
+    'reason.HEARTBEAT_TIMEOUT':
+        'Heartbeat responses stopped and the client requested a recovery snapshot.',
     'reason.MANUAL': 'A manual recovery sync was requested.',
     'reason.STALE_PACKET':
         'An out-of-date multiplayer packet was rejected and a resync was requested.',
@@ -95,6 +98,7 @@ export const zhReasonMessages: ReasonMessageShape = {
     'reason.AUTHORITY_REJECTED': '房主拒绝了这次多人操作。',
     'reason.CHECKSUM_UNAVAILABLE': '房主无法安全校验这次操作。',
     'reason.CHECKSUM_MISMATCH': '多人会话出现漂移，正在请求重新同步。',
+    'reason.HEARTBEAT_TIMEOUT': '心跳响应停止，客户端已请求恢复快照。',
     'reason.MANUAL': '已请求一次手动恢复同步。',
     'reason.STALE_PACKET': '过期的多人数据包已被拒绝，并触发了重新同步请求。',
     'reason.NON_PROTOCOL_ACTION': '该操作不允许通过多人协议发送。',

@@ -1,6 +1,6 @@
 import React, { ComponentType, FC, memo } from 'react';
 import { motion, Variants } from 'framer-motion';
-import { cn } from '@gemduel/shared/utils';
+import { cn } from '../utils';
 
 /**
  * Supported animation modes for the Gem Duel interface

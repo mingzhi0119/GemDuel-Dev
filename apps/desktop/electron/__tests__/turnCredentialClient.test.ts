@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTurnCredentialClient } from '../turnCredentialClient.js';
 
 const createJsonResponse = (status: number, payload: unknown) =>
@@ -40,6 +40,10 @@ const createLeasePayload = ({
 });
 
 describe('turn credential client', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     it('prefers the online TURN service and caches the active lease', async () => {
         const fetchImpl = vi.fn(async () => createJsonResponse(200, createLeasePayload()));
         const setTimeoutImpl = vi.fn(() => 7);
@@ -303,6 +307,45 @@ describe('turn credential client', () => {
                 severity: 'error',
                 context: expect.objectContaining({
                     reasonCode: 'TURN_CREDENTIAL_FALLBACK_DENIED',
+                }),
+            })
+        );
+    });
+
+    it('falls back when the online TURN service does not respond before the request deadline', async () => {
+        vi.useFakeTimers();
+        const recordMainHealth = vi.fn();
+        const fetchImpl = vi.fn(
+            (_url: RequestInfo | URL, options?: RequestInit) =>
+                new Promise<Response>((_resolve, reject) => {
+                    options?.signal?.addEventListener('abort', () => {
+                        reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+                    });
+                })
+        );
+        const client = createTurnCredentialClient({
+            bundleConfig: '',
+            rawIceConfig: JSON.stringify([{ urls: 'stun:legacy.example.com' }]),
+            serviceUrlEnv: 'https://relay.example.com/turn',
+            serviceTokenEnv: 'service-token',
+            fallbackModeEnv: 'allow-runtime-ice',
+            fetchImpl: asFetch(fetchImpl),
+            now: () => Date.parse('2026-04-20T12:00:00.000Z'),
+            recordMainHealth,
+            requestTimeoutMs: 250,
+        });
+
+        const profilePromise = client.getRuntimeRelayProfile();
+        await vi.advanceTimersByTimeAsync(250);
+
+        await expect(profilePromise).resolves.toMatchObject({
+            source: 'runtime-ice-fallback',
+        });
+        expect(recordMainHealth).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: 'TURN_CREDENTIAL_FETCH_FAILED',
+                context: expect.objectContaining({
+                    reasonCode: 'TURN_CREDENTIAL_FETCH_FAILED',
                 }),
             })
         );

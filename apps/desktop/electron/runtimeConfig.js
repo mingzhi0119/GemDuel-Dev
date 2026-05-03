@@ -160,6 +160,11 @@ const parseRuntimeIceServersFromEnv = (rawConfig, logger = console) => {
 export const getRuntimeIceServersFromEnv = (rawConfig, logger = console) =>
     parseRuntimeIceServersFromEnv(rawConfig, logger);
 
+const LOOPBACK_TURN_SERVICE_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+
+const isLoopbackTurnServiceHost = (hostname) =>
+    LOOPBACK_TURN_SERVICE_HOSTS.has(hostname.toLowerCase());
+
 export const getTurnCredentialServiceConfig = ({
     serviceUrlEnv,
     serviceTokenEnv,
@@ -191,6 +196,10 @@ export const getTurnCredentialServiceConfig = ({
             throw new Error('unsupported-protocol');
         }
 
+        if (url.protocol === 'http:' && !isLoopbackTurnServiceHost(url.hostname)) {
+            throw new Error('insecure-non-loopback-http');
+        }
+
         return {
             enabled: true,
             serviceUrl: url.toString().replace(/\/+$/, ''),
@@ -199,7 +208,7 @@ export const getTurnCredentialServiceConfig = ({
         };
     } catch (error) {
         logger.warn?.(
-            '[RTC] GEMDUEL_TURN_SERVICE_URL must be an absolute http/https URL. Falling back to governed runtime relay sources.',
+            '[RTC] GEMDUEL_TURN_SERVICE_URL must be an absolute HTTPS URL, except HTTP is allowed for loopback development hosts. Falling back to governed runtime relay sources.',
             error
         );
 

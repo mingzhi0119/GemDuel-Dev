@@ -52,6 +52,7 @@ export interface PlayerZoneSurfaceArtwork {
     primaryPath: string;
     fallbackPath?: string;
     mirrorFallback?: boolean;
+    objectPosition?: React.CSSProperties['objectPosition'];
 }
 
 export interface PlayerZoneStackState {

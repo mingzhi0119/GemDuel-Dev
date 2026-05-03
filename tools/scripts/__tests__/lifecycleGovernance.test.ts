@@ -58,6 +58,40 @@ const coverageFixture = {
         },
     },
 };
+const passingDependencyGateSummary = {
+    schemaVersion: 1,
+    status: 'passed',
+    gates: [
+        {
+            id: 'licenses',
+            title: 'License allowlist gate',
+            status: 'passed',
+            errors: [],
+            evidenceRefs: ['tools/governance/dependency-license-allowlist.json'],
+        },
+        {
+            id: 'sbom',
+            title: 'Dependency SBOM drift gate',
+            status: 'passed',
+            errors: [],
+            evidenceRefs: ['tools/governance/dependency-sbom.snapshot.json'],
+        },
+        {
+            id: 'secrets-runtime',
+            title: 'Secret and runtime env drift gate',
+            status: 'passed',
+            errors: [],
+            evidenceRefs: [GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance],
+        },
+    ],
+    summary: {
+        componentCount: readJson('tools/governance/dependency-sbom.snapshot.json').componentCount,
+        allowedLicenseCount: readJson('tools/governance/dependency-license-allowlist.json')
+            .allowedLicenses.length,
+        scannedTextFiles: 100,
+        governedEnvNames: 10,
+    },
+};
 
 describe('lifecycle governance', () => {
     it('accepts the committed lifecycle governance snapshots and docs', () => {
@@ -294,6 +328,7 @@ describe('lifecycle governance', () => {
             },
             dependencySbomSnapshot: readJson('tools/governance/dependency-sbom.snapshot.json'),
             licenseAllowlist: readJson('tools/governance/dependency-license-allowlist.json'),
+            dependencyGateSummary: passingDependencyGateSummary as never,
             requireCompleteEvidence: true,
         });
         const certification = buildLifecycleCertificationReport({
@@ -309,6 +344,113 @@ describe('lifecycle governance', () => {
         expect(dashboard.completeness).toBe('complete');
         expect(certification.status).toBe('passed');
         expect(certification.localScore.score).toBe(10);
+        expect(certification.externalEvidence.remoteGitHubSettings).toMatchObject({
+            status: 'partial',
+            scoreTreatment: 'excluded-local-only',
+            excludedFromScore: true,
+        });
+    });
+
+    it('fails the lifecycle dashboard when fresh dependency gate evidence reports SBOM drift', () => {
+        const auditGateSummary = buildAuditGateSummary({
+            gateSnapshot: auditGateSnapshot,
+            packageJson,
+            workflowTexts,
+        });
+        const auditGateReport = {
+            ...auditGateSummary,
+            generatedAt: '2026-04-25T00:00:00.000Z',
+            status: 'passed',
+            errors: [],
+        };
+        const lifecycleReport = buildLifecycleGovernanceReport({
+            generatedAt: '2026-04-25T00:00:00.000Z',
+            packageJson,
+            repoSettingsSnapshot,
+            repoSettingsChecklistText: readText(GOVERNANCE_DOC_PATHS.repoSettingsChecklist),
+            codeownersText: readText('.github/CODEOWNERS'),
+            codeownersRoleMap,
+            boundaryRegistry,
+            contributingText: readText('CONTRIBUTING.md'),
+            changelogText: readText('CHANGELOG.md'),
+            releaseChangelogSnapshot,
+            benchmarkBaseline,
+            auditGateSnapshot,
+            dashboardSnapshot,
+            sealExclusions: SEAL_COVERAGE_EXCLUSIONS,
+            sealExclusionPolicy: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY,
+            sealExclusionReviewSnapshot,
+            repoRoot,
+            workflowTexts,
+        });
+        const dashboard = buildLifecycleDashboardReport({
+            generatedAt: '2026-04-25T00:00:00.000Z',
+            dashboardSnapshot,
+            lifecycleReport,
+            auditGateReport,
+            benchmarkBaseline,
+            benchmarkReport: {
+                status: 'passed',
+                errors: [],
+                benchmarks: benchmarkBaseline.benchmarks.map((benchmark: { id: string }) => ({
+                    id: benchmark.id,
+                    medianMs: 0.001,
+                    p95Ms: 0.002,
+                })),
+            },
+            bundleBudgetReport: {
+                status: 'healthy',
+                budget: {
+                    observed: 250,
+                },
+            },
+            coverageSummary: buildBranchCoverageSummary({
+                coverageFinal: coverageFixture,
+                minimumPercent: auditGateSnapshot.coverage.branchMinimumPercent,
+            }),
+            coveragePerFileKeyModulesReport: {
+                schemaVersion: 1,
+                status: 'passed',
+                violations: [],
+                generatedAt: '2026-04-25T00:00:00.000Z',
+            } as never,
+            architectureBudgetSummary: {
+                errors: 0,
+                warnings: 0,
+            },
+            sealReviewSummary: {
+                errors: 0,
+                count: SEAL_COVERAGE_EXCLUSIONS.length,
+                baselineCount: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY.baselineCount,
+            },
+            dependencySbomSnapshot: readJson('tools/governance/dependency-sbom.snapshot.json'),
+            licenseAllowlist: readJson('tools/governance/dependency-license-allowlist.json'),
+            dependencyGateSummary: {
+                ...passingDependencyGateSummary,
+                status: 'failed',
+                gates: passingDependencyGateSummary.gates.map((gate) =>
+                    gate.id === 'sbom'
+                        ? {
+                              ...gate,
+                              status: 'failed',
+                              errors: [
+                                  'Dependency SBOM snapshot drifted from pnpm licenses inventory.',
+                              ],
+                          }
+                        : gate
+                ),
+            } as never,
+            requireCompleteEvidence: true,
+        });
+
+        expect(dashboard.status).toBe('failed');
+        expect(dashboard.errors).toEqual(
+            expect.arrayContaining([
+                expect.stringContaining(
+                    'Dependency governance gate sbom failed: Dependency SBOM snapshot drifted from pnpm licenses inventory.'
+                ),
+            ])
+        );
     });
 
     it('renders a failure summary markdown table with evidence refs and suggested commands', () => {

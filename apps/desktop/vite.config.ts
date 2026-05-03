@@ -4,7 +4,7 @@ import { dirname, extname, join, relative, resolve, sep } from 'path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, pathToFileURL } from 'url';
-import { resolveManualChunk } from '@gemduel/shared/build/viteManualChunks';
+import { resolveManualChunk } from './viteManualChunks';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

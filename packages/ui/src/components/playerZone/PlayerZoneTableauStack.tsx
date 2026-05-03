@@ -1,13 +1,14 @@
 import { motion } from 'framer-motion';
 import type { CSSProperties } from 'react';
 import { GEM_TYPES } from '@gemduel/shared/constants';
-import { cn } from '@gemduel/shared/utils';
+import { cn } from '../../utils';
 import { Card, STANDARD_CARD_SIZE } from '../Card';
 import {
-    PLAYER_ZONE_STACK_OFFSET_X,
-    PLAYER_ZONE_STACK_OFFSET_Y,
-    SUMMARY_TEXT_COLORS,
-} from './constants';
+    BONUS_GEM_BADGE_BACK_ARTWORK,
+    CARD_NUMBER_ARTWORK,
+    POINT_RIBBON_ARTWORK,
+} from '../uiIconArtwork';
+import { PLAYER_ZONE_STACK_OFFSET_X, PLAYER_ZONE_STACK_OFFSET_Y } from './constants';
 import { ScaledCardFrame } from './ScaledCardFrame';
 import type { PlayerKey } from '@gemduel/shared/types';
 import type { PlayerZoneColorStats, PlayerZoneStackState } from './types';
@@ -32,7 +33,8 @@ type PlayerZoneStackSurfaceVisualId =
     | 'royal-luxury'
     | 'dark-arcane'
     | 'clean-boardgame'
-    | 'pearl-opaline';
+    | 'pearl-opaline'
+    | 'lotus-porcelain';
 
 interface PlayerZoneStackSurfaceVisual {
     id: PlayerZoneStackSurfaceVisualId;
@@ -133,6 +135,25 @@ const STACK_SURFACE_VISUALS: Record<PlayerZoneStackSurfaceVisualId, PlayerZoneSt
                 filter: 'drop-shadow(0 12px 22px rgba(190,137,126,0.18)) drop-shadow(0 0 12px rgba(125,211,252,0.10))',
             },
         },
+        'lotus-porcelain': {
+            id: 'lotus-porcelain',
+            emptyClassName: 'border-teal-100/48 bg-cyan-50/18',
+            emptyStyle: {
+                borderColor: 'rgba(153,246,228,0.46)',
+                backgroundColor: 'rgba(236,254,255,0.18)',
+                boxShadow:
+                    'inset 0 0 18px rgba(20,184,166,0.10), 0 10px 24px rgba(15,118,110,0.14)',
+            },
+            backClassName: 'shadow-none',
+            backStyle: {
+                boxShadow:
+                    '0 11px 23px rgba(15,118,110,0.17), inset 0 0 13px rgba(244,114,182,0.08), inset 0 0 16px rgba(251,191,36,0.09)',
+            },
+            topCardClassName: 'shadow-none',
+            topCardLayerStyle: {
+                filter: 'drop-shadow(0 12px 22px rgba(15,118,110,0.18)) drop-shadow(0 0 10px rgba(244,114,182,0.10))',
+            },
+        },
     };
 
 const getPlayerZoneStackSurfaceVisual = (
@@ -141,6 +162,65 @@ const getPlayerZoneStackSurfaceVisual = (
     surfaceVariant && surfaceVariant in STACK_SURFACE_VISUALS
         ? STACK_SURFACE_VISUALS[surfaceVariant as PlayerZoneStackSurfaceVisualId]
         : STACK_SURFACE_VISUALS['clean-boardgame'];
+
+type BonusBadgeArtworkColor = keyof typeof BONUS_GEM_BADGE_BACK_ARTWORK;
+type PointRibbonArtworkColor = keyof typeof POINT_RIBBON_ARTWORK;
+type CardNumberDigit = keyof typeof CARD_NUMBER_ARTWORK;
+
+interface CardNumberValueProps {
+    value: number;
+    heightPx: number;
+    color: string;
+    type: 'point' | 'bonus';
+    className?: string;
+}
+
+const getBonusBadgeBackPath = (color: string) =>
+    BONUS_GEM_BADGE_BACK_ARTWORK[color as BonusBadgeArtworkColor] ??
+    BONUS_GEM_BADGE_BACK_ARTWORK.black;
+
+const getPointRibbonPath = (color: string, isSpecial: boolean) =>
+    isSpecial
+        ? POINT_RIBBON_ARTWORK.silver
+        : (POINT_RIBBON_ARTWORK[color as PointRibbonArtworkColor] ?? POINT_RIBBON_ARTWORK.silver);
+
+const getCardNumberDigits = (value: number): CardNumberDigit[] => {
+    const normalizedValue = Math.max(0, Math.trunc(Number.isFinite(value) ? value : 0));
+
+    return String(normalizedValue)
+        .split('')
+        .filter((digit): digit is CardNumberDigit => digit in CARD_NUMBER_ARTWORK);
+};
+
+const CardNumberValue = ({ value, heightPx, color, type, className }: CardNumberValueProps) => {
+    const digits = getCardNumberDigits(value);
+
+    return (
+        <span
+            role="img"
+            aria-label={String(value)}
+            data-tableau-point-summary={type === 'point' ? color : undefined}
+            data-tableau-bonus-number={type === 'bonus' ? color : undefined}
+            data-card-number-value={type}
+            data-value={value}
+            className={cn('relative z-10 flex items-center justify-center', className)}
+            style={{ height: `${heightPx}px` }}
+        >
+            {digits.map((digit, index) => (
+                <img
+                    key={`${digit}-${index}`}
+                    src={CARD_NUMBER_ARTWORK[digit]}
+                    alt=""
+                    aria-hidden="true"
+                    draggable={false}
+                    data-card-number-digit={digit}
+                    data-card-number-index={index}
+                    className="-mx-[0.08em] h-full w-auto object-contain"
+                />
+            ))}
+        </span>
+    );
+};
 
 export function PlayerZoneTableauStack({
     player,
@@ -160,9 +240,13 @@ export function PlayerZoneTableauStack({
     const type = isSpecial
         ? GEM_TYPES.NULL
         : (GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES] ?? GEM_TYPES.NULL);
-    const summaryPointColor = isSpecial
-        ? '#e5e7eb'
-        : (SUMMARY_TEXT_COLORS[type.id] ?? SUMMARY_TEXT_COLORS.black);
+    const pointRibbonPath = getPointRibbonPath(color, isSpecial);
+    const bonusBadgeBackPath = getBonusBadgeBackPath(color);
+    const pointRibbonWidthPx = Math.round(summaryBadgeSizePx * 1.35);
+    const pointRibbonHeightPx = Math.round(pointRibbonWidthPx * 1.23);
+    const bonusBadgeSizePx = Math.round(summaryBadgeSizePx * 1.28);
+    const pointDigitHeightPx = Math.round(summaryBadgeFontPx * 1.6);
+    const bonusDigitHeightPx = Math.round(summaryBadgeFontPx * 1.28);
     const surfaceVisual = getPlayerZoneStackSurfaceVisual(surfaceVariant);
     const stackBackClassName = isSpecial
         ? `rounded border border-slate-300/70 bg-gradient-to-br from-slate-300 via-amber-200 to-slate-700 transition-all duration-200 opacity-40 ${surfaceVisual.backClassName}`
@@ -170,7 +254,8 @@ export function PlayerZoneTableauStack({
     const emptyBorderClassName = surfaceVisual.emptyClassName;
 
     return (
-        <div
+        <button
+            type="button"
             data-tableau-stack={`${player}-${color}`}
             data-tableau-special-stack={isSpecial ? `${player}-pure-royal` : undefined}
             data-tableau-stack-color={color}
@@ -178,7 +263,9 @@ export function PlayerZoneTableauStack({
             data-tableau-special-pure-count={isSpecial ? purePointCount : undefined}
             data-tableau-special-royal-count={isSpecial ? royalCount : undefined}
             data-tableau-stack-surface={surfaceVisual.id}
-            className="flex shrink-0 flex-col items-center gap-1 min-w-[32px]"
+            disabled={stats.cards.length === 0}
+            aria-label={`View ${title ?? color} tableau stack`}
+            className="flex shrink-0 flex-col items-center gap-1 min-w-[32px] appearance-none border-0 bg-transparent p-0 text-inherit disabled:cursor-default"
             onClick={() =>
                 stats.cards.length > 0 &&
                 onSelectStack(
@@ -265,35 +352,32 @@ export function PlayerZoneTableauStack({
                                                 repeat: Infinity,
                                                 ease: 'easeInOut',
                                             }}
-                                            className={cn(
-                                                'px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-[2px] border shadow-xl transition-colors',
-                                                stats.points >= 7
-                                                    ? 'border-amber-400 shadow-amber-500/20'
-                                                    : 'border-white/20'
-                                            )}
+                                            data-tableau-point-ribbon={color}
+                                            className="relative flex items-center justify-center drop-shadow-[0_10px_16px_rgba(0,0,0,0.42)]"
+                                            style={{
+                                                width: `${pointRibbonWidthPx}px`,
+                                                height: `${pointRibbonHeightPx}px`,
+                                            }}
                                         >
-                                            <span
-                                                data-tableau-point-summary={color}
+                                            <img
+                                                src={pointRibbonPath}
+                                                alt=""
+                                                aria-hidden="true"
+                                                draggable={false}
+                                                data-tableau-point-ribbon-artwork={color}
+                                                className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                                            />
+                                            <CardNumberValue
+                                                type="point"
+                                                color={color}
+                                                value={stats.points}
+                                                heightPx={pointDigitHeightPx}
                                                 className={cn(
-                                                    'text-sm font-black drop-shadow-md',
+                                                    'drop-shadow-md',
                                                     stats.points >= 7 &&
                                                         'drop-shadow-[0_0_8px_rgba(255,255,255,0.28)]'
                                                 )}
-                                                style={{
-                                                    color: summaryPointColor,
-                                                    textShadow:
-                                                        type.id === 'white' || isSpecial
-                                                            ? '0 1px 3px rgba(15,23,42,0.95)'
-                                                            : '0 1px 3px rgba(15,23,42,0.75)',
-                                                }}
-                                            >
-                                                {stats.points}
-                                                {!isSpecial && (
-                                                    <span className="text-[0.72em] font-black opacity-90">
-                                                        /10
-                                                    </span>
-                                                )}
-                                            </span>
+                                            />
                                         </motion.div>
                                     </div>
                                 )}
@@ -303,33 +387,29 @@ export function PlayerZoneTableauStack({
                                     stats.bonusCount > 0 && (
                                         <div className="absolute -bottom-2 -right-2 z-40">
                                             <div
-                                                className={`px-1.5 py-0.5 rounded-full border shadow-lg flex gap-0.5 items-center ${
-                                                    theme === 'dark'
-                                                        ? isSpecial
-                                                            ? 'bg-slate-950 text-amber-100 border-amber-300/60'
-                                                            : 'bg-slate-950 text-white border-slate-700'
-                                                        : isSpecial
-                                                          ? 'bg-white text-stone-800 border-amber-300'
-                                                          : 'bg-white text-stone-800 border-stone-300'
-                                                }`}
+                                                data-tableau-bonus-summary={color}
+                                                className="relative flex items-center justify-center drop-shadow-[0_8px_14px_rgba(0,0,0,0.42)]"
                                                 style={{
-                                                    minWidth: `${summaryBadgeSizePx}px`,
-                                                    minHeight: `${summaryBadgeSizePx}px`,
+                                                    width: `${bonusBadgeSizePx}px`,
+                                                    height: `${bonusBadgeSizePx}px`,
                                                     lineHeight: 1,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
                                                 }}
                                             >
-                                                <span
-                                                    className="font-black"
-                                                    style={{
-                                                        fontSize: `${summaryBadgeFontPx}px`,
-                                                        lineHeight: 1,
-                                                    }}
-                                                >
-                                                    {stats.bonusCount}
-                                                </span>
+                                                <img
+                                                    src={bonusBadgeBackPath}
+                                                    alt=""
+                                                    aria-hidden="true"
+                                                    draggable={false}
+                                                    data-tableau-bonus-badge-back={color}
+                                                    className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                                                />
+                                                <CardNumberValue
+                                                    type="bonus"
+                                                    color={color}
+                                                    value={stats.bonusCount}
+                                                    heightPx={bonusDigitHeightPx}
+                                                    className="drop-shadow-[0_1px_3px_rgba(15,23,42,0.85)]"
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -357,6 +437,6 @@ export function PlayerZoneTableauStack({
                     )}
                 </motion.div>
             </ScaledCardFrame>
-        </div>
+        </button>
     );
 }

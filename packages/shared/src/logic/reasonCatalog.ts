@@ -24,6 +24,11 @@ const REASON_DESCRIPTORS: Record<AppReasonCode, ReasonDescriptor> = {
         severity: 'error',
         message: 'The multiplayer session drifted and is requesting a resync.',
     },
+    HEARTBEAT_TIMEOUT: {
+        group: 'recovery',
+        severity: 'warn',
+        message: 'Heartbeat responses stopped and the client requested a recovery snapshot.',
+    },
     MANUAL: {
         group: 'recovery',
         severity: 'warn',

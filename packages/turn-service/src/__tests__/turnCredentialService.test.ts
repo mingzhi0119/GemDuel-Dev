@@ -146,6 +146,73 @@ describe('turn credential service', () => {
         expect(expiredError?.reasonCode).toBe('TURN_CREDENTIAL_BUNDLE_EXPIRED');
     });
 
+    it('binds leases to authenticated principals for refresh and revoke', () => {
+        let nonce = 0;
+        const service = createTurnCredentialService({
+            authTokens: [
+                { token: 'token-a', principal: 'principal-a' },
+                { token: 'token-b', principal: 'principal-b' },
+            ],
+            relayUrls: ['turn:relay.example.com:3478'],
+            sharedSecret: 'shared-secret',
+            ttlMs: 60_000,
+            randomId: () => `00000000-0000-4000-8000-${String((nonce += 1)).padStart(12, '0')}`,
+        });
+
+        const issued = service.issue({
+            authorization: 'Bearer token-a',
+            body: {
+                subject: 'player-1',
+                client: 'vitest',
+            },
+        });
+
+        const crossRefreshError = (() => {
+            try {
+                service.refresh({
+                    authorization: 'Bearer token-b',
+                    body: {
+                        leaseId: issued.leaseId,
+                        client: 'vitest',
+                    },
+                });
+                return null;
+            } catch (error) {
+                return error as TurnCredentialServiceError;
+            }
+        })();
+
+        const crossRevokeError = (() => {
+            try {
+                service.revoke({
+                    authorization: 'Bearer token-b',
+                    body: {
+                        leaseId: issued.leaseId,
+                        client: 'vitest',
+                    },
+                });
+                return null;
+            } catch (error) {
+                return error as TurnCredentialServiceError;
+            }
+        })();
+
+        expect(crossRefreshError?.status).toBe(403);
+        expect(crossRefreshError?.reasonCode).toBe('TURN_CREDENTIAL_REFRESH_FAILED');
+        expect(crossRevokeError?.status).toBe(403);
+        expect(crossRevokeError?.reasonCode).toBe('TURN_CREDENTIAL_REVOKE_FAILED');
+
+        expect(
+            service.refresh({
+                authorization: 'Bearer token-a',
+                body: {
+                    leaseId: issued.leaseId,
+                    client: 'vitest',
+                },
+            }).leaseId
+        ).not.toBe(issued.leaseId);
+    });
+
     it('serves issue, refresh, and revoke over the governed HTTP handler', async () => {
         let nowMs = Date.parse('2026-04-20T12:00:00.000Z');
         const service = createTurnCredentialService({

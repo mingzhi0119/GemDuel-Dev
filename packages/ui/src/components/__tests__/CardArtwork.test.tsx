@@ -126,6 +126,25 @@ describe('Card artwork rendering', () => {
         expect(html).not.toContain('data-card-face-pattern="true"');
     });
 
+    it('normalizes deterministic runtime card IDs to their full-card artwork asset', () => {
+        const deterministicIds = ['151-bk-1-1700000000000', '151-bk-1-1-k9x'];
+
+        for (const id of deterministicIds) {
+            const deterministicRuntimeCard: CardType = {
+                ...realCard,
+                id,
+            };
+            const html = renderToStaticMarkup(
+                <Card card={deterministicRuntimeCard} theme="dark" />
+            );
+
+            expect(html).toContain('data-card-artwork="151-bk"');
+            expect(html).toContain('/assets/cards/151-bk.png');
+            expect(html).not.toContain(`/assets/cards/${id}.png`);
+            expect(html).not.toContain('data-card-face-pattern="true"');
+        }
+    });
+
     it('normalizes replay card instance IDs to their full-card artwork asset', () => {
         const replayInstanceCard: CardType = {
             ...realCard,
@@ -136,6 +155,41 @@ describe('Card artwork rendering', () => {
         expect(html).toContain('data-card-artwork="151-bk"');
         expect(html).toContain('/assets/cards/151-bk.png');
         expect(html).not.toContain('/assets/cards/c:151-bk#0.png');
+        expect(html).not.toContain('data-card-face-pattern="true"');
+    });
+
+    it('migrates legacy card IDs to canonical full-card artwork assets', () => {
+        const legacyCards = [
+            { id: 'l3-gr-63', expectedArtworkId: '322-gr' },
+            { id: 'c:l3-jo-69#0', expectedArtworkId: '371-jo' },
+            { id: 'l1-bl-4', expectedArtworkId: '155-bk' },
+            { id: 'l3-ma-75-3-1-k9x', expectedArtworkId: '343-wh' },
+        ];
+
+        for (const { id, expectedArtworkId } of legacyCards) {
+            const legacyCard: CardType = {
+                ...realCard,
+                id,
+            };
+            const html = renderToStaticMarkup(<Card card={legacyCard} theme="dark" />);
+
+            expect(html).toContain(`data-card-artwork="${expectedArtworkId}"`);
+            expect(html).toContain(`/assets/cards/${expectedArtworkId}.png`);
+            expect(html).not.toContain(`/assets/cards/${id}.png`);
+            expect(html).not.toContain('data-card-face-pattern="true"');
+        }
+    });
+
+    it('migrates legacy royal card IDs to canonical full-card artwork assets', () => {
+        const legacyRoyalCard: CardType = {
+            ...(royalCard as unknown as CardType),
+            id: 'royal-again',
+        };
+        const html = renderToStaticMarkup(<Card card={legacyRoyalCard} theme="dark" isRoyal />);
+
+        expect(html).toContain('data-card-artwork="r92-ro"');
+        expect(html).toContain('/assets/cards/r92-ro.png');
+        expect(html).not.toContain('/assets/cards/royal-again.png');
         expect(html).not.toContain('data-card-face-pattern="true"');
     });
 

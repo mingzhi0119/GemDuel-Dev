@@ -15,6 +15,10 @@ const mocks = vi.hoisted(() => ({
     layout: null as ResponsiveLayout | null,
     setLocale: vi.fn(),
     setSurfaceTheme: vi.fn(),
+    useGameLogic: vi.fn(),
+    useReplayIOOptions: null as {
+        onReplayImportSuccess?: () => void;
+    } | null,
     useReplayAutoSave: vi.fn(),
     useLanDevVerification: vi.fn(),
 }));
@@ -60,15 +64,21 @@ vi.mock('../hooks/useLanDevVerification', () => ({
 }));
 
 vi.mock('../hooks/useGameLogic', () => ({
-    useGameLogic: () => mocks.game,
+    useGameLogic: (...args: unknown[]) => {
+        mocks.useGameLogic(...args);
+        return mocks.game;
+    },
 }));
 
 vi.mock('../app/io/useReplayIO', () => ({
-    useReplayIO: () => ({
-        handleDownloadReplay: vi.fn(),
-        handleUploadReplay: vi.fn(),
-        persistReplayToProjectFolder: vi.fn(),
-    }),
+    useReplayIO: (options: { onReplayImportSuccess?: () => void }) => {
+        mocks.useReplayIOOptions = options;
+        return {
+            handleDownloadReplay: vi.fn(),
+            handleUploadReplay: vi.fn(),
+            persistReplayToProjectFolder: vi.fn(),
+        };
+    },
 }));
 
 vi.mock('../app/io/useReplayAutoSave', () => ({
@@ -174,6 +184,8 @@ describe('GemDuelBoard replay review state', () => {
         mocks.game = createGameController();
         mocks.setLocale.mockReset();
         mocks.setSurfaceTheme.mockReset();
+        mocks.useGameLogic.mockReset();
+        mocks.useReplayIOOptions = null;
         mocks.useReplayAutoSave.mockReset();
         mocks.useLanDevVerification.mockReset();
         delete window.electron;
@@ -214,5 +226,46 @@ describe('GemDuelBoard replay review state', () => {
 
         expect(mocks.routeProps?.ui.isReviewing).toBe(false);
         expect(mocks.routeProps?.ui.persistentWinner).toBe('p1');
+    });
+
+    it('exits network matchmaking when importing a replay', async () => {
+        mocks.lan = {
+            ...createLanController(),
+            state: {
+                ...createLanController().state,
+                phase: 'matched',
+                roomId: 'lan-room',
+                remoteInstanceId: 'peer',
+            },
+            launch: {
+                roomId: 'lan-room',
+                targetIP: '192.168.1.20',
+                targetPort: 9001,
+                hostPeerId: 'peer-host',
+                transportHost: false,
+                hostPlayer: 'p1',
+                mode: 'classic',
+            },
+        };
+
+        await renderBoard();
+
+        await act(async () => {
+            mocks.routeProps?.setters.setMatchmakingRoute('lan');
+            await Promise.resolve();
+        });
+
+        expect(mocks.useGameLogic.mock.calls.at(-1)?.[0]).toBe(true);
+
+        await act(async () => {
+            mocks.useReplayIOOptions?.onReplayImportSuccess?.();
+            await Promise.resolve();
+        });
+
+        expect(mocks.lan.cancelSearch).toHaveBeenCalledTimes(1);
+        expect(mocks.lan.clearLaunch).toHaveBeenCalledTimes(1);
+        expect(mocks.routeProps?.ui.matchmakingRoute).toBe('none');
+        expect(mocks.routeProps?.ui.isReviewing).toBe(true);
+        expect(mocks.useGameLogic.mock.calls.at(-1)?.[0]).toBe(false);
     });
 });

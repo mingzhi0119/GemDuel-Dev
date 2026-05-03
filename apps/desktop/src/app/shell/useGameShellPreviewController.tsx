@@ -45,6 +45,7 @@ interface PeekPreviewModel {
     cards: CardType[];
     title: string;
     previewContent?: ReactNode;
+    collectionLayout?: 'deck-peek';
 }
 
 export const useGameShellPreviewController = ({
@@ -234,6 +235,7 @@ export const useGameShellPreviewController = ({
         cards: peekPreviewCards,
         title: t('deckPeek.title'),
         previewContent: peekPreviewContent,
+        collectionLayout: shouldShowPeekPreview ? 'deck-peek' : undefined,
     };
 
     return {

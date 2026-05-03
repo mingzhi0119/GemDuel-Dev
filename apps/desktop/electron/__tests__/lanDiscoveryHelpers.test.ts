@@ -192,27 +192,79 @@ describe('lanDiscovery helpers', () => {
             transportHost: true,
             hostPlayer: 'p2',
             hostAddress: '192.168.1.10',
+            hostNonce: 'aaaa',
+            guestNonce: '1111',
         };
 
         expect(
             canHandleRemotePregamePacket(hostRoom, {
                 roomId: ROOM_ID,
+                instanceId: GUEST_INSTANCE_ID,
+                hostInstanceId: HOST_INSTANCE_ID,
                 guestInstanceId: GUEST_INSTANCE_ID,
+                hostNonce: 'aaaa',
+                guestNonce: '1111',
             })
         ).toBe(true);
         expect(
             canHandleRemotePregamePacket(hostRoom, {
                 roomId: 'wrong-room',
+                instanceId: GUEST_INSTANCE_ID,
+                hostInstanceId: HOST_INSTANCE_ID,
                 guestInstanceId: GUEST_INSTANCE_ID,
+                hostNonce: 'aaaa',
+                guestNonce: '1111',
+            })
+        ).toBe(false);
+        expect(
+            canHandleRemotePregamePacket(hostRoom, {
+                roomId: ROOM_ID,
+                instanceId: GUEST_INSTANCE_ID,
+                hostInstanceId: HOST_INSTANCE_ID,
+                guestInstanceId: GUEST_INSTANCE_ID,
+                hostNonce: 'aaaa',
+                guestNonce: 'stale',
             })
         ).toBe(false);
         expect(isRemotePlayerP1(hostRoom)).toBe(true);
         expect(applyRemoteModeSelection(hostRoom, 'classic').selectedMode).toBe('classic');
         expect(applyIncomingStartReady(hostRoom, { roomId: 'wrong-room' })).toBeNull();
 
+        const guestRoom = {
+            ...createEmptyLanMatchState(),
+            roomId: ROOM_ID,
+            hostInstanceId: HOST_INSTANCE_ID,
+            guestInstanceId: GUEST_INSTANCE_ID,
+            transportHost: false,
+            hostAddress: '192.168.1.10',
+            hostNonce: 'aaaa',
+            guestNonce: '1111',
+        };
+
         expect(
-            applyIncomingStartReady(hostRoom, {
+            applyIncomingStartReady(guestRoom, {
                 roomId: ROOM_ID,
+                instanceId: HOST_INSTANCE_ID,
+                hostInstanceId: HOST_INSTANCE_ID,
+                guestInstanceId: GUEST_INSTANCE_ID,
+                hostNonce: 'aaaa',
+                guestNonce: 'stale',
+                hostAddress: '192.168.1.10',
+                hostPeerId: 'peer-host',
+                hostPlayer: 'p2',
+                hostPort: 9001,
+                mode: 'roguelike',
+            })
+        ).toBeNull();
+
+        expect(
+            applyIncomingStartReady(guestRoom, {
+                roomId: ROOM_ID,
+                instanceId: HOST_INSTANCE_ID,
+                hostInstanceId: HOST_INSTANCE_ID,
+                guestInstanceId: GUEST_INSTANCE_ID,
+                hostNonce: 'aaaa',
+                guestNonce: '1111',
                 hostAddress: '192.168.1.10',
                 hostPeerId: 'peer-host',
                 hostPlayer: 'p2',
@@ -221,7 +273,7 @@ describe('lanDiscovery helpers', () => {
             })
         ).toMatchObject({
             roomId: ROOM_ID,
-            targetIP: 'localhost',
+            targetIP: '192.168.1.10',
             targetPort: 9001,
             hostPeerId: 'peer-host',
             hostPlayer: 'p2',
@@ -237,6 +289,7 @@ describe('lanDiscovery helpers', () => {
             hostAddress: '192.168.1.10',
             hostPort: 9001,
             hostNonce: 'aaaa',
+            guestNonce: '1111',
         };
 
         expect(
@@ -264,13 +317,11 @@ describe('lanDiscovery helpers', () => {
             createMatchAckPacket({
                 appVersion: '5.2.11',
                 instanceId: GUEST_INSTANCE_ID,
-                roomSession: {
-                    ...roomSession,
-                    guestNonce: '1111',
-                },
+                roomSession,
             })
         ).toMatchObject({
             kind: 'MATCH_ACK',
+            hostNonce: 'aaaa',
             guestNonce: '1111',
         });
 
@@ -279,7 +330,6 @@ describe('lanDiscovery helpers', () => {
             instanceId: HOST_INSTANCE_ID,
             roomSession,
         });
-        expect(heartbeat).not.toHaveProperty('guestNonce');
         expect(heartbeat).not.toHaveProperty('hostPlayer');
         expect(heartbeat).not.toHaveProperty('hostPeerId');
         expect(heartbeat).not.toHaveProperty('selectedMode');
@@ -296,6 +346,8 @@ describe('lanDiscovery helpers', () => {
             })
         ).toMatchObject({
             kind: 'SELECT_MODE',
+            hostNonce: 'aaaa',
+            guestNonce: '1111',
             mode: 'classic',
         });
         expect(
@@ -307,6 +359,8 @@ describe('lanDiscovery helpers', () => {
         ).toMatchObject({
             kind: 'START_REQUEST',
             roomId: ROOM_ID,
+            hostNonce: 'aaaa',
+            guestNonce: '1111',
         });
         expect(
             createStartReadyPacket({
@@ -321,20 +375,24 @@ describe('lanDiscovery helpers', () => {
             })
         ).toMatchObject({
             kind: 'START_READY',
+            hostNonce: 'aaaa',
+            guestNonce: '1111',
             hostPeerId: 'peer-host',
             hostPlayer: 'p2',
             hostPort: 9001,
             mode: 'roguelike',
         });
 
-        const cancelWithoutIds = createCancelPacket({
+        const cancelPacket = createCancelPacket({
             appVersion: '5.2.11',
             instanceId: HOST_INSTANCE_ID,
-            roomSession: {
-                roomId: ROOM_ID,
-            },
+            roomSession,
         });
-        expect(cancelWithoutIds).not.toHaveProperty('hostInstanceId');
-        expect(cancelWithoutIds).not.toHaveProperty('guestInstanceId');
+        expect(cancelPacket).toMatchObject({
+            hostInstanceId: HOST_INSTANCE_ID,
+            guestInstanceId: GUEST_INSTANCE_ID,
+            hostNonce: 'aaaa',
+            guestNonce: '1111',
+        });
     });
 });

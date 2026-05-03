@@ -2,7 +2,7 @@ import React from 'react';
 import { getGemLabel } from '@gemduel/shared';
 import { GemTypeObject } from '@gemduel/shared/types';
 import { useLocale } from '../i18n/LocaleProvider';
-import { cn } from '@gemduel/shared/utils';
+import { cn } from '../utils';
 import { GemArtwork, type GemArtworkVariant } from './GemArtwork';
 
 interface GemIconProps {

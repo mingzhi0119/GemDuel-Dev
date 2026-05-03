@@ -5,6 +5,7 @@ import {
     getRuntimeRelayProfileFromEnv,
     getTurnCredentialServiceConfig,
 } from './runtimeConfig.js';
+import { createTurnClientError, sendTurnCredentialRequest } from './turnCredentialHttp.js';
 
 const REFRESH_BUFFER_MS = 30_000;
 
@@ -13,19 +14,11 @@ const hasExpired = (isoTimestamp, nowMs) =>
         ? true
         : Date.parse(isoTimestamp) <= nowMs;
 
-const normalizeServiceUrl = (serviceUrl) => serviceUrl.replace(/\/+$/, '');
-
 const buildDefaultRelayProfile = () =>
     buildRuntimeRelayProfile({
         source: 'default-stun',
         iceServers: [],
     });
-
-const createTurnClientError = (reasonCode, message, cause) => ({
-    reasonCode,
-    message,
-    cause,
-});
 
 export const createTurnCredentialClient = ({
     bundleConfig,
@@ -39,6 +32,9 @@ export const createTurnCredentialClient = ({
     recordMainHealth = () => undefined,
     setTimeoutImpl = globalThis.setTimeout,
     clearTimeoutImpl = globalThis.clearTimeout,
+    requestTimeoutMs = 10_000,
+    requestSetTimeoutImpl = globalThis.setTimeout,
+    requestClearTimeoutImpl = globalThis.clearTimeout,
 }) => {
     const serviceConfig = getTurnCredentialServiceConfig({
         serviceUrlEnv,
@@ -140,62 +136,15 @@ export const createTurnCredentialClient = ({
         }, delayMs);
     };
 
-    const sendRequest = async ({ path, body, schema, failureReasonCode }) => {
-        if (!serviceConfig.enabled || typeof fetchImpl !== 'function') {
-            throw createTurnClientError(
-                failureReasonCode,
-                'TURN credential service is not enabled for this desktop runtime.'
-            );
-        }
-
-        let response;
-        try {
-            response = await fetchImpl(`${normalizeServiceUrl(serviceConfig.serviceUrl)}/${path}`, {
-                method: 'POST',
-                headers: {
-                    authorization: `Bearer ${serviceConfig.serviceToken}`,
-                    'content-type': 'application/json',
-                },
-                body: JSON.stringify(body),
-            });
-        } catch (error) {
-            throw createTurnClientError(
-                failureReasonCode,
-                'TURN credential request could not reach the online service.',
-                error
-            );
-        }
-
-        let payload = null;
-        try {
-            payload = await response.json();
-        } catch (error) {
-            throw createTurnClientError(
-                'TURN_CREDENTIAL_BUNDLE_INVALID',
-                'TURN credential service returned a non-JSON payload.',
-                error
-            );
-        }
-
-        if (!response.ok) {
-            throw createTurnClientError(
-                typeof payload?.reasonCode === 'string' ? payload.reasonCode : failureReasonCode,
-                typeof payload?.message === 'string'
-                    ? payload.message
-                    : 'TURN credential service rejected the request.'
-            );
-        }
-
-        const parsed = schema.safeParse(payload);
-        if (!parsed.success) {
-            throw createTurnClientError(
-                'TURN_CREDENTIAL_BUNDLE_INVALID',
-                'TURN credential service returned a payload outside the governed contract.'
-            );
-        }
-
-        return parsed.data;
-    };
+    const sendRequest = (request) =>
+        sendTurnCredentialRequest({
+            ...request,
+            serviceConfig,
+            fetchImpl,
+            requestTimeoutMs,
+            requestSetTimeoutImpl,
+            requestClearTimeoutImpl,
+        });
 
     const issueRuntimeRelayProfile = async () => {
         const lease = await sendRequest({

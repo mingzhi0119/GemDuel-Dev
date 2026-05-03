@@ -62,6 +62,27 @@ const createRuntimeCandidate = (
     source: 'runtime',
 });
 
+const RUNTIME_PLAYER_ZONE_SIDE_THEMES = new Set<RuntimeSurfaceLabTheme>(['lotus-porcelain']);
+
+const createRuntimePlayerZoneSideCandidate = (
+    style: RuntimeSurfaceLabTheme,
+    player: 'p1' | 'p2',
+    theme: ThemeName
+): SurfaceLabCandidate => ({
+    batch: 'runtime',
+    date: 'current',
+    promptId: `RUNTIME-${style}-player-zone-${player}`,
+    slot: 'player-zone',
+    style,
+    variant: theme.toUpperCase(),
+    score: null,
+    risk: 'Runtime-integrated side-specific player-zone surface asset.',
+    dimensions: null,
+    archiveUrl: `/assets/surfaces/anime-themes/${style}/${theme}/player-zone-${player}.png`,
+    source: 'runtime',
+    playerZoneSide: player,
+});
+
 export const createRuntimeSurfaceLabAssetSets = (theme: ThemeName): SurfaceLabAssetSet[] =>
     RUNTIME_SURFACE_LAB_THEMES.map((style) => {
         const slots = SURFACE_LAB_SLOTS.reduce<Record<SurfaceLabSlot, SurfaceLabCandidate>>(
@@ -71,6 +92,12 @@ export const createRuntimeSurfaceLabAssetSets = (theme: ThemeName): SurfaceLabAs
             },
             {} as Record<SurfaceLabSlot, SurfaceLabCandidate>
         );
+        const playerZoneSideSlots = RUNTIME_PLAYER_ZONE_SIDE_THEMES.has(style)
+            ? {
+                  p1: createRuntimePlayerZoneSideCandidate(style, 'p1', theme),
+                  p2: createRuntimePlayerZoneSideCandidate(style, 'p2', theme),
+              }
+            : undefined;
 
         return {
             id: `runtime:${style}:${theme}`,
@@ -82,6 +109,7 @@ export const createRuntimeSurfaceLabAssetSets = (theme: ThemeName): SurfaceLabAs
             variant: theme.toUpperCase(),
             label: `${style} (${theme})`,
             slots,
+            playerZoneSideSlots,
         };
     });
 

@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { cn } from '@gemduel/shared/utils';
+import { cn } from '../utils';
 import type { GemColor, GemTypeObject } from '@gemduel/shared/types';
 import { GemContrastOverlay } from './gemContrast/GemContrastOverlay';
 

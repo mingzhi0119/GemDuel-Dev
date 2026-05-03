@@ -23,7 +23,7 @@
         "deps:check": "turbo run deps:check --filter=@gemduel/tools-scripts",
         "desktop:check": "turbo run desktop:check --filter=@gemduel/tools-scripts",
         "dev": "turbo run dev --filter=@gemduel/desktop",
-        "electron:build": "pnpm run architecture:check && pnpm run boundaries:check && pnpm run deps:check && pnpm run licenses:check && pnpm run sbom:check && pnpm run secrets:check && pnpm run seal-exclusions:check && pnpm run desktop:check && pnpm run test:coverage && pnpm run build && pnpm run bundle:check && pnpm run bench && pnpm run audit:gates && pnpm run governance:report && pnpm run lifecycle:certify && pnpm run governance:artifacts && turbo run electron:build --filter=@gemduel/desktop",
+        "electron:build": "pnpm run architecture:check && pnpm run boundaries:check && pnpm run deps:check && pnpm run licenses:check && pnpm run sbom:check && pnpm run secrets:check && pnpm run seal-exclusions:check && pnpm run desktop:check && pnpm run test:coverage && pnpm run build && pnpm run bundle:check && pnpm run bench && pnpm run audit:gates && pnpm run governance:report && turbo run electron:build --filter=@gemduel/desktop && pnpm run release:artifacts:check && pnpm run lifecycle:certify && pnpm run governance:artifacts -- --out-dir artifacts/governance && pnpm run governance:evidence:check -- --artifacts-dir artifacts/governance",
         "electron:dev": "turbo run electron:dev --filter=@gemduel/desktop",
         "electron:lan:verify": "pnpm --dir tools/scripts run electron:lan:verify",
         "electron:open": "pnpm --dir apps/desktop run electron:open",

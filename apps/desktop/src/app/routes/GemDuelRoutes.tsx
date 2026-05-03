@@ -4,6 +4,7 @@ import type { AppRouteProps } from '@app/types/ui';
 import type { ThemeName } from '@gemduel/shared/types';
 import { DesktopStage } from '../layout/DesktopStage';
 import { getVisualLabMode } from '../visual-lab/visualLabMode';
+import { RouteErrorBoundary } from './RouteErrorBoundary';
 
 const DraftScreen = React.lazy(() =>
     import('@gemduel/ui/components/DraftScreen').then((module) => ({ default: module.DraftScreen }))
@@ -148,8 +149,11 @@ export function GemDuelRoutes(props: AppRouteProps) {
         routeContent = <GameShell {...props} />;
     }
 
+    const routeResetKey = `${routeKind}:${ui.matchmakingRoute}:${historyControls.historyLength}:${state.phase}`;
     const suspenseContent = (
-        <Suspense fallback={getRouteFallback(routeKind, theme)}>{routeContent}</Suspense>
+        <RouteErrorBoundary resetKey={routeResetKey}>
+            <Suspense fallback={getRouteFallback(routeKind, theme)}>{routeContent}</Suspense>
+        </RouteErrorBoundary>
     );
 
     if (props.layout.layoutMode === 'desktop-4k') {

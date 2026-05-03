@@ -23,6 +23,7 @@ import {
 } from '@gemduel/config-vitest/seal-exclusions';
 import { collectArchitectureBudgetResults } from './architectureBudgets.js';
 import { buildBundleBudgetReport } from './buildBudgetReport.js';
+import { buildDependencyGateSummaryFromRepo } from './dependencyGateEvidence.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -153,6 +154,15 @@ const main = () => {
           })
         : null;
     const benchmarkBaseline = readJson('tools/governance/benchmark-baselines.snapshot.json');
+    const dependencySbomSnapshot = readJson('tools/governance/dependency-sbom.snapshot.json');
+    const licenseAllowlist = readJson('tools/governance/dependency-license-allowlist.json');
+    const dependencyGateSummary = buildDependencyGateSummaryFromRepo({
+        repoRoot,
+        packageJson: readJson('package.json'),
+        dependencySbomSnapshot,
+        licenseAllowlist,
+        governanceDocumentText: readText(GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance),
+    });
     const dashboard = buildLifecycleDashboardReport({
         generatedAt,
         dashboardSnapshot,
@@ -177,8 +187,9 @@ const main = () => {
             count: SEAL_COVERAGE_EXCLUSIONS.length,
             baselineCount: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY.baselineCount,
         },
-        dependencySbomSnapshot: readJson('tools/governance/dependency-sbom.snapshot.json'),
-        licenseAllowlist: readJson('tools/governance/dependency-license-allowlist.json'),
+        dependencySbomSnapshot,
+        licenseAllowlist,
+        dependencyGateSummary,
         provenance: {
             generatedBy: 'tools/scripts/generate-governance-report.mjs',
             sha: process.env.GITHUB_SHA ?? null,

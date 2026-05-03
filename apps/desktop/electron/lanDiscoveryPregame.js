@@ -1,10 +1,14 @@
-import { getOpposingPlayer } from './lanDiscoveryProtocol.js';
+import { getOpposingPlayer, isPrivateLanAddress } from './lanDiscoveryProtocol.js';
 
 export const canHandleRemotePregamePacket = (roomSession, packet) =>
     Boolean(
         roomSession?.transportHost &&
         roomSession.roomId === packet.roomId &&
+        roomSession.hostInstanceId === packet.hostInstanceId &&
         packet.guestInstanceId === roomSession.guestInstanceId &&
+        packet.instanceId === roomSession.guestInstanceId &&
+        packet.hostNonce === roomSession.hostNonce &&
+        packet.guestNonce === roomSession.guestNonce &&
         roomSession.hostPlayer
     );
 
@@ -18,7 +22,21 @@ export const applyRemoteModeSelection = (roomSession, mode) => {
 };
 
 export const applyIncomingStartReady = (roomSession, packet) => {
-    if (!roomSession?.roomId || roomSession.roomId !== packet.roomId) {
+    if (
+        !roomSession?.roomId ||
+        roomSession.roomId !== packet.roomId ||
+        roomSession.hostInstanceId !== packet.hostInstanceId ||
+        roomSession.guestInstanceId !== packet.guestInstanceId ||
+        packet.instanceId !== roomSession.hostInstanceId ||
+        packet.hostNonce !== roomSession.hostNonce ||
+        packet.guestNonce !== roomSession.guestNonce ||
+        !isPrivateLanAddress(packet.hostAddress) ||
+        !Number.isInteger(packet.hostPort) ||
+        packet.hostPort < 1 ||
+        packet.hostPort > 65535 ||
+        !packet.hostPeerId ||
+        (packet.hostPlayer !== 'p1' && packet.hostPlayer !== 'p2')
+    ) {
         return null;
     }
 

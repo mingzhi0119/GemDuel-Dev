@@ -1,7 +1,7 @@
 import React from 'react';
 import { Info, Wifi, WifiOff } from 'lucide-react';
 import { localizeLooseUiMessage } from '@gemduel/shared';
-import { cn } from '@gemduel/shared/utils';
+import { cn } from '../utils';
 import { useLocale, useT } from '../i18n/LocaleProvider';
 
 interface StatusBarProps {

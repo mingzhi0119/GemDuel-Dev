@@ -10,15 +10,15 @@ import {
     type NetworkMessage,
 } from '@gemduel/shared/types/network';
 
-const reportReleaseHealth = vi.fn();
+const reportRendererEvent = vi.fn();
 type ConnectionHealthResult = {
     latency: number;
     isUnstable: boolean;
     handleHeartbeat: (msg: HeartbeatMessage) => void;
 };
 
-vi.mock('@gemduel/shared/observability/releaseHealth', () => ({
-    reportReleaseHealth: (...args: unknown[]) => reportReleaseHealth(...args),
+vi.mock('../../observability/rendererLogger', () => ({
+    reportRendererEvent: (...args: unknown[]) => reportRendererEvent(...args),
 }));
 
 (
@@ -32,7 +32,7 @@ describe('useConnectionHealth', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-04-19T00:00:00.000Z'));
-        reportReleaseHealth.mockReset();
+        reportRendererEvent.mockReset();
         vi.spyOn(console, 'info').mockImplementation(() => undefined);
         vi.spyOn(console, 'warn').mockImplementation(() => undefined);
         vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -51,11 +51,12 @@ describe('useConnectionHealth', () => {
 
     it('marks the connection unstable after missed heartbeats and reports restoration on pong', () => {
         const sendMessage = vi.fn<(message: NetworkMessage) => void>();
+        const requestRecovery = vi.fn();
         const connection = { open: true } as DataConnection;
         let currentResult: ConnectionHealthResult | null = null;
 
         const Harness = () => {
-            currentResult = useConnectionHealth(connection, sendMessage);
+            currentResult = useConnectionHealth(connection, sendMessage, requestRecovery);
             return null;
         };
 
@@ -79,12 +80,20 @@ describe('useConnectionHealth', () => {
         });
         expect(currentResult).not.toBeNull();
         expect(currentResult!.isUnstable).toBe(true);
-        expect(reportReleaseHealth).toHaveBeenCalledWith(
+        expect(reportRendererEvent).toHaveBeenCalledWith(
             expect.objectContaining({
                 name: 'HEARTBEAT_TIMEOUT',
                 severity: 'warn',
-            })
+            }),
+            expect.any(Object)
         );
+        expect(requestRecovery).toHaveBeenCalledTimes(1);
+        expect(requestRecovery).toHaveBeenCalledWith('HEARTBEAT_TIMEOUT');
+
+        act(() => {
+            vi.advanceTimersByTime(4000);
+        });
+        expect(requestRecovery).toHaveBeenCalledTimes(1);
 
         act(() => {
             currentResult?.handleHeartbeat({
@@ -97,7 +106,7 @@ describe('useConnectionHealth', () => {
         expect(currentResult).not.toBeNull();
         expect(currentResult!.isUnstable).toBe(false);
         expect(currentResult!.latency).toBe(42);
-        expect(reportReleaseHealth).toHaveBeenCalledWith(
+        expect(reportRendererEvent).toHaveBeenCalledWith(
             expect.objectContaining({
                 name: 'HEARTBEAT_RESTORED',
                 severity: 'info',
@@ -163,6 +172,6 @@ describe('useConnectionHealth', () => {
         expect(sendMessage).not.toHaveBeenCalled();
         expect(currentResult).not.toBeNull();
         expect(currentResult!.isUnstable).toBe(false);
-        expect(reportReleaseHealth).not.toHaveBeenCalled();
+        expect(reportRendererEvent).not.toHaveBeenCalled();
     });
 });

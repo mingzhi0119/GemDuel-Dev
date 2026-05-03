@@ -22,6 +22,7 @@ export const createElectronRuntimeHarness = ({
     let mainWindow = null;
     let updateFailureCount = 0;
     let lastLoggedUpdaterProgressBucket = 0;
+    let updateDownloaded = false;
 
     const getMainWindowId = () => mainWindow?.webContents?.id ?? null;
 
@@ -192,6 +193,7 @@ export const createElectronRuntimeHarness = ({
 
     const attachAutoUpdaterLifecycle = () => {
         autoUpdater.on('checking-for-update', () => {
+            updateDownloaded = false;
             log.info('Checking for update...');
             recordMainHealth({
                 category: 'updater',
@@ -218,6 +220,7 @@ export const createElectronRuntimeHarness = ({
         });
 
         autoUpdater.on('update-not-available', () => {
+            updateDownloaded = false;
             log.info('Update not available.');
             recordMainHealth({
                 category: 'updater',
@@ -228,6 +231,7 @@ export const createElectronRuntimeHarness = ({
         });
 
         autoUpdater.on('error', (err) => {
+            updateDownloaded = false;
             log.error('Error in auto-updater:', err);
             updateFailureCount += 1;
             recordMainHealth({
@@ -274,6 +278,7 @@ export const createElectronRuntimeHarness = ({
         });
 
         autoUpdater.on('update-downloaded', (info) => {
+            updateDownloaded = true;
             log.info('Update downloaded; will install now', info);
             lastLoggedUpdaterProgressBucket = 100;
             recordMainHealth({
@@ -320,10 +325,12 @@ export const createElectronRuntimeHarness = ({
         attachWindowLifecycle,
         authorizeDesktopRequest,
         configureAutoUpdater,
+        canQuitAndInstall: () => updateDownloaded,
         registerGovernedIpcHandlers,
         resetUpdaterState: () => {
             updateFailureCount = 0;
             lastLoggedUpdaterProgressBucket = 0;
+            updateDownloaded = false;
         },
         sendToRenderer,
     };

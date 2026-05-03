@@ -129,6 +129,11 @@ const GEM_PANEL_GEOMETRY_BY_SURFACE: Record<SurfaceThemeVariant, GemPanelGeometr
         [0.0829, 0.2456, 0.4083, 0.5718, 0.7313, 0.9027],
         0.132
     ),
+    'lotus-porcelain': createGemPanelGeometryFromGridLines(
+        [0.123, 0.279, 0.435, 0.592, 0.75, 0.905],
+        [0.145, 0.288, 0.431, 0.576, 0.72, 0.863],
+        0.132
+    ),
 };
 
 const GEM_PANEL_SKIN_BASE: Record<GemPanelSkinId, Omit<GemPanelSkin, 'artworkPath'>> = {

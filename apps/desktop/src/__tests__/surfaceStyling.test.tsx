@@ -507,13 +507,31 @@ describe('surface styling affordances', () => {
         expect(specialStack?.getAttribute('data-tableau-card-count')).toBe('2');
         expect(specialStack?.getAttribute('data-tableau-special-pure-count')).toBe('1');
         expect(specialStack?.getAttribute('data-tableau-special-royal-count')).toBe('1');
-        expect(container.querySelector('[data-tableau-point-summary="red"]')?.textContent).toBe(
-            '2/10'
-        );
+        const redPointSummary = container.querySelector('[data-tableau-point-summary="red"]');
+        const redBonusSummary = container.querySelector('[data-tableau-bonus-summary="red"]');
+
+        expect(redPointSummary?.getAttribute('data-value')).toBe('2');
+        expect(redPointSummary?.textContent).toBe('');
+        expect(
+            redPointSummary?.querySelector('[data-card-number-digit="2"]')?.getAttribute('src')
+        ).toBe('/assets/ui-icons/card-numbers/card-number-2.png');
+        expect(
+            container
+                .querySelector('[data-tableau-point-ribbon-artwork="red"]')
+                ?.getAttribute('src')
+        ).toBe('/assets/ui-icons/point-ribbon-red-short.png');
+        expect(
+            container.querySelector('[data-tableau-bonus-badge-back="red"]')?.getAttribute('src')
+        ).toBe('/assets/ui-icons/bonus-gem-badge-back-red.png');
+        expect(redBonusSummary?.querySelector('[data-tableau-bonus-number="red"]')).not.toBeNull();
+        expect(
+            redBonusSummary?.querySelector('[data-card-number-digit="1"]')?.getAttribute('src')
+        ).toBe('/assets/ui-icons/card-numbers/card-number-1.png');
         expect(
             container.querySelector('[data-tableau-point-summary="pure-royal"]')?.textContent
         ).not.toContain('/10');
         expect(specialStack?.textContent).not.toContain('/10');
+        expect(container.querySelector('[data-tableau-bonus-summary="pure-royal"]')).toBeNull();
     });
 
     it('applies runtime surface-specific tableau stack visuals', () => {
@@ -741,6 +759,8 @@ describe('surface styling affordances', () => {
         expect(html).toContain('data-player-zone-surface-primary="/legacy-player-zone.png"');
         expect(html).toContain('data-player-zone-surface-using-fallback="true"');
         expect(html).toContain('data-player-zone-surface-mirrored="true"');
+        expect(html).toContain('data-player-zone-surface-position="right center"');
+        expect(html).toContain('object-position:right center');
         expect(html).toContain('transform:scaleX(-1)');
         expect(html).not.toContain('background-image:url(&quot;/legacy-player-zone.png&quot;)');
     });
@@ -1729,6 +1749,26 @@ describe('card preview interactions', () => {
         await renderShell(modalProps);
 
         expect(document.body.querySelectorAll('[data-card-preview-card]')).toHaveLength(9);
+        expect(
+            document.body
+                .querySelector('[data-card-preview-overlay]')
+                ?.getAttribute('data-card-preview-layout')
+        ).toBe('deck-peek');
+        expect(
+            Array.from(document.body.querySelectorAll('[data-card-preview-deck-row]')).map((row) =>
+                row.getAttribute('data-card-preview-deck-row')
+            )
+        ).toEqual(['3', '2', '1']);
+        expect(
+            Array.from(document.body.querySelectorAll('[data-card-preview-deck-back]')).map(
+                (deckBack) => deckBack.getAttribute('data-card-preview-deck-back')
+            )
+        ).toEqual(['3', '2', '1']);
+        expect(
+            Array.from(document.body.querySelectorAll('[data-card-preview-card-order-label]')).map(
+                (label) => label.textContent
+            )
+        ).toEqual(['First', 'Second', 'Third']);
         expect(document.body.querySelector('[data-card-preview-action]')).toBeNull();
         expect(document.body.textContent).toContain('Deck Intelligence');
     });
@@ -1907,6 +1947,102 @@ describe('card preview interactions', () => {
         expect(document.body.querySelectorAll('[data-card-preview-card]')).toHaveLength(12);
         expect(document.body.querySelector('[data-card-preview-actions]')).toBeNull();
         expect(document.body.textContent).toContain('Showing 12 / 13');
+    });
+
+    it('lays out deck intelligence with deck-back rows and one bottom-order label row', async () => {
+        Object.defineProperty(window, 'innerWidth', {
+            configurable: true,
+            writable: true,
+            value: 1914,
+        });
+        Object.defineProperty(window, 'innerHeight', {
+            configurable: true,
+            writable: true,
+            value: 1269,
+        });
+        const peekCards = ([3, 2, 1] as const).flatMap((level) =>
+            [0, 1, 2].map((index) => ({
+                ...SAMPLE_CARD,
+                id: `peek-l${level}-${index}`,
+                level,
+            }))
+        );
+
+        await renderInteractive(
+            <CardPreviewOverlay
+                isOpen={true}
+                mode="collection"
+                cards={peekCards}
+                title="Deck Intelligence"
+                collectionLayout="deck-peek"
+                deckBackArtwork={{
+                    1: { path: '/assets/deck-back-l1.png', variant: 'test-l1' },
+                    2: { path: '/assets/deck-back-l2.png', variant: 'test-l2' },
+                    3: { path: '/assets/deck-back-l3.png', variant: 'test-l3' },
+                }}
+                theme="dark"
+                onClose={() => undefined}
+            />
+        );
+
+        const overlay = document.body.querySelector('[data-card-preview-overlay]');
+        const rowCards = (level: 1 | 2 | 3) =>
+            Array.from(
+                document.body.querySelectorAll(
+                    `[data-card-preview-deck-row="${level}"] [data-card-preview-card]`
+                )
+            ).map((card) => card.getAttribute('data-card-preview-card'));
+        const orderLabels = Array.from(
+            document.body.querySelectorAll('[data-card-preview-card-order-label]')
+        ).map((label) => label.textContent);
+        const deckBacks = Array.from(
+            document.body.querySelectorAll<HTMLElement>('[data-card-preview-deck-back]')
+        );
+        const firstCardFrame = document.body.querySelector<HTMLElement>(
+            '[data-card-preview-card-frame="peek-l3-0"]'
+        );
+
+        expect(overlay?.getAttribute('data-card-preview-layout')).toBe('deck-peek');
+        expect(overlay?.getAttribute('data-card-preview-grid-columns')).toBe('3');
+        expect(overlay?.getAttribute('data-card-preview-grid-rows')).toBe('3');
+        expect(document.body.querySelector('[data-card-preview-deck-grid]')).not.toBeNull();
+        expect(document.body.querySelector('[data-card-preview-grid]')).toBeNull();
+        expect(
+            Array.from(document.body.querySelectorAll('[data-card-preview-deck-row]')).map((row) =>
+                row.getAttribute('data-card-preview-deck-row')
+            )
+        ).toEqual(['3', '2', '1']);
+        expect(
+            Array.from(document.body.querySelectorAll('[data-card-preview-deck-back]')).map(
+                (deckBack) => deckBack.getAttribute('data-card-preview-deck-back')
+            )
+        ).toEqual(['3', '2', '1']);
+        expect(
+            Array.from(document.body.querySelectorAll('[data-card-preview-deck-back-img]')).map(
+                (deckBack) => deckBack.getAttribute('src')
+            )
+        ).toEqual([
+            '/assets/deck-back-l3.png',
+            '/assets/deck-back-l2.png',
+            '/assets/deck-back-l1.png',
+        ]);
+        expect(firstCardFrame).not.toBeNull();
+        expect(
+            deckBacks.every((deckBack) => deckBack.style.width === firstCardFrame?.style.width)
+        ).toBe(true);
+        expect(
+            deckBacks.every((deckBack) => deckBack.style.height === firstCardFrame?.style.height)
+        ).toBe(true);
+        expect(rowCards(1)).toEqual(['peek-l1-0', 'peek-l1-1', 'peek-l1-2']);
+        expect(rowCards(2)).toEqual(['peek-l2-0', 'peek-l2-1', 'peek-l2-2']);
+        expect(rowCards(3)).toEqual(['peek-l3-0', 'peek-l3-1', 'peek-l3-2']);
+        expect(orderLabels).toEqual(['First', 'Second', 'Third']);
+        expect(
+            document.body.querySelector<HTMLElement>('[data-card-preview-title-band]')?.style.height
+        ).toBe('146px');
+        expect(
+            document.body.querySelector<HTMLElement>('[data-card-preview-card-band]')?.style.top
+        ).toBe('164px');
     });
 
     it('supports custom preview content and centered single preview actions', async () => {

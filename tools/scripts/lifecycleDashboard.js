@@ -66,6 +66,7 @@ export const buildLifecycleDashboardReport = ({
     sealReviewSummary,
     dependencySbomSnapshot,
     licenseAllowlist,
+    dependencyGateSummary = null,
     provenance = {},
     requireCompleteEvidence = false,
 }) => {
@@ -79,6 +80,14 @@ export const buildLifecycleDashboardReport = ({
         bundleBudgetReport == null
             ? 'not-collected'
             : metricStatus(bundleBudgetReport.status !== 'incident');
+    const dependencyGateStatus =
+        dependencyGateSummary == null
+            ? 'not-collected'
+            : metricStatus(dependencyGateSummary.status === 'passed');
+    const dependencyGateValue =
+        dependencyGateSummary == null
+            ? 'not collected'
+            : `${dependencyGateSummary.summary?.componentCount ?? dependencySbomSnapshot?.componentCount ?? 'n/a'} components, ${dependencyGateSummary.summary?.allowedLicenseCount ?? licenseAllowlist?.allowedLicenses?.length ?? 'n/a'} allowed licenses, ${dependencyGateSummary.gates.map((gate) => `${gate.id}:${gate.status}`).join(', ')}`;
 
     const perFileReport = coveragePerFileKeyModulesReport ?? null;
     let keyModulePerFileDashboardStatus = 'not-collected';
@@ -154,15 +163,14 @@ export const buildLifecycleDashboardReport = ({
         {
             id: 'dependency-sbom',
             title: 'Dependency SBOM And Licenses',
-            status: metricStatus(
-                Number.isInteger(dependencySbomSnapshot?.componentCount) &&
-                    Array.isArray(licenseAllowlist?.allowedLicenses) &&
-                    licenseAllowlist.allowedLicenses.length > 0
-            ),
-            value: `${dependencySbomSnapshot?.componentCount ?? 'n/a'} components, ${licenseAllowlist?.allowedLicenses?.length ?? 'n/a'} allowed licenses`,
+            status: dependencyGateStatus,
+            value: dependencyGateValue,
             evidenceRefs: [
                 'tools/governance/dependency-sbom.snapshot.json',
                 'tools/governance/dependency-license-allowlist.json',
+                'tools/scripts/check-sbom-governance.mjs',
+                'tools/scripts/check-license-governance.mjs',
+                'tools/scripts/check-secret-governance.mjs',
             ],
         },
         {
@@ -213,6 +221,12 @@ export const buildLifecycleDashboardReport = ({
 
         if (requireCompleteEvidence && metric.status === 'not-collected') {
             errors.push(`Lifecycle dashboard metric ${metric.id} was not collected.`);
+        }
+    }
+
+    for (const gate of dependencyGateSummary?.gates ?? []) {
+        if (gate.status === 'failed') {
+            errors.push(`Dependency governance gate ${gate.id} failed: ${gate.errors.join('; ')}.`);
         }
     }
 

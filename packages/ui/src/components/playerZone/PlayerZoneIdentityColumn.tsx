@@ -2,7 +2,7 @@ import { Hand, Plus, RotateCcw, Scroll, Shield, Swords } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { getAbilityLabel, getGemLabel, getPlayerDisplayName } from '@gemduel/shared';
 import { canActionRunInPhase } from '@gemduel/shared/logic/fsm';
-import { cn } from '@gemduel/shared/utils';
+import { cn } from '../../utils';
 import type { Buff, EffectiveCardAbility, GamePhase } from '@gemduel/shared/types';
 import { useLocale, useT } from '../../i18n/LocaleProvider';
 import { PlayerBuffIcon } from './PlayerBuffIcon';

@@ -107,7 +107,11 @@ export const applySessionHeartbeat = ({ address, nowValue, packet, roomSession }
 
     const belongsToSession =
         packet.hostInstanceId === roomSession.hostInstanceId &&
-        packet.guestInstanceId === roomSession.guestInstanceId;
+        packet.guestInstanceId === roomSession.guestInstanceId &&
+        packet.hostNonce === roomSession.hostNonce &&
+        (!roomSession.guestNonce ||
+            !packet.guestNonce ||
+            packet.guestNonce === roomSession.guestNonce);
 
     if (!belongsToSession) {
         return false;

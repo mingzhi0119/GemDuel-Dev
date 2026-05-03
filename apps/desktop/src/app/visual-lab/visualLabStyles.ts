@@ -134,6 +134,7 @@ export const createVisualLabShellStyles = (
                 primaryPath,
                 fallbackPath,
                 mirrorFallback: player === 'p2',
+                objectPosition: player === 'p1' ? 'left center' : 'right center',
             };
         },
         royalCardBackArtwork: {

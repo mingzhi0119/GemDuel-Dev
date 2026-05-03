@@ -1,7 +1,12 @@
 export const NETWORK_SYNC_REASONS = ['TURN_SYNC', 'INITIAL', 'RECOVERY'] as const;
 export type NetworkSyncReason = (typeof NETWORK_SYNC_REASONS)[number];
 
-export const RECOVERY_REASONS = ['CHECKSUM_MISMATCH', 'MANUAL', 'STALE_PACKET'] as const;
+export const RECOVERY_REASONS = [
+    'CHECKSUM_MISMATCH',
+    'HEARTBEAT_TIMEOUT',
+    'MANUAL',
+    'STALE_PACKET',
+] as const;
 export type RecoveryReason = (typeof RECOVERY_REASONS)[number];
 
 export const GUEST_DISPATCH_BOUNDARY_REASON_CODES = [

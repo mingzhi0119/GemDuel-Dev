@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 
 const require = createRequire(import.meta.url);
@@ -256,5 +257,58 @@ describe('electron preload contract', () => {
             UPDATE_CHANNELS.downloadProgress,
             expect.any(Function)
         );
+    });
+
+    it('loads the real preload script through the shared bridge factory', async () => {
+        const previousVisualLab = process.env.GEMDUEL_ALLOW_VISUAL_LAB;
+        const exposed = new Map<string, unknown>();
+        const contextBridge = {
+            exposeInMainWorld: vi.fn((key: string, value: unknown) => {
+                exposed.set(key, value);
+            }),
+        };
+        const ipcRenderer = {
+            invoke: vi.fn((channel) => Promise.resolve(channel)),
+            send: vi.fn(),
+            on: vi.fn(),
+            removeListener: vi.fn(),
+        };
+        const preloadPath = require.resolve('../preload.js');
+
+        process.env.GEMDUEL_ALLOW_VISUAL_LAB = 'true';
+        vi.resetModules();
+        vi.doMock('electron', () => ({
+            default: { contextBridge, ipcRenderer },
+            contextBridge,
+            ipcRenderer,
+        }));
+
+        try {
+            await import(`${pathToFileURL(preloadPath).href}?preload-test=${Date.now()}`);
+        } finally {
+            vi.doUnmock('electron');
+            vi.resetModules();
+            if (previousVisualLab === undefined) {
+                delete process.env.GEMDUEL_ALLOW_VISUAL_LAB;
+            } else {
+                process.env.GEMDUEL_ALLOW_VISUAL_LAB = previousVisualLab;
+            }
+        }
+
+        expect(contextBridge.exposeInMainWorld).toHaveBeenCalledWith(
+            '__GEMDUEL_RUNTIME_CONFIG__',
+            Object.freeze({
+                allowVisualLab: true,
+            })
+        );
+        expect(contextBridge.exposeInMainWorld).toHaveBeenCalledWith(
+            'electron',
+            expect.objectContaining({
+                getAppVersion: expect.any(Function),
+                restartApp: expect.any(Function),
+            })
+        );
+        (exposed.get('electron') as { restartApp: () => void }).restartApp();
+        expect(ipcRenderer.send).toHaveBeenCalledWith('restart_app');
     });
 });

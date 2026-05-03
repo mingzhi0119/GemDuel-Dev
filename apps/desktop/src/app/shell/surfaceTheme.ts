@@ -3,7 +3,8 @@ export type SurfaceThemeVariant =
     | 'royal-luxury'
     | 'dark-arcane'
     | 'clean-boardgame'
-    | 'pearl-opaline';
+    | 'pearl-opaline'
+    | 'lotus-porcelain';
 export type SurfaceEffectsSkin = 'anime';
 
 export type SurfaceThemeSlot = 'gemPanel' | 'playerZone' | 'background' | 'effects';
@@ -30,6 +31,7 @@ export const SURFACE_THEME_VARIANTS = [
     'dark-arcane',
     'clean-boardgame',
     'pearl-opaline',
+    'lotus-porcelain',
 ] as const satisfies readonly SurfaceThemeVariant[];
 
 export const DEFAULT_SURFACE_THEME_SELECTIONS: SurfaceThemeSelections = {

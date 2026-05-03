@@ -5,6 +5,7 @@ import {
     NETWORK_PROTOCOL_VERSION,
     NetworkMessage,
 } from '@gemduel/shared/types/network';
+import type { RecoveryReason } from '@gemduel/shared/types/network';
 import { reportRendererEvent } from '../observability/rendererLogger';
 
 const PING_INTERVAL_MS = 2000;
@@ -12,7 +13,8 @@ const TIMEOUT_THRESHOLD_MS = 6000; // Missed 3 pings = trouble
 
 export const useConnectionHealth = (
     connection: DataConnection | null,
-    sendMessage: (msg: NetworkMessage) => void
+    sendMessage: (msg: NetworkMessage) => void,
+    requestRecovery?: (reason: RecoveryReason) => void
 ) => {
     const [latency, setLatency] = useState<number>(0);
     const [isUnstable, setIsUnstable] = useState(false);
@@ -49,8 +51,8 @@ export const useConnectionHealth = (
                             consoleMessage: '[NET] Connection unstable: No PONG received.',
                         }
                     );
+                    requestRecovery?.('HEARTBEAT_TIMEOUT');
                 }
-                // Optional: Trigger active reconnection logic here
             } else {
                 setIsUnstable(false);
                 if (unstableReportedRef.current) {
@@ -75,7 +77,7 @@ export const useConnectionHealth = (
             if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
             unstableReportedRef.current = false;
         };
-    }, [connection, sendMessage]);
+    }, [connection, requestRecovery, sendMessage]);
 
     // 2. Message Handler (Call this from useOnlineManager when data arrives)
     const handleHeartbeat = useCallback(

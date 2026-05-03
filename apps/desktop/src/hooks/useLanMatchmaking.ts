@@ -8,6 +8,7 @@ import type {
     ReportLanPeerReadyPayload,
     SelectLanPregameModePayload,
 } from '@gemduel/shared/types/lan';
+import { reportRendererEvent } from '../observability/rendererLogger';
 
 const FALLBACK_STATE: LanMatchmakingState = {
     phase: 'idle',
@@ -25,6 +26,30 @@ const FALLBACK_STATE: LanMatchmakingState = {
 
 const getBridge = () => window.electron;
 
+const LAN_BRIDGE_ERROR_STATE: LanMatchmakingState = {
+    ...FALLBACK_STATE,
+    errorMessage: 'LAN matchmaking is temporarily unavailable.',
+    statusMessage: 'LAN matchmaking request failed.',
+};
+
+const reportLanBridgeFailure = (operation: string, error: unknown) => {
+    reportRendererEvent(
+        {
+            category: 'runtime',
+            name: 'LAN_MATCHMAKING_IPC_REJECTED',
+            severity: 'warn',
+            message: 'LAN matchmaking bridge request failed.',
+            context: {
+                operation,
+            },
+        },
+        {
+            consoleMessage: `[LAN] Matchmaking bridge request failed: ${operation}`,
+            consoleDetails: error,
+        }
+    );
+};
+
 export const useLanMatchmaking = () => {
     const [state, setState] = useState<LanMatchmakingState>(FALLBACK_STATE);
     const [launch, setLaunch] = useState<LanLaunchPayload | null>(null);
@@ -36,9 +61,16 @@ export const useLanMatchmaking = () => {
             return FALLBACK_STATE;
         }
 
-        const nextState = await bridge.getLanMatchmakingState();
-        setState(nextState);
-        return nextState;
+        try {
+            const nextState = await bridge.getLanMatchmakingState();
+            setState(nextState);
+            return nextState;
+        } catch (error) {
+            reportLanBridgeFailure('refresh', error);
+            setLaunch(null);
+            setState(LAN_BRIDGE_ERROR_STATE);
+            return LAN_BRIDGE_ERROR_STATE;
+        }
     }, []);
 
     useEffect(() => {
@@ -71,10 +103,17 @@ export const useLanMatchmaking = () => {
             return FALLBACK_STATE;
         }
 
-        const nextState = await bridge.startLanMatchmaking();
-        setLaunch(null);
-        setState(nextState);
-        return nextState;
+        try {
+            const nextState = await bridge.startLanMatchmaking();
+            setLaunch(null);
+            setState(nextState);
+            return nextState;
+        } catch (error) {
+            reportLanBridgeFailure('startSearch', error);
+            setLaunch(null);
+            setState(LAN_BRIDGE_ERROR_STATE);
+            return LAN_BRIDGE_ERROR_STATE;
+        }
     }, []);
 
     const cancelSearch = useCallback(async () => {
@@ -83,10 +122,17 @@ export const useLanMatchmaking = () => {
             return FALLBACK_STATE;
         }
 
-        const nextState = await bridge.cancelLanMatchmaking();
-        setLaunch(null);
-        setState(nextState);
-        return nextState;
+        try {
+            const nextState = await bridge.cancelLanMatchmaking();
+            setLaunch(null);
+            setState(nextState);
+            return nextState;
+        } catch (error) {
+            reportLanBridgeFailure('cancelSearch', error);
+            setLaunch(null);
+            setState(LAN_BRIDGE_ERROR_STATE);
+            return LAN_BRIDGE_ERROR_STATE;
+        }
     }, []);
 
     const selectMode = useCallback(
@@ -96,12 +142,19 @@ export const useLanMatchmaking = () => {
                 return state;
             }
 
-            const nextState = await bridge.selectLanPregameMode({
-                roomId: state.roomId,
-                mode,
-            } satisfies SelectLanPregameModePayload);
-            setState(nextState);
-            return nextState;
+            try {
+                const nextState = await bridge.selectLanPregameMode({
+                    roomId: state.roomId,
+                    mode,
+                } satisfies SelectLanPregameModePayload);
+                setState(nextState);
+                return nextState;
+            } catch (error) {
+                reportLanBridgeFailure('selectMode', error);
+                setLaunch(null);
+                setState(LAN_BRIDGE_ERROR_STATE);
+                return LAN_BRIDGE_ERROR_STATE;
+            }
         },
         [state]
     );
@@ -112,11 +165,18 @@ export const useLanMatchmaking = () => {
             return state;
         }
 
-        const nextState = await bridge.confirmLanPregameStart({
-            roomId: state.roomId,
-        } satisfies ConfirmLanPregameStartPayload);
-        setState(nextState);
-        return nextState;
+        try {
+            const nextState = await bridge.confirmLanPregameStart({
+                roomId: state.roomId,
+            } satisfies ConfirmLanPregameStartPayload);
+            setState(nextState);
+            return nextState;
+        } catch (error) {
+            reportLanBridgeFailure('confirmStart', error);
+            setLaunch(null);
+            setState(LAN_BRIDGE_ERROR_STATE);
+            return LAN_BRIDGE_ERROR_STATE;
+        }
     }, [state]);
 
     const reportPeerReady = useCallback((payload: ReportLanPeerReadyPayload) => {
@@ -125,7 +185,11 @@ export const useLanMatchmaking = () => {
             return;
         }
 
-        bridge.reportLanPeerReady(payload);
+        try {
+            bridge.reportLanPeerReady(payload);
+        } catch (error) {
+            reportLanBridgeFailure('reportPeerReady', error);
+        }
     }, []);
 
     const clearLaunch = useCallback(() => {

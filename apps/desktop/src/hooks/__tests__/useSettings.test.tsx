@@ -5,6 +5,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SETTINGS_STORAGE_KEY, useSettings } from '../useSettings';
 import { DEFAULT_SURFACE_THEME_SELECTIONS } from '../../app/shell/surfaceTheme';
 
+const reportRendererEvent = vi.fn();
+
+vi.mock('../../observability/rendererLogger', () => ({
+    reportRendererEvent: (...args: unknown[]) => reportRendererEvent(...args),
+}));
+
 (
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -41,6 +47,7 @@ describe('useSettings', () => {
 
     beforeEach(() => {
         currentResult = null;
+        reportRendererEvent.mockReset();
         window.localStorage.clear();
         setNavigatorLanguage('en-US');
     });
@@ -281,5 +288,32 @@ describe('useSettings', () => {
 
         stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored.soundEnabled).toBe(true);
+    });
+
+    it('keeps in-memory settings when localStorage persistence throws', () => {
+        Object.defineProperty(window, 'localStorage', {
+            configurable: true,
+            value: {
+                getItem: vi.fn(() => null),
+                setItem: vi.fn(() => {
+                    throw new Error('quota exceeded');
+                }),
+            },
+        });
+
+        renderHarness();
+
+        expect(currentResult?.locale).toBe('en');
+        expect(currentResult?.soundEnabled).toBe(true);
+        expect(reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'SETTINGS_PERSIST_FAILED',
+                severity: 'warn',
+            }),
+            expect.objectContaining({
+                consoleDetails: expect.any(Error),
+            })
+        );
     });
 });

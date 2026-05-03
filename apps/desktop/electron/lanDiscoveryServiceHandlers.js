@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { z } from 'zod';
 import {
     isPrivateLanAddress,
     LAN_DISCOVERY_PROTOCOL_VERSION,
@@ -18,6 +19,78 @@ import {
     isRemotePlayerP1,
 } from './lanDiscoveryPregame.js';
 import { createMatchAckPacket, createMatchAssignPacket } from './lanDiscoveryPackets.js';
+
+const NON_EMPTY_STRING = z.string().min(1);
+const LAN_MODE_SCHEMA = z.enum(['classic', 'roguelike']);
+const LAN_PLAYER_SCHEMA = z.enum(['p1', 'p2']);
+const LAN_HOST_PORT_SCHEMA = z.number().int().min(1).max(65535);
+const LAN_HOST_ADDRESS_SCHEMA = z.string().refine((address) => isPrivateLanAddress(address));
+
+const createLanPacketSchema = (kind, shape) =>
+    z
+        .object({
+            kind: z.literal(kind),
+            protocolVersion: z.literal(LAN_DISCOVERY_PROTOCOL_VERSION),
+            appVersion: NON_EMPTY_STRING,
+            instanceId: NON_EMPTY_STRING,
+            ...shape,
+        })
+        .strict();
+
+const roomBindingShape = {
+    roomId: NON_EMPTY_STRING,
+    hostInstanceId: NON_EMPTY_STRING,
+    guestInstanceId: NON_EMPTY_STRING,
+};
+
+const nonceBindingShape = {
+    ...roomBindingShape,
+    hostNonce: NON_EMPTY_STRING,
+    guestNonce: NON_EMPTY_STRING,
+};
+
+const LAN_PACKET_SCHEMA = z.discriminatedUnion('kind', [
+    createLanPacketSchema('SEARCH', {}),
+    createLanPacketSchema('MATCH_ASSIGN', {
+        ...roomBindingShape,
+        hostAddress: LAN_HOST_ADDRESS_SCHEMA,
+        hostPort: LAN_HOST_PORT_SCHEMA,
+        hostNonce: NON_EMPTY_STRING,
+    }),
+    createLanPacketSchema('MATCH_ACK', {
+        ...roomBindingShape,
+        hostNonce: NON_EMPTY_STRING,
+        guestNonce: NON_EMPTY_STRING,
+    }),
+    createLanPacketSchema('SESSION_HEARTBEAT', {
+        ...roomBindingShape,
+        hostAddress: LAN_HOST_ADDRESS_SCHEMA,
+        hostPort: LAN_HOST_PORT_SCHEMA,
+        hostNonce: NON_EMPTY_STRING,
+        guestNonce: NON_EMPTY_STRING.optional(),
+        hostPlayer: LAN_PLAYER_SCHEMA.optional(),
+        hostPeerId: NON_EMPTY_STRING.optional(),
+        selectedMode: LAN_MODE_SCHEMA.optional(),
+    }),
+    createLanPacketSchema('SELECT_MODE', {
+        ...nonceBindingShape,
+        mode: LAN_MODE_SCHEMA,
+    }),
+    createLanPacketSchema('START_REQUEST', {
+        ...nonceBindingShape,
+    }),
+    createLanPacketSchema('START_READY', {
+        ...nonceBindingShape,
+        hostAddress: LAN_HOST_ADDRESS_SCHEMA,
+        hostPort: LAN_HOST_PORT_SCHEMA,
+        hostPeerId: NON_EMPTY_STRING,
+        hostPlayer: LAN_PLAYER_SCHEMA,
+        mode: LAN_MODE_SCHEMA,
+    }),
+    createLanPacketSchema('CANCEL', {
+        ...nonceBindingShape,
+    }),
+]);
 
 export const createLanDiscoveryPacketHandlers = ({
     appVersionString,
@@ -92,6 +165,7 @@ export const createLanDiscoveryPacketHandlers = ({
         if (
             !getWantsSearch() ||
             roomSession?.phase !== 'searching' ||
+            packet.hostInstanceId !== packet.instanceId ||
             packet.guestInstanceId !== instanceId
         ) {
             return;
@@ -122,7 +196,9 @@ export const createLanDiscoveryPacketHandlers = ({
             !roomSession?.transportHost ||
             roomSession.roomId !== packet.roomId ||
             packet.hostInstanceId !== instanceId ||
-            packet.guestInstanceId !== roomSession.guestInstanceId
+            packet.guestInstanceId !== roomSession.guestInstanceId ||
+            packet.guestInstanceId !== packet.instanceId ||
+            packet.hostNonce !== roomSession.hostNonce
         ) {
             return;
         }
@@ -184,11 +260,17 @@ export const createLanDiscoveryPacketHandlers = ({
         if (!roomSession?.roomId) {
             return;
         }
+        const expectedRemoteInstanceId = roomSession.transportHost
+            ? roomSession.guestInstanceId
+            : roomSession.hostInstanceId;
         const targetsLocal =
-            !packet.hostInstanceId ||
-            packet.hostInstanceId === roomSession.hostInstanceId ||
-            packet.guestInstanceId === roomSession.guestInstanceId;
-        if (roomSession.roomId !== packet.roomId || !targetsLocal) {
+            roomSession.roomId === packet.roomId &&
+            packet.hostInstanceId === roomSession.hostInstanceId &&
+            packet.guestInstanceId === roomSession.guestInstanceId &&
+            packet.hostNonce === roomSession.hostNonce &&
+            packet.guestNonce === roomSession.guestNonce &&
+            packet.instanceId === expectedRemoteInstanceId;
+        if (!targetsLocal) {
             return;
         }
         resetSession({
@@ -200,16 +282,22 @@ export const createLanDiscoveryPacketHandlers = ({
     };
 
     const handleIncomingPacket = (message, remoteInfo) => {
-        let packet;
+        let rawPacket;
         try {
-            packet = JSON.parse(message.toString());
+            rawPacket = JSON.parse(message.toString());
         } catch {
             return;
         }
+
+        const parsedPacket = LAN_PACKET_SCHEMA.safeParse(rawPacket);
+        if (!parsedPacket.success) {
+            return;
+        }
+
+        const packet = parsedPacket.data;
         if (
             !packet ||
             typeof packet !== 'object' ||
-            packet.protocolVersion !== LAN_DISCOVERY_PROTOCOL_VERSION ||
             packet.appVersion !== appVersionString ||
             packet.instanceId === instanceId
         ) {

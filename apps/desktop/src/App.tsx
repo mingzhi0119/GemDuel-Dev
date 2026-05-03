@@ -141,6 +141,17 @@ export default function GemDuelBoard() {
     const { handleDownloadReplay, handleUploadReplay, persistReplayToProjectFolder } = useReplayIO({
         replay: game.replay.currentReplay,
         importHistory: handlers.importHistory,
+        onReplayImportSuccess: () => {
+            if (lan.state.phase !== 'idle') {
+                void lan.cancelSearch();
+            }
+            lan.clearLaunch();
+            setMatchmakingRoute('none');
+            setPersistentWinner(null);
+            setIsReviewing(true);
+            lastGuestLaunchRoomRef.current = null;
+            lastHostStartRoomRef.current = null;
+        },
     });
 
     useReplayAutoSave({

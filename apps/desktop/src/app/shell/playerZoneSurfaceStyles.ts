@@ -62,5 +62,6 @@ export const createPlayerZoneSurfaceArtwork = (
         primaryPath: `${basePath}/player-zone-${player}.png`,
         fallbackPath: `${basePath}/player-zone.png`,
         mirrorFallback: player === 'p2',
+        objectPosition: player === 'p1' ? 'left center' : 'right center',
     };
 };

@@ -8,11 +8,15 @@ import { buildSelectBuffAction } from '../logic/interactionCommands';
 import { getCrownCount, getPlayerScore } from '../logic/selectors';
 import type { GameAction, GameState, GemCoord, GemColor, PlayerKey } from '../types';
 import { evaluateReplayPerformance } from './evaluation';
-import { loadReplaySession } from './loader';
-import { buildReplayRecorderFromHistory } from './recorder';
+import {
+    createReplayRecorderInternalState,
+    recordReplayAction,
+    seedReplayRecorderState,
+} from './recorder';
 import { createReplayCheckpoint } from './runtime';
 import { saveReplayVNext } from './writer';
 import type {
+    LoadedReplaySession,
     ReplaySimulationAbortReason,
     ReplaySimulationOptions,
     ReplaySimulationResult,
@@ -345,15 +349,9 @@ const stabilizeAiAction = (state: GameState, action: GameAction): GameAction => 
 const finalizeSimulationReplay = (
     state: GameState,
     history: GameAction[],
-    {
-        gameVersion,
-        createdAt,
-        abortReason,
-    }: Pick<Required<ReplaySimulationOptions>, 'gameVersion' | 'createdAt'> & {
-        abortReason: ReplaySimulationAbortReason | null;
-    }
+    recorder: ReturnType<typeof createReplayRecorderInternalState>,
+    abortReason: ReplaySimulationAbortReason | null
 ): ReplaySimulationResult => {
-    const recorder = buildReplayRecorderFromHistory(history, gameVersion, createdAt);
     if (!recorder.init) {
         throw new Error('AI simulation did not produce a replay bootstrap snapshot.');
     }
@@ -374,12 +372,12 @@ const finalizeSimulationReplay = (
         ...(abortReason ? { endReason: 'aborted' } : {}),
     });
 
-    const session = loadReplaySession(replay);
-    if (session.finalStateHash !== replay.summary.finalStateHash) {
-        throw new Error(
-            `AI simulation replay hash mismatch: expected ${replay.summary.finalStateHash}, got ${session.finalStateHash}.`
-        );
-    }
+    const session: LoadedReplaySession = {
+        replay,
+        history,
+        finalState: state,
+        finalStateHash: replay.summary.finalStateHash,
+    };
 
     return {
         replay,
@@ -412,12 +410,18 @@ export const simulateAiVsAiReplay = (options: ReplaySimulationOptions): ReplaySi
         useBuffs,
         isHost: true,
         hostPlayer,
+        seed: createdAt,
     });
     const initialState = applyAction(INITIAL_STATE_SKELETON, startAction);
     if (!initialState) {
         throw new Error('AI simulation failed to initialize the opening game state.');
     }
 
+    const recorder = seedReplayRecorderState(
+        createReplayRecorderInternalState(gameVersion, createdAt),
+        startAction,
+        initialState
+    );
     const history: GameAction[] = [startAction];
     let state = initialState;
     let abortReason: ReplaySimulationAbortReason | null = null;
@@ -444,6 +448,7 @@ export const simulateAiVsAiReplay = (options: ReplaySimulationOptions): ReplaySi
         }
 
         history.push(action);
+        recordReplayAction(recorder, state, action, nextState);
         state = nextState;
     }
 
@@ -454,11 +459,7 @@ export const simulateAiVsAiReplay = (options: ReplaySimulationOptions): ReplaySi
         };
     }
 
-    return finalizeSimulationReplay(state, history, {
-        gameVersion,
-        createdAt,
-        abortReason,
-    });
+    return finalizeSimulationReplay(state, history, recorder, abortReason);
 };
 
 export const simulateAiVsAiReplayBatch = (

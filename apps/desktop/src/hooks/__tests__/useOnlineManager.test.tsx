@@ -126,7 +126,7 @@ vi.mock('../useConnectionHealth', () => ({
     }),
 }));
 
-vi.mock('@gemduel/shared/observability/releaseHealth', () => ({
+vi.mock('../../observability/releaseHealth', () => ({
     reportReleaseHealth: (...args: unknown[]) => reportReleaseHealth(...args),
 }));
 

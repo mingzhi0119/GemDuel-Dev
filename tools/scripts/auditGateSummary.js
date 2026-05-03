@@ -9,6 +9,7 @@ const hasRootScript = (packageJson, scriptName) =>
 
 export const buildAuditGateSummary = ({ gateSnapshot, packageJson, workflowTexts }) => {
     const requiredRootScripts = gateSnapshot?.requiredRootScripts ?? [];
+    const orderedRootScriptCommands = gateSnapshot?.orderedRootScriptCommands ?? {};
     const workflowCommands = gateSnapshot?.workflowCommands ?? {};
 
     return {
@@ -21,6 +22,29 @@ export const buildAuditGateSummary = ({ gateSnapshot, packageJson, workflowTexts
             present: hasRootScript(packageJson, scriptName),
             command: packageJson?.scripts?.[scriptName] ?? null,
         })),
+        orderedRootScriptCommands: Object.entries(orderedRootScriptCommands).map(
+            ([scriptName, commands]) => {
+                const orderedCommands = Array.isArray(commands) ? commands : [];
+                const scriptCommand = packageJson?.scripts?.[scriptName] ?? '';
+                let searchFrom = 0;
+
+                return {
+                    scriptName,
+                    commands: orderedCommands.map((command) => {
+                        const commandIndex = scriptCommand.indexOf(command, searchFrom);
+                        const presentInOrder = commandIndex >= 0;
+                        if (presentInOrder) {
+                            searchFrom = commandIndex + command.length;
+                        }
+
+                        return {
+                            command,
+                            presentInOrder,
+                        };
+                    }),
+                };
+            }
+        ),
         workflows: Object.entries(workflowCommands).map(([workflowPath, commands]) => {
             const workflowText = workflowTexts?.[workflowPath] ?? '';
             return {
@@ -50,6 +74,13 @@ export const collectAuditGateSummaryErrors = ({ gateSnapshot, summary }) => {
         errors.push('Audit gate snapshot must define requiredRootScripts.');
     }
 
+    if (
+        gateSnapshot.orderedRootScriptCommands != null &&
+        !isPlainObject(gateSnapshot.orderedRootScriptCommands)
+    ) {
+        errors.push('Audit gate snapshot orderedRootScriptCommands must be an object.');
+    }
+
     if (!isPlainObject(gateSnapshot.workflowCommands)) {
         errors.push('Audit gate snapshot must define workflowCommands.');
     }
@@ -57,6 +88,16 @@ export const collectAuditGateSummaryErrors = ({ gateSnapshot, summary }) => {
     for (const script of summary?.rootScripts ?? []) {
         if (!script.present) {
             errors.push(`Root package.json is missing script ${script.scriptName}.`);
+        }
+    }
+
+    for (const script of summary?.orderedRootScriptCommands ?? []) {
+        for (const command of script.commands) {
+            if (!command.presentInOrder) {
+                errors.push(
+                    `Root package.json script ${script.scriptName} is missing ordered command ${command.command}.`
+                );
+            }
         }
     }
 
@@ -108,6 +149,21 @@ export const renderAuditGateMarkdown = (report) => {
         lines.push(
             `| ${script.scriptName} | ${script.present ? 'present' : 'missing'} | \`${script.command ?? ''}\` |`
         );
+    }
+
+    lines.push(
+        '',
+        '## Ordered Root Script Commands',
+        '',
+        '| Script | Command | Status |',
+        '| --- | --- | --- |'
+    );
+    for (const script of report.orderedRootScriptCommands ?? []) {
+        for (const command of script.commands) {
+            lines.push(
+                `| ${script.scriptName} | \`${command.command}\` | ${command.presentInOrder ? 'present in order' : 'missing or out of order'} |`
+            );
+        }
     }
 
     lines.push(

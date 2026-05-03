@@ -4,9 +4,16 @@
     "certificationMode": "repo-contained-local-10-of-10",
     "remoteGitHubSettings": {
         "excludedFromScore": true,
+        "evidenceStatus": "partial",
+        "scoreTreatment": "excluded-local-only",
         "reason": "Live branch protection, rulesets, and vulnerability-alert settings remain external follow-up items for this pass. Repo-contained desired-state snapshots and optional read-only drift checks still stay governed.",
         "desiredStateSnapshot": "tools/governance/repo-settings.snapshot.json",
-        "optionalLiveCommand": "pnpm repo-settings:check -- --live"
+        "optionalLiveCommand": "pnpm repo-settings:check -- --live",
+        "requiredForProductionCertification": [
+            "live default-branch protection",
+            "live branch and tag rulesets",
+            "live vulnerability-alert setting"
+        ]
     },
     "requiredLocalReports": [
         "audit-gates.report.json",

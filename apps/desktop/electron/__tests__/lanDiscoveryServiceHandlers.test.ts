@@ -91,12 +91,12 @@ describe('lan discovery packet handlers', () => {
             protocolVersion: LAN_DISCOVERY_PROTOCOL_VERSION,
             appVersion: '5.2.11',
             instanceId: REMOTE_INSTANCE_ID,
-            hostAddress: '10.0.0.5',
         });
 
         expect(harness.getRoomSession()).toMatchObject({
             phase: 'matched',
-            remoteAddress: '10.0.0.5',
+            remoteAddress: '192.168.1.20',
+            hostAddress: '192.168.1.10',
             roomId: ROOM_ID,
             transportHost: true,
         });
@@ -168,6 +168,9 @@ describe('lan discovery packet handlers', () => {
                 roomId: ROOM_ID,
                 hostInstanceId: LOCAL_INSTANCE_ID,
                 guestInstanceId: REMOTE_INSTANCE_ID,
+                transportHost: true,
+                hostNonce: 'host-nonce',
+                guestNonce: 'guest-nonce',
             },
             wantsSearch: false,
         });
@@ -188,11 +191,115 @@ describe('lan discovery packet handlers', () => {
             instanceId: REMOTE_INSTANCE_ID,
             roomId: ROOM_ID,
             hostInstanceId: LOCAL_INSTANCE_ID,
+            guestInstanceId: REMOTE_INSTANCE_ID,
+            hostNonce: 'host-nonce',
+            guestNonce: 'wrong-nonce',
+        });
+        expect(harness.resets).toEqual([]);
+
+        dispatchPacket(harness.handler, {
+            kind: 'CANCEL',
+            protocolVersion: LAN_DISCOVERY_PROTOCOL_VERSION,
+            appVersion: '5.2.11',
+            instanceId: REMOTE_INSTANCE_ID,
+            roomId: ROOM_ID,
+            hostInstanceId: LOCAL_INSTANCE_ID,
+            guestInstanceId: REMOTE_INSTANCE_ID,
+            hostNonce: 'host-nonce',
+            guestNonce: 'guest-nonce',
         });
 
         expect(harness.resets).toContainEqual({
             phase: 'idle',
             statusMessage: 'LAN duel is ready.',
+        });
+    });
+
+    it('rejects forged start-ready packets before mutating launch state', () => {
+        const roomSession = {
+            phase: 'matched',
+            roomId: ROOM_ID,
+            hostInstanceId: REMOTE_INSTANCE_ID,
+            guestInstanceId: LOCAL_INSTANCE_ID,
+            transportHost: false,
+            hostAddress: '192.168.1.20',
+            hostPort: 9001,
+            hostNonce: 'host-nonce',
+            guestNonce: 'guest-nonce',
+            localSeat: 'p1',
+        };
+        const harness = createPacketHarness({
+            roomSession,
+            wantsSearch: true,
+        });
+
+        dispatchPacket(harness.handler, {
+            kind: 'START_READY',
+            protocolVersion: LAN_DISCOVERY_PROTOCOL_VERSION,
+            appVersion: '5.2.11',
+            instanceId: REMOTE_INSTANCE_ID,
+            roomId: ROOM_ID,
+            hostInstanceId: REMOTE_INSTANCE_ID,
+            guestInstanceId: LOCAL_INSTANCE_ID,
+            hostNonce: 'host-nonce',
+            guestNonce: 'stale-nonce',
+            hostAddress: '192.168.1.20',
+            hostPort: 9001,
+            hostPeerId: 'peer-host',
+            hostPlayer: 'p2',
+            mode: 'classic',
+        });
+
+        expect(harness.emitted).toEqual([]);
+        expect(harness.getRoomSession()).toMatchObject({
+            phase: 'matched',
+        });
+        expect(harness.getRoomSession()?.selectedMode).toBeUndefined();
+
+        dispatchPacket(harness.handler, {
+            kind: 'START_READY',
+            protocolVersion: LAN_DISCOVERY_PROTOCOL_VERSION,
+            appVersion: '5.2.11',
+            instanceId: REMOTE_INSTANCE_ID,
+            roomId: ROOM_ID,
+            hostInstanceId: REMOTE_INSTANCE_ID,
+            guestInstanceId: LOCAL_INSTANCE_ID,
+            hostNonce: 'host-nonce',
+            guestNonce: 'guest-nonce',
+            hostAddress: '203.0.113.10',
+            hostPort: 9001,
+            hostPeerId: 'peer-host',
+            hostPlayer: 'p2',
+            mode: 'classic',
+        });
+
+        expect(harness.emitted).toEqual([]);
+
+        dispatchPacket(harness.handler, {
+            kind: 'START_READY',
+            protocolVersion: LAN_DISCOVERY_PROTOCOL_VERSION,
+            appVersion: '5.2.11',
+            instanceId: REMOTE_INSTANCE_ID,
+            roomId: ROOM_ID,
+            hostInstanceId: REMOTE_INSTANCE_ID,
+            guestInstanceId: LOCAL_INSTANCE_ID,
+            hostNonce: 'host-nonce',
+            guestNonce: 'guest-nonce',
+            hostAddress: '192.168.1.20',
+            hostPort: 9001,
+            hostPeerId: 'peer-host',
+            hostPlayer: 'p2',
+            mode: 'classic',
+        });
+
+        expect(harness.emitted).toContainEqual({
+            type: 'launch',
+            launch: expect.objectContaining({
+                roomId: ROOM_ID,
+                targetIP: '192.168.1.20',
+                hostPeerId: 'peer-host',
+                mode: 'classic',
+            }),
         });
     });
 });

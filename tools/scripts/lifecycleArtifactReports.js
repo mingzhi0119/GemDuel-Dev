@@ -11,6 +11,7 @@ import {
 } from './auditGateSummary.js';
 import { collectArchitectureBudgetResults } from './architectureBudgets.js';
 import { buildBundleBudgetReport } from './buildBudgetReport.js';
+import { buildDependencyGateSummaryFromRepo } from './dependencyGateEvidence.js';
 import { GOVERNANCE_DOC_PATHS } from './governanceDocPaths.js';
 import {
     buildLifecycleDashboardReport,
@@ -115,6 +116,24 @@ export const buildLifecycleArtifactReports = ({
               provenance,
           })
         : null;
+    const dependencySbomSnapshot = readJson(
+        repoRoot,
+        'tools/governance/dependency-sbom.snapshot.json'
+    );
+    const licenseAllowlist = readJson(
+        repoRoot,
+        'tools/governance/dependency-license-allowlist.json'
+    );
+    const dependencyGateSummary = buildDependencyGateSummaryFromRepo({
+        repoRoot,
+        packageJson,
+        dependencySbomSnapshot,
+        licenseAllowlist,
+        governanceDocumentText: readText(
+            repoRoot,
+            GOVERNANCE_DOC_PATHS.dependencyRuntimeGovernance
+        ),
+    });
     const dashboardReport = buildLifecycleDashboardReport({
         generatedAt,
         dashboardSnapshot: readJson(repoRoot, 'tools/governance/lifecycle-dashboard.snapshot.json'),
@@ -141,11 +160,9 @@ export const buildLifecycleArtifactReports = ({
             count: SEAL_COVERAGE_EXCLUSIONS.length,
             baselineCount: SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY.baselineCount,
         },
-        dependencySbomSnapshot: readJson(
-            repoRoot,
-            'tools/governance/dependency-sbom.snapshot.json'
-        ),
-        licenseAllowlist: readJson(repoRoot, 'tools/governance/dependency-license-allowlist.json'),
+        dependencySbomSnapshot,
+        licenseAllowlist,
+        dependencyGateSummary,
         provenance,
         requireCompleteEvidence,
     });

@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, expect, it } from 'vitest';
-import { resolveManualChunk } from '@gemduel/shared/build/viteManualChunks';
+import { resolveManualChunk } from '../../../apps/desktop/viteManualChunks';
 
 describe('resolveManualChunk', () => {
     it('keeps cross-dependent gameplay and networking modules in the same runtime chunk', () => {

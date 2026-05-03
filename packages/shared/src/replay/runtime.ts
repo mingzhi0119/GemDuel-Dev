@@ -38,6 +38,8 @@ const ROYAL_TEMPLATE_MAP = new Map<string, RoyalCard>(ROYAL_CARDS.map((card) => 
 const BUFF_MAP = new Map<string, Buff>(Object.values(BUFFS).map((buff) => [buff.id, buff as Buff]));
 const INSTANCE_ID_PATTERN = /^c:(.+)#(\d+)$/;
 const RUNTIME_CARD_SUFFIX_PATTERN = /-\d{13}-[a-z0-9]+$/i;
+const DEFAULT_RUNTIME_CARD_ID_PATTERN = /-\d+-\d{13}$/i;
+const SEEDED_RUNTIME_CARD_SUFFIX_PATTERN = /-\d+-\d+-[a-z0-9]+$/i;
 
 export interface ReplayCardRegistry {
     cardInstances: ReplayCardInstances;
@@ -47,7 +49,12 @@ export interface ReplayCardRegistry {
 const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 export const stripRuntimeCardId = (cardId: string): string =>
-    cardId.startsWith('c:') ? cardId : cardId.replace(RUNTIME_CARD_SUFFIX_PATTERN, '');
+    cardId.startsWith('c:')
+        ? cardId
+        : cardId
+              .replace(RUNTIME_CARD_SUFFIX_PATTERN, '')
+              .replace(DEFAULT_RUNTIME_CARD_ID_PATTERN, '')
+              .replace(SEEDED_RUNTIME_CARD_SUFFIX_PATTERN, '');
 
 export const parseReplayCardInstanceId = (
     instanceId: ReplayCardInstanceId

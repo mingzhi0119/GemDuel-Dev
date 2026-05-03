@@ -1,5 +1,6 @@
 import { BUFFS, GRID_SIZE } from '../constants';
-import { generateDeck, generateGemPool, shuffleArray } from '../utils';
+import { createSeededRandomSource, generateDeck, generateGemPool, shuffleArray } from '../utils';
+import type { RandomSource } from '../utils';
 import type {
     BasicGemColor,
     BoardCell,
@@ -18,12 +19,20 @@ export interface StartGameOptions {
     useBuffs: boolean;
     isHost?: boolean;
     hostPlayer?: PlayerKey;
+    randomSource?: RandomSource;
+    seed?: string | number;
 }
+
+const resolveRandomSource = (options: StartGameOptions): RandomSource | undefined =>
+    options.randomSource ??
+    (options.seed !== undefined ? createSeededRandomSource(options.seed) : undefined);
 
 export const BASIC_GEM_COLORS: BasicGemColor[] = ['red', 'green', 'blue', 'white', 'black'];
 
-export const getRandomBasicGemColor = (): BasicGemColor =>
-    BASIC_GEM_COLORS[Math.floor(Math.random() * BASIC_GEM_COLORS.length)];
+export const getRandomBasicGemColor = (randomSource?: RandomSource): BasicGemColor => {
+    const next = randomSource?.next ?? Math.random;
+    return BASIC_GEM_COLORS[Math.floor(next() * BASIC_GEM_COLORS.length)];
+};
 
 export const isBuffLevel = (value: unknown): value is BuffLevel =>
     value === 1 || value === 2 || value === 3;
@@ -42,10 +51,10 @@ const buildBoard = (initialBoardFlat: BoardCell[]): BoardCell[][] => {
     return board;
 };
 
-const createPlayerInitRandoms = (): PlayerInitRandoms => ({
-    randomGems: Array.from({ length: 5 }, () => getRandomBasicGemColor()),
-    reserveCardLevel: (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3,
-    preferenceColor: getRandomBasicGemColor(),
+const createPlayerInitRandoms = (randomSource?: RandomSource): PlayerInitRandoms => ({
+    randomGems: Array.from({ length: 5 }, () => getRandomBasicGemColor(randomSource)),
+    reserveCardLevel: (Math.floor((randomSource?.next ?? Math.random)() * 3) + 1) as 1 | 2 | 3,
+    preferenceColor: getRandomBasicGemColor(randomSource),
 });
 
 const getLevelBuffs = (level: BuffLevel): Buff[] =>
@@ -63,11 +72,12 @@ const buildCategoryDiverseDraftCandidates = (
         excludeBuffIds = new Set<string>(),
         excludeCategories = new Set<NonNullable<Buff['category']>>(),
         targetCount,
-    }: DraftCandidateOptions
+    }: DraftCandidateOptions,
+    randomSource?: RandomSource
 ): Buff[] => {
     const categoriesSeen = new Set<string>();
     const selectedBuffs: Buff[] = [];
-    const shuffledPool = shuffleArray([...getLevelBuffs(level)]);
+    const shuffledPool = shuffleArray([...getLevelBuffs(level)], randomSource);
 
     for (const buff of shuffledPool) {
         if (excludeBuffIds.has(buff.id)) continue;
@@ -93,14 +103,19 @@ const buildCategoryDiverseDraftCandidates = (
     return selectedBuffs;
 };
 
-export const buildDraftPoolForLevel = (level: BuffLevel): string[] => {
-    const selectedBuffs = buildCategoryDiverseDraftCandidates(level, { targetCount: 3 });
+export const buildDraftPoolForLevel = (level: BuffLevel, randomSource?: RandomSource): string[] => {
+    const selectedBuffs = buildCategoryDiverseDraftCandidates(
+        level,
+        { targetCount: 3 },
+        randomSource
+    );
     return selectedBuffs.map((buff) => buff.id);
 };
 
 export const buildP2AsymmetricDraftPool = (
     level: BuffLevel,
-    p1SelectedBuffId: string
+    p1SelectedBuffId: string,
+    randomSource?: RandomSource
 ): string[] | undefined => {
     const p1SelectedBuff = (Object.values(BUFFS) as Buff[]).find(
         (buff) => buff.id === p1SelectedBuffId
@@ -114,11 +129,15 @@ export const buildP2AsymmetricDraftPool = (
         excludeCategories.add(p1SelectedBuff.category);
     }
 
-    const generatedPool = buildCategoryDiverseDraftCandidates(level, {
-        excludeBuffIds: new Set([p1SelectedBuffId]),
-        excludeCategories,
-        targetCount: 3,
-    });
+    const generatedPool = buildCategoryDiverseDraftCandidates(
+        level,
+        {
+            excludeBuffIds: new Set([p1SelectedBuffId]),
+            excludeCategories,
+            targetCount: 3,
+        },
+        randomSource
+    );
 
     return [p1SelectedBuffId, ...generatedPool.map((buff) => buff.id)];
 };
@@ -152,12 +171,13 @@ export const createGameSetupPayload = (
     mode: GameMode,
     options: StartGameOptions = { useBuffs: false }
 ): BuffInitPayload => {
-    const fullPool = generateGemPool();
+    const randomSource = resolveRandomSource(options);
+    const fullPool = generateGemPool(randomSource);
     const initialBoardFlat = fullPool.slice(0, 25);
     const initialBag = fullPool.slice(25);
-    const deck1 = generateDeck(1, options.useBuffs);
-    const deck2 = generateDeck(2, options.useBuffs);
-    const deck3 = generateDeck(3, options.useBuffs);
+    const deck1 = generateDeck(1, options.useBuffs, randomSource);
+    const deck2 = generateDeck(2, options.useBuffs, randomSource);
+    const deck3 = generateDeck(3, options.useBuffs, randomSource);
 
     return {
         mode,
@@ -174,8 +194,8 @@ export const createGameSetupPayload = (
             3: deck3,
         },
         initRandoms: {
-            p1: createPlayerInitRandoms(),
-            p2: createPlayerInitRandoms(),
+            p1: createPlayerInitRandoms(randomSource),
+            p2: createPlayerInitRandoms(randomSource),
         },
         isHost: options.isHost ?? true,
         hostPlayer: options.hostPlayer ?? 'p1',
@@ -186,16 +206,17 @@ export const buildStartGameAction = (
     mode: GameMode,
     options: StartGameOptions = { useBuffs: false }
 ): Extract<GameAction, { type: 'INIT' | 'INIT_DRAFT' }> => {
-    const setupData = createGameSetupPayload(mode, options);
+    const randomSource = resolveRandomSource(options);
+    const setupData = createGameSetupPayload(mode, { ...options, randomSource });
 
     if (!options.useBuffs) {
         return { type: 'INIT', payload: setupData };
     }
 
-    const buffLevel = (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
+    const buffLevel = (Math.floor((randomSource?.next ?? Math.random)() * 3) + 1) as 1 | 2 | 3;
     const payload: InitDraftPayload = {
         ...setupData,
-        draftPool: buildDraftPoolForLevel(buffLevel),
+        draftPool: buildDraftPoolForLevel(buffLevel, randomSource),
         buffLevel,
     };
 

@@ -15,7 +15,7 @@ export const heartbeatPingMessageSchema = z
         type: z.literal('HEARTBEAT_PING'),
         timestamp: z.number(),
     })
-    .passthrough();
+    .strict();
 
 export const heartbeatPongMessageSchema = z
     .object({
@@ -23,7 +23,7 @@ export const heartbeatPongMessageSchema = z
         type: z.literal('HEARTBEAT_PONG'),
         timestamp: z.number(),
     })
-    .passthrough();
+    .strict();
 
 export const bootstrapStateMessageSchema = z
     .object({
@@ -40,7 +40,7 @@ export const bootstrapStateMessageSchema = z
             .strict()
             .optional(),
     })
-    .passthrough();
+    .strict();
 
 export const guestIntentMessageSchema = z
     .object({
@@ -49,7 +49,7 @@ export const guestIntentMessageSchema = z
         requestId: z.string().min(1),
         command: guestIntentCommandSchema,
     })
-    .passthrough();
+    .strict();
 
 export const hostDecisionMessageSchema = z
     .object({
@@ -63,7 +63,7 @@ export const hostDecisionMessageSchema = z
         command: guestIntentCommandSchema.optional(),
         checksum: z.string().optional(),
     })
-    .passthrough()
+    .strict()
     .superRefine((value, ctx) => {
         if (value.command && value.command.kind !== value.intentKind) {
             ctx.addIssue({
@@ -90,7 +90,7 @@ export const syncStateMessageSchema = z
         reason: z.string().min(1),
         replaySync: replaySyncSchema.optional(),
     })
-    .passthrough();
+    .strict();
 
 export const recoveryRequestMessageSchema = z
     .object({
@@ -99,7 +99,7 @@ export const recoveryRequestMessageSchema = z
         reason: recoveryReasonSchema,
         requestId: z.string().optional(),
     })
-    .passthrough();
+    .strict();
 
 export const networkEnvelopeSchema = z
     .object({

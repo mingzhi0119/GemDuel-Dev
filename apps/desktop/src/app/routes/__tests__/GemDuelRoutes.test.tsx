@@ -15,6 +15,13 @@ import { GemDuelRoutes } from '../GemDuelRoutes';
 
 const routeSpies = vi.hoisted(() => ({
     draftScreenProps: vi.fn(),
+    throwGameShell: false,
+}));
+
+const reportRendererEvent = vi.fn();
+
+vi.mock('../../../observability/rendererLogger', () => ({
+    reportRendererEvent: (...args: unknown[]) => reportRendererEvent(...args),
 }));
 
 vi.mock('@gemduel/ui/components/GameConfigMenu', () => ({
@@ -37,7 +44,13 @@ vi.mock('@gemduel/ui/components/DraftScreen', () => ({
 }));
 
 vi.mock('../../shell/GameShell', () => ({
-    GameShell: () => <div data-testid="game-route">game</div>,
+    GameShell: () => {
+        if (routeSpies.throwGameShell) {
+            throw new Error('route failed');
+        }
+
+        return <div data-testid="game-route">game</div>;
+    },
 }));
 
 vi.mock('../../visual-lab/VisualLabRoute', () => ({
@@ -269,6 +282,8 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         document.body.innerHTML = '';
         window.history.replaceState(null, '', '/');
         routeSpies.draftScreenProps.mockReset();
+        routeSpies.throwGameShell = false;
+        reportRendererEvent.mockReset();
         vi.restoreAllMocks();
     });
 
@@ -570,6 +585,37 @@ describe('GemDuelRoutes desktop stage rendering', () => {
                 activePlayer: 'p2',
                 onReroll: expect.any(Function),
                 localPlayer: 'p1',
+            })
+        );
+
+        act(() => {
+            root.unmount();
+        });
+    });
+
+    it('contains route render failures inside a recovery boundary', async () => {
+        routeSpies.throwGameShell = true;
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        const { container, root } = await renderRoutes(
+            createProps({
+                game: createGame({
+                    historyControls: {
+                        historyLength: 1,
+                    },
+                }),
+            })
+        );
+
+        expect(container.querySelector('[role="alert"]')).not.toBeNull();
+        expect(reportRendererEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'runtime',
+                name: 'ROUTE_RENDER_FAILED',
+                severity: 'error',
+            }),
+            expect.objectContaining({
+                consoleDetails: expect.any(Error),
             })
         );
 

@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildDependencySbomSnapshot, collectSbomSnapshotErrors } from './dependencyGovernance.js';
+import {
+    DEPENDENCY_SBOM_SNAPSHOT_OPTIONS,
+    buildDependencySbomSnapshot,
+    collectSbomSnapshotErrors,
+} from './dependencyGovernance.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,11 +24,6 @@ const readLicenseReport = () =>
             shell: true,
         })
     );
-const SBOM_SNAPSHOT_OPTIONS = Object.freeze({
-    excludePlatformScopedBinaries: true,
-    normalizeInstallPaths: true,
-});
-
 const packageJson = readJson('package.json');
 const licenseReport = readLicenseReport();
 const expectedSnapshot = readJson(
@@ -36,7 +35,7 @@ const errors = collectSbomSnapshotErrors({
     licenseReport,
     expectedSnapshot,
     repoRoot,
-    snapshotOptions: SBOM_SNAPSHOT_OPTIONS,
+    snapshotOptions: DEPENDENCY_SBOM_SNAPSHOT_OPTIONS,
 });
 
 if (errors.length > 0) {
@@ -54,7 +53,7 @@ const snapshot = buildDependencySbomSnapshot(
     packageJson,
     licenseReport,
     repoRoot,
-    SBOM_SNAPSHOT_OPTIONS
+    DEPENDENCY_SBOM_SNAPSHOT_OPTIONS
 );
 console.log(
     `Dependency SBOM gate passed. Components=${snapshot.componentCount}, licenses=${Object.keys(snapshot.licenseInventory).length}.`

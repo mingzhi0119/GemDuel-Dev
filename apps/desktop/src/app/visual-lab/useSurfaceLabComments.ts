@@ -9,8 +9,8 @@ const normalizeComment = (value: unknown): string | null => {
         return null;
     }
 
-    const comment = value.replace(/\r\n/g, '\n').trim();
-    return comment ? comment : null;
+    const comment = value.replace(/\r\n/g, '\n');
+    return comment.trim() ? comment : null;
 };
 
 export const normalizeSurfaceLabStyleComments = (value: unknown): SurfaceLabStyleComments => {

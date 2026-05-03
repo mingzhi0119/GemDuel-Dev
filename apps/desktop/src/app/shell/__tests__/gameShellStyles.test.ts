@@ -84,6 +84,7 @@ describe('createGameShellStyles', () => {
 
     it('uses dedicated level card backs for every bundled surface theme', () => {
         expect(SURFACE_THEME_VARIANTS).toContain('pearl-opaline');
+        expect(SURFACE_THEME_VARIANTS).toContain('lotus-porcelain');
 
         for (const variant of SURFACE_THEME_VARIANTS) {
             const surfaceTheme: SurfaceThemeSelections = {
@@ -131,6 +132,7 @@ describe('player zone surface preview styles', () => {
             primaryPath: '/assets/surfaces/anime-themes/royal-luxury/dark/player-zone-p2.png',
             fallbackPath: '/assets/surfaces/anime-themes/royal-luxury/dark/player-zone.png',
             mirrorFallback: true,
+            objectPosition: 'right center',
         });
     });
 });

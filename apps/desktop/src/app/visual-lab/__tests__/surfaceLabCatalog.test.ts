@@ -131,9 +131,17 @@ describe('surface lab catalog', () => {
     it('creates runtime fallback sets for all integrated themes', () => {
         const sets = createRuntimeSurfaceLabAssetSets('dark');
 
-        expect(sets).toHaveLength(5);
+        expect(sets).toHaveLength(6);
         expect(sets[0].source).toBe('runtime');
         expect(sets.map((set) => set.style)).toContain('pearl-opaline');
+        expect(sets.map((set) => set.style)).toContain('lotus-porcelain');
+        const lotusSet = sets.find((set) => set.style === 'lotus-porcelain');
+        expect(lotusSet?.playerZoneSideSlots?.p1?.archiveUrl).toBe(
+            '/assets/surfaces/anime-themes/lotus-porcelain/dark/player-zone-p1.png'
+        );
+        expect(lotusSet?.playerZoneSideSlots?.p2?.archiveUrl).toBe(
+            '/assets/surfaces/anime-themes/lotus-porcelain/dark/player-zone-p2.png'
+        );
         expect(sets[0].slots['market-card-back-l3'].archiveUrl).toContain(
             '/assets/surfaces/anime-themes/'
         );

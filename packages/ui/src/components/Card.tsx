@@ -2,14 +2,15 @@ import React from 'react';
 import { Crown } from 'lucide-react';
 import { GEM_TYPES } from '@gemduel/shared/constants';
 import { GemIcon } from './GemIcon';
-import { Card as CardType, CardInteractionContext, GemColor } from '@gemduel/shared/types';
+import { GemColor } from '@gemduel/shared/types';
 import { CardAbilityBadges } from './card/CardAbilityBadges';
+import { CardEmptyPlaceholder } from './card/CardEmptyPlaceholder';
 import { CardFacePattern } from './card/CardFacePattern';
+import type { CardProps } from './card/CardProps';
 import { CardReserveActionButton } from './card/CardReserveActionButton';
 import { JokerBonusBadge } from './card/JokerBonusBadge';
 import { getCardArtworkPath, getRuntimeCardArtworkId } from './card/cardArtwork';
 import { getCardCostCountStyle } from './card/cardCostStyles';
-import type { CardBackArtwork } from './card/cardBackArtwork';
 import { getCardScoreColorClass } from './card/cardScoreColor';
 import {
     BASE_CARD_SIZE,
@@ -18,7 +19,6 @@ import {
     getCardSampleDimensions,
     getCardDimensions,
     scaleCardMetric,
-    type CardSize,
 } from './card/cardSizing';
 import { useT } from '../i18n/LocaleProvider';
 
@@ -29,23 +29,6 @@ export {
     SMALL_CARD_SIZE,
     STANDARD_CARD_SIZE,
 } from './card/cardSizing';
-
-interface CardProps {
-    card: CardType | null;
-    canBuy?: boolean;
-    onClick?: (card: CardType, context?: CardInteractionContext) => void;
-    onReserve?: (card: CardType, context?: CardInteractionContext) => void;
-    context?: CardInteractionContext;
-    isReservedView?: boolean;
-    isRoyal?: boolean;
-    reserveOnClick?: boolean;
-    allowUnavailableClick?: boolean;
-    className?: string;
-    size?: CardSize;
-    theme?: 'light' | 'dark';
-    isDeckPreview?: boolean;
-    cardBackArtwork?: CardBackArtwork;
-}
 
 export const Card: React.FC<CardProps> = React.memo(
     ({
@@ -91,19 +74,15 @@ export const Card: React.FC<CardProps> = React.memo(
         const reserveButtonPaddingPx = scaleCardMetric(6, cardScale);
         const usesSampleCanvas = sampleDimensions.width !== dimensions.width;
 
-        if (!card)
+        if (!card) {
             return (
-                <div
-                    className="bg-slate-800/50 rounded-lg border border-dashed border-slate-700 flex items-center justify-center text-slate-600 text-xs"
-                    style={{
-                        width: `${dimensions.width}px`,
-                        height: `${dimensions.height}px`,
-                        borderRadius: `${cornerRadiusPx}px`,
-                    }}
-                >
-                    {t('card.empty')}
-                </div>
+                <CardEmptyPlaceholder
+                    dimensions={dimensions}
+                    cornerRadiusPx={cornerRadiusPx}
+                    label={t('card.empty')}
+                />
             );
+        }
 
         const bgGradient = isRoyal
             ? 'from-yellow-600 to-amber-800 ring-2 ring-yellow-400/50'
@@ -131,6 +110,25 @@ export const Card: React.FC<CardProps> = React.memo(
                 onClick(card, context);
             }
         };
+        const isInteractive = Boolean(
+            (reserveOnClick && onReserve) ||
+            ((canBuy || isRoyal || allowUnavailableClick) && onClick)
+        );
+        const handleCardKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (event) => {
+            if (!isInteractive || (event.key !== 'Enter' && event.key !== ' ')) {
+                return;
+            }
+
+            event.preventDefault();
+            handleCardClick();
+        };
+        const rootAriaLabel = isRoyal
+            ? `Select royal card ${card.id}`
+            : reserveOnClick
+              ? `Reserve card ${card.id}`
+              : allowUnavailableClick
+                ? `Preview card ${card.id}`
+                : `Select card ${card.id}`;
 
         const affordableClassName =
             canBuy && !isRoyal
@@ -167,6 +165,10 @@ export const Card: React.FC<CardProps> = React.memo(
         return (
             <div
                 onClick={handleCardClick}
+                onKeyDown={handleCardKeyDown}
+                role={isInteractive ? 'button' : undefined}
+                tabIndex={isInteractive ? 0 : undefined}
+                aria-label={isInteractive ? rootAriaLabel : undefined}
                 data-card-affordable={canBuy && !isRoyal ? 'true' : 'false'}
                 data-card-reserve-on-click={reserveOnClick ? 'true' : 'false'}
                 data-card-preview-click={allowUnavailableClick ? 'true' : 'false'}

@@ -77,14 +77,17 @@ export function PlayerZoneResourcesColumn({
                         (isDiscardMode && count > 0);
 
                     return (
-                        <div
+                        <button
+                            type="button"
                             key={gem.id}
                             data-player-gem={`${player}-${gem.id}`}
                             data-player-zone-gem={`${player}-${gem.id}`}
                             data-player-gem-color={gem.id}
                             data-player-gem-count={count}
+                            disabled={!isClickable}
+                            aria-label={`${isDiscardMode ? 'Discard' : 'Select'} ${gem.label} gem`}
                             onClick={() => isClickable && onGemClick && onGemClick(gem.id)}
-                            className={`relative transition-all group ${isClickable ? 'cursor-pointer hover:scale-110 active:scale-95 ring-2 ring-rose-500 rounded-full' : ''}`}
+                            className={`relative appearance-none border-0 bg-transparent p-0 transition-all group disabled:cursor-default ${isClickable ? 'cursor-pointer hover:scale-110 active:scale-95 ring-2 ring-rose-500 rounded-full' : ''}`}
                         >
                             <AnimatePresence>
                                 {feedbacks
@@ -132,7 +135,7 @@ export function PlayerZoneResourcesColumn({
                                     className={count === 0 ? 'grayscale opacity-50' : 'shadow-lg'}
                                 />
                             </div>
-                        </div>
+                        </button>
                     );
                 })}
             </div>

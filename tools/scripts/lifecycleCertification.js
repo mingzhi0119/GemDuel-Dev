@@ -63,6 +63,21 @@ export const collectLifecycleCertificationSnapshotErrors = (snapshot) => {
         );
     }
 
+    if (snapshot.remoteGitHubSettings?.evidenceStatus !== 'partial') {
+        errors.push(
+            'Lifecycle certification snapshot must mark live GitHub settings evidence as partial.'
+        );
+    }
+
+    if (
+        !Array.isArray(snapshot.remoteGitHubSettings?.requiredForProductionCertification) ||
+        snapshot.remoteGitHubSettings.requiredForProductionCertification.length === 0
+    ) {
+        errors.push(
+            'Lifecycle certification snapshot must list remote GitHub evidence required for production certification.'
+        );
+    }
+
     if (!Array.isArray(snapshot.scorecard) || snapshot.scorecard.length !== 10) {
         errors.push(
             'Lifecycle certification snapshot must define exactly 10 scorecard dimensions.'
@@ -188,11 +203,22 @@ export const buildLifecycleCertificationReport = ({
         scopeAnchor: certificationSnapshot?.scopeAnchor ?? null,
         certificationMode: certificationSnapshot?.certificationMode ?? null,
         remoteGitHubSettings: certificationSnapshot?.remoteGitHubSettings ?? null,
+        externalEvidence: {
+            remoteGitHubSettings: {
+                status: certificationSnapshot?.remoteGitHubSettings?.evidenceStatus ?? 'unknown',
+                scoreTreatment: certificationSnapshot?.remoteGitHubSettings?.scoreTreatment ?? null,
+                excludedFromScore:
+                    certificationSnapshot?.remoteGitHubSettings?.excludedFromScore === true,
+                requiredForProductionCertification:
+                    certificationSnapshot?.remoteGitHubSettings
+                        ?.requiredForProductionCertification ?? [],
+            },
+        },
         localScore: {
             score: averageScore,
             maxScore: 10,
             scoringNote:
-                'Live GitHub branch protection, rulesets, and vulnerability-alert drift are excluded by snapshot policy for this local certification.',
+                'Live GitHub branch protection, rulesets, and vulnerability-alert drift are partial external evidence and excluded by snapshot policy for this local certification.',
         },
         scorecard,
         errors,
@@ -209,6 +235,7 @@ export const renderLifecycleCertificationMarkdown = (certification) => {
         `- Local score: ${certification.localScore.score}/${certification.localScore.maxScore}`,
         `- Scope anchor: ${certification.scopeAnchor}`,
         `- Remote GitHub settings excluded: ${certification.remoteGitHubSettings?.excludedFromScore === true}`,
+        `- Remote GitHub evidence status: ${certification.externalEvidence?.remoteGitHubSettings?.status ?? 'unknown'}`,
         '',
         '## Failures',
     ];

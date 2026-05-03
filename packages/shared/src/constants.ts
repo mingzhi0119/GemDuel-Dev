@@ -1,4 +1,3 @@
-import { RotateCcw, Hand, Scroll, Plus } from 'lucide-react';
 import { GemColor, RoyalCard, CardAbility } from './types';
 export { BUFF_LEVELS, BUFFS } from './data/buffs';
 
@@ -116,11 +115,11 @@ export const SPIRAL_ORDER = [
 
 // ⚡ 特殊能力定义 (之前如果缺了这个，读取 realCards.js 会直接白屏)
 export const ABILITIES = {
-    AGAIN: { id: 'again', label: 'Play Again', icon: RotateCcw },
-    STEAL: { id: 'steal', label: 'Steal Gem', icon: Hand },
-    SCROLL: { id: 'scroll', label: 'Take Scroll', icon: Scroll },
-    BONUS_GEM: { id: 'bonus_gem', label: 'Take Gem', icon: Plus },
-    NONE: { id: 'none', label: '', icon: null },
+    AGAIN: { id: 'again', label: 'Play Again' },
+    STEAL: { id: 'steal', label: 'Steal Gem' },
+    SCROLL: { id: 'scroll', label: 'Take Scroll' },
+    BONUS_GEM: { id: 'bonus_gem', label: 'Take Gem' },
+    NONE: { id: 'none', label: '' },
 } as const;
 
 // 🟢 新增：皇室卡定义 (Royal Cards)

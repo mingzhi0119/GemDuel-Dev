@@ -1,5 +1,14 @@
 # GemDuel-Dev Independent Engineering Audit 2026-05-02
 
+## Completion Status
+
+- Status: **Completed and remediated**
+- Completion date: **2026-05-02**
+- Closure basis: confirmed P1/P2 findings `F-001` through `F-016` were remediated in the follow-up engineering pass, with local validation rerun from the repository root.
+- Closure evidence: `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:coverage`, `pnpm test:security`, `pnpm boundaries:check`, `pnpm architecture:check`, `pnpm deps:check`, `pnpm desktop:check`, `pnpm release:check`, `pnpm build`, `pnpm bundle:check`, `pnpm licenses:check`, `pnpm sbom:check`, `pnpm secrets:check`, `pnpm seal-exclusions:check`, `pnpm repo-settings:check`, `pnpm codeowners:check`, `pnpm changelog:check`, `pnpm audit:gates --out-dir artifacts/governance`, `pnpm bench`, `pnpm governance:report`, `pnpm lifecycle:certify`, `pnpm governance:artifacts --out-dir artifacts/governance`, `pnpm governance:evidence:check --artifacts-dir artifacts/governance`, and `pnpm governance:dashboard --artifacts-dir artifacts/governance` passed.
+- Not a packaging certification: `pnpm electron:build` was not run from WSL/Linux because the release target remains Windows NSIS only. `pnpm release:provenance:check` requires tag/CI provenance context and is not a local non-tag gate.
+- Scope boundary retained: cancelled Phase 2 right-click / drag direct-buy stayed cancelled; desktop packaging scope stayed Windows NSIS only.
+
 ## Executive Summary
 
 - Overall score: **8.1 / 10**
