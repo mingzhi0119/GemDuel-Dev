@@ -3,13 +3,9 @@ import type { CSSProperties } from 'react';
 import { GEM_TYPES } from '@gemduel/shared/constants';
 import { cn } from '../../utils';
 import { Card, STANDARD_CARD_SIZE } from '../Card';
-import {
-    BONUS_GEM_BADGE_BACK_ARTWORK,
-    CARD_NUMBER_ARTWORK,
-    POINT_RIBBON_ARTWORK,
-} from '../uiIconArtwork';
 import { PLAYER_ZONE_STACK_OFFSET_X, PLAYER_ZONE_STACK_OFFSET_Y } from './constants';
 import { ScaledCardFrame } from './ScaledCardFrame';
+import { CardNumberValue, getBonusBadgeBackPath, getPointRibbonPath } from './tableauStackArtwork';
 import type { PlayerKey } from '@gemduel/shared/types';
 import type { PlayerZoneColorStats, PlayerZoneStackState } from './types';
 
@@ -162,65 +158,6 @@ const getPlayerZoneStackSurfaceVisual = (
     surfaceVariant && surfaceVariant in STACK_SURFACE_VISUALS
         ? STACK_SURFACE_VISUALS[surfaceVariant as PlayerZoneStackSurfaceVisualId]
         : STACK_SURFACE_VISUALS['clean-boardgame'];
-
-type BonusBadgeArtworkColor = keyof typeof BONUS_GEM_BADGE_BACK_ARTWORK;
-type PointRibbonArtworkColor = keyof typeof POINT_RIBBON_ARTWORK;
-type CardNumberDigit = keyof typeof CARD_NUMBER_ARTWORK;
-
-interface CardNumberValueProps {
-    value: number;
-    heightPx: number;
-    color: string;
-    type: 'point' | 'bonus';
-    className?: string;
-}
-
-const getBonusBadgeBackPath = (color: string) =>
-    BONUS_GEM_BADGE_BACK_ARTWORK[color as BonusBadgeArtworkColor] ??
-    BONUS_GEM_BADGE_BACK_ARTWORK.black;
-
-const getPointRibbonPath = (color: string, isSpecial: boolean) =>
-    isSpecial
-        ? POINT_RIBBON_ARTWORK.silver
-        : (POINT_RIBBON_ARTWORK[color as PointRibbonArtworkColor] ?? POINT_RIBBON_ARTWORK.silver);
-
-const getCardNumberDigits = (value: number): CardNumberDigit[] => {
-    const normalizedValue = Math.max(0, Math.trunc(Number.isFinite(value) ? value : 0));
-
-    return String(normalizedValue)
-        .split('')
-        .filter((digit): digit is CardNumberDigit => digit in CARD_NUMBER_ARTWORK);
-};
-
-const CardNumberValue = ({ value, heightPx, color, type, className }: CardNumberValueProps) => {
-    const digits = getCardNumberDigits(value);
-
-    return (
-        <span
-            role="img"
-            aria-label={String(value)}
-            data-tableau-point-summary={type === 'point' ? color : undefined}
-            data-tableau-bonus-number={type === 'bonus' ? color : undefined}
-            data-card-number-value={type}
-            data-value={value}
-            className={cn('relative z-10 flex items-center justify-center', className)}
-            style={{ height: `${heightPx}px` }}
-        >
-            {digits.map((digit, index) => (
-                <img
-                    key={`${digit}-${index}`}
-                    src={CARD_NUMBER_ARTWORK[digit]}
-                    alt=""
-                    aria-hidden="true"
-                    draggable={false}
-                    data-card-number-digit={digit}
-                    data-card-number-index={index}
-                    className="-mx-[0.08em] h-full w-auto object-contain"
-                />
-            ))}
-        </span>
-    );
-};
 
 export function PlayerZoneTableauStack({
     player,
