@@ -84,6 +84,21 @@ describe('AppOverlayStack', () => {
         expect(container?.textContent).not.toContain('Select Card Color');
     });
 
+    it('renders an enlarged return-to-results action in review mode', async () => {
+        await renderOverlay('zh', { isReviewing: true });
+
+        const returnButton = Array.from(container?.querySelectorAll('button') ?? []).find(
+            (button) => button.textContent?.includes('返回结算')
+        );
+
+        expect(returnButton?.className).toContain('px-12');
+        expect(returnButton?.className).toContain('py-6');
+        expect(returnButton?.className).toContain('text-4xl');
+        expect(returnButton?.className).toContain('gap-4');
+        expect(returnButton?.className).toContain('border-2');
+        expect(returnButton?.querySelector('svg')?.getAttribute('width')).toBe('36');
+    });
+
     it('renders five basic gem artwork buttons and excludes gold', async () => {
         await renderOverlay('en');
 

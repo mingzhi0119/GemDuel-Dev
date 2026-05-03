@@ -908,6 +908,9 @@ describe('surface styling affordances', () => {
         );
 
         expect(topBarHtml).toContain('var(--gd-topbar-goal-text)');
+        expect(topBarHtml).toContain('var(--gd-topbar-p1-text)');
+        expect(topBarHtml).toContain('var(--gd-topbar-p2-text)');
+        expect(topBarHtml).toContain('var(--gd-topbar-divider)');
         expect(marketHtml).toContain('var(--gd-shell-label-primary)');
         expect(royalHtml).toContain('var(--gd-shell-gold-text)');
         expect(actionsHtml).toContain('var(--gd-shell-action-text)');
@@ -2256,7 +2259,7 @@ describe('card preview interactions', () => {
             />
         );
 
-        expect(document.body.textContent).toContain('Player 1 - Extra Points');
+        expect(document.body.textContent).toContain('P1 - Extra Points');
         expect(document.body.textContent).not.toContain('COLOR: PURE-ROYAL');
     });
 

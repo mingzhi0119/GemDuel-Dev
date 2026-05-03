@@ -83,7 +83,7 @@ export const useNetworkEventHandlers = ({
         (authoritativeState: GameState, _reason: string, replaySync?: ReplaySync) => {
             pendingGuestIntentRef.current = null;
             const localPlayer = authoritativeState.hostPlayer === 'p1' ? 'p2' : 'p1';
-            localDispatch({
+            clearAndInit({
                 type: 'FORCE_SYNC',
                 payload: {
                     ...authoritativeState,
@@ -117,7 +117,7 @@ export const useNetworkEventHandlers = ({
             onlineRef.current?.requestRecovery(recoveryReason);
         },
         [
-            localDispatch,
+            clearAndInit,
             onlineRef,
             pendingGuestIntentRef,
             publishStatusNotice,

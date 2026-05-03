@@ -145,7 +145,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                     className={topBarGoalClass}
                     style={{
                         ...readabilityTextStyle,
-                        color: 'var(--gd-topbar-goal-text)',
+                        color: 'var(--gd-topbar-gold-text)',
                         textShadow: topBarTextShadow,
                     }}
                 >
@@ -178,8 +178,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
     const renderTurnSide = (pid: PlayerKey) => {
         const isP1 = pid === 'p1';
-        const activeClass = isP1 ? 'text-emerald-500' : 'text-blue-500';
-        const inactiveClass = '';
+        const playerColor = isP1 ? 'var(--gd-topbar-p1-text)' : 'var(--gd-topbar-p2-text)';
 
         return (
             <div
@@ -188,27 +187,25 @@ export const TopBar: React.FC<TopBarProps> = ({
                 style={readabilityTextStyle}
             >
                 <span
-                    className={`text-[16px] font-black uppercase tracking-widest lg:text-[42px] ${
-                        isP1 ? 'text-emerald-500' : 'text-blue-500'
-                    }`}
+                    className="text-[16px] font-black uppercase tracking-widest lg:text-[42px]"
+                    style={{
+                        ...readabilityTextStyle,
+                        color: playerColor,
+                        textShadow: topBarTextShadow,
+                    }}
                 >
                     {isP1 ? 'P1' : 'P2'}
                 </span>
                 <span
                     data-topbar-turn-count={pid}
                     data-value={playerTurnCounts[pid]}
-                    className={`text-[12px] font-black leading-none transition-colors lg:text-[38px] ${
-                        activePlayer === pid ? activeClass : inactiveClass
-                    }`}
-                    style={
-                        activePlayer === pid
-                            ? { ...readabilityTextStyle, textShadow: topBarTextShadow }
-                            : {
-                                  ...readabilityTextStyle,
-                                  color: 'var(--gd-topbar-label-primary)',
-                                  textShadow: topBarTextShadow,
-                              }
-                    }
+                    className="text-[12px] font-black leading-none transition-colors lg:text-[38px]"
+                    style={{
+                        ...readabilityTextStyle,
+                        color:
+                            activePlayer === pid ? playerColor : 'var(--gd-topbar-label-primary)',
+                        textShadow: topBarTextShadow,
+                    }}
                 >
                     {playerTurnCounts[pid]}
                 </span>
@@ -253,9 +250,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                     >
                         {renderTurnSide('p1')}
                         <div
-                            className={`h-5 w-px lg:h-8 ${
-                                theme === 'dark' ? 'bg-slate-600/70' : 'bg-stone-300/80'
-                            }`}
+                            className="h-5 w-px lg:h-8"
+                            style={{ backgroundColor: 'var(--gd-topbar-divider)' }}
                         />
                         {renderTurnSide('p2')}
                     </div>

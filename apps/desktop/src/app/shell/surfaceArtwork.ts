@@ -305,8 +305,8 @@ export const createTopBarSurfaceStyle = (
         backgroundColor: 'transparent',
         backgroundImage: 'none',
         backgroundRepeat: 'no-repeat',
-        borderColor: 'rgba(250,204,21,0.18)',
-        boxShadow: 'inset 0 -1px 0 rgba(250,204,21,0.12)',
+        borderColor: 'transparent',
+        boxShadow: 'none',
     };
 };
 

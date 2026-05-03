@@ -90,6 +90,12 @@ export function PlayerZoneIdentityColumn({
         isActive && !isPrivilegeMode && canActionRunInPhase('ACTIVATE_PRIVILEGE', phase);
     const items: ReactElement[] = [];
     let currentIndex = 0;
+    const privilegeScrollReadabilityClass = readabilityTreatment
+        ? 'rounded-full border border-cyan-50/30 bg-slate-950/18 p-1 backdrop-blur-[6px] backdrop-saturate-125'
+        : '';
+    const privilegeScrollReadabilityChip = readabilityTreatment
+        ? 'player-privilege-scroll'
+        : undefined;
 
     for (let i = 0; i < Math.max(0, privileges); i++) {
         const idx = currentIndex++;
@@ -97,10 +103,12 @@ export function PlayerZoneIdentityColumn({
             <button
                 key={`std-${i}`}
                 data-player-zone-privilege={`${player}-standard-${i}`}
+                data-readability-hud-chip={privilegeScrollReadabilityChip}
                 disabled={!canUsePrivilege}
                 onClick={onUsePrivilege}
                 className={cn(
                     'transition-all',
+                    privilegeScrollReadabilityClass,
                     canUsePrivilege
                         ? 'hover:scale-110 hover:text-amber-100 cursor-pointer animate-pulse'
                         : 'opacity-80 cursor-default',
@@ -122,10 +130,12 @@ export function PlayerZoneIdentityColumn({
             <button
                 key={`extra-${i}`}
                 data-player-zone-privilege={`${player}-extra-${i}`}
+                data-readability-hud-chip={privilegeScrollReadabilityChip}
                 disabled={!canUsePrivilege}
                 onClick={onUsePrivilege}
                 className={cn(
                     'transition-all',
+                    privilegeScrollReadabilityClass,
                     canUsePrivilege
                         ? 'hover:scale-110 hover:text-yellow-200 cursor-pointer animate-pulse'
                         : 'opacity-80 cursor-default',
@@ -233,7 +243,8 @@ export function PlayerZoneIdentityColumn({
                     </div>
                 )}
                 <h3
-                    className={`font-black text-[20px] whitespace-nowrap uppercase tracking-[0.16em] ${
+                    data-player-zone-label={player}
+                    className={`font-black text-[40px] leading-none whitespace-nowrap uppercase tracking-[0.16em] ${
                         isActive
                             ? player === 'p1'
                                 ? 'text-emerald-500'

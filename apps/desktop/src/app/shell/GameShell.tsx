@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { CardPreviewOverlay } from '@gemduel/ui/components/CardPreviewOverlay';
 import { TopBar } from '@gemduel/ui/components/TopBar';
 import { UpdateNotification } from '@gemduel/ui/components/UpdateNotification';
+import { READABILITY_HUD_TREATMENT } from '@gemduel/ui/components/readabilityHudStyles';
 import { useLocale, useT } from '@gemduel/ui/i18n/LocaleProvider';
 import type { AppRouteProps } from '@app/types/ui';
 import { useGameSoundEffects } from '../audio/useGameSoundEffects';
@@ -46,6 +47,7 @@ export function GameShell({
     const { getPlayerScore, getCrownCount, canAfford, isMyTurn } = getters;
     const { locale } = useLocale();
     const t = useT();
+    const readabilityTreatment = true;
 
     const isP1ZoneActive = turn === 'p1' && !ui.isReviewing && !winner;
     const isP2ZoneActive = turn === 'p2' && !ui.isReviewing && !winner;
@@ -192,6 +194,9 @@ export function GameShell({
         <div
             data-surface-slot="app-background"
             data-surface-variant={shellSurfaceVariant}
+            data-main-game-readability={
+                readabilityTreatment ? READABILITY_HUD_TREATMENT : undefined
+            }
             className={`relative h-full w-full font-sans grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden transition-colors duration-500 ${
                 theme === 'dark' ? 'text-slate-200' : 'text-stone-800'
             }`}
@@ -220,6 +225,7 @@ export function GameShell({
                 surfaceVariant={topBarSurfaceVariant}
                 localPlayer={localPlayer}
                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
+                readabilityTreatment={readabilityTreatment}
             />
 
             <AppChrome
@@ -315,6 +321,7 @@ export function GameShell({
                 onPreviewCard={previewMarketCard}
                 onPreviewDeckReserve={previewDeckReserve}
                 onPreviewRoyal={previewRoyalCard}
+                readabilityTreatment={readabilityTreatment}
             />
 
             <PlayerRail
@@ -329,6 +336,7 @@ export function GameShell({
                 pendingReservedCardIds={effectivePresentation.pendingReservedCardIds}
                 onPreviewStack={previewPlayerStack}
                 buffPreviewActions={buffPreviewActions}
+                readabilityTreatment={readabilityTreatment}
             />
         </div>
     );

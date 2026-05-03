@@ -6,7 +6,10 @@ import { RoyalCard, GamePhase, Card as CardType } from '@gemduel/shared/types';
 import { useT } from '../i18n/LocaleProvider';
 import { LexiconTerm } from '../lexicon/LexiconTerm';
 import { FEATURED_CARD_SIZE } from './card/cardSizing';
-import { READABILITY_HUD_GLASS_CLASS, READABILITY_HUD_TEXT_STYLE } from './readabilityHudStyles';
+import {
+    READABILITY_HUD_GLASS_CLASS,
+    READABILITY_HUD_LABEL_TEXT_STYLE,
+} from './readabilityHudStyles';
 import type { CardBackArtwork } from './card/cardBackArtwork';
 
 export type RoyalCourtDisplayMode = 'faces' | 'backs';
@@ -70,16 +73,20 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
         >
             <h2
                 data-readability-hud-chip={readabilityTreatment ? 'royal-label' : undefined}
-                className="mb-2 flex min-h-6 items-center justify-center gap-2.5 text-[13px] font-black uppercase tracking-[0.34em]"
+                className={`mb-2 flex items-center justify-center gap-2.5 font-black uppercase ${
+                    readabilityTreatment
+                        ? 'min-h-8 text-[20px] leading-none tracking-[0.18em] antialiased'
+                        : 'min-h-6 text-[13px] tracking-[0.34em]'
+                }`}
                 style={{
-                    ...(readabilityTreatment ? READABILITY_HUD_TEXT_STYLE : {}),
+                    ...(readabilityTreatment ? READABILITY_HUD_LABEL_TEXT_STYLE : {}),
                     color: 'var(--gd-shell-gold-text)',
                     textShadow: readabilityTreatment
-                        ? READABILITY_HUD_TEXT_STYLE.textShadow
+                        ? READABILITY_HUD_LABEL_TEXT_STYLE.textShadow
                         : 'var(--gd-shell-text-shadow)',
                 }}
             >
-                <Crown size={18} />{' '}
+                <Crown size={readabilityTreatment ? 27 : 18} />{' '}
                 <LexiconTerm termId="royal" className="normal-case" underline={false}>
                     {t('royalCourt.title')}
                 </LexiconTerm>

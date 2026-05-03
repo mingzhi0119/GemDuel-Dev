@@ -454,12 +454,12 @@ export const RULEBOOK_CONTENT: RulebookPage[] = [
                         zh: '游戏开始前会随机选择一个 1 到 3 的增益等级。',
                     },
                     {
-                        en: 'Player 1 drafts 1 Buff from 3 options.',
-                        zh: '玩家 1 从 3 个选项中选择 1 个增益。',
+                        en: 'P1 drafts 1 Buff from 3 options.',
+                        zh: 'P1 从 3 个选项中选择 1 个增益。',
                     },
                     {
-                        en: "Player 2 drafts from 4 options: Player 1's chosen Buff plus 3 new Buffs.",
-                        zh: '玩家 2 从 4 个选项中选择：包括玩家 1 已选的增益以及 3 个新增益。',
+                        en: "P2 drafts from 4 options: P1's chosen Buff plus 3 new Buffs.",
+                        zh: 'P2 从 4 个选项中选择：包括 P1 已选的增益以及 3 个新增益。',
                     },
                 ],
             },

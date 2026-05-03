@@ -10,7 +10,7 @@ import { StatusBar } from '@gemduel/ui/components/StatusBar';
 import { FEATURED_CARD_SIZE } from '@gemduel/ui/components/card/cardSizing';
 import {
     READABILITY_HUD_COMPACT_GLASS_CLASS,
-    READABILITY_HUD_SOFT_GLASS_CLASS,
+    READABILITY_HUD_FLAT_GLASS_CLASS,
     READABILITY_HUD_TEXT_STYLE,
 } from '@gemduel/ui/components/readabilityHudStyles';
 import type {
@@ -296,7 +296,7 @@ export function GamePlaySurface({
                                 }
                                 className={`flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500 ${
                                     readabilityTreatment
-                                        ? `${READABILITY_HUD_SOFT_GLASS_CLASS} rounded-2xl`
+                                        ? `${READABILITY_HUD_FLAT_GLASS_CLASS} rounded-2xl`
                                         : ''
                                 }`}
                             >

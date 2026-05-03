@@ -1,4 +1,4 @@
-import { useEffect, type MutableRefObject } from 'react';
+import { useEffect, useRef, type MutableRefObject } from 'react';
 import { shouldSendHostStateSync } from '@gemduel/shared/logic/networkDispatchPolicy';
 import type { GameState } from '@gemduel/shared/types';
 import { buildReplayDeltaSync, buildReplayFullSync } from '@gemduel/shared/replay';
@@ -25,14 +25,24 @@ export const useHostStateSync = ({
     pendingReplayFullSyncRef,
     nextReplaySyncReasonRef,
 }: UseHostStateSyncArgs) => {
+    const lastSentGameStateRef = useRef<GameState | null>(null);
+
     useEffect(() => {
         if (!replayRecorder.init) {
             return;
         }
 
         if (shouldSendHostStateSync(gameState, skipNextHostSyncRef.current)) {
+            const replayRevision = replayRecorder.replayRevision;
             const shouldSendFull =
                 pendingReplayFullSyncRef.current || lastSentReplayRevisionRef.current < 0;
+            const hasUnsentReplayRevision = replayRevision > lastSentReplayRevisionRef.current;
+            const hasUnsentGameState = lastSentGameStateRef.current !== gameState;
+
+            if (!shouldSendFull && !hasUnsentReplayRevision && !hasUnsentGameState) {
+                return;
+            }
+
             const replaySync = shouldSendFull
                 ? buildReplayFullSync(replayRecorder, gameState)
                 : buildReplayDeltaSync(
@@ -44,7 +54,8 @@ export const useHostStateSync = ({
             online.sendState(gameState, reason, replaySync);
             pendingReplayFullSyncRef.current = false;
             nextReplaySyncReasonRef.current = 'TURN_SYNC';
-            lastSentReplayRevisionRef.current = replayRecorder.replayRevision;
+            lastSentReplayRevisionRef.current = replayRevision;
+            lastSentGameStateRef.current = gameState;
             return;
         }
 

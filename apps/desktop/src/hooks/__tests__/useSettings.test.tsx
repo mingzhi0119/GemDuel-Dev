@@ -75,7 +75,7 @@ describe('useSettings', () => {
         expect(currentResult?.resolvedInitialLocale).toBe('en');
         expect(currentResult?.GAME_CONFIG).toMatchObject({
             difficulty: 'NORMAL',
-            playerNames: { p1: 'Player 1', p2: 'Player 2' },
+            playerNames: { p1: 'P1', p2: 'P2' },
         });
 
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
@@ -93,8 +93,8 @@ describe('useSettings', () => {
         expect(currentResult?.locale).toBe('zh');
         expect(currentResult?.resolvedInitialLocale).toBe('zh');
         expect(currentResult?.GAME_CONFIG.playerNames).toEqual({
-            p1: '玩家 1',
-            p2: '玩家 2',
+            p1: 'P1',
+            p2: 'P2',
         });
     });
 

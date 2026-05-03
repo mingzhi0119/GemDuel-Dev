@@ -13,7 +13,10 @@ import {
 import { useT } from '../i18n/LocaleProvider';
 import { LexiconTerm } from '../lexicon/LexiconTerm';
 import { MarketLevelRow } from './market/MarketLevelRow';
-import { READABILITY_HUD_GLASS_CLASS, READABILITY_HUD_TEXT_STYLE } from './readabilityHudStyles';
+import {
+    READABILITY_HUD_GLASS_CLASS,
+    READABILITY_HUD_LABEL_TEXT_STYLE,
+} from './readabilityHudStyles';
 import type { MarketDeckBackArtworkMap } from './card/cardBackArtwork';
 
 interface MarketProps {
@@ -91,16 +94,16 @@ export const Market: React.FC<MarketProps> = React.memo(
                         data-readability-hud-chip={
                             readabilityTreatment ? 'market-label' : undefined
                         }
-                        className={`mb-1 text-center text-[13px] font-black uppercase tracking-[0.34em] ${
+                        className={`mb-1 text-center font-black uppercase ${
                             readabilityTreatment
-                                ? `${READABILITY_HUD_GLASS_CLASS} rounded-full px-5 py-1.5`
-                                : ''
+                                ? `${READABILITY_HUD_GLASS_CLASS} rounded-full px-6 py-2 text-[20px] leading-none tracking-[0.18em] antialiased`
+                                : 'text-[13px] tracking-[0.34em]'
                         }`}
                         style={{
-                            ...(readabilityTreatment ? READABILITY_HUD_TEXT_STYLE : {}),
+                            ...(readabilityTreatment ? READABILITY_HUD_LABEL_TEXT_STYLE : {}),
                             color: 'var(--gd-shell-label-primary)',
                             textShadow: readabilityTreatment
-                                ? READABILITY_HUD_TEXT_STYLE.textShadow
+                                ? READABILITY_HUD_LABEL_TEXT_STYLE.textShadow
                                 : 'var(--gd-shell-text-shadow)',
                         }}
                     >

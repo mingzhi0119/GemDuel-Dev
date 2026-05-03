@@ -7,6 +7,7 @@ import type {
 } from '@gemduel/ui/components/card/cardBackArtwork';
 import type { PlayerZoneSurfaceArtwork } from '@gemduel/ui/components/playerZone/types';
 import { createGameShellStyles, type GameShellStyles } from '../shell/gameShellStyles';
+import { createSurfaceThemeSelections, isSurfaceThemeVariant } from '../shell/surfaceTheme';
 import {
     DESKTOP_SHELL_ARTWORK_HEIGHT_PX,
     DESKTOP_TOP_BAR_HEIGHT_PX,
@@ -79,8 +80,8 @@ const createTransparentTopBarSurfaceStyle = (): CSSProperties => ({
     backgroundImage: 'none',
     backgroundRepeat: 'no-repeat',
     height: `${DESKTOP_TOP_BAR_HEIGHT_PX}px`,
-    borderColor: 'rgba(250,204,21,0.18)',
-    boxShadow: 'inset 0 -1px 0 rgba(250,204,21,0.12)',
+    borderColor: 'transparent',
+    boxShadow: 'none',
 });
 
 export const createVisualLabShellStyles = (
@@ -89,7 +90,14 @@ export const createVisualLabShellStyles = (
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>,
     playerZoneSideSlots: Partial<Record<PlayerKey, SurfaceLabCandidate>> = {}
 ): VisualLabShellStyles => {
-    const base = createGameShellStyles(theme, layout);
+    const shellStyleName = assetSlots['shell-background'].style;
+    const base = createGameShellStyles(
+        theme,
+        layout,
+        isSurfaceThemeVariant(shellStyleName)
+            ? createSurfaceThemeSelections(shellStyleName)
+            : undefined
+    );
     const marketDeckBackArtwork: MarketDeckBackArtworkMap = {
         1: {
             path: getSlotArtwork(assetSlots, 'market-card-back-l1'),

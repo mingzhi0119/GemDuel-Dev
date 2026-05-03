@@ -125,7 +125,7 @@ describe('DraftScreen', () => {
         expect(p2Html).toContain('w-[68.5rem]');
         expect(p1Html.match(/w-64 h-80/g)).toHaveLength(3);
         expect(p2Html.match(/w-64 h-80/g)).toHaveLength(4);
-        expect(p2Html).toContain('Player 1&#x27;s Choice');
+        expect(p2Html).toContain('P1&#x27;s Choice');
         expect(p2Html).toContain('ring-2 ring-amber-400/50');
     });
 

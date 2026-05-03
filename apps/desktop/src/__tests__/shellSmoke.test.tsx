@@ -14,7 +14,12 @@ import type { ResponsiveLayout } from '@gemduel/shared/types';
 import { createMockState } from '@gemduel/shared/logic/__tests__/testHelpers';
 
 vi.mock('@gemduel/ui/components/GameActions', () => ({
-    GameActions: () => <div data-testid="game-actions-smoke" />,
+    GameActions: ({ readabilityTreatment }: { readabilityTreatment?: boolean }) => (
+        <div
+            data-testid="game-actions-smoke"
+            data-readability-treatment={readabilityTreatment ? 'true' : 'false'}
+        />
+    ),
 }));
 
 vi.mock('@gemduel/ui/components/GameBoard', () => ({
@@ -22,7 +27,12 @@ vi.mock('@gemduel/ui/components/GameBoard', () => ({
 }));
 
 vi.mock('@gemduel/ui/components/Market', () => ({
-    Market: () => <div data-testid="market-smoke" />,
+    Market: ({ readabilityTreatment }: { readabilityTreatment?: boolean }) => (
+        <div
+            data-testid="market-smoke"
+            data-readability-treatment={readabilityTreatment ? 'true' : 'false'}
+        />
+    ),
 }));
 
 vi.mock('@gemduel/ui/components/ReplayControls', () => ({
@@ -30,7 +40,12 @@ vi.mock('@gemduel/ui/components/ReplayControls', () => ({
 }));
 
 vi.mock('@gemduel/ui/components/RoyalCourt', () => ({
-    RoyalCourt: () => <div data-testid="royal-court-smoke" />,
+    RoyalCourt: ({ readabilityTreatment }: { readabilityTreatment?: boolean }) => (
+        <div
+            data-testid="royal-court-smoke"
+            data-readability-treatment={readabilityTreatment ? 'true' : 'false'}
+        />
+    ),
 }));
 
 vi.mock('@gemduel/ui/components/StatusBar', () => ({
@@ -38,11 +53,28 @@ vi.mock('@gemduel/ui/components/StatusBar', () => ({
 }));
 
 vi.mock('@gemduel/ui/components/PlayerZone', () => ({
-    PlayerZone: () => <div data-testid="player-zone-smoke" />,
+    PlayerZone: ({
+        player,
+        readabilityTreatment,
+    }: {
+        player?: string;
+        readabilityTreatment?: boolean;
+    }) => (
+        <div
+            data-testid="player-zone-smoke"
+            data-player={player}
+            data-readability-treatment={readabilityTreatment ? 'true' : 'false'}
+        />
+    ),
 }));
 
 vi.mock('@gemduel/ui/components/TopBar', () => ({
-    TopBar: () => <div data-testid="top-bar-smoke" />,
+    TopBar: ({ readabilityTreatment }: { readabilityTreatment?: boolean }) => (
+        <div
+            data-testid="top-bar-smoke"
+            data-readability-treatment={readabilityTreatment ? 'true' : 'false'}
+        />
+    ),
 }));
 
 vi.mock('@gemduel/ui/components/UpdateNotification', () => ({
@@ -337,7 +369,33 @@ describe('shell smoke coverage', () => {
             />
         );
 
-        expect(container?.querySelector('[data-testid="top-bar-smoke"]')).not.toBeNull();
-        expect(container?.querySelector('[data-testid="market-smoke"]')).not.toBeNull();
+        expect(
+            container?.querySelector('[data-main-game-readability="porcelain-glass"]')
+        ).not.toBeNull();
+        expect(
+            container?.querySelector(
+                '[data-testid="top-bar-smoke"][data-readability-treatment="true"]'
+            )
+        ).not.toBeNull();
+        expect(
+            container?.querySelector(
+                '[data-testid="market-smoke"][data-readability-treatment="true"]'
+            )
+        ).not.toBeNull();
+        expect(
+            container?.querySelector(
+                '[data-testid="royal-court-smoke"][data-readability-treatment="true"]'
+            )
+        ).not.toBeNull();
+        expect(
+            container?.querySelector(
+                '[data-testid="game-actions-smoke"][data-readability-treatment="true"]'
+            )
+        ).not.toBeNull();
+        expect(
+            container?.querySelectorAll(
+                '[data-testid="player-zone-smoke"][data-readability-treatment="true"]'
+            ).length
+        ).toBe(2);
     });
 });

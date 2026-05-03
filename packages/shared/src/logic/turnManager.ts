@@ -128,7 +128,7 @@ export const finalizeTurn = (
     const nextBuffEffect = state.playerBuffs?.[transitionTarget]?.effects?.passive;
     if (nextBuffEffect?.hoarderBonus && state.playerReserved[transitionTarget].length === 3) {
         grantRandomBasicGems(state, transitionTarget, 1);
-        state.toastMessage = `Hoarder: +1 Gem for ${transitionTarget === 'p1' ? 'Player 1' : 'Player 2'}!`;
+        state.toastMessage = `Hoarder: +1 Gem for ${transitionTarget === 'p1' ? 'P1' : 'P2'}!`;
     }
 
     const currentBuffObj = state.playerBuffs?.[state.turn];

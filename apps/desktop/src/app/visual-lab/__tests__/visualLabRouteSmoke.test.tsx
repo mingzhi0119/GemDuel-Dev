@@ -11,7 +11,11 @@ import type { GameAction } from '@gemduel/shared/types';
 import { VisualLabRoute } from '../VisualLabRoute';
 import { VisualLabConsole } from '../VisualLabConsole';
 import { SURFACE_LAB_SLOTS, type SurfaceLabCandidate } from '../surfaceLabTypes';
-import { createSurfaceLabAssetSets, normalizeSurfaceLabCandidates } from '../surfaceLabCatalog';
+import {
+    createRuntimeSurfaceLabAssetSets,
+    createSurfaceLabAssetSets,
+    normalizeSurfaceLabCandidates,
+} from '../surfaceLabCatalog';
 import { createVisualLabShellStyles } from '../visualLabStyles';
 import type { SurfaceLabMotionOptions } from '../motionLabEvents';
 import {
@@ -961,7 +965,37 @@ describe('visual lab smoke', () => {
         expect(styles.topBarSurfaceStyle.backgroundImage).toBe('none');
         expect(styles.topBarSurfaceStyle.backgroundColor).toBe('transparent');
         expect(styles.topBarSurfaceStyle.height).toBe('120px');
+        expect(styles.topBarSurfaceStyle.borderColor).toBe('transparent');
+        expect(styles.topBarSurfaceStyle.boxShadow).toBe('none');
         expect(styles.topBarSurfaceVariant).toContain('shell-fill');
+    });
+
+    it('uses the selected runtime style tone for Visual Lab text variables', () => {
+        const runtimeSets = createRuntimeSurfaceLabAssetSets('dark');
+        const darkArcane = runtimeSets.find((set) => set.style === 'dark-arcane');
+        const lotusPorcelain = runtimeSets.find((set) => set.style === 'lotus-porcelain');
+        const darkStyles = createVisualLabShellStyles(
+            'dark',
+            createLayout(),
+            darkArcane!.slots,
+            {}
+        );
+        const lotusStyles = createVisualLabShellStyles(
+            'dark',
+            createLayout(),
+            lotusPorcelain!.slots,
+            {}
+        );
+        const darkVars = darkStyles.shellStyle as Record<`--gd-${string}`, string>;
+        const lotusVars = lotusStyles.shellStyle as Record<`--gd-${string}`, string>;
+
+        expect(darkVars['--gd-shell-label-primary']).toBe('#f8fafc');
+        expect(darkVars['--gd-topbar-label-primary']).toBe('#f8fafc');
+        expect(lotusVars['--gd-shell-label-primary']).toBe('#002147');
+        expect(lotusVars['--gd-shell-label-muted']).toBe('#212121');
+        expect(lotusVars['--gd-topbar-label-primary']).toBe('#002147');
+        expect(lotusVars['--gd-topbar-label-muted']).toBe('#212121');
+        expect(lotusVars['--gd-topbar-p1-text']).toBe('#047857');
     });
 
     it('hides and restores the floating Visual Lab console', async () => {
