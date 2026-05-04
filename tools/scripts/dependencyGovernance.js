@@ -43,6 +43,7 @@ const GOVERNANCE_SCAN_EXCLUDED_DIRS = new Set([
     '.husky',
     '.vite',
     'archive',
+    'artifacts',
     'coverage',
     'dist',
     'node_modules',

@@ -600,6 +600,14 @@ describe('dependency governance', () => {
                 path.join(repoRoot, 'workflow.yml'),
                 'token: ${{ secrets.GITHUB_TOKEN }}'
             );
+            mkdirSync(path.join(repoRoot, 'artifacts', 'governance'), { recursive: true });
+            writeFileSync(
+                path.join(repoRoot, 'artifacts', 'governance', 'audit-gates.report.json'),
+                JSON.stringify({
+                    generatedEnv: 'process.env.GEMDUEL_GENERATED_ARTIFACT',
+                    generatedToken: 'ghp_0123456789abcdefghijklmnopqrstuv',
+                })
+            );
 
             expect(
                 collectTextFileEntries(repoRoot, { includeTests: false }).map(
