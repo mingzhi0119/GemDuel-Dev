@@ -177,4 +177,19 @@ describe('player zone surface preview styles', () => {
             objectPosition: 'right center',
         });
     });
+
+    it('uses the unmirrored left artwork for player one surface previews', () => {
+        window.history.replaceState({}, '', '/?playerZoneBg=clean-boardgame');
+
+        const style = createPlayerZoneSurfaceStyle('dark', getPlayerZoneSurfaceVariant(), 'p1');
+        const artwork = createPlayerZoneSurfaceArtwork('dark', getPlayerZoneSurfaceVariant(), 'p1');
+
+        expect(style?.backgroundPosition).toBe('left center');
+        expect(artwork).toEqual({
+            primaryPath: '/assets/surfaces/anime-themes/clean-boardgame/dark/player-zone-p1.png',
+            fallbackPath: '/assets/surfaces/anime-themes/clean-boardgame/dark/player-zone.png',
+            mirrorFallback: false,
+            objectPosition: 'left center',
+        });
+    });
 });
