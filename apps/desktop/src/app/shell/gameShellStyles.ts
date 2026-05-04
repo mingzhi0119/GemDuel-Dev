@@ -128,7 +128,6 @@ const LIGHT_TOPBAR_PALETTE: SurfaceTextPalette = {
 };
 
 const LIGHT_TEXT_SURFACE_VARIANTS = new Set<SurfaceThemeVariant>([
-    'clean-boardgame',
     'pearl-opaline',
     'lotus-porcelain',
 ]);

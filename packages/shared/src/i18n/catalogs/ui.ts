@@ -366,7 +366,7 @@ export const zhUiMessages: UiMessageShape = {
     'settings.surface.variant.darkArcane': '暗黑奥术',
     'settings.surface.variant.cleanBoardgame': '干净桌游',
     'settings.surface.variant.pearlOpaline': '珍珠欧泊',
-    'settings.surface.variant.lotusPorcelain': '莲瓷',
+    'settings.surface.variant.lotusPorcelain': '莲花瓷韵',
     'deckPeek.title': '牌库情报',
     'deckPeek.close': '关闭窗口',
     'deckPeek.empty': '这个牌库已经没有卡牌了。',

@@ -70,12 +70,22 @@ describe('createGameShellStyles', () => {
             playerZone: 'lotus-porcelain',
             effects: 'anime',
         });
+        const cleanBoardgame = createGameShellStyles('dark', TEST_LAYOUT, {
+            background: 'clean-boardgame',
+            gemPanel: 'clean-boardgame',
+            playerZone: 'clean-boardgame',
+            effects: 'anime',
+        });
         const darkVars = darkArcane.shellStyle as Record<`--gd-${string}`, string>;
         const lotusVars = lotusPorcelain.shellStyle as Record<`--gd-${string}`, string>;
+        const cleanVars = cleanBoardgame.shellStyle as Record<`--gd-${string}`, string>;
 
         expect(darkVars['--gd-shell-label-primary']).toBe('#f8fafc');
         expect(darkVars['--gd-topbar-label-primary']).toBe('#f8fafc');
         expect(darkVars['--gd-topbar-p1-text']).toBe('#10b981');
+        expect(cleanVars['--gd-shell-label-primary']).toBe('#f8fafc');
+        expect(cleanVars['--gd-topbar-label-primary']).toBe('#f8fafc');
+        expect(cleanVars['--gd-shell-control-text']).toBe('#f8fafc');
         expect(lotusVars['--gd-shell-label-primary']).toBe('#002147');
         expect(lotusVars['--gd-shell-label-muted']).toBe('#212121');
         expect(lotusVars['--gd-shell-gold-text']).toBe('#facc15');
