@@ -1,4 +1,4 @@
-import type { ThemeName } from '@app/types/ui';
+import type { AppVisualLabMode, ThemeName } from '@app/types/ui';
 import type { PlayerKey } from '@gemduel/shared/types';
 
 export const SURFACE_LAB_SLOTS = [
@@ -55,7 +55,7 @@ export interface SurfaceLabCatalog {
     assetSets: SurfaceLabAssetSet[];
 }
 
-export type VisualLabMode = 'surfaces' | 'motion';
+export type VisualLabMode = AppVisualLabMode;
 
 export const RUNTIME_SURFACE_LAB_THEMES = [
     'crystal-anime',

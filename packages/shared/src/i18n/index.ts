@@ -234,9 +234,9 @@ export const localizeLooseUiMessage = (message: string | null | undefined, local
         });
     }
 
-    const hoarderMatch = message.match(/^Hoarder: \+1 Gem for (Player 1|Player 2)!$/);
+    const hoarderMatch = message.match(/^Hoarder: \+1 Gem for (P1|P2)!$/);
     if (hoarderMatch) {
-        const player = hoarderMatch[1] === 'Player 1' ? 'p1' : 'p2';
+        const player = hoarderMatch[1] === 'P1' ? 'p1' : 'p2';
         return translate(locale, 'message.hoarderGem', {
             player: getPlayerDisplayName(player, locale),
         });

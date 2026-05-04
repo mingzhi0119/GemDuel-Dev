@@ -31,7 +31,11 @@ import {
 
 const SURFACE_LAB_REVIEW_STATE_SYNC_INTERVAL_MS = 2000;
 
-export function useSurfaceLabSharedReviewState(assetSets: readonly SurfaceLabAssetSet[] = []) {
+export function useSurfaceLabSharedReviewState(
+    assetSets: readonly SurfaceLabAssetSet[] = [],
+    options: { readOnly?: boolean } = {}
+) {
+    const readOnly = options.readOnly ?? false;
     const latestReviewStateRevisionRef = useRef(-1);
     const isApplyingSharedReviewStateRef = useRef(false);
     const hasBootstrappedReviewStateRef = useRef(false);
@@ -53,6 +57,15 @@ export function useSurfaceLabSharedReviewState(assetSets: readonly SurfaceLabAss
             regenMarks?: SurfaceLabRegenMarks;
             comments?: SurfaceLabStyleComments;
         }) => {
+            if (readOnly) {
+                setReviewStateStatus((current) => ({
+                    ...current,
+                    status: current.status === 'loading' ? 'unavailable' : current.status,
+                    message: 'Review state is read-only in readability mode',
+                }));
+                return null;
+            }
+
             const ratings = next.ratings ?? latestStyleRatingsRef.current;
             const regenMarks = next.regenMarks ?? latestRegenMarksRef.current;
             const comments = next.comments ?? latestStyleCommentsRef.current;
@@ -107,7 +120,7 @@ export function useSurfaceLabSharedReviewState(assetSets: readonly SurfaceLabAss
                 return null;
             }
         },
-        []
+        [readOnly]
     );
 
     const handleStyleRatingsChange = useCallback(
@@ -196,10 +209,10 @@ export function useSurfaceLabSharedReviewState(assetSets: readonly SurfaceLabAss
     useEffect(() => {
         latestAssetSetsRef.current = assetSets.map(serializeSurfaceLabAssetSet);
 
-        if (hasBootstrappedReviewStateRef.current) {
+        if (hasBootstrappedReviewStateRef.current && !readOnly) {
             void publishSharedReviewState({});
         }
-    }, [assetSets, publishSharedReviewState]);
+    }, [assetSets, publishSharedReviewState, readOnly]);
 
     useEffect(() => {
         let disposed = false;
@@ -217,13 +230,24 @@ export function useSurfaceLabSharedReviewState(assetSets: readonly SurfaceLabAss
                     if (payload.state && !disposed) {
                         applySharedReviewState(payload.state, payload.path);
                         hasBootstrappedReviewStateRef.current = true;
-                        void publishSharedReviewState({});
+                        if (!readOnly) {
+                            void publishSharedReviewState({});
+                        }
                     }
                     return;
                 }
 
                 if (response.status === 404) {
                     hasBootstrappedReviewStateRef.current = true;
+                    if (readOnly) {
+                        setReviewStateStatus((current) => ({
+                            ...current,
+                            status: 'unavailable',
+                            message: 'Review state file unavailable in read-only mode',
+                        }));
+                        return;
+                    }
+
                     await publishSharedReviewState({
                         ratings: readSurfaceLabRatings(),
                         regenMarks: readSurfaceLabRegenMarks(),
@@ -255,7 +279,7 @@ export function useSurfaceLabSharedReviewState(assetSets: readonly SurfaceLabAss
         return () => {
             disposed = true;
         };
-    }, [applySharedReviewState, publishSharedReviewState]);
+    }, [applySharedReviewState, publishSharedReviewState, readOnly]);
 
     useEffect(() => {
         let disposed = false;

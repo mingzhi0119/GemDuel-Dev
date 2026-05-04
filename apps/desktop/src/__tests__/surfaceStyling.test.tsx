@@ -908,10 +908,123 @@ describe('surface styling affordances', () => {
         );
 
         expect(topBarHtml).toContain('var(--gd-topbar-goal-text)');
+        expect(topBarHtml).toContain('var(--gd-topbar-p1-text)');
+        expect(topBarHtml).toContain('var(--gd-topbar-p2-text)');
+        expect(topBarHtml).toContain('var(--gd-topbar-divider)');
         expect(marketHtml).toContain('var(--gd-shell-label-primary)');
         expect(royalHtml).toContain('var(--gd-shell-gold-text)');
         expect(actionsHtml).toContain('var(--gd-shell-action-text)');
         expect(replayHtml).toContain('var(--gd-shell-action-text)');
+    });
+
+    it('keeps porcelain-glass readability HUD treatment opt-in', () => {
+        const defaultTopBarHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <TopBar
+                    p1Score={0}
+                    p1Crowns={0}
+                    p2Score={0}
+                    p2Crowns={0}
+                    playerTurnCounts={{ p1: 1, p2: 0 }}
+                    activePlayer="p1"
+                    theme="light"
+                />
+            </LocaleProvider>
+        );
+        const topBarHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <TopBar
+                    p1Score={0}
+                    p1Crowns={0}
+                    p2Score={0}
+                    p2Crowns={0}
+                    playerTurnCounts={{ p1: 1, p2: 0 }}
+                    activePlayer="p1"
+                    theme="light"
+                    readabilityTreatment={true}
+                />
+            </LocaleProvider>
+        );
+        const marketHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <Market
+                    market={EMPTY_MARKET}
+                    decks={EMPTY_DECKS}
+                    phase="IDLE"
+                    turn="p1"
+                    inventories={{ p1: EMPTY_COST, p2: EMPTY_COST }}
+                    playerTableau={{ p1: [], p2: [] }}
+                    playerBuffs={{
+                        p1: BUFFS.NONE as unknown as Buff,
+                        p2: BUFFS.NONE as unknown as Buff,
+                    }}
+                    theme="light"
+                    readabilityTreatment={true}
+                />
+            </LocaleProvider>
+        );
+        const royalHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <RoyalCourt
+                    royalDeck={[]}
+                    phase="IDLE"
+                    handleSelectRoyal={() => undefined}
+                    theme="light"
+                    readabilityTreatment={true}
+                />
+            </LocaleProvider>
+        );
+        const actionsHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <GameActions
+                    handleReplenish={() => undefined}
+                    bag={[{ type: GEM_TYPES.BLUE, uid: 'bag-blue' }]}
+                    phase="IDLE"
+                    handleConfirmTake={() => undefined}
+                    handleCancelReserve={() => undefined}
+                    handleCancelPrivilege={() => undefined}
+                    theme="light"
+                    readabilityTreatment={true}
+                />
+            </LocaleProvider>
+        );
+        const playerZoneHtml = renderToStaticMarkup(
+            <LocaleProvider locale="zh" setLocale={() => undefined}>
+                <PlayerZone
+                    player="p1"
+                    inventory={EMPTY_COST}
+                    cards={[]}
+                    reserved={[]}
+                    privileges={0}
+                    isActive={true}
+                    phase="IDLE"
+                    lastFeedback={null}
+                    onBuyReserved={() => false}
+                    onDiscardReserved={() => undefined}
+                    onUsePrivilege={() => undefined}
+                    isPrivilegeMode={false}
+                    onGemClick={() => undefined}
+                    isStealMode={false}
+                    isDiscardMode={false}
+                    buff={BUFFS.NONE as unknown as Buff}
+                    theme="light"
+                    score={0}
+                    crowns={0}
+                    readabilityTreatment={true}
+                />
+            </LocaleProvider>
+        );
+
+        expect(defaultTopBarHtml).not.toContain('data-readability-hud=');
+        expect(topBarHtml).toContain('data-readability-hud="porcelain-glass"');
+        expect(topBarHtml).toContain('data-readability-hud-chip="score-group"');
+        expect(marketHtml).toContain('data-readability-hud-chip="market-label"');
+        expect(royalHtml).toContain('data-readability-hud-chip="royal-label"');
+        expect(actionsHtml).toContain('data-readability-hud-chip="game-actions"');
+        expect(playerZoneHtml).toContain('data-readability-hud="porcelain-glass"');
+        expect(playerZoneHtml).toContain('data-readability-hud-chip="player-resources"');
+        expect(playerZoneHtml).toContain('data-readability-hud-chip="player-identity"');
+        expect(playerZoneHtml).toContain('data-readability-hud-chip="player-tableau-empty-slot"');
     });
 
     it('hides pending reserved cards while keeping the target slot anchor', () => {
@@ -2146,7 +2259,7 @@ describe('card preview interactions', () => {
             />
         );
 
-        expect(document.body.textContent).toContain('Player 1 - Extra Points');
+        expect(document.body.textContent).toContain('P1 - Extra Points');
         expect(document.body.textContent).not.toContain('COLOR: PURE-ROYAL');
     });
 

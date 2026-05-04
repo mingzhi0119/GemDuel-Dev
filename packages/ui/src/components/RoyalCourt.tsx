@@ -6,6 +6,10 @@ import { RoyalCard, GamePhase, Card as CardType } from '@gemduel/shared/types';
 import { useT } from '../i18n/LocaleProvider';
 import { LexiconTerm } from '../lexicon/LexiconTerm';
 import { FEATURED_CARD_SIZE } from './card/cardSizing';
+import {
+    READABILITY_HUD_GLASS_CLASS,
+    READABILITY_HUD_LABEL_TEXT_STYLE,
+} from './readabilityHudStyles';
 import type { CardBackArtwork } from './card/cardBackArtwork';
 
 export type RoyalCourtDisplayMode = 'faces' | 'backs';
@@ -19,6 +23,7 @@ interface RoyalCourtProps {
     onPreviewRoyal?: (card: RoyalCard) => void;
     displayMode?: RoyalCourtDisplayMode;
     royalCardBackArtwork?: CardBackArtwork;
+    readabilityTreatment?: boolean;
 }
 
 const ROYAL_COURT_SLOT_COUNT = 4;
@@ -40,6 +45,7 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
     onPreviewRoyal,
     displayMode = 'faces',
     royalCardBackArtwork,
+    readabilityTreatment = false,
 }) => {
     const t = useT();
     const isSelectingRoyal = isRoyalSelectionPhase(phase);
@@ -53,17 +59,34 @@ export const RoyalCourt: React.FC<RoyalCourtProps> = ({
 
     return (
         <div
-            className="flex flex-col gap-4 items-center p-1 shrink-0 transition-all duration-500"
-            style={{ width: ROYAL_COURT_GRID_SIZE.width }}
+            data-readability-hud-chip={readabilityTreatment ? 'royal-court' : undefined}
+            className={`flex flex-col items-center gap-4 shrink-0 transition-all duration-500 ${
+                readabilityTreatment
+                    ? `${READABILITY_HUD_GLASS_CLASS} rounded-[1.75rem] px-4 py-3`
+                    : 'p-1'
+            }`}
+            style={{
+                width: readabilityTreatment
+                    ? ROYAL_COURT_GRID_SIZE.width + 32
+                    : ROYAL_COURT_GRID_SIZE.width,
+            }}
         >
             <h2
-                className="mb-2 flex min-h-6 items-center justify-center gap-2.5 text-[13px] font-black uppercase tracking-[0.34em]"
+                data-readability-hud-chip={readabilityTreatment ? 'royal-label' : undefined}
+                className={`mb-2 flex items-center justify-center gap-2.5 font-black uppercase ${
+                    readabilityTreatment
+                        ? 'min-h-8 text-[20px] leading-none tracking-[0.18em] antialiased'
+                        : 'min-h-6 text-[13px] tracking-[0.34em]'
+                }`}
                 style={{
+                    ...(readabilityTreatment ? READABILITY_HUD_LABEL_TEXT_STYLE : {}),
                     color: 'var(--gd-shell-gold-text)',
-                    textShadow: 'var(--gd-shell-text-shadow)',
+                    textShadow: readabilityTreatment
+                        ? READABILITY_HUD_LABEL_TEXT_STYLE.textShadow
+                        : 'var(--gd-shell-text-shadow)',
                 }}
             >
-                <Crown size={18} />{' '}
+                <Crown size={readabilityTreatment ? 27 : 18} />{' '}
                 <LexiconTerm termId="royal" className="normal-case" underline={false}>
                     {t('royalCourt.title')}
                 </LexiconTerm>

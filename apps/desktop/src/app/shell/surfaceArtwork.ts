@@ -130,8 +130,8 @@ const GEM_PANEL_GEOMETRY_BY_SURFACE: Record<SurfaceThemeVariant, GemPanelGeometr
         0.132
     ),
     'lotus-porcelain': createGemPanelGeometryFromGridLines(
-        [0.123, 0.279, 0.435, 0.592, 0.75, 0.905],
-        [0.145, 0.288, 0.431, 0.576, 0.72, 0.863],
+        [0.1212, 0.2799, 0.4258, 0.571, 0.7145, 0.89],
+        [0.1356, 0.2839, 0.4266, 0.5694, 0.7137, 0.8788],
         0.132
     ),
 };
@@ -305,8 +305,8 @@ export const createTopBarSurfaceStyle = (
         backgroundColor: 'transparent',
         backgroundImage: 'none',
         backgroundRepeat: 'no-repeat',
-        borderColor: 'rgba(250,204,21,0.18)',
-        boxShadow: 'inset 0 -1px 0 rgba(250,204,21,0.12)',
+        borderColor: 'transparent',
+        boxShadow: 'none',
     };
 };
 

@@ -80,6 +80,48 @@ describe('PlayerZoneIdentityColumn echo reservoir memory', () => {
         expect(memory?.textContent).toContain('Steal');
     });
 
+    it('renders the player label at double the previous size', async () => {
+        const rendered = await renderColumn(BUFFS.NONE as unknown as Buff);
+        container = rendered.container;
+        root = rendered.root;
+
+        const label = container?.querySelector('[data-player-zone-label="p1"]');
+
+        expect(label?.textContent).toBe('P1');
+        expect(label?.className).toContain('text-[40px]');
+        expect(label?.className).toContain('leading-none');
+    });
+
+    it('adds readability blur only to owned privilege scrolls', async () => {
+        const rendered = await renderColumn(BUFFS.NONE as unknown as Buff, {
+            privileges: 1,
+            readabilityTreatment: true,
+        });
+        container = rendered.container;
+        root = rendered.root;
+
+        const scroll = container?.querySelector<HTMLElement>('[data-player-zone-privilege]');
+
+        expect(scroll?.dataset.readabilityHudChip).toBe('player-privilege-scroll');
+        expect(scroll?.className).toContain('backdrop-blur-[6px]');
+    });
+
+    it('does not add readability blur when the player has no privilege scrolls', async () => {
+        const rendered = await renderColumn(BUFFS.NONE as unknown as Buff, {
+            privileges: 0,
+            extraPrivileges: 0,
+            readabilityTreatment: true,
+        });
+        container = rendered.container;
+        root = rendered.root;
+
+        expect(container?.querySelector('[data-player-zone-privilege]')).toBeNull();
+        expect(
+            container?.querySelector('[data-readability-hud-chip="player-privilege-scroll"]')
+        ).toBeNull();
+        expect(container?.textContent).toContain('P1');
+    });
+
     it('includes the remembered bonus-gem color in the memory label', async () => {
         const rendered = await renderColumn({
             ...BUFFS.ECHO_RESERVOIR,

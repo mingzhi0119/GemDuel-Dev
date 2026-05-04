@@ -31,6 +31,7 @@ interface PlayerRailProps {
     pendingReservedCardIds?: string[];
     onPreviewStack?: (stack: PlayerZoneStackState & { player: PlayerKey }) => void;
     buffPreviewActions?: Partial<Record<PlayerKey, PlayerZoneBuffPreviewAction>>;
+    readabilityTreatment?: boolean;
 }
 
 export function PlayerRail({
@@ -47,6 +48,7 @@ export function PlayerRail({
     pendingReservedCardIds = [],
     onPreviewStack,
     buffPreviewActions,
+    readabilityTreatment = false,
 }: PlayerRailProps) {
     const { state, handlers, getters } = game;
     const {
@@ -139,6 +141,7 @@ export function PlayerRail({
                         pendingReservedCardIds={pendingReservedCardIds}
                         onPreviewStack={onPreviewStack}
                         buffPreviewAction={buffPreviewActions?.p1}
+                        readabilityTreatment={readabilityTreatment}
                     />
                 </div>
             </div>
@@ -201,6 +204,7 @@ export function PlayerRail({
                         pendingReservedCardIds={pendingReservedCardIds}
                         onPreviewStack={onPreviewStack}
                         buffPreviewAction={buffPreviewActions?.p2}
+                        readabilityTreatment={readabilityTreatment}
                     />
                 </div>
             </div>

@@ -63,4 +63,18 @@ describe('TopBar buff placement', () => {
         expect(container?.querySelector('[data-buff-trigger="intelligence"]')).toBeNull();
         expect(container?.textContent).not.toContain('Intelligence');
     });
+
+    it('keeps crown goal text on the gold crown color channel', async () => {
+        await renderTopBar();
+
+        const p1CrownGoal = container?.querySelector(
+            '[data-topbar-crown-group="p1"] > span:last-child'
+        ) as HTMLElement | null;
+        const p2CrownGoal = container?.querySelector(
+            '[data-topbar-crown-group="p2"] > span:last-child'
+        ) as HTMLElement | null;
+
+        expect(p1CrownGoal?.style.color).toBe('var(--gd-topbar-gold-text)');
+        expect(p2CrownGoal?.style.color).toBe('var(--gd-topbar-gold-text)');
+    });
 });

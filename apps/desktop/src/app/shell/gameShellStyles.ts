@@ -29,8 +29,13 @@ interface SurfaceTextPalette {
     action: string;
     control: string;
     controlMuted: string;
+    playerOne: string;
+    playerTwo: string;
+    divider: string;
     shadow: string;
     controlShadow: string;
+    chromeHoverIcon: string;
+    chromeHoverBackground: string;
 }
 
 type SurfaceTextVariableStyle = CSSProperties & Record<`--gd-${string}`, string>;
@@ -59,8 +64,13 @@ const DARK_FIELD_PALETTE: SurfaceTextPalette = {
     action: '#f8fafc',
     control: '#f8fafc',
     controlMuted: '#dbeafe',
+    playerOne: '#10b981',
+    playerTwo: '#3b82f6',
+    divider: 'rgba(71,85,105,0.7)',
     shadow: '0 2px 5px rgba(0,0,0,0.86)',
     controlShadow: '0 2px 5px rgba(0,0,0,0.82)',
+    chromeHoverIcon: '#ffffff',
+    chromeHoverBackground: 'rgba(15,23,42,0.38)',
 };
 
 const DARK_TOPBAR_PALETTE: SurfaceTextPalette = {
@@ -71,19 +81,65 @@ const DARK_TOPBAR_PALETTE: SurfaceTextPalette = {
     action: '#f8fafc',
     control: '#f8fafc',
     controlMuted: '#dbeafe',
+    playerOne: '#10b981',
+    playerTwo: '#3b82f6',
+    divider: 'rgba(71,85,105,0.7)',
     shadow: '0 2px 5px rgba(0,0,0,0.88)',
     controlShadow: '0 2px 5px rgba(0,0,0,0.82)',
+    chromeHoverIcon: '#ffffff',
+    chromeHoverBackground: 'rgba(15,23,42,0.38)',
 };
+
+const LIGHT_OXFORD_INK = '#002147';
+const LIGHT_MATTE_INK = '#212121';
+
+const LIGHT_FIELD_PALETTE: SurfaceTextPalette = {
+    primary: LIGHT_OXFORD_INK,
+    muted: LIGHT_MATTE_INK,
+    goal: LIGHT_OXFORD_INK,
+    gold: '#facc15',
+    action: LIGHT_OXFORD_INK,
+    control: LIGHT_OXFORD_INK,
+    controlMuted: LIGHT_MATTE_INK,
+    playerOne: '#047857',
+    playerTwo: '#1d4ed8',
+    divider: 'rgba(100,116,139,0.52)',
+    shadow: '0 1px 1px rgba(255,255,255,0.72)',
+    controlShadow: '0 1px 1px rgba(255,255,255,0.68)',
+    chromeHoverIcon: LIGHT_OXFORD_INK,
+    chromeHoverBackground: 'rgba(255,255,255,0.72)',
+};
+
+const LIGHT_TOPBAR_PALETTE: SurfaceTextPalette = {
+    primary: LIGHT_OXFORD_INK,
+    muted: LIGHT_MATTE_INK,
+    goal: LIGHT_OXFORD_INK,
+    gold: '#facc15',
+    action: LIGHT_OXFORD_INK,
+    control: LIGHT_OXFORD_INK,
+    controlMuted: LIGHT_MATTE_INK,
+    playerOne: '#047857',
+    playerTwo: '#1d4ed8',
+    divider: 'rgba(100,116,139,0.52)',
+    shadow: '0 1px 1px rgba(255,255,255,0.78)',
+    controlShadow: '0 1px 1px rgba(255,255,255,0.7)',
+    chromeHoverIcon: LIGHT_OXFORD_INK,
+    chromeHoverBackground: 'rgba(255,255,255,0.72)',
+};
+
+const LIGHT_TEXT_SURFACE_VARIANTS = new Set<SurfaceThemeVariant>([
+    'pearl-opaline',
+    'lotus-porcelain',
+]);
 
 const getFieldPalette = (theme: ThemeName, variant: SurfaceThemeVariant): SurfaceTextPalette => {
     void theme;
-    void variant;
-    return DARK_FIELD_PALETTE;
+    return LIGHT_TEXT_SURFACE_VARIANTS.has(variant) ? LIGHT_FIELD_PALETTE : DARK_FIELD_PALETTE;
 };
 
-const getTopBarPalette = (theme: ThemeName): SurfaceTextPalette => {
+const getTopBarPalette = (theme: ThemeName, variant: SurfaceThemeVariant): SurfaceTextPalette => {
     void theme;
-    return DARK_TOPBAR_PALETTE;
+    return LIGHT_TEXT_SURFACE_VARIANTS.has(variant) ? LIGHT_TOPBAR_PALETTE : DARK_TOPBAR_PALETTE;
 };
 
 const createSurfaceTextVariableStyle = (
@@ -91,7 +147,7 @@ const createSurfaceTextVariableStyle = (
     fieldVariant: SurfaceThemeVariant
 ): SurfaceTextVariableStyle => {
     const field = getFieldPalette(theme, fieldVariant);
-    const topBar = getTopBarPalette(theme);
+    const topBar = getTopBarPalette(theme, fieldVariant);
 
     return {
         '--gd-shell-label-primary': field.primary,
@@ -103,6 +159,9 @@ const createSurfaceTextVariableStyle = (
         '--gd-shell-control-muted': field.controlMuted,
         '--gd-shell-text-shadow': field.shadow,
         '--gd-shell-control-text-shadow': field.controlShadow,
+        '--gd-shell-p1-text': field.playerOne,
+        '--gd-shell-p2-text': field.playerTwo,
+        '--gd-shell-divider': field.divider,
         '--gd-topbar-label-primary': topBar.primary,
         '--gd-topbar-label-muted': topBar.muted,
         '--gd-topbar-goal-text': topBar.goal,
@@ -112,10 +171,13 @@ const createSurfaceTextVariableStyle = (
         '--gd-topbar-control-muted': topBar.controlMuted,
         '--gd-topbar-text-shadow': topBar.shadow,
         '--gd-topbar-control-text-shadow': topBar.controlShadow,
+        '--gd-topbar-p1-text': topBar.playerOne,
+        '--gd-topbar-p2-text': topBar.playerTwo,
+        '--gd-topbar-divider': topBar.divider,
         '--gd-chrome-icon': topBar.primary,
-        '--gd-chrome-icon-hover': '#ffffff',
+        '--gd-chrome-icon-hover': topBar.chromeHoverIcon,
         '--gd-chrome-focus': topBar.gold,
-        '--gd-chrome-hover-bg': 'rgba(15,23,42,0.38)',
+        '--gd-chrome-hover-bg': topBar.chromeHoverBackground,
         '--gd-chrome-text-shadow': topBar.shadow,
     } as SurfaceTextVariableStyle;
 };
@@ -150,7 +212,7 @@ export const createGameShellStyles = (
     return {
         shellStyle,
         topBarSurfaceStyle: {
-            ...createTopBarSurfaceStyle(theme),
+            ...createTopBarSurfaceStyle(theme, resolvedSurfaceTheme.background),
             ...createDesktopTopBarContractStyle(layout),
         } as CSSProperties,
         scaledZoneWrapperStyle: {
@@ -167,7 +229,7 @@ export const createGameShellStyles = (
         } as CSSProperties,
         gemBoardSurfaceStyle: createGemPanelSurfaceStyle(theme, resolvedSurfaceTheme.gemPanel),
         gemPanelSkin: getGemPanelSkin(theme, resolvedSurfaceTheme.gemPanel),
-        marketSurfaceStyle: createMarketSurfaceStyle(theme),
+        marketSurfaceStyle: createMarketSurfaceStyle(theme, resolvedSurfaceTheme.background),
         marketDeckBackArtwork: getSurfaceThemeMarketDeckBackArtwork(
             theme,
             resolvedSurfaceTheme.background

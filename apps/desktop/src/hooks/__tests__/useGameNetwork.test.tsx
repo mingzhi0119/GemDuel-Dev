@@ -48,6 +48,7 @@ type GameNetworkResult = {
 let latestHandlers: OnlineManagerHandlers | null = null;
 let latestEnabled = false;
 let latestTargetIp = 'localhost';
+let useFreshOnlineController = false;
 
 vi.mock('../useOnlineManager', () => ({
     useOnlineManager: (
@@ -60,7 +61,7 @@ vi.mock('../useOnlineManager', () => ({
         latestHandlers = handlers;
         latestEnabled = enabled;
         latestTargetIp = targetIP ?? 'localhost';
-        return mockOnlineController;
+        return useFreshOnlineController ? { ...mockOnlineController } : mockOnlineController;
     },
 }));
 
@@ -115,6 +116,7 @@ describe('useGameNetwork', () => {
         latestHandlers = null;
         latestEnabled = false;
         latestTargetIp = 'localhost';
+        useFreshOnlineController = false;
         reportReleaseHealth.mockReset();
         resetOnlineControllerMocks();
     });
@@ -543,7 +545,7 @@ describe('useGameNetwork', () => {
             latestHandlers?.onStateReceived(authoritativeState, 'RECOVERY');
         });
 
-        expect(localDispatch).toHaveBeenCalledWith({
+        expect(clearAndInit).toHaveBeenCalledWith({
             type: 'FORCE_SYNC',
             payload: {
                 ...authoritativeState,
@@ -551,6 +553,9 @@ describe('useGameNetwork', () => {
                 localPlayer: 'p2',
             },
         });
+        expect(localDispatch).not.toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'FORCE_SYNC' })
+        );
 
         act(() => {
             latestHandlers?.onHostDecisionReceived({
@@ -687,6 +692,7 @@ describe('useGameNetwork', () => {
     it('skips exactly one host sync after bootstrap and resumes on the next state update', () => {
         const localDispatch = vi.fn();
         const clearAndInit = vi.fn();
+        useFreshOnlineController = true;
         let currentGameState = createOnlineState({
             isHost: true,
             turn: 'p1',
@@ -760,6 +766,33 @@ describe('useGameNetwork', () => {
             'INITIAL',
             expect.objectContaining({
                 kind: 'full',
+            })
+        );
+
+        mockOnlineController.sendState.mockClear();
+
+        act(() => {
+            root?.render(React.createElement(Harness));
+        });
+
+        expect(mockOnlineController.sendState).not.toHaveBeenCalled();
+
+        currentGameState = {
+            ...currentGameState,
+            activeModal: null,
+        };
+
+        act(() => {
+            root?.render(React.createElement(Harness));
+        });
+
+        expect(mockOnlineController.sendState).toHaveBeenCalledWith(
+            expect.objectContaining({
+                activeModal: null,
+            }),
+            'TURN_SYNC',
+            expect.objectContaining({
+                kind: 'delta',
             })
         );
     });

@@ -8,6 +8,11 @@ import { ReplayControls } from '@gemduel/ui/components/ReplayControls';
 import { RoyalCourt, type RoyalCourtDisplayMode } from '@gemduel/ui/components/RoyalCourt';
 import { StatusBar } from '@gemduel/ui/components/StatusBar';
 import { FEATURED_CARD_SIZE } from '@gemduel/ui/components/card/cardSizing';
+import {
+    READABILITY_HUD_COMPACT_GLASS_CLASS,
+    READABILITY_HUD_FLAT_GLASS_CLASS,
+    READABILITY_HUD_TEXT_STYLE,
+} from '@gemduel/ui/components/readabilityHudStyles';
 import type {
     CardBackArtwork,
     MarketDeckBackArtworkMap,
@@ -49,6 +54,7 @@ interface GamePlaySurfaceProps {
     onPreviewCard?: (card: CardType, context: CardInteractionContext) => void;
     onPreviewDeckReserve?: (level: 1 | 2 | 3) => void;
     onPreviewRoyal?: (card: RoyalCard) => void;
+    readabilityTreatment?: boolean;
 }
 
 const MARKET_ROW_GAP_PX = 6;
@@ -80,6 +86,7 @@ export function GamePlaySurface({
     onPreviewCard,
     onPreviewDeckReserve,
     onPreviewRoyal,
+    readabilityTreatment = false,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
     const {
@@ -118,6 +125,7 @@ export function GamePlaySurface({
         0,
         SHARED_PRIVILEGE_SUPPLY_SIZE - (privileges.p1 + privileges.p2)
     );
+    const hasVisibleStatus = Boolean(errorMsg || state.mode === 'ONLINE_MULTIPLAYER');
 
     return (
         <div className="min-h-0 h-full w-full overflow-hidden flex items-center justify-center relative z-30 px-4 py-4 lg:py-6 transition-colors duration-500">
@@ -166,6 +174,7 @@ export function GamePlaySurface({
                                 deckBackArtwork={marketDeckBackArtwork}
                                 pendingMarketRefillSlots={pendingMarketRefillSlots}
                                 onPreviewCard={onPreviewCard}
+                                readabilityTreatment={readabilityTreatment}
                             />
                         </div>
                     </div>
@@ -178,16 +187,37 @@ export function GamePlaySurface({
                             width: `${centerFrameWidthPx}px`,
                         }}
                     >
-                        <div className="h-5 w-full flex items-center justify-center">
-                            <StatusBar
-                                errorMsg={errorMsg}
-                                isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
-                                connectionStatus={online.connectionStatus}
-                            />
+                        <div
+                            data-readability-hud-chip={
+                                readabilityTreatment ? 'center-status' : undefined
+                            }
+                            className="h-5 w-full flex items-center justify-center"
+                            style={readabilityTreatment ? READABILITY_HUD_TEXT_STYLE : undefined}
+                        >
+                            <div
+                                className={
+                                    readabilityTreatment && hasVisibleStatus
+                                        ? `${READABILITY_HUD_COMPACT_GLASS_CLASS} rounded-full px-4 py-2`
+                                        : ''
+                                }
+                            >
+                                <StatusBar
+                                    errorMsg={errorMsg}
+                                    isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
+                                    connectionStatus={online.connectionStatus}
+                                />
+                            </div>
                         </div>
 
                         <div
-                            className="-mt-3 mb-2 w-full min-h-[32px] flex items-center justify-center gap-2"
+                            data-readability-hud-chip={
+                                readabilityTreatment ? 'privilege-supply' : undefined
+                            }
+                            className={`-mt-3 mb-2 min-h-[32px] flex items-center justify-center gap-2 ${
+                                readabilityTreatment
+                                    ? `${READABILITY_HUD_COMPACT_GLASS_CLASS} w-fit min-w-[88px] rounded-full px-3 py-0.5`
+                                    : 'w-full'
+                            }`}
                             title="Shared Privilege Scroll supply"
                         >
                             {Array.from({ length: remainingPrivilegeSupply }).map((_, index) => (
@@ -230,6 +260,7 @@ export function GamePlaySurface({
                                 handleCancelPrivilege={handleCancelPrivilege}
                                 theme={theme}
                                 canInteract={isMyTurn}
+                                readabilityTreatment={readabilityTreatment}
                             />
                         </div>
                     </div>
@@ -257,8 +288,18 @@ export function GamePlaySurface({
                                 onPreviewRoyal={onPreviewRoyal}
                                 displayMode={royalDisplayMode}
                                 royalCardBackArtwork={royalCardBackArtwork}
+                                readabilityTreatment={readabilityTreatment}
                             />
-                            <div className="flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500">
+                            <div
+                                data-readability-hud-chip={
+                                    readabilityTreatment ? 'replay-controls' : undefined
+                                }
+                                className={`flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500 ${
+                                    readabilityTreatment
+                                        ? `${READABILITY_HUD_FLAT_GLASS_CLASS} rounded-2xl`
+                                        : ''
+                                }`}
+                            >
                                 <ReplayControls
                                     undo={historyControls.undo}
                                     redo={historyControls.redo}

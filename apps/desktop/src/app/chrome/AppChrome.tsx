@@ -10,6 +10,7 @@ import { Volume2, VolumeX } from 'lucide-react';
 import type { ThemeName } from '@gemduel/shared/types';
 import { GameGlyph } from '@gemduel/ui/components/GameGlyph';
 import { LocaleSwitch } from '@gemduel/ui/components/LocaleSwitch';
+import { READABILITY_HUD_GLASS_CLASS } from '@gemduel/ui/components/readabilityHudStyles';
 import {
     TOOLTIP_LABEL_CLASS,
     getTooltipLabelThemeClass,
@@ -26,8 +27,7 @@ const DebugPanel = React.lazy(() =>
     import('@gemduel/ui/components/DebugPanel').then((module) => ({ default: module.DebugPanel }))
 );
 
-const chromeActionButtonClass =
-    "group relative flex h-[84px] w-[84px] items-center justify-center overflow-visible rounded-full border-0 bg-slate-950/20 backdrop-blur-md transition-colors before:pointer-events-none before:absolute before:-inset-2 before:z-0 before:rounded-full before:bg-slate-950/18 before:backdrop-blur-lg before:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-24 lg:w-24";
+const chromeActionButtonClass = `group relative flex h-[84px] w-[84px] items-center justify-center overflow-visible rounded-full ${READABILITY_HUD_GLASS_CLASS} transition-[background-color,border-color,box-shadow,backdrop-filter,color] before:pointer-events-none before:absolute before:-inset-2 before:z-0 before:rounded-full before:bg-slate-950/10 before:backdrop-blur-[10px] before:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-24 lg:w-24`;
 
 interface AppChromeProps {
     theme: ThemeName;

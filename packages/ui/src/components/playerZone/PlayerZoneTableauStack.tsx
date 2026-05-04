@@ -22,6 +22,7 @@ interface PlayerZoneTableauStackProps {
     title?: string;
     purePointCount?: number;
     royalCount?: number;
+    readabilityTreatment?: boolean;
 }
 
 type PlayerZoneStackSurfaceVisualId =
@@ -172,6 +173,7 @@ export function PlayerZoneTableauStack({
     title,
     purePointCount,
     royalCount,
+    readabilityTreatment = false,
 }: PlayerZoneTableauStackProps) {
     const isSpecial = color === 'pure-royal';
     const type = isSpecial
@@ -355,6 +357,9 @@ export function PlayerZoneTableauStack({
                     ) : (
                         <div
                             data-tableau-empty-stack-surface={surfaceVisual.id}
+                            data-readability-hud-chip={
+                                readabilityTreatment ? 'player-tableau-empty-slot' : undefined
+                            }
                             className={`rounded border border-dashed flex items-center justify-center ${emptyBorderClassName}`}
                             style={{
                                 width: `${STANDARD_CARD_SIZE.width}px`,

@@ -221,6 +221,20 @@ const settleUi = async (ticks = 3) => {
     }
 };
 
+const waitForCondition = async (predicate: () => boolean, message: string, timeoutMs = 5000) => {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+        if (predicate()) {
+            return;
+        }
+
+        await settleUi(1);
+    }
+
+    throw new Error(message);
+};
+
 const getRequiredElement = <T extends Element>(container: ParentNode, selector: string): T => {
     const element = container.querySelector(selector);
     if (!element) {
@@ -238,12 +252,30 @@ const clickElement = async (element: HTMLElement) => {
 };
 
 const openSettingsMenu = async (container: HTMLElement) => {
+    await waitForCondition(
+        () => Boolean(container.querySelector('button[aria-label="Settings"]')),
+        'Expected settings button to render before opening the replay menu.'
+    );
     await clickElement(
         getRequiredElement<HTMLButtonElement>(container, 'button[aria-label="Settings"]')
     );
 };
 
-const importReplayThroughUi = async (container: HTMLElement, exportedJson: string) => {
+const waitForReplayHistoryLength = async (
+    container: HTMLElement,
+    expectedHistoryLength: number
+) => {
+    await waitForCondition(() => {
+        const counter = container.querySelector<HTMLElement>('[data-replay-step-counter="true"]');
+        return Number(counter?.dataset.historyLength ?? '0') === expectedHistoryLength;
+    }, `Expected replay history length ${expectedHistoryLength} after import.`);
+};
+
+const importReplayThroughUi = async (
+    container: HTMLElement,
+    exportedJson: string,
+    expectedHistoryLength: number
+) => {
     await openSettingsMenu(container);
     const input = getRequiredElement<HTMLInputElement>(
         container,
@@ -266,6 +298,7 @@ const importReplayThroughUi = async (container: HTMLElement, exportedJson: strin
         await Promise.resolve();
     });
     await settleUi(5);
+    await waitForReplayHistoryLength(container, expectedHistoryLength);
 };
 
 const exportReplayThroughUi = async (
@@ -488,7 +521,7 @@ describe('replay roundtrip review', () => {
 
         expect(saveReplayToFolder).not.toHaveBeenCalled();
 
-        await importReplayThroughUi(container!, fixture.exportedJson);
+        await importReplayThroughUi(container!, fixture.exportedJson, fixture.states.length);
 
         expect(saveReplayToFolder).not.toHaveBeenCalled();
         expect(container?.textContent).not.toContain('Review Board');
@@ -576,13 +609,13 @@ describe('replay roundtrip review', () => {
                 fixture.states.length - 1
             )
         ).toEqual(getExpectedSnapshot(fixture, fixture.states.length - 1));
-    }, 15000);
+    }, 30000);
 
     it('keeps replay navigation usable for imported SELECT_CARD_COLOR states without showing the blocking overlay', async () => {
         const fixture = createSelectCardColorReplayFixture();
         await renderHarness();
 
-        await importReplayThroughUi(container!, fixture.exportedJson);
+        await importReplayThroughUi(container!, fixture.exportedJson, fixture.states.length);
 
         expect(container?.textContent).not.toContain('Select Card Color');
         expect(getSnapshotFromUi(container!)).toEqual(
@@ -606,7 +639,7 @@ describe('replay roundtrip review', () => {
         const fixture = createPeekModalReplayFixture();
         await renderHarness();
 
-        await importReplayThroughUi(container!, fixture.exportedJson);
+        await importReplayThroughUi(container!, fixture.exportedJson, fixture.states.length);
 
         expect(container?.textContent).not.toContain('Deck Intelligence');
         expect(getSnapshotFromUi(container!)).toEqual(

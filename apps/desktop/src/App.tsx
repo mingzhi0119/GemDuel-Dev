@@ -19,6 +19,7 @@ import {
     getSurfacePreviewVariant,
 } from './app/shell/surfacePreviewQuery';
 import type { PlayerKey } from '@gemduel/shared/types';
+import type { AppVisualLabMode } from './types/ui';
 import { getDocumentLanguage } from '@gemduel/shared';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 
@@ -193,7 +194,7 @@ export default function GemDuelBoard() {
         setSurfaceTheme(createSurfaceThemeSelections(variant));
     };
 
-    const handleOpenVisualLab = (mode: 'surfaces' | 'motion') => {
+    const handleOpenVisualLab = (mode: AppVisualLabMode) => {
         const nextUrl = new URL(window.location.href);
         nextUrl.searchParams.set('visualLab', mode);
         window.location.assign(`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);

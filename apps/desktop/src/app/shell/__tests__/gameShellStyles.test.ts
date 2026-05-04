@@ -51,8 +51,50 @@ describe('createGameShellStyles', () => {
         );
         expect(styles.topBarSurfaceStyle.backgroundImage).toBe('none');
         expect(styles.topBarSurfaceStyle.height).toBe('120px');
+        expect(styles.topBarSurfaceStyle.borderColor).toBe('transparent');
+        expect(styles.topBarSurfaceStyle.boxShadow).toBe('none');
         expect(styles.playerRailStyle.height).toBe('520px');
         expect(styles.effectsSkin).toBe('anime');
+    });
+
+    it('switches shell and top bar text colors from the selected surface tone', () => {
+        const darkArcane = createGameShellStyles('dark', TEST_LAYOUT, {
+            background: 'dark-arcane',
+            gemPanel: 'dark-arcane',
+            playerZone: 'dark-arcane',
+            effects: 'anime',
+        });
+        const lotusPorcelain = createGameShellStyles('dark', TEST_LAYOUT, {
+            background: 'lotus-porcelain',
+            gemPanel: 'lotus-porcelain',
+            playerZone: 'lotus-porcelain',
+            effects: 'anime',
+        });
+        const cleanBoardgame = createGameShellStyles('dark', TEST_LAYOUT, {
+            background: 'clean-boardgame',
+            gemPanel: 'clean-boardgame',
+            playerZone: 'clean-boardgame',
+            effects: 'anime',
+        });
+        const darkVars = darkArcane.shellStyle as Record<`--gd-${string}`, string>;
+        const lotusVars = lotusPorcelain.shellStyle as Record<`--gd-${string}`, string>;
+        const cleanVars = cleanBoardgame.shellStyle as Record<`--gd-${string}`, string>;
+
+        expect(darkVars['--gd-shell-label-primary']).toBe('#f8fafc');
+        expect(darkVars['--gd-topbar-label-primary']).toBe('#f8fafc');
+        expect(darkVars['--gd-topbar-p1-text']).toBe('#10b981');
+        expect(cleanVars['--gd-shell-label-primary']).toBe('#f8fafc');
+        expect(cleanVars['--gd-topbar-label-primary']).toBe('#f8fafc');
+        expect(cleanVars['--gd-shell-control-text']).toBe('#f8fafc');
+        expect(lotusVars['--gd-shell-label-primary']).toBe('#002147');
+        expect(lotusVars['--gd-shell-label-muted']).toBe('#212121');
+        expect(lotusVars['--gd-shell-gold-text']).toBe('#facc15');
+        expect(lotusVars['--gd-topbar-gold-text']).toBe('#facc15');
+        expect(lotusVars['--gd-topbar-label-primary']).toBe('#002147');
+        expect(lotusVars['--gd-topbar-label-muted']).toBe('#212121');
+        expect(lotusVars['--gd-topbar-p1-text']).toBe('#047857');
+        expect(lotusVars['--gd-topbar-p2-text']).toBe('#1d4ed8');
+        expect(lotusVars['--gd-topbar-divider']).toBe('rgba(100,116,139,0.52)');
     });
 
     it('wires the bundled surface theme slots without resizing fixed surfaces', () => {
@@ -133,6 +175,21 @@ describe('player zone surface preview styles', () => {
             fallbackPath: '/assets/surfaces/anime-themes/royal-luxury/dark/player-zone.png',
             mirrorFallback: true,
             objectPosition: 'right center',
+        });
+    });
+
+    it('uses the unmirrored left artwork for player one surface previews', () => {
+        window.history.replaceState({}, '', '/?playerZoneBg=clean-boardgame');
+
+        const style = createPlayerZoneSurfaceStyle('dark', getPlayerZoneSurfaceVariant(), 'p1');
+        const artwork = createPlayerZoneSurfaceArtwork('dark', getPlayerZoneSurfaceVariant(), 'p1');
+
+        expect(style?.backgroundPosition).toBe('left center');
+        expect(artwork).toEqual({
+            primaryPath: '/assets/surfaces/anime-themes/clean-boardgame/dark/player-zone-p1.png',
+            fallbackPath: '/assets/surfaces/anime-themes/clean-boardgame/dark/player-zone.png',
+            mirrorFallback: false,
+            objectPosition: 'left center',
         });
     });
 });

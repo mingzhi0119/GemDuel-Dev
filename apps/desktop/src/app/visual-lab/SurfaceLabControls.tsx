@@ -57,10 +57,12 @@ function SurfaceLabSlotSummary({
     assetSlots,
     regenMarks,
     toggleSurfaceLabSlotRegenMark,
+    reviewReadOnly,
 }: {
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>;
     regenMarks: SurfaceLabRegenMarks;
     toggleSurfaceLabSlotRegenMark: (candidate: SurfaceLabCandidate) => void;
+    reviewReadOnly?: boolean;
 }) {
     return (
         <div className="grid gap-1.5">
@@ -74,19 +76,32 @@ function SurfaceLabSlotSummary({
                         key={slot}
                         className="grid grid-cols-[26px_88px_1fr_auto] items-center gap-2 rounded-md border border-slate-700/80 bg-slate-950/70 px-2 py-1.5 text-[11px]"
                     >
-                        <button
-                            type="button"
-                            aria-label={`${markedForRegen ? 'Clear' : 'Mark'} ${slotLabel} for regeneration`}
-                            aria-pressed={markedForRegen}
-                            className={`flex h-6 w-6 items-center justify-center rounded border transition-colors ${
-                                markedForRegen
-                                    ? 'border-amber-200 bg-amber-300 text-slate-950 shadow-[0_0_14px_rgba(251,191,36,0.28)]'
-                                    : 'border-slate-600 bg-slate-950 text-slate-400 hover:border-amber-300 hover:text-amber-100'
-                            }`}
-                            onClick={() => toggleSurfaceLabSlotRegenMark(candidate)}
-                        >
-                            <RefreshCw size={13} aria-hidden="true" />
-                        </button>
+                        {reviewReadOnly ? (
+                            <span
+                                aria-label={`${slotLabel} regeneration mark preview`}
+                                className={`flex h-6 w-6 items-center justify-center rounded border ${
+                                    markedForRegen
+                                        ? 'border-amber-200 bg-amber-300 text-slate-950'
+                                        : 'border-slate-700 bg-slate-950 text-slate-600'
+                                }`}
+                            >
+                                <RefreshCw size={13} aria-hidden="true" />
+                            </span>
+                        ) : (
+                            <button
+                                type="button"
+                                aria-label={`${markedForRegen ? 'Clear' : 'Mark'} ${slotLabel} for regeneration`}
+                                aria-pressed={markedForRegen}
+                                className={`flex h-6 w-6 items-center justify-center rounded border transition-colors ${
+                                    markedForRegen
+                                        ? 'border-amber-200 bg-amber-300 text-slate-950 shadow-[0_0_14px_rgba(251,191,36,0.28)]'
+                                        : 'border-slate-600 bg-slate-950 text-slate-400 hover:border-amber-300 hover:text-amber-100'
+                                }`}
+                                onClick={() => toggleSurfaceLabSlotRegenMark(candidate)}
+                            >
+                                <RefreshCw size={13} aria-hidden="true" />
+                            </button>
+                        )}
                         <span className="font-black uppercase text-slate-400">{slotLabel}</span>
                         <span className="min-w-0 truncate font-mono text-slate-100">
                             {candidate.promptId}
@@ -123,6 +138,7 @@ export function SurfaceLabControls({
     setSlotOverrides,
     assetSlots,
     reviewStateStatus,
+    reviewReadOnly = false,
 }: {
     mode: VisualLabMode;
     catalogStatus: string;
@@ -143,6 +159,7 @@ export function SurfaceLabControls({
     setSlotOverrides: (next: Partial<Record<SurfaceLabSlot, string>>) => void;
     assetSlots: Record<SurfaceLabSlot, SurfaceLabCandidate>;
     reviewStateStatus?: SurfaceLabReviewStateStatus;
+    reviewReadOnly?: boolean;
 }) {
     const hasFilterMatches = visibleAssetSets.length > 0;
     const hasRatingMatches =
@@ -180,7 +197,11 @@ export function SurfaceLabControls({
         <section className="flex flex-col gap-3">
             <div>
                 <div className="text-[12px] font-black uppercase tracking-[0.2em] text-cyan-100">
-                    {mode === 'surfaces' ? 'Surface Suite' : 'Motion Suite'}
+                    {mode === 'motion'
+                        ? 'Motion Suite'
+                        : mode === 'readability'
+                          ? 'Readability Suite'
+                          : 'Surface Suite'}
                 </div>
                 <div className="mt-1 text-[11px] text-slate-400">
                     {catalogStatus === 'ready'
@@ -304,6 +325,7 @@ export function SurfaceLabControls({
                 assetSlots={assetSlots}
                 regenMarks={regenMarks}
                 toggleSurfaceLabSlotRegenMark={toggleSurfaceLabSlotRegenMark}
+                reviewReadOnly={reviewReadOnly}
             />
             <div className="grid min-w-0 max-w-full gap-2 rounded-lg border border-slate-700 bg-slate-950/70 p-2">
                 <div className="flex items-center justify-between gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-300">

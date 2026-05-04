@@ -9,7 +9,7 @@ interface GameConfigMenuProps {
     onOnlineSetup: () => void;
     onLanSetup: () => void;
     onStartGame: (mode: GameMode, config: { useBuffs: boolean }) => void;
-    onOpenVisualLab?: (mode: 'surfaces' | 'motion') => void;
+    onOpenVisualLab?: (mode: 'surfaces' | 'motion' | 'readability') => void;
     theme: string;
 }
 
@@ -141,6 +141,13 @@ export function GameConfigMenu({
                                 >
                                     Motion
                                 </button>
+                                <button
+                                    type="button"
+                                    className="border-l border-cyan-300/35 px-7 py-5 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
+                                    onClick={() => onOpenVisualLab('readability')}
+                                >
+                                    Readability
+                                </button>
                             </div>
                         )}
                         <button
@@ -156,7 +163,7 @@ export function GameConfigMenu({
                                     Visual Lab
                                 </span>
                                 <span className="mt-3 text-[15px] font-bold uppercase tracking-[0.14em] text-cyan-100/70">
-                                    Surfaces / Motion
+                                    Surfaces / Motion / Readability
                                 </span>
                             </span>
                         </button>

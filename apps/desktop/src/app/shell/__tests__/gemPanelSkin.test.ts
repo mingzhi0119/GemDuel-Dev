@@ -91,4 +91,26 @@ describe('gem panel skin geometry', () => {
             expect(gemDiameterPx).toBeLessThanOrEqual(63);
         }
     });
+
+    it('uses the calibrated lotus porcelain grid intersections', () => {
+        const skin = getGemPanelSkin('dark', 'lotus-porcelain');
+        const centers = getGemPanelCellCentersNormalized(skin);
+
+        expect(skin.cellGridLinesNormalized).toEqual({
+            x: [0.1212, 0.2799, 0.4258, 0.571, 0.7145, 0.89],
+            y: [0.1356, 0.2839, 0.4266, 0.5694, 0.7137, 0.8788],
+        });
+        expect(centers[0]).toEqual({
+            x: expect.closeTo(0.20055, 5),
+            y: expect.closeTo(0.20975, 5),
+        });
+        expect(centers[12]).toEqual({
+            x: expect.closeTo(0.4984, 5),
+            y: expect.closeTo(0.498, 5),
+        });
+        expect(centers[24]).toEqual({
+            x: expect.closeTo(0.80225, 5),
+            y: expect.closeTo(0.79625, 5),
+        });
+    });
 });

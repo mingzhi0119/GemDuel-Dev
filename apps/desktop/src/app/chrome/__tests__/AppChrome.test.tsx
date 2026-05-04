@@ -116,7 +116,7 @@ describe('AppChrome locale controls', () => {
         expect(tooltip?.className).toContain('px-4');
     });
 
-    it('renders enlarged blurred top-right chrome actions', async () => {
+    it('renders enlarged porcelain-glass top-right chrome actions', async () => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -142,9 +142,14 @@ describe('AppChrome locale controls', () => {
             expect(button?.className).toContain('w-[84px]');
             expect(button?.className).toContain('lg:h-24');
             expect(button?.className).toContain('lg:w-24');
-            expect(button?.className).toContain('backdrop-blur-md');
+            expect(button?.className).toContain(
+                'shadow-[0_12px_32px_rgba(4,18,28,0.24),inset_0_1px_0_rgba(255,255,255,0.18)]'
+            );
+            expect(button?.className).toContain('backdrop-blur-[10px]');
+            expect(button?.className).toContain('backdrop-saturate-125');
             expect(button?.className).toContain('before:-inset-2');
-            expect(button?.className).toContain('before:backdrop-blur-lg');
+            expect(button?.className).toContain('before:bg-slate-950/10');
+            expect(button?.className).toContain('before:backdrop-blur-[10px]');
         }
 
         expect(
