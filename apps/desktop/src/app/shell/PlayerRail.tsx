@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { PlayerZone } from '@gemduel/ui/components/PlayerZone';
+import { getReservedCardVisibilityForViewer } from '@gemduel/shared/logic/multiplayerVisibility';
 import type {
     PlayerZoneBuffPreviewAction,
     PlayerZoneStackState,
@@ -7,7 +8,12 @@ import type {
 } from '@gemduel/ui/components/playerZone/types';
 import { getFsmPhaseSurfacePolicy } from '@gemduel/shared/logic/fsm';
 import type { AppRouteProps } from '@app/types/ui';
-import type { GamePhase, PlayerKey } from '@gemduel/shared/types';
+import type {
+    GamePhase,
+    LanOpponentVisibilityPreferences,
+    PlayerKey,
+    ReservedCardVisibility,
+} from '@gemduel/shared/types';
 import {
     createPlayerZoneSurfaceStyle,
     createPlayerZoneSurfaceArtwork,
@@ -32,7 +38,21 @@ interface PlayerRailProps {
     onPreviewStack?: (stack: PlayerZoneStackState & { player: PlayerKey }) => void;
     buffPreviewActions?: Partial<Record<PlayerKey, PlayerZoneBuffPreviewAction>>;
     readabilityTreatment?: boolean;
+    lanOpponentVisibilityPreferences?: LanOpponentVisibilityPreferences;
 }
+
+const shouldHideLanOpponentSurface = (
+    player: PlayerKey,
+    localPlayer: PlayerKey,
+    preferences: LanOpponentVisibilityPreferences | undefined
+): boolean =>
+    Boolean(preferences && player !== localPlayer && !preferences.showOpponentPlayerZoneCards);
+
+const shouldHideLanOpponentGems = (
+    player: PlayerKey,
+    localPlayer: PlayerKey,
+    preferences: LanOpponentVisibilityPreferences | undefined
+): boolean => Boolean(preferences && player !== localPlayer && !preferences.showOpponentGems);
 
 export function PlayerRail({
     game,
@@ -49,6 +69,7 @@ export function PlayerRail({
     onPreviewStack,
     buffPreviewActions,
     readabilityTreatment = false,
+    lanOpponentVisibilityPreferences,
 }: PlayerRailProps) {
     const { state, handlers, getters } = game;
     const {
@@ -61,6 +82,8 @@ export function PlayerRail({
         lastFeedback,
         playerBuffs,
         extraPrivileges,
+        localPlayer,
+        mode,
     } = state;
     const {
         handleSelfGemClick,
@@ -76,6 +99,18 @@ export function PlayerRail({
         previewPlayerZoneSurfaceVariant !== 'none'
             ? previewPlayerZoneSurfaceVariant
             : (playerZoneSurfaceVariant ?? 'none');
+    const getReservedVisibility = (player: PlayerKey): ReservedCardVisibility =>
+        mode === 'ONLINE_MULTIPLAYER'
+            ? getReservedCardVisibilityForViewer(player, localPlayer)
+            : 'faces';
+    const getTableauVisibility = (player: PlayerKey): ReservedCardVisibility =>
+        shouldHideLanOpponentSurface(player, localPlayer, lanOpponentVisibilityPreferences)
+            ? 'backs'
+            : 'faces';
+    const getGemVisibility = (player: PlayerKey): 'visible' | 'hidden' =>
+        shouldHideLanOpponentGems(player, localPlayer, lanOpponentVisibilityPreferences)
+            ? 'hidden'
+            : 'visible';
 
     return (
         <div
@@ -138,6 +173,9 @@ export function PlayerRail({
                             )
                         }
                         surfaceVariant={resolvedPlayerZoneSurfaceVariant}
+                        reservedVisibility={getReservedVisibility('p1')}
+                        tableauVisibility={getTableauVisibility('p1')}
+                        gemVisibility={getGemVisibility('p1')}
                         pendingReservedCardIds={pendingReservedCardIds}
                         onPreviewStack={onPreviewStack}
                         buffPreviewAction={buffPreviewActions?.p1}
@@ -201,6 +239,9 @@ export function PlayerRail({
                             )
                         }
                         surfaceVariant={resolvedPlayerZoneSurfaceVariant}
+                        reservedVisibility={getReservedVisibility('p2')}
+                        tableauVisibility={getTableauVisibility('p2')}
+                        gemVisibility={getGemVisibility('p2')}
                         pendingReservedCardIds={pendingReservedCardIds}
                         onPreviewStack={onPreviewStack}
                         buffPreviewAction={buffPreviewActions?.p2}

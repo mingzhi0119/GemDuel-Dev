@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
 import { createGameSetupPayload } from '@gemduel/shared/logic/gameSetup';
+import { isHiddenReservedCard } from '@gemduel/shared/logic/multiplayerVisibility';
 import {
     computeBootstrapChecksum,
     computeGuestIntentChecksum,
@@ -752,6 +753,25 @@ describe('useGameNetwork', () => {
             isHost: true,
             turn: 'p1',
             extraPoints: { p1: 1, p2: 0 },
+            playerReserved: {
+                p1: [
+                    {
+                        id: 'private-host-reserved',
+                        level: 1,
+                        cost: {
+                            blue: 0,
+                            white: 0,
+                            green: 0,
+                            black: 0,
+                            red: 1,
+                            pearl: 0,
+                            gold: 0,
+                        },
+                        points: 1,
+                    },
+                ],
+                p2: [],
+            },
         });
 
         act(() => {
@@ -760,13 +780,19 @@ describe('useGameNetwork', () => {
 
         expect(mockOnlineController.sendState).toHaveBeenCalledWith(
             expect.objectContaining({
-                isHost: true,
+                isHost: false,
+                localPlayer: 'p2',
                 turn: 'p1',
             }),
-            'INITIAL',
-            expect.objectContaining({
-                kind: 'full',
-            })
+            'INITIAL'
+        );
+        expect(
+            isHiddenReservedCard(
+                mockOnlineController.sendState.mock.calls[0]?.[0].playerReserved.p1[0]
+            )
+        ).toBe(true);
+        expect(JSON.stringify(mockOnlineController.sendState.mock.calls[0]?.[0])).not.toContain(
+            'private-host-reserved'
         );
 
         mockOnlineController.sendState.mockClear();
@@ -790,10 +816,7 @@ describe('useGameNetwork', () => {
             expect.objectContaining({
                 activeModal: null,
             }),
-            'TURN_SYNC',
-            expect.objectContaining({
-                kind: 'delta',
-            })
+            'TURN_SYNC'
         );
     });
 });

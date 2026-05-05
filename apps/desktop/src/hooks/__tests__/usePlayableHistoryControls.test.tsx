@@ -21,7 +21,10 @@ describe('usePlayableHistoryControls', () => {
     let container: HTMLDivElement | null = null;
     let currentResult: ReturnType<typeof usePlayableHistoryControls> | null = null;
 
-    const renderHarness = (mode: Parameters<typeof usePlayableHistoryControls>[0]) => {
+    const renderHarness = (
+        mode: Parameters<typeof usePlayableHistoryControls>[0],
+        allowTimeTravel = false
+    ) => {
         const historyControls = {
             undo: vi.fn(),
             redo: vi.fn(),
@@ -30,7 +33,7 @@ describe('usePlayableHistoryControls', () => {
         };
 
         const Harness = () => {
-            currentResult = usePlayableHistoryControls(mode, historyControls);
+            currentResult = usePlayableHistoryControls(mode, historyControls, allowTimeTravel);
             return null;
         };
 
@@ -85,5 +88,18 @@ describe('usePlayableHistoryControls', () => {
         expect(historyControls.redo).not.toHaveBeenCalled();
         expect(currentResult?.canUndo).toBe(false);
         expect(currentResult?.canRedo).toBe(false);
+    });
+
+    it('allows review-mode history time travel even when live multiplayer would block it', () => {
+        mocks.isHistoryTimeTravelBlocked.mockReturnValue(true);
+        const { historyControls } = renderHarness('ONLINE_MULTIPLAYER', true);
+
+        currentResult?.undo();
+        currentResult?.redo();
+
+        expect(historyControls.undo).toHaveBeenCalled();
+        expect(historyControls.redo).toHaveBeenCalled();
+        expect(currentResult?.canUndo).toBe(true);
+        expect(currentResult?.canRedo).toBe(true);
     });
 });

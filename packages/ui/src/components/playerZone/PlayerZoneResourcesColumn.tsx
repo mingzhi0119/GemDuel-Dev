@@ -4,6 +4,7 @@ import { GemIcon } from '../GemIcon';
 import { FloatingGem, FloatingText } from '../VisualFeedback';
 import type { RefObject } from 'react';
 import type { GemColor, GemInventory, PlayerKey } from '@gemduel/shared/types';
+import type { ReservedCardVisibility } from '@gemduel/shared/types';
 import {
     PLAYER_ZONE_DISPLAY_COLORS,
     PLAYER_ZONE_RESOURCE_COLORS,
@@ -40,6 +41,8 @@ interface PlayerZoneResourcesColumnProps {
     onGemClick: (color: string) => void;
     onSelectStack: (stack: PlayerZoneStackState) => void;
     readabilityTreatment?: boolean;
+    tableauVisibility?: ReservedCardVisibility;
+    gemVisibility?: 'visible' | 'hidden';
 }
 
 export function PlayerZoneResourcesColumn({
@@ -62,7 +65,11 @@ export function PlayerZoneResourcesColumn({
     onGemClick,
     onSelectStack,
     readabilityTreatment = false,
+    tableauVisibility = 'faces',
+    gemVisibility = 'visible',
 }: PlayerZoneResourcesColumnProps) {
+    const gemsAreHidden = gemVisibility === 'hidden';
+
     return (
         <div
             data-player-zone-column="resources"
@@ -78,8 +85,38 @@ export function PlayerZoneResourcesColumn({
                 ).map((gem) => {
                     const count = inventory[gem.id as GemColor] || 0;
                     const isClickable =
-                        (isStealMode && count > 0 && gem.id !== 'gold') ||
-                        (isDiscardMode && count > 0);
+                        !gemsAreHidden &&
+                        ((isStealMode && count > 0 && gem.id !== 'gold') ||
+                            (isDiscardMode && count > 0));
+
+                    if (gemsAreHidden) {
+                        return (
+                            <button
+                                type="button"
+                                key={gem.id}
+                                data-player-gem={`${player}-${gem.id}`}
+                                data-player-zone-gem-hidden={`${player}-${gem.id}`}
+                                data-player-gem-color={gem.id}
+                                disabled={true}
+                                aria-label="Hidden gem inventory"
+                                className="relative appearance-none border-0 bg-transparent p-0 disabled:cursor-default"
+                            >
+                                <div
+                                    aria-hidden="true"
+                                    data-player-gem-back="true"
+                                    className={`rounded-full border ${
+                                        theme === 'dark'
+                                            ? 'border-slate-500/45 bg-slate-950/70'
+                                            : 'border-stone-400/55 bg-stone-700/30'
+                                    }`}
+                                    style={{
+                                        width: `${inventoryGemSizePx}px`,
+                                        height: `${inventoryGemSizePx}px`,
+                                    }}
+                                />
+                            </button>
+                        );
+                    }
 
                     return (
                         <button
@@ -168,6 +205,7 @@ export function PlayerZoneResourcesColumn({
                             surfaceVariant={surfaceVariant}
                             onSelectStack={onSelectStack}
                             readabilityTreatment={readabilityTreatment}
+                            visibility={tableauVisibility}
                         />
                     );
                 })}
@@ -185,6 +223,7 @@ export function PlayerZoneResourcesColumn({
                     purePointCount={specialStackStats.purePointCount}
                     royalCount={specialStackStats.royalCount}
                     readabilityTreatment={readabilityTreatment}
+                    visibility={tableauVisibility}
                 />
             </div>
         </div>

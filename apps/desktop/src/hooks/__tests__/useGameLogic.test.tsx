@@ -169,7 +169,8 @@ describe('useGameLogic', () => {
         expect(mocks.useHistoryFlattening).toHaveBeenCalledWith(gameState, historyControls, true);
         expect(mocks.usePlayableHistoryControls).toHaveBeenCalledWith(
             gameState.mode,
-            historyControls
+            historyControls,
+            true
         );
 
         expect(currentResult?.state).toMatchObject({

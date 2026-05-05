@@ -970,7 +970,7 @@ describe('marketActions phase 3 coverage', () => {
         const nextState = handleReserveDeck(state, { level: 2 });
 
         expect(nextState.toastMessage).toBe('Reserve limit reached!');
-        expect(nextState.playerReserved.p1.map((card) => card.id)).toEqual([
+        expect(nextState.playerReserved.p1.map((card) => (card as Card).id)).toEqual([
             'res-1',
             'res-2',
             'res-3',

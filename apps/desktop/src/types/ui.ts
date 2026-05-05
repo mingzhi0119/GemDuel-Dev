@@ -46,6 +46,8 @@ export interface AppUiState {
     persistentWinner: PlayerKey | null;
     showRestartConfirm: boolean;
     soundEnabled: boolean;
+    lanShowOpponentPlayerZoneCards?: boolean;
+    lanShowOpponentGems?: boolean;
 }
 
 export interface AppUiSetters {
@@ -56,6 +58,8 @@ export interface AppUiSetters {
     setIsPeekingBoard: Dispatch<SetStateAction<boolean>>;
     setShowRestartConfirm: Dispatch<SetStateAction<boolean>>;
     setSoundEnabled: Dispatch<SetStateAction<boolean>>;
+    setLanShowOpponentPlayerZoneCards?: Dispatch<SetStateAction<boolean>>;
+    setLanShowOpponentGems?: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface AppUiCallbacks {

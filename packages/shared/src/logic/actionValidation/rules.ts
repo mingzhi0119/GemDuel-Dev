@@ -10,6 +10,7 @@ import type {
 } from '../../types';
 import { getCommandPhaseRejectionReason } from '../fsm';
 import { getFsmPhaseSurfacePolicy, isBonusColorSelectionPhase } from '../fsm';
+import { getVisibleReservedCards } from '../multiplayerVisibility';
 import { validateGemSelection } from '../validators';
 import { isRuntimeActionShapeValid, isWithinBoard } from './guards';
 
@@ -78,7 +79,9 @@ const validateCardSource = (
     marketInfo?: MarketCardRef
 ): string | null => {
     if (source === 'reserved') {
-        return state.playerReserved[state.turn].some((entry) => entry.id === card.id)
+        return getVisibleReservedCards(state.playerReserved[state.turn]).some(
+            (entry) => entry.id === card.id
+        )
             ? null
             : 'Reserved card does not belong to the active player.';
     }
@@ -232,7 +235,7 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
                 if (!state.playerBuffs?.[state.turn]?.effects?.passive?.stealReserved) {
                     return 'The active player cannot steal reserved cards.';
                 }
-                return state.playerReserved[opponent].some(
+                return getVisibleReservedCards(state.playerReserved[opponent]).some(
                     (card) => card.id === action.payload.card.id
                 )
                     ? null
@@ -283,7 +286,7 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
             ) {
                 return 'The active player cannot discard reserved cards.';
             }
-            return state.playerReserved[state.turn].some(
+            return getVisibleReservedCards(state.playerReserved[state.turn]).some(
                 (card) => card.id === action.payload.cardId
             )
                 ? null

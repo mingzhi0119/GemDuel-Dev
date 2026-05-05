@@ -9,6 +9,7 @@ import {
 } from '../../types';
 import { calculateTransaction } from '../../utils';
 import { validateGemSelection } from '../validators';
+import { getVisibleReservedCards } from '../multiplayerVisibility';
 import {
     canActionRunInPhase,
     getFsmPhaseSurfacePolicy,
@@ -142,7 +143,7 @@ export const computeAiAction = (state: GameState): GameAction | null => {
         }
     }
     // Check Reserved
-    const buyableFromReserved = state.playerReserved[aiPlayer].filter(
+    const buyableFromReserved = getVisibleReservedCards(state.playerReserved[aiPlayer]).filter(
         (card) =>
             calculateTransaction(
                 card,

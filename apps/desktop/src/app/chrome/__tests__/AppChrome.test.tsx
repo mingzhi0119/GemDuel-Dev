@@ -53,6 +53,39 @@ const ChromeHarness = ({ theme = 'dark' }: { theme?: 'dark' }) => {
     );
 };
 
+const LanVisibilityHarness = () => {
+    const [locale, setLocale] = useState<'en' | 'zh'>('en');
+    const [showCards, setShowCards] = useState(true);
+    const [showGems, setShowGems] = useState(true);
+
+    return (
+        <LocaleProvider locale={locale} setLocale={setLocale}>
+            <AppChrome
+                theme="dark"
+                showDebug={false}
+                canShowDebug={false}
+                onToggleDebug={vi.fn()}
+                onDownloadReplay={vi.fn()}
+                onUploadReplay={vi.fn()}
+                onRequestRestart={vi.fn()}
+                onShowRulebook={vi.fn()}
+                onAddCrowns={vi.fn()}
+                onAddPoints={vi.fn()}
+                onAddPrivilege={vi.fn()}
+                onForceRoyal={vi.fn()}
+                showDebugPanels={false}
+                soundEnabled={true}
+                onToggleSound={vi.fn()}
+                showLanVisibilitySettings={true}
+                lanShowOpponentPlayerZoneCards={showCards}
+                lanShowOpponentGems={showGems}
+                onSetLanShowOpponentPlayerZoneCards={setShowCards}
+                onSetLanShowOpponentGems={setShowGems}
+            />
+        </LocaleProvider>
+    );
+};
+
 describe('AppChrome locale controls', () => {
     let root: Root | null = null;
     let container: HTMLDivElement | null = null;
@@ -344,5 +377,73 @@ describe('AppChrome locale controls', () => {
                 'button[data-app-surface-theme-select="true"]'
             )?.dataset.appSurfaceThemeValue
         ).toBe('royal-luxury');
+    });
+
+    it('shows LAN visibility toggles only when enabled and keeps them local to the menu', async () => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+
+        await act(async () => {
+            root = createRoot(container!);
+            root.render(<ChromeHarness />);
+            await Promise.resolve();
+        });
+
+        const settingsButton = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
+        );
+
+        await act(async () => {
+            settingsButton?.click();
+            await Promise.resolve();
+        });
+
+        expect(container.querySelector('[data-lan-visibility-controls="true"]')).toBeNull();
+
+        await act(async () => {
+            root?.render(<LanVisibilityHarness />);
+            await Promise.resolve();
+        });
+
+        const lanSettingsButton = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="Settings"]'
+        );
+
+        await act(async () => {
+            lanSettingsButton?.click();
+            await Promise.resolve();
+        });
+
+        const controls = container.querySelector<HTMLElement>(
+            '[data-lan-visibility-controls="true"]'
+        );
+        const cardsToggle = container.querySelector<HTMLInputElement>(
+            'input[data-lan-show-opponent-player-zone-cards="true"]'
+        );
+        const gemsToggle = container.querySelector<HTMLInputElement>(
+            'input[data-lan-show-opponent-gems="true"]'
+        );
+
+        expect(controls?.textContent).toContain('LAN Visibility');
+        expect(controls?.textContent).toContain('Show opponent PlayerZone cards');
+        expect(controls?.textContent).toContain('Show opponent gems');
+        expect(cardsToggle?.checked).toBe(true);
+        expect(gemsToggle?.checked).toBe(true);
+
+        await act(async () => {
+            cardsToggle?.click();
+            gemsToggle?.click();
+            await Promise.resolve();
+        });
+
+        expect(
+            container.querySelector<HTMLInputElement>(
+                'input[data-lan-show-opponent-player-zone-cards="true"]'
+            )?.checked
+        ).toBe(false);
+        expect(
+            container.querySelector<HTMLInputElement>('input[data-lan-show-opponent-gems="true"]')
+                ?.checked
+        ).toBe(false);
     });
 });

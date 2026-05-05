@@ -6,7 +6,7 @@ import { Card, STANDARD_CARD_SIZE } from '../Card';
 import { PLAYER_ZONE_STACK_OFFSET_X, PLAYER_ZONE_STACK_OFFSET_Y } from './constants';
 import { ScaledCardFrame } from './ScaledCardFrame';
 import { CardNumberValue, getBonusBadgeBackPath, getPointRibbonPath } from './tableauStackArtwork';
-import type { PlayerKey } from '@gemduel/shared/types';
+import type { PlayerKey, ReservedCardVisibility } from '@gemduel/shared/types';
 import type { PlayerZoneColorStats, PlayerZoneStackState } from './types';
 
 interface PlayerZoneTableauStackProps {
@@ -23,6 +23,7 @@ interface PlayerZoneTableauStackProps {
     purePointCount?: number;
     royalCount?: number;
     readabilityTreatment?: boolean;
+    visibility?: ReservedCardVisibility;
 }
 
 type PlayerZoneStackSurfaceVisualId =
@@ -37,9 +38,7 @@ interface PlayerZoneStackSurfaceVisual {
     id: PlayerZoneStackSurfaceVisualId;
     emptyClassName: string;
     emptyStyle: CSSProperties;
-    backClassName: string;
     backStyle: CSSProperties;
-    topCardClassName: string;
     topCardLayerStyle: CSSProperties;
 }
 
@@ -53,11 +52,9 @@ const STACK_SURFACE_VISUALS: Record<PlayerZoneStackSurfaceVisualId, PlayerZoneSt
                 backgroundColor: 'rgba(76,29,149,0.16)',
                 boxShadow: 'inset 0 0 22px rgba(167,139,250,0.11), 0 12px 28px rgba(24,16,55,0.18)',
             },
-            backClassName: 'shadow-none',
             backStyle: {
                 boxShadow: '0 12px 24px rgba(48,22,95,0.22), inset 0 0 14px rgba(125,211,252,0.10)',
             },
-            topCardClassName: 'shadow-none',
             topCardLayerStyle: {
                 filter: 'drop-shadow(0 14px 24px rgba(48,22,95,0.24)) drop-shadow(0 0 12px rgba(125,211,252,0.12))',
             },
@@ -70,11 +67,9 @@ const STACK_SURFACE_VISUALS: Record<PlayerZoneStackSurfaceVisualId, PlayerZoneSt
                 backgroundColor: 'rgba(41,37,36,0.18)',
                 boxShadow: 'inset 0 0 18px rgba(245,158,11,0.08), 0 13px 28px rgba(28,25,23,0.20)',
             },
-            backClassName: 'shadow-none',
             backStyle: {
                 boxShadow: '0 12px 24px rgba(28,25,23,0.24), inset 0 0 12px rgba(245,158,11,0.11)',
             },
-            topCardClassName: 'shadow-none',
             topCardLayerStyle: {
                 filter: 'drop-shadow(0 14px 26px rgba(28,25,23,0.26)) drop-shadow(0 0 10px rgba(245,158,11,0.12))',
             },
@@ -87,11 +82,9 @@ const STACK_SURFACE_VISUALS: Record<PlayerZoneStackSurfaceVisualId, PlayerZoneSt
                 backgroundColor: 'rgba(24,24,27,0.24)',
                 boxShadow: 'inset 0 0 20px rgba(124,45,18,0.18), 0 14px 30px rgba(9,9,11,0.28)',
             },
-            backClassName: 'shadow-none',
             backStyle: {
                 boxShadow: '0 14px 28px rgba(9,9,11,0.30), inset 0 0 14px rgba(194,65,12,0.12)',
             },
-            topCardClassName: 'shadow-none',
             topCardLayerStyle: {
                 filter: 'drop-shadow(0 15px 28px rgba(9,9,11,0.34)) drop-shadow(0 0 10px rgba(194,65,12,0.14))',
             },
@@ -104,11 +97,9 @@ const STACK_SURFACE_VISUALS: Record<PlayerZoneStackSurfaceVisualId, PlayerZoneSt
                 backgroundColor: 'rgba(100,116,139,0.12)',
                 boxShadow: 'inset 0 0 14px rgba(226,232,240,0.05), 0 10px 22px rgba(15,23,42,0.16)',
             },
-            backClassName: 'shadow-none',
             backStyle: {
                 boxShadow: '0 10px 22px rgba(15,23,42,0.18), inset 0 0 10px rgba(226,232,240,0.07)',
             },
-            topCardClassName: 'shadow-none',
             topCardLayerStyle: {
                 filter: 'drop-shadow(0 12px 22px rgba(15,23,42,0.20))',
             },
@@ -122,12 +113,10 @@ const STACK_SURFACE_VISUALS: Record<PlayerZoneStackSurfaceVisualId, PlayerZoneSt
                 boxShadow:
                     'inset 0 0 18px rgba(125,211,252,0.10), 0 10px 24px rgba(190,137,126,0.13)',
             },
-            backClassName: 'shadow-none',
             backStyle: {
                 boxShadow:
                     '0 10px 22px rgba(190,137,126,0.16), inset 0 0 14px rgba(255,255,255,0.18), inset 0 0 18px rgba(125,211,252,0.10)',
             },
-            topCardClassName: 'shadow-none',
             topCardLayerStyle: {
                 filter: 'drop-shadow(0 12px 22px rgba(190,137,126,0.18)) drop-shadow(0 0 12px rgba(125,211,252,0.10))',
             },
@@ -141,12 +130,10 @@ const STACK_SURFACE_VISUALS: Record<PlayerZoneStackSurfaceVisualId, PlayerZoneSt
                 boxShadow:
                     'inset 0 0 18px rgba(20,184,166,0.10), 0 10px 24px rgba(15,118,110,0.14)',
             },
-            backClassName: 'shadow-none',
             backStyle: {
                 boxShadow:
                     '0 11px 23px rgba(15,118,110,0.17), inset 0 0 13px rgba(244,114,182,0.08), inset 0 0 16px rgba(251,191,36,0.09)',
             },
-            topCardClassName: 'shadow-none',
             topCardLayerStyle: {
                 filter: 'drop-shadow(0 12px 22px rgba(15,118,110,0.18)) drop-shadow(0 0 10px rgba(244,114,182,0.10))',
             },
@@ -174,6 +161,7 @@ export function PlayerZoneTableauStack({
     purePointCount,
     royalCount,
     readabilityTreatment = false,
+    visibility = 'faces',
 }: PlayerZoneTableauStackProps) {
     const isSpecial = color === 'pure-royal';
     const type = isSpecial
@@ -188,9 +176,10 @@ export function PlayerZoneTableauStack({
     const bonusDigitHeightPx = Math.round(summaryBadgeFontPx * 1.28);
     const surfaceVisual = getPlayerZoneStackSurfaceVisual(surfaceVariant);
     const stackBackClassName = isSpecial
-        ? `rounded border border-slate-300/70 bg-gradient-to-br from-slate-300 via-amber-200 to-slate-700 transition-all duration-200 opacity-40 ${surfaceVisual.backClassName}`
-        : `rounded border ${type.border} bg-gradient-to-br ${type.color} transition-all duration-200 opacity-40 ${surfaceVisual.backClassName}`;
+        ? 'rounded border border-slate-300/70 bg-gradient-to-br from-slate-300 via-amber-200 to-slate-700 transition-all duration-200 opacity-40 shadow-none'
+        : `rounded border ${type.border} bg-gradient-to-br ${type.color} transition-all duration-200 opacity-40 shadow-none`;
     const emptyBorderClassName = surfaceVisual.emptyClassName;
+    const isBackOnly = visibility === 'backs';
 
     return (
         <button
@@ -202,10 +191,16 @@ export function PlayerZoneTableauStack({
             data-tableau-special-pure-count={isSpecial ? purePointCount : undefined}
             data-tableau-special-royal-count={isSpecial ? royalCount : undefined}
             data-tableau-stack-surface={surfaceVisual.id}
-            disabled={stats.cards.length === 0}
-            aria-label={`View ${title ?? color} tableau stack`}
+            data-tableau-stack-visibility={visibility}
+            disabled={stats.cards.length === 0 || isBackOnly}
+            aria-label={
+                isBackOnly
+                    ? `Hidden ${title ?? color} tableau stack`
+                    : `View ${title ?? color} tableau stack`
+            }
             className="flex shrink-0 flex-col items-center gap-1 min-w-[32px] appearance-none border-0 bg-transparent p-0 text-inherit disabled:cursor-default"
             onClick={() =>
+                !isBackOnly &&
                 stats.cards.length > 0 &&
                 onSelectStack(
                     title
@@ -239,7 +234,9 @@ export function PlayerZoneTableauStack({
                     {stats.cards.length > 0 ? (
                         stats.cards.map((card, idx: number) => (
                             <div
-                                key={card.id || idx}
+                                key={
+                                    isBackOnly ? `${player}-${color}-hidden-${idx}` : card.id || idx
+                                }
                                 className="absolute inset-0 z-10"
                                 style={{
                                     top: `${idx * PLAYER_ZONE_STACK_OFFSET_Y}px`,
@@ -249,17 +246,15 @@ export function PlayerZoneTableauStack({
                                         : {}),
                                 }}
                                 data-tableau-top-card-surface={
-                                    idx === stats.cards.length - 1 ? surfaceVisual.id : undefined
+                                    idx === stats.cards.length - 1 && !isBackOnly
+                                        ? surfaceVisual.id
+                                        : undefined
+                                }
+                                data-tableau-hidden-card={
+                                    isBackOnly ? `${player}-${color}-${idx}` : undefined
                                 }
                             >
-                                {idx === stats.cards.length - 1 ? (
-                                    <Card
-                                        card={card}
-                                        canBuy={false}
-                                        theme={theme}
-                                        className={surfaceVisual.topCardClassName}
-                                    />
-                                ) : (
+                                {isBackOnly || idx !== stats.cards.length - 1 ? (
                                     <div
                                         data-tableau-stack-back-surface={surfaceVisual.id}
                                         className={stackBackClassName}
@@ -269,59 +264,69 @@ export function PlayerZoneTableauStack({
                                             ...surfaceVisual.backStyle,
                                         }}
                                     />
+                                ) : (
+                                    <Card
+                                        card={card}
+                                        canBuy={false}
+                                        theme={theme}
+                                        className="shadow-none"
+                                    />
                                 )}
 
-                                {idx === stats.cards.length - 1 && stats.points > 0 && (
-                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                                        <motion.div
-                                            animate={
-                                                stats.points >= 7
-                                                    ? {
-                                                          scale: [1, 1.1, 1],
-                                                          filter: [
-                                                              'drop-shadow(0 0 2px #fbbf24)',
-                                                              'drop-shadow(0 0 8px #f59e0b)',
-                                                              'drop-shadow(0 0 2px #fbbf24)',
-                                                          ],
-                                                      }
-                                                    : {}
-                                            }
-                                            transition={{
-                                                duration: 2,
-                                                repeat: Infinity,
-                                                ease: 'easeInOut',
-                                            }}
-                                            data-tableau-point-ribbon={color}
-                                            className="relative flex items-center justify-center drop-shadow-[0_10px_16px_rgba(0,0,0,0.42)]"
-                                            style={{
-                                                width: `${pointRibbonWidthPx}px`,
-                                                height: `${pointRibbonHeightPx}px`,
-                                            }}
-                                        >
-                                            <img
-                                                src={pointRibbonPath}
-                                                alt=""
-                                                aria-hidden="true"
-                                                draggable={false}
-                                                data-tableau-point-ribbon-artwork={color}
-                                                className="pointer-events-none absolute inset-0 h-full w-full object-contain"
-                                            />
-                                            <CardNumberValue
-                                                type="point"
-                                                color={color}
-                                                value={stats.points}
-                                                heightPx={pointDigitHeightPx}
-                                                className={cn(
-                                                    'drop-shadow-md',
-                                                    stats.points >= 7 &&
-                                                        'drop-shadow-[0_0_8px_rgba(255,255,255,0.28)]'
-                                                )}
-                                            />
-                                        </motion.div>
-                                    </div>
-                                )}
+                                {!isBackOnly &&
+                                    idx === stats.cards.length - 1 &&
+                                    stats.points > 0 && (
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                                            <motion.div
+                                                animate={
+                                                    stats.points >= 7
+                                                        ? {
+                                                              scale: [1, 1.1, 1],
+                                                              filter: [
+                                                                  'drop-shadow(0 0 2px #fbbf24)',
+                                                                  'drop-shadow(0 0 8px #f59e0b)',
+                                                                  'drop-shadow(0 0 2px #fbbf24)',
+                                                              ],
+                                                          }
+                                                        : {}
+                                                }
+                                                transition={{
+                                                    duration: 2,
+                                                    repeat: Infinity,
+                                                    ease: 'easeInOut',
+                                                }}
+                                                data-tableau-point-ribbon={color}
+                                                className="relative flex items-center justify-center drop-shadow-[0_10px_16px_rgba(0,0,0,0.42)]"
+                                                style={{
+                                                    width: `${pointRibbonWidthPx}px`,
+                                                    height: `${pointRibbonHeightPx}px`,
+                                                }}
+                                            >
+                                                <img
+                                                    src={pointRibbonPath}
+                                                    alt=""
+                                                    aria-hidden="true"
+                                                    draggable={false}
+                                                    data-tableau-point-ribbon-artwork={color}
+                                                    className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+                                                />
+                                                <CardNumberValue
+                                                    type="point"
+                                                    color={color}
+                                                    value={stats.points}
+                                                    heightPx={pointDigitHeightPx}
+                                                    className={cn(
+                                                        'drop-shadow-md',
+                                                        stats.points >= 7 &&
+                                                            'drop-shadow-[0_0_8px_rgba(255,255,255,0.28)]'
+                                                    )}
+                                                />
+                                            </motion.div>
+                                        </div>
+                                    )}
 
                                 {idx === stats.cards.length - 1 &&
+                                    !isBackOnly &&
                                     !isSpecial &&
                                     stats.bonusCount > 0 && (
                                         <div className="absolute -bottom-2 -right-2 z-40">

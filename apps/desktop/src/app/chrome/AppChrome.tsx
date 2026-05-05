@@ -21,6 +21,7 @@ import {
     type SurfaceThemeSelections,
     type SurfaceThemeVariant,
 } from '../shell/surfaceTheme';
+import { AppChromeLanVisibilityControls } from './AppChromeLanVisibilityControls';
 import { AppChromeSurfaceControls } from './AppChromeSurfaceMenu';
 
 const DebugPanel = React.lazy(() =>
@@ -47,6 +48,11 @@ interface AppChromeProps {
     onSelectSurfaceTheme?: (variant: SurfaceThemeVariant) => void;
     soundEnabled: boolean;
     onToggleSound: () => void;
+    showLanVisibilitySettings?: boolean;
+    lanShowOpponentPlayerZoneCards?: boolean;
+    lanShowOpponentGems?: boolean;
+    onSetLanShowOpponentPlayerZoneCards?: (value: boolean) => void;
+    onSetLanShowOpponentGems?: (value: boolean) => void;
 }
 
 export function AppChrome({
@@ -67,6 +73,11 @@ export function AppChrome({
     onSelectSurfaceTheme,
     soundEnabled,
     onToggleSound,
+    showLanVisibilitySettings = false,
+    lanShowOpponentPlayerZoneCards = true,
+    lanShowOpponentGems = true,
+    onSetLanShowOpponentPlayerZoneCards,
+    onSetLanShowOpponentGems,
 }: AppChromeProps) {
     const t = useT();
     const settingsTooltipId = useId();
@@ -257,6 +268,18 @@ export function AppChrome({
                                         {t('settings.sound')}
                                     </span>
                                 </button>
+
+                                {showLanVisibilitySettings && (
+                                    <AppChromeLanVisibilityControls
+                                        theme={theme}
+                                        showOpponentPlayerZoneCards={lanShowOpponentPlayerZoneCards}
+                                        showOpponentGems={lanShowOpponentGems}
+                                        onSetShowOpponentPlayerZoneCards={
+                                            onSetLanShowOpponentPlayerZoneCards
+                                        }
+                                        onSetShowOpponentGems={onSetLanShowOpponentGems}
+                                    />
+                                )}
 
                                 <button
                                     onClick={() => {

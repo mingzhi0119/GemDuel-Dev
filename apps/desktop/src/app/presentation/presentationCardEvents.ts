@@ -1,3 +1,4 @@
+import { getVisibleReservedCards } from '@gemduel/shared/logic/multiplayerVisibility';
 import type { GameState, PlayerKey } from '@gemduel/shared/types';
 import type {
     CardFlightPresentationItem,
@@ -23,7 +24,7 @@ const findMarketCardSource = (
 };
 
 const findReservedCardIndex = (state: GameState, player: PlayerKey, cardId: string): number =>
-    state.playerReserved[player].findIndex((card) => card.id === cardId);
+    getVisibleReservedCards(state.playerReserved[player]).findIndex((card) => card.id === cardId);
 
 const getNewCardIds = (
     previousCards: Array<{ id: string }>,
@@ -44,7 +45,7 @@ const createCardFlightItems = (
         const nextCollection =
             target === 'tableau'
                 ? nextState.playerTableau[player]
-                : nextState.playerReserved[player];
+                : getVisibleReservedCards(nextState.playerReserved[player]);
         const card = nextCollection.find((nextCard) => nextCard.id === cardId);
 
         if (!card) {
@@ -105,8 +106,8 @@ export const deriveCardEvents = (
         }
 
         const reservedCardIds = getNewCardIds(
-            previousState.playerReserved[player],
-            nextState.playerReserved[player]
+            getVisibleReservedCards(previousState.playerReserved[player]),
+            getVisibleReservedCards(nextState.playerReserved[player])
         );
         if (reservedCardIds.length > 0) {
             const cards = createCardFlightItems(

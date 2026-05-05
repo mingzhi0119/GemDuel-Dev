@@ -5,6 +5,8 @@ import type {
     GamePhase,
     GemInventory,
     PlayerKey,
+    ReservedCardVisibility,
+    ReservedCardView,
     RoyalCard,
 } from '@gemduel/shared/types';
 
@@ -12,7 +14,7 @@ export interface PlayerZoneProps {
     player: PlayerKey;
     inventory: GemInventory;
     cards: CardType[];
-    reserved: CardType[];
+    reserved: ReservedCardView[];
     royals?: RoyalCard[];
     privileges: number;
     extraPrivileges?: number;
@@ -37,6 +39,9 @@ export interface PlayerZoneProps {
     surfaceArtwork?: PlayerZoneSurfaceArtwork;
     surfaceVariant?: string;
     readabilityTreatment?: boolean;
+    reservedVisibility?: ReservedCardVisibility;
+    tableauVisibility?: ReservedCardVisibility;
+    gemVisibility?: 'visible' | 'hidden';
     pendingReservedCardIds?: string[];
     onPreviewStack?: (stack: PlayerZoneStackState & { player: PlayerKey }) => void;
     buffPreviewAction?: PlayerZoneBuffPreviewAction;

@@ -44,6 +44,10 @@ export default function GemDuelBoard() {
         setSurfaceTheme,
         soundEnabled,
         setSoundEnabled,
+        lanShowOpponentPlayerZoneCards,
+        setLanShowOpponentPlayerZoneCards,
+        lanShowOpponentGems,
+        setLanShowOpponentGems,
     } = useSettings();
     const initialSurfacePreviewVariant = useMemo(getSurfacePreviewVariant, []);
     const [surfacePreviewVariant, setSurfacePreviewVariant] = useState(
@@ -285,6 +289,8 @@ export default function GemDuelBoard() {
                     persistentWinner,
                     showRestartConfirm,
                     soundEnabled,
+                    lanShowOpponentPlayerZoneCards,
+                    lanShowOpponentGems,
                 }}
                 setters={{
                     setShowDebug,
@@ -294,6 +300,8 @@ export default function GemDuelBoard() {
                     setIsPeekingBoard,
                     setShowRestartConfirm,
                     setSoundEnabled,
+                    setLanShowOpponentPlayerZoneCards,
+                    setLanShowOpponentGems,
                 }}
                 callbacks={{
                     handleRestart,

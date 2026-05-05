@@ -79,6 +79,22 @@ export interface Card {
     image?: string | null;
 }
 
+export type ReservedCardVisibility = 'faces' | 'backs';
+
+export interface LanOpponentVisibilityPreferences {
+    showOpponentPlayerZoneCards: boolean;
+    showOpponentGems: boolean;
+}
+
+export interface HiddenReservedCard {
+    isHiddenReservedCard: true;
+    slotKey: string;
+    owner: PlayerKey;
+    slotIndex: number;
+}
+
+export type ReservedCardView = Card | HiddenReservedCard;
+
 export interface DeckState {
     1: Card[];
     2: Card[];
@@ -320,7 +336,7 @@ export interface GameState {
     decks: DeckState;
     market: MarketState;
     playerTableau: Record<PlayerKey, Card[]>;
-    playerReserved: Record<PlayerKey, Card[]>;
+    playerReserved: Record<PlayerKey, ReservedCardView[]>;
     playerRoyals: Record<PlayerKey, RoyalCard[]>;
     playerTurnCounts: Record<PlayerKey, number>;
     inventories: Record<PlayerKey, GemInventory>;

@@ -31,6 +31,7 @@ import {
     canonicalizeDeterministicSaltToken,
     pickDeterministicBasicGemColor,
 } from '../deterministicRandom';
+import { isVisibleReservedCard } from '../multiplayerVisibility';
 import {
     GameState,
     Card,
@@ -178,7 +179,9 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     if (source === 'market' && marketInfo) {
         refreshMarketCardSlot(state, marketInfo);
     } else if (source === 'reserved') {
-        state.playerReserved[player] = state.playerReserved[player].filter((c) => c.id !== card.id);
+        state.playerReserved[player] = state.playerReserved[player].filter(
+            (c) => !isVisibleReservedCard(c) || c.id !== card.id
+        );
     }
 
     // Determine next turn
@@ -199,10 +202,13 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
 
 export const handleDiscardReserved = (state: GameState, payload: { cardId: string }): GameState => {
     const player = state.turn;
-    const cardIdx = state.playerReserved[player].findIndex((c) => c.id === payload.cardId);
+    const cardIdx = state.playerReserved[player].findIndex(
+        (c) => isVisibleReservedCard(c) && c.id === payload.cardId
+    );
     if (cardIdx === -1) return state;
 
     const card = state.playerReserved[player].splice(cardIdx, 1)[0];
+    if (!card || !isVisibleReservedCard(card)) return state;
     const buff = state.playerBuffs?.[player];
 
     if (buff?.effects?.active === 'discard_reserved' || buff?.id === 'puppet_master') {
@@ -259,7 +265,7 @@ export const handleReserveCard = (state: GameState, payload: ReserveCardPayload)
         }
         // Remove from opponent hand
         state.playerReserved[opponent] = state.playerReserved[opponent].filter(
-            (c) => c.id !== card.id
+            (c) => !isVisibleReservedCard(c) || c.id !== card.id
         );
         state.playerReserved[player].push(card);
         state.toastMessage = 'The Collector: Card stolen!';

@@ -5,7 +5,8 @@ import { applyAction } from '../gameReducer';
 import { createGameSetupPayload } from '../gameSetup';
 import { INITIAL_STATE_SKELETON } from '../initialState';
 import { pickDeterministicBasicGemColor } from '../deterministicRandom';
-import type { GameAction, GameState, PlayerKey } from '../../types';
+import { getVisibleReservedCards } from '../multiplayerVisibility';
+import type { Card, GameAction, GameState, PlayerKey } from '../../types';
 
 const cloneState = <T>(value: T): T => structuredClone(value);
 const RUNTIME_CARD_SUFFIX_PATTERN = /-\d{13}-[a-z0-9]+$/i;
@@ -43,8 +44,8 @@ const toReplayInstanceState = (state: GameState): GameState => {
         p2: nextState.playerTableau.p2.map((card) => convertCard(card)!),
     };
     nextState.playerReserved = {
-        p1: nextState.playerReserved.p1.map((card) => convertCard(card)!),
-        p2: nextState.playerReserved.p2.map((card) => convertCard(card)!),
+        p1: getVisibleReservedCards(nextState.playerReserved.p1).map((card) => convertCard(card)!),
+        p2: getVisibleReservedCards(nextState.playerReserved.p2).map((card) => convertCard(card)!),
     };
 
     return nextState;
@@ -76,6 +77,14 @@ const moveMarketCardToReserved = (
 
     state.playerReserved[player].push(card);
     state.market[level][idx] = state.decks[level].pop() ?? null;
+};
+
+const getReservedCardForTest = (state: GameState, player: PlayerKey, index: number): Card => {
+    const card = getVisibleReservedCards(state.playerReserved[player])[index];
+    if (!card) {
+        throw new Error(`Missing visible reserved card for ${player} at index ${index}.`);
+    }
+    return card;
 };
 
 const createSpeculatorPurchaseState = (): GameState => {
@@ -198,14 +207,14 @@ describe('deterministic bonus rewards', () => {
         const actionA: GameAction = {
             type: 'BUY_CARD',
             payload: {
-                card: stateA.playerReserved.p1[0],
+                card: getReservedCardForTest(stateA, 'p1', 0),
                 source: 'reserved',
             },
         };
         const actionB: GameAction = {
             type: 'BUY_CARD',
             payload: {
-                card: stateB.playerReserved.p1[0],
+                card: getReservedCardForTest(stateB, 'p1', 0),
                 source: 'reserved',
             },
         };

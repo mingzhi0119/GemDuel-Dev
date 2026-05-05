@@ -1,7 +1,7 @@
 import { useEffect, useRef, type MutableRefObject } from 'react';
 import { shouldSendHostStateSync } from '@gemduel/shared/logic/networkDispatchPolicy';
+import { createRemoteMultiplayerViewForHost } from '@gemduel/shared/logic/multiplayerVisibility';
 import type { GameState } from '@gemduel/shared/types';
-import { buildReplayDeltaSync, buildReplayFullSync } from '@gemduel/shared/replay';
 import type { NetworkSyncReason } from '@gemduel/shared/types/network';
 import type { buildReplayRecorderFromHistory } from '@gemduel/shared/replay';
 import type { OnlineManagerController } from '../useOnlineManager';
@@ -43,15 +43,8 @@ export const useHostStateSync = ({
                 return;
             }
 
-            const replaySync = shouldSendFull
-                ? buildReplayFullSync(replayRecorder, gameState)
-                : buildReplayDeltaSync(
-                      replayRecorder,
-                      gameState,
-                      lastSentReplayRevisionRef.current
-                  );
             const reason = shouldSendFull ? nextReplaySyncReasonRef.current : 'TURN_SYNC';
-            online.sendState(gameState, reason, replaySync);
+            online.sendState(createRemoteMultiplayerViewForHost(gameState), reason);
             pendingReplayFullSyncRef.current = false;
             nextReplaySyncReasonRef.current = 'TURN_SYNC';
             lastSentReplayRevisionRef.current = replayRevision;

@@ -87,7 +87,11 @@ export const useGameLogic = (
 
     // 5. History Flattening
     useHistoryFlattening(gameState, historyControls, historyControls.historySource === 'live');
-    const playableHistoryControls = usePlayableHistoryControls(gameState.mode, historyControls);
+    const playableHistoryControls = usePlayableHistoryControls(
+        gameState.mode,
+        historyControls,
+        isReviewing
+    );
     const currentReplay = useMemo(() => {
         const recorder =
             gameState.mode === 'ONLINE_MULTIPLAYER' && !gameState.isHost

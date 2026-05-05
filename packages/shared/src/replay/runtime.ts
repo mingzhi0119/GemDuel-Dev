@@ -1,5 +1,6 @@
 import { BUFFS, GEM_TYPES, ROYAL_CARDS } from '../constants';
 import { INITIAL_STATE_SKELETON } from '../logic/initialState';
+import { getVisibleReservedCards } from '../logic/multiplayerVisibility';
 import { CLASSIC_CARDS, ROGUE_CARDS } from '../data/realCards';
 import type {
     BoardCell,
@@ -369,8 +370,12 @@ export const serializeReplayStateSnapshot = (
         ),
     },
     playerReserved: {
-        p1: state.playerReserved.p1.map((card) => resolveInstanceId(card, runtimeToInstance)),
-        p2: state.playerReserved.p2.map((card) => resolveInstanceId(card, runtimeToInstance)),
+        p1: getVisibleReservedCards(state.playerReserved.p1).map((card) =>
+            resolveInstanceId(card, runtimeToInstance)
+        ),
+        p2: getVisibleReservedCards(state.playerReserved.p2).map((card) =>
+            resolveInstanceId(card, runtimeToInstance)
+        ),
     },
     playerRoyals: {
         p1: state.playerRoyals.p1.map((card) => card.id),
@@ -596,7 +601,7 @@ const findCardInMarket = (state: GameState, marketRef: ReplayMarketRef) => {
 };
 
 const findCardByInstance = (state: GameState, instanceId: ReplayCardInstanceId, owner: PlayerKey) =>
-    state.playerReserved[owner].find((card) => card.id === instanceId) ??
+    getVisibleReservedCards(state.playerReserved[owner]).find((card) => card.id === instanceId) ??
     state.playerTableau[owner].find((card) => card.id === instanceId && !card.isBuff) ??
     null;
 

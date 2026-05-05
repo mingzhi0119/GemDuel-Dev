@@ -4,13 +4,14 @@ This archive keeps historical audit, remediation, certification, and planning ar
 
 ## Audits And Revalidations
 
+- Migration assessment: [Unity Migration Suitability Assessment 2026-05-04](audits/unity-migration-suitability-assessment-2026-05-04.md).
 - Latest completed audit: [Six-Subagent Engineering Audit 2026-05-02](audits/engineering-audit-report-2026-05-02-six-subagent.md) - completed and remediated.
 - Earlier audit set: [2026-04-25](audits/engineering-audit-report-2026-04-25.md), [2026-04-27](audits/engineering-audit-report-2026-04-27.md), [GPT-5.5 Pro 2026-04-28 Revalidation](audits/gpt-5.5-pro-2026-04-28-revalidation.md), [Opus 4.7 2026-04-27](audits/opus-4.7-engineering-audit-report-2026-04-27.md), [Opus 4.7 2026-04-20](audits/opus-4.7-independent-audit-report-2026-04-20.md), [Opus 4.7 2026-04-21](audits/opus-4.7-independent-audit-report-2026-04-21.md).
 
 ## Roadmaps And Implementation Plans
 
 - [Remaining Unstarted Backlog 2026-05-02](roadmaps/remaining-unstarted-backlog-2026-05-02.md)
-- Historical roadmaps: [GPT-5.5 Pro Remediation 2026-04-28](roadmaps/gpt-5.5-pro-2026-04-28-remediation-plan.md), [Market Card Preview 2026-04-28](roadmaps/market-card-preview-interaction-upgrade-2026-04-28.md), [Opus 4.7 Audit Roadmap 2026-04-27](roadmaps/opus-4.7-engineering-audit-roadmap-2026-04-27.md), [Player Zone Special Stacks 2026-04-27](roadmaps/player-zone-special-stacks-and-icon-retirement-plan-2026-04-27.md), [Light/Dark Runtime Theme Retirement 2026-04-27](roadmaps/theme-retirement-plan-2026-04-27.md).
+- Historical roadmaps: [Multiplayer Hidden Information 2026-05-05](roadmaps/multiplayer-hidden-information-roadmap-2026-05-05.md), [Replay-Only History Controls 2026-05-04](roadmaps/replay-only-history-controls-layout-requirement-2026-05-04.md), [GPT-5.5 Pro Remediation 2026-04-28](roadmaps/gpt-5.5-pro-2026-04-28-remediation-plan.md), [Market Card Preview 2026-04-28](roadmaps/market-card-preview-interaction-upgrade-2026-04-28.md), [Opus 4.7 Audit Roadmap 2026-04-27](roadmaps/opus-4.7-engineering-audit-roadmap-2026-04-27.md), [Player Zone Special Stacks 2026-04-27](roadmaps/player-zone-special-stacks-and-icon-retirement-plan-2026-04-27.md), [Light/Dark Runtime Theme Retirement 2026-04-27](roadmaps/theme-retirement-plan-2026-04-27.md).
 
 ## Certifications
 

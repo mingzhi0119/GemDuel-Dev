@@ -2,7 +2,9 @@ import React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GameState } from '@gemduel/shared/types';
+import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
+import { isHiddenReservedCard } from '@gemduel/shared/logic/multiplayerVisibility';
+import type { Card, GameState } from '@gemduel/shared/types';
 import type {
     BootstrapCommand,
     GuestIntentCommand,
@@ -151,6 +153,50 @@ const createGameState = (): GameState =>
         isHost: false,
     }) as GameState;
 
+const createOnlineHostState = (): GameState => ({
+    ...(JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState),
+    mode: 'ONLINE_MULTIPLAYER',
+    isHost: true,
+    hostPlayer: 'p1',
+    localPlayer: 'p1',
+    playerReserved: {
+        p1: [
+            {
+                id: 'host-private-reserved',
+                level: 1,
+                cost: {
+                    blue: 0,
+                    white: 0,
+                    green: 0,
+                    black: 0,
+                    red: 2,
+                    pearl: 0,
+                    gold: 0,
+                },
+                points: 1,
+                ability: 'steal',
+                bonusColor: 'red',
+            },
+        ],
+        p2: [
+            {
+                id: 'guest-own-reserved',
+                level: 1,
+                cost: {
+                    blue: 0,
+                    white: 0,
+                    green: 0,
+                    black: 0,
+                    red: 0,
+                    pearl: 0,
+                    gold: 0,
+                },
+                points: 0,
+            },
+        ],
+    },
+});
+
 describe('useOnlineManager', () => {
     let root: Root | null = null;
     let container: HTMLDivElement | null = null;
@@ -285,7 +331,9 @@ describe('useOnlineManager', () => {
         const state = createGameState();
 
         act(() => {
-            currentResult?.sendBootstrap(bootstrapCommand, 'checksum-123');
+            currentResult?.sendBootstrap(bootstrapCommand, 'checksum-123', {
+                leak: 'unsafe-replay-full',
+            } as never);
             currentResult?.sendGuestIntent('guest-req', guestIntent);
             currentResult?.sendHostDecision(hostDecision);
             currentResult?.sendState(state, 'RECOVERY');
@@ -323,6 +371,7 @@ describe('useOnlineManager', () => {
                 requestId: 'recover-1',
             },
         ]);
+        expect(connection.sent[0]).not.toHaveProperty('replayFull');
 
         expect(reportReleaseHealth).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -368,5 +417,52 @@ describe('useOnlineManager', () => {
 
         expect(currentResult?.remotePeerId).toBe('peer-guest');
         expect(currentResult?.connectionStatus).toBe('connected');
+    });
+
+    it('redacts host state snapshots before sending them to the guest', () => {
+        renderHarness(true);
+        const peer = harness.peers[0];
+
+        act(() => {
+            currentResult?.connectToPeer('peer-guest');
+        });
+
+        const connection = peer.lastConnection as FakeConnectionLike;
+
+        act(() => {
+            connection.emit('open');
+        });
+
+        act(() => {
+            currentResult?.sendState(createOnlineHostState(), 'TURN_SYNC', {
+                leak: 'unsafe-replay-sync',
+            } as never);
+        });
+
+        const syncState = connection.sent.find((message) => message.type === 'SYNC_STATE');
+
+        expect(syncState).toMatchObject({
+            version: NETWORK_PROTOCOL_VERSION,
+            type: 'SYNC_STATE',
+            reason: 'TURN_SYNC',
+        });
+        if (syncState?.type !== 'SYNC_STATE') {
+            throw new Error('Expected SYNC_STATE payload.');
+        }
+
+        expect(syncState.snapshot.isHost).toBe(false);
+        expect(syncState.snapshot.localPlayer).toBe('p2');
+        expect(isHiddenReservedCard(syncState.snapshot.playerReserved.p1[0])).toBe(true);
+        expect((syncState.snapshot.playerReserved.p2[0] as Card | undefined)?.id).toBe(
+            'guest-own-reserved'
+        );
+        expect(JSON.stringify(syncState.snapshot)).not.toContain('host-private-reserved');
+        const hiddenReserved = JSON.stringify(syncState.snapshot.playerReserved.p1[0]);
+        expect(hiddenReserved).not.toContain('steal');
+        expect(hiddenReserved).not.toContain('bonusColor');
+        expect(hiddenReserved).not.toContain('cost');
+        expect(hiddenReserved).not.toContain('points');
+        expect(syncState).not.toHaveProperty('replaySync');
+        expect(JSON.stringify(syncState)).not.toContain('unsafe-replay-sync');
     });
 });

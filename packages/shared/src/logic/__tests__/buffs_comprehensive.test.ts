@@ -350,7 +350,10 @@ describe('Comprehensive Buff Tests', () => {
             });
 
             state = produce(state, (draft) => {
-                handleBuyCard(draft, { card: state.playerReserved.p1[0], source: 'reserved' });
+                handleBuyCard(draft, {
+                    card: state.playerReserved.p1[0] as Card,
+                    source: 'reserved',
+                });
             });
 
             const total = Object.values(state.inventories.p1).reduce((a, b) => a + b, 0);
@@ -535,14 +538,14 @@ describe('Comprehensive Buff Tests', () => {
 
             state = produce(state, (draft) => {
                 handleReserveCard(draft, {
-                    card: state.playerReserved.p2[0],
+                    card: state.playerReserved.p2[0] as Card,
                     isSteal: true,
                     level: 1,
                     idx: 0,
                 });
             });
 
-            expect(state.playerReserved.p1[0].id).toBe('target');
+            expect((state.playerReserved.p1[0] as Card).id).toBe('target');
             expect(state.playerReserved.p2.length).toBe(0);
 
             // Win condition test

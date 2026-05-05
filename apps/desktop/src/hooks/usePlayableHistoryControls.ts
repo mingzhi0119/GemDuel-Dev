@@ -11,10 +11,11 @@ interface HistoryControls {
 
 export const usePlayableHistoryControls = <T extends HistoryControls>(
     mode: GameMode,
-    historyControls: T
+    historyControls: T,
+    allowTimeTravel = false
 ) =>
     useMemo(() => {
-        const isBlocked = isHistoryTimeTravelBlocked(mode);
+        const isBlocked = !allowTimeTravel && isHistoryTimeTravelBlocked(mode);
 
         return {
             ...historyControls,
@@ -23,4 +24,4 @@ export const usePlayableHistoryControls = <T extends HistoryControls>(
             canUndo: !isBlocked && historyControls.canUndo,
             canRedo: !isBlocked && historyControls.canRedo,
         };
-    }, [historyControls, mode]);
+    }, [allowTimeTravel, historyControls, mode]);

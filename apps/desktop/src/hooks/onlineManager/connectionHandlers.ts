@@ -3,6 +3,7 @@ import type { DataConnection } from 'peerjs';
 import type { GameState } from '@gemduel/shared/types';
 import type { ReplayFullSync } from '@gemduel/shared/replay';
 import { createReasonTelemetryContext } from '@gemduel/shared/logic/reasonCatalog';
+import { createRemoteMultiplayerViewForHost } from '@gemduel/shared/logic/multiplayerVisibility';
 import { reportRendererEvent } from '../../observability/rendererLogger';
 import { NETWORK_PROTOCOL_VERSION, type NetworkMessage } from '@gemduel/shared/types/network';
 import { getInboundMessageCheck } from '@gemduel/shared/logic/networkProtocol';
@@ -31,7 +32,6 @@ export const registerConnectionHandlers = ({
     isHostRef,
     reconnectAttempts,
     getCurrentStateRef,
-    getCurrentReplayFullSyncRef,
     handleHeartbeat,
     sendMessage,
     setConn,
@@ -133,9 +133,8 @@ export const registerConnectionHandlers = ({
                     sendMessage({
                         version: NETWORK_PROTOCOL_VERSION,
                         type: 'SYNC_STATE',
-                        snapshot: getCurrentStateRef(),
+                        snapshot: createRemoteMultiplayerViewForHost(getCurrentStateRef()),
                         reason: 'RECOVERY',
-                        replaySync: getCurrentReplayFullSyncRef?.() ?? undefined,
                     });
                 }
                 break;

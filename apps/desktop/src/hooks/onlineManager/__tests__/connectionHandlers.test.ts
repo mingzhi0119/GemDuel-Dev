@@ -4,6 +4,7 @@ import type { DataConnection } from 'peerjs';
 import type { GameState } from '@gemduel/shared/types';
 import { createGameSetupPayload } from '@gemduel/shared/logic/gameSetup';
 import { INITIAL_STATE_SKELETON } from '@gemduel/shared/logic/initialState';
+import { isHiddenReservedCard } from '@gemduel/shared/logic/multiplayerVisibility';
 import {
     NETWORK_PROTOCOL_VERSION,
     type BootstrapCommand,
@@ -52,6 +53,35 @@ const asConnection = (connection: FakeConnection) => connection as unknown as Da
 
 const createState = (): GameState =>
     JSON.parse(JSON.stringify(INITIAL_STATE_SKELETON)) as GameState;
+
+const createOnlineHostState = (): GameState => ({
+    ...createState(),
+    mode: 'ONLINE_MULTIPLAYER',
+    isHost: true,
+    hostPlayer: 'p1',
+    localPlayer: 'p1',
+    playerReserved: {
+        p1: [
+            {
+                id: 'recovery-private-host-card',
+                level: 2,
+                cost: {
+                    blue: 0,
+                    white: 0,
+                    green: 0,
+                    black: 0,
+                    red: 3,
+                    pearl: 0,
+                    gold: 0,
+                },
+                points: 2,
+                ability: 'bonus_gem',
+                bonusColor: 'red',
+            },
+        ],
+        p2: [],
+    },
+});
 
 describe('registerConnectionHandlers', () => {
     beforeEach(() => {
@@ -238,7 +268,7 @@ describe('registerConnectionHandlers', () => {
         const connection = new FakeConnection();
         const handlersRef = createRef(createHandlers());
         const sendMessage = vi.fn();
-        const state = createState();
+        const state = createOnlineHostState();
         const guestIntent: GuestIntentCommand = { kind: 'CLOSE_MODAL' };
 
         registerConnectionHandlers({
@@ -271,13 +301,22 @@ describe('registerConnectionHandlers', () => {
             'guest-1',
             guestIntent
         );
-        expect(sendMessage).toHaveBeenCalledWith({
-            version: NETWORK_PROTOCOL_VERSION,
-            type: 'SYNC_STATE',
-            snapshot: state,
-            reason: 'RECOVERY',
-            replaySync: undefined,
-        });
+        expect(sendMessage).toHaveBeenCalledWith(
+            expect.objectContaining({
+                version: NETWORK_PROTOCOL_VERSION,
+                type: 'SYNC_STATE',
+                reason: 'RECOVERY',
+            })
+        );
+        const recoveryPayload = sendMessage.mock.calls[0]?.[0];
+        expect(recoveryPayload).not.toHaveProperty('replaySync');
+        expect(recoveryPayload.snapshot.isHost).toBe(false);
+        expect(recoveryPayload.snapshot.localPlayer).toBe('p2');
+        expect(isHiddenReservedCard(recoveryPayload.snapshot.playerReserved.p1[0])).toBe(true);
+        expect(JSON.stringify(recoveryPayload.snapshot)).not.toContain(
+            'recovery-private-host-card'
+        );
+        expect(JSON.stringify(recoveryPayload.snapshot)).not.toContain('bonus_gem');
         expect(reportRendererEvent).toHaveBeenCalledWith(
             expect.objectContaining({
                 category: 'recovery',

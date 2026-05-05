@@ -11,6 +11,7 @@ import type {
     RecoveryReason,
 } from '@gemduel/shared/types/network';
 import { NETWORK_PROTOCOL_VERSION } from '@gemduel/shared/types/network';
+import { createRemoteMultiplayerViewForHost } from '@gemduel/shared/logic/multiplayerVisibility';
 import { useConnectionHealth } from './useConnectionHealth';
 import { createReasonTelemetryContext } from '@gemduel/shared/logic/reasonCatalog';
 import { logRendererMessage, reportRendererEvent } from '../observability/rendererLogger';
@@ -182,13 +183,12 @@ export const useOnlineManager = (
     );
 
     const sendBootstrap = useCallback(
-        (command: BootstrapCommand, checksum?: string, replayFull?: ReplayFullSync) => {
+        (command: BootstrapCommand, checksum?: string) => {
             sendMessage({
                 version: NETWORK_PROTOCOL_VERSION,
                 type: 'BOOTSTRAP_STATE',
                 command,
                 checksum,
-                replayFull,
             });
         },
         [sendMessage]
@@ -219,12 +219,16 @@ export const useOnlineManager = (
 
     const sendState = useCallback(
         (state: GameState, reason: NetworkSyncReason = 'TURN_SYNC', replaySync?: ReplaySync) => {
+            const shouldRedactForGuest = state.mode === 'ONLINE_MULTIPLAYER' && state.isHost;
+            const snapshot = shouldRedactForGuest
+                ? createRemoteMultiplayerViewForHost(state)
+                : state;
             sendMessage({
                 version: NETWORK_PROTOCOL_VERSION,
                 type: 'SYNC_STATE',
-                snapshot: state,
+                snapshot,
                 reason,
-                replaySync,
+                ...(!shouldRedactForGuest && replaySync ? { replaySync } : {}),
             });
         },
         [sendMessage]

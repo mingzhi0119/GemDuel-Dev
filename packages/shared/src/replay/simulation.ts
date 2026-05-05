@@ -6,6 +6,7 @@ import { buildStartGameAction } from '../logic/gameSetup';
 import { INITIAL_STATE_SKELETON } from '../logic/initialState';
 import { buildSelectBuffAction } from '../logic/interactionCommands';
 import { getCrownCount, getPlayerScore } from '../logic/selectors';
+import { getVisibleReservedCards } from '../logic/multiplayerVisibility';
 import type { GameAction, GameState, GemCoord, GemColor, PlayerKey } from '../types';
 import { evaluateReplayPerformance } from './evaluation';
 import {
@@ -246,7 +247,7 @@ const buildFallbackCandidates = (state: GameState): GameAction[] => {
         }
     }
 
-    for (const card of state.playerReserved[actor]) {
+    for (const card of getVisibleReservedCards(state.playerReserved[actor])) {
         if (card.bonusColor === 'gold') {
             if (canActionRunInPhase('BUY_CARD', state.phase)) {
                 candidates.push({

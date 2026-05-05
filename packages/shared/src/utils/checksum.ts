@@ -35,6 +35,16 @@ const sortCardSummaries = (cards: Card[]) =>
         .map((card) => summarizeCard(card))
         .sort((left, right) => stableJsonStringify(left).localeCompare(stableJsonStringify(right)));
 
+const summarizeReservedCards = (
+    cards: GameState['playerReserved'][keyof GameState['playerReserved']]
+) => {
+    // Multiplayer guests receive anonymous reserved-card backs, so the sync hash
+    // can only compare the public slot shape without leaking card identities.
+    return cards.map((_, slotIndex) => ({
+        slotIndex,
+    }));
+};
+
 /**
  * Generates a simple checksum (hash) for the game state.
  * This is used to detect desynchronization between clients in online mode.
@@ -56,8 +66,8 @@ export const generateGameStateHash = (state: GameState | null): string => {
             p2: sortCardSummaries(state.playerTableau.p2),
         },
         playerReserved: {
-            p1: sortCardSummaries(state.playerReserved.p1),
-            p2: sortCardSummaries(state.playerReserved.p2),
+            p1: summarizeReservedCards(state.playerReserved.p1),
+            p2: summarizeReservedCards(state.playerReserved.p2),
         },
         market: {
             1: state.market[1].map((card) => summarizeCard(card)),

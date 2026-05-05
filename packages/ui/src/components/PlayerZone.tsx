@@ -81,6 +81,9 @@ export const PlayerZone = ({
     surfaceArtwork,
     surfaceVariant,
     readabilityTreatment = false,
+    reservedVisibility = 'faces',
+    tableauVisibility = 'faces',
+    gemVisibility = 'visible',
     pendingReservedCardIds = [],
     onPreviewStack,
     buffPreviewAction,
@@ -226,6 +229,8 @@ export const PlayerZone = ({
             onGemClick={onGemClick}
             onSelectStack={handleSelectStack}
             readabilityTreatment={readabilityTreatment}
+            tableauVisibility={tableauVisibility}
+            gemVisibility={gemVisibility}
         />
     );
     const reservedColumn = (
@@ -242,6 +247,7 @@ export const PlayerZone = ({
             pendingReservedCardIds={pendingReservedCardIds}
             dividerSide={player === 'p1' ? 'right' : 'left'}
             readabilityTreatment={readabilityTreatment}
+            reservedVisibility={reservedVisibility}
         />
     );
 

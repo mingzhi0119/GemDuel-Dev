@@ -56,14 +56,26 @@ vi.mock('@gemduel/ui/components/PlayerZone', () => ({
     PlayerZone: ({
         player,
         readabilityTreatment,
+        reserved,
+        reservedVisibility,
+        tableauVisibility,
+        gemVisibility,
     }: {
         player?: string;
         readabilityTreatment?: boolean;
+        reserved?: unknown[];
+        reservedVisibility?: string;
+        tableauVisibility?: string;
+        gemVisibility?: string;
     }) => (
         <div
             data-testid="player-zone-smoke"
             data-player={player}
             data-readability-treatment={readabilityTreatment ? 'true' : 'false'}
+            data-reserved-visibility={reservedVisibility}
+            data-tableau-visibility={tableauVisibility}
+            data-gem-visibility={gemVisibility}
+            data-reserved-first={JSON.stringify(reserved?.[0] ?? null)}
         />
     ),
 }));
@@ -152,8 +164,10 @@ const createGameController = (): AppRouteProps['game'] => {
             redo: vi.fn(),
             canUndo: false,
             canRedo: false,
+            jumpToStep: vi.fn(),
             currentIndex: 0,
             historyLength: 0,
+            historySource: 'live',
         },
         online: {
             isHost: true,
@@ -326,6 +340,25 @@ describe('shell smoke coverage', () => {
         );
 
         expect(container?.querySelector('[data-testid="game-board-smoke"]')).not.toBeNull();
+        expect(container?.querySelector('[data-testid="replay-controls-smoke"]')).toBeNull();
+    });
+
+    it('renders GamePlaySurface replay controls only when requested for review mode', () => {
+        renderElement(
+            <GamePlaySurface
+                game={createGameController()}
+                layout={layout}
+                theme="dark"
+                effectiveGameMode="REVIEW"
+                localPlayer="p1"
+                gemBoardSurfaceStyle={{}}
+                gemPanelSkin={getGemPanelSkin('dark')}
+                marketSurfaceStyle={{}}
+                showReplayControls={true}
+            />
+        );
+
+        expect(container?.querySelector('[data-testid="replay-controls-smoke"]')).not.toBeNull();
     });
 
     it('renders PlayerRail with mocked player zones', () => {
@@ -353,6 +386,66 @@ describe('shell smoke coverage', () => {
         expect(p2Frame?.className).toContain('border-[3px]');
         expect(p2Frame?.className).toContain('border-transparent');
         expect(p2Frame?.className).not.toContain('border-slate');
+    });
+
+    it('passes multiplayer reserved backs and LAN local hiding preferences into PlayerZone', () => {
+        const game = createGameController();
+        game.state = {
+            ...game.state,
+            mode: 'ONLINE_MULTIPLAYER',
+            isHost: true,
+            hostPlayer: 'p1',
+            localPlayer: 'p1',
+            playerReserved: {
+                p1: [],
+                p2: [
+                    {
+                        id: 'opponent-private-reserved',
+                        level: 1,
+                        cost: {
+                            blue: 0,
+                            white: 0,
+                            green: 0,
+                            black: 0,
+                            red: 1,
+                            pearl: 0,
+                            gold: 0,
+                        },
+                        points: 1,
+                    },
+                ],
+            },
+        };
+
+        renderElement(
+            <PlayerRail
+                game={game}
+                theme="dark"
+                effectiveGameMode="IDLE"
+                scaledZoneWrapperStyle={{}}
+                playerRailStyle={{}}
+                isP1ZoneActive={true}
+                isP2ZoneActive={false}
+                lanOpponentVisibilityPreferences={{
+                    showOpponentPlayerZoneCards: false,
+                    showOpponentGems: false,
+                }}
+            />
+        );
+
+        const p1Zone = container?.querySelector<HTMLElement>(
+            '[data-testid="player-zone-smoke"][data-player="p1"]'
+        );
+        const p2Zone = container?.querySelector<HTMLElement>(
+            '[data-testid="player-zone-smoke"][data-player="p2"]'
+        );
+
+        expect(p1Zone?.dataset.reservedVisibility).toBe('faces');
+        expect(p1Zone?.dataset.tableauVisibility).toBe('faces');
+        expect(p1Zone?.dataset.gemVisibility).toBe('visible');
+        expect(p2Zone?.dataset.reservedVisibility).toBe('backs');
+        expect(p2Zone?.dataset.tableauVisibility).toBe('backs');
+        expect(p2Zone?.dataset.gemVisibility).toBe('hidden');
     });
 
     it('renders GameShell without throwing through the excluded composition shell', () => {
@@ -392,10 +485,86 @@ describe('shell smoke coverage', () => {
                 '[data-testid="game-actions-smoke"][data-readability-treatment="true"]'
             )
         ).not.toBeNull();
+        expect(container?.querySelector('[data-testid="replay-controls-smoke"]')).toBeNull();
         expect(
             container?.querySelectorAll(
                 '[data-testid="player-zone-smoke"][data-readability-treatment="true"]'
             ).length
         ).toBe(2);
+    });
+
+    it('redacts opponent reserved cards in the GameShell player rail view', () => {
+        const game = createGameController();
+        game.state = {
+            ...game.state,
+            mode: 'ONLINE_MULTIPLAYER',
+            isHost: true,
+            hostPlayer: 'p1',
+            localPlayer: 'p1',
+            playerReserved: {
+                p1: [],
+                p2: [
+                    {
+                        id: 'shell-private-opponent-reserved',
+                        level: 1,
+                        cost: {
+                            blue: 0,
+                            white: 0,
+                            green: 0,
+                            black: 0,
+                            red: 1,
+                            pearl: 0,
+                            gold: 0,
+                        },
+                        points: 1,
+                    },
+                ],
+            },
+        };
+
+        renderElement(
+            <GameShell
+                appVersion="5.2.11"
+                game={game}
+                lan={lanController}
+                layout={layout}
+                theme="dark"
+                ui={{
+                    ...uiState,
+                    matchmakingRoute: 'lan',
+                    lanShowOpponentPlayerZoneCards: false,
+                    lanShowOpponentGems: false,
+                }}
+                setters={uiSetters}
+                callbacks={uiCallbacks}
+            />
+        );
+
+        const p2Zone = container?.querySelector<HTMLElement>(
+            '[data-testid="player-zone-smoke"][data-player="p2"]'
+        );
+
+        expect(p2Zone?.dataset.reservedVisibility).toBe('backs');
+        expect(p2Zone?.dataset.tableauVisibility).toBe('backs');
+        expect(p2Zone?.dataset.gemVisibility).toBe('hidden');
+        expect(p2Zone?.dataset.reservedFirst).toContain('isHiddenReservedCard');
+        expect(p2Zone?.dataset.reservedFirst).not.toContain('shell-private-opponent-reserved');
+    });
+
+    it('shows GameShell replay controls while review mode is active', () => {
+        renderElement(
+            <GameShell
+                appVersion="5.2.11"
+                game={createGameController()}
+                lan={lanController}
+                layout={layout}
+                theme="dark"
+                ui={{ ...uiState, isReviewing: true }}
+                setters={uiSetters}
+                callbacks={uiCallbacks}
+            />
+        );
+
+        expect(container?.querySelector('[data-testid="replay-controls-smoke"]')).not.toBeNull();
     });
 });

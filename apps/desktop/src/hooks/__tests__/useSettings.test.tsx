@@ -82,6 +82,8 @@ describe('useSettings', () => {
         expect(stored.theme).toBeUndefined();
         expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
         expect(stored.soundEnabled).toBe(true);
+        expect(stored.lanShowOpponentPlayerZoneCards).toBe(true);
+        expect(stored.lanShowOpponentGems).toBe(true);
         expect(stored.desktopAspectRatio).toBeUndefined();
         expect(stored.locale).toBeUndefined();
     });
@@ -114,11 +116,15 @@ describe('useSettings', () => {
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('zh');
         expect(currentResult?.soundEnabled).toBe(false);
+        expect(currentResult?.lanShowOpponentPlayerZoneCards).toBe(true);
+        expect(currentResult?.lanShowOpponentGems).toBe(true);
         expect(currentResult?.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
 
         act(() => {
             currentResult?.setLocale('en');
             currentResult?.setSoundEnabled(true);
+            currentResult?.setLanShowOpponentPlayerZoneCards(false);
+            currentResult?.setLanShowOpponentGems(false);
             currentResult?.setSurfaceTheme((current) => ({
                 ...current,
                 background: 'royal-luxury',
@@ -130,6 +136,8 @@ describe('useSettings', () => {
         expect(currentResult?.theme).toBe('dark');
         expect(currentResult?.locale).toBe('en');
         expect(currentResult?.soundEnabled).toBe(true);
+        expect(currentResult?.lanShowOpponentPlayerZoneCards).toBe(false);
+        expect(currentResult?.lanShowOpponentGems).toBe(false);
         expect(currentResult?.surfaceTheme.playerZone).toBe('dark-arcane');
         expect(currentResult?.surfaceTheme.background).toBe('royal-luxury');
         expect(currentResult?.surfaceTheme.gemPanel).toBe('royal-luxury');
@@ -139,6 +147,8 @@ describe('useSettings', () => {
         expect(stored).toMatchObject({
             locale: 'en',
             soundEnabled: true,
+            lanShowOpponentPlayerZoneCards: false,
+            lanShowOpponentGems: false,
         });
         expect(stored.theme).toBeUndefined();
         expect(stored.desktopAspectRatio).toBeUndefined();
@@ -171,6 +181,8 @@ describe('useSettings', () => {
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
         expect(stored.soundEnabled).toBe(true);
+        expect(stored.lanShowOpponentPlayerZoneCards).toBe(true);
+        expect(stored.lanShowOpponentGems).toBe(true);
         expect(stored.surfaceThemeDefaultVersion).toBe('royal-luxury-default-2026-04-29');
     });
 
@@ -209,6 +221,8 @@ describe('useSettings', () => {
         expect(stored.theme).toBeUndefined();
         expect(stored.surfaceTheme).toEqual(DEFAULT_SURFACE_THEME_SELECTIONS);
         expect(stored.soundEnabled).toBe(true);
+        expect(stored.lanShowOpponentPlayerZoneCards).toBe(true);
+        expect(stored.lanShowOpponentGems).toBe(true);
         expect(stored.desktopAspectRatio).toBeUndefined();
         expect(stored.locale).toBeUndefined();
     });
@@ -243,6 +257,8 @@ describe('useSettings', () => {
         const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored).toMatchObject({ locale: 'zh' });
         expect(stored.soundEnabled).toBe(true);
+        expect(stored.lanShowOpponentPlayerZoneCards).toBe(true);
+        expect(stored.lanShowOpponentGems).toBe(true);
         expect(stored.theme).toBeUndefined();
         expect(stored.desktopAspectRatio).toBeUndefined();
     });
@@ -288,6 +304,33 @@ describe('useSettings', () => {
 
         stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
         expect(stored.soundEnabled).toBe(true);
+    });
+
+    it('persists LAN opponent visibility preferences locally', () => {
+        window.localStorage.setItem(
+            SETTINGS_STORAGE_KEY,
+            JSON.stringify({
+                lanShowOpponentPlayerZoneCards: false,
+                lanShowOpponentGems: false,
+            })
+        );
+
+        renderHarness();
+
+        expect(currentResult?.lanShowOpponentPlayerZoneCards).toBe(false);
+        expect(currentResult?.lanShowOpponentGems).toBe(false);
+
+        act(() => {
+            currentResult?.setLanShowOpponentPlayerZoneCards(true);
+            currentResult?.setLanShowOpponentGems((current) => !current);
+        });
+
+        expect(currentResult?.lanShowOpponentPlayerZoneCards).toBe(true);
+        expect(currentResult?.lanShowOpponentGems).toBe(true);
+
+        const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) ?? '{}');
+        expect(stored.lanShowOpponentPlayerZoneCards).toBe(true);
+        expect(stored.lanShowOpponentGems).toBe(true);
     });
 
     it('keeps in-memory settings when localStorage persistence throws', () => {

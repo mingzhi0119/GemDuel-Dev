@@ -24,6 +24,7 @@ import {
 } from './presentationPreview';
 import { getShouldShowGemPanelCalibrationOverlay } from './surfacePreviewQuery';
 import { useGameShellPreviewController } from './useGameShellPreviewController';
+import { createMultiplayerViewForPlayer } from '@gemduel/shared/logic/multiplayerVisibility';
 
 export function GameShell({
     appVersion,
@@ -53,6 +54,25 @@ export function GameShell({
     const isP2ZoneActive = turn === 'p2' && !ui.isReviewing && !winner;
     const effectiveGameMode = ui.isReviewing ? 'REVIEW' : winner ? 'GAME_OVER' : phase;
     const localPlayer = state.localPlayer;
+    const playerRailState = useMemo<typeof state>(() => {
+        if (state.mode !== 'ONLINE_MULTIPLAYER') {
+            return state;
+        }
+
+        return {
+            ...state,
+            ...createMultiplayerViewForPlayer(state, localPlayer),
+        };
+    }, [localPlayer, state]);
+    const playerRailGame = useMemo(
+        () => ({
+            ...game,
+            state: playerRailState,
+        }),
+        [game, playerRailState]
+    );
+    const showLanVisibilitySettings =
+        ui.matchmakingRoute === 'lan' && state.mode === 'ONLINE_MULTIPLAYER';
     const presentation = usePresentationEvents({
         state,
         currentIndex: historyControls.currentIndex,
@@ -246,6 +266,11 @@ export function GameShell({
                 onSelectSurfaceTheme={callbacks.selectSurfaceTheme}
                 soundEnabled={ui.soundEnabled}
                 onToggleSound={() => setters.setSoundEnabled((current) => !current)}
+                showLanVisibilitySettings={showLanVisibilitySettings}
+                lanShowOpponentPlayerZoneCards={ui.lanShowOpponentPlayerZoneCards ?? true}
+                lanShowOpponentGems={ui.lanShowOpponentGems ?? true}
+                onSetLanShowOpponentPlayerZoneCards={setters.setLanShowOpponentPlayerZoneCards}
+                onSetLanShowOpponentGems={setters.setLanShowOpponentGems}
             />
 
             <AppOverlayStack
@@ -322,10 +347,11 @@ export function GameShell({
                 onPreviewDeckReserve={previewDeckReserve}
                 onPreviewRoyal={previewRoyalCard}
                 readabilityTreatment={readabilityTreatment}
+                showReplayControls={ui.isReviewing}
             />
 
             <PlayerRail
-                game={game}
+                game={playerRailGame}
                 theme={theme}
                 effectiveGameMode={effectiveGameMode}
                 scaledZoneWrapperStyle={scaledZoneWrapperStyle}
@@ -337,6 +363,15 @@ export function GameShell({
                 onPreviewStack={previewPlayerStack}
                 buffPreviewActions={buffPreviewActions}
                 readabilityTreatment={readabilityTreatment}
+                lanOpponentVisibilityPreferences={
+                    showLanVisibilitySettings
+                        ? {
+                              showOpponentPlayerZoneCards:
+                                  ui.lanShowOpponentPlayerZoneCards ?? true,
+                              showOpponentGems: ui.lanShowOpponentGems ?? true,
+                          }
+                        : undefined
+                }
             />
         </div>
     );

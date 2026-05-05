@@ -55,6 +55,7 @@ interface GamePlaySurfaceProps {
     onPreviewDeckReserve?: (level: 1 | 2 | 3) => void;
     onPreviewRoyal?: (card: RoyalCard) => void;
     readabilityTreatment?: boolean;
+    showReplayControls?: boolean;
 }
 
 const MARKET_ROW_GAP_PX = 6;
@@ -87,6 +88,7 @@ export function GamePlaySurface({
     onPreviewDeckReserve,
     onPreviewRoyal,
     readabilityTreatment = false,
+    showReplayControls = false,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
     const {
@@ -290,37 +292,33 @@ export function GamePlaySurface({
                                 royalCardBackArtwork={royalCardBackArtwork}
                                 readabilityTreatment={readabilityTreatment}
                             />
-                            <div
-                                data-readability-hud-chip={
-                                    readabilityTreatment ? 'replay-controls' : undefined
-                                }
-                                className={`flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500 ${
-                                    readabilityTreatment
-                                        ? `${READABILITY_HUD_FLAT_GLASS_CLASS} rounded-2xl`
-                                        : ''
-                                }`}
-                            >
-                                <ReplayControls
-                                    undo={historyControls.undo}
-                                    redo={historyControls.redo}
-                                    fastForward={() =>
-                                        historyControls.jumpToStep(
-                                            historyControls.historyLength - 1
-                                        )
+                            {showReplayControls && (
+                                <div
+                                    data-readability-hud-chip={
+                                        readabilityTreatment ? 'replay-controls' : undefined
                                     }
-                                    canUndo={
-                                        state.mode !== 'ONLINE_MULTIPLAYER' &&
-                                        historyControls.canUndo
-                                    }
-                                    canRedo={
-                                        state.mode !== 'ONLINE_MULTIPLAYER' &&
-                                        historyControls.canRedo
-                                    }
-                                    currentIndex={historyControls.currentIndex}
-                                    historyLength={historyControls.historyLength}
-                                    theme={theme}
-                                />
-                            </div>
+                                    className={`flex flex-col gap-3 items-center p-2 lg:p-3 transition-colors duration-500 ${
+                                        readabilityTreatment
+                                            ? `${READABILITY_HUD_FLAT_GLASS_CLASS} rounded-2xl`
+                                            : ''
+                                    }`}
+                                >
+                                    <ReplayControls
+                                        undo={historyControls.undo}
+                                        redo={historyControls.redo}
+                                        fastForward={() =>
+                                            historyControls.jumpToStep(
+                                                historyControls.historyLength - 1
+                                            )
+                                        }
+                                        canUndo={historyControls.canUndo}
+                                        canRedo={historyControls.canRedo}
+                                        currentIndex={historyControls.currentIndex}
+                                        historyLength={historyControls.historyLength}
+                                        theme={theme}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
