@@ -1,4 +1,4 @@
-import { GameGlyph } from '@gemduel/ui/components/GameGlyph';
+import { ArrowLeft } from 'lucide-react';
 import {
     TOOLTIP_LABEL_CLASS,
     getTooltipLabelThemeClass,
@@ -33,8 +33,8 @@ export function VisualLabRestartButton({
         <div className="absolute right-5 top-0 z-[200] flex h-24 items-center lg:right-7 lg:h-[120px]">
             <button
                 type="button"
-                data-app-restart-button="true"
-                data-readability-hud-chip={readabilityTreatment ? 'visual-lab-restart' : undefined}
+                data-visual-lab-close-button="true"
+                data-readability-hud-chip={readabilityTreatment ? 'visual-lab-close' : undefined}
                 onClick={onCloseToStartPage}
                 className={`group relative flex h-20 w-20 items-center justify-center rounded-full border-0 bg-transparent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 lg:h-24 lg:w-24 ${restartIconButtonClass} ${
                     readabilityTreatment ? READABILITY_HUD_GLASS_CLASS : ''
@@ -47,7 +47,7 @@ export function VisualLabRestartButton({
                 aria-label={label}
                 aria-describedby={tooltipId}
             >
-                <GameGlyph variant="restart" size={48} />
+                <ArrowLeft size={42} aria-hidden="true" strokeWidth={2.5} />
                 <span
                     id={tooltipId}
                     role="tooltip"

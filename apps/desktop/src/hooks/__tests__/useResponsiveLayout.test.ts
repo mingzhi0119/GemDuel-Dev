@@ -179,6 +179,18 @@ describe('Responsive layout adaptation', () => {
             ...expectedDesktopSizing(2160),
         });
 
+        expectLayoutMatch(calculateResponsiveLayout(900, 700), {
+            layoutMode: 'desktop-4k',
+            viewportWidth: 900,
+            viewportHeight: 700,
+            stageCanvasWidthPx: 3840,
+            stageCanvasHeightPx: 2160,
+            stageScale: 900 / 3840,
+            stageInsetXPx: 0,
+            stageInsetYPx: 97,
+            ...expectedDesktopSizing(2160),
+        });
+
         expectLayoutMatch(calculateResponsiveLayout(3440, 1440), {
             layoutMode: 'desktop-4k',
             viewportWidth: 3440,
@@ -320,6 +332,7 @@ describe('Responsive layout adaptation', () => {
 
     it('keeps one fixed 16:9 logical canvas across desktop viewports', () => {
         expectFixedDesktopCanvas([
+            [900, 700],
             [1440, 900],
             [1920, 1200],
             [3840, 2400],
@@ -438,6 +451,7 @@ describe('Responsive layout adaptation', () => {
 
     it('keeps desktop chrome stable while scaling the play surface by logical width or height', () => {
         [
+            [900, 700],
             [1280, 720],
             [1366, 768],
             [1440, 900],

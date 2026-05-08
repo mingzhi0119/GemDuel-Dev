@@ -21,6 +21,9 @@ describe('AppOverlayStack', () => {
         overrides: Partial<{
             isReviewing: boolean;
             phase: (typeof GAME_PHASES)[keyof typeof GAME_PHASES];
+            showRestartConfirm: boolean;
+            onCancelRestart: () => void;
+            onConfirmRestart: () => void;
         }> = {}
     ) => {
         container = document.createElement('div');
@@ -35,14 +38,14 @@ describe('AppOverlayStack', () => {
                         showRulebook={false}
                         persistentWinner={null}
                         isReviewing={overrides.isReviewing ?? false}
-                        showRestartConfirm={false}
+                        showRestartConfirm={overrides.showRestartConfirm ?? false}
                         phase={overrides.phase ?? GAME_PHASES.SELECT_CARD_COLOR}
                         isPeekingBoard={false}
                         onCloseRulebook={vi.fn()}
                         onStartReview={vi.fn()}
                         onStopReview={vi.fn()}
-                        onCancelRestart={vi.fn()}
-                        onConfirmRestart={vi.fn()}
+                        onCancelRestart={overrides.onCancelRestart ?? vi.fn()}
+                        onConfirmRestart={overrides.onConfirmRestart ?? vi.fn()}
                         onStartBoardPeek={vi.fn()}
                         onStopBoardPeek={vi.fn()}
                         onSelectBonusColor={vi.fn()}
@@ -116,5 +119,33 @@ describe('AppOverlayStack', () => {
         expect(gemIds).not.toContain('gold');
         expect(firstColorButton?.className).toContain('h-20');
         expect(firstColorButton?.className).toContain('md:h-24');
+    });
+
+    it('treats restart confirmation as a keyboard-contained dialog', async () => {
+        const onCancelRestart = vi.fn();
+        await renderOverlay('en', {
+            phase: GAME_PHASES.IDLE,
+            showRestartConfirm: true,
+            onCancelRestart,
+        });
+
+        const dialog = container?.querySelector('[role="dialog"]');
+        const buttons = Array.from(dialog?.querySelectorAll('button') ?? []);
+
+        expect(dialog?.getAttribute('aria-modal')).toBe('true');
+        expect(document.activeElement).toBe(buttons[0]);
+
+        await act(async () => {
+            buttons[1]?.focus();
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+        });
+
+        expect(document.activeElement).toBe(buttons[0]);
+
+        await act(async () => {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        });
+
+        expect(onCancelRestart).toHaveBeenCalledTimes(1);
     });
 });

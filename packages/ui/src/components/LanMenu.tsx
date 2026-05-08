@@ -106,6 +106,24 @@ export function LanMenu({
                         </div>
                     )}
 
+                    {lan.phase === 'idle' && (
+                        <div className="flex flex-col items-center gap-4 py-8 text-center">
+                            <div className="text-xl font-bold uppercase tracking-wide">
+                                {t('lan.ready')}
+                            </div>
+                            <div className="max-w-xl text-sm opacity-60">
+                                {localizedStatusMessage}
+                            </div>
+                            <button
+                                onClick={onRetry}
+                                className="px-5 py-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors flex items-center gap-2 font-bold"
+                            >
+                                <RefreshCcw size={16} />
+                                {t('lan.searchAgain')}
+                            </button>
+                        </div>
+                    )}
+
                     {isMatched && (
                         <>
                             <div className="flex items-center justify-between gap-4">

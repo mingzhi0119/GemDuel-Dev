@@ -24,6 +24,7 @@ interface ConnectionHandlerDependencies {
     setConn: Dispatch<SetStateAction<DataConnection | null>>;
     setRemotePeerId: Dispatch<SetStateAction<string>>;
     setConnectionStatus: Dispatch<SetStateAction<ConnectionStatus>>;
+    setErrorMessage?: Dispatch<SetStateAction<string | null>>;
 }
 
 export const registerConnectionHandlers = ({
@@ -37,9 +38,11 @@ export const registerConnectionHandlers = ({
     setConn,
     setRemotePeerId,
     setConnectionStatus,
+    setErrorMessage = () => undefined,
 }: ConnectionHandlerDependencies) => {
     connection.on('open', () => {
         setConnectionStatus('connected');
+        setErrorMessage(null);
         setConn(connection);
         setRemotePeerId(connection.peer);
         reconnectAttempts.current = 0;
@@ -155,6 +158,9 @@ export const registerConnectionHandlers = ({
             if (current === connection) {
                 setConnectionStatus('disconnected');
                 setRemotePeerId('');
+                setErrorMessage(
+                    'Connection closed. Ask the host for a fresh Match ID and try again.'
+                );
                 return null;
             }
             return current;
@@ -162,6 +168,8 @@ export const registerConnectionHandlers = ({
     });
 
     connection.on('error', (err) => {
+        setConnectionStatus('disconnected');
+        setErrorMessage('Connection failed. Check the Match ID and try again.');
         reportRendererEvent(
             {
                 category: 'peer',

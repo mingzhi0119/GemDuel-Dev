@@ -4,6 +4,7 @@ export interface CardPreviewAction {
     id: CardPreviewActionId;
     label: string;
     disabled?: boolean;
+    disabledReason?: string;
     onAction?: () => boolean | void;
 }
 

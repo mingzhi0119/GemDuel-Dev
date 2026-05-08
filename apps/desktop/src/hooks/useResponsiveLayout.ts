@@ -30,6 +30,8 @@ export {
 const MOBILE_BREAKPOINT = 1024;
 const FALLBACK_VIEWPORT = { width: 1280, height: 800 };
 const FALLBACK_DEVICE_PIXEL_RATIO = 1;
+const MIN_DESKTOP_VIEWPORT_WIDTH_PX = 900;
+const MIN_DESKTOP_VIEWPORT_HEIGHT_PX = 600;
 const MIN_DESKTOP_EFFECTIVE_WIDTH_PX = 1440;
 const MIN_DESKTOP_EFFECTIVE_HEIGHT_PX = 900;
 const MOBILE_ZONE_HEIGHT_PX = 286;
@@ -59,6 +61,8 @@ const canUseDesktopLayout = (
     isFinePointer: boolean
 ) =>
     viewportWidth >= MOBILE_BREAKPOINT ||
+    (viewportWidth >= MIN_DESKTOP_VIEWPORT_WIDTH_PX &&
+        viewportHeight >= MIN_DESKTOP_VIEWPORT_HEIGHT_PX) ||
     (isFinePointer &&
         viewportWidth * devicePixelRatio >= MIN_DESKTOP_EFFECTIVE_WIDTH_PX &&
         viewportHeight * devicePixelRatio >= MIN_DESKTOP_EFFECTIVE_HEIGHT_PX);

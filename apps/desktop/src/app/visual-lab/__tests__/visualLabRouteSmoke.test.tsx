@@ -316,7 +316,7 @@ describe('visual lab smoke', () => {
         expect(royalBack).toBeTruthy();
         expect(royalBack?.getAttribute('src')).toContain('royal-card-back.png');
         const back = container?.querySelector(
-            '[data-app-restart-button="true"]'
+            '[data-visual-lab-close-button="true"]'
         ) as HTMLButtonElement | null;
         expect(back).not.toBeNull();
         await act(async () => {

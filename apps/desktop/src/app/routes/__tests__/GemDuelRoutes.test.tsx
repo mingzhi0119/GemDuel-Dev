@@ -65,7 +65,7 @@ vi.mock('../../visual-lab/VisualLabRoute', () => ({
             {onCloseToStartPage ? (
                 <button
                     type="button"
-                    data-app-restart-button="true"
+                    data-visual-lab-close-button="true"
                     onClick={() => onCloseToStartPage()}
                 >
                     back
@@ -406,11 +406,22 @@ describe('GemDuelRoutes desktop stage rendering', () => {
     });
 
     it('mounts the visual lab route from the query string without entering normal game routes', async () => {
-        window.history.replaceState(null, '', '/?visualLab=readability');
         const closeVisualLabToStartPage = vi.fn();
 
         const { container, root } = await renderRoutes(
             createProps({
+                ui: {
+                    showDebug: false,
+                    isReviewing: false,
+                    showRulebook: false,
+                    setupRoute: 'none',
+                    matchmakingRoute: 'none',
+                    visualLabMode: 'readability',
+                    isPeekingBoard: false,
+                    persistentWinner: null,
+                    showRestartConfirm: false,
+                    soundEnabled: true,
+                },
                 callbacks: {
                     handleRestart: vi.fn(),
                     handleDownloadReplay: vi.fn(),
@@ -427,7 +438,7 @@ describe('GemDuelRoutes desktop stage rendering', () => {
         expect(visualLab?.getAttribute('data-visual-lab-mode')).toBe('readability');
         expect(container.querySelector('[data-testid="config-route"]')).toBeNull();
 
-        const back = container.querySelector('[data-app-restart-button="true"]');
+        const back = container.querySelector('[data-visual-lab-close-button="true"]');
         expect(back).not.toBeNull();
         await act(async () => {
             (back as HTMLButtonElement).click();

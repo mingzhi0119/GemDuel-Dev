@@ -2,10 +2,11 @@
 import React, { act, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ROYAL_CARDS } from '@gemduel/shared/constants';
+import { GEM_TYPES, ROYAL_CARDS } from '@gemduel/shared/constants';
 import { CLASSIC_CARDS } from '@gemduel/shared/data/realCards';
 import type { GemInventory } from '@gemduel/shared/types';
 import { Card } from '../Card';
+import { AnimatedGemButton } from '../gameBoard/AnimatedGemButton';
 import { RoyalCourt } from '../RoyalCourt';
 import { PlayerZoneResourcesColumn } from '../playerZone/PlayerZoneResourcesColumn';
 import { PlayerZoneTableauStack } from '../playerZone/PlayerZoneTableauStack';
@@ -65,10 +66,11 @@ describe('interactive UI surfaces', () => {
         const onClick = vi.fn();
         const view = await render(<Card card={card} allowUnavailableClick onClick={onClick} />);
         const cardButton = view.querySelector<HTMLElement>(
-            '[role="button"][aria-label="Preview card 151-bk"]'
+            '[role="button"][aria-label^="Preview"]'
         );
 
         expect(cardButton).not.toBeNull();
+        expect(cardButton?.getAttribute('aria-label')).not.toContain(card.id);
         expect(cardButton?.tabIndex).toBe(0);
 
         await act(async () => {
@@ -109,6 +111,31 @@ describe('interactive UI surfaces', () => {
         });
 
         expect(handleSelectRoyal).toHaveBeenCalledWith(royal);
+    });
+
+    it('labels board gems with color, position, and target state', async () => {
+        const view = await render(
+            <AnimatedGemButton
+                r={1}
+                c={2}
+                gem={{ type: GEM_TYPES.GOLD, uid: 'gold-test' }}
+                theme="dark"
+                isSelectedGem={false}
+                isReserveGoldSelected={false}
+                isTarget={true}
+                shouldDim={false}
+                isInteractive={true}
+                selectionIndex={-1}
+                onGemClick={vi.fn()}
+                onGemPointerDown={vi.fn()}
+                onGemPointerEnter={vi.fn()}
+            />
+        );
+        const gemButton = view.querySelector('button');
+
+        expect(gemButton?.getAttribute('aria-label')).toBe(
+            'Gold gem at row 2, column 3, selectable target'
+        );
     });
 
     it('preserves gem button disabled semantics while keeping active gems clickable', async () => {

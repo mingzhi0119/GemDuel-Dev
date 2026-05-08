@@ -19,18 +19,26 @@ import {
     getSurfacePreviewVariant,
 } from './app/shell/surfacePreviewQuery';
 import type { PlayerKey } from '@gemduel/shared/types';
-import type { AppVisualLabMode } from './types/ui';
+import type { AppVisualLabMode, MatchmakingRoute, StartSetupRoute } from './types/ui';
 import { getDocumentLanguage } from '@gemduel/shared';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
+import {
+    EMPTY_SEARCH_ROUTE,
+    readSearchRouteState,
+    writeSearchRouteHistory,
+    type AppSearchRouteState,
+} from './app/routes/searchRouteState';
+import { useVisualLabExitReset } from './app/visual-lab/useVisualLabExitReset';
 
 export default function GemDuelBoard() {
     const [showDebug, setShowDebug] = useState(false);
     const [isReviewing, setIsReviewing] = useState(false);
     const [showRulebook, setShowRulebook] = useState(false);
-    const [matchmakingRoute, setMatchmakingRoute] = useState<'none' | 'online' | 'lan'>('none');
+    const [searchRoute, setSearchRoute] = useState<AppSearchRouteState>(readSearchRouteState);
     const [isPeekingBoard, setIsPeekingBoard] = useState(false);
     const [persistentWinner, setPersistentWinner] = useState<PlayerKey | null>(null);
     const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+    const { setupRoute, matchmakingRoute, visualLabMode } = searchRoute;
     const lastGuestLaunchRoomRef = useRef<string | null>(null);
     const lastHostStartRoomRef = useRef<string | null>(null);
     const didSurfacePreviewStartRef = useRef(false);
@@ -63,6 +71,46 @@ export default function GemDuelBoard() {
     );
     const layout = useResponsiveLayout();
     const lan = useLanMatchmaking();
+
+    const navigateSearchRoute = (route: AppSearchRouteState, mode: 'push' | 'replace' = 'push') => {
+        writeSearchRouteHistory(route, mode);
+        setSearchRoute(route);
+    };
+
+    const setStartSetupRoute = (
+        next: StartSetupRoute | ((current: StartSetupRoute) => StartSetupRoute)
+    ) => {
+        setSearchRoute((current) => {
+            const setup = typeof next === 'function' ? next(current.setupRoute) : next;
+            const route: AppSearchRouteState = {
+                setupRoute: setup,
+                matchmakingRoute: 'none',
+                visualLabMode: null,
+            };
+            const normalizedRoute = setup === 'none' ? EMPTY_SEARCH_ROUTE : route;
+            writeSearchRouteHistory(normalizedRoute, setup === 'none' ? 'replace' : 'push');
+            return normalizedRoute;
+        });
+    };
+
+    const setMatchmakingRoute = (
+        next: MatchmakingRoute | ((current: MatchmakingRoute) => MatchmakingRoute)
+    ) => {
+        setSearchRoute((current) => {
+            const matchmaking = typeof next === 'function' ? next(current.matchmakingRoute) : next;
+            const route: AppSearchRouteState =
+                matchmaking === 'none'
+                    ? EMPTY_SEARCH_ROUTE
+                    : {
+                          setupRoute: 'none',
+                          matchmakingRoute: matchmaking,
+                          visualLabMode: null,
+                      };
+            writeSearchRouteHistory(route, matchmaking === 'none' ? 'replace' : 'push');
+            return route;
+        });
+    };
+
     const lanShouldConnect =
         matchmakingRoute === 'lan' &&
         (lan.state.phase === 'matched' || lan.state.phase === 'starting');
@@ -107,6 +155,15 @@ export default function GemDuelBoard() {
     });
 
     useEffect(() => {
+        const handlePopState = () => {
+            setSearchRoute(readSearchRouteState());
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
+    useEffect(() => {
         setPersistentWinner((current) =>
             current === desiredPersistentWinner ? current : desiredPersistentWinner
         );
@@ -131,6 +188,16 @@ export default function GemDuelBoard() {
         }
     }, [historyControls.historyLength, historyControls.historySource]);
 
+    const markVisualLabOpened = useVisualLabExitReset({
+        visualLabMode,
+        historyLength: historyControls.historyLength,
+        resetToStartPage: () => {
+            handlers.importHistory([]);
+            setPersistentWinner(null);
+            setIsReviewing(false);
+        },
+    });
+
     useEffect(() => {
         document.documentElement.dataset.theme = theme;
         document.body.dataset.theme = theme;
@@ -151,7 +218,7 @@ export default function GemDuelBoard() {
                 void lan.cancelSearch();
             }
             lan.clearLaunch();
-            setMatchmakingRoute('none');
+            navigateSearchRoute(EMPTY_SEARCH_ROUTE, 'replace');
             setPersistentWinner(null);
             setIsReviewing(true);
             lastGuestLaunchRoomRef.current = null;
@@ -185,7 +252,7 @@ export default function GemDuelBoard() {
         if (lan.state.phase !== 'idle') {
             void lan.cancelSearch();
         }
-        setMatchmakingRoute('none');
+        navigateSearchRoute(EMPTY_SEARCH_ROUTE, 'replace');
         handlers.importHistory([]);
         setShowRestartConfirm(false);
         lastGuestLaunchRoomRef.current = null;
@@ -199,17 +266,19 @@ export default function GemDuelBoard() {
     };
 
     const handleOpenVisualLab = (mode: AppVisualLabMode) => {
-        const nextUrl = new URL(window.location.href);
-        nextUrl.searchParams.set('visualLab', mode);
-        window.location.assign(`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+        markVisualLabOpened();
+        navigateSearchRoute(
+            {
+                setupRoute: 'none',
+                matchmakingRoute: 'none',
+                visualLabMode: mode,
+            },
+            'push'
+        );
     };
 
     const handleCloseVisualLabToStartPage = () => {
-        const nextUrl = new URL(window.location.href);
-        nextUrl.searchParams.delete('visualLab');
-        const search = nextUrl.searchParams.toString();
-        const query = search.length > 0 ? `?${search}` : '';
-        window.location.assign(`${nextUrl.pathname}${query}${nextUrl.hash}`);
+        navigateSearchRoute(EMPTY_SEARCH_ROUTE, 'replace');
     };
 
     useEffect(() => {
@@ -271,6 +340,14 @@ export default function GemDuelBoard() {
         }
     }, [historyControls.historyLength, lan]);
 
+    const startGameAndClearRoute = (
+        mode: Parameters<typeof handlers.startGame>[0],
+        config: Parameters<typeof handlers.startGame>[1]
+    ) => {
+        navigateSearchRoute(EMPTY_SEARCH_ROUTE, 'replace');
+        handlers.startGame(mode, config);
+    };
+
     return (
         <LocaleProvider locale={locale} setLocale={setLocale}>
             <GemDuelRoutes
@@ -284,7 +361,9 @@ export default function GemDuelBoard() {
                     showDebug,
                     isReviewing,
                     showRulebook,
+                    setupRoute,
                     matchmakingRoute,
+                    visualLabMode,
                     isPeekingBoard,
                     persistentWinner,
                     showRestartConfirm,
@@ -296,6 +375,7 @@ export default function GemDuelBoard() {
                     setShowDebug,
                     setIsReviewing,
                     setShowRulebook,
+                    setStartSetupRoute,
                     setMatchmakingRoute,
                     setIsPeekingBoard,
                     setShowRestartConfirm,
@@ -307,6 +387,7 @@ export default function GemDuelBoard() {
                     handleRestart,
                     handleDownloadReplay,
                     handleUploadReplay,
+                    startGame: startGameAndClearRoute,
                     selectSurfaceTheme: handleSelectSurfaceTheme,
                     openVisualLab: handleOpenVisualLab,
                     closeVisualLabToStartPage: handleCloseVisualLabToStartPage,

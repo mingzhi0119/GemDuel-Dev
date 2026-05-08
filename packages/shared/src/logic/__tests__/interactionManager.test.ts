@@ -37,7 +37,7 @@ describe('interactionManager', () => {
         };
         placeGem(reserveState, 0, 0, GEM_TYPES.RED);
         expect(processGemClick(reserveState, 0, 0)).toEqual({
-            error: 'Must select a Gold gem!',
+            error: 'That is not Gold. Select a highlighted Gold gem or Cancel.',
         });
 
         const selectionState = createState({ phase: 'IDLE' });

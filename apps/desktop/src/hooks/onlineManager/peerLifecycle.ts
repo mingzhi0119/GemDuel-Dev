@@ -16,6 +16,7 @@ interface PeerLifecycleDependencies {
     setIsHost: Dispatch<SetStateAction<boolean>>;
     setConnectionStatus: Dispatch<SetStateAction<ConnectionStatus>>;
     setRemotePeerId: Dispatch<SetStateAction<string>>;
+    setErrorMessage?: Dispatch<SetStateAction<string | null>>;
 }
 
 export const createManagedPeer = ({
@@ -28,6 +29,9 @@ export const createManagedPeer = ({
     setupConnection,
     setPeerId,
     setIsHost,
+    setConnectionStatus,
+    setRemotePeerId,
+    setErrorMessage = () => undefined,
 }: PeerLifecycleDependencies): Peer => {
     logRendererMessage('info', '[NET] Initializing Peer...');
     logRendererMessage('info', `[NET] Target IP: ${targetIP}`);
@@ -48,6 +52,7 @@ export const createManagedPeer = ({
 
     peer.on('open', (id) => {
         setPeerId(id);
+        setErrorMessage(null);
         reportRendererEvent(
             {
                 category: 'peer',
@@ -123,6 +128,9 @@ export const createManagedPeer = ({
                 }
             }, 2000);
         } else {
+            setConnectionStatus('disconnected');
+            setRemotePeerId('');
+            setErrorMessage('Online service disconnected. Try again in a moment.');
             reportRendererEvent({
                 category: 'peer',
                 name: 'PEER_RECONNECT_EXHAUSTED',
@@ -136,6 +144,9 @@ export const createManagedPeer = ({
     });
 
     peer.on('error', (err) => {
+        setConnectionStatus('disconnected');
+        setErrorMessage('Online service is unavailable. Check your connection and try again.');
+        setRemotePeerId('');
         reportRendererEvent(
             {
                 category: 'peer',

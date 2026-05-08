@@ -9,6 +9,7 @@ import { CardFacePattern } from './card/CardFacePattern';
 import type { CardProps } from './card/CardProps';
 import { CardReserveActionButton } from './card/CardReserveActionButton';
 import { JokerBonusBadge } from './card/JokerBonusBadge';
+import { getCardAriaLabel } from './card/cardAriaLabel';
 import { getCardArtworkPath, getRuntimeCardArtworkId } from './card/cardArtwork';
 import { getCardCostCountStyle } from './card/cardCostStyles';
 import { getCardScoreColorClass } from './card/cardScoreColor';
@@ -20,7 +21,7 @@ import {
     getCardDimensions,
     scaleCardMetric,
 } from './card/cardSizing';
-import { useT } from '../i18n/LocaleProvider';
+import { useLocale, useT } from '../i18n/LocaleProvider';
 
 export {
     FEATURED_CARD_SAMPLE_SIZE,
@@ -46,6 +47,7 @@ export const Card: React.FC<CardProps> = React.memo(
         theme = 'dark',
         cardBackArtwork,
     }) => {
+        const { locale } = useLocale();
         const t = useT();
         const dimensions = getCardDimensions(size);
         const sampleDimensions = getCardSampleDimensions(size);
@@ -122,13 +124,14 @@ export const Card: React.FC<CardProps> = React.memo(
             event.preventDefault();
             handleCardClick();
         };
-        const rootAriaLabel = isRoyal
-            ? `Select royal card ${card.id}`
-            : reserveOnClick
-              ? `Reserve card ${card.id}`
-              : allowUnavailableClick
-                ? `Preview card ${card.id}`
-                : `Select card ${card.id}`;
+        const rootAriaLabel = getCardAriaLabel({
+            card,
+            isRoyal,
+            reserveOnClick,
+            allowUnavailableClick,
+            locale,
+            t,
+        });
 
         const affordableClassName =
             canBuy && !isRoyal

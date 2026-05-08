@@ -38,12 +38,15 @@ export const useOnlineManager = (
     const [connectionStatus, setConnectionStatus] = useState<
         'disconnected' | 'connecting' | 'connected'
     >('disconnected');
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isHost, setIsHost] = useState(false);
 
     const handlersRef = useRef(handlers);
     const isHostRef = useRef(isHost);
+    const connectionStatusRef = useRef(connectionStatus);
     const reconnectAttempts = useRef(0);
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const connectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         handlersRef.current = handlers;
@@ -52,6 +55,26 @@ export const useOnlineManager = (
     useEffect(() => {
         isHostRef.current = isHost;
     }, [isHost]);
+
+    useEffect(
+        () => () => {
+            if (connectTimeoutRef.current) {
+                clearTimeout(connectTimeoutRef.current);
+                connectTimeoutRef.current = null;
+            }
+        },
+        []
+    );
+
+    useEffect(() => {
+        connectionStatusRef.current = connectionStatus;
+        if (connectionStatus === 'connected' && connectTimeoutRef.current) {
+            clearTimeout(connectTimeoutRef.current);
+            connectTimeoutRef.current = null;
+        }
+    }, [connectionStatus]);
+
+    const clearError = useCallback(() => setErrorMessage(null), []);
 
     const sendMessage = useCallback(
         (msg: NetworkMessage) => {
@@ -103,6 +126,7 @@ export const useOnlineManager = (
                 setConn,
                 setRemotePeerId,
                 setConnectionStatus,
+                setErrorMessage,
             });
         },
         [getCurrentReplayFullSyncRef, getCurrentStateRef, handleHeartbeat, sendMessage]
@@ -131,6 +155,7 @@ export const useOnlineManager = (
             setIsHost,
             setConnectionStatus,
             setRemotePeerId,
+            setErrorMessage,
         });
 
         setPeer(managedPeer);
@@ -149,7 +174,17 @@ export const useOnlineManager = (
 
     const connectToPeer = useCallback(
         (id: string) => {
+            const trimmedId = id.trim();
+            if (!trimmedId) {
+                setErrorMessage('Paste an opponent Match ID before connecting.');
+                return;
+            }
+
             if (!peer) {
+                setConnectionStatus('disconnected');
+                setErrorMessage(
+                    'Online service is still starting. Wait for your Match ID, then try again.'
+                );
                 reportRendererEvent(
                     {
                         category: 'peer',
@@ -164,6 +199,10 @@ export const useOnlineManager = (
                 );
                 return;
             }
+            if (connectTimeoutRef.current) {
+                clearTimeout(connectTimeoutRef.current);
+            }
+            setErrorMessage(null);
             setConnectionStatus('connecting');
             isHostRef.current = false;
             reportRendererEvent({
@@ -172,12 +211,19 @@ export const useOnlineManager = (
                 severity: 'info',
                 message: 'Outgoing peer connection was requested.',
                 context: {
-                    remotePeerId: id,
+                    remotePeerId: trimmedId,
                 },
             });
-            const connection = peer.connect(id);
+            const connection = peer.connect(trimmedId);
             setupConnectionRef.current(connection);
             setIsHost(false);
+            connectTimeoutRef.current = setTimeout(() => {
+                if (connectionStatusRef.current !== 'connecting') {
+                    return;
+                }
+                setConnectionStatus('disconnected');
+                setErrorMessage('Connection timed out. Check the Match ID and try again.');
+            }, 8000);
         },
         [peer]
     );
@@ -239,7 +285,9 @@ export const useOnlineManager = (
         remotePeerId,
         connectionStatus,
         isHost,
+        errorMessage,
         connectToPeer,
+        clearError,
         sendBootstrap,
         sendGuestIntent,
         sendHostDecision,

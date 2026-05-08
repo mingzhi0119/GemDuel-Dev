@@ -166,7 +166,7 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         () => createVisualLabShellStyles(labTheme, layout, assetSlots, playerZoneSideSlots),
         [assetSlots, labTheme, layout, playerZoneSideSlots]
     );
-    const restartTooltipId = useId();
+    const closeTooltipId = useId();
     const triggerMotion = useCallback(
         (type: SurfaceLabMotionEventType = motionType) => {
             motionNonceRef.current += 1;
@@ -255,8 +255,8 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
             {onCloseToStartPage ? (
                 <VisualLabRestartButton
                     theme={labTheme}
-                    label={t('settings.restart')}
-                    tooltipId={restartTooltipId}
+                    label={t('visualLab.backToStartPage')}
+                    tooltipId={closeTooltipId}
                     readabilityTreatment={readabilityTreatment}
                     onCloseToStartPage={onCloseToStartPage}
                 />

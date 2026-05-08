@@ -25,8 +25,10 @@ export interface OnlineManagerController {
     peerId: string;
     remotePeerId: string;
     connectionStatus: ConnectionStatus;
+    errorMessage?: string | null;
     isHost: boolean;
     connectToPeer: (id: string) => void;
+    clearError?: () => void;
     sendBootstrap: (
         command: BootstrapCommand,
         checksum?: string,

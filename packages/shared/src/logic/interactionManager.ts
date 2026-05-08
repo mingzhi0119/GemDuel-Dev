@@ -53,7 +53,9 @@ export const processGemClick = (
 
         case 'reserve-gold':
             if (gem.type.id !== 'gold') {
-                return { error: 'Must select a Gold gem!' };
+                return {
+                    error: 'That is not Gold. Select a highlighted Gold gem or Cancel.',
+                };
             }
             if (gameState.pendingReserve?.isDeck) {
                 return {

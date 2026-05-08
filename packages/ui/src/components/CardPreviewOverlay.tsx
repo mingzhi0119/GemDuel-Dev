@@ -1,14 +1,13 @@
-import { type ReactNode, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { getPlayerDisplayName } from '@gemduel/shared';
-import type { Card as CardType, PlayerKey } from '@gemduel/shared/types';
 import { useLocale, useT } from '../i18n/LocaleProvider';
 import { Card, FEATURED_CARD_SAMPLE_SIZE, FEATURED_CARD_SIZE } from './Card';
 import { CardPreviewDeckPeekGrid } from './CardPreviewDeckPeekGrid';
-import type { MarketDeckBackArtworkMap } from './card/cardBackArtwork';
 import type { CardPreviewAction } from './cardPreviewActions';
+import type { CardPreviewMode, CardPreviewOverlayProps } from './cardPreviewOverlayTypes';
 import {
     CARD_ACTION_BUTTON_CLASS,
     CARD_LIMIT,
@@ -22,25 +21,6 @@ import {
     getPreviewLayout,
     useViewportSize,
 } from './cardPreviewOverlayLayout';
-
-type CardPreviewMode = 'single' | 'collection';
-type CardPreviewCollectionLayout = 'grid' | 'deck-peek';
-
-interface CardPreviewOverlayProps {
-    isOpen: boolean;
-    mode: CardPreviewMode;
-    cards: CardType[];
-    theme: 'light' | 'dark';
-    onClose: () => void;
-    title?: string;
-    player?: PlayerKey;
-    color?: string;
-    previewContent?: ReactNode;
-    actions?: CardPreviewAction[];
-    cardActions?: CardPreviewAction[][];
-    collectionLayout?: CardPreviewCollectionLayout;
-    deckBackArtwork?: MarketDeckBackArtworkMap;
-}
 
 export function CardPreviewOverlay({
     isOpen,
@@ -108,6 +88,9 @@ export function CardPreviewOverlay({
     const hasVisiblePreview = visibleCards.length > 0 || hasPreviewContent;
     const actionLayout = actions.length === 1 ? 'single' : actions.length > 1 ? 'pair' : 'none';
     const actionAlign = actions.length === 1 ? 'center' : 'split';
+    const disabledActionReason = actions.find(
+        (action) => action.disabled && action.disabledReason
+    )?.disabledReason;
     const handleAction = (action: CardPreviewAction) => {
         if (action.disabled || !action.onAction) {
             return;
@@ -147,10 +130,9 @@ export function CardPreviewOverlay({
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.16, ease: 'easeOut' }}
                 >
-                    <button
-                        type="button"
+                    <div
                         className="absolute inset-0 cursor-default"
-                        aria-label="Close card preview"
+                        aria-hidden="true"
                         onClick={onClose}
                     />
                     <button
@@ -323,12 +305,29 @@ export function CardPreviewOverlay({
                                                 data-card-preview-action-index={actionIndex}
                                                 data-card-preview-action-scope="card"
                                                 disabled={action.disabled}
+                                                title={
+                                                    action.disabled
+                                                        ? action.disabledReason
+                                                        : undefined
+                                                }
                                                 onClick={() => handleAction(action)}
                                                 className={CARD_ACTION_BUTTON_CLASS}
                                             >
                                                 {action.label}
                                             </button>
                                         ))}
+                                        {visibleCardActions[index].find(
+                                            (action) => action.disabled && action.disabledReason
+                                        )?.disabledReason ? (
+                                            <div className="basis-full text-center text-[11px] font-semibold text-amber-100/75">
+                                                {
+                                                    visibleCardActions[index].find(
+                                                        (action) =>
+                                                            action.disabled && action.disabledReason
+                                                    )?.disabledReason
+                                                }
+                                            </div>
+                                        ) : null}
                                     </div>
                                 ))}
                             </div>
@@ -355,6 +354,9 @@ export function CardPreviewOverlay({
                                                 index === 0 ? 'true' : undefined
                                             }
                                             disabled={action.disabled}
+                                            title={
+                                                action.disabled ? action.disabledReason : undefined
+                                            }
                                             onClick={() => handleAction(action)}
                                             className={GLOBAL_ACTION_BUTTON_CLASS}
                                         >
@@ -362,6 +364,11 @@ export function CardPreviewOverlay({
                                         </button>
                                     ))}
                                 </div>
+                                {disabledActionReason ? (
+                                    <div className="absolute top-full mt-3 w-full text-center text-sm font-semibold text-amber-100/80">
+                                        {disabledActionReason}
+                                    </div>
+                                ) : null}
                             </div>
                         )}
                     </motion.div>

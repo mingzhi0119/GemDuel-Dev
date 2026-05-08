@@ -74,6 +74,19 @@ export const createGameShellCardPreviewModel = ({
     const buyLabel = getLexiconLabel('buyCard', locale);
     const reserveLabel = getLexiconLabel('reserve', locale);
     const revealLabel = getLexiconLabel('reveal', locale);
+    const getUnavailableReason = () => t('cardPreview.disabled.unavailable');
+    const getBuyDisabledReason = (sourceStillMatches: boolean, canAffordCard: boolean) => {
+        if (!canRunPreviewAction) return getUnavailableReason();
+        if (!sourceStillMatches) return t('cardPreview.disabled.cardMoved');
+        if (!canAffordCard) return t('cardPreview.disabled.notEnoughGems');
+        return undefined;
+    };
+    const getReserveDisabledReason = (sourceStillMatches: boolean) => {
+        if (!canRunPreviewAction) return getUnavailableReason();
+        if (!sourceStillMatches) return t('cardPreview.disabled.cardMoved');
+        if (!reserveRoomAvailable) return t('cardPreview.disabled.reserveFull');
+        return undefined;
+    };
 
     if (cardPreview.kind === 'market-card') {
         const sourceCard = getPreviewSourceCard(state, cardPreview.context);
@@ -82,6 +95,7 @@ export const createGameShellCardPreviewModel = ({
             canRunPreviewAction && sourceStillMatches && canAfford(cardPreview.card, false);
         const canReservePreviewCard =
             canRunPreviewAction && sourceStillMatches && reserveRoomAvailable;
+        const canAffordPreviewCard = canAfford(cardPreview.card, false);
 
         return {
             mode: 'single',
@@ -93,6 +107,10 @@ export const createGameShellCardPreviewModel = ({
                           id: 'buy',
                           label: buyLabel,
                           disabled: !canBuyPreviewCard,
+                          disabledReason: getBuyDisabledReason(
+                              sourceStillMatches,
+                              canAffordPreviewCard
+                          ),
                           onAction: () =>
                               handlers.initiateBuy(cardPreview.card, 'market', cardPreview.context),
                       },
@@ -100,6 +118,7 @@ export const createGameShellCardPreviewModel = ({
                           id: 'reserve',
                           label: reserveLabel,
                           disabled: !canReservePreviewCard,
+                          disabledReason: getReserveDisabledReason(sourceStillMatches),
                           onAction: () =>
                               handlers.handleReserveCard(cardPreview.card, cardPreview.context),
                       }
@@ -127,18 +146,24 @@ export const createGameShellCardPreviewModel = ({
                           canRunPreviewAction && sourceStillMatches && canAfford(card, false);
                       const canReservePreviewCard =
                           canRunPreviewAction && sourceStillMatches && reserveRoomAvailable;
+                      const canAffordPreviewCard = canAfford(card, false);
 
                       return createCardPreviewActions(
                           {
                               id: 'buy',
                               label: buyLabel,
                               disabled: !canBuyPreviewCard,
+                              disabledReason: getBuyDisabledReason(
+                                  sourceStillMatches,
+                                  canAffordPreviewCard
+                              ),
                               onAction: () => handlers.initiateBuy(card, 'market', context),
                           },
                           {
                               id: 'reserve',
                               label: reserveLabel,
                               disabled: !canReservePreviewCard,
+                              disabledReason: getReserveDisabledReason(sourceStillMatches),
                               onAction: () => handlers.handleReserveCard(card, context),
                           }
                       );
@@ -150,6 +175,13 @@ export const createGameShellCardPreviewModel = ({
     if (cardPreview.kind === 'deck-reserve') {
         const deck = state.decks[cardPreview.level];
         const canReserveDeck = canRunPreviewAction && deck.length > 0 && reserveRoomAvailable;
+        const reserveDeckDisabledReason = !canRunPreviewAction
+            ? getUnavailableReason()
+            : deck.length === 0
+              ? t('cardPreview.disabled.deckEmpty')
+              : !reserveRoomAvailable
+                ? t('cardPreview.disabled.reserveFull')
+                : undefined;
 
         return {
             mode: 'single',
@@ -178,6 +210,7 @@ export const createGameShellCardPreviewModel = ({
                       id: 'reserve',
                       label: reserveLabel,
                       disabled: !canReserveDeck,
+                      disabledReason: reserveDeckDisabledReason,
                       onAction: () => handlers.handleReserveDeck(cardPreview.level),
                   })
                 : createCardPreviewActions(),

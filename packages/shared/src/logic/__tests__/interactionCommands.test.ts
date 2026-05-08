@@ -28,7 +28,7 @@ describe('Interaction Commands', () => {
         const withoutGold = buildReserveDeckFlow(2, false);
 
         expect(withGold.action.type).toBe('INITIATE_RESERVE');
-        expect(withGold.prompt).toBe('Select a Gold gem.');
+        expect(withGold.prompt).toBe('Select one highlighted Gold gem on the board, or Cancel.');
         expect(withoutGold.action.type).toBe('RESERVE_DECK');
         expect(withoutGold.prompt).toBeUndefined();
     });

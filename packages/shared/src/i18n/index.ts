@@ -173,7 +173,10 @@ export const localizeLooseUiMessage = (message: string | null | undefined, local
 
     const fixedMap: Partial<Record<string, TranslationKeyWithoutParams>> = {
         'Select a Gold gem.': 'message.selectGold',
+        'Select one highlighted Gold gem on the board, or Cancel.': 'message.selectHighlightedGold',
         'Must select a Gold gem!': 'message.mustSelectGold',
+        'That is not Gold. Select a highlighted Gold gem or Cancel.':
+            'message.mustSelectHighlightedGold',
         'Cannot use Privilege on Gold.': 'message.cannotPrivilegeGold',
         'Cannot take Gold directly!': 'message.cannotTakeGoldDirectly',
         'Cannot steal Gold!': 'message.cannotStealGold',
@@ -202,6 +205,20 @@ export const localizeLooseUiMessage = (message: string | null | undefined, local
         'Opponent disconnected.': 'message.lan.opponentDisconnected',
         'LAN discovery failed to start.': 'message.lan.discoveryFailed',
         'LAN transport is unavailable.': 'message.lan.transportUnavailable',
+        'LAN duel requires the Electron desktop app.': 'message.lan.requiresDesktop',
+        'LAN matchmaking is not available in this browser preview.':
+            'message.lan.browserUnavailable',
+        'Paste an opponent Match ID before connecting.': 'message.online.pasteIdFirst',
+        'Online service is still starting. Wait for your Match ID, then try again.':
+            'message.online.serviceStarting',
+        'Online service is unavailable. Check your connection and try again.':
+            'message.online.serviceUnavailable',
+        'Connection failed. Check the Match ID and try again.': 'message.online.connectionFailed',
+        'Connection timed out. Check the Match ID and try again.':
+            'message.online.connectionTimedOut',
+        'Connection closed. Ask the host for a fresh Match ID and try again.':
+            'message.online.connectionClosed',
+        'Online service disconnected. Try again in a moment.': 'message.online.serviceDisconnected',
         'Only P1 can choose the match mode.': 'message.lan.onlyP1Choose',
         'Only P1 can start the LAN duel.': 'message.lan.onlyP1Start',
         'Choose Classic or Roguelike before starting.': 'message.lan.chooseModeFirst',

@@ -58,7 +58,7 @@ export const buildReserveCardFlow = (
                   type: 'INITIATE_RESERVE',
                   payload: { card, ...marketInfo },
               },
-              prompt: 'Select a Gold gem.',
+              prompt: 'Select one highlighted Gold gem on the board, or Cancel.',
           }
         : {
               action: {
@@ -74,7 +74,7 @@ export const buildReserveDeckFlow = (level: 1 | 2 | 3, hasGold: boolean): Reserv
                   type: 'INITIATE_RESERVE_DECK',
                   payload: { level },
               },
-              prompt: 'Select a Gold gem.',
+              prompt: 'Select one highlighted Gold gem on the board, or Cancel.',
           }
         : {
               action: {

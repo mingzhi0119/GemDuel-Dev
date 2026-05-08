@@ -9,16 +9,21 @@ import { LocaleProvider } from '../../i18n/LocaleProvider';
     globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
+const defaultMenuProps = {
+    setupRoute: 'none' as const,
+    onSelectSetup: vi.fn(),
+    onBackToModeSelection: vi.fn(),
+    onOnlineSetup: vi.fn(),
+    onLanSetup: vi.fn(),
+    onStartGame: vi.fn(),
+    theme: 'dark',
+};
+
 describe('GameConfigMenu', () => {
     it('shows the start-page language switch and bilingual online entry points', () => {
         const html = renderToStaticMarkup(
             <LocaleProvider locale="en" setLocale={vi.fn()}>
-                <GameConfigMenu
-                    onOnlineSetup={vi.fn()}
-                    onLanSetup={vi.fn()}
-                    onStartGame={vi.fn()}
-                    theme="dark"
-                />
+                <GameConfigMenu {...defaultMenuProps} />
             </LocaleProvider>
         );
 
@@ -32,12 +37,7 @@ describe('GameConfigMenu', () => {
     it('renders the Chinese title in zh mode', () => {
         const html = renderToStaticMarkup(
             <LocaleProvider locale="zh" setLocale={vi.fn()}>
-                <GameConfigMenu
-                    onOnlineSetup={vi.fn()}
-                    onLanSetup={vi.fn()}
-                    onStartGame={vi.fn()}
-                    theme="dark"
-                />
+                <GameConfigMenu {...defaultMenuProps} />
             </LocaleProvider>
         );
 
@@ -55,13 +55,7 @@ describe('GameConfigMenu', () => {
             root = createRoot(container);
             root.render(
                 <LocaleProvider locale="en" setLocale={vi.fn()}>
-                    <GameConfigMenu
-                        onOnlineSetup={vi.fn()}
-                        onLanSetup={vi.fn()}
-                        onStartGame={vi.fn()}
-                        onOpenVisualLab={onOpenVisualLab}
-                        theme="dark"
-                    />
+                    <GameConfigMenu {...defaultMenuProps} onOpenVisualLab={onOpenVisualLab} />
                 </LocaleProvider>
             );
         });
@@ -91,6 +85,51 @@ describe('GameConfigMenu', () => {
         expect(onOpenVisualLab).toHaveBeenNthCalledWith(1, 'surfaces');
         expect(onOpenVisualLab).toHaveBeenNthCalledWith(2, 'motion');
         expect(onOpenVisualLab).toHaveBeenNthCalledWith(3, 'readability');
+
+        act(() => {
+            root?.unmount();
+        });
+        container.remove();
+    });
+
+    it('uses controlled setup route for opponent selection and back navigation', async () => {
+        const onBackToModeSelection = vi.fn();
+        const onStartGame = vi.fn();
+        const container = document.createElement('div');
+        let root: Root | null = null;
+
+        document.body.appendChild(container);
+        await act(async () => {
+            root = createRoot(container);
+            root.render(
+                <LocaleProvider locale="en" setLocale={vi.fn()}>
+                    <GameConfigMenu
+                        {...defaultMenuProps}
+                        setupRoute="classic"
+                        onBackToModeSelection={onBackToModeSelection}
+                        onStartGame={onStartGame}
+                    />
+                </LocaleProvider>
+            );
+        });
+
+        expect(container.textContent).toContain('Select Opponent');
+        expect(container.textContent).toContain('Classic Mode');
+
+        const localPvp = Array.from(container.querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('Local PvP')
+        );
+        const back = Array.from(container.querySelectorAll('button')).find((button) =>
+            button.textContent?.includes('Back to Mode Selection')
+        );
+
+        await act(async () => {
+            localPvp?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            back?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+
+        expect(onStartGame).toHaveBeenCalledWith('LOCAL_PVP', { useBuffs: false });
+        expect(onBackToModeSelection).toHaveBeenCalledTimes(1);
 
         act(() => {
             root?.unmount();

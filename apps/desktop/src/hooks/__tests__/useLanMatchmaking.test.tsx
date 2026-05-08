@@ -270,12 +270,28 @@ describe('useLanMatchmaking', () => {
 
         await renderHarness();
 
-        expect(currentResult?.state).toEqual(idleState);
+        expect(currentResult?.state).toMatchObject({
+            phase: 'error',
+            errorMessage: 'LAN duel requires the Electron desktop app.',
+            statusMessage: 'LAN matchmaking is not available in this browser preview.',
+        });
         await act(async () => {
-            await expect(currentResult?.startSearch()).resolves.toEqual(idleState);
-            await expect(currentResult?.cancelSearch()).resolves.toEqual(idleState);
-            await expect(currentResult?.selectMode('classic')).resolves.toEqual(idleState);
-            await expect(currentResult?.confirmStart()).resolves.toEqual(idleState);
+            await expect(currentResult?.startSearch()).resolves.toMatchObject({
+                phase: 'error',
+                errorMessage: 'LAN duel requires the Electron desktop app.',
+            });
+            await expect(currentResult?.cancelSearch()).resolves.toMatchObject({
+                phase: 'error',
+                errorMessage: 'LAN duel requires the Electron desktop app.',
+            });
+            await expect(currentResult?.selectMode('classic')).resolves.toMatchObject({
+                phase: 'error',
+                errorMessage: 'LAN duel requires the Electron desktop app.',
+            });
+            await expect(currentResult?.confirmStart()).resolves.toMatchObject({
+                phase: 'error',
+                errorMessage: 'LAN duel requires the Electron desktop app.',
+            });
         });
 
         act(() => {

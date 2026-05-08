@@ -257,6 +257,9 @@ describe('useOnlineManager', () => {
             })
         );
         expect(currentResult?.connectionStatus).toBe('disconnected');
+        expect(currentResult?.errorMessage).toBe(
+            'Online service is still starting. Wait for your Match ID, then try again.'
+        );
     });
 
     it('initializes a managed peer when enabled and destroys it during cleanup', () => {

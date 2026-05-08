@@ -2,7 +2,7 @@ import type { ChangeEventHandler, Dispatch, SetStateAction } from 'react';
 import type { useGameLogic } from '../hooks/useGameLogic';
 import type { useLanMatchmaking } from '../hooks/useLanMatchmaking';
 import type { SurfaceThemeSelections, SurfaceThemeVariant } from '../app/shell/surfaceTheme';
-import type { PlayerKey, ThemeName } from '@gemduel/shared/types';
+import type { GameMode, PlayerKey, ThemeName } from '@gemduel/shared/types';
 import type { AppReasonCode } from '@gemduel/shared/types/reason';
 
 export type { ThemeName } from '@gemduel/shared/types';
@@ -35,13 +35,16 @@ export interface ResponsiveLayout {
 export type GameLogicController = ReturnType<typeof useGameLogic>;
 export type LanMatchmakingController = ReturnType<typeof useLanMatchmaking>;
 export type MatchmakingRoute = 'none' | 'online' | 'lan';
+export type StartSetupRoute = 'none' | 'classic' | 'roguelike';
 export type AppVisualLabMode = 'surfaces' | 'motion' | 'readability';
 
 export interface AppUiState {
     showDebug: boolean;
     isReviewing: boolean;
     showRulebook: boolean;
+    setupRoute?: StartSetupRoute;
     matchmakingRoute: MatchmakingRoute;
+    visualLabMode?: AppVisualLabMode | null;
     isPeekingBoard: boolean;
     persistentWinner: PlayerKey | null;
     showRestartConfirm: boolean;
@@ -54,6 +57,7 @@ export interface AppUiSetters {
     setShowDebug: Dispatch<SetStateAction<boolean>>;
     setIsReviewing: Dispatch<SetStateAction<boolean>>;
     setShowRulebook: Dispatch<SetStateAction<boolean>>;
+    setStartSetupRoute?: Dispatch<SetStateAction<StartSetupRoute>>;
     setMatchmakingRoute: Dispatch<SetStateAction<MatchmakingRoute>>;
     setIsPeekingBoard: Dispatch<SetStateAction<boolean>>;
     setShowRestartConfirm: Dispatch<SetStateAction<boolean>>;
@@ -66,6 +70,10 @@ export interface AppUiCallbacks {
     handleRestart: () => void;
     handleDownloadReplay: () => void;
     handleUploadReplay: ChangeEventHandler<HTMLInputElement>;
+    startGame?: (
+        mode: GameMode,
+        config: { useBuffs: boolean; isHost?: boolean; hostPlayer?: PlayerKey }
+    ) => void;
     selectSurfaceTheme?: (variant: SurfaceThemeVariant) => void;
     openVisualLab?: (mode: AppVisualLabMode) => void;
     closeVisualLabToStartPage?: () => void;

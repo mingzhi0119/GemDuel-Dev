@@ -3,7 +3,6 @@ import { isDraftSelectionPhase } from '@gemduel/shared/logic/fsm';
 import type { AppRouteProps } from '@app/types/ui';
 import type { ThemeName } from '@gemduel/shared/types';
 import { DesktopStage } from '../layout/DesktopStage';
-import { getVisualLabMode } from '../visual-lab/visualLabMode';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
 
 const DraftScreen = React.lazy(() =>
@@ -68,7 +67,10 @@ const getRouteFallback = (routeKind: RouteKind, theme: ThemeName) => {
 export function GemDuelRoutes(props: AppRouteProps) {
     const { game, theme, ui, setters } = props;
     const { state, handlers, historyControls, online } = game;
-    const visualLabMode = getVisualLabMode();
+    const startGame = props.callbacks.startGame ?? handlers.startGame;
+    const setupRoute = ui.setupRoute ?? 'none';
+    const visualLabMode = ui.visualLabMode ?? null;
+    const setStartSetupRoute = setters.setStartSetupRoute ?? (() => undefined);
     let routeContent: React.ReactNode;
     let routeKind: RouteKind;
 
@@ -107,7 +109,7 @@ export function GemDuelRoutes(props: AppRouteProps) {
                 <OnlineMenu
                     onBack={() => setters.setMatchmakingRoute('none')}
                     online={online}
-                    startGame={handlers.startGame}
+                    startGame={startGame}
                     theme={theme}
                 />
             );
@@ -136,9 +138,12 @@ export function GemDuelRoutes(props: AppRouteProps) {
             routeKind = 'config';
             routeContent = (
                 <GameConfigMenu
+                    setupRoute={setupRoute}
+                    onSelectSetup={setStartSetupRoute}
+                    onBackToModeSelection={() => setStartSetupRoute('none')}
                     onOnlineSetup={() => setters.setMatchmakingRoute('online')}
                     onLanSetup={() => setters.setMatchmakingRoute('lan')}
-                    onStartGame={handlers.startGame}
+                    onStartGame={startGame}
                     onOpenVisualLab={props.callbacks.openVisualLab}
                     theme={theme}
                 />
@@ -149,7 +154,7 @@ export function GemDuelRoutes(props: AppRouteProps) {
         routeContent = <GameShell {...props} />;
     }
 
-    const routeResetKey = `${routeKind}:${ui.matchmakingRoute}:${historyControls.historyLength}:${state.phase}`;
+    const routeResetKey = `${routeKind}:${setupRoute}:${ui.matchmakingRoute}:${visualLabMode ?? 'none'}:${historyControls.historyLength}:${state.phase}`;
     const suspenseContent = (
         <RouteErrorBoundary resetKey={routeResetKey}>
             <Suspense fallback={getRouteFallback(routeKind, theme)}>{routeContent}</Suspense>

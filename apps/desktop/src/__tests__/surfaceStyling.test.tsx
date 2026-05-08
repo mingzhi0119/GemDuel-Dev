@@ -2216,6 +2216,7 @@ describe('card preview interactions', () => {
                         id: 'reserve',
                         label: 'Reserve',
                         disabled: true,
+                        disabledReason: 'Reserved slots are full.',
                         onAction: onReserve,
                     }
                 )}
@@ -2229,6 +2230,11 @@ describe('card preview interactions', () => {
         expect(actions).toHaveLength(2);
         expect(actions[0]?.getAttribute('data-card-preview-action')).toBe('buy');
         expect(actions[1]?.getAttribute('data-card-preview-action')).toBe('reserve');
+        expect(actions[1]?.getAttribute('title')).toBe('Reserved slots are full.');
+        expect(document.body.textContent).toContain('Reserved slots are full.');
+        expect(
+            document.body.querySelectorAll('button[aria-label="Close card preview"]')
+        ).toHaveLength(1);
         expect(actions[0]?.className).toContain('min-h-[52px]');
         expect(actions[0]?.className).toContain('sm:min-h-[56px]');
         expect(actions[0]?.className).toContain('sm:min-w-[184px]');

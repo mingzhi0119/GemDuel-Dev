@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useId, useRef } from 'react';
 import { ArrowLeft, RotateCcw, Users } from 'lucide-react';
 import { GEM_TYPES, BONUS_COLORS } from '@gemduel/shared/constants';
 import { getGemLabel } from '@gemduel/shared';
@@ -53,6 +53,59 @@ export function AppOverlayStack({
 }: AppOverlayStackProps) {
     const { locale } = useLocale();
     const t = useT();
+    const restartDialogTitleId = useId();
+    const restartDialogRef = useRef<HTMLDivElement | null>(null);
+    const cancelRestartButtonRef = useRef<HTMLButtonElement | null>(null);
+
+    useEffect(() => {
+        if (!showRestartConfirm) {
+            return undefined;
+        }
+
+        const previouslyFocused = document.activeElement as HTMLElement | null;
+        cancelRestartButtonRef.current?.focus();
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                onCancelRestart();
+                return;
+            }
+
+            if (event.key !== 'Tab') {
+                return;
+            }
+
+            const focusableButtons = Array.from(
+                restartDialogRef.current?.querySelectorAll<HTMLButtonElement>(
+                    'button:not(:disabled)'
+                ) ?? []
+            );
+
+            if (focusableButtons.length === 0) {
+                return;
+            }
+
+            const firstButton = focusableButtons[0];
+            const lastButton = focusableButtons[focusableButtons.length - 1];
+            const activeElement = document.activeElement;
+
+            if (event.shiftKey && activeElement === firstButton) {
+                event.preventDefault();
+                lastButton.focus();
+            } else if (!event.shiftKey && activeElement === lastButton) {
+                event.preventDefault();
+                firstButton.focus();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown, true);
+            previouslyFocused?.focus?.();
+        };
+    }, [onCancelRestart, showRestartConfirm]);
+
     return (
         <>
             <Suspense fallback={<div className="absolute inset-0 z-[200] bg-black/50" />}>
@@ -145,8 +198,17 @@ export function AppOverlayStack({
 
             {showRestartConfirm && (
                 <div className="absolute inset-0 z-[300] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-in fade-in">
-                    <div className="max-h-[calc(100vh-96px)] w-[min(88vw,1344px)] overflow-auto rounded-[48px] border border-slate-700 bg-slate-900 p-12 text-center shadow-2xl lg:p-24">
-                        <h3 className="mb-6 text-4xl font-bold text-white lg:text-6xl">
+                    <div
+                        ref={restartDialogRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby={restartDialogTitleId}
+                        className="max-h-[calc(100vh-96px)] w-[min(88vw,1344px)] overflow-auto rounded-[48px] border border-slate-700 bg-slate-900 p-12 text-center shadow-2xl lg:p-24"
+                    >
+                        <h3
+                            id={restartDialogTitleId}
+                            className="mb-6 text-4xl font-bold text-white lg:text-6xl"
+                        >
                             {t('overlays.restartTitle')}
                         </h3>
                         <p className="mb-16 text-2xl text-slate-300 lg:text-4xl">
@@ -154,6 +216,7 @@ export function AppOverlayStack({
                         </p>
                         <div className="flex flex-wrap justify-center gap-8 lg:gap-12">
                             <button
+                                ref={cancelRestartButtonRef}
                                 onClick={onCancelRestart}
                                 className="rounded-3xl bg-slate-800 px-12 py-6 text-2xl font-semibold text-white transition-colors hover:bg-slate-700 lg:px-[4.5rem] lg:py-7 lg:text-4xl"
                             >

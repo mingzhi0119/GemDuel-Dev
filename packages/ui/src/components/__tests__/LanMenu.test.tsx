@@ -69,6 +69,35 @@ describe('LanMenu', () => {
         expect(container?.textContent).toContain('Searching for opponent on local network...');
     });
 
+    it('renders idle as an actionable fallback instead of a blank panel', async () => {
+        const props = createProps({
+            lan: {
+                phase: 'idle',
+                roomId: null,
+                remoteInstanceId: null,
+                remoteAddress: null,
+                hostPort: null,
+                transportHost: false,
+                localSeat: null,
+                selectedMode: null,
+                hostPeerId: null,
+                errorMessage: null,
+                statusMessage: 'LAN duel is ready.',
+            },
+        });
+
+        await renderMenu(props);
+
+        expect(container?.textContent).toContain('Ready to Search');
+        expect(container?.textContent).toContain('LAN duel is ready.');
+
+        act(() => {
+            findButton('Search Again')?.click();
+        });
+
+        expect(props.onRetry).toHaveBeenCalledTimes(1);
+    });
+
     it('lets randomized P1 choose a mode and start the duel', async () => {
         const props = createProps({
             lan: {

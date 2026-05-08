@@ -1,6 +1,9 @@
 export const enLooseMessages = {
     'message.selectGold': 'Select a Gold gem.',
+    'message.selectHighlightedGold': 'Select one highlighted Gold gem on the board, or Cancel.',
     'message.mustSelectGold': 'Must select a Gold gem!',
+    'message.mustSelectHighlightedGold':
+        'That is not Gold. Select a highlighted Gold gem or Cancel.',
     'message.cannotPrivilegeGold': 'Cannot use Privilege on Gold.',
     'message.cannotTakeGoldDirectly': 'Cannot take Gold directly!',
     'message.cannotStealGold': 'Cannot steal Gold!',
@@ -29,6 +32,18 @@ export const enLooseMessages = {
     'message.lan.opponentDisconnected': 'Opponent disconnected.',
     'message.lan.discoveryFailed': 'LAN discovery failed to start.',
     'message.lan.transportUnavailable': 'LAN transport is unavailable.',
+    'message.lan.requiresDesktop': 'LAN duel requires the Electron desktop app.',
+    'message.lan.browserUnavailable': 'LAN matchmaking is not available in this browser preview.',
+    'message.online.pasteIdFirst': 'Paste an opponent Match ID before connecting.',
+    'message.online.serviceStarting':
+        'Online service is still starting. Wait for your Match ID, then try again.',
+    'message.online.serviceUnavailable':
+        'Online service is unavailable. Check your connection and try again.',
+    'message.online.connectionFailed': 'Connection failed. Check the Match ID and try again.',
+    'message.online.connectionTimedOut': 'Connection timed out. Check the Match ID and try again.',
+    'message.online.connectionClosed':
+        'Connection closed. Ask the host for a fresh Match ID and try again.',
+    'message.online.serviceDisconnected': 'Online service disconnected. Try again in a moment.',
     'message.lan.onlyP1Choose': 'Only P1 can choose the match mode.',
     'message.lan.onlyP1Start': 'Only P1 can start the LAN duel.',
     'message.lan.chooseModeFirst': 'Choose Classic or Roguelike before starting.',
@@ -45,7 +60,9 @@ type LooseMessageShape = { [K in keyof typeof enLooseMessages]: string };
 
 export const zhLooseMessages: LooseMessageShape = {
     'message.selectGold': '请选择一个黄金宝石。',
+    'message.selectHighlightedGold': '请选择棋盘上高亮的一个黄金宝石，或取消。',
     'message.mustSelectGold': '必须选择一个黄金宝石！',
+    'message.mustSelectHighlightedGold': '这不是黄金宝石。请选择高亮的黄金宝石，或取消。',
     'message.cannotPrivilegeGold': '不能对黄金使用特权。',
     'message.cannotTakeGoldDirectly': '不能直接拿取黄金！',
     'message.cannotStealGold': '不能偷取黄金！',
@@ -74,6 +91,15 @@ export const zhLooseMessages: LooseMessageShape = {
     'message.lan.opponentDisconnected': '对手已断开连接。',
     'message.lan.discoveryFailed': '局域网发现服务启动失败。',
     'message.lan.transportUnavailable': '局域网传输当前不可用。',
+    'message.lan.requiresDesktop': '局域网对决需要 Electron 桌面版。',
+    'message.lan.browserUnavailable': '浏览器预览中无法使用局域网匹配。',
+    'message.online.pasteIdFirst': '连接前请先粘贴对手的对局 ID。',
+    'message.online.serviceStarting': '在线服务仍在启动。等你的对局 ID 出现后再重试。',
+    'message.online.serviceUnavailable': '在线服务不可用。请检查网络后重试。',
+    'message.online.connectionFailed': '连接失败。请检查对局 ID 后重试。',
+    'message.online.connectionTimedOut': '连接超时。请检查对局 ID 后重试。',
+    'message.online.connectionClosed': '连接已关闭。请让房主提供新的对局 ID 后重试。',
+    'message.online.serviceDisconnected': '在线服务已断开。请稍后重试。',
     'message.lan.onlyP1Choose': '只有 P1 可以选择对局模式。',
     'message.lan.onlyP1Start': '只有 P1 可以开始局域网对战。',
     'message.lan.chooseModeFirst': '开始前请先选择经典模式或肉鸽模式。',

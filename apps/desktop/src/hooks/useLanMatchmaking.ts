@@ -32,6 +32,13 @@ const LAN_BRIDGE_ERROR_STATE: LanMatchmakingState = {
     statusMessage: 'LAN matchmaking request failed.',
 };
 
+const BROWSER_LAN_UNAVAILABLE_STATE: LanMatchmakingState = {
+    ...FALLBACK_STATE,
+    phase: 'error',
+    errorMessage: 'LAN duel requires the Electron desktop app.',
+    statusMessage: 'LAN matchmaking is not available in this browser preview.',
+};
+
 const reportLanBridgeFailure = (operation: string, error: unknown) => {
     reportRendererEvent(
         {
@@ -57,8 +64,8 @@ export const useLanMatchmaking = () => {
     const refresh = useCallback(async () => {
         const bridge = getBridge();
         if (!bridge) {
-            setState(FALLBACK_STATE);
-            return FALLBACK_STATE;
+            setState(BROWSER_LAN_UNAVAILABLE_STATE);
+            return BROWSER_LAN_UNAVAILABLE_STATE;
         }
 
         try {
@@ -76,7 +83,7 @@ export const useLanMatchmaking = () => {
     useEffect(() => {
         const bridge = getBridge();
         if (!bridge) {
-            setState(FALLBACK_STATE);
+            setState(BROWSER_LAN_UNAVAILABLE_STATE);
             return undefined;
         }
 
@@ -100,7 +107,8 @@ export const useLanMatchmaking = () => {
     const startSearch = useCallback(async () => {
         const bridge = getBridge();
         if (!bridge) {
-            return FALLBACK_STATE;
+            setState(BROWSER_LAN_UNAVAILABLE_STATE);
+            return BROWSER_LAN_UNAVAILABLE_STATE;
         }
 
         try {
@@ -119,7 +127,8 @@ export const useLanMatchmaking = () => {
     const cancelSearch = useCallback(async () => {
         const bridge = getBridge();
         if (!bridge) {
-            return FALLBACK_STATE;
+            setState(BROWSER_LAN_UNAVAILABLE_STATE);
+            return BROWSER_LAN_UNAVAILABLE_STATE;
         }
 
         try {

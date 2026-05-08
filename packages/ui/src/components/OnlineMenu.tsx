@@ -1,15 +1,18 @@
 import { ArrowLeft, Globe, Copy, CheckCircle2, Play, Users, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import { localizeLooseUiMessage } from '@gemduel/shared';
 import { GameMode, PlayerKey } from '@gemduel/shared/types';
-import { useT } from '../i18n/LocaleProvider';
+import { useLocale, useT } from '../i18n/LocaleProvider';
 
 interface OnlineMenuProps {
     onBack: () => void;
     online: {
         peerId: string | null;
         connectionStatus: string;
+        errorMessage?: string | null;
         isHost: boolean;
         connectToPeer: (id: string) => void;
+        clearError?: () => void;
     };
     startGame: (
         mode: GameMode,
@@ -21,9 +24,12 @@ interface OnlineMenuProps {
 export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps) {
     const [roomInput, setRoomInput] = useState('');
     const [copySuccess, setCopySuccess] = useState(false);
+    const { locale } = useLocale();
     const t = useT();
 
     const isConnected = online.connectionStatus === 'connected';
+    const localizedErrorMessage = localizeLooseUiMessage(online.errorMessage, locale);
+    const connectToCurrentRoom = () => online.connectToPeer(roomInput);
 
     return (
         <div
@@ -110,6 +116,11 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                                 }
                                             }}
                                             disabled={!online.peerId}
+                                            title={
+                                                online.peerId
+                                                    ? undefined
+                                                    : t('online.copyUnavailable')
+                                            }
                                             className={`p-2 rounded-lg transition-colors ${copySuccess ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
                                         >
                                             {copySuccess ? (
@@ -202,7 +213,19 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                                         type="text"
                                         placeholder={t('online.pasteId')}
                                         value={roomInput}
-                                        onChange={(e) => setRoomInput(e.target.value)}
+                                        onChange={(e) => {
+                                            setRoomInput(e.target.value);
+                                            online.clearError?.();
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (
+                                                event.key === 'Enter' &&
+                                                roomInput.trim() &&
+                                                online.connectionStatus !== 'connecting'
+                                            ) {
+                                                connectToCurrentRoom();
+                                            }
+                                        }}
                                         disabled={isConnected}
                                         className={`w-full p-4 rounded-xl font-mono text-lg outline-none border-2 transition-all
                                             ${
@@ -217,9 +240,24 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                             </div>
 
                             <div className="mt-auto">
+                                {localizedErrorMessage && !isConnected && (
+                                    <div
+                                        role="alert"
+                                        className={`mb-4 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm ${
+                                            theme === 'dark' ? 'text-red-100' : 'text-red-700'
+                                        }`}
+                                    >
+                                        <div className="font-black uppercase tracking-wider">
+                                            {t('online.errorTitle')}
+                                        </div>
+                                        <div className="mt-1 opacity-85">
+                                            {localizedErrorMessage}
+                                        </div>
+                                    </div>
+                                )}
                                 {!isConnected ? (
                                     <button
-                                        onClick={() => online.connectToPeer(roomInput)}
+                                        onClick={connectToCurrentRoom}
                                         disabled={
                                             !roomInput || online.connectionStatus === 'connecting'
                                         }
@@ -262,7 +300,7 @@ export function OnlineMenu({ onBack, online, startGame, theme }: OnlineMenuProps
                 className={`absolute bottom-0 left-0 w-full py-2 text-center text-[10px] font-mono opacity-30 lg:text-sm ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
             >
                 {t('online.statusPrefix')}: {online.connectionStatus.toUpperCase()} •{' '}
-                {t('online.serverCloud')}
+                {localizedErrorMessage ? t('online.retryHint') : t('online.serverCloud')}
             </div>
         </div>
     );

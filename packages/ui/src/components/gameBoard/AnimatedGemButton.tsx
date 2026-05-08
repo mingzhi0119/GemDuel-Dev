@@ -1,8 +1,10 @@
 import React from 'react';
 import { cn } from '../../utils';
 import { withGameAnimation } from '../../hoc/withGameAnimation';
-import { BoardCell } from '@gemduel/shared/types';
+import { getGemLabel } from '@gemduel/shared';
+import { BoardCell, GemColor } from '@gemduel/shared/types';
 import { GemArtwork } from '../GemArtwork';
+import { useLocale } from '../../i18n/LocaleProvider';
 
 interface GemButtonProps {
     r: number;
@@ -36,6 +38,7 @@ const GemButton: React.FC<GemButtonProps> = React.memo(
         onGemPointerDown,
         onGemPointerEnter,
     }) => {
+        const { locale } = useLocale();
         const handleClick = React.useCallback(() => {
             onGemClick(r, c);
         }, [r, c, onGemClick]);
@@ -50,6 +53,18 @@ const GemButton: React.FC<GemButtonProps> = React.memo(
         const handlePointerEnter = React.useCallback(() => {
             onGemPointerEnter(r, c);
         }, [c, onGemPointerEnter, r]);
+        const gemLabel = getGemLabel(gem.type.id as GemColor, locale);
+        const stateLabel = [
+            isSelectedGem ? `selected ${selectionIndex + 1}` : null,
+            isTarget ? 'selectable target' : null,
+            isReserveGoldSelected ? 'reserved gold target selected' : null,
+            !isInteractive ? 'not available' : null,
+        ]
+            .filter(Boolean)
+            .join(', ');
+        const ariaLabel = `${gemLabel} gem at row ${r + 1}, column ${c + 1}${
+            stateLabel ? `, ${stateLabel}` : ''
+        }`;
 
         return (
             <button
@@ -57,6 +72,7 @@ const GemButton: React.FC<GemButtonProps> = React.memo(
                 onPointerDown={handlePointerDown}
                 onPointerEnter={handlePointerEnter}
                 disabled={!isInteractive}
+                aria-label={ariaLabel}
                 className={`relative w-full h-full rounded-full flex items-center justify-center ${!isInteractive ? 'cursor-default' : 'cursor-pointer'}`}
             >
                 <div

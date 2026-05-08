@@ -6,6 +6,9 @@ import { LocaleSwitch } from './LocaleSwitch';
 import { useViewportFitScale } from './useViewportFitScale';
 
 interface GameConfigMenuProps {
+    setupRoute: 'none' | 'classic' | 'roguelike';
+    onSelectSetup: (setup: 'none' | 'classic' | 'roguelike') => void;
+    onBackToModeSelection: () => void;
     onOnlineSetup: () => void;
     onLanSetup: () => void;
     onStartGame: (mode: GameMode, config: { useBuffs: boolean }) => void;
@@ -14,17 +17,25 @@ interface GameConfigMenuProps {
 }
 
 export function GameConfigMenu({
+    setupRoute,
+    onSelectSetup,
+    onBackToModeSelection,
     onOnlineSetup,
     onLanSetup,
     onStartGame,
     onOpenVisualLab,
     theme,
 }: GameConfigMenuProps) {
-    const [gameConfig, setGameConfig] = useState<{ useBuffs: boolean } | null>(null);
     const [showVisualLabMenu, setShowVisualLabMenu] = useState(false);
     const { locale } = useLocale();
     const t = useT();
     const fitScale = useViewportFitScale<HTMLDivElement>(3, 96);
+    const gameConfig =
+        setupRoute === 'classic'
+            ? { useBuffs: false }
+            : setupRoute === 'roguelike'
+              ? { useBuffs: true }
+              : null;
 
     if (!gameConfig) {
         return (
@@ -50,7 +61,7 @@ export function GameConfigMenu({
 
                     <div className="flex flex-col md:flex-row gap-6 mt-8">
                         <button
-                            onClick={() => setGameConfig({ useBuffs: false })}
+                            onClick={() => onSelectSetup('classic')}
                             className="group relative w-64 h-40 rounded-2xl border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden
                                   border-slate-300 hover:border-blue-500 bg-white/5 hover:bg-blue-500/10"
                         >
@@ -64,7 +75,7 @@ export function GameConfigMenu({
                         </button>
 
                         <button
-                            onClick={() => setGameConfig({ useBuffs: true })}
+                            onClick={() => onSelectSetup('roguelike')}
                             className="group relative w-64 h-40 rounded-2xl border-2 flex flex-col items-center justify-center gap-4 transition-all hover:scale-105 active:scale-95 overflow-hidden
                                   border-slate-300 hover:border-purple-500 bg-white/5 hover:bg-purple-500/10"
                         >
@@ -124,26 +135,26 @@ export function GameConfigMenu({
                 </div>
 
                 {onOpenVisualLab && (
-                    <div className="absolute bottom-8 right-8 z-10 flex items-end gap-4">
+                    <div className="absolute right-8 top-8 z-10 flex items-start gap-3">
                         {showVisualLabMenu && (
-                            <div className="flex overflow-hidden rounded-2xl border border-cyan-300/45 bg-slate-950/92 text-[16px] font-black uppercase tracking-[0.14em] text-slate-100 shadow-2xl shadow-cyan-950/45 backdrop-blur-md">
+                            <div className="flex overflow-hidden rounded-xl border border-cyan-300/45 bg-slate-950/92 text-[12px] font-black uppercase tracking-[0.12em] text-slate-100 shadow-2xl shadow-cyan-950/45 backdrop-blur-md">
                                 <button
                                     type="button"
-                                    className="px-7 py-5 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
+                                    className="px-4 py-3 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
                                     onClick={() => onOpenVisualLab('surfaces')}
                                 >
                                     Surfaces
                                 </button>
                                 <button
                                     type="button"
-                                    className="border-l border-cyan-300/35 px-7 py-5 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
+                                    className="border-l border-cyan-300/35 px-4 py-3 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
                                     onClick={() => onOpenVisualLab('motion')}
                                 >
                                     Motion
                                 </button>
                                 <button
                                     type="button"
-                                    className="border-l border-cyan-300/35 px-7 py-5 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
+                                    className="border-l border-cyan-300/35 px-4 py-3 transition-colors hover:bg-cyan-400/18 focus-visible:bg-cyan-400/18 focus-visible:outline-none"
                                     onClick={() => onOpenVisualLab('readability')}
                                 >
                                     Readability
@@ -154,15 +165,15 @@ export function GameConfigMenu({
                             type="button"
                             aria-label="Open Visual Lab"
                             aria-expanded={showVisualLabMenu}
-                            className="flex min-h-28 items-center gap-6 rounded-[2rem] border border-cyan-300/55 bg-cyan-400/12 px-8 py-6 text-left text-cyan-50 shadow-2xl shadow-cyan-950/35 backdrop-blur-md transition-all hover:border-cyan-200 hover:bg-cyan-400/20 hover:shadow-cyan-800/30 focus-visible:border-cyan-200 focus-visible:bg-cyan-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/40"
+                            className="flex min-h-16 items-center gap-3 rounded-2xl border border-cyan-300/55 bg-cyan-400/12 px-4 py-3 text-left text-cyan-50 shadow-2xl shadow-cyan-950/35 backdrop-blur-md transition-all hover:border-cyan-200 hover:bg-cyan-400/20 hover:shadow-cyan-800/30 focus-visible:border-cyan-200 focus-visible:bg-cyan-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/40"
                             onClick={() => setShowVisualLabMenu((current) => !current)}
                         >
-                            <FlaskConical size={44} aria-hidden="true" className="text-cyan-200" />
+                            <FlaskConical size={24} aria-hidden="true" className="text-cyan-200" />
                             <span className="flex flex-col leading-none">
-                                <span className="text-3xl font-black uppercase tracking-[0.16em]">
+                                <span className="text-sm font-black uppercase tracking-[0.12em]">
                                     Visual Lab
                                 </span>
-                                <span className="mt-3 text-[15px] font-bold uppercase tracking-[0.14em] text-cyan-100/70">
+                                <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em] text-cyan-100/70">
                                     Surfaces / Motion / Readability
                                 </span>
                             </span>
@@ -218,7 +229,7 @@ export function GameConfigMenu({
                 </div>
 
                 <button
-                    onClick={() => setGameConfig(null)}
+                    onClick={onBackToModeSelection}
                     className="text-xs underline opacity-40 hover:opacity-100 transition-opacity mt-4"
                 >
                     {t('startPage.backToModeSelection')}
