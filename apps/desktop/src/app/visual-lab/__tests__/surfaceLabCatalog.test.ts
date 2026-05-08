@@ -135,6 +135,15 @@ describe('surface lab catalog', () => {
         expect(sets[0].source).toBe('runtime');
         expect(sets.map((set) => set.style)).toContain('pearl-opaline');
         expect(sets.map((set) => set.style)).toContain('lotus-porcelain');
+        for (const set of sets) {
+            expect(set.playerZoneSideSlots?.p1?.archiveUrl).toBe(
+                `/assets/surfaces/anime-themes/${set.style}/dark/player-zone-p1.png`
+            );
+            expect(set.playerZoneSideSlots?.p2?.archiveUrl).toBe(
+                `/assets/surfaces/anime-themes/${set.style}/dark/player-zone-p2.png`
+            );
+        }
+
         const lotusSet = sets.find((set) => set.style === 'lotus-porcelain');
         expect(lotusSet?.playerZoneSideSlots?.p1?.archiveUrl).toBe(
             '/assets/surfaces/anime-themes/lotus-porcelain/dark/player-zone-p1.png'

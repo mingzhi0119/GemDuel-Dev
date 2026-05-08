@@ -29,6 +29,12 @@ const GEM_FLIGHT_STYLES = `
     48% { opacity: 0.9; transform: translate3d(var(--end-x), var(--end-y), 0) scale(1.06); }
     100% { opacity: 0; transform: translate3d(var(--end-x), var(--end-y), 0) scale(1); }
 }
+@keyframes gemduel-gem-anchor-pulse {
+    0% { opacity: 0; transform: scale(0.72); }
+    20% { opacity: 1; transform: scale(1.12); }
+    74% { opacity: 0.7; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.2); }
+}
 `;
 
 const shouldHoldPresentationPreview = (): boolean =>
@@ -47,6 +53,7 @@ type GemLayerEvent =
 interface GemMotionItem {
     key: string;
     color: GemColor;
+    label: string;
     sourceSelector?: string;
     targetSelector?: string;
     sourceFallbackSelector?: string;
@@ -91,6 +98,7 @@ const buildGemMotionItems = (event: GemLayerEvent): GemMotionItem[] => {
         return createRepeatedGemItems(event.id, event.deltas, (color, index) => {
             const source = event.sources?.filter((candidate) => candidate.color === color)[index];
             return {
+                label: `${event.player.toUpperCase()} +${color}`,
                 sourceSelector: getBoardSourceSelector(source),
                 sourceFallbackSelector: CENTER_PLAYFIELD_SELECTOR,
                 targetSelector: `[data-player-gem="${event.player}-${color}"]`,
@@ -103,6 +111,7 @@ const buildGemMotionItems = (event: GemLayerEvent): GemMotionItem[] => {
         return event.cells.map((cell, index) => ({
             key: `${event.id}:${cell.row}-${cell.col}`,
             color: cell.color,
+            label: `${cell.color} drops`,
             sourcePoint: getDropSourcePoint(index),
             targetSelector: `[data-board-cell="${cell.row}-${cell.col}"]`,
             targetFallbackSelector: CENTER_PLAYFIELD_SELECTOR,
@@ -111,6 +120,7 @@ const buildGemMotionItems = (event: GemLayerEvent): GemMotionItem[] => {
 
     if (event.type === 'gem-steal') {
         return createRepeatedGemItems(event.id, event.deltas, (color) => ({
+            label: `${event.toPlayer.toUpperCase()} steals ${color}`,
             sourceSelector: `[data-player-gem="${event.fromPlayer}-${color}"]`,
             sourceFallbackSelector: `[data-player-zone="${event.fromPlayer}"]`,
             targetSelector: `[data-player-gem="${event.toPlayer}-${color}"]`,
@@ -121,6 +131,7 @@ const buildGemMotionItems = (event: GemLayerEvent): GemMotionItem[] => {
     return createRepeatedGemItems(event.id, event.deltas, (color, index) => {
         const sink = getAnchorCenter(CENTER_PLAYFIELD_SELECTOR);
         return {
+            label: `${event.player.toUpperCase()} -${color}`,
             sourceSelector: `[data-player-gem="${event.player}-${color}"]`,
             sourceFallbackSelector: `[data-player-zone="${event.player}"]`,
             targetPoint: {
@@ -173,9 +184,9 @@ function AnimatedGemClone({
     const style = {
         width: gemSizePx,
         height: gemSizePx,
-        left: previewMode ? 0 : undefined,
-        top: previewMode ? 0 : undefined,
-        zIndex: previewMode ? 190 : undefined,
+        left: 0,
+        top: 0,
+        zIndex: previewMode ? 1001 : undefined,
         filter: previewMode
             ? 'drop-shadow(0 0 18px rgba(125,211,252,0.8)) drop-shadow(0 12px 18px rgba(0,0,0,0.42))'
             : 'drop-shadow(0 10px 14px rgba(0,0,0,0.38))',
@@ -197,23 +208,72 @@ function AnimatedGemClone({
     } as CSSProperties;
 
     return (
-        <div
-            aria-hidden="true"
-            data-gem-flight={item.color}
-            className="fixed z-[120] pointer-events-none"
-            style={style}
-        >
+        <>
+            <GemFlightAnchorHalo point={source} tone="source" previewMode={previewMode} />
+            <GemFlightAnchorHalo point={target} tone="target" previewMode={previewMode} />
             <div
                 aria-hidden="true"
-                className="absolute inset-[-18%] rounded-full bg-cyan-200/20 blur-md"
-            />
-            <GemIcon
-                type={gemType}
-                size="w-full h-full"
-                theme={theme}
-                variant="board"
-                className="shadow-2xl"
-            />
+                data-gem-flight={item.color}
+                className="fixed z-[120] pointer-events-none"
+                style={style}
+            >
+                <GemFlightLabel label={item.label} />
+                <div
+                    aria-hidden="true"
+                    className="absolute inset-[-18%] rounded-full bg-cyan-200/20 blur-md"
+                />
+                <GemIcon
+                    type={gemType}
+                    size="w-full h-full"
+                    theme={theme}
+                    variant="board"
+                    className="shadow-2xl"
+                />
+            </div>
+        </>
+    );
+}
+
+function GemFlightAnchorHalo({
+    point,
+    tone,
+    previewMode,
+}: {
+    point: { x: number; y: number };
+    tone: 'source' | 'target';
+    previewMode?: PresentationPreviewMode;
+}) {
+    const size = tone === 'target' ? 72 : 58;
+
+    return (
+        <div
+            aria-hidden="true"
+            data-gem-flight-anchor={tone}
+            className={`fixed z-[118] pointer-events-none rounded-full border-2 ${
+                tone === 'target'
+                    ? 'border-emerald-200/80 shadow-[0_0_26px_rgba(52,211,153,0.7)]'
+                    : 'border-cyan-200/70 shadow-[0_0_22px_rgba(125,211,252,0.58)]'
+            }`}
+            style={{
+                left: point.x - size / 2,
+                top: point.y - size / 2,
+                width: size,
+                height: size,
+                zIndex: previewMode ? 1000 : undefined,
+                animation: 'gemduel-gem-anchor-pulse 660ms ease-out both',
+            }}
+        />
+    );
+}
+
+function GemFlightLabel({ label }: { label: string }) {
+    return (
+        <div
+            aria-hidden="true"
+            data-gem-flight-label={label}
+            className="absolute left-1/2 top-[-28px] z-10 -translate-x-1/2 whitespace-nowrap rounded-md border border-cyan-200/70 bg-slate-950/88 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-cyan-50 shadow-[0_8px_18px_rgba(0,0,0,0.4)]"
+        >
+            {label}
         </div>
     );
 }

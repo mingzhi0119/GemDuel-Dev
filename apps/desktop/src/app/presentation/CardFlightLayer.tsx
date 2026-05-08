@@ -12,16 +12,32 @@ import type {
 } from './presentationTypes';
 import { getAnchorCenter } from './presentationGeometry';
 import { CARD_FLIGHT_STYLES } from './cardFlightStyles';
+import { CardFlightAnchorHalo, CardFlightLabel } from './cardFlightAnnotations';
 import { DeckBackFace } from './DeckBackFace';
 import { MarketRefillMotion } from './MarketRefillMotion';
 import { getPresentationDurationMs, type PresentationPreviewMode } from './presentationPreviewMode';
 
-const CARD_SCALE = 0.42;
-const LAB_CARD_SCALE = 0.62;
+const CARD_SCALE = 0.52;
+const LAB_CARD_SCALE = 0.68;
 const MIDDLE_ZONE_SELECTOR = '[data-presentation-anchor="middle-zone"]';
 
 const getCardScale = (previewMode: PresentationPreviewMode | undefined): number =>
     previewMode ? LAB_CARD_SCALE : CARD_SCALE;
+
+const getCardActionLabel = (
+    event: CardAcquirePresentationEvent | CardReservePresentationEvent,
+    item: CardFlightPresentationItem
+) => {
+    const playerLabel = event.player.toUpperCase();
+
+    if (event.type === 'card-reserve') {
+        return item.source.kind === 'deck'
+            ? `${playerLabel} reserves from deck`
+            : `${playerLabel} reserves`;
+    }
+
+    return item.source.kind === 'reserved' ? `${playerLabel} buys reserved` : `${playerLabel} buys`;
+};
 
 type CardFlightEvent =
     | CardAcquirePresentationEvent
@@ -110,13 +126,14 @@ function FlightCard({
     const endX = target.x - cardWidth / 2;
     const endY = target.y - cardHeight / 2;
     const durationMs = getPresentationDurationMs(prefersReducedMotion ? 180 : 720, previewMode);
+    const actionLabel = getCardActionLabel(event, item);
 
     const style = {
         width: cardWidth,
         height: cardHeight,
-        left: previewMode ? 0 : undefined,
-        top: previewMode ? 0 : undefined,
-        zIndex: previewMode ? 190 : undefined,
+        left: 0,
+        top: 0,
+        zIndex: previewMode ? 1001 : undefined,
         filter: previewMode
             ? 'drop-shadow(0 0 18px rgba(125,211,252,0.7)) drop-shadow(0 18px 32px rgba(0,0,0,0.42))'
             : 'drop-shadow(0 14px 28px rgba(0,0,0,0.36))',
@@ -132,36 +149,41 @@ function FlightCard({
     } as CSSProperties;
 
     return (
-        <div
-            aria-hidden="true"
-            data-card-flight={event.type}
-            data-card-id={item.cardId}
-            className="fixed z-[119] pointer-events-none"
-            style={style}
-        >
-            {previewMode && (
-                <div
-                    aria-hidden="true"
-                    className="absolute inset-[-10px] rounded-xl border-2 border-cyan-200/80 shadow-[0_0_28px_rgba(125,211,252,0.7)]"
-                />
-            )}
+        <>
+            <CardFlightAnchorHalo point={source} tone="source" previewMode={previewMode} />
+            <CardFlightAnchorHalo point={target} tone="target" previewMode={previewMode} />
             <div
-                className="origin-top-left overflow-hidden rounded-lg"
-                style={{
-                    width: FEATURED_CARD_SIZE.width,
-                    height: FEATURED_CARD_SIZE.height,
-                    transform: `scale(${cardScale})`,
-                }}
+                aria-hidden="true"
+                data-card-flight={event.type}
+                data-card-id={item.cardId}
+                className="fixed z-[119] pointer-events-none"
+                style={style}
             >
-                <Card
-                    card={item.card}
-                    size="featured"
-                    canBuy={false}
-                    theme={theme}
-                    className="shadow-2xl"
-                />
+                <CardFlightLabel label={actionLabel} />
+                {previewMode && (
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-[-10px] rounded-xl border-2 border-cyan-200/80 shadow-[0_0_28px_rgba(125,211,252,0.7)]"
+                    />
+                )}
+                <div
+                    className="origin-top-left overflow-hidden rounded-lg"
+                    style={{
+                        width: FEATURED_CARD_SIZE.width,
+                        height: FEATURED_CARD_SIZE.height,
+                        transform: `scale(${cardScale})`,
+                    }}
+                >
+                    <Card
+                        card={item.card}
+                        size="featured"
+                        canBuy={false}
+                        theme={theme}
+                        className="shadow-2xl"
+                    />
+                </div>
             </div>
-        </div>
+        </>
     );
 }
 
@@ -201,13 +223,14 @@ function DeckReserveFlightCard({
     const endY = target.y - cardHeight / 2;
     const artwork = marketDeckBackArtwork?.[item.source.level];
     const durationMs = getPresentationDurationMs(prefersReducedMotion ? 180 : 760, previewMode);
+    const actionLabel = getCardActionLabel(event, item);
 
     const style = {
         width: cardWidth,
         height: cardHeight,
-        left: previewMode ? 0 : undefined,
-        top: previewMode ? 0 : undefined,
-        zIndex: previewMode ? 190 : undefined,
+        left: 0,
+        top: 0,
+        zIndex: previewMode ? 1001 : undefined,
         filter: previewMode
             ? 'drop-shadow(0 0 18px rgba(125,211,252,0.7)) drop-shadow(0 18px 32px rgba(0,0,0,0.42))'
             : 'drop-shadow(0 14px 28px rgba(0,0,0,0.36))',
@@ -224,60 +247,65 @@ function DeckReserveFlightCard({
     } as CSSProperties;
 
     return (
-        <div
-            aria-hidden="true"
-            data-card-flight={event.type}
-            data-card-reserve-source="deck"
-            data-card-id={item.cardId}
-            className="fixed z-[119] pointer-events-none"
-            style={style}
-        >
-            {previewMode && (
-                <div
-                    aria-hidden="true"
-                    className="absolute inset-[-10px] rounded-xl border-2 border-cyan-200/80 shadow-[0_0_28px_rgba(125,211,252,0.7)]"
-                />
-            )}
+        <>
+            <CardFlightAnchorHalo point={source} tone="source" previewMode={previewMode} />
+            <CardFlightAnchorHalo point={target} tone="target" previewMode={previewMode} />
             <div
-                className="origin-top-left overflow-hidden rounded-lg"
-                style={{
-                    width: FEATURED_CARD_SIZE.width,
-                    height: FEATURED_CARD_SIZE.height,
-                    transform: `scale(${cardScale})`,
-                    transformOrigin: 'top left',
-                    transformStyle: 'preserve-3d',
-                }}
+                aria-hidden="true"
+                data-card-flight={event.type}
+                data-card-reserve-source="deck"
+                data-card-id={item.cardId}
+                className="fixed z-[119] pointer-events-none"
+                style={style}
             >
-                {!prefersReducedMotion && (
+                <CardFlightLabel label={actionLabel} />
+                {previewMode && (
+                    <div
+                        aria-hidden="true"
+                        className="absolute inset-[-10px] rounded-xl border-2 border-cyan-200/80 shadow-[0_0_28px_rgba(125,211,252,0.7)]"
+                    />
+                )}
+                <div
+                    className="origin-top-left overflow-hidden rounded-lg"
+                    style={{
+                        width: FEATURED_CARD_SIZE.width,
+                        height: FEATURED_CARD_SIZE.height,
+                        transform: `scale(${cardScale})`,
+                        transformOrigin: 'top left',
+                        transformStyle: 'preserve-3d',
+                    }}
+                >
+                    {!prefersReducedMotion && (
+                        <div
+                            className="absolute inset-0 overflow-hidden rounded-lg"
+                            style={{
+                                backfaceVisibility: 'hidden',
+                                animation: `gemduel-card-reserve-deck-back ${durationMs}ms ease-out ${stagger}ms both`,
+                            }}
+                        >
+                            <DeckBackFace artwork={artwork} level={item.source.level} />
+                        </div>
+                    )}
                     <div
                         className="absolute inset-0 overflow-hidden rounded-lg"
                         style={{
                             backfaceVisibility: 'hidden',
-                            animation: `gemduel-card-reserve-deck-back ${durationMs}ms ease-out ${stagger}ms both`,
+                            animation: prefersReducedMotion
+                                ? undefined
+                                : `gemduel-card-reserve-deck-face ${durationMs}ms ease-out ${stagger}ms both`,
                         }}
                     >
-                        <DeckBackFace artwork={artwork} level={item.source.level} />
+                        <Card
+                            card={item.card}
+                            size="featured"
+                            canBuy={false}
+                            theme={theme}
+                            className="shadow-2xl"
+                        />
                     </div>
-                )}
-                <div
-                    className="absolute inset-0 overflow-hidden rounded-lg"
-                    style={{
-                        backfaceVisibility: 'hidden',
-                        animation: prefersReducedMotion
-                            ? undefined
-                            : `gemduel-card-reserve-deck-face ${durationMs}ms ease-out ${stagger}ms both`,
-                    }}
-                >
-                    <Card
-                        card={item.card}
-                        size="featured"
-                        canBuy={false}
-                        theme={theme}
-                        className="shadow-2xl"
-                    />
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 

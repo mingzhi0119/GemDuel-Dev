@@ -29,4 +29,10 @@ export const CARD_FLIGHT_STYLES = `
     42% { opacity: 1; transform: rotateY(0deg); }
     100% { opacity: 1; transform: rotateY(0deg); }
 }
+@keyframes gemduel-card-anchor-pulse {
+    0% { opacity: 0; transform: scale(0.78); }
+    18% { opacity: 1; transform: scale(1.08); }
+    72% { opacity: 0.72; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.18); }
+}
 `;

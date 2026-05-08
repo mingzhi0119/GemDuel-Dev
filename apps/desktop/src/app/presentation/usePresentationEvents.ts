@@ -15,7 +15,7 @@ type PresentationStage = 'intro' | 'selection' | 'pulse';
 const MARKET_REFILL_DURATION_MS = 1000;
 const MARKET_REFILL_REDUCED_DURATION_MS = 240;
 const TURN_HANDOFF_DURATION_MS = 3000;
-const TURN_HANDOFF_REDUCED_DURATION_MS = 260;
+const TURN_HANDOFF_REDUCED_DURATION_MS = 1200;
 
 interface UsePresentationEventsParams {
     state: GameState;

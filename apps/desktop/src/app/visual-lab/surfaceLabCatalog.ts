@@ -62,7 +62,7 @@ const createRuntimeCandidate = (
     source: 'runtime',
 });
 
-const RUNTIME_PLAYER_ZONE_SIDE_THEMES = new Set<RuntimeSurfaceLabTheme>(['lotus-porcelain']);
+const RUNTIME_PLAYER_ZONE_SIDE_THEMES = new Set<RuntimeSurfaceLabTheme>(RUNTIME_SURFACE_LAB_THEMES);
 
 const createRuntimePlayerZoneSideCandidate = (
     style: RuntimeSurfaceLabTheme,
