@@ -114,6 +114,9 @@ export const networkEnvelopeSchema = z
             'HEARTBEAT_PONG',
         ]),
     })
+    // The envelope is only a routing probe. Live inbound unknown-field policy is
+    // enforced after the message type is known so valid payload fields are not
+    // rejected before their specific schema runs.
     .passthrough();
 
 export const networkMessageSchema = z.discriminatedUnion('type', [

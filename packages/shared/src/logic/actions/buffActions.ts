@@ -7,6 +7,7 @@ import {
 } from '../../data/colorPreferenceProxyCards';
 import { buildDraftPoolForLevel, buildP2AsymmetricDraftPool, isBuffLevel } from '../gameSetup';
 import { canActionRunInPhase } from '../fsm';
+import { createSeededRandomSource, shuffleArray } from '../../utils';
 import {
     BasicGemColor,
     GameState,
@@ -248,7 +249,12 @@ export const handleSelectBuff = (state: GameState, payload: SelectBuffPayload): 
                         state.p2DraftPool = p2DraftPool;
                     }
                 } else {
-                    const shuffled = [...levelBuffs].sort(() => Math.random() - 0.5);
+                    const shuffled = shuffleArray(
+                        [...levelBuffs],
+                        createSeededRandomSource(
+                            `p2-draft:${state.mode}:${currentBuffLevel}:${state.p1SelectedBuff?.id ?? 'none'}`
+                        )
+                    );
                     state.p2DraftPool = shuffled.slice(0, 4).map((b) => (b as Buff).id);
                 }
             }

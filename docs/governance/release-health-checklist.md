@@ -11,7 +11,7 @@ Use this list before packaging a desktop release or cutting a release candidate.
 - `pnpm desktop:check`
 - `pnpm release:check`
 - `pnpm release:artifacts:check`
-- `pnpm release:provenance:check`
+- `pnpm release:provenance:check` (strict for CI/tag context; local non-tag runs report `skipped-non-tag-context` unless `--strict` is passed)
 - `pnpm repo-settings:check`
 - `pnpm codeowners:check`
 - `pnpm changelog:check`

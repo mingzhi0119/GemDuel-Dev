@@ -8,6 +8,8 @@ import {
     MarketCardRef,
 } from '../../types';
 import { calculateTransaction } from '../../utils';
+import type { RandomSource } from '../../utils';
+import { createUnseededRandomSource } from '../../utils';
 import { validateGemSelection } from '../validators';
 import { getVisibleReservedCards } from '../multiplayerVisibility';
 import {
@@ -22,7 +24,11 @@ import { ABILITIES } from '../../constants';
 /**
  * Heuristic-based AI for Gem Duel
  */
-export const computeAiAction = (state: GameState): GameAction | null => {
+export const computeAiAction = (
+    state: GameState,
+    randomSource?: RandomSource
+): GameAction | null => {
+    const random = randomSource ?? createUnseededRandomSource();
     const aiPlayer = state.turn;
     const opponent = aiPlayer === 'p1' ? 'p2' : 'p1';
     const surfacePolicy = getFsmPhaseSurfacePolicy(state.phase);
@@ -31,9 +37,9 @@ export const computeAiAction = (state: GameState): GameAction | null => {
     if (isDraftSelectionPhase(state.phase)) {
         const pool = state.p2DraftPool || state.draftPool || [];
         if (pool.length > 0) {
-            const chosenId = pool[Math.floor(Math.random() * pool.length)];
+            const chosenId = pool[Math.floor(random.next() * pool.length)];
             const basics: BasicGemColor[] = ['red', 'green', 'blue', 'white', 'black'];
-            const randomColor = basics[Math.floor(Math.random() * basics.length)];
+            const randomColor = basics[Math.floor(random.next() * basics.length)];
             const action: GameAction = {
                 type: 'SELECT_BUFF',
                 payload: { buffId: chosenId, randomColor },

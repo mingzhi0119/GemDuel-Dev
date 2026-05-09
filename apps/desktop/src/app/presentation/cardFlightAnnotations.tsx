@@ -37,7 +37,7 @@ export function CardFlightLabel({ label }: { label: string }) {
         <div
             aria-hidden="true"
             data-card-flight-label={label}
-            className="absolute left-1/2 top-[-32px] z-10 -translate-x-1/2 whitespace-nowrap rounded-md border border-cyan-200/70 bg-slate-950/88 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-cyan-50 shadow-[0_8px_22px_rgba(0,0,0,0.42)]"
+            className="absolute left-1/2 top-[-28px] z-10 -translate-x-1/2 whitespace-nowrap text-[11px] font-black uppercase tracking-[0.14em] text-cyan-50 drop-shadow-[0_2px_7px_rgba(0,0,0,0.95)]"
         >
             {label}
         </div>

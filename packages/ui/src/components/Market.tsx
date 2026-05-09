@@ -40,6 +40,7 @@ interface MarketProps {
     }>;
     onPreviewCard?: (card: CardType, context: CardInteractionContext) => void;
     readabilityTreatment?: boolean;
+    enableThreeCardDepth?: boolean;
 }
 
 export const Market: React.FC<MarketProps> = React.memo(
@@ -60,6 +61,7 @@ export const Market: React.FC<MarketProps> = React.memo(
         pendingMarketRefillSlots = [],
         onPreviewCard,
         readabilityTreatment = false,
+        enableThreeCardDepth = false,
     }) => {
         const t = useT();
         const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
@@ -129,6 +131,7 @@ export const Market: React.FC<MarketProps> = React.memo(
                             onPreviewDeckReserve={onPreviewDeckReserve}
                             isPendingMarketRefillSlot={isPendingMarketRefillSlot}
                             onPreviewCard={onPreviewCard}
+                            enableThreeCardDepth={enableThreeCardDepth}
                         />
                     ))}
                 </div>

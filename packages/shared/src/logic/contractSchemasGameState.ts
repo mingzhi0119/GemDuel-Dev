@@ -11,6 +11,10 @@ import {
     playerKeySchema,
 } from './contractSchemasCore';
 
+// Game-state schemas intentionally preserve extra fields for replay and snapshot
+// compatibility. Live inbound network messages use strict top-level schemas in
+// contractSchemasNetwork.ts before these compatibility schemas are reached.
+
 export const gemCoordSchema = z
     .object({
         r: z.number().int(),

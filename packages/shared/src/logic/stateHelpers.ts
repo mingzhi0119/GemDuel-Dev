@@ -6,8 +6,28 @@
  */
 
 import { GameState, PlayerKey } from '../types';
+import { generateGameStateHash } from '../utils/checksum';
 
 export const SHARED_PRIVILEGE_SUPPLY_SIZE = 3;
+
+export const createStateScopedUid = (state: GameState, scope: string, index = 0): string =>
+    [
+        scope,
+        generateGameStateHash(state),
+        state.turn,
+        state.playerTurnCounts?.p1 ?? 0,
+        state.playerTurnCounts?.p2 ?? 0,
+        index,
+    ].join('-');
+
+const createFeedbackUid = (state: GameState) =>
+    [
+        'feedback',
+        state.phase,
+        state.turn,
+        state.playerTurnCounts?.p1 ?? 0,
+        state.playerTurnCounts?.p2 ?? 0,
+    ].join('-');
 
 /**
  * Add feedback for a player action to the state
@@ -25,7 +45,7 @@ export const addFeedback = (
 ): void => {
     if (!state.lastFeedback) {
         state.lastFeedback = {
-            uid: Date.now() + '-' + Math.random(),
+            uid: createFeedbackUid(state),
             items: [],
         };
     }

@@ -36,6 +36,7 @@ export function CardPreviewOverlay({
     cardActions = [],
     collectionLayout = 'grid',
     deckBackArtwork,
+    enableThreeCardDepth = false,
 }: CardPreviewOverlayProps) {
     const { locale } = useLocale();
     const t = useT();
@@ -219,6 +220,7 @@ export function CardPreviewOverlay({
                                     orderLabels={deckPeekOrderLabels}
                                     theme={theme}
                                     deckBackArtwork={deckBackArtwork}
+                                    enableThreeCardDepth={enableThreeCardDepth}
                                 />
                             ) : (
                                 <div
@@ -270,6 +272,11 @@ export function CardPreviewOverlay({
                                                         canBuy={false}
                                                         theme={theme}
                                                         size="featured"
+                                                        depthLayer={
+                                                            enableThreeCardDepth
+                                                                ? 'preview'
+                                                                : undefined
+                                                        }
                                                     />
                                                 </div>
                                             </div>

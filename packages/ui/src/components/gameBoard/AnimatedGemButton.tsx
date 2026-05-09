@@ -17,6 +17,7 @@ interface GemButtonProps {
     shouldDim: boolean;
     isInteractive: boolean;
     selectionIndex: number;
+    renderArtwork?: boolean;
     onGemClick: (r: number, c: number) => void;
     onGemPointerDown: (event: React.PointerEvent<HTMLButtonElement>, r: number, c: number) => void;
     onGemPointerEnter: (r: number, c: number) => void;
@@ -34,6 +35,7 @@ const GemButton: React.FC<GemButtonProps> = React.memo(
         shouldDim,
         isInteractive,
         selectionIndex,
+        renderArtwork = true,
         onGemClick,
         onGemPointerDown,
         onGemPointerEnter,
@@ -87,17 +89,19 @@ const GemButton: React.FC<GemButtonProps> = React.memo(
                         shouldDim && 'opacity-20'
                     )}
                 />
-                <GemArtwork
-                    gemId={gem.type.id}
-                    theme={theme}
-                    variant="board"
-                    className={cn(
-                        'h-full w-full transition-all duration-150',
-                        isSelectedGem ? 'scale-105' : 'opacity-95',
-                        shouldDim && 'opacity-20 grayscale',
-                        (isTarget || isReserveGoldSelected) && 'z-20'
-                    )}
-                />
+                {renderArtwork ? (
+                    <GemArtwork
+                        gemId={gem.type.id}
+                        theme={theme}
+                        variant="board"
+                        className={cn(
+                            'h-full w-full transition-all duration-150',
+                            isSelectedGem ? 'scale-105' : 'opacity-95',
+                            shouldDim && 'opacity-20 grayscale',
+                            (isTarget || isReserveGoldSelected) && 'z-20'
+                        )}
+                    />
+                ) : null}
                 {isSelectedGem && !isReserveGoldSelected && (
                     <div className="absolute inset-0 z-30 flex items-center justify-center font-bold text-white drop-shadow-md text-lg">
                         {selectionIndex + 1}

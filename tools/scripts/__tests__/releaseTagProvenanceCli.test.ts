@@ -72,17 +72,39 @@ describe('release tag provenance CLI', () => {
         }
     }, 15000);
 
-    it('fails when required provenance parameters are missing', () => {
+    it('skips ordinary local non-tag runs when no provenance parameters are present', () => {
         const result = spawnSync('node', ['tools/scripts/check-release-tag-provenance.mjs'], {
             cwd: repoRoot,
             encoding: 'utf8',
             env: {
                 ...process.env,
+                CI: '',
                 GITHUB_SHA: '',
                 GITHUB_DEFAULT_BRANCH: '',
                 GITHUB_REF: '',
             },
         });
+
+        expect(result.status).toBe(0);
+        expect(result.stdout).toContain('skipped-non-tag-context');
+    });
+
+    it('fails in strict mode when required provenance parameters are missing', () => {
+        const result = spawnSync(
+            'node',
+            ['tools/scripts/check-release-tag-provenance.mjs', '--strict'],
+            {
+                cwd: repoRoot,
+                encoding: 'utf8',
+                env: {
+                    ...process.env,
+                    CI: '',
+                    GITHUB_SHA: '',
+                    GITHUB_DEFAULT_BRANCH: '',
+                    GITHUB_REF: '',
+                },
+            }
+        );
 
         expect(result.status).toBe(1);
         expect(result.stderr).toContain('Release tag provenance check failed:');

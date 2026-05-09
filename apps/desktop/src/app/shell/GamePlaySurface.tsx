@@ -56,6 +56,8 @@ interface GamePlaySurfaceProps {
     onPreviewRoyal?: (card: RoyalCard) => void;
     readabilityTreatment?: boolean;
     showReplayControls?: boolean;
+    renderGemArtwork?: boolean;
+    enableThreeCardDepth?: boolean;
 }
 
 const MARKET_ROW_GAP_PX = 6;
@@ -89,6 +91,8 @@ export function GamePlaySurface({
     onPreviewRoyal,
     readabilityTreatment = false,
     showReplayControls = false,
+    renderGemArtwork = true,
+    enableThreeCardDepth = false,
 }: GamePlaySurfaceProps) {
     const { state, handlers, getters, historyControls, online } = game;
     const {
@@ -177,6 +181,7 @@ export function GamePlaySurface({
                                 pendingMarketRefillSlots={pendingMarketRefillSlots}
                                 onPreviewCard={onPreviewCard}
                                 readabilityTreatment={readabilityTreatment}
+                                enableThreeCardDepth={enableThreeCardDepth}
                             />
                         </div>
                     </div>
@@ -249,6 +254,7 @@ export function GamePlaySurface({
                             surfaceStyle={gemBoardSurfaceStyle}
                             panelSkin={gemPanelSkin}
                             showCalibrationOverlay={showGemPanelCalibrationOverlay}
+                            renderGemArtwork={renderGemArtwork}
                         />
 
                         <div className="mt-3 h-14 w-full flex items-start justify-center pt-1">

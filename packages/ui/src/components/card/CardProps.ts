@@ -2,6 +2,8 @@ import type { Card as CardType, CardInteractionContext } from '@gemduel/shared/t
 import type { CardBackArtwork } from './cardBackArtwork';
 import type { CardSize } from './cardSizing';
 
+export type CardDepthLayer = 'market' | 'preview' | 'flight';
+
 export interface CardProps {
     card: CardType | null;
     canBuy?: boolean;
@@ -16,4 +18,5 @@ export interface CardProps {
     size?: CardSize;
     theme?: 'light' | 'dark';
     cardBackArtwork?: CardBackArtwork;
+    depthLayer?: CardDepthLayer;
 }

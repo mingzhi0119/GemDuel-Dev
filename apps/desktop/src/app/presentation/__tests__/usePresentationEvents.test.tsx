@@ -247,6 +247,35 @@ describe('usePresentationEvents', () => {
         expect(currentResult?.activeTurnHandoffEvent).toBeNull();
     });
 
+    it('keeps extra-turn callouts on screen for the handoff visual duration', async () => {
+        vi.useFakeTimers();
+        const previousState = cloneState();
+        previousState.pendingExtraTurn = false;
+        const nextState = cloneState();
+        nextState.pendingExtraTurn = true;
+
+        await renderHarness(previousState, 0);
+        await renderHarness(nextState, 1);
+
+        expect(currentResult?.activeEvent).toMatchObject({
+            type: 'ability-callout',
+            callout: 'extra-turn',
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(2999);
+        });
+        expect(currentResult?.activeEvent).toMatchObject({
+            type: 'ability-callout',
+            callout: 'extra-turn',
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(1);
+        });
+        expect(currentResult?.activeEvent).toBeNull();
+    });
+
     it('keeps market-refill pending for the one-second visual duration', async () => {
         vi.useFakeTimers();
         const previousState = cloneState();

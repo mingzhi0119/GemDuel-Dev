@@ -10,6 +10,7 @@ interface CardPreviewDeckPeekGridProps {
     orderLabels: string[];
     theme: 'light' | 'dark';
     deckBackArtwork?: MarketDeckBackArtworkMap;
+    enableThreeCardDepth?: boolean;
 }
 
 export function CardPreviewDeckPeekGrid({
@@ -18,6 +19,7 @@ export function CardPreviewDeckPeekGrid({
     orderLabels,
     theme,
     deckBackArtwork,
+    enableThreeCardDepth = false,
 }: CardPreviewDeckPeekGridProps) {
     return (
         <div
@@ -102,6 +104,7 @@ export function CardPreviewDeckPeekGrid({
                                         canBuy={false}
                                         theme={theme}
                                         size="featured"
+                                        depthLayer={enableThreeCardDepth ? 'preview' : undefined}
                                     />
                                 </div>
                             </div>

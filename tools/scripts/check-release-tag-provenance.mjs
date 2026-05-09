@@ -12,6 +12,7 @@ const parseArgs = (argv) => {
         defaultBranch: process.env.GITHUB_DEFAULT_BRANCH ?? null,
         releaseRef: process.env.GITHUB_REF ?? null,
         repoRoot,
+        strict: process.env.CI === 'true',
     };
 
     for (let index = 0; index < argv.length; index += 1) {
@@ -38,6 +39,11 @@ const parseArgs = (argv) => {
         if (value === '--repo-root') {
             args.repoRoot = path.resolve(argv[index + 1] ?? args.repoRoot);
             index += 1;
+            continue;
+        }
+
+        if (value === '--strict') {
+            args.strict = true;
         }
     }
 
@@ -50,7 +56,16 @@ const main = () => {
         defaultBranch,
         releaseRef,
         repoRoot: targetRepoRoot,
+        strict,
     } = parseArgs(process.argv.slice(2));
+    const hasExplicitProvenanceInput = Boolean(commitSha || defaultBranch || releaseRef);
+    if (!strict && !hasExplicitProvenanceInput) {
+        console.log(
+            'Release tag provenance check skipped-non-tag-context. Pass --strict or run in CI/tag context to enforce provenance.'
+        );
+        return;
+    }
+
     const issues = collectReleaseTagProvenanceErrors({
         commitSha,
         defaultBranch,

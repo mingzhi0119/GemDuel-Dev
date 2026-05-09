@@ -131,7 +131,11 @@ describe('CardFlightLayer', () => {
         expect(flight?.style.zIndex).toBe('1001');
         expect(flight?.style.getPropertyValue('--start-x')).not.toBe('');
         expect(flight?.style.getPropertyValue('--end-x')).not.toBe('');
-        expect(container!.querySelector('[data-card-flight-label="P1 buys"]')).not.toBeNull();
+        const label = container!.querySelector<HTMLElement>('[data-card-flight-label="P1 buys"]');
+        expect(label).not.toBeNull();
+        expect(label?.className).not.toContain('border');
+        expect(label?.className).not.toContain('bg-');
+        expect(container!.querySelector('.border-cyan-200\\/80')).toBeNull();
         expect(anchors.length).toBe(2);
         expect(Array.from(anchors).every((anchor) => anchor.style.zIndex === '1000')).toBe(true);
     });

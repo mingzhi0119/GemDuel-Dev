@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { PresentationLayer } from '../presentation/PresentationLayer';
+import { type ThreeLayerStatus } from '../presentation/ThreePresentationLayer';
+import {
+    VISUAL_LAB_THREE_FEATURES,
+    shouldRenderGemArtworkForThreeFeatures,
+} from '../presentation/threePresentationFeatures';
+import { ThreePresentationStack } from '../presentation/ThreePresentationStack';
 import type { PresentationController } from '../presentation/usePresentationEvents';
 import type { PresentationEvent } from '../presentation/presentationTypes';
 import { GamePlaySurface } from '../shell/GamePlaySurface';
@@ -76,6 +82,9 @@ const getVisualLabEventTimeoutMs = (event: PresentationEvent, mode: VisualLabMod
         case 'market-refill':
             return 3800;
         case 'ability-callout':
+            if (event.callout === 'extra-turn') {
+                return 9800;
+            }
             return 4200;
         case 'card-acquire':
         case 'card-reserve':
@@ -167,6 +176,11 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
         [assetSlots, labTheme, layout, playerZoneSideSlots]
     );
     const closeTooltipId = useId();
+    const [threeLayerStatus, setThreeLayerStatus] = useState<ThreeLayerStatus>('pending');
+    const renderGemArtwork = shouldRenderGemArtworkForThreeFeatures(
+        VISUAL_LAB_THREE_FEATURES,
+        threeLayerStatus
+    );
     const triggerMotion = useCallback(
         (type: SurfaceLabMotionEventType = motionType) => {
             motionNonceRef.current += 1;
@@ -276,6 +290,13 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 localPlayer={state.localPlayer}
                 isOnline={false}
                 readabilityTreatment={readabilityTreatment}
+                desktopTypography={layout.layoutMode === 'desktop-4k'}
+                renderTurnPointer={false}
+            />
+            <ThreePresentationStack
+                activePlayer={state.turn}
+                features={VISUAL_LAB_THREE_FEATURES}
+                onStatusChange={setThreeLayerStatus}
             />
 
             <div className="min-h-0">
@@ -294,6 +315,8 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                     isRoyalSelectionBlocked={presentation.isBlockingRoyalSelection}
                     pendingMarketRefillSlots={presentation.pendingMarketRefillSlots}
                     readabilityTreatment={readabilityTreatment}
+                    renderGemArtwork={renderGemArtwork}
+                    enableThreeCardDepth={VISUAL_LAB_THREE_FEATURES.cardSlab}
                 />
             </div>
 
@@ -319,6 +342,7 @@ export function VisualLabRoute(props: VisualLabRouteProps) {
                 onSelectRoyal={() => setActiveEvent(null)}
                 marketDeckBackArtwork={styles.marketDeckBackArtwork}
                 previewMode={mode === 'motion' ? 'slow' : undefined}
+                enableThreeCardDepth={VISUAL_LAB_THREE_FEATURES.cardSlab}
             />
 
             <VisualLabConsole

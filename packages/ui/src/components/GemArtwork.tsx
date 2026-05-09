@@ -2,50 +2,15 @@ import type { CSSProperties } from 'react';
 import { cn } from '../utils';
 import type { GemColor, GemTypeObject } from '@gemduel/shared/types';
 import { GemContrastOverlay } from './gemContrast/GemContrastOverlay';
+import { GEM_ARTWORK_ASSETS } from './gemArtworkAssets';
 
 export type GemArtworkVariant = 'icon' | 'board' | 'card-cost' | 'card-bonus' | 'choice';
-
-interface GemArtworkAsset {
-    path: string;
-    alt: string;
-}
 
 interface GemArtworkLayout {
     inset: string;
     translateXPercent: number;
     translateYPercent: number;
 }
-
-const GEM_ARTWORK_ASSETS: Record<GemColor, GemArtworkAsset> = {
-    blue: {
-        path: '/assets/gems/blue.png',
-        alt: 'Blue gem artwork',
-    },
-    white: {
-        path: '/assets/gems/white.png',
-        alt: 'White gem artwork',
-    },
-    green: {
-        path: '/assets/gems/green.png',
-        alt: 'Green gem artwork',
-    },
-    black: {
-        path: '/assets/gems/black.png',
-        alt: 'Black gem artwork',
-    },
-    red: {
-        path: '/assets/gems/red.png',
-        alt: 'Red gem artwork',
-    },
-    pearl: {
-        path: '/assets/gems/pearl.png',
-        alt: 'Pearl gem artwork',
-    },
-    gold: {
-        path: '/assets/gems/gold.png',
-        alt: 'Gold gem artwork',
-    },
-};
 
 const VARIANT_STYLE: Record<
     GemArtworkVariant,

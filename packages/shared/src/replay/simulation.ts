@@ -8,6 +8,7 @@ import { buildSelectBuffAction } from '../logic/interactionCommands';
 import { getCrownCount, getPlayerScore } from '../logic/selectors';
 import { getVisibleReservedCards } from '../logic/multiplayerVisibility';
 import type { GameAction, GameState, GemCoord, GemColor, PlayerKey } from '../types';
+import { createSeededRandomSource } from '../utils';
 import { evaluateReplayPerformance } from './evaluation';
 import {
     createReplayRecorderInternalState,
@@ -426,13 +427,14 @@ export const simulateAiVsAiReplay = (options: ReplaySimulationOptions): ReplaySi
     const history: GameAction[] = [startAction];
     let state = initialState;
     let abortReason: ReplaySimulationAbortReason | null = null;
+    const aiRandomSource = createSeededRandomSource(`${createdAt}:ai`);
 
     for (let actionCount = 0; actionCount < maxActions; actionCount += 1) {
         if (state.winner) {
             break;
         }
 
-        const heuristicAction = computeAiAction(state);
+        const heuristicAction = computeAiAction(state, aiRandomSource);
         const preferredAction = heuristicAction ? stabilizeAiAction(state, heuristicAction) : null;
         let action = preferredAction;
         let nextState =

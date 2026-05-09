@@ -29,6 +29,7 @@ interface GameBoardProps {
     surfaceStyle?: React.CSSProperties;
     panelSkin: GemPanelSkin;
     showCalibrationOverlay?: boolean;
+    renderGemArtwork?: boolean;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = React.memo(
@@ -45,6 +46,7 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
         surfaceStyle,
         panelSkin,
         showCalibrationOverlay = false,
+        renderGemArtwork = true,
     }) => {
         const surfacePolicy = getFsmPhaseSurfacePolicy(phase);
         const { panelFootprint, cellCenters, cellGridLines, gemDiameterPx } =
@@ -137,12 +139,29 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                             const orderIndex = SPIRAL_ORDER.findIndex(
                                 ([sr, sc]) => sr === r && sc === c
                             );
+                            const selectionIndex = displayedSelection.findIndex(
+                                (selection) => selection.r === r && selection.c === c
+                            );
 
                             return (
                                 <div
                                     key={`${r}-${c}`}
                                     data-board-cell={`${r}-${c}`}
                                     data-gem-id={isEmpty ? 'empty' : gem.type.id}
+                                    data-board-row={r}
+                                    data-board-col={c}
+                                    data-board-gem-color={isEmpty ? 'empty' : gem.type.id}
+                                    data-board-gem-uid={isEmpty ? undefined : gem.uid}
+                                    data-board-gem-selected={isSelectedGem ? 'true' : 'false'}
+                                    data-board-gem-selection-index={
+                                        isSelectedGem ? selectionIndex : undefined
+                                    }
+                                    data-board-gem-target={isTarget ? 'true' : 'false'}
+                                    data-board-gem-reserve-selected={
+                                        isReserveGoldSelected ? 'true' : 'false'
+                                    }
+                                    data-board-gem-dimmed={shouldDim ? 'true' : 'false'}
+                                    data-board-gem-interactive={isInteractive ? 'true' : 'false'}
                                     className="absolute flex items-center justify-center"
                                     style={{
                                         left: `${(center.x * 100).toFixed(3)}%`,
@@ -165,9 +184,8 @@ export const GameBoard: React.FC<GameBoardProps> = React.memo(
                                                 isTarget={isTarget}
                                                 shouldDim={shouldDim}
                                                 isInteractive={isInteractive}
-                                                selectionIndex={displayedSelection.findIndex(
-                                                    (s) => s.r === r && s.c === c
-                                                )}
+                                                selectionIndex={selectionIndex}
+                                                renderArtwork={renderGemArtwork}
                                                 onGemClick={handleBoardGemClick}
                                                 onGemPointerDown={handleBoardGemPointerDown}
                                                 onGemPointerEnter={handleBoardGemPointerEnter}

@@ -86,6 +86,12 @@ describe('lanDiscovery helpers', () => {
     });
 
     it('applies seat assignment, launches sessions, and derives cancel states', () => {
+        const incompleteSession = {
+            ...createEmptyLanMatchState(),
+            roomId: ROOM_ID,
+        };
+        expect(applySeatAssignment(incompleteSession)).toBe(incompleteSession);
+
         const hostSession = {
             ...createEmptyLanMatchState(),
             roomId: ROOM_ID,
@@ -112,6 +118,21 @@ describe('lanDiscovery helpers', () => {
             hostPlayer: 'p2',
             mode: 'classic',
         });
+
+        const guestLaunchSession = {
+            ...hostSession,
+            transportHost: false,
+        };
+        expect(buildLanLaunch(guestLaunchSession, 'roguelike')).toMatchObject({
+            targetIP: '192.168.1.10',
+            transportHost: false,
+            mode: 'roguelike',
+        });
+
+        hostSession.phase = 'starting';
+        applySeatAssignment(hostSession);
+        expect(hostSession.statusMessage).toBe('Connecting LAN duel...');
+
         expect(buildLanLaunch({ roomId: ROOM_ID }, 'classic')).toBeNull();
         expect(buildLanCancelState({ wantsSearch: true })).toMatchObject({
             phase: 'searching',
@@ -138,6 +159,21 @@ describe('lanDiscovery helpers', () => {
 
         expect(guestSession.transportHost).toBe(false);
         expect(guestSession.remoteAddress).toBe('192.168.1.10');
+
+        const addressFallbackSession = createGuestRoomSession({
+            address: '192.168.1.11',
+            guestNonce: '2222',
+            now: 100,
+            packet: {
+                roomId: ROOM_ID,
+                hostInstanceId: HOST_INSTANCE_ID,
+                guestInstanceId: GUEST_INSTANCE_ID,
+                hostPort: 9001,
+                hostNonce: 'aaaa',
+            },
+        });
+        expect(addressFallbackSession.hostAddress).toBe('192.168.1.11');
+
         expect(
             applySessionHeartbeat({
                 address: '192.168.1.10',
@@ -145,6 +181,21 @@ describe('lanDiscovery helpers', () => {
                 packet: {
                     roomId: 'wrong-room',
                     hostInstanceId: HOST_INSTANCE_ID,
+                    guestInstanceId: GUEST_INSTANCE_ID,
+                    hostAddress: '192.168.1.10',
+                    hostNonce: 'aaaa',
+                },
+                roomSession: guestSession,
+            })
+        ).toBe(false);
+
+        expect(
+            applySessionHeartbeat({
+                address: '192.168.1.10',
+                nowValue: 100,
+                packet: {
+                    roomId: ROOM_ID,
+                    hostInstanceId: 'wrong-host',
                     guestInstanceId: GUEST_INSTANCE_ID,
                     hostAddress: '192.168.1.10',
                     hostNonce: 'aaaa',

@@ -33,7 +33,10 @@ const getPresentationEventDurationMs = (
             return MARKET_REFILL_REDUCED_DURATION_MS;
         }
 
-        if (event.type === 'turn-handoff') {
+        if (
+            event.type === 'turn-handoff' ||
+            (event.type === 'ability-callout' && event.callout === 'extra-turn')
+        ) {
             return TURN_HANDOFF_REDUCED_DURATION_MS;
         }
 
@@ -46,6 +49,9 @@ const getPresentationEventDurationMs = (
 
     switch (event.type) {
         case 'ability-callout':
+            if (event.callout === 'extra-turn') {
+                return TURN_HANDOFF_DURATION_MS;
+            }
             return 1150;
         case 'turn-handoff':
             return TURN_HANDOFF_DURATION_MS;

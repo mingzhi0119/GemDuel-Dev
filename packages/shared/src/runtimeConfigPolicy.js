@@ -7,6 +7,13 @@ export const TURN_CREDENTIAL_SERVICE_POLICY_VERSION = 1;
 export const TURN_CREDENTIAL_SERVICE_FALLBACK_MODES = ['allow-runtime-ice', 'deny-runtime-ice'];
 
 export const RUNTIME_CONFIG_POLICY = Object.freeze({
+    CI: {
+        owner: 'Release Engineering',
+        defaultValue: 'unset',
+        validation: 'GitHub Actions truthy CI marker or unset outside CI.',
+        secretHandling: 'CI metadata only. Never store secrets here.',
+        failureMode: 'Release provenance check falls back to explicit CLI strictness.',
+    },
     GEMDUEL_DISABLE_UPDATES: {
         owner: 'Desktop Platform',
         defaultValue: 'false',

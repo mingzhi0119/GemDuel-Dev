@@ -17,7 +17,7 @@ describe('TopBar buff placement', () => {
     let root: Root | null = null;
     let container: HTMLDivElement | null = null;
 
-    const renderTopBar = async () => {
+    const renderTopBar = async (props: Partial<React.ComponentProps<typeof TopBar>> = {}) => {
         container = document.createElement('div');
         document.body.appendChild(container);
 
@@ -37,6 +37,8 @@ describe('TopBar buff placement', () => {
                             p1: BUFFS.INTELLIGENCE as unknown as Buff,
                             p2: BUFFS.NONE as unknown as Buff,
                         }}
+                        desktopTypography
+                        {...props}
                     />
                 </LocaleProvider>
             );
@@ -76,5 +78,48 @@ describe('TopBar buff placement', () => {
 
         expect(p1CrownGoal?.style.color).toBe('var(--gd-topbar-gold-text)');
         expect(p2CrownGoal?.style.color).toBe('var(--gd-topbar-gold-text)');
+    });
+
+    it('shows a persistent pointer under the active player using desktop-scale typography', async () => {
+        await renderTopBar();
+
+        const p1Pointer = container?.querySelector<HTMLElement>(
+            '[data-topbar-active-turn-pointer="p1"]'
+        );
+        const p2Pointer = container?.querySelector<HTMLElement>(
+            '[data-topbar-active-turn-pointer="p2"]'
+        );
+        const p1Label = container?.querySelector<HTMLElement>('[data-topbar-player-label="p1"]');
+        const p2Label = container?.querySelector<HTMLElement>('[data-topbar-player-label="p2"]');
+
+        expect(p1Pointer).not.toBeNull();
+        expect(p2Pointer).toBeNull();
+        expect(p1Pointer?.className).toContain('absolute');
+        expect(p1Pointer?.className).toContain('h-[120px]');
+        expect(p1Pointer?.className).toContain('w-[40px]');
+        expect(p1Pointer?.style.clipPath).toBe('polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)');
+        expect(p1Pointer?.style.animation).toContain('gemduel-topbar-pointer-rotate-y');
+        expect(p1Pointer?.style.animation).toContain('linear');
+        expect(p1Pointer?.style.animation).not.toContain('ease-in-out');
+        expect(p1Pointer?.style.background).toContain('conic-gradient');
+        expect(p1Pointer?.style.background).toContain('#facc15');
+        expect(p1Pointer?.style.borderBottomColor).toBe('');
+        expect(p1Label?.className).toContain('text-[56px]');
+        expect(p1Label?.className).not.toContain('lg:text-[42px]');
+        expect(p1Label?.dataset.topbarActivePlayerLabel).toBe('p1');
+        expect(p1Label?.style.animation).toContain('gemduel-topbar-active-player-breathe');
+        expect(p2Label?.dataset.topbarActivePlayerLabel).toBeUndefined();
+        expect(p2Label?.style.animation).toBe('');
+    });
+
+    it('can suppress the legacy CSS pointer while keeping the active player anchor', async () => {
+        await renderTopBar({ renderTurnPointer: false });
+
+        const activePointer = container?.querySelector('[data-topbar-active-turn-pointer]');
+        const p1Label = container?.querySelector<HTMLElement>('[data-topbar-player-label="p1"]');
+
+        expect(activePointer).toBeNull();
+        expect(p1Label?.dataset.topbarActivePlayerLabel).toBe('p1');
+        expect(p1Label?.style.animation).toContain('gemduel-topbar-active-player-breathe');
     });
 });

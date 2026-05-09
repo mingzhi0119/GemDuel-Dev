@@ -12,6 +12,7 @@ const parseArgs = (argv) => {
     const args = {
         artifactsDir: path.join(repoRoot, 'artifacts', 'governance'),
         extraEvidenceDirs: [],
+        allowPartial: false,
     };
 
     for (let index = 0; index < argv.length; index += 1) {
@@ -30,6 +31,11 @@ const parseArgs = (argv) => {
                 .map((entry) => entry.trim())
                 .filter(Boolean)
                 .map((entry) => path.resolve(repoRoot, entry));
+            continue;
+        }
+
+        if (value === '--allow-partial') {
+            args.allowPartial = true;
         }
     }
 
@@ -64,7 +70,7 @@ const summarizeRetainedDirs = (dirs) => {
 };
 
 const main = () => {
-    const { artifactsDir, extraEvidenceDirs } = parseArgs(process.argv.slice(2));
+    const { artifactsDir, extraEvidenceDirs, allowPartial } = parseArgs(process.argv.slice(2));
     const generatedAt = new Date().toISOString();
 
     const dashboard = readOptionalJson(
@@ -82,9 +88,23 @@ const main = () => {
     const perFileCoverage = readOptionalJson(
         path.join(artifactsDir, 'coverage-perfile-key-modules.report.json')
     );
-    const manifest = readOptionalJson(path.join(artifactsDir, 'governance-evidence.manifest.json'));
+    const manifestPath = path.join(artifactsDir, 'governance-evidence.manifest.json');
+    const manifest = readOptionalJson(manifestPath);
+
+    if (!manifest && !allowPartial) {
+        console.error(
+            `Governance dashboard requires a complete evidence manifest at ${path.relative(repoRoot, manifestPath).replaceAll(path.sep, '/')}.`
+        );
+        console.error(
+            'Run `pnpm governance:artifacts --out-dir artifacts/governance` first, or pass `--allow-partial` for a diagnostic dashboard.'
+        );
+        process.exit(1);
+    }
 
     const retainedNote = [
+        !manifest && allowPartial
+            ? 'Partial diagnostic dashboard: governance evidence manifest was not loaded.'
+            : '',
         'GitHub Actions retains governance-evidence artifacts for 30 days; download historical ZIPs to compare trends locally.',
         summarizeRetainedDirs(extraEvidenceDirs),
     ]

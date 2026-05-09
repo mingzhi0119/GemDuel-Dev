@@ -4,11 +4,92 @@ import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
 import {
     createStableLogId,
+    findAvailablePort,
     startPeerSignalingServer,
     stopPeerSignalingServer,
 } from '../peerSignalingServer.js';
 
 describe('peer signaling server governance', () => {
+    it('retries occupied ports and rejects non-retryable probe errors', async () => {
+        const createServer = vi
+            .fn()
+            .mockImplementationOnce(() => {
+                const handlers = new Map<string, (value?: unknown) => void>();
+                return {
+                    unref: vi.fn(),
+                    once: vi.fn((event: string, callback: (value?: unknown) => void) => {
+                        handlers.set(event, callback);
+                    }),
+                    close: vi.fn(),
+                    listen: vi.fn(() => {
+                        handlers.get('error')?.(
+                            Object.assign(new Error('busy'), { code: 'EADDRINUSE' })
+                        );
+                    }),
+                    address: vi.fn(),
+                };
+            })
+            .mockImplementationOnce(() => {
+                const handlers = new Map<string, () => void>();
+                return {
+                    unref: vi.fn(),
+                    once: vi.fn((event: string, callback: () => void) => {
+                        handlers.set(event, callback);
+                    }),
+                    close: vi.fn((callback: () => void) => callback()),
+                    listen: vi.fn(() => {
+                        handlers.get('listening')?.();
+                    }),
+                    address: vi.fn(() => ({ port: 9001 })),
+                };
+            });
+
+        await expect(
+            findAvailablePort({
+                startingPort: 9000,
+                host: '127.0.0.1',
+                portCandidates: 2,
+                createServer,
+            })
+        ).resolves.toBe(9001);
+
+        const failingCreateServer = vi.fn(() => {
+            const handlers = new Map<string, (value?: unknown) => void>();
+            return {
+                unref: vi.fn(),
+                once: vi.fn((event: string, callback: (value?: unknown) => void) => {
+                    handlers.set(event, callback);
+                }),
+                close: vi.fn(),
+                listen: vi.fn(() => {
+                    handlers.get('error')?.(Object.assign(new Error('denied'), { code: 'EACCES' }));
+                }),
+                address: vi.fn(),
+            };
+        });
+
+        await expect(
+            findAvailablePort({
+                startingPort: 9000,
+                host: '127.0.0.1',
+                createServer:
+                    failingCreateServer as unknown as typeof import('node:net').createServer,
+            })
+        ).rejects.toMatchObject({ code: 'EACCES' });
+    });
+
+    it('rejects start when the PeerServer factory throws', async () => {
+        await expect(
+            startPeerSignalingServer({
+                startingPort: 9000,
+                peerServerFactory: vi.fn(() => {
+                    throw new Error('factory failed');
+                }),
+                findPort: vi.fn(async () => 9000),
+            })
+        ).rejects.toThrow('factory failed');
+    });
+
     it('creates stable short log ids without exposing raw peer ids', () => {
         const logId = createStableLogId('peer-1', 'peer');
 
@@ -137,5 +218,51 @@ describe('peer signaling server governance', () => {
                 },
             })
         );
+    });
+
+    it('returns safe shutdown results for missing, errored, and throwing close paths', async () => {
+        await expect(stopPeerSignalingServer(null)).resolves.toEqual({ closed: false });
+        await expect(
+            stopPeerSignalingServer({
+                host: '0.0.0.0',
+                port: 9100,
+                path: '/gemduel',
+                closed: false,
+            })
+        ).resolves.toEqual({ closed: false });
+
+        const closeError = new Error('close failed');
+        await expect(
+            stopPeerSignalingServer(
+                {
+                    httpServer: {
+                        close: vi.fn((callback: (error?: Error) => void) => callback(closeError)),
+                    },
+                    host: '0.0.0.0',
+                    port: 9100,
+                    path: '/gemduel',
+                    closed: false,
+                },
+                { logger: { warn: vi.fn(), info: vi.fn() } }
+            )
+        ).resolves.toEqual({ closed: false, error: closeError });
+
+        const thrownError = new Error('close threw');
+        await expect(
+            stopPeerSignalingServer(
+                {
+                    httpServer: {
+                        close: vi.fn(() => {
+                            throw thrownError;
+                        }),
+                    },
+                    host: '0.0.0.0',
+                    port: 9100,
+                    path: '/gemduel',
+                    closed: false,
+                },
+                { logger: { warn: vi.fn(), info: vi.fn() } }
+            )
+        ).resolves.toEqual({ closed: false, error: thrownError });
     });
 });

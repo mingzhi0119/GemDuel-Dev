@@ -9,10 +9,10 @@
         "excludePlatformScopedBinaries": true,
         "normalizeInstallPaths": true
     },
-    "componentCount": 704,
+    "componentCount": 711,
     "licenseInventory": {
-        "MIT": 560,
-        "Apache-2.0": 30,
+        "MIT": 566,
+        "Apache-2.0": 31,
         "BSD-2-Clause": 13,
         "BSD-3-Clause": 20,
         "ISC": 63,
@@ -185,6 +185,13 @@
             "name": "@develar/schema-utils",
             "version": "2.6.5",
             "license": "MIT",
+            "dev": false
+        },
+        {
+            "path": "inventory/@dimforge/rapier3d-compat@0.12.0/1",
+            "name": "@dimforge/rapier3d-compat",
+            "version": "0.12.0",
+            "license": "Apache-2.0",
             "dev": false
         },
         {
@@ -552,6 +559,13 @@
             "dev": false
         },
         {
+            "path": "inventory/@tweenjs/tween.js@23.1.3/1",
+            "name": "@tweenjs/tween.js",
+            "version": "23.1.3",
+            "license": "MIT",
+            "dev": false
+        },
+        {
             "path": "inventory/@types/babel__core@7.20.5/1",
             "name": "@types/babel__core",
             "version": "7.20.5",
@@ -765,6 +779,27 @@
             "path": "inventory/@types/serve-static@1.15.10/1",
             "name": "@types/serve-static",
             "version": "1.15.10",
+            "license": "MIT",
+            "dev": false
+        },
+        {
+            "path": "inventory/@types/stats.js@0.17.4/1",
+            "name": "@types/stats.js",
+            "version": "0.17.4",
+            "license": "MIT",
+            "dev": false
+        },
+        {
+            "path": "inventory/@types/three@0.184.1/1",
+            "name": "@types/three",
+            "version": "0.184.1",
+            "license": "MIT",
+            "dev": false
+        },
+        {
+            "path": "inventory/@types/webxr@0.5.24/1",
+            "name": "@types/webxr",
+            "version": "0.5.24",
             "license": "MIT",
             "dev": false
         },
@@ -3121,6 +3156,13 @@
             "dev": false
         },
         {
+            "path": "inventory/meshoptimizer@1.1.1/1",
+            "name": "meshoptimizer",
+            "version": "1.1.1",
+            "license": "MIT",
+            "dev": false
+        },
+        {
             "path": "inventory/methods@1.1.2/1",
             "name": "methods",
             "version": "1.1.2",
@@ -4496,6 +4538,13 @@
             "path": "inventory/thenify-all@1.6.0/1",
             "name": "thenify-all",
             "version": "1.6.0",
+            "license": "MIT",
+            "dev": false
+        },
+        {
+            "path": "inventory/three@0.184.0/1",
+            "name": "three",
+            "version": "0.184.0",
             "license": "MIT",
             "dev": false
         },

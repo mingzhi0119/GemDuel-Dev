@@ -1,6 +1,11 @@
+import type { ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { usePrefersReducedMotion } from '@gemduel/ui/components/animation';
-import type { TurnHandoffPresentationEvent } from './presentationTypes';
+import type { PlayerKey } from '@gemduel/shared/types';
+import type {
+    AbilityCalloutPresentationEvent,
+    TurnHandoffPresentationEvent,
+} from './presentationTypes';
 import { getElementRect, getRectCenter, getViewportCenter } from './presentationGeometry';
 import { createGaussianBlurHaloStyle } from './turnHandoffStyles';
 import {
@@ -9,6 +14,7 @@ import {
 } from './presentationPreviewMode';
 
 const TURN_HANDOFF_STAGE_SELECTOR = '[data-testid="desktop-stage-canvas"]';
+const TURN_HANDOFF_TOPBAR_SELECTOR = '[data-presentation-anchor="topbar"]';
 const TURN_HANDOFF_DURATION_SECONDS = 3;
 const TURN_HANDOFF_REDUCED_DURATION_SECONDS = 1.2;
 
@@ -38,7 +44,7 @@ const TURN_HANDOFF_STYLES = `
 }
 `;
 
-const getPlayerAccent = (player: TurnHandoffPresentationEvent['toPlayer']) =>
+const getPlayerAccent = (player: PlayerKey) =>
     player === 'p1'
         ? {
               glow: 'rgba(16, 185, 129, 0.48)',
@@ -55,42 +61,60 @@ const getPlayerAccent = (player: TurnHandoffPresentationEvent['toPlayer']) =>
 
 const getBannerLayout = () => {
     const stageRect = getElementRect(TURN_HANDOFF_STAGE_SELECTOR);
+    const topBarRect = getElementRect(TURN_HANDOFF_TOPBAR_SELECTOR);
 
     if (stageRect) {
-        const center = getRectCenter(stageRect);
+        const center = topBarRect ? getRectCenter(topBarRect) : getRectCenter(stageRect);
+        const topOffset = Math.max(2, stageRect.height * 0.004);
+        const top = topBarRect
+            ? topBarRect.y + topBarRect.height + topOffset
+            : stageRect.y + Math.max(32, stageRect.height * 0.055);
+
         return {
-            center,
+            center: {
+                x: center.x,
+                y: top,
+            },
             stageRect,
+            width: Math.min(340, Math.max(230, stageRect.width * 0.28)),
         };
     }
 
     const viewportCenter = getViewportCenter();
     return {
-        center: viewportCenter,
+        center: {
+            x: viewportCenter.x,
+            y: Math.max(48, viewportCenter.y * 0.18),
+        },
         stageRect: {
             x: 0,
             y: 0,
             width: typeof window === 'undefined' ? 0 : window.innerWidth,
             height: typeof window === 'undefined' ? 0 : window.innerHeight,
         },
+        width: 260,
     };
 };
 
-export function TurnHandoffBanner({
-    event,
+function TurnStatusBannerFrame({
+    player,
+    title,
+    meta,
     previewMode,
+    dataAttributes,
 }: {
-    event: TurnHandoffPresentationEvent;
+    player: PlayerKey;
+    title: string;
+    meta: ReactNode;
     previewMode?: PresentationPreviewMode;
+    dataAttributes: Record<string, string>;
 }) {
     const prefersReducedMotion = usePrefersReducedMotion();
-    const incomingAccent = getPlayerAccent(event.toPlayer);
+    const incomingAccent = getPlayerAccent(player);
     const layout = getBannerLayout();
     const duration = prefersReducedMotion
         ? getPresentationDurationSeconds(TURN_HANDOFF_REDUCED_DURATION_SECONDS, previewMode)
         : getPresentationDurationSeconds(TURN_HANDOFF_DURATION_SECONDS, previewMode);
-    const fromLabel = event.fromPlayer.toUpperCase();
-    const toLabel = event.toPlayer.toUpperCase();
     const cardAnimationName = prefersReducedMotion
         ? 'gemduel-turn-handoff-card-reduced'
         : 'gemduel-turn-handoff-card';
@@ -108,59 +132,109 @@ export function TurnHandoffBanner({
                     width: layout.stageRect.width,
                     height: layout.stageRect.height,
                     zIndex: previewMode ? 1000 : undefined,
-                    background:
-                        'radial-gradient(circle at center, rgba(15,23,42,0.36) 0%, rgba(15,23,42,0.2) 34%, rgba(15,23,42,0.04) 68%, transparent 100%)',
+                    background: 'transparent',
                     animation: `gemduel-turn-handoff-backdrop ${duration}s ease-out both`,
                 }}
             />
             <div
                 aria-live="polite"
-                data-turn-handoff-banner={event.toPlayer}
-                data-turn-handoff-position="stage-center"
-                data-turn-handoff-from={event.fromPlayer}
-                data-turn-handoff-to={event.toPlayer}
+                {...dataAttributes}
                 className="pointer-events-none fixed z-[121]"
                 style={{
                     left: layout.center.x,
                     top: layout.center.y,
+                    width: layout.width,
                     zIndex: previewMode ? 1001 : undefined,
-                    transform: 'translate(-50%, -50%)',
+                    transform: 'translateX(-50%)',
                 }}
             >
                 <div
                     aria-hidden="true"
                     data-turn-handoff-gaussian-halo="true"
-                    className="absolute -inset-x-16 -inset-y-10 rounded-full opacity-80"
+                    className="absolute -inset-x-8 -inset-y-3 rounded-full opacity-75"
                     style={{
                         ...createGaussianBlurHaloStyle({ color: incomingAccent.soft }),
-                        animation: prefersReducedMotion
-                            ? undefined
-                            : 'gemduel-turn-handoff-halo 1.15s ease-in-out infinite',
+                        animation: `${cardAnimationName} ${duration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
                     }}
                 />
                 <div
-                    className={`relative flex min-w-[520px] flex-col items-center justify-center gap-3 border bg-slate-950/88 px-8 py-6 text-center shadow-2xl backdrop-blur-xl ${incomingAccent.text} ${incomingAccent.ring}`}
+                    className={`relative flex w-full items-center justify-center gap-2 overflow-hidden border bg-slate-950/86 px-3 py-1.5 text-center shadow-xl backdrop-blur-lg ${incomingAccent.text} ${incomingAccent.ring}`}
                     style={{
                         borderRadius: 8,
-                        boxShadow: `0 22px 70px rgba(0,0,0,0.46), 0 0 42px ${incomingAccent.glow}`,
+                        boxShadow: `0 12px 34px rgba(0,0,0,0.38), 0 0 24px ${incomingAccent.glow}`,
                         animation: `${cardAnimationName} ${duration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
                     }}
                 >
-                    <div className="flex items-center justify-center gap-3 text-[15px] font-black uppercase tracking-[0.22em] opacity-80">
-                        <span>{fromLabel}</span>
-                        <span
-                            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10"
-                            aria-hidden="true"
-                        >
-                            <ArrowRight size={18} strokeWidth={2.8} />
-                        </span>
-                        <span>{toLabel}</span>
-                    </div>
-                    <div className="text-[42px] font-black uppercase leading-none tracking-[0.08em]">
-                        {toLabel} Turn
+                    {meta ? (
+                        <div className="flex shrink-0 items-center justify-center gap-1 text-[10px] font-black uppercase tracking-[0.14em] opacity-80">
+                            {meta}
+                        </div>
+                    ) : null}
+                    <div className="min-w-0 whitespace-nowrap text-[20px] font-black uppercase leading-none tracking-[0.04em]">
+                        {title}
                     </div>
                 </div>
             </div>
         </>
+    );
+}
+
+export function TurnHandoffBanner({
+    event,
+    previewMode,
+}: {
+    event: TurnHandoffPresentationEvent;
+    previewMode?: PresentationPreviewMode;
+}) {
+    const fromLabel = event.fromPlayer.toUpperCase();
+    const toLabel = event.toPlayer.toUpperCase();
+
+    return (
+        <TurnStatusBannerFrame
+            player={event.toPlayer}
+            title={`${toLabel} Turn`}
+            previewMode={previewMode}
+            dataAttributes={{
+                'data-turn-handoff-banner': event.toPlayer,
+                'data-turn-handoff-position': 'topbar-under-center',
+                'data-turn-handoff-from': event.fromPlayer,
+                'data-turn-handoff-to': event.toPlayer,
+            }}
+            meta={
+                <>
+                    <span>{fromLabel}</span>
+                    <span
+                        className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10"
+                        aria-hidden="true"
+                    >
+                        <ArrowRight size={13} strokeWidth={2.8} />
+                    </span>
+                    <span>{toLabel}</span>
+                </>
+            }
+        />
+    );
+}
+
+export function ExtraTurnBanner({
+    event,
+    previewMode,
+}: {
+    event: AbilityCalloutPresentationEvent;
+    previewMode?: PresentationPreviewMode;
+}) {
+    const playerLabel = event.player.toUpperCase();
+
+    return (
+        <TurnStatusBannerFrame
+            player={event.player}
+            title={`${playerLabel} Extra Turn`}
+            previewMode={previewMode}
+            dataAttributes={{
+                'data-extra-turn-banner': event.player,
+                'data-extra-turn-position': 'topbar-under-center',
+            }}
+            meta={null}
+        />
     );
 }

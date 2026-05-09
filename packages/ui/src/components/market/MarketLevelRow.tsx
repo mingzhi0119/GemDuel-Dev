@@ -30,6 +30,7 @@ interface MarketLevelRowProps {
         cardId: string | null | undefined
     ) => boolean;
     onPreviewCard?: (card: CardType, context: CardInteractionContext) => void;
+    enableThreeCardDepth?: boolean;
 }
 
 export function MarketLevelRow({
@@ -47,6 +48,7 @@ export function MarketLevelRow({
     onPreviewDeckReserve,
     isPendingMarketRefillSlot,
     onPreviewCard,
+    enableThreeCardDepth = false,
 }: MarketLevelRowProps) {
     const t = useT();
     const deckArtwork = deckBackArtwork?.[lvl];
@@ -78,6 +80,7 @@ export function MarketLevelRow({
                 allowUnavailableClick={Boolean(onPreviewCard)}
                 theme={theme}
                 size="featured"
+                depthLayer={enableThreeCardDepth ? 'market' : undefined}
             />
         );
     };

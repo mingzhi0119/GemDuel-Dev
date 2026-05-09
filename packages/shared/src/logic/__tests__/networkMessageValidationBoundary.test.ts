@@ -107,7 +107,7 @@ describe('network message boundary contracts', () => {
             ok: false,
             boundaryId: 'network-message-parsing',
             code: 'NETWORK_MESSAGE_INVALID_ENVELOPE',
-            message: 'HEARTBEAT_PING requires a numeric timestamp payload.',
+            message: 'Inbound network payload included unsupported top-level fields.',
             runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
         });
     });

@@ -5,7 +5,7 @@
  */
 
 import { GEM_TYPES, GAME_PHASES } from '../../constants';
-import { addFeedback } from '../stateHelpers';
+import { addFeedback, createStateScopedUid } from '../stateHelpers';
 import { GameState, GemColor, UsePrivilegePayload } from '../../types';
 
 /**
@@ -44,7 +44,10 @@ export const handleUsePrivilege = (state: GameState, payload: UsePrivilegePayloa
     const collectibleGemType: GemColor = gemType;
 
     // Take the gem
-    state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
+    state.board[r][c] = {
+        type: GEM_TYPES.EMPTY,
+        uid: createStateScopedUid(state, `empty-${r}-${c}`),
+    };
     state.inventories[state.turn][collectibleGemType] =
         (state.inventories[state.turn][collectibleGemType] || 0) + 1;
     addFeedback(state, state.turn, collectibleGemType, 1);

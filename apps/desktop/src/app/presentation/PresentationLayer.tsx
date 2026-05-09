@@ -7,7 +7,7 @@ import type { ThemeName } from '@app/types/ui';
 import { AbilityCalloutStack } from './AbilityCalloutStack';
 import { CardFlightLayer } from './CardFlightLayer';
 import { GemFlightLayer } from './GemFlightLayer';
-import { TurnHandoffBanner } from './TurnHandoffBanner';
+import { ExtraTurnBanner, TurnHandoffBanner } from './TurnHandoffBanner';
 import type { PresentationPreviewMode } from './presentationPreviewMode';
 import type { PresentationController } from './usePresentationEvents';
 
@@ -18,6 +18,7 @@ interface PresentationLayerProps {
     onSelectRoyal: (card: RoyalCard) => void;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     previewMode?: PresentationPreviewMode;
+    enableThreeCardDepth?: boolean;
 }
 
 const MIDDLE_ZONE_ANCHOR = '[data-presentation-anchor="middle-zone"]';
@@ -29,6 +30,7 @@ export function PresentationLayer({
     onSelectRoyal,
     marketDeckBackArtwork,
     previewMode,
+    enableThreeCardDepth = false,
 }: PresentationLayerProps) {
     const { activeEvent, activeMarketRefillEvent, activeTurnHandoffEvent, activeStage } =
         presentation;
@@ -42,6 +44,7 @@ export function PresentationLayer({
                 theme={theme}
                 marketDeckBackArtwork={marketDeckBackArtwork}
                 previewMode={previewMode}
+                enableThreeCardDepth={enableThreeCardDepth}
             />
         );
     }
@@ -69,6 +72,7 @@ export function PresentationLayer({
                             theme={theme}
                             marketDeckBackArtwork={marketDeckBackArtwork}
                             previewMode={previewMode}
+                            enableThreeCardDepth={enableThreeCardDepth}
                         />
                     );
                     break;
@@ -87,12 +91,20 @@ export function PresentationLayer({
                     break;
                 case 'ability-callout':
                     layers.push(
-                        <AbilityCalloutStack
-                            key={activeEvent.id}
-                            event={activeEvent}
-                            theme={theme}
-                            previewMode={previewMode}
-                        />
+                        activeEvent.callout === 'extra-turn' ? (
+                            <ExtraTurnBanner
+                                key={activeEvent.id}
+                                event={activeEvent}
+                                previewMode={previewMode}
+                            />
+                        ) : (
+                            <AbilityCalloutStack
+                                key={activeEvent.id}
+                                event={activeEvent}
+                                theme={theme}
+                                previewMode={previewMode}
+                            />
+                        )
                     );
                     break;
                 default:

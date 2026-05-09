@@ -10,6 +10,11 @@ import { AppChrome } from '../chrome/AppChrome';
 import { AppOverlayStack } from '../overlays/AppOverlayStack';
 import { PresentationLayer } from '../presentation/PresentationLayer';
 import {
+    MAIN_GAME_THREE_FEATURES,
+    shouldRenderGemArtworkForThreeFeatures,
+} from '../presentation/threePresentationFeatures';
+import { ThreePresentationStack } from '../presentation/ThreePresentationStack';
+import {
     usePresentationEvents,
     type PresentationController,
 } from '../presentation/usePresentationEvents';
@@ -49,6 +54,10 @@ export function GameShell({
     const { locale } = useLocale();
     const t = useT();
     const readabilityTreatment = true;
+    const renderGemArtwork = shouldRenderGemArtworkForThreeFeatures(
+        MAIN_GAME_THREE_FEATURES,
+        'running'
+    );
 
     const isP1ZoneActive = turn === 'p1' && !ui.isReviewing && !winner;
     const isP2ZoneActive = turn === 'p2' && !ui.isReviewing && !winner;
@@ -246,7 +255,10 @@ export function GameShell({
                 localPlayer={localPlayer}
                 isOnline={state.mode === 'ONLINE_MULTIPLAYER'}
                 readabilityTreatment={readabilityTreatment}
+                desktopTypography={layout.layoutMode === 'desktop-4k'}
+                renderTurnPointer={false}
             />
+            <ThreePresentationStack activePlayer={turn} features={MAIN_GAME_THREE_FEATURES} />
 
             <AppChrome
                 theme={theme}
@@ -328,6 +340,7 @@ export function GameShell({
                         : handlers.handleSelectRoyal
                 }
                 marketDeckBackArtwork={marketDeckBackArtwork}
+                enableThreeCardDepth={MAIN_GAME_THREE_FEATURES.cardSlab}
             />
 
             <GamePlaySurface
@@ -348,6 +361,7 @@ export function GameShell({
                 onPreviewRoyal={previewRoyalCard}
                 readabilityTreatment={readabilityTreatment}
                 showReplayControls={ui.isReviewing}
+                renderGemArtwork={renderGemArtwork}
             />
 
             <PlayerRail

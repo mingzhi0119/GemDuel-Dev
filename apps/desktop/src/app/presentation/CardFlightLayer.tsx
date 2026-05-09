@@ -99,12 +99,14 @@ function FlightCard({
     index,
     theme,
     previewMode,
+    enableThreeCardDepth,
 }: {
     event: CardAcquirePresentationEvent | CardReservePresentationEvent;
     item: CardFlightPresentationItem;
     index: number;
     theme: ThemeName;
     previewMode?: PresentationPreviewMode;
+    enableThreeCardDepth?: boolean;
 }) {
     const prefersReducedMotion = usePrefersReducedMotion();
     const sourceSelectors = getCardSourceSelector(item.source, event.player);
@@ -160,12 +162,6 @@ function FlightCard({
                 style={style}
             >
                 <CardFlightLabel label={actionLabel} />
-                {previewMode && (
-                    <div
-                        aria-hidden="true"
-                        className="absolute inset-[-10px] rounded-xl border-2 border-cyan-200/80 shadow-[0_0_28px_rgba(125,211,252,0.7)]"
-                    />
-                )}
                 <div
                     className="origin-top-left overflow-hidden rounded-lg"
                     style={{
@@ -180,6 +176,7 @@ function FlightCard({
                         canBuy={false}
                         theme={theme}
                         className="shadow-2xl"
+                        depthLayer={enableThreeCardDepth ? 'flight' : undefined}
                     />
                 </div>
             </div>
@@ -194,6 +191,7 @@ function DeckReserveFlightCard({
     theme,
     marketDeckBackArtwork,
     previewMode,
+    enableThreeCardDepth,
 }: {
     event: CardReservePresentationEvent;
     item: CardFlightPresentationItem & { source: Extract<CardFlightSource, { kind: 'deck' }> };
@@ -201,6 +199,7 @@ function DeckReserveFlightCard({
     theme: ThemeName;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     previewMode?: PresentationPreviewMode;
+    enableThreeCardDepth?: boolean;
 }) {
     const prefersReducedMotion = usePrefersReducedMotion();
     const sourceSelectors = getCardSourceSelector(item.source, event.player);
@@ -259,12 +258,6 @@ function DeckReserveFlightCard({
                 style={style}
             >
                 <CardFlightLabel label={actionLabel} />
-                {previewMode && (
-                    <div
-                        aria-hidden="true"
-                        className="absolute inset-[-10px] rounded-xl border-2 border-cyan-200/80 shadow-[0_0_28px_rgba(125,211,252,0.7)]"
-                    />
-                )}
                 <div
                     className="origin-top-left overflow-hidden rounded-lg"
                     style={{
@@ -301,6 +294,7 @@ function DeckReserveFlightCard({
                             canBuy={false}
                             theme={theme}
                             className="shadow-2xl"
+                            depthLayer={enableThreeCardDepth ? 'flight' : undefined}
                         />
                     </div>
                 </div>
@@ -314,11 +308,13 @@ export function CardFlightLayer({
     theme,
     marketDeckBackArtwork,
     previewMode,
+    enableThreeCardDepth = false,
 }: {
     event: CardFlightEvent;
     theme: ThemeName;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     previewMode?: PresentationPreviewMode;
+    enableThreeCardDepth?: boolean;
 }) {
     const [isReady, setIsReady] = useState(false);
 
@@ -348,6 +344,7 @@ export function CardFlightLayer({
                     theme={theme}
                     marketDeckBackArtwork={marketDeckBackArtwork}
                     previewMode={previewMode}
+                    enableThreeCardDepth={enableThreeCardDepth}
                 />
             </div>
         );
@@ -370,6 +367,7 @@ export function CardFlightLayer({
                         theme={theme}
                         marketDeckBackArtwork={marketDeckBackArtwork}
                         previewMode={previewMode}
+                        enableThreeCardDepth={enableThreeCardDepth}
                     />
                 ) : (
                     <FlightCard
@@ -379,6 +377,7 @@ export function CardFlightLayer({
                         index={index}
                         theme={theme}
                         previewMode={previewMode}
+                        enableThreeCardDepth={enableThreeCardDepth}
                     />
                 )
             )}

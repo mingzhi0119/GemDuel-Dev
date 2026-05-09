@@ -161,6 +161,7 @@ describe('electron runtime config', () => {
 
     it('declares ownership and secret handling for every governed env var', () => {
         expect(Object.keys(RUNTIME_CONFIG_POLICY).sort()).toEqual([
+            'CI',
             'CSC_KEY_PASSWORD',
             'CSC_LINK',
             'GEMDUEL_ALLOW_PRERELEASE',

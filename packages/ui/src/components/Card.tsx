@@ -22,7 +22,6 @@ import {
     scaleCardMetric,
 } from './card/cardSizing';
 import { useLocale, useT } from '../i18n/LocaleProvider';
-
 export {
     FEATURED_CARD_SAMPLE_SIZE,
     FEATURED_CARD_SIZE,
@@ -30,7 +29,6 @@ export {
     SMALL_CARD_SIZE,
     STANDARD_CARD_SIZE,
 } from './card/cardSizing';
-
 export const Card: React.FC<CardProps> = React.memo(
     ({
         card,
@@ -46,6 +44,7 @@ export const Card: React.FC<CardProps> = React.memo(
         size = 'default',
         theme = 'dark',
         cardBackArtwork,
+        depthLayer,
     }) => {
         const { locale } = useLocale();
         const t = useT();
@@ -132,7 +131,6 @@ export const Card: React.FC<CardProps> = React.memo(
             locale,
             t,
         });
-
         const affordableClassName =
             canBuy && !isRoyal
                 ? theme === 'dark'
@@ -164,7 +162,6 @@ export const Card: React.FC<CardProps> = React.memo(
                     }`
         }
     `;
-
         return (
             <div
                 onClick={handleCardClick}
@@ -176,6 +173,14 @@ export const Card: React.FC<CardProps> = React.memo(
                 data-card-reserve-on-click={reserveOnClick ? 'true' : 'false'}
                 data-card-preview-click={allowUnavailableClick ? 'true' : 'false'}
                 data-card-back-preview={cardBackArtwork?.variant}
+                data-three-card-slab={depthLayer}
+                data-three-card-slab-card-id={depthLayer ? card.id : undefined}
+                data-three-card-slab-size={depthLayer ? size : undefined}
+                data-three-card-slab-theme={depthLayer ? theme : undefined}
+                data-three-card-slab-royal={depthLayer && isRoyal ? 'true' : undefined}
+                data-three-card-slab-affordable={
+                    depthLayer && canBuy && !isRoyal ? 'true' : undefined
+                }
                 className={
                     hasRuntimeArtwork ? runtimeArtworkShellClassName : fallbackShellClassName
                 }
@@ -352,7 +357,6 @@ export const Card: React.FC<CardProps> = React.memo(
                                 ))}
                         </div>
                     )}
-
                     {isRoyal && !hasRuntimeArtwork && (
                         <>
                             <div className="absolute inset-0 bg-yellow-500/10 animate-pulse pointer-events-none z-0" />
@@ -370,7 +374,6 @@ export const Card: React.FC<CardProps> = React.memo(
                             </div>
                         </>
                     )}
-
                     {!isReservedView && !isRoyal && onReserve && (
                         <div
                             className="absolute inset-x-0 flex items-start justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"

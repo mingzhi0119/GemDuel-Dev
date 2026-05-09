@@ -1,11 +1,13 @@
 // @vitest-environment happy-dom
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getVisualLabMode } from '../visualLabMode';
 
 describe('getVisualLabMode', () => {
     afterEach(() => {
         window.history.replaceState({}, '', '/');
+        delete window.__GEMDUEL_RUNTIME_CONFIG__;
+        vi.unstubAllEnvs();
     });
 
     it('reads known visual lab modes from the query string', () => {
@@ -25,5 +27,30 @@ describe('getVisualLabMode', () => {
 
         window.history.replaceState({}, '', '/');
         expect(getVisualLabMode()).toBeNull();
+    });
+
+    it('returns null when window is unavailable', () => {
+        const originalWindow = window;
+        Reflect.deleteProperty(globalThis, 'window');
+
+        try {
+            expect(getVisualLabMode()).toBeNull();
+        } finally {
+            Object.defineProperty(globalThis, 'window', {
+                configurable: true,
+                value: originalWindow,
+            });
+        }
+    });
+
+    it('requires an explicit runtime bridge unlock outside Vite dev', () => {
+        vi.stubEnv('DEV', false);
+        window.history.replaceState({}, '', '/?visualLab=surfaces');
+        window.__GEMDUEL_RUNTIME_CONFIG__ = { allowVisualLab: false };
+
+        expect(getVisualLabMode()).toBeNull();
+
+        window.__GEMDUEL_RUNTIME_CONFIG__ = { allowVisualLab: true };
+        expect(getVisualLabMode()).toBe('surfaces');
     });
 });

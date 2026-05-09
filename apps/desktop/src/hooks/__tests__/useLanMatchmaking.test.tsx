@@ -373,4 +373,103 @@ describe('useLanMatchmaking', () => {
             })
         );
     });
+
+    it('reports refresh, cancel, select, and confirm bridge rejections', async () => {
+        (bridge.getLanMatchmakingState as ReturnType<typeof vi.fn>).mockResolvedValue({
+            ...idleState,
+            phase: 'matched',
+            roomId: 'room-1',
+            localSeat: 'p1',
+            statusMessage: 'Opponent matched. Randomized seats are ready.',
+        } satisfies LanMatchmakingState);
+        await renderHarness();
+
+        (bridge.cancelLanMatchmaking as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+            new Error('cancel rejected')
+        );
+        await act(async () => {
+            await expect(currentResult?.cancelSearch()).resolves.toMatchObject({
+                errorMessage: 'LAN matchmaking is temporarily unavailable.',
+            });
+        });
+        expect(reportRendererEvent).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                name: 'LAN_MATCHMAKING_IPC_REJECTED',
+                context: { operation: 'cancelSearch' },
+            }),
+            expect.any(Object)
+        );
+
+        act(() => {
+            listener?.({
+                type: 'state',
+                state: {
+                    ...idleState,
+                    phase: 'matched',
+                    roomId: 'room-1',
+                    localSeat: 'p1',
+                    statusMessage: 'Opponent matched. Randomized seats are ready.',
+                },
+            });
+        });
+        (bridge.selectLanPregameMode as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+            new Error('select rejected')
+        );
+        await act(async () => {
+            await expect(currentResult?.selectMode('classic')).resolves.toMatchObject({
+                errorMessage: 'LAN matchmaking is temporarily unavailable.',
+            });
+        });
+        expect(reportRendererEvent).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                name: 'LAN_MATCHMAKING_IPC_REJECTED',
+                context: { operation: 'selectMode' },
+            }),
+            expect.any(Object)
+        );
+
+        act(() => {
+            listener?.({
+                type: 'state',
+                state: {
+                    ...idleState,
+                    phase: 'matched',
+                    roomId: 'room-1',
+                    localSeat: 'p1',
+                    statusMessage: 'Opponent matched. Randomized seats are ready.',
+                },
+            });
+        });
+        (bridge.confirmLanPregameStart as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+            new Error('confirm rejected')
+        );
+        await act(async () => {
+            await expect(currentResult?.confirmStart()).resolves.toMatchObject({
+                errorMessage: 'LAN matchmaking is temporarily unavailable.',
+            });
+        });
+        expect(reportRendererEvent).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                name: 'LAN_MATCHMAKING_IPC_REJECTED',
+                context: { operation: 'confirmStart' },
+            }),
+            expect.any(Object)
+        );
+
+        (bridge.getLanMatchmakingState as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+            new Error('refresh rejected')
+        );
+        await act(async () => {
+            await expect(currentResult?.refresh()).resolves.toMatchObject({
+                errorMessage: 'LAN matchmaking is temporarily unavailable.',
+            });
+        });
+        expect(reportRendererEvent).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                name: 'LAN_MATCHMAKING_IPC_REJECTED',
+                context: { operation: 'refresh' },
+            }),
+            expect.any(Object)
+        );
+    });
 });

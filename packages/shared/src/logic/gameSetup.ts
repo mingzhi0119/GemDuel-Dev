@@ -1,5 +1,11 @@
 import { BUFFS, GRID_SIZE } from '../constants';
-import { createSeededRandomSource, generateDeck, generateGemPool, shuffleArray } from '../utils';
+import {
+    createSeededRandomSource,
+    createUnseededRandomSource,
+    generateDeck,
+    generateGemPool,
+    shuffleArray,
+} from '../utils';
 import type { RandomSource } from '../utils';
 import type {
     BasicGemColor,
@@ -23,14 +29,16 @@ export interface StartGameOptions {
     seed?: string | number;
 }
 
-const resolveRandomSource = (options: StartGameOptions): RandomSource | undefined =>
+const resolveRandomSource = (options: StartGameOptions): RandomSource =>
     options.randomSource ??
-    (options.seed !== undefined ? createSeededRandomSource(options.seed) : undefined);
+    (options.seed !== undefined
+        ? createSeededRandomSource(options.seed)
+        : createUnseededRandomSource());
 
 export const BASIC_GEM_COLORS: BasicGemColor[] = ['red', 'green', 'blue', 'white', 'black'];
 
 export const getRandomBasicGemColor = (randomSource?: RandomSource): BasicGemColor => {
-    const next = randomSource?.next ?? Math.random;
+    const next = (randomSource ?? createUnseededRandomSource()).next;
     return BASIC_GEM_COLORS[Math.floor(next() * BASIC_GEM_COLORS.length)];
 };
 
@@ -53,7 +61,8 @@ const buildBoard = (initialBoardFlat: BoardCell[]): BoardCell[][] => {
 
 const createPlayerInitRandoms = (randomSource?: RandomSource): PlayerInitRandoms => ({
     randomGems: Array.from({ length: 5 }, () => getRandomBasicGemColor(randomSource)),
-    reserveCardLevel: (Math.floor((randomSource?.next ?? Math.random)() * 3) + 1) as 1 | 2 | 3,
+    reserveCardLevel: (Math.floor((randomSource ?? createUnseededRandomSource()).next() * 3) +
+        1) as 1 | 2 | 3,
     preferenceColor: getRandomBasicGemColor(randomSource),
 });
 
@@ -213,7 +222,7 @@ export const buildStartGameAction = (
         return { type: 'INIT', payload: setupData };
     }
 
-    const buffLevel = (Math.floor((randomSource?.next ?? Math.random)() * 3) + 1) as 1 | 2 | 3;
+    const buffLevel = (Math.floor(randomSource.next() * 3) + 1) as 1 | 2 | 3;
     const payload: InitDraftPayload = {
         ...setupData,
         draftPool: buildDraftPoolForLevel(buffLevel, randomSource),

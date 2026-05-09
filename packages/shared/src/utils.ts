@@ -20,9 +20,17 @@ const normalizeRandomSource = (randomSource?: RandomInput): RandomSource => {
         return randomSource;
     }
 
+    return createUnseededRandomSource();
+};
+
+// Casual local setup can use ambient entropy. Replayable simulations and networked setup
+// must pass an explicit seed or RandomSource so generated actions remain reproducible.
+export const createUnseededRandomSource = (): RandomSource => {
+    const next = Math.random;
     return {
-        next: Math.random,
-        nextId: (scope, index) => `${scope}-${index}-${Date.now()}`,
+        next,
+        nextId: (scope, index) =>
+            `${scope}-${index}-${Math.floor(next() * 0xffffffff).toString(36)}`,
     };
 };
 
@@ -54,6 +62,12 @@ export const createSeededRandomSource = (seed: string | number): RandomSource =>
     };
 };
 
+const createRuntimeCardInstanceSuffix = (random: RandomSource): string => {
+    const timestampShapedSerial = Math.floor(1_000_000_000_000 + random.next() * 9_000_000_000_000);
+    const token = Math.floor(random.next() * 0xffffffff).toString(36);
+    return `${timestampShapedSerial}-${token}`;
+};
+
 // 洗牌算法
 export const shuffleArray = <T>(array: T[], randomSource?: RandomInput): T[] => {
     const random = normalizeRandomSource(randomSource);
@@ -74,7 +88,7 @@ export const generateGemPool = (randomSource?: RandomInput): BoardCell[] => {
             pool.push({
                 uid:
                     random.nextId?.(`gem-${typeKey}`, i) ??
-                    `${typeKey}-${i}-${Date.now()}-${Math.floor(random.next() * 0xffffffff).toString(36)}`,
+                    `${typeKey}-${i}-${Math.floor(random.next() * 0xffffffff).toString(36)}`,
                 type: GEM_TYPES[typeKey.toUpperCase() as keyof typeof GEM_TYPES],
             });
         }
@@ -106,9 +120,7 @@ export const generateDeck = (
 
     const deck = levelCards.map((card) => ({
         ...(card as Card),
-        id:
-            random.nextId?.(card.id, level) ??
-            `${card.id}-${Date.now()}-${random.next().toString(36).slice(2, 7)}`,
+        id: `${card.id}-${createRuntimeCardInstanceSuffix(random)}`,
     }));
 
     return shuffleArray(deck, random);

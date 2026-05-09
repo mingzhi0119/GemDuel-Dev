@@ -20,4 +20,5 @@ export interface CardPreviewOverlayProps {
     cardActions?: CardPreviewAction[][];
     collectionLayout?: CardPreviewCollectionLayout;
     deckBackArtwork?: MarketDeckBackArtworkMap;
+    enableThreeCardDepth?: boolean;
 }

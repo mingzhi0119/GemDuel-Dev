@@ -19,11 +19,13 @@ export function MarketRefillMotion({
     theme,
     marketDeckBackArtwork,
     previewMode,
+    enableThreeCardDepth = false,
 }: {
     slot: MarketRefillPresentationEvent['slots'][number];
     theme: ThemeName;
     marketDeckBackArtwork?: MarketDeckBackArtworkMap;
     previewMode?: PresentationPreviewMode;
+    enableThreeCardDepth?: boolean;
 }) {
     const prefersReducedMotion = usePrefersReducedMotion();
     const sourceRect = getElementRect(`[data-market-deck="${slot.level}"]`);
@@ -68,7 +70,13 @@ export function MarketRefillMotion({
                 animate={{ x: targetRect.x, y: targetRect.y, scale: targetScale, opacity: 1 }}
                 transition={{ duration: durationSeconds, ease: 'easeOut' }}
             >
-                <Card card={slot.nextCard} size="featured" canBuy={false} theme={theme} />
+                <Card
+                    card={slot.nextCard}
+                    size="featured"
+                    canBuy={false}
+                    theme={theme}
+                    depthLayer={enableThreeCardDepth ? 'flight' : undefined}
+                />
             </motion.div>
         );
     }
@@ -130,6 +138,7 @@ export function MarketRefillMotion({
                     canBuy={false}
                     theme={theme}
                     className="shadow-2xl"
+                    depthLayer={enableThreeCardDepth ? 'flight' : undefined}
                 />
             </motion.div>
         </motion.div>

@@ -19,6 +19,36 @@ import {
 } from './contractSchemas';
 
 const NETWORK_SYNC_REASON_SET = new Set<NetworkSyncReason>(NETWORK_SYNC_REASONS);
+const NETWORK_MESSAGE_ALLOWED_TOP_LEVEL_KEYS = {
+    BOOTSTRAP_STATE: new Set(['version', 'type', 'command', 'checksum', 'replayFull']),
+    GUEST_INTENT: new Set(['version', 'type', 'requestId', 'command']),
+    HOST_DECISION: new Set([
+        'version',
+        'type',
+        'requestId',
+        'intentKind',
+        'approved',
+        'reasonCode',
+        'reason',
+        'command',
+        'checksum',
+    ]),
+    SYNC_STATE: new Set(['version', 'type', 'snapshot', 'reason', 'replaySync']),
+    RECOVERY_REQUEST: new Set(['version', 'type', 'reason', 'requestId']),
+    HEARTBEAT_PING: new Set(['version', 'type', 'timestamp']),
+    HEARTBEAT_PONG: new Set(['version', 'type', 'timestamp']),
+} satisfies Record<NetworkMessage['type'], ReadonlySet<string>>;
+
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+    Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const hasUnsupportedTopLevelFields = (value: unknown, type: NetworkMessage['type']): boolean => {
+    if (!isPlainRecord(value)) {
+        return false;
+    }
+    const allowedKeys = NETWORK_MESSAGE_ALLOWED_TOP_LEVEL_KEYS[type];
+    return Object.keys(value).some((key) => !allowedKeys.has(key));
+};
 
 export const parseNetworkMessage = (value: unknown): NetworkMessage | null => {
     const result = parseNetworkMessageBoundary(value);
@@ -40,6 +70,16 @@ export const parseNetworkMessageBoundary = (
             boundaryId: 'network-message-parsing',
             code: 'NETWORK_MESSAGE_INVALID_ENVELOPE',
             message: 'Inbound network payload did not match the protocol envelope.',
+            runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
+        };
+    }
+
+    if (hasUnsupportedTopLevelFields(value, envelope.data.type)) {
+        return {
+            ok: false,
+            boundaryId: 'network-message-parsing',
+            code: 'NETWORK_MESSAGE_INVALID_ENVELOPE',
+            message: 'Inbound network payload included unsupported top-level fields.',
             runtimeSignal: 'NETWORK_MESSAGE_REJECTED',
         };
     }

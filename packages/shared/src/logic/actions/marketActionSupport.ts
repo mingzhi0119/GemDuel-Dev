@@ -1,5 +1,5 @@
 import { GEM_TYPES } from '../../constants';
-import { addFeedback } from '../stateHelpers';
+import { addFeedback, createStateScopedUid } from '../stateHelpers';
 import type { BoardCell, Buff, BuyCardPayload, GameState, GemColor, PlayerKey } from '../../types';
 import { pickDeterministicBasicGemColor } from '../deterministicRandom';
 
@@ -65,7 +65,7 @@ export const returnPaidGemsToBag = (
         for (let index = 0; index < remainingToReturn; index += 1) {
             state.bag.push({
                 type: GEM_TYPES[color.toUpperCase() as keyof typeof GEM_TYPES],
-                uid: `returned-${color}-${Date.now()}-${index}`,
+                uid: createStateScopedUid(state, `returned-${color}`, state.bag.length + index),
             } as BoardCell);
         }
     }
@@ -89,7 +89,7 @@ export const returnPaidGoldToBag = (state: GameState, player: PlayerKey, goldCos
     for (let index = 0; index < goldToReturn; index += 1) {
         state.bag.push({
             type: GEM_TYPES.GOLD,
-            uid: `returned-gold-${Date.now()}-${index}`,
+            uid: createStateScopedUid(state, 'returned-gold', state.bag.length + index),
         } as BoardCell);
     }
 };
@@ -126,7 +126,10 @@ export const takeGoldFromBoardIfPresent = (
         return;
     }
 
-    state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
+    state.board[r][c] = {
+        type: GEM_TYPES.EMPTY,
+        uid: createStateScopedUid(state, `empty-${r}-${c}`),
+    };
     state.inventories[player].gold += 1;
     addFeedback(state, player, 'gold', 1);
 };

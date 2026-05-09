@@ -26,6 +26,30 @@ describe('AI player phase routing', () => {
         vi.restoreAllMocks();
     });
 
+    it('can route draft randomness through an explicit random source', () => {
+        const randomSource = {
+            next: vi.fn().mockReturnValueOnce(0.99).mockReturnValueOnce(0.2),
+        };
+
+        const action = computeAiAction(
+            createMockState({
+                phase: 'DRAFT_PHASE',
+                turn: 'p2',
+                p2DraftPool: ['privilege_favor', 'deep_pockets'],
+            }),
+            randomSource
+        );
+
+        expect(action).toMatchObject({
+            type: 'SELECT_BUFF',
+            payload: {
+                buffId: 'deep_pockets',
+                randomColor: 'green',
+            },
+        });
+        expect(randomSource.next).toHaveBeenCalledTimes(2);
+    });
+
     it('uses the FSM steal surface policy before choosing a gem to steal', () => {
         const action = computeAiAction(
             createMockState({

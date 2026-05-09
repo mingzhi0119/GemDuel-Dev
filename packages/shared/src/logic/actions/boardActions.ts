@@ -9,7 +9,7 @@
  */
 
 import { GEM_TYPES, SPIRAL_ORDER, GAME_PHASES } from '../../constants';
-import { addFeedback, addPrivilege } from '../stateHelpers';
+import { addFeedback, addPrivilege, createStateScopedUid } from '../stateHelpers';
 import { finalizeTurn } from '../turnManager';
 import { continueAbilityResolution, getAbilityResolutionNextPlayer } from './abilityResolution';
 import {
@@ -44,12 +44,15 @@ export const handleTakeGems = (state: GameState, payload: TakeGemsPayload): Game
     const collectedTypes: string[] = [];
 
     // Take gems from board and update inventory
-    coords.forEach(({ r, c }) => {
+    coords.forEach(({ r, c }, index) => {
         const gem = state.board[r][c];
         const gemType = gem.type.id;
         collectedTypes.push(gemType);
         newInv[gemType as GemColor] = (newInv[gemType as GemColor] || 0) + 1;
-        state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
+        state.board[r][c] = {
+            type: GEM_TYPES.EMPTY,
+            uid: createStateScopedUid(state, `empty-${r}-${c}`, index),
+        };
 
         if (gemType === 'pearl') pearlCount++;
         colorCounts[gemType] = (colorCounts[gemType] || 0) + 1;
@@ -194,7 +197,10 @@ export const handleTakeBonusGem = (state: GameState, payload: BonusGemPayload): 
     const gem = state.board[r][c];
     const gemType = gem.type.id as GemColor;
 
-    state.board[r][c] = { type: GEM_TYPES.EMPTY, uid: `empty-${r}-${c}-${Date.now()}` };
+    state.board[r][c] = {
+        type: GEM_TYPES.EMPTY,
+        uid: createStateScopedUid(state, `empty-${r}-${c}`),
+    };
     state.inventories[state.turn][gemType] = (state.inventories[state.turn][gemType] || 0) + 1;
     state.bonusGemTarget = null;
 
@@ -230,7 +236,7 @@ export const handleDiscardGem = (state: GameState, payload: string): GameState =
         currentInv[gemId]--;
         state.bag.push({
             type: GEM_TYPES[gemId.toUpperCase() as keyof typeof GEM_TYPES],
-            uid: `discard-${Date.now()}`,
+            uid: createStateScopedUid(state, `discard-${gemId}`, state.bag.length),
         } as BoardCell);
 
         const totalGems = Object.values(currentInv).reduce((a, b) => a + b, 0);
