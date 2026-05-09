@@ -39,6 +39,7 @@ namespace GemDuel.Presentation
         private bool previewBackdropCaptureEnabled;
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> grayscaleTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private Font uiFont;
         private float renderOpacity = 1f;
         private bool compensateTextWeight;
@@ -1146,28 +1147,10 @@ namespace GemDuel.Presentation
 
         private void RenderPlayerZoneContent(string player, Rect zoneRect, bool isActive)
         {
-            var inner = new Rect(zoneRect.x + 16f, zoneRect.y + 16f, zoneRect.width - 32f, zoneRect.height - 32f);
-            const float gap = 16f;
-            const float identityWidth = 128f;
-            var flexibleWidth = Math.Max(1f, inner.width - identityWidth - gap * 2f);
-            var reservedWidth = flexibleWidth * 0.22f;
-            var resourcesWidth = flexibleWidth - reservedWidth;
-
-            Rect reservedRect;
-            Rect resourcesRect;
-            Rect identityRect;
-            if (player == "p1")
-            {
-                reservedRect = new Rect(inner.x, inner.y, reservedWidth, inner.height);
-                resourcesRect = new Rect(reservedRect.xMax + gap, inner.y, resourcesWidth, inner.height);
-                identityRect = new Rect(resourcesRect.xMax + gap, inner.y, identityWidth, inner.height);
-            }
-            else
-            {
-                identityRect = new Rect(inner.x, inner.y, identityWidth, inner.height);
-                resourcesRect = new Rect(identityRect.xMax + gap, inner.y, resourcesWidth, inner.height);
-                reservedRect = new Rect(resourcesRect.xMax + gap, inner.y, reservedWidth, inner.height);
-            }
+            _ = zoneRect;
+            var reservedRect = PlayerReservedColumnRect(player);
+            var resourcesRect = PlayerResourcesRect(player);
+            var identityRect = PlayerScoreRect(player);
 
             RenderPlayerReservedColumn(player, reservedRect);
             RenderPlayerResourcesColumn(player, resourcesRect);
@@ -1184,7 +1167,6 @@ namespace GemDuel.Presentation
             CreateRoundedPanelPx(player + " Avatar", rect.x + rect.width * 0.5f - 26f, rect.y + 38f, 52f, 52f, 26f, 1f, new Color(0.85f, 0.72f, 0.22f, 0.2f), isActive ? accent : new Color(0.18f, 0.22f, 0.3f), -0.08f);
             CreateText(player + " Avatar Icon", ViewportPoint(rect.x + rect.width * 0.5f, rect.y + 64f, -0.1f), player == "p1" ? "♜" : "⚔", 0.13f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
             CreateText(player + " Zone Label", ViewportPoint(rect.x + rect.width * 0.5f, rect.y + 122f, -0.1f), player.ToUpperInvariant(), 0.18f, isActive ? accent : muted, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText(player + " Zone Score", ViewportPoint(rect.x + rect.width * 0.5f, rect.y + 151f, -0.1f), GetScore(player).ToString(), 0.075f, new Color(0.86f, 0.89f, 0.95f), TextAnchor.MiddleCenter);
 
             var privileges = GetIntAt("privileges", player);
             var extraPrivileges = GetIntAt("extraPrivileges", player);
@@ -1208,11 +1190,11 @@ namespace GemDuel.Presentation
         private void RenderPlayerResourcesColumn(string player, Rect rect)
         {
             var inventory = (JObject)((JObject)currentState.Snapshot["inventories"])[player];
-            const float gemSize = 32f;
-            const float gemGap = 14f;
+            const float gemSize = 54f;
+            const float gemGap = 6f;
             var totalGemWidth = PlayerZoneResourceOrder.Length * gemSize + (PlayerZoneResourceOrder.Length - 1) * gemGap;
             var gemX = rect.x + (rect.width - totalGemWidth) * 0.5f;
-            var gemY = rect.y + 20f;
+            var gemY = rect.y + 12.91f;
             for (var index = 0; index < PlayerZoneResourceOrder.Length; index += 1)
             {
                 var gemId = PlayerZoneResourceOrder[index];
@@ -1220,19 +1202,32 @@ namespace GemDuel.Presentation
                 var gemRect = new Rect(gemX + index * (gemSize + gemGap), gemY, gemSize, gemSize);
                 if (count == 0)
                 {
-                    WithRenderOpacity(0.5f, () => CreateGemArtwork(player + " Resource Gem " + gemId, gemId, gemRect, -0.09f));
+                    WithRenderOpacity(0.5f, () => CreateGemArtwork(player + " Resource Gem " + gemId, gemId, gemRect, -0.09f, grayscale: true));
                 }
                 else
                 {
                     CreateGemArtwork(player + " Resource Gem " + gemId, gemId, gemRect, -0.09f);
                 }
 
-                CreateText(player + " Resource Count " + gemId, ViewportPoint(gemRect.center.x, gemRect.yMax + 14f, -0.1f), count.ToString(), 0.045f, count > 0 ? Color.white : new Color(0.55f, 0.6f, 0.68f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                var badgeSize = 23f;
+                CreateRoundedPanelPx(
+                    player + " Resource Count Badge " + gemId,
+                    gemRect.xMax - badgeSize + 4f,
+                    gemRect.yMax - badgeSize + 4f,
+                    badgeSize,
+                    badgeSize,
+                    badgeSize * 0.5f,
+                    0f,
+                    new Color(0f, 0f, 0f, 0f),
+                    new Color(0.04f, 0.05f, 0.08f, 0.88f),
+                    -0.1f
+                );
+                CreateText(player + " Resource Count " + gemId, ViewportPoint(gemRect.xMax - badgeSize * 0.5f + 4f, gemRect.yMax - badgeSize * 0.5f + 4f, -0.11f), count.ToString(), 0.048f, count > 0 ? Color.white : new Color(0.55f, 0.6f, 0.68f), TextAnchor.MiddleCenter, FontStyle.Bold);
             }
 
             const int stackCount = 6;
             const float stackGap = 6f;
-            var stackScale = Mathf.Clamp((rect.width - stackGap * (stackCount - 1)) / (120f * stackCount), 0.46f, 0.86f);
+            var stackScale = Mathf.Clamp((rect.width - stackGap * (stackCount - 1)) / (120f * stackCount), 0.46f, 1f);
             var stackWidth = 120f * stackScale;
             var stackHeight = 160f * stackScale;
             var stackX = rect.x + (rect.width - (stackWidth * stackCount + stackGap * (stackCount - 1))) * 0.5f;
@@ -1262,7 +1257,7 @@ namespace GemDuel.Presentation
             }
 
             var slotCount = Math.Min(reserved.Count, 3);
-            var scale = Mathf.Clamp(rect.width / (150f + Math.Max(slotCount - 1, 0) * 34f), 0.42f, 0.88f);
+            var scale = Mathf.Clamp(rect.width / (150f + Math.Max(slotCount - 1, 0) * 34f), 0.42f, 1.32f);
             var cardWidth = 150f * scale;
             var cardHeight = 200f * scale;
             var offsetX = 34f * scale;
@@ -1283,11 +1278,13 @@ namespace GemDuel.Presentation
 
         private void RenderEmptyTableauSlot(string player, string color, Rect rect)
         {
-            CreateRoundedPanelPx(player + " Empty Tableau " + color, rect.x, rect.y, rect.width, rect.height, 4f, 1f, new Color(0.75f, 0.64f, 0.35f, 0.28f), new Color(0.02f, 0.04f, 0.07f, 0.24f), -0.08f);
+            CreateRoundedPanelPx(player + " Empty Tableau " + color, rect.x, rect.y, rect.width, rect.height, 4f, 1f, new Color(0.99f, 0.9f, 0.54f, 0.16f), new Color(0.16f, 0.14f, 0.14f, 0.16f), -0.08f);
             if (color != "pure-royal")
             {
                 var dotSize = Math.Max(8f, rect.width * 0.16f);
-                CreateRoundedPanelPx(player + " Empty Tableau Dot " + color, rect.center.x - dotSize * 0.5f, rect.center.y - dotSize * 0.5f, dotSize, dotSize, dotSize * 0.5f, 0f, new Color(0f, 0f, 0f, 0f), ColorForGem(color), -0.1f);
+                var dotColor = ColorForGem(color);
+                dotColor.a = 0.2f;
+                CreateRoundedPanelPx(player + " Empty Tableau Dot " + color, rect.center.x - dotSize * 0.5f, rect.center.y - dotSize * 0.5f, dotSize, dotSize, dotSize * 0.5f, 0f, new Color(0f, 0f, 0f, 0f), dotColor, -0.1f);
             }
         }
 
@@ -1453,6 +1450,11 @@ namespace GemDuel.Presentation
         private static Rect PlayerResourcesRect(string player)
         {
             return new Rect(player == "p1" ? 211.88f : 1042f, 830f, 666.12f, 240.5f);
+        }
+
+        private static Rect PlayerReservedColumnRect(string player)
+        {
+            return new Rect(player == "p1" ? 9.5f : 1716.12f, 830f, 194.38f, 240.5f);
         }
 
         private static Rect PlayerReservedRect(string player, int index)
@@ -1695,7 +1697,8 @@ namespace GemDuel.Presentation
             float z,
             bool clickable = false,
             Action<GemDuelViewTarget> configureTarget = null,
-            string semanticKey = null
+            string semanticKey = null,
+            bool grayscale = false
         )
         {
             var fileName = GemArtworkFileName(gemId);
@@ -1714,16 +1717,69 @@ namespace GemDuel.Presentation
                 );
             }
 
-            return CreateImagePanelPx(
+            var texture = LoadPublicTexture("gems", fileName);
+            if (texture == null)
+            {
+                return CreatePanelPx(
+                    name,
+                    rect.x,
+                    rect.y,
+                    rect.width,
+                    rect.height,
+                    ColorForGem(gemId),
+                    clickable,
+                    configureTarget,
+                    semanticKey
+                );
+            }
+
+            return CreateImagePanel(
                 name,
-                rect,
-                z,
+                ViewportRectCenter(rect, z),
+                ViewportSize(rect.width, rect.height),
+                grayscale ? GetGrayscaleTexture(texture) : texture,
                 clickable,
                 configureTarget,
-                semanticKey,
-                "gems",
-                fileName
+                semanticKey
             );
+        }
+
+        private Texture2D GetGrayscaleTexture(Texture2D source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var key = source.name + "|grayscale";
+            if (grayscaleTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            try
+            {
+                var pixels = source.GetPixels32();
+                for (var index = 0; index < pixels.Length; index += 1)
+                {
+                    var pixel = pixels[index];
+                    var gray = (byte)Mathf.RoundToInt(pixel.r * 0.299f + pixel.g * 0.587f + pixel.b * 0.114f);
+                    pixels[index] = new Color32(gray, gray, gray, pixel.a);
+                }
+
+                var texture = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
+                texture.name = key;
+                texture.wrapMode = TextureWrapMode.Clamp;
+                texture.filterMode = source.filterMode;
+                texture.SetPixels32(pixels);
+                texture.Apply(false, true);
+                grayscaleTextureCache[key] = texture;
+                return texture;
+            }
+            catch
+            {
+                return source;
+            }
         }
 
         private GameObject CreateImagePanel(
