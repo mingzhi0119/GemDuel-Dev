@@ -38,6 +38,7 @@ namespace GemDuel.Presentation
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private Font uiFont;
+        private float renderOpacity = 1f;
 
         public int GuidedEventsCompleted
         {
@@ -974,21 +975,24 @@ namespace GemDuel.Presentation
 
         private void RenderMarket()
         {
-            CreateText("Market Label", ViewportPoint(520f, 126f, 0f), "市场", 0.2f, new Color(0.95f, 0.97f, 1f), TextAnchor.MiddleCenter);
-            var market = (JObject)currentState.Snapshot["market"];
-            var decks = (JObject)currentState.Snapshot["decks"];
-            for (var level = 3; level >= 1; level -= 1)
+            WithRenderOpacity(0.8f, () =>
             {
-                var deckRect = MarketDeckRect(level);
-                CreateDeckBack(level, ((JArray)decks[level.ToString()]).Count, deckRect);
-                var row = (JArray)market[level.ToString()];
-                for (var index = 0; index < row.Count; index += 1)
+                CreateText("Market Label", ViewportPoint(520f, 126f, 0f), "市场", 0.2f, new Color(0.95f, 0.97f, 1f), TextAnchor.MiddleCenter);
+                var market = (JObject)currentState.Snapshot["market"];
+                var decks = (JObject)currentState.Snapshot["decks"];
+                for (var level = 3; level >= 1; level -= 1)
                 {
-                    var instanceId = row[index].Value<string>();
-                    var cardRect = MarketCardRect(level, index);
-                    CreateMarketCard(instanceId, level, index, cardRect);
+                    var deckRect = MarketDeckRect(level);
+                    CreateDeckBack(level, ((JArray)decks[level.ToString()]).Count, deckRect);
+                    var row = (JArray)market[level.ToString()];
+                    for (var index = 0; index < row.Count; index += 1)
+                    {
+                        var instanceId = row[index].Value<string>();
+                        var cardRect = MarketCardRect(level, index);
+                        CreateMarketCard(instanceId, level, index, cardRect);
+                    }
                 }
-            }
+            });
         }
 
         private void RenderRoyals()
@@ -1129,7 +1133,15 @@ namespace GemDuel.Presentation
                 var gemId = PlayerZoneResourceOrder[index];
                 var count = inventory.Value<int>(gemId);
                 var gemRect = new Rect(gemX + index * (gemSize + gemGap), gemY, gemSize, gemSize);
-                CreateGemArtwork(player + " Resource Gem " + gemId, gemId, gemRect, -0.09f);
+                if (count == 0)
+                {
+                    WithRenderOpacity(0.5f, () => CreateGemArtwork(player + " Resource Gem " + gemId, gemId, gemRect, -0.09f));
+                }
+                else
+                {
+                    CreateGemArtwork(player + " Resource Gem " + gemId, gemId, gemRect, -0.09f);
+                }
+
                 CreateText(player + " Resource Count " + gemId, ViewportPoint(gemRect.center.x, gemRect.yMax + 14f, -0.1f), count.ToString(), 0.045f, count > 0 ? Color.white : new Color(0.55f, 0.6f, 0.68f), TextAnchor.MiddleCenter, FontStyle.Bold);
             }
 
@@ -1647,7 +1659,7 @@ namespace GemDuel.Presentation
             var renderer = panel.GetComponent<MeshRenderer>();
             var material = new Material(Shader.Find("Sprites/Default"));
             material.mainTexture = texture;
-            material.color = Color.white;
+            material.color = ApplyRenderOpacity(Color.white);
             renderer.sharedMaterial = material;
 
             if (clickable || !string.IsNullOrEmpty(semanticKey))
@@ -1860,7 +1872,7 @@ namespace GemDuel.Presentation
             panel.transform.localScale = new Vector3(size.x, size.y, 1f);
             var renderer = panel.GetComponent<MeshRenderer>();
             var material = new Material(Shader.Find("Sprites/Default"));
-            material.color = color;
+            material.color = ApplyRenderOpacity(color);
             renderer.sharedMaterial = material;
 
             if (clickable || !string.IsNullOrEmpty(semanticKey))
@@ -1896,13 +1908,33 @@ namespace GemDuel.Presentation
             mesh.fontStyle = style;
             mesh.anchor = anchor;
             mesh.alignment = TextAlignment.Center;
-            mesh.color = color;
+            mesh.color = ApplyRenderOpacity(color);
             var meshRenderer = label.GetComponent<MeshRenderer>();
             if (meshRenderer != null && mesh.font != null)
             {
                 meshRenderer.sharedMaterial = mesh.font.material;
             }
             return mesh;
+        }
+
+        private void WithRenderOpacity(float opacity, Action render)
+        {
+            var previousOpacity = renderOpacity;
+            renderOpacity *= Mathf.Clamp01(opacity);
+            try
+            {
+                render();
+            }
+            finally
+            {
+                renderOpacity = previousOpacity;
+            }
+        }
+
+        private Color ApplyRenderOpacity(Color color)
+        {
+            color.a *= renderOpacity;
+            return color;
         }
 
         private Font ResolveUiFont()
