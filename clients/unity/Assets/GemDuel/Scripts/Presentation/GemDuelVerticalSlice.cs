@@ -857,11 +857,26 @@ namespace GemDuel.Presentation
             ClearRenderedState();
             renderRoot = new GameObject("GemDuel Rendered State");
             CreatePanel("Draft Background", new Vector3(0f, 0f, 0.45f), AutomationViewportWorldSize(), new Color(0f, 0.01f, 0.055f), false, null, "app.shell");
-            CreateText("Draft Shell Label", ViewportPoint(1815f, 28f, 0f), "草稿自定义", 0.09f, new Color(0.9f, 0.73f, 0.2f), TextAnchor.MiddleCenter);
-            CreateText("Draft Header", ViewportPoint(960f, 168f, 0f), "✧ 肉鸽选增益 ✧", 0.36f, Color.white, TextAnchor.MiddleCenter);
-            CreateText("Draft Mode", ViewportPoint(960f, 225f, 0f), "三级规则改变选秀", 0.19f, new Color(0.62f, 0.62f, 0.72f), TextAnchor.MiddleCenter);
-            CreatePanelPx("Draft Player Pill", 822f, 311f, 276f, 80f, new Color(0.0f, 0.18f, 0.17f));
-            CreateText("Draft Player", ViewportPoint(960f, 353f, -0.02f), "P1：3 选 1", 0.19f, new Color(0.04f, 0.78f, 0.58f), TextAnchor.MiddleCenter);
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("Draft Shell Label", ViewportPoint(1840f, 29f, 0f), "▱ 草稿自定义", 0.055f, new Color(0.95f, 0.72f, 0.05f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateRoundedPanelPx("Draft Customize Panel", 1552f, 58f, 352f, 82f, 22f, 1f, new Color(0.08f, 0.11f, 0.2f), new Color(0.01f, 0.02f, 0.06f, 0.92f));
+                CreateRoundedPanelPx("Draft Refresh Button", 1563f, 75f, 126f, 48f, 14f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.86f, 0.57f, 0.0f), -0.01f);
+                CreateText("Draft Refresh Text", ViewportPoint(1626f, 100f, -0.02f), "↻  刷新池", 0.075f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreatePanelPx("Draft Customize Divider", 1706f, 80f, 1f, 36f, -0.01f, new Color(0.16f, 0.18f, 0.27f));
+                CreateText("Draft L1", ViewportPoint(1757f, 100f, -0.02f), "L1", 0.068f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft L2", ViewportPoint(1810f, 100f, -0.02f), "L2", 0.068f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateRoundedPanelPx("Draft L3 Active", 1840f, 75f, 48f, 48f, 12f, 0f, new Color(0f, 0f, 0f, 0f), new Color(1f, 0.78f, 0.17f), -0.01f);
+                CreateText("Draft L3", ViewportPoint(1864f, 100f, -0.02f), "L3", 0.068f, new Color(0.16f, 0.11f, 0.02f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft Header", ViewportPoint(960f, 168f, 0f), "✧ 肉鸽选增益 ✧", 0.36f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft Mode", ViewportPoint(960f, 225f, 0f), "三级规则改变选秀", 0.19f, new Color(0.62f, 0.62f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            });
+            CreateRoundedPanelPx("Draft Player Pill", 822f, 311f, 276f, 80f, 40f, 2f, new Color(0.02f, 0.73f, 0.55f), new Color(0.0f, 0.18f, 0.17f, 0.78f));
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("Draft Player Shield", ViewportPoint(879f, 352f, -0.02f), "♢", 0.14f, new Color(0.04f, 0.78f, 0.58f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft Player", ViewportPoint(987f, 353f, -0.02f), "P1：3 选 1", 0.19f, new Color(0.04f, 0.78f, 0.58f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            });
 
             RenderDraftCard(
                 348f,
@@ -877,7 +892,7 @@ namespace GemDuel.Presentation
                 "🏆",
                 "胜利",
                 "皇家特使",
-                "在你的第 5 个回合完整结算后，拿取 1 张剩余皇家卡。",
+                "在你的第 5 个回合完整结算后，拿取 1\n张剩余皇家卡。",
                 "单色分数获胜:",
                 "关闭"
             );
@@ -886,7 +901,7 @@ namespace GemDuel.Presentation
                 "◎",
                 "经济",
                 "极简主义",
-                "你购买的前 2 张卡提供双倍奖励。宝石持有上限：8。",
+                "你购买的前 2 张卡提供双倍奖励。宝石\n持有上限：8。",
                 string.Empty,
                 string.Empty
             );
@@ -902,20 +917,25 @@ namespace GemDuel.Presentation
             string footerValue
         )
         {
-            CreatePanelPx("Draft Card Border " + title, x, 440f, 384f, 480f, 0f, new Color(0.95f, 0.68f, 0.04f));
-            CreatePanelPx("Draft Card Body " + title, x + 4f, 444f, 376f, 472f, -0.02f, new Color(0.18f, 0.055f, 0.06f));
-            CreatePanelPx("Draft Icon " + title, x + 32f, 472f, 56f, 56f, -0.04f, new Color(0.32f, 0.21f, 0.22f));
-            CreatePanelPx("Draft Level " + title, x + 279f, 472f, 68f, 40f, -0.04f, new Color(0.23f, 0.11f, 0.12f));
-            CreateText("Draft Icon Text " + title, ViewportPoint(x + 60f, 502f, -0.02f), icon, 0.16f, new Color(1f, 0.71f, 0.08f), TextAnchor.MiddleCenter);
-            CreateText("Draft Level Text " + title, ViewportPoint(x + 313f, 493f, -0.02f), "LVL 3", 0.1f, new Color(0.75f, 0.65f, 0.35f), TextAnchor.MiddleCenter);
-            CreateText("Draft Category " + title, ViewportPoint(x + 331f, 528f, -0.02f), category, 0.07f, new Color(0.7f, 0.58f, 0.34f), TextAnchor.MiddleRight);
-            CreateText("Draft Title " + title, ViewportPoint(x + 33f, 576f, -0.02f), title, 0.18f, new Color(1f, 0.93f, 0.54f), TextAnchor.MiddleLeft);
-            CreateText("Draft Description " + title, ViewportPoint(x + 33f, 642f, -0.02f), description, 0.095f, new Color(0.86f, 0.74f, 0.33f), TextAnchor.MiddleLeft);
+            CreateRoundedPanelPx("Draft Card " + title, x, 440f, 384f, 480f, 24f, 3f, new Color(0.95f, 0.68f, 0.04f), new Color(0.18f, 0.055f, 0.06f));
+            CreateRoundedPanelPx("Draft Icon " + title, x + 32f, 472f, 56f, 56f, 16f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.32f, 0.21f, 0.22f), -0.04f);
+            CreateRoundedPanelPx("Draft Level " + title, x + 279f, 472f, 68f, 40f, 20f, 1f, new Color(0.41f, 0.32f, 0.31f), new Color(0.23f, 0.11f, 0.12f), -0.04f);
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("Draft Icon Text " + title, ViewportPoint(x + 60f, 502f, -0.02f), icon, 0.16f, new Color(1f, 0.71f, 0.08f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft Level Text " + title, ViewportPoint(x + 313f, 493f, -0.02f), "LVL 3", 0.1f, new Color(0.75f, 0.65f, 0.35f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft Category " + title, ViewportPoint(x + 331f, 528f, -0.02f), category, 0.07f, new Color(0.7f, 0.58f, 0.34f), TextAnchor.MiddleRight, FontStyle.Bold);
+                CreateText("Draft Title " + title, ViewportPoint(x + 33f, 576f, -0.02f), title, 0.18f, new Color(1f, 0.93f, 0.54f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Draft Description " + title, ViewportPoint(x + 33f, 646f, -0.02f), description, 0.1f, new Color(0.86f, 0.74f, 0.33f), TextAnchor.MiddleLeft, FontStyle.Bold);
+            });
             CreatePanelPx("Draft Divider " + title, x + 32f, 814f, 318f, 2f, -0.04f, new Color(0.34f, 0.22f, 0.2f));
             if (!string.IsNullOrEmpty(footerLabel))
             {
-                CreateText("Draft Footer Label " + title, ViewportPoint(x + 33f, 848f, -0.02f), footerLabel, 0.08f, new Color(0.74f, 0.62f, 0.3f), TextAnchor.MiddleLeft);
-                CreateText("Draft Footer Value " + title, ViewportPoint(x + 350f, 878f, -0.02f), footerValue, 0.08f, new Color(1f, 0.84f, 0.22f), TextAnchor.MiddleRight);
+                WithTextWeightCompensation(() =>
+                {
+                    CreateText("Draft Footer Label " + title, ViewportPoint(x + 33f, 848f, -0.02f), footerLabel, 0.08f, new Color(0.74f, 0.62f, 0.3f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                    CreateText("Draft Footer Value " + title, ViewportPoint(x + 350f, 878f, -0.02f), footerValue, 0.08f, new Color(1f, 0.84f, 0.22f), TextAnchor.MiddleRight, FontStyle.Bold);
+                });
             }
         }
 
