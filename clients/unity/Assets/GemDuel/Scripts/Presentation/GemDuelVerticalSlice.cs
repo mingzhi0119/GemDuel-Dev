@@ -938,18 +938,61 @@ namespace GemDuel.Presentation
         {
             var p1Crowns = GetCrowns("p1");
             var p2Crowns = GetCrowns("p2");
-            var p1Privileges = GetIntAt("privileges", "p1");
-            var p2Privileges = GetIntAt("privileges", "p2");
+            var p1Score = GetScore("p1");
+            var p2Score = GetScore("p2");
             var p1Turns = GetPlayerTurnCount("p1");
             var p2Turns = GetPlayerTurnCount("p2");
 
-            CreateText("P1 Crown Counter", ViewportPoint(452f, 31f, 0f), p1Crowns + "/10", 0.26f, new Color(1f, 0.87f, 0.26f), TextAnchor.MiddleCenter);
-            CreateText("P1 Privilege Counter", ViewportPoint(582f, 31f, 0f), p1Privileges + "/20", 0.26f, Color.white, TextAnchor.MiddleCenter);
-            CreateText("P2 Crown Counter", ViewportPoint(1408f, 31f, 0f), p2Crowns + "/10", 0.26f, new Color(1f, 0.87f, 0.26f), TextAnchor.MiddleCenter);
-            CreateText("P2 Privilege Counter", ViewportPoint(1538f, 31f, 0f), p2Privileges + "/20", 0.26f, Color.white, TextAnchor.MiddleCenter);
-            CreateText("Turn P1", ViewportPoint(872f, 31f, 0f), "P1 " + p1Turns, 0.2f, new Color(0.2f, 0.95f, 0.72f), TextAnchor.MiddleCenter);
-            CreateText("Turn Center", ViewportPoint(960f, 31f, 0f), "回合", 0.13f, Color.white, TextAnchor.MiddleCenter);
-            CreateText("Turn P2", ViewportPoint(1048f, 31f, 0f), p2Turns + " P2", 0.2f, new Color(0.3f, 0.58f, 1f), TextAnchor.MiddleCenter);
+            WithTextWeightCompensation(() =>
+            {
+                RenderTopbarScoreGroup("p1", 347f, p1Crowns, p1Score);
+                RenderTopbarScoreGroup("p2", 1307f, p2Crowns, p2Score);
+
+                CreateRoundedPanelPx("Topbar Turn Core", 814f, 14f, 292f, 36f, 18f, 1f, new Color(0.28f, 0.4f, 0.58f, 0.72f), new Color(0.02f, 0.06f, 0.13f, 0.72f), -0.04f);
+                CreateText("Turn P1 Label", ViewportPoint(853f, 31f, -0.06f), "P1", 0.18f, new Color(0.2f, 0.95f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Turn P1 Count", ViewportPoint(888f, 31f, -0.06f), p1Turns.ToString(), 0.15f, new Color(0.2f, 0.95f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Turn P1 Word", ViewportPoint(932f, 31f, -0.06f), "回合", 0.1f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreatePanelPx("Turn Core Divider", 960f, 21f, 1f, 20f, -0.06f, new Color(0.44f, 0.52f, 0.66f, 0.72f));
+                CreateText("Turn P2 Word", ViewportPoint(988f, 31f, -0.06f), "回合", 0.1f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Turn P2 Count", ViewportPoint(1031f, 31f, -0.06f), p2Turns.ToString(), 0.15f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Turn P2 Label", ViewportPoint(1069f, 31f, -0.06f), "P2", 0.18f, new Color(0.3f, 0.58f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+
+                RenderTurnPointer(currentState.Turn == "p1" ? 848f : 1072f);
+                RenderTopbarControls();
+            });
+        }
+
+        private void RenderTopbarScoreGroup(string player, float x, int crowns, int score)
+        {
+            var crownTextX = x + 79f;
+            var scoreIconX = x + 152f;
+            var scoreTextX = x + 207f;
+            CreateImagePanelPx(player + " Crown Icon", new Rect(x, 0f, 54f, 54f), -0.04f, "ui-icons", "crown-gold-green-screen.png");
+            CreateText(player + " Crown Value", ViewportPoint(crownTextX, 31f, -0.06f), crowns.ToString(), 0.3f, new Color(1f, 0.87f, 0.26f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            CreateText(player + " Crown Goal", ViewportPoint(crownTextX + 40f, 34f, -0.06f), "/10", 0.17f, new Color(1f, 0.87f, 0.26f), TextAnchor.MiddleCenter, FontStyle.Bold);
+
+            CreateImagePanelPx(player + " Point Icon", new Rect(scoreIconX, 2f, 47f, 55f), -0.04f, "ui-icons", "point-ribbon-silver-short.png");
+            CreateText(player + " Point Value", ViewportPoint(scoreTextX, 31f, -0.06f), score.ToString(), 0.3f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            CreateText(player + " Point Goal", ViewportPoint(scoreTextX + 44f, 34f, -0.06f), "/20", 0.17f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+        }
+
+        private void RenderTurnPointer(float centerX)
+        {
+            CreatePanelPx("Topbar Pointer Upper", centerX - 6f, 54f, 12f, 28f, -0.06f, new Color(0.98f, 0.72f, 0.12f, 0.95f));
+            CreatePanelPx("Topbar Pointer Lower", centerX - 4f, 78f, 8f, 32f, -0.06f, new Color(0.74f, 0.36f, 0.04f, 0.86f));
+        }
+
+        private void RenderTopbarControls()
+        {
+            CreateTopbarControl(1784f, "Ⅱ");
+            CreateTopbarControl(1834f, "↶");
+            CreateTopbarControl(1884f, "⚙");
+        }
+
+        private void CreateTopbarControl(float centerX, string label)
+        {
+            CreateRoundedPanelPx("Topbar Control " + label, centerX - 24f, 6f, 48f, 48f, 24f, 1f, new Color(0.72f, 0.78f, 0.9f, 0.56f), new Color(0.03f, 0.04f, 0.08f, 0.68f), -0.04f);
+            CreateText("Topbar Control Label " + label, ViewportPoint(centerX, 30f, -0.06f), label, 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
         }
 
         private void RenderBoard()

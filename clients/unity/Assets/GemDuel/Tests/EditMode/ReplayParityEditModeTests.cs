@@ -167,6 +167,45 @@ namespace GemDuel.Tests.EditMode
             }
         }
 
+        [Test]
+        public void TopbarPointCounterUsesScoreInsteadOfPrivilegeBank()
+        {
+            var root = new GameObject("GemDuel Topbar Score Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+                slice.ApplyNextFixtureEvent();
+                slice.ApplyNextFixtureEvent();
+
+                var automationState = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var snapshot = (JObject)automationState["snapshot"];
+                Assert.AreEqual(1, ((JObject)snapshot["privileges"]).Value<int>("p2"));
+                Assert.AreEqual(0, ((JObject)snapshot["extraPoints"]).Value<int>("p2"));
+                Assert.AreEqual(0, ((JArray)((JObject)snapshot["playerTableau"])["p2"]).Count);
+
+                var topbarPointValue = FindTextMesh("p2 Point Value");
+                Assert.NotNull(topbarPointValue);
+                Assert.AreEqual("0", topbarPointValue.text);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                foreach (var obj in Object.FindObjectsByType<GameObject>())
+                {
+                    if (obj == null)
+                    {
+                        continue;
+                    }
+
+                    if (obj.name == "GemDuel Rendered State" || obj.name == "Status Topbar")
+                    {
+                        Object.DestroyImmediate(obj);
+                    }
+                }
+            }
+        }
+
         private static ReplayManifest LoadManifest()
         {
             var path = RepositoryPaths.ResolveFromRoot("fixtures", "replay-golden", "manifest.json");
@@ -212,6 +251,19 @@ namespace GemDuel.Tests.EditMode
             target.Column = column;
             target.GemId = gemId;
             return target;
+        }
+
+        private static TextMesh FindTextMesh(string name)
+        {
+            foreach (var mesh in Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None))
+            {
+                if (mesh != null && mesh.name == name)
+                {
+                    return mesh;
+                }
+            }
+
+            return null;
         }
     }
 }
