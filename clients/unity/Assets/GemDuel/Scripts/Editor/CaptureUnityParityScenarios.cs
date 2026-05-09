@@ -122,6 +122,7 @@ namespace GemDuel.Editor
             var root = new GameObject("GemDuel Unity Parity Harness");
             var slice = root.AddComponent<GemDuelVerticalSlice>();
             slice.SetAutomationViewport(viewport.Width, viewport.Height);
+            slice.SetPreviewBackdropCaptureForAutomation(true);
 
             if (scenario.StartsInShell)
             {

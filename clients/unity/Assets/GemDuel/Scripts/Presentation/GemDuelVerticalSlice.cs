@@ -33,8 +33,10 @@ namespace GemDuel.Presentation
         private bool settingsOpen;
         private string errorBanner = string.Empty;
         private PreviewContext previewContext;
+        private Texture2D previewBackgroundTexture;
         private int automationViewportWidth = 1920;
         private int automationViewportHeight = 1080;
+        private bool previewBackdropCaptureEnabled;
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private Font uiFont;
@@ -97,6 +99,7 @@ namespace GemDuel.Presentation
             }
 
             previewContext = null;
+            ClearPreviewBackgroundTexture();
             settingsOpen = false;
             errorBanner = string.Empty;
             RenderState();
@@ -115,6 +118,11 @@ namespace GemDuel.Presentation
             }
         }
 
+        public void SetPreviewBackdropCaptureForAutomation(bool enabled)
+        {
+            previewBackdropCaptureEnabled = enabled;
+        }
+
         public void LoadMainMenuForAutomation()
         {
             BuildCamera();
@@ -125,6 +133,7 @@ namespace GemDuel.Presentation
             nextFixtureEventIndex = 0;
             selectedGemCoords.Clear();
             previewContext = null;
+            ClearPreviewBackgroundTexture();
             settingsOpen = false;
             errorBanner = string.Empty;
             isMainMenu = true;
@@ -146,6 +155,7 @@ namespace GemDuel.Presentation
                     isMainMenu = true;
                     settingsOpen = false;
                     previewContext = null;
+                    ClearPreviewBackgroundTexture();
                     errorBanner = string.Empty;
                     RenderState();
                     SetStatus("Mode selected: " + (payload.Value<string>("mode") ?? "classic"));
@@ -269,6 +279,7 @@ namespace GemDuel.Presentation
             isMainMenu = false;
             settingsOpen = false;
             previewContext = null;
+            ClearPreviewBackgroundTexture();
             errorBanner = string.Empty;
             LoadFixture(fixtureFileName);
             RenderState();
@@ -443,16 +454,17 @@ namespace GemDuel.Presentation
 
             var eventType = replayEvent.Value<string>("type") ?? string.Empty;
             var completedPreview = previewContext;
+            PreviewContext nextPreviewContext = null;
             nextFixtureEventIndex += 1;
             selectedGemCoords.Clear();
             previewContext = null;
             if ((eventType == "buy_card" || eventType == "reserve_card") && completedPreview != null)
             {
-                previewContext = completedPreview;
+                nextPreviewContext = completedPreview;
             }
             else if (eventType == "select_royal")
             {
-                previewContext = new PreviewContext
+                nextPreviewContext = new PreviewContext
                 {
                     Source = "royal",
                     Level = -1,
@@ -464,6 +476,16 @@ namespace GemDuel.Presentation
             settingsOpen = false;
             errorBanner = string.Empty;
             isMainMenu = false;
+            if (nextPreviewContext != null)
+            {
+                RenderState();
+                CapturePreviewBackgroundTexture();
+                previewContext = nextPreviewContext;
+                RenderState();
+                return result;
+            }
+
+            ClearPreviewBackgroundTexture();
             RenderState();
             return result;
         }
@@ -540,6 +562,7 @@ namespace GemDuel.Presentation
                 return RejectSemanticAction(error);
             }
 
+            PreparePreviewBackgroundCapture();
             previewContext = new PreviewContext
             {
                 Source = "market",
@@ -572,6 +595,7 @@ namespace GemDuel.Presentation
                 return RejectSemanticAction(error);
             }
 
+            PreparePreviewBackgroundCapture();
             previewContext = new PreviewContext
             {
                 Source = "reserved",
@@ -896,7 +920,17 @@ namespace GemDuel.Presentation
         private void RenderPreviewOverlay()
         {
             var cardLabel = previewContext == null ? "Card Preview" : previewContext.InstanceId;
-            CreatePanelPx("Preview Overlay", 0f, 0f, 1920f, 1080f, -0.28f, new Color(0.02f, 0.03f, 0.06f, 0.54f), false, null, "card.preview.overlay");
+            if (previewBackgroundTexture != null)
+            {
+                CreateImagePanel(
+                    "Preview Blurred Background",
+                    new Vector3(0f, 0f, -0.27f),
+                    AutomationViewportWorldSize(),
+                    previewBackgroundTexture
+                );
+            }
+
+            CreatePanelPx("Preview Overlay", 0f, 0f, 1920f, 1080f, -0.28f, new Color(0.02f, 0.03f, 0.06f, 0.22f), false, null, "card.preview.overlay");
             CreateText("Preview Title", ViewportPoint(960f, 133f, -0.3f), "CARD PREVIEW", 0.18f, new Color(1f, 0.94f, 0.65f), TextAnchor.MiddleCenter);
             CreatePanelPx("Preview Close", 1848f, 24f, 48f, 48f, -0.3f, new Color(0.03f, 0.04f, 0.08f, 0.82f));
             CreateText("Preview Close Text", ViewportPoint(1872f, 48f, -0.32f), "×", 0.15f, Color.white, TextAnchor.MiddleCenter);
@@ -2158,6 +2192,102 @@ namespace GemDuel.Presentation
                     DestroyUnityObject(obj);
                 }
             }
+        }
+
+        private void PreparePreviewBackgroundCapture()
+        {
+            if (previewContext != null)
+            {
+                previewContext = null;
+                RenderState();
+            }
+
+            CapturePreviewBackgroundTexture();
+        }
+
+        private void CapturePreviewBackgroundTexture()
+        {
+            ClearPreviewBackgroundTexture();
+            if (!Application.isPlaying && !previewBackdropCaptureEnabled)
+            {
+                return;
+            }
+
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                return;
+            }
+
+            var width = Math.Max(1, automationViewportWidth);
+            var height = Math.Max(1, automationViewportHeight);
+            var renderTexture = new RenderTexture(width, height, 24);
+            var sourceTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
+            var previousTarget = camera.targetTexture;
+            var previousActive = RenderTexture.active;
+            var previousAspect = camera.aspect;
+
+            try
+            {
+                camera.aspect = (float)width / height;
+                camera.targetTexture = renderTexture;
+                RenderTexture.active = renderTexture;
+                camera.Render();
+                sourceTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                sourceTexture.Apply();
+
+                var downsample = 8;
+                var previewWidth = Math.Max(1, width / downsample);
+                var previewHeight = Math.Max(1, height / downsample);
+                var previewTexture = new Texture2D(previewWidth, previewHeight, TextureFormat.RGB24, false)
+                {
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp,
+                };
+
+                for (var y = 0; y < previewHeight; y += 1)
+                {
+                    for (var x = 0; x < previewWidth; x += 1)
+                    {
+                        var u = (x + 0.5f) / previewWidth;
+                        var v = (y + 0.5f) / previewHeight;
+                        var color = (
+                            sourceTexture.GetPixelBilinear(Mathf.Clamp01(u - 0.006f), Mathf.Clamp01(v - 0.006f))
+                            + sourceTexture.GetPixelBilinear(Mathf.Clamp01(u + 0.006f), Mathf.Clamp01(v - 0.006f))
+                            + sourceTexture.GetPixelBilinear(Mathf.Clamp01(u - 0.006f), Mathf.Clamp01(v + 0.006f))
+                            + sourceTexture.GetPixelBilinear(Mathf.Clamp01(u + 0.006f), Mathf.Clamp01(v + 0.006f))
+                        ) * 0.25f;
+                        previewTexture.SetPixel(x, y, color);
+                    }
+                }
+
+                previewTexture.Apply();
+                previewBackgroundTexture = previewTexture;
+            }
+            finally
+            {
+                camera.targetTexture = previousTarget;
+                camera.aspect = previousAspect;
+                RenderTexture.active = previousActive;
+                DestroyUnityObject(renderTexture);
+                DestroyUnityObject(sourceTexture);
+            }
+        }
+
+        private void ClearPreviewBackgroundTexture()
+        {
+            if (previewBackgroundTexture == null)
+            {
+                return;
+            }
+
+            DestroyUnityObject(previewBackgroundTexture);
+            previewBackgroundTexture = null;
+        }
+
+        private void OnDestroy()
+        {
+            ClearPreviewBackgroundTexture();
         }
 
         private static void BuildCamera()
