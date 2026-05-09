@@ -39,6 +39,7 @@ namespace GemDuel.Presentation
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private Font uiFont;
         private float renderOpacity = 1f;
+        private bool compensateTextWeight;
 
         public int GuidedEventsCompleted
         {
@@ -778,26 +779,30 @@ namespace GemDuel.Presentation
             CreatePanel("Shell Background", new Vector3(0f, 0f, 0.45f), AutomationViewportWorldSize(), new Color(0.0f, 0.015f, 0.055f), false, null, "app.shell");
             CreatePanel("Main Menu Surface", new Vector3(0f, 0f, 0.34f), AutomationViewportWorldSize(), new Color(0f, 0f, 0f, 0f), false, null, "main.menu");
 
-            CreateRoundedPanelPx("Visual Lab", 1775f, 17f, 128f, 32f, 8f, 1f, new Color(0.23f, 0.55f, 0.72f), new Color(0.01f, 0.04f, 0.09f));
-            CreateText("Visual Lab Title", ViewportPoint(1844f, 30f, -0.02f), "VISUAL LAB", 0.034f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Visual Lab Subtitle", ViewportPoint(1844f, 39f, -0.02f), "SURFACES / MOTION / READABILITY", 0.018f, new Color(0.66f, 0.73f, 0.82f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            WithTextWeightCompensation(() =>
+            {
+                CreateRoundedPanelPx("Visual Lab", 1775f, 17f, 128f, 32f, 8f, 1f, new Color(0.23f, 0.55f, 0.72f), new Color(0.01f, 0.04f, 0.09f));
+                CreateFlaskIconPx(1789f, 32f, new Color(0.65f, 0.95f, 0.99f));
+                CreateText("Visual Lab Title", ViewportPoint(1844f, 30f, -0.02f), "VISUAL LAB", 0.034f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Visual Lab Subtitle", ViewportPoint(1844f, 39f, -0.02f), "SURFACES / MOTION / READABILITY", 0.018f, new Color(0.66f, 0.73f, 0.82f), TextAnchor.MiddleCenter, FontStyle.Bold);
 
-            CreateText("Menu Title", ViewportPoint(960f, 203f, 0f), "宝石：对决", 0.55f, new Color(0.96f, 0.62f, 0.04f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Menu Subtitle", ViewportPoint(960f, 280f, 0f), "战术焕新对决", 0.16f, new Color(0.48f, 0.52f, 0.61f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Menu Title", ViewportPoint(960f, 190f, 0f), "宝石：对决", 0.55f, new Color(0.96f, 0.62f, 0.04f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Menu Subtitle", ViewportPoint(960f, 268f, 0f), "战术焕新对决", 0.16f, new Color(0.48f, 0.52f, 0.61f), TextAnchor.MiddleCenter, FontStyle.Normal);
 
-            CreateRoundedPanelPx("Locale Toggle", 859f, 309f, 203f, 57f, 28f, 2f, new Color(0.19f, 0.24f, 0.34f), new Color(0.04f, 0.07f, 0.12f));
-            CreateRoundedPanelPx("Locale Toggle Active", 979f, 316f, 76f, 43f, 22f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.05f, 0.76f, 0.59f), -0.01f);
-            CreateText("Locale English", ViewportPoint(922f, 339f, -0.02f), "English", 0.095f, new Color(0.78f, 0.83f, 0.91f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Locale Chinese", ViewportPoint(1018f, 339f, -0.02f), "中文", 0.105f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateRoundedPanelPx("Locale Toggle", 858f, 301f, 204f, 57f, 28f, 1f, new Color(0.2f, 0.25f, 0.35f), new Color(0.04f, 0.07f, 0.12f));
+                CreateRoundedPanelPx("Locale Toggle Active", 979f, 309f, 75f, 42f, 21f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.06f, 0.73f, 0.51f), -0.01f);
+                CreateText("Locale English", ViewportPoint(922f, 330f, -0.02f), "English", 0.095f, new Color(0.78f, 0.83f, 0.91f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Locale Chinese", ViewportPoint(1017f, 330f, -0.02f), "中文", 0.105f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
 
-            CreateRoundedPanelPx("Mode Local Card", 558f, 455f, 384f, 239f, 24f, 3f, new Color(0.73f, 0.77f, 0.85f), new Color(0.07f, 0.08f, 0.13f));
-            CreateRoundedPanelPx("Mode Rogue Card", 978f, 455f, 384f, 239f, 24f, 3f, new Color(0.73f, 0.77f, 0.85f), new Color(0.07f, 0.08f, 0.13f));
-            CreateText("Mode Local Text", ViewportPoint(750f, 552f, -0.02f), "经典模式", 0.19f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Mode Local Body", ViewportPoint(750f, 612f, -0.02f), "标准规则，纯粹策略。", 0.086f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Mode Roguelike Text", ViewportPoint(1142f, 552f, -0.02f), "肉鸽模式", 0.18f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateRoundedPanelPx("Mode Rogue Badge", 1233f, 535f, 32f, 32f, 16f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.61f, 0.28f, 0.94f), -0.01f);
-            CreateText("Mode Rogue Badge Text", ViewportPoint(1249f, 551f, -0.02f), "新", 0.065f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Mode Roguelike Body", ViewportPoint(1142f, 612f, -0.02f), "随机起始增益与不同流派展开。", 0.08f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateRoundedPanelPx("Mode Local Card", 558f, 455f, 384f, 239f, 24f, 3f, new Color(0.73f, 0.77f, 0.85f), new Color(0.07f, 0.08f, 0.13f));
+                CreateRoundedPanelPx("Mode Rogue Card", 978f, 455f, 384f, 239f, 24f, 3f, new Color(0.73f, 0.77f, 0.85f), new Color(0.07f, 0.08f, 0.13f));
+                CreateText("Mode Local Text", ViewportPoint(750f, 552f, -0.02f), "经典模式", 0.19f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Mode Local Body", ViewportPoint(750f, 612f, -0.02f), "标准规则，纯粹策略。", 0.086f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Mode Roguelike Text", ViewportPoint(1142f, 552f, -0.02f), "肉鸽模式", 0.18f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateRoundedPanelPx("Mode Rogue Badge", 1233f, 535f, 32f, 32f, 16f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.61f, 0.28f, 0.94f), -0.01f);
+                CreateText("Mode Rogue Badge Text", ViewportPoint(1249f, 551f, -0.02f), "新", 0.065f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Mode Roguelike Body", ViewportPoint(1142f, 612f, -0.02f), "随机起始增益与不同流派展开。", 0.08f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            });
 
             var localModeRect = new Rect(729.6f, 518.4f, 460.8f, 75.6f);
             CreatePanelPx("Mode Local Semantic Target", localModeRect.x, localModeRect.y, localModeRect.width, localModeRect.height, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
@@ -809,12 +814,15 @@ namespace GemDuel.Presentation
             CreatePanelPx("Menu Divider", 800f, 792f, 320f, 1f, new Color(0.08f, 0.11f, 0.18f));
             CreateRoundedPanelPx("Mode Online", 672f, 817f, 263f, 118f, 24f, 3f, new Color(0.06f, 0.21f, 0.43f), new Color(0.015f, 0.045f, 0.1f));
             CreateRoundedPanelPx("Mode LAN", 960f, 817f, 288f, 118f, 24f, 3f, new Color(0.02f, 0.35f, 0.29f), new Color(0.01f, 0.09f, 0.08f));
-            CreateText("Mode Online Icon", ViewportPoint(738f, 876f, -0.02f), "◎", 0.16f, new Color(0.34f, 0.61f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Mode Online Text", ViewportPoint(829f, 869f, -0.02f), "在线对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Mode Online Body", ViewportPoint(829f, 900f, -0.02f), "远程多人联机", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Mode Lan Icon", ViewportPoint(1026f, 876f, -0.02f), "◉", 0.15f, new Color(0.12f, 0.88f, 0.67f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Mode LAN Text", ViewportPoint(1149f, 869f, -0.02f), "局域网对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText("Mode LAN Body", ViewportPoint(1149f, 900f, -0.02f), "自动匹配附近玩家", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            WithTextWeightCompensation(() =>
+            {
+                CreateGlobeIconPx(738f, 876f, new Color(0.38f, 0.65f, 0.98f));
+                CreateText("Mode Online Text", ViewportPoint(829f, 864f, -0.02f), "在线对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Mode Online Body", ViewportPoint(829f, 896f, -0.02f), "远程多人联机", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateRadioIconPx(1026f, 876f, new Color(0.2f, 0.83f, 0.6f));
+                CreateText("Mode LAN Text", ViewportPoint(1149f, 864f, -0.02f), "局域网对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Mode LAN Body", ViewportPoint(1149f, 896f, -0.02f), "自动匹配附近玩家", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            });
             CreateText("Menu Footer", ViewportPoint(960f, 1059f, -0.02f), "选择一个模式开始", 0.024f, new Color(0.43f, 0.46f, 0.55f), TextAnchor.MiddleCenter);
         }
 
@@ -1897,6 +1905,36 @@ namespace GemDuel.Presentation
 
         private TextMesh CreateText(string name, Vector3 position, string text, float size, Color color, TextAnchor anchor, FontStyle style = FontStyle.Normal)
         {
+            var mesh = CreateTextMesh(name, position, text, size, color, anchor, style);
+            if (compensateTextWeight && style == FontStyle.Bold)
+            {
+                var offsets = size >= 0.12f
+                    ? new[]
+                    {
+                        TextPixelOffset(0.55f, 0f),
+                        TextPixelOffset(-0.35f, 0f),
+                        TextPixelOffset(0f, 0.4f),
+                    }
+                    : new[] { TextPixelOffset(0.45f, 0f) };
+                for (var index = 0; index < offsets.Length; index += 1)
+                {
+                    CreateTextMesh(
+                        name + " Weight " + index,
+                        position + offsets[index] + new Vector3(0f, 0f, -0.001f * (index + 1)),
+                        text,
+                        size,
+                        color,
+                        anchor,
+                        style
+                    );
+                }
+            }
+
+            return mesh;
+        }
+
+        private TextMesh CreateTextMesh(string name, Vector3 position, string text, float size, Color color, TextAnchor anchor, FontStyle style)
+        {
             var label = new GameObject(name);
             label.transform.SetParent(renderRoot == null ? transform : renderRoot.transform, false);
             label.transform.position = position;
@@ -1917,6 +1955,36 @@ namespace GemDuel.Presentation
             return mesh;
         }
 
+        private void CreateGlobeIconPx(float centerX, float centerY, Color color)
+        {
+            CreateRoundedPanelPx("Mode Online Icon Outer", centerX - 12f, centerY - 12f, 24f, 24f, 12f, 2f, color, new Color(0f, 0f, 0f, 0f), -0.02f);
+            CreateRoundedPanelPx("Mode Online Icon Meridian", centerX - 5f, centerY - 12f, 10f, 24f, 5f, 1.5f, color, new Color(0f, 0f, 0f, 0f), -0.021f);
+            CreatePanelPx("Mode Online Icon Equator", centerX - 11f, centerY - 1f, 22f, 2f, -0.022f, color);
+        }
+
+        private void CreateRadioIconPx(float centerX, float centerY, Color color)
+        {
+            CreateRoundedPanelPx("Mode LAN Icon Outer", centerX - 12f, centerY - 12f, 24f, 24f, 12f, 2f, color, new Color(0f, 0f, 0f, 0f), -0.02f);
+            CreateRoundedPanelPx("Mode LAN Icon Middle", centerX - 7f, centerY - 7f, 14f, 14f, 7f, 1.5f, color, new Color(0f, 0f, 0f, 0f), -0.021f);
+            CreateRoundedPanelPx("Mode LAN Icon Dot", centerX - 2.5f, centerY - 2.5f, 5f, 5f, 2.5f, 0f, new Color(0f, 0f, 0f, 0f), color, -0.022f);
+        }
+
+        private void CreateFlaskIconPx(float centerX, float centerY, Color color)
+        {
+            CreatePanelPx("Visual Lab Icon Neck", centerX - 2f, centerY - 8f, 4f, 8f, -0.02f, color);
+            CreatePanelPx("Visual Lab Icon Lip", centerX - 5f, centerY - 9f, 10f, 2f, -0.021f, color);
+            CreatePanelPx("Visual Lab Icon Base", centerX - 7f, centerY + 6f, 14f, 2f, -0.021f, color);
+            CreatePanelPx("Visual Lab Icon Left", centerX - 7f, centerY + 1f, 2f, 7f, -0.021f, color);
+            CreatePanelPx("Visual Lab Icon Right", centerX + 5f, centerY + 1f, 2f, 7f, -0.021f, color);
+            CreatePanelPx("Visual Lab Icon Liquid", centerX - 5f, centerY + 3f, 10f, 2f, -0.022f, color);
+        }
+
+        private Vector3 TextPixelOffset(float x, float y)
+        {
+            var size = AutomationViewportWorldSize();
+            return new Vector3((x / 1920f) * size.x, (-y / 1080f) * size.y, 0f);
+        }
+
         private void WithRenderOpacity(float opacity, Action render)
         {
             var previousOpacity = renderOpacity;
@@ -1935,6 +2003,20 @@ namespace GemDuel.Presentation
         {
             color.a *= renderOpacity;
             return color;
+        }
+
+        private void WithTextWeightCompensation(Action render)
+        {
+            var previous = compensateTextWeight;
+            compensateTextWeight = true;
+            try
+            {
+                render();
+            }
+            finally
+            {
+                compensateTextWeight = previous;
+            }
         }
 
         private Font ResolveUiFont()
