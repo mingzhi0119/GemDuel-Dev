@@ -14,7 +14,7 @@ export const SEAL_EXCLUSION_OWNER_ROLES = Object.freeze([
 ]);
 
 export const SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY = {
-    baselineCount: 97,
+    baselineCount: 100,
     maxReviewCadenceDays: 30,
     shellAdrPath: SHELL_ADR_PATH,
 };
@@ -139,6 +139,18 @@ export const SEAL_COVERAGE_EXCLUSIONS = [
     shellExclusion(
         'src/app/presentation/PresentationLayer.tsx',
         'Presentation layer composes tested event controllers and visual animation leaves without owning domain decisions.'
+    ),
+    shellExclusion(
+        'src/app/presentation/ThreePresentationLayer.tsx',
+        'Three presentation layer is visual WebGL composition over tested DOM anchor collectors and smoke-tested fallback behavior.'
+    ),
+    shellExclusion(
+        'src/app/presentation/ThreeCardSlabLayer.tsx',
+        'Three card slab layer is visual WebGL composition over tested card anchor collectors and runtime fallback status.'
+    ),
+    leafExclusion(
+        'src/app/presentation/threeCardSlabObjects.ts',
+        'Three card slab mesh factory creates visual-only geometry and materials from tested card slab anchor snapshots.'
     ),
     leafExclusion(
         'src/app/presentation/TurnHandoffBanner.tsx',

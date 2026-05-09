@@ -15,9 +15,9 @@ Establish a repeatable comparison harness that drives the Electron renderer and 
 - Unity fixture: `fixtures/replay-golden/local-pvp-royal-extra-turn-game-over.replay.json`
 - Viewports: `1920x1080`, `1366x768`
 - Baseline output root: `artifacts/electron-unity-parity/2026-05-09-baseline/`
-- Latest output root: `artifacts/electron-unity-parity/2026-05-09T18-current-final-incomplete/`
-- Generated full matrix: `artifacts/electron-unity-parity/2026-05-09T18-current-final-incomplete/parity-matrix.md`
-- Generated summary: `artifacts/electron-unity-parity/2026-05-09T18-current-final-incomplete/runner-summary.json`
+- Latest output root: `artifacts/electron-unity-parity/2026-05-09T21-visual-idle-wait/`
+- Generated full matrix: `artifacts/electron-unity-parity/2026-05-09T21-visual-idle-wait/parity-matrix.md`
+- Generated summary: `artifacts/electron-unity-parity/2026-05-09T21-visual-idle-wait/runner-summary.json`
 
 The Electron hook is development-only and query-gated by `parityHarness=1`. It exposes semantic actions through `window.__GEMDUEL_PARITY__`, including:
 
@@ -42,7 +42,7 @@ Unity currently uses the committed replay fixture plus the Unity editor parity c
 
 Latest run status: `0 Equivalent`, `22 Failing`, `0 Blocker` across `11` scenarios x `2` viewports.
 
-Artifact root: `artifacts/electron-unity-parity/2026-05-09T18-current-final-incomplete/`
+Artifact root: `artifacts/electron-unity-parity/2026-05-09T21-visual-idle-wait/`
 
 Progress achieved in this pass:
 
@@ -53,14 +53,17 @@ Progress achieved in this pass:
 - The `buy-card` revision `8`, `end-turn` revision `11`, and `reserve-card` revision `44` Unity states are now constrained by TypeScript-authored replay checkpoints exported from `packages/shared` fixtures.
 - Unity EditMode tests passed with `9/9` tests, including parity-critical checkpoint assertions and semantic local PvP interaction coverage.
 - Semantic bounding boxes are now clean across all `22` viewport rows. Every latest `*-visual-diff.json` reports `boundingBoxes.ok: true`, with `0` missing Electron keys, `0` missing Unity keys, and `0` bad comparisons over required common keys.
+- The Electron invalid-action capture now waits for both the current rendered route and `error.banner` before dumping visible state. This removed the previous `1366x768` invalid-action bbox false negative.
+- Electron screenshot capture now waits through an explicit parity visual idle interval before dumping the final visible state and screenshot. This prevents in-flight board gem animation from being mistaken for Unity divergence.
 - Unity now loads the Electron public card, gem, and royal-luxury surface PNG assets through `Resources/GemDuelPublicAssets` with uncompressed, no-mipmap import settings for parity captures.
 - Unity draft/start, board, player-zone, and preview surfaces have moved from fixture-only placeholder presentation toward Electron-aligned visible UI, but they are still not visually equivalent.
 
 Remaining replacement gaps:
 
 - Unity migration is not complete.
-- All `22` rows still fail screenshot visual parity. Pixel mismatch remains far outside the `0.75%` threshold, ranging from `8.62%` to `89.04%` in the latest run.
+- All `22` rows still fail screenshot visual parity. Pixel mismatch remains far outside the `0.75%` threshold, ranging from `4.72%` to `90.98%` in the latest run.
 - Unity now exposes the required semantic surfaces for this matrix, but those surfaces are still visually primitive compared with Electron. Board, market, player-zone, royal featured, preview, settings, draft/setup, menu, and error surfaces need real visual parity work until screenshot diffs pass.
+- The largest remaining visual mismatches are renderer-composition differences, not shared-state differences: Electron combines browser/CSS/Three card-slab rendering, backdrop blur, glass panels, and exact typography, while Unity currently composes flat quads and TextMesh objects with only partial shell/player-zone parity.
 - The final completion target remains `22 Equivalent / 0 Failing / 0 Blocker`; this run is not an Electron replacement candidate.
 
 ## Visual Standard
@@ -76,13 +79,13 @@ Remaining replacement gaps:
 
 Latest run status: `0 Equivalent`, `22 Failing`, `0 Blocker` across `11` scenarios x `2` viewports.
 
-The full viewport matrix is generated at `artifacts/electron-unity-parity/2026-05-09T18-current-final-incomplete/parity-matrix.md`.
+The full viewport matrix is generated at `artifacts/electron-unity-parity/2026-05-09T21-visual-idle-wait/parity-matrix.md`.
 
 Current aggregate evidence:
 
 - Shared state: `22/22` Equivalent.
 - Semantic bounding boxes: `22/22` passing, `0` missing Electron keys, `0` missing Unity keys, `0` bad comparisons.
-- Screenshot visual diff: `0/22` passing; mismatch range is `8.62%` to `89.04%`.
+- Screenshot visual diff: `0/22` passing; mismatch range is `4.72%` to `90.98%`.
 - Runner blocker status: `unity.ok: true`, `unity.blocker: null`.
 
 ## Failure Classification

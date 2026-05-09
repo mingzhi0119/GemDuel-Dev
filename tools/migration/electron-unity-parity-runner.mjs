@@ -405,6 +405,8 @@ const buildElectronScript = (scenario, replayBase64) => {
   for (const step of steps) {
     results.push(await api.dispatch(step.action, step.payload));
   }
+  await new Promise((resolve) => setTimeout(resolve, 1600));
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   return JSON.stringify({ results, state: api.dumpState() });
 })()
 `;

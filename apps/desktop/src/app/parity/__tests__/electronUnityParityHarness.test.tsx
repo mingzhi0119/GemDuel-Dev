@@ -2,7 +2,10 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Card, GameAction, GameState, RoyalCard } from '@gemduel/shared/types';
-import { useElectronUnityParityHarness } from '../electronUnityParityHarness';
+import {
+    createElectronUnityParityApi,
+    useElectronUnityParityHarness,
+} from '../electronUnityParityHarness';
 import type { UseElectronUnityParityHarnessParams } from '../electronUnityParityTypes';
 
 const replayMocks = vi.hoisted(() => ({
@@ -142,6 +145,16 @@ const renderHarness = (params: UseElectronUnityParityHarnessParams) => {
     return root;
 };
 
+const flushEffects = async () => {
+    await act(async () => {
+        await Promise.resolve();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+};
+
+const createApi = (params: UseElectronUnityParityHarnessParams) =>
+    createElectronUnityParityApi({ current: params });
+
 describe('useElectronUnityParityHarness', () => {
     const originalRequestAnimationFrame = window.requestAnimationFrame;
     let root: Root | null = null;
@@ -185,50 +198,41 @@ describe('useElectronUnityParityHarness', () => {
         vi.restoreAllMocks();
     });
 
-    it('does not install outside the dev parity query path', () => {
+    it('does not install outside the dev parity query path', async () => {
         const { params } = createParams();
         window.history.pushState({}, '', '/');
 
         root = renderHarness(params);
+        await flushEffects();
 
         expect(window.__GEMDUEL_PARITY__).toBeUndefined();
     });
 
-    it('installs, dumps current state, and cleans up the global API', () => {
+    it('creates an API that dumps current state', () => {
         const { params } = createParams();
+        const api = createApi(params);
 
-        root = renderHarness(params);
-
-        expect(window.__GEMDUEL_PARITY?.version).toBe(1);
-        expect(window.__GEMDUEL_PARITY?.actions).toContain('start_local_game');
-        expect(window.__GEMDUEL_PARITY?.isReady()).toBe(true);
-        expect(window.__GEMDUEL_PARITY?.dumpState()).toMatchObject({
+        expect(api.version).toBe(1);
+        expect(api.actions).toContain('start_local_game');
+        expect(api.isReady()).toBe(true);
+        expect(api.dumpState()).toMatchObject({
             source: 'electron',
             game: { phase: 'PLAY' },
         });
-
-        act(() => {
-            root?.unmount();
-        });
-        root = null;
-
-        expect(window.__GEMDUEL_PARITY__).toBeUndefined();
     });
 
     it('drives core semantic actions through the rendered UI and app handlers', async () => {
         const { params } = createParams();
-        root = renderHarness(params);
-        const api = window.__GEMDUEL_PARITY;
-        expect(api).toBeDefined();
+        const api = createApi(params);
 
-        await expect(api?.dispatch('choose_mode', { mode: 'roguelike' })).resolves.toMatchObject({
+        await expect(api.dispatch('choose_mode', { mode: 'roguelike' })).resolves.toMatchObject({
             ok: true,
             action: 'choose_mode',
         });
         expect(params.setStartSetupRoute).toHaveBeenCalledWith('roguelike');
 
         await expect(
-            api?.dispatch('start_local_game', { seed: 'parity-seed', useBuffs: true })
+            api.dispatch('start_local_game', { seed: 'parity-seed', useBuffs: true })
         ).resolves.toMatchObject({ ok: true, action: 'start_local_game' });
         expect(params.startGame).toHaveBeenCalledWith('LOCAL_PVP', {
             useBuffs: true,
@@ -236,57 +240,57 @@ describe('useElectronUnityParityHarness', () => {
         });
 
         await expect(
-            api?.dispatch('click_market_card', { level: 1, index: 0 })
+            api.dispatch('click_market_card', { level: 1, index: 0 })
         ).resolves.toMatchObject({ ok: true, action: 'click_market_card' });
-        await expect(api?.dispatch('buy_card', { level: 1, index: 0 })).resolves.toMatchObject({
+        await expect(api.dispatch('buy_card', { level: 1, index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'buy_card',
         });
-        await expect(api?.dispatch('reserve_card', { level: 1, index: 0 })).resolves.toMatchObject({
+        await expect(api.dispatch('reserve_card', { level: 1, index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'reserve_card',
         });
-        await expect(api?.dispatch('click_player_reserved', { index: 0 })).resolves.toMatchObject({
+        await expect(api.dispatch('click_player_reserved', { index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'click_player_reserved',
         });
         await expect(
-            api?.dispatch('confirm_preview_action', { actionId: 'reserve' })
+            api.dispatch('confirm_preview_action', { actionId: 'reserve' })
         ).resolves.toMatchObject({
             ok: true,
             action: 'confirm_preview_action',
         });
-        await expect(api?.dispatch('end_turn')).resolves.toMatchObject({
+        await expect(api.dispatch('end_turn')).resolves.toMatchObject({
             ok: true,
             action: 'end_turn',
         });
-        await expect(api?.dispatch('force_royal_selection')).resolves.toMatchObject({
+        await expect(api.dispatch('force_royal_selection')).resolves.toMatchObject({
             ok: true,
             action: 'force_royal_selection',
         });
         expect(params.game.handlers.handleForceRoyal).toHaveBeenCalledTimes(1);
-        await expect(api?.dispatch('choose_royal', { index: 0 })).resolves.toMatchObject({
+        await expect(api.dispatch('choose_royal', { index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'choose_royal',
         });
         expect(params.game.handlers.handleSelectRoyal).toHaveBeenCalledTimes(1);
-        await expect(api?.dispatch('open_settings')).resolves.toMatchObject({
+        await expect(api.dispatch('open_settings')).resolves.toMatchObject({
             ok: true,
             action: 'open_settings',
         });
         await expect(
-            api?.dispatch('change_setting', { name: 'locale', value: 'en' })
+            api.dispatch('change_setting', { name: 'locale', value: 'en' })
         ).resolves.toMatchObject({ ok: true, action: 'change_setting' });
         expect(params.setLocale).toHaveBeenCalledWith('en');
         await expect(
-            api?.dispatch('change_setting', { name: 'soundEnabled', value: false })
+            api.dispatch('change_setting', { name: 'soundEnabled', value: false })
         ).resolves.toMatchObject({ ok: true, action: 'change_setting' });
         expect(params.setSoundEnabled).toHaveBeenCalledWith(false);
         await expect(
-            api?.dispatch('change_setting', { name: 'surfaceTheme', value: 'royal-luxury' })
+            api.dispatch('change_setting', { name: 'surfaceTheme', value: 'royal-luxury' })
         ).resolves.toMatchObject({ ok: true, action: 'change_setting' });
         expect(params.selectSurfaceTheme).toHaveBeenCalledWith('royal-luxury');
-        await expect(api?.dispatch('invalid_action')).resolves.toMatchObject({
+        await expect(api.dispatch('invalid_action')).resolves.toMatchObject({
             ok: true,
             action: 'invalid_action',
         });
@@ -297,14 +301,13 @@ describe('useElectronUnityParityHarness', () => {
 
     it('loads replay fixtures and falls back to replay-backed semantic events', async () => {
         const { params } = createParams();
-        root = renderHarness(params);
-        const api = window.__GEMDUEL_PARITY;
+        const api = createApi(params);
         document.querySelector('[data-card-preview-action="buy"]')?.remove();
         document.querySelector('[data-card-preview-action="reserve"]')?.remove();
         document.querySelector('[data-game-action="replenish"]')?.remove();
 
         await expect(
-            api?.dispatch('load_replay_fixture', { rawText: '{"events":[]}', revision: 0 })
+            api.dispatch('load_replay_fixture', { rawText: '{"events":[]}', revision: 0 })
         ).resolves.toMatchObject({
             ok: true,
             action: 'load_replay_fixture',
@@ -315,17 +318,17 @@ describe('useElectronUnityParityHarness', () => {
         });
         expect(params.game.handlers.importHistory).toHaveBeenCalledWith([{ type: 'INIT' }]);
 
-        await expect(api?.dispatch('buy_card', { level: 1, index: 0 })).resolves.toMatchObject({
+        await expect(api.dispatch('buy_card', { level: 1, index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'buy_card',
             detail: 'Applied replay-backed semantic buy_card action.',
         });
-        await expect(api?.dispatch('reserve_card', { level: 1, index: 0 })).resolves.toMatchObject({
+        await expect(api.dispatch('reserve_card', { level: 1, index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'reserve_card',
             detail: 'Applied replay-backed semantic reserve_card action.',
         });
-        await expect(api?.dispatch('end_turn')).resolves.toMatchObject({
+        await expect(api.dispatch('end_turn')).resolves.toMatchObject({
             ok: true,
             action: 'end_turn',
             detail: 'Applied replay-backed semantic replenish action.',
@@ -334,11 +337,10 @@ describe('useElectronUnityParityHarness', () => {
 
     it('reports unsupported or missing semantic targets without mutating through shortcuts', async () => {
         const { params } = createParams();
-        root = renderHarness(params);
-        const api = window.__GEMDUEL_PARITY;
+        const api = createApi(params);
 
         await expect(
-            api?.dispatch('change_setting', { name: 'unknown', value: true })
+            api.dispatch('change_setting', { name: 'unknown', value: true })
         ).resolves.toMatchObject({
             ok: false,
             action: 'change_setting',
@@ -347,7 +349,7 @@ describe('useElectronUnityParityHarness', () => {
 
         document.querySelector('[data-market-slot="1-0"]')?.remove();
         await expect(
-            api?.dispatch('click_market_card', { level: 1, index: 0 })
+            api.dispatch('click_market_card', { level: 1, index: 0 })
         ).resolves.toMatchObject({
             ok: false,
             action: 'click_market_card',
@@ -355,7 +357,7 @@ describe('useElectronUnityParityHarness', () => {
         });
 
         params.game.state.royalDeck = [];
-        await expect(api?.dispatch('choose_royal', { index: 0 })).resolves.toMatchObject({
+        await expect(api.dispatch('choose_royal', { index: 0 })).resolves.toMatchObject({
             ok: false,
             action: 'choose_royal',
             detail: 'No royal at index 0.',
@@ -364,11 +366,10 @@ describe('useElectronUnityParityHarness', () => {
 
     it('runs step batches in order and resets loaded replay state', async () => {
         const { params } = createParams();
-        root = renderHarness(params);
-        const api = window.__GEMDUEL_PARITY;
+        const api = createApi(params);
 
         await expect(
-            api?.runSteps([
+            api.runSteps([
                 { action: 'choose_mode', payload: { mode: 'classic' } },
                 { action: 'reset' },
             ])

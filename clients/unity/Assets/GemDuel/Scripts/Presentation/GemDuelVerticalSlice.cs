@@ -16,6 +16,8 @@ namespace GemDuel.Presentation
     {
         private const string DefaultFixtureFileName = "local-pvp-royal-extra-turn-game-over.replay.json";
         private static readonly string[] GemOrder = { "blue", "white", "green", "black", "red", "pearl", "gold" };
+        private static readonly string[] PlayerZoneResourceOrder = { "red", "green", "blue", "white", "black", "pearl", "gold" };
+        private static readonly string[] PlayerZoneTableauOrder = { "red", "green", "blue", "white", "black", "pure-royal" };
 
         private readonly LocalDevPlatformServices platformServices = new LocalDevPlatformServices();
         private readonly GameReducer reducer = new GameReducer();
@@ -745,7 +747,7 @@ namespace GemDuel.Presentation
                 "dark",
                 "shell-background.png"
             );
-            CreatePanelPx("Shell Bottom Fill", 0f, 820f, 1920f, 260f, new Color(0.02f, 0.04f, 0.08f));
+            CreatePanelPx("Shell Bottom Fill", 0f, 820f, 1920f, 260f, 0.42f, new Color(0.02f, 0.04f, 0.08f));
 
             RenderTopbar();
             RenderMarket();
@@ -885,7 +887,7 @@ namespace GemDuel.Presentation
         private void RenderPreviewOverlay()
         {
             var cardLabel = previewContext == null ? "Card Preview" : previewContext.InstanceId;
-            CreatePanelPx("Preview Overlay", 0f, 0f, 1920f, 1080f, new Color(0.02f, 0.03f, 0.06f, 0.54f), false, null, "card.preview.overlay");
+            CreatePanelPx("Preview Overlay", 0f, 0f, 1920f, 1080f, -0.28f, new Color(0.02f, 0.03f, 0.06f, 0.54f), false, null, "card.preview.overlay");
             CreateText("Preview Title", ViewportPoint(960f, 133f, -0.3f), "CARD PREVIEW", 0.18f, new Color(1f, 0.94f, 0.65f), TextAnchor.MiddleCenter);
             CreatePanelPx("Preview Close", 1848f, 24f, 48f, 48f, -0.3f, new Color(0.03f, 0.04f, 0.08f, 0.82f));
             CreateText("Preview Close Text", ViewportPoint(1872f, 48f, -0.32f), "×", 0.15f, Color.white, TextAnchor.MiddleCenter);
@@ -912,7 +914,7 @@ namespace GemDuel.Presentation
         private void RenderSettingsOverlay()
         {
             var rect = new Rect(1722f, 60f, 186f, 228.83f);
-            CreatePanelPx("Settings Panel", rect.x, rect.y, rect.width, rect.height, new Color(0.1f, 0.12f, 0.16f), false, null, "settings.panel");
+            CreatePanelPx("Settings Panel", rect.x, rect.y, rect.width, rect.height, -0.3f, new Color(0.1f, 0.12f, 0.16f), false, null, "settings.panel");
             CreateText("Settings Title", ViewportPoint(1815f, 92f, -0.32f), "设置", 0.16f, Color.white, TextAnchor.MiddleCenter);
             CreateText("Settings Body", ViewportPoint(1815f, 172f, -0.32f), "English   中文\nTheme: dark\nSound: on", 0.09f, new Color(0.86f, 0.89f, 0.95f), TextAnchor.MiddleCenter);
         }
@@ -1030,17 +1032,7 @@ namespace GemDuel.Presentation
                 CreatePanelPx(player + " Resources Target", resourcesRect.x, resourcesRect.y, resourcesRect.width, resourcesRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player.resources");
                 CreatePanelPx(player + " Score Target", scoreRect.x, scoreRect.y, scoreRect.width, scoreRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player.score");
             }
-            CreateText(player + " Zone Label", center + new Vector3(-3.7f, -0.2f, 0f), player.ToUpperInvariant(), 0.22f, isActive ? new Color(1f, 0.86f, 0.35f) : Color.white, TextAnchor.MiddleLeft);
-            CreateText(player + " Zone Score", center + new Vector3(-3.7f, -0.52f, 0f), GetScore(player).ToString(), 0.13f, new Color(0.86f, 0.89f, 0.95f), TextAnchor.MiddleLeft);
-
-            var inventory = (JObject)((JObject)currentState.Snapshot["inventories"])[player];
-            for (var i = 0; i < GemOrder.Length; i += 1)
-            {
-                var gemId = GemOrder[i];
-                var count = inventory.Value<int>(gemId);
-                var pos = center + new Vector3(0.72f + i * 0.38f, -0.25f, 0f);
-                CreateInventoryGem(player, gemId, count, pos);
-            }
+            RenderPlayerZoneContent(player, zoneRect, isActive);
 
             if (isActive)
             {
@@ -1060,6 +1052,181 @@ namespace GemDuel.Presentation
                         "player.reserved." + index
                     );
                 }
+            }
+        }
+
+        private void RenderPlayerZoneContent(string player, Rect zoneRect, bool isActive)
+        {
+            var inner = new Rect(zoneRect.x + 16f, zoneRect.y + 16f, zoneRect.width - 32f, zoneRect.height - 32f);
+            const float gap = 16f;
+            const float identityWidth = 128f;
+            var flexibleWidth = Math.Max(1f, inner.width - identityWidth - gap * 2f);
+            var reservedWidth = flexibleWidth * 0.22f;
+            var resourcesWidth = flexibleWidth - reservedWidth;
+
+            Rect reservedRect;
+            Rect resourcesRect;
+            Rect identityRect;
+            if (player == "p1")
+            {
+                reservedRect = new Rect(inner.x, inner.y, reservedWidth, inner.height);
+                resourcesRect = new Rect(reservedRect.xMax + gap, inner.y, resourcesWidth, inner.height);
+                identityRect = new Rect(resourcesRect.xMax + gap, inner.y, identityWidth, inner.height);
+            }
+            else
+            {
+                identityRect = new Rect(inner.x, inner.y, identityWidth, inner.height);
+                resourcesRect = new Rect(identityRect.xMax + gap, inner.y, resourcesWidth, inner.height);
+                reservedRect = new Rect(resourcesRect.xMax + gap, inner.y, reservedWidth, inner.height);
+            }
+
+            RenderPlayerReservedColumn(player, reservedRect);
+            RenderPlayerResourcesColumn(player, resourcesRect);
+            RenderPlayerIdentityColumn(player, identityRect, isActive);
+        }
+
+        private void RenderPlayerIdentityColumn(string player, Rect rect, bool isActive)
+        {
+            var dividerX = player == "p1" ? rect.x : rect.xMax - 1f;
+            CreatePanelPx(player + " Identity Divider", dividerX, rect.y + 6f, 1f, rect.height - 12f, -0.07f, new Color(0.32f, 0.39f, 0.5f, 0.55f));
+
+            var accent = player == "p1" ? new Color(0.06f, 0.78f, 0.58f) : new Color(0.18f, 0.45f, 0.95f);
+            var muted = new Color(0.63f, 0.69f, 0.78f);
+            CreateRoundedPanelPx(player + " Avatar", rect.x + rect.width * 0.5f - 26f, rect.y + 38f, 52f, 52f, 26f, 1f, new Color(0.85f, 0.72f, 0.22f, 0.2f), isActive ? accent : new Color(0.18f, 0.22f, 0.3f), -0.08f);
+            CreateText(player + " Avatar Icon", ViewportPoint(rect.x + rect.width * 0.5f, rect.y + 64f, -0.1f), player == "p1" ? "♜" : "⚔", 0.13f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            CreateText(player + " Zone Label", ViewportPoint(rect.x + rect.width * 0.5f, rect.y + 122f, -0.1f), player.ToUpperInvariant(), 0.18f, isActive ? accent : muted, TextAnchor.MiddleCenter, FontStyle.Bold);
+            CreateText(player + " Zone Score", ViewportPoint(rect.x + rect.width * 0.5f, rect.y + 151f, -0.1f), GetScore(player).ToString(), 0.075f, new Color(0.86f, 0.89f, 0.95f), TextAnchor.MiddleCenter);
+
+            var privileges = GetIntAt("privileges", player);
+            var extraPrivileges = GetIntAt("extraPrivileges", player);
+            var totalPrivileges = Math.Max(0, privileges + extraPrivileges);
+            if (totalPrivileges == 0)
+            {
+                CreateText(player + " Empty Privilege", ViewportPoint(rect.x + rect.width * 0.5f, rect.y + 188f, -0.1f), "◷", 0.11f, new Color(0.43f, 0.5f, 0.6f), TextAnchor.MiddleCenter);
+                return;
+            }
+
+            for (var index = 0; index < Math.Min(totalPrivileges, 4); index += 1)
+            {
+                var column = index % 2;
+                var row = index / 2;
+                var x = rect.x + rect.width * 0.5f - 18f + column * 36f;
+                var y = rect.y + 176f + row * 34f;
+                CreateText(player + " Privilege " + index, ViewportPoint(x, y, -0.1f), "◉", 0.11f, index < privileges ? new Color(1f, 0.82f, 0.22f) : new Color(1f, 0.63f, 0.1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            }
+        }
+
+        private void RenderPlayerResourcesColumn(string player, Rect rect)
+        {
+            var inventory = (JObject)((JObject)currentState.Snapshot["inventories"])[player];
+            const float gemSize = 32f;
+            const float gemGap = 14f;
+            var totalGemWidth = PlayerZoneResourceOrder.Length * gemSize + (PlayerZoneResourceOrder.Length - 1) * gemGap;
+            var gemX = rect.x + (rect.width - totalGemWidth) * 0.5f;
+            var gemY = rect.y + 20f;
+            for (var index = 0; index < PlayerZoneResourceOrder.Length; index += 1)
+            {
+                var gemId = PlayerZoneResourceOrder[index];
+                var count = inventory.Value<int>(gemId);
+                var gemRect = new Rect(gemX + index * (gemSize + gemGap), gemY, gemSize, gemSize);
+                CreateGemArtwork(player + " Resource Gem " + gemId, gemId, gemRect, -0.09f);
+                CreateText(player + " Resource Count " + gemId, ViewportPoint(gemRect.center.x, gemRect.yMax + 14f, -0.1f), count.ToString(), 0.045f, count > 0 ? Color.white : new Color(0.55f, 0.6f, 0.68f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            }
+
+            const int stackCount = 6;
+            const float stackGap = 6f;
+            var stackScale = Mathf.Clamp((rect.width - stackGap * (stackCount - 1)) / (120f * stackCount), 0.46f, 0.86f);
+            var stackWidth = 120f * stackScale;
+            var stackHeight = 160f * stackScale;
+            var stackX = rect.x + (rect.width - (stackWidth * stackCount + stackGap * (stackCount - 1))) * 0.5f;
+            var stackY = rect.y + 82f;
+            for (var index = 0; index < PlayerZoneTableauOrder.Length; index += 1)
+            {
+                var color = PlayerZoneTableauOrder[index];
+                var stackRect = new Rect(stackX + index * (stackWidth + stackGap), stackY, stackWidth, stackHeight);
+                var cardIds = GetPlayerTableauCardIds(player, color);
+                if (cardIds.Count == 0)
+                {
+                    RenderEmptyTableauSlot(player, color, stackRect);
+                }
+                else
+                {
+                    RenderTableauStack(player, color, stackRect, cardIds, stackScale);
+                }
+            }
+        }
+
+        private void RenderPlayerReservedColumn(string player, Rect rect)
+        {
+            var reserved = (JArray)((JObject)currentState.Snapshot["playerReserved"])[player];
+            if (reserved.Count == 0)
+            {
+                return;
+            }
+
+            var slotCount = Math.Min(reserved.Count, 3);
+            var scale = Mathf.Clamp(rect.width / (150f + Math.Max(slotCount - 1, 0) * 34f), 0.42f, 0.88f);
+            var cardWidth = 150f * scale;
+            var cardHeight = 200f * scale;
+            var offsetX = 34f * scale;
+            var offsetY = 44f * scale;
+            var totalWidth = cardWidth + Math.Max(slotCount - 1, 0) * offsetX;
+            var totalHeight = cardHeight + Math.Max(slotCount - 1, 0) * offsetY;
+            var startX = rect.x + (rect.width - totalWidth) * 0.5f;
+            var startY = rect.y + (rect.height - totalHeight) * 0.5f;
+
+            for (var index = 0; index < slotCount; index += 1)
+            {
+                var item = reserved[index];
+                var instanceId = item.Type == JTokenType.String ? item.Value<string>() : ((JObject)item).Value<string>("instanceId");
+                var cardRect = new Rect(startX + index * offsetX, startY + index * offsetY, cardWidth, cardHeight);
+                CreateCardArtwork(player + " Reserved Card " + index, instanceId, cardRect, -0.09f);
+            }
+        }
+
+        private void RenderEmptyTableauSlot(string player, string color, Rect rect)
+        {
+            CreateRoundedPanelPx(player + " Empty Tableau " + color, rect.x, rect.y, rect.width, rect.height, 4f, 1f, new Color(0.75f, 0.64f, 0.35f, 0.28f), new Color(0.02f, 0.04f, 0.07f, 0.24f), -0.08f);
+            if (color != "pure-royal")
+            {
+                var dotSize = Math.Max(8f, rect.width * 0.16f);
+                CreateRoundedPanelPx(player + " Empty Tableau Dot " + color, rect.center.x - dotSize * 0.5f, rect.center.y - dotSize * 0.5f, dotSize, dotSize, dotSize * 0.5f, 0f, new Color(0f, 0f, 0f, 0f), ColorForGem(color), -0.1f);
+            }
+        }
+
+        private void RenderTableauStack(string player, string color, Rect rect, IReadOnlyList<string> cardIds, float stackScale)
+        {
+            for (var index = 0; index < cardIds.Count; index += 1)
+            {
+                var isTop = index == cardIds.Count - 1;
+                var cardRect = new Rect(
+                    rect.x + index * (2f * stackScale),
+                    rect.y - index * (3f * stackScale),
+                    rect.width,
+                    rect.height
+                );
+                if (isTop)
+                {
+                    CreateCardArtwork(player + " Tableau " + color + " " + index, cardIds[index], cardRect, -0.1f);
+                }
+                else
+                {
+                    CreateRoundedPanelPx(player + " Tableau Back " + color + " " + index, cardRect.x, cardRect.y, cardRect.width, cardRect.height, 4f, 1f, new Color(0.65f, 0.58f, 0.4f, 0.32f), new Color(0.04f, 0.06f, 0.1f, 0.82f), -0.09f);
+                }
+            }
+
+            var stats = GetPlayerTableauStats(player, color);
+            if (stats.points > 0)
+            {
+                CreateRoundedPanelPx(player + " Tableau Points " + color, rect.center.x - 15f, rect.center.y - 18f, 30f, 36f, 5f, 1f, new Color(1f, 0.76f, 0.18f), new Color(0.12f, 0.08f, 0.04f, 0.92f), -0.12f);
+                CreateText(player + " Tableau Points Text " + color, ViewportPoint(rect.center.x, rect.center.y, -0.13f), stats.points.ToString(), 0.06f, new Color(1f, 0.9f, 0.32f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            }
+
+            if (stats.bonus > 0 && color != "pure-royal")
+            {
+                var badgeSize = 24f;
+                CreateRoundedPanelPx(player + " Tableau Bonus " + color, rect.xMax - badgeSize + 4f, rect.yMax - badgeSize + 4f, badgeSize, badgeSize, badgeSize * 0.5f, 1f, new Color(0.08f, 0.1f, 0.14f), ColorForGem(color), -0.12f);
+                CreateText(player + " Tableau Bonus Text " + color, ViewportPoint(rect.xMax + 4f - badgeSize * 0.5f, rect.yMax + 4f - badgeSize * 0.5f, -0.13f), stats.bonus.ToString(), 0.045f, TextColorForGem(color), TextAnchor.MiddleCenter, FontStyle.Bold);
             }
         }
 
@@ -2225,6 +2392,71 @@ namespace GemDuel.Presentation
             }
 
             return "tableau " + string.Join(" ", GemOrder.Select(color => ShortGem(color) + ":" + counts[color]));
+        }
+
+        private List<string> GetPlayerTableauCardIds(string player, string color)
+        {
+            var ids = new List<string>();
+            var tableau = (JArray)((JObject)currentState.Snapshot["playerTableau"])[player];
+            foreach (var entry in tableau)
+            {
+                var instanceId = entry.Value<string>("instanceId");
+                var card = ResolveCard(instanceId);
+                var bonusColor = card?.BonusColor ?? GuessBonusColorFromInstanceId(instanceId);
+                var isSpecial = bonusColor == "null" || bonusColor == "pearl";
+                if ((color == "pure-royal" && isSpecial) || bonusColor == color)
+                {
+                    ids.Add(instanceId);
+                }
+            }
+
+            if (color == "pure-royal")
+            {
+                var royals = (JArray)((JObject)currentState.Snapshot["playerRoyals"])[player];
+                foreach (var royalToken in royals)
+                {
+                    ids.Add(royalToken.Value<string>());
+                }
+            }
+
+            return ids;
+        }
+
+        private (int points, int bonus) GetPlayerTableauStats(string player, string color)
+        {
+            var points = 0;
+            var bonus = 0;
+            var tableau = (JArray)((JObject)currentState.Snapshot["playerTableau"])[player];
+            foreach (var entry in tableau)
+            {
+                var instanceId = entry.Value<string>("instanceId");
+                var card = ResolveCard(instanceId);
+                if (card == null)
+                {
+                    continue;
+                }
+
+                var isSpecial = card.BonusColor == "null" || card.BonusColor == "pearl";
+                if ((color == "pure-royal" && isSpecial) || card.BonusColor == color)
+                {
+                    points += card.Points;
+                    bonus += Math.Max(0, card.BonusCount);
+                }
+            }
+
+            if (color == "pure-royal")
+            {
+                var royals = (JArray)((JObject)currentState.Snapshot["playerRoyals"])[player];
+                foreach (var royalToken in royals)
+                {
+                    if (catalog.Royals.TryGetValue(royalToken.Value<string>(), out var royal))
+                    {
+                        points += royal.Points;
+                    }
+                }
+            }
+
+            return (points, bonus);
         }
 
         private int GetScore(string player)

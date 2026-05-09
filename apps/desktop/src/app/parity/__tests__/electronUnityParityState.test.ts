@@ -205,7 +205,7 @@ describe('electronUnityParityState', () => {
             pendingReserve: { level: 1, idx: 0, isDeck: false, card: '112-re' },
             pendingBuy: { source: 'market', card: '122-gr' },
         });
-        expect(semanticKeys).toEqual(
+        expect([...semanticKeys]).toEqual(
             expect.arrayContaining([
                 'app.shell',
                 'board.root',
