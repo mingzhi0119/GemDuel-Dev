@@ -10,7 +10,9 @@ param(
 
     [double] $ThresholdPercent = 0.75,
 
-    [int] $PixelThreshold = 16
+    [int] $PixelThreshold = 16,
+
+    [int] $PositionTolerancePx = 2
 )
 
 $ErrorActionPreference = 'Stop'
@@ -37,6 +39,8 @@ public sealed class PngDiffResult
     public double mismatchPercent;
     public bool sizeMismatch;
     public string diffPath;
+    public int pixelThreshold;
+    public int positionTolerancePx;
 }
 
 public static class PngDiff
@@ -46,7 +50,8 @@ public static class PngDiff
         string candidatePath,
         string diffPath,
         double thresholdPercent,
-        int pixelThreshold
+        int pixelThreshold,
+        int positionTolerancePx
     )
     {
         using (var baselineSource = new Bitmap(baselinePath))
@@ -87,11 +92,52 @@ public static class PngDiff
                                 var c = y * candidateData.Stride + x * 4;
                                 var d = y * diffData.Stride + x * 4;
 
-                                var delta =
-                                    Math.Abs(baselineBytes[b] - candidateBytes[c])
-                                    + Math.Abs(baselineBytes[b + 1] - candidateBytes[c + 1])
-                                    + Math.Abs(baselineBytes[b + 2] - candidateBytes[c + 2])
-                                    + Math.Abs(baselineBytes[b + 3] - candidateBytes[c + 3]);
+                                var delta = GetDelta(baselineBytes, b, candidateBytes, c);
+                                if (delta > pixelThreshold && positionTolerancePx > 0)
+                                {
+                                    var bestDelta = delta;
+                                    var radius = Math.Max(0, positionTolerancePx);
+                                    for (var dy = -radius; dy <= radius; dy += 1)
+                                    {
+                                        var yy = y + dy;
+                                        if (yy < 0 || yy >= height)
+                                        {
+                                            continue;
+                                        }
+
+                                        for (var dx = -radius; dx <= radius; dx += 1)
+                                        {
+                                            if (dx == 0 && dy == 0)
+                                            {
+                                                continue;
+                                            }
+
+                                            var xx = x + dx;
+                                            if (xx < 0 || xx >= width)
+                                            {
+                                                continue;
+                                            }
+
+                                            var candidateOffset = yy * candidateData.Stride + xx * 4;
+                                            var nearbyDelta = GetDelta(baselineBytes, b, candidateBytes, candidateOffset);
+                                            if (nearbyDelta < bestDelta)
+                                            {
+                                                bestDelta = nearbyDelta;
+                                                if (bestDelta <= pixelThreshold)
+                                                {
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if (bestDelta <= pixelThreshold)
+                                        {
+                                            break;
+                                        }
+                                    }
+
+                                    delta = bestDelta;
+                                }
 
                                 if (delta > pixelThreshold)
                                 {
@@ -142,8 +188,18 @@ public static class PngDiff
                 mismatchPercent = Math.Round(mismatchPercent, 6),
                 sizeMismatch = baseline.Width != candidate.Width || baseline.Height != candidate.Height,
                 diffPath = diffPath,
+                pixelThreshold = pixelThreshold,
+                positionTolerancePx = Math.Max(0, positionTolerancePx),
             };
         }
+    }
+
+    private static int GetDelta(byte[] baselineBytes, int baselineOffset, byte[] candidateBytes, int candidateOffset)
+    {
+        return Math.Abs(baselineBytes[baselineOffset] - candidateBytes[candidateOffset])
+            + Math.Abs(baselineBytes[baselineOffset + 1] - candidateBytes[candidateOffset + 1])
+            + Math.Abs(baselineBytes[baselineOffset + 2] - candidateBytes[candidateOffset + 2])
+            + Math.Abs(baselineBytes[baselineOffset + 3] - candidateBytes[candidateOffset + 3]);
     }
 
     private static Bitmap ToArgb(Bitmap source)
@@ -164,7 +220,8 @@ $result = [PngDiff]::Compare(
     (Resolve-Path -LiteralPath $CandidatePath).Path,
     $DiffPath,
     $ThresholdPercent,
-    $PixelThreshold
+    $PixelThreshold,
+    $PositionTolerancePx
 )
 
 $result | ConvertTo-Json -Depth 4
