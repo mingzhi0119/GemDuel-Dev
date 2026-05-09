@@ -40,6 +40,7 @@ namespace GemDuel.Presentation
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> grayscaleTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> displayTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private Font uiFont;
         private float renderOpacity = 1f;
         private bool compensateTextWeight;
@@ -1645,7 +1646,7 @@ namespace GemDuel.Presentation
                 name,
                 ViewportRectCenter(rect, z),
                 ViewportSize(rect.width, rect.height),
-                texture,
+                GetDisplayTexture(texture, rect.width, rect.height),
                 clickable,
                 configureTarget,
                 semanticKey
@@ -1737,7 +1738,7 @@ namespace GemDuel.Presentation
                 name,
                 ViewportRectCenter(rect, z),
                 ViewportSize(rect.width, rect.height),
-                grayscale ? GetGrayscaleTexture(texture) : texture,
+                GetDisplayTexture(grayscale ? GetGrayscaleTexture(texture) : texture, rect.width, rect.height),
                 clickable,
                 configureTarget,
                 semanticKey
@@ -1774,6 +1775,90 @@ namespace GemDuel.Presentation
                 texture.SetPixels32(pixels);
                 texture.Apply(false, true);
                 grayscaleTextureCache[key] = texture;
+                return texture;
+            }
+            catch
+            {
+                return source;
+            }
+        }
+
+        private Texture2D GetDisplayTexture(Texture2D source, float displayWidth, float displayHeight)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var targetWidth = Math.Max(1, Mathf.RoundToInt(displayWidth));
+            var targetHeight = Math.Max(1, Mathf.RoundToInt(displayHeight));
+            if (source.width <= targetWidth * 1.08f && source.height <= targetHeight * 1.08f)
+            {
+                return source;
+            }
+
+            var key = source.name + "|display|" + targetWidth.ToString() + "x" + targetHeight.ToString();
+            if (displayTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            try
+            {
+                var sourcePixels = source.GetPixels32();
+                var targetPixels = new Color32[targetWidth * targetHeight];
+                var scaleX = source.width / (float)targetWidth;
+                var scaleY = source.height / (float)targetHeight;
+
+                for (var y = 0; y < targetHeight; y += 1)
+                {
+                    var y0 = Mathf.Clamp(Mathf.FloorToInt(y * scaleY), 0, source.height - 1);
+                    var y1 = Mathf.Clamp(Mathf.CeilToInt((y + 1) * scaleY), y0 + 1, source.height);
+                    for (var x = 0; x < targetWidth; x += 1)
+                    {
+                        var x0 = Mathf.Clamp(Mathf.FloorToInt(x * scaleX), 0, source.width - 1);
+                        var x1 = Mathf.Clamp(Mathf.CeilToInt((x + 1) * scaleX), x0 + 1, source.width);
+                        long r = 0;
+                        long g = 0;
+                        long b = 0;
+                        long a = 0;
+                        var count = 0;
+                        for (var sy = y0; sy < y1; sy += 1)
+                        {
+                            var rowOffset = sy * source.width;
+                            for (var sx = x0; sx < x1; sx += 1)
+                            {
+                                var pixel = sourcePixels[rowOffset + sx];
+                                r += pixel.r;
+                                g += pixel.g;
+                                b += pixel.b;
+                                a += pixel.a;
+                                count += 1;
+                            }
+                        }
+
+                        if (count <= 0)
+                        {
+                            targetPixels[y * targetWidth + x] = sourcePixels[y0 * source.width + x0];
+                            continue;
+                        }
+
+                        targetPixels[y * targetWidth + x] = new Color32(
+                            (byte)(r / count),
+                            (byte)(g / count),
+                            (byte)(b / count),
+                            (byte)(a / count)
+                        );
+                    }
+                }
+
+                var texture = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, false);
+                texture.name = key;
+                texture.wrapMode = TextureWrapMode.Clamp;
+                texture.filterMode = FilterMode.Bilinear;
+                texture.SetPixels32(targetPixels);
+                texture.Apply(false, true);
+                displayTextureCache[key] = texture;
                 return texture;
             }
             catch
