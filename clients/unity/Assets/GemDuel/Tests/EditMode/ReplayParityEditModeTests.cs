@@ -1,8 +1,12 @@
 using System.IO;
 using GemDuel.Catalog;
+using GemDuel.Core;
+using GemDuel.Presentation;
 using GemDuel.Replay;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace GemDuel.Tests.EditMode
 {
@@ -52,11 +56,115 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void FullCoverageReplayCarriesParityCriticalSharedCheckpoints()
+        {
+            var replay = LoadReplay("local-pvp-royal-extra-turn-game-over.replay.json");
+
+            AssertParityCheckpoint(replay, 8, "BONUS_ACTION", "p2");
+            AssertParityCheckpoint(replay, 11, "IDLE", "p2");
+            AssertParityCheckpoint(replay, 44, "DISCARD_EXCESS_GEMS", "p2");
+        }
+
+        [Test]
         public void UnknownReplayEventFailsExplicitly()
         {
             var result = new ReplayParityRunner().RunUnknownEventProbe();
 
             Assert.IsTrue(result.Ok);
+        }
+
+        [Test]
+        public void GuidedLocalPvpPlaybackCompletesFullFixture()
+        {
+            var root = new GameObject("GemDuel Guided Playback Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+
+                Assert.AreEqual(0, slice.GuidedEventsCompleted);
+                Assert.AreEqual(93, slice.GuidedEventsTotal);
+                Assert.IsTrue(slice.PlayGuidedFixtureToEndForAutomation(out var error), error);
+                Assert.AreEqual(93, slice.GuidedEventsCompleted);
+                Assert.AreEqual("p1", slice.Winner);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                foreach (var obj in Object.FindObjectsByType<GameObject>())
+                {
+                    if (obj == null)
+                    {
+                        continue;
+                    }
+
+                    if (obj.name == "GemDuel Rendered State" || obj.name == "Status Topbar")
+                    {
+                        Object.DestroyImmediate(obj);
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void MinimalTakeGemsMutationUpdatesBoardAndInventoryBetweenCheckpoints()
+        {
+            var replay = LoadReplay("local-pvp-royal-extra-turn-game-over.replay.json");
+            var state = ReplayBootstrapper.Bootstrap(replay);
+            var reducer = new GameReducer();
+
+            Assert.IsTrue(reducer.ApplyReplayEvent(state, replay.Events[0], replay.Checkpoints).Ok);
+            Assert.IsTrue(reducer.ApplyReplayEvent(state, replay.Events[1], replay.Checkpoints).Ok);
+
+            var result = reducer.ApplyReplayEvent(state, replay.Events[2], replay.Checkpoints);
+
+            Assert.IsTrue(result.Ok, result.Error);
+            var board = (JArray)state.Snapshot["board"];
+            var p1Inventory = (JObject)((JObject)state.Snapshot["inventories"])["p1"];
+            Assert.AreEqual("empty", board[0][0].Value<string>());
+            Assert.AreEqual("empty", board[0][1].Value<string>());
+            Assert.AreEqual("empty", board[0][2].Value<string>());
+            Assert.AreEqual(2, p1Inventory.Value<int>("white"));
+            Assert.AreEqual(1, p1Inventory.Value<int>("blue"));
+        }
+
+        [Test]
+        public void VisibleGemSelectionAcceptsLegalNonFixtureLineAndUpdatesState()
+        {
+            var root = new GameObject("GemDuel Free Gem Selection Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+                slice.ApplyNextFixtureEvent();
+                slice.ApplyNextFixtureEvent();
+
+                slice.HandleVisibleTarget(CreateGemTarget(root, 3, 0, "green"));
+                slice.HandleVisibleTarget(CreateGemTarget(root, 3, 1, "red"));
+                slice.HandleVisibleTarget(CreateGemTarget(root, 3, 2, "red"));
+
+                Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 0));
+                Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 1));
+                Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 2));
+                Assert.AreEqual(1, slice.GetInventoryCountForAutomation("p1", "green"));
+                Assert.AreEqual(2, slice.GetInventoryCountForAutomation("p1", "red"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                foreach (var obj in Object.FindObjectsByType<GameObject>())
+                {
+                    if (obj == null)
+                    {
+                        continue;
+                    }
+
+                    if (obj.name == "GemDuel Rendered State" || obj.name == "Status Topbar")
+                    {
+                        Object.DestroyImmediate(obj);
+                    }
+                }
+            }
         }
 
         private static ReplayManifest LoadManifest()
@@ -69,6 +177,41 @@ namespace GemDuel.Tests.EditMode
         {
             var path = RepositoryPaths.ResolveFromRoot("fixtures", "replay-golden", fileName);
             return JsonConvert.DeserializeObject<ReplayVNext>(File.ReadAllText(path));
+        }
+
+        private static void AssertParityCheckpoint(
+            ReplayVNext replay,
+            int revision,
+            string expectedPhase,
+            string expectedTurn
+        )
+        {
+            var checkpoint = replay.Checkpoints.Find(candidate => candidate.Revision == revision);
+            Assert.NotNull(checkpoint, "Missing parity-critical checkpoint " + revision);
+            Assert.AreEqual(expectedPhase, checkpoint.State.Value<string>("phase"));
+            Assert.AreEqual(expectedTurn, checkpoint.State.Value<string>("turn"));
+
+            var state = ReplayBootstrapper.Bootstrap(replay);
+            var reducer = new GameReducer();
+            for (var index = 0; index < revision; index += 1)
+            {
+                var result = reducer.ApplyReplayEvent(state, replay.Events[index], replay.Checkpoints);
+                Assert.IsTrue(result.Ok, result.Error);
+            }
+
+            Assert.IsTrue(JToken.DeepEquals(checkpoint.State, state.Snapshot));
+        }
+
+        private static GemDuelViewTarget CreateGemTarget(GameObject root, int row, int column, string gemId)
+        {
+            var targetObject = new GameObject("Gem Target " + row + "," + column);
+            targetObject.transform.SetParent(root.transform, false);
+            var target = targetObject.AddComponent<GemDuelViewTarget>();
+            target.Kind = "Gem";
+            target.Row = row;
+            target.Column = column;
+            target.GemId = gemId;
+            return target;
         }
     }
 }

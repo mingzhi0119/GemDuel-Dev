@@ -12,8 +12,10 @@ import { INITIAL_STATE_SKELETON } from '../../packages/shared/src/logic/initialS
 import { buildSelectBuffAction } from '../../packages/shared/src/logic/interactionCommands';
 import {
     buildReplayInitSnapshot,
+    buildIdentityRuntimeToInstanceMap,
     createReplayCheckpoint,
     createReplayRecorderInternalState,
+    loadReplayStateAtRevision,
     recordReplayAction,
     saveReplayVNext,
     seedReplayRecorderState,
@@ -39,6 +41,8 @@ const REQUIRED_COVERAGE = [
     'buff',
     'game-over',
 ] as const;
+
+const FULL_COVERAGE_PARITY_CHECKPOINT_REVISIONS = [8, 11, 44] as const;
 
 type CoverageTag = (typeof REQUIRED_COVERAGE)[number];
 
@@ -229,7 +233,10 @@ const buildFullCoverageReplay = (): ReplayVNext =>
                 result.status === 'completed' &&
                 hasFullCoverage(result.replay.events, result.replay)
             ) {
-                return result.replay;
+                return addParityCheckpoints(
+                    result.replay,
+                    FULL_COVERAGE_PARITY_CHECKPOINT_REVISIONS
+                );
             }
         }
 
@@ -246,12 +253,38 @@ const buildFullCoverageReplay = (): ReplayVNext =>
                 result.status === 'completed' &&
                 hasFullCoverage(result.replay.events, result.replay)
             ) {
-                return result.replay;
+                return addParityCheckpoints(
+                    result.replay,
+                    FULL_COVERAGE_PARITY_CHECKPOINT_REVISIONS
+                );
             }
         }
 
         throw new Error('Could not generate a deterministic full-coverage replay fixture.');
     });
+
+const addParityCheckpoints = (replay: ReplayVNext, revisions: readonly number[]): ReplayVNext => {
+    const runtimeToInstance = buildIdentityRuntimeToInstanceMap(replay.init.cardInstances);
+    const checkpoints = new Map(
+        (replay.checkpoints ?? []).map((checkpoint) => [checkpoint.revision, checkpoint])
+    );
+
+    for (const revision of revisions) {
+        if (revision < 0 || revision > replay.replayRevision) {
+            throw new Error(`Parity checkpoint revision ${revision} is outside replay bounds.`);
+        }
+
+        const state = loadReplayStateAtRevision(replay, revision);
+        checkpoints.set(revision, createReplayCheckpoint(revision, state, runtimeToInstance));
+    }
+
+    return {
+        ...replay,
+        checkpoints: [...checkpoints.values()].sort(
+            (left, right) => left.revision - right.revision
+        ),
+    };
+};
 
 const buildFixtureManifest = (fixtures: GoldenFixture[]) => ({
     schemaVersion: 1,

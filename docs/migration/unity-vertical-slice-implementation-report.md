@@ -159,6 +159,61 @@ C:\Program Files\Unity\Hub\Editor\6000.4.6f1\Editor\Unity.exe -batchmode -projec
 - Build output was written to the ignored mirror path
   `C:\Users\sange\.codex\unity-workspaces\GemDuel-Dev\artifacts\unity\build\windows\GemDuelUnitySlice.exe`.
 
+Hygiene follow-up validation from the source checkout:
+
+- `pnpm --dir tools/scripts exec vite-node --script ../../tools/migration/verify-replay-parity.ts`
+    - `ok: true`
+    - `fixtureCount: 3`
+    - `coverageGaps: []`
+    - hashes: `e1b5e1bf`, `e0f3316a`, `d161e8c`
+- `pnpm --dir tools/scripts exec vite-node --script ../../tools/migration/export-unity-catalogs.ts --check`
+    - Unity catalog check passed.
+- `pnpm exec prettier --check --ignore-unknown docs/migration clients/unity .prettierignore`
+    - All matched files use Prettier code style.
+- `pnpm secrets:check`
+    - Secret and env drift gate passed.
+- `git diff --cached --check`
+    - passed after Unity YAML whitespace was scoped through `clients/unity/.gitattributes`.
+- Unity EditMode tests through local Unity `6000.4.6f1`: passed with result XML
+  `artifacts/unity/editmode-results.xml`, `result="Passed"`, `total="5"`, `passed="5"`,
+  `failed="0"`.
+- Unity Windows IL2CPP build through local Unity `6000.4.6f1`: passed with log
+  `artifacts/unity/build-il2cpp.log`, `Build Finished, Result: Success`, complete build size
+  `494.1 mb`, and output
+  `artifacts/unity/build/windows/GemDuelUnitySlice.exe`.
+
+Scoped Electron-parity follow-up from the source checkout:
+
+- Added visible guided local PvP presentation for the full-coverage fixture:
+    - topbar with P1/P2 points, crowns, active player, and turn counts;
+    - three-row market with deck counts and market card labels;
+    - 5x5 board with highlighted fixture gem targets plus free legal take-gems line selection;
+    - royal area with selectable/claimed state;
+    - P1/P2 player rail with inventories, tableau counts, reserved counts, royals, score, crowns,
+      and privilege count.
+- Added click target routing for visible board, market, royal, buff, replenish, bonus, steal, and
+  discard actions without adding Unity Physics dependencies.
+- Added `GemDuel.Editor.CaptureUnityPresentation` Editor CLI screenshot capture:
+    - `artifacts/unity/screenshots/unity-opening.png`
+    - `artifacts/unity/screenshots/unity-completed-fixture.png`
+    - `artifacts/unity/screenshots/unity-free-gem-selection.png`
+- Unity EditMode tests through local Unity `6000.4.6f1`: passed with result XML
+  `artifacts/unity/editmode-results.xml`, `result="Passed"`, `total="8"`, `passed="8"`,
+  `failed="0"`.
+- New EditMode coverage:
+  `GuidedLocalPvpPlaybackCompletesFullFixture` plays 93/93 guided local PvP fixture events and
+  confirms winner `p1`.
+- Additional regression coverage:
+    - `MinimalTakeGemsMutationUpdatesBoardAndInventoryBetweenCheckpoints` confirms a non-checkpoint
+      take-gems event empties board cells and adds inventory.
+    - `VisibleGemSelectionAcceptsLegalNonFixtureLineAndUpdatesState` confirms a legal non-highlighted
+      board line is accepted and updates Unity state.
+- Screenshot smoke evidence:
+    - opening screenshot: 2560x1440, sampled 48 unique colors;
+    - completed fixture screenshot: 2560x1440, sampled 45 unique colors;
+    - free gem selection screenshot: 2560x1440, sampled 37 unique colors.
+- See `docs/migration/unity-electron-90-parity-report.md` for the scoped 9/10 parity matrix.
+
 Environment notes:
 
 - Direct validation against `/home/sange/projects/GemDuel-Dev/clients/unity` fails before project
@@ -170,9 +225,13 @@ Environment notes:
 ## Safety Checks
 
 - `packages/shared` gameplay logic was not changed.
-- No Unity cache/output directories were produced inside the source checkout: no
-  `clients/unity/Library`, `Temp`, `Obj`, `Logs`, `UserSettings`, or `Builds` directories were
-  present after validation.
+- Unity identity files are now part of the source boundary: `clients/unity/Assets/**/*.meta`,
+  `clients/unity/ProjectSettings/*.asset`, and `clients/unity/ProjectSettings/ProjectVersion.txt`
+  should be tracked so clean checkouts preserve asset GUIDs, scene references, assembly definitions,
+  and Windows build settings.
+- Unity cache/output directories remain outside source control:
+  `clients/unity/Library`, `Temp`, `Obj`, `Logs`, `UserSettings`, `Builds`, and local
+  `artifacts/unity/` outputs.
 - Unity cache/build outputs were produced only in the temporary NTFS mirror and ignored
   `artifacts/unity/` tree; no output is intended for commit.
 - No Steamworks/EOS SDKs, app IDs, product IDs, secrets, tokens, credentials, upload logs, or
@@ -180,10 +239,15 @@ Environment notes:
 
 ## Next Steps
 
-1. For day-to-day Unity Editor work, use an NTFS checkout or mirror rather than the WSL ext4
-   `/home/...` path.
-2. Open `clients/unity` from that NTFS location and let Unity generate local cache only.
-3. Keep rerunning the EditMode and IL2CPP batch build commands above after C# or fixture changes.
-4. If C# parity tests fail, fix Unity source against the committed replay fixtures without changing
-   `packages/shared` gameplay logic.
-5. Only after green Unity parity, decide whether to expand beyond the sidecar slice.
+1. Keep Unity repo hygiene green before adding features: `.meta` and required `ProjectSettings`
+   files are source; `Library`, `Temp`, `Logs`, `UserSettings`, build products, and
+   `artifacts/unity` are local output.
+2. Close any interactive Unity Editor instance before batch gates, then rerun Unity EditMode tests.
+   Use the IL2CPP Windows build gate when validating release-like shape.
+3. Replace guided fixture progression with arbitrary local PvP reducer behavior that does not depend
+   on checkpoints for normal player turns.
+4. Expand the replay parity corpus before broad UI, card-art, or animation work. Add fixtures for
+   new rule coverage first, reduce checkpoint dependence where practical, and keep TypeScript as the
+   oracle.
+5. Keep Steam/Epic SDK work behind the LocalDev platform-service stub until replay parity,
+   non-fixture local PvP, and Windows build repeatability are all green.

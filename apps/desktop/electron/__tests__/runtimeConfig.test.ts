@@ -185,6 +185,7 @@ describe('electron runtime config', () => {
             'GITHUB_SHA',
             'GITHUB_STEP_SUMMARY',
             'GITHUB_WORKFLOW',
+            'UNITY_EXE',
             'WIN_CSC_KEY_PASSWORD',
             'WIN_CSC_LINK',
         ]);

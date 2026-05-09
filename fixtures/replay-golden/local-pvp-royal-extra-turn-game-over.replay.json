@@ -1028,6 +1028,180 @@
             }
         },
         {
+            "revision": 8,
+            "state": {
+                "board": [
+                    ["empty", "empty", "empty", "empty", "green"],
+                    ["empty", "empty", "gold", "empty", "black"],
+                    ["empty", "empty", "empty", "empty", "gold"],
+                    ["empty", "empty", "empty", "blue", "black"],
+                    ["gold", "red", "empty", "black", "pearl"]
+                ],
+                "bag": ["red", "red", "green", "green"],
+                "turn": "p2",
+                "phase": "BONUS_ACTION",
+                "mode": "LOCAL_PVP",
+                "winner": null,
+                "market": {
+                    "1": ["c:155-bk#0", "c:112-re#0", "c:144-wh#0", "c:115-re#0", "c:142-wh#0"],
+                    "2": ["c:215-re#0", "c:244-wh#0", "c:255-bk#0", "c:231-bl#0"],
+                    "3": ["c:343-wh#0", "c:353-bk#0", "c:323-gr#0"]
+                },
+                "decks": {
+                    "1": [
+                        "c:145-wh#0",
+                        "c:131-bl#0",
+                        "c:121-gr#0",
+                        "c:172-jo#0",
+                        "c:111-re#0",
+                        "c:135-bl#0",
+                        "c:154-bk#0",
+                        "c:152-bk#0",
+                        "c:143-wh#0",
+                        "c:134-bl#0",
+                        "c:141-wh#0",
+                        "c:114-re#0",
+                        "c:125-gr#0",
+                        "c:113-re#0",
+                        "c:173-jo#0",
+                        "c:171-jo#0",
+                        "c:124-gr#0",
+                        "c:151-bk#0",
+                        "c:132-bl#0",
+                        "c:174-jo#0",
+                        "c:123-gr#0",
+                        "c:133-bl#0",
+                        "c:122-gr#0",
+                        "c:181-po#0"
+                    ],
+                    "2": [
+                        "c:281-po#0",
+                        "c:234-bl#0",
+                        "c:233-bl#0",
+                        "c:225-gr#0",
+                        "c:251-bk#0",
+                        "c:272-jo#0",
+                        "c:223-gr#0",
+                        "c:245-wh#0",
+                        "c:214-re#0",
+                        "c:232-bl#0",
+                        "c:241-wh#0",
+                        "c:221-gr#0",
+                        "c:271-jo#0",
+                        "c:211-re#0",
+                        "c:254-bk#0",
+                        "c:212-re#0",
+                        "c:213-re#0",
+                        "c:252-bk#0",
+                        "c:224-gr#0",
+                        "c:253-bk#0",
+                        "c:243-wh#0",
+                        "c:222-gr#0",
+                        "c:235-bl#0",
+                        "c:273-jo#0",
+                        "c:242-wh#0"
+                    ],
+                    "3": [
+                        "c:342-wh#0",
+                        "c:313-re#0",
+                        "c:381-po#0",
+                        "c:352-bk#0",
+                        "c:321-gr#0",
+                        "c:371-jo#0",
+                        "c:312-re#0",
+                        "c:351-bk#0",
+                        "c:333-bl#0",
+                        "c:332-bl#0",
+                        "c:322-gr#0",
+                        "c:373-jo#0",
+                        "c:374-jo#0",
+                        "c:372-jo#0",
+                        "c:331-bl#0",
+                        "c:311-re#0",
+                        "c:341-wh#0"
+                    ]
+                },
+                "playerTableau": {
+                    "p1": [],
+                    "p2": [{ "kind": "instance", "instanceId": "c:153-bk#0" }]
+                },
+                "playerReserved": { "p1": [], "p2": [] },
+                "playerRoyals": { "p1": [], "p2": [] },
+                "inventories": {
+                    "p1": {
+                        "blue": 2,
+                        "white": 3,
+                        "green": 1,
+                        "black": 1,
+                        "red": 1,
+                        "gold": 0,
+                        "pearl": 1
+                    },
+                    "p2": {
+                        "blue": 1,
+                        "white": 1,
+                        "green": 0,
+                        "black": 0,
+                        "red": 0,
+                        "gold": 0,
+                        "pearl": 0
+                    }
+                },
+                "privileges": { "p1": 0, "p2": 1 },
+                "royalDeck": ["r91-ro", "r92-ro", "r93-ro", "r94-ro"],
+                "royalMilestones": {
+                    "p1": { "3": false, "6": false },
+                    "p2": { "3": false, "6": false }
+                },
+                "extraPoints": { "p1": 0, "p2": 0 },
+                "extraCrowns": { "p1": 0, "p2": 0 },
+                "extraAllocation": {
+                    "p1": {
+                        "blue": 0,
+                        "white": 0,
+                        "green": 0,
+                        "black": 0,
+                        "red": 0,
+                        "gold": 0,
+                        "pearl": 0
+                    },
+                    "p2": {
+                        "blue": 0,
+                        "white": 0,
+                        "green": 0,
+                        "black": 0,
+                        "red": 0,
+                        "gold": 0,
+                        "pearl": 0
+                    }
+                },
+                "extraPrivileges": { "p1": 0, "p2": 0 },
+                "playerBuffs": {
+                    "p1": { "buff": { "id": "royal_envoy", "level": 3 } },
+                    "p2": { "buff": { "id": "echo_reservoir", "level": 3 } }
+                },
+                "draftPool": ["collector", "royal_envoy", "minimalist"],
+                "p2DraftPool": ["royal_envoy", "echo_reservoir", "collector", "minimalist"],
+                "p1SelectedBuffId": "royal_envoy",
+                "draftOrder": [],
+                "buffLevel": 3,
+                "p2DraftLevel": 3,
+                "privilegeGemCount": 0,
+                "pendingReserve": null,
+                "pendingBuy": null,
+                "bonusGemTarget": "black",
+                "nextPlayerAfterRoyal": "p1",
+                "pendingExtraTurn": false,
+                "playerTurnCounts": { "p1": 3, "p2": 2 },
+                "abilityResolution": {
+                    "nextPlayer": "p1",
+                    "pending": [],
+                    "resolved": ["bonus_gem"],
+                    "bonusGemColor": "black"
+                }
+            }
+        },
+        {
             "revision": 9,
             "state": {
                 "board": [
@@ -1193,6 +1367,174 @@
                 "nextPlayerAfterRoyal": null,
                 "pendingExtraTurn": false,
                 "playerTurnCounts": { "p1": 3, "p2": 3 },
+                "abilityResolution": null
+            }
+        },
+        {
+            "revision": 11,
+            "state": {
+                "board": [
+                    ["empty", "empty", "empty", "empty", "green"],
+                    ["empty", "red", "gold", "red", "empty"],
+                    ["empty", "green", "white", "white", "gold"],
+                    ["empty", "green", "white", "blue", "black"],
+                    ["gold", "red", "empty", "black", "pearl"]
+                ],
+                "bag": [],
+                "turn": "p2",
+                "phase": "IDLE",
+                "mode": "LOCAL_PVP",
+                "winner": null,
+                "market": {
+                    "1": ["c:181-po#0", "c:112-re#0", "c:144-wh#0", "c:115-re#0", "c:142-wh#0"],
+                    "2": ["c:215-re#0", "c:244-wh#0", "c:255-bk#0", "c:231-bl#0"],
+                    "3": ["c:343-wh#0", "c:353-bk#0", "c:323-gr#0"]
+                },
+                "decks": {
+                    "1": [
+                        "c:145-wh#0",
+                        "c:131-bl#0",
+                        "c:121-gr#0",
+                        "c:172-jo#0",
+                        "c:111-re#0",
+                        "c:135-bl#0",
+                        "c:154-bk#0",
+                        "c:152-bk#0",
+                        "c:143-wh#0",
+                        "c:134-bl#0",
+                        "c:141-wh#0",
+                        "c:114-re#0",
+                        "c:125-gr#0",
+                        "c:113-re#0",
+                        "c:173-jo#0",
+                        "c:171-jo#0",
+                        "c:124-gr#0",
+                        "c:151-bk#0",
+                        "c:132-bl#0",
+                        "c:174-jo#0",
+                        "c:123-gr#0",
+                        "c:133-bl#0",
+                        "c:122-gr#0"
+                    ],
+                    "2": [
+                        "c:281-po#0",
+                        "c:234-bl#0",
+                        "c:233-bl#0",
+                        "c:225-gr#0",
+                        "c:251-bk#0",
+                        "c:272-jo#0",
+                        "c:223-gr#0",
+                        "c:245-wh#0",
+                        "c:214-re#0",
+                        "c:232-bl#0",
+                        "c:241-wh#0",
+                        "c:221-gr#0",
+                        "c:271-jo#0",
+                        "c:211-re#0",
+                        "c:254-bk#0",
+                        "c:212-re#0",
+                        "c:213-re#0",
+                        "c:252-bk#0",
+                        "c:224-gr#0",
+                        "c:253-bk#0",
+                        "c:243-wh#0",
+                        "c:222-gr#0",
+                        "c:235-bl#0",
+                        "c:273-jo#0",
+                        "c:242-wh#0"
+                    ],
+                    "3": [
+                        "c:342-wh#0",
+                        "c:313-re#0",
+                        "c:381-po#0",
+                        "c:352-bk#0",
+                        "c:321-gr#0",
+                        "c:371-jo#0",
+                        "c:312-re#0",
+                        "c:351-bk#0",
+                        "c:333-bl#0",
+                        "c:332-bl#0",
+                        "c:322-gr#0",
+                        "c:373-jo#0",
+                        "c:374-jo#0",
+                        "c:372-jo#0",
+                        "c:331-bl#0",
+                        "c:311-re#0",
+                        "c:341-wh#0"
+                    ]
+                },
+                "playerTableau": {
+                    "p1": [{ "kind": "instance", "instanceId": "c:155-bk#0" }],
+                    "p2": [{ "kind": "instance", "instanceId": "c:153-bk#0" }]
+                },
+                "playerReserved": { "p1": [], "p2": [] },
+                "playerRoyals": { "p1": [], "p2": [] },
+                "inventories": {
+                    "p1": {
+                        "blue": 2,
+                        "white": 0,
+                        "green": 1,
+                        "black": 1,
+                        "red": 1,
+                        "gold": 0,
+                        "pearl": 1
+                    },
+                    "p2": {
+                        "blue": 1,
+                        "white": 1,
+                        "green": 0,
+                        "black": 1,
+                        "red": 0,
+                        "gold": 0,
+                        "pearl": 0
+                    }
+                },
+                "privileges": { "p1": 1, "p2": 1 },
+                "royalDeck": ["r91-ro", "r92-ro", "r93-ro", "r94-ro"],
+                "royalMilestones": {
+                    "p1": { "3": false, "6": false },
+                    "p2": { "3": false, "6": false }
+                },
+                "extraPoints": { "p1": 0, "p2": 0 },
+                "extraCrowns": { "p1": 0, "p2": 0 },
+                "extraAllocation": {
+                    "p1": {
+                        "blue": 0,
+                        "white": 0,
+                        "green": 0,
+                        "black": 0,
+                        "red": 0,
+                        "gold": 0,
+                        "pearl": 0
+                    },
+                    "p2": {
+                        "blue": 0,
+                        "white": 0,
+                        "green": 0,
+                        "black": 0,
+                        "red": 0,
+                        "gold": 0,
+                        "pearl": 0
+                    }
+                },
+                "extraPrivileges": { "p1": 0, "p2": 0 },
+                "playerBuffs": {
+                    "p1": { "buff": { "id": "royal_envoy", "level": 3 } },
+                    "p2": { "buff": { "id": "echo_reservoir", "level": 3 } }
+                },
+                "draftPool": ["collector", "royal_envoy", "minimalist"],
+                "p2DraftPool": ["royal_envoy", "echo_reservoir", "collector", "minimalist"],
+                "p1SelectedBuffId": "royal_envoy",
+                "draftOrder": [],
+                "buffLevel": 3,
+                "p2DraftLevel": 3,
+                "privilegeGemCount": 0,
+                "pendingReserve": null,
+                "pendingBuy": null,
+                "bonusGemTarget": null,
+                "nextPlayerAfterRoyal": null,
+                "pendingExtraTurn": false,
+                "playerTurnCounts": { "p1": 4, "p2": 3 },
                 "abilityResolution": null
             }
         },
@@ -2109,6 +2451,192 @@
                 "nextPlayerAfterRoyal": null,
                 "pendingExtraTurn": false,
                 "playerTurnCounts": { "p1": 13, "p2": 12 },
+                "abilityResolution": null
+            }
+        },
+        {
+            "revision": 44,
+            "state": {
+                "board": [
+                    ["empty", "empty", "empty", "empty", "empty"],
+                    ["empty", "empty", "empty", "empty", "empty"],
+                    ["empty", "empty", "empty", "empty", "gold"],
+                    ["blue", "empty", "empty", "empty", "black"],
+                    ["gold", "red", "empty", "green", "green"]
+                ],
+                "bag": [],
+                "turn": "p2",
+                "phase": "DISCARD_EXCESS_GEMS",
+                "mode": "LOCAL_PVP",
+                "winner": null,
+                "market": {
+                    "1": ["c:181-po#0", "c:132-bl#0", "c:144-wh#0", "c:124-gr#0", "c:171-jo#0"],
+                    "2": ["c:215-re#0", "c:244-wh#0", "c:255-bk#0", "c:242-wh#0"],
+                    "3": ["c:341-wh#0", "c:353-bk#0", "c:323-gr#0"]
+                },
+                "decks": {
+                    "1": [
+                        "c:145-wh#0",
+                        "c:131-bl#0",
+                        "c:121-gr#0",
+                        "c:172-jo#0",
+                        "c:111-re#0",
+                        "c:135-bl#0",
+                        "c:154-bk#0",
+                        "c:152-bk#0",
+                        "c:143-wh#0",
+                        "c:134-bl#0",
+                        "c:141-wh#0",
+                        "c:114-re#0",
+                        "c:125-gr#0",
+                        "c:113-re#0",
+                        "c:173-jo#0"
+                    ],
+                    "2": [
+                        "c:281-po#0",
+                        "c:234-bl#0",
+                        "c:233-bl#0",
+                        "c:225-gr#0",
+                        "c:251-bk#0",
+                        "c:272-jo#0",
+                        "c:223-gr#0",
+                        "c:245-wh#0",
+                        "c:214-re#0",
+                        "c:232-bl#0",
+                        "c:241-wh#0",
+                        "c:221-gr#0",
+                        "c:271-jo#0",
+                        "c:211-re#0",
+                        "c:254-bk#0",
+                        "c:212-re#0",
+                        "c:213-re#0",
+                        "c:252-bk#0",
+                        "c:224-gr#0",
+                        "c:253-bk#0",
+                        "c:243-wh#0",
+                        "c:222-gr#0",
+                        "c:235-bl#0",
+                        "c:273-jo#0"
+                    ],
+                    "3": [
+                        "c:342-wh#0",
+                        "c:313-re#0",
+                        "c:381-po#0",
+                        "c:352-bk#0",
+                        "c:321-gr#0",
+                        "c:371-jo#0",
+                        "c:312-re#0",
+                        "c:351-bk#0",
+                        "c:333-bl#0",
+                        "c:332-bl#0",
+                        "c:322-gr#0",
+                        "c:373-jo#0",
+                        "c:374-jo#0",
+                        "c:372-jo#0",
+                        "c:331-bl#0",
+                        "c:311-re#0"
+                    ]
+                },
+                "playerTableau": {
+                    "p1": [
+                        { "kind": "instance", "instanceId": "c:155-bk#0" },
+                        { "kind": "instance", "instanceId": "c:142-wh#0" },
+                        { "kind": "instance", "instanceId": "c:122-gr#0" },
+                        { "kind": "instance", "instanceId": "c:231-bl#0" },
+                        { "kind": "instance", "instanceId": "c:151-bk#0" },
+                        { "kind": "instance", "instanceId": "c:123-gr#0" }
+                    ],
+                    "p2": [
+                        { "kind": "instance", "instanceId": "c:153-bk#0" },
+                        { "kind": "instance", "instanceId": "c:115-re#0" },
+                        { "kind": "instance", "instanceId": "c:112-re#0" },
+                        { "kind": "instance", "instanceId": "c:174-jo#0" },
+                        { "kind": "instance", "instanceId": "c:133-bl#0" }
+                    ]
+                },
+                "playerReserved": { "p1": [], "p2": ["c:343-wh#0"] },
+                "playerRoyals": { "p1": ["r91-ro"], "p2": [] },
+                "inventories": {
+                    "p1": {
+                        "blue": 1,
+                        "white": 2,
+                        "green": 1,
+                        "black": 0,
+                        "red": 1,
+                        "gold": 0,
+                        "pearl": 2
+                    },
+                    "p2": {
+                        "blue": 2,
+                        "white": 2,
+                        "green": 1,
+                        "black": 3,
+                        "red": 2,
+                        "gold": 1,
+                        "pearl": 0
+                    }
+                },
+                "privileges": { "p1": 3, "p2": 0 },
+                "royalDeck": ["r92-ro", "r93-ro", "r94-ro"],
+                "royalMilestones": {
+                    "p1": { "3": false, "6": false },
+                    "p2": { "3": false, "6": false }
+                },
+                "extraPoints": { "p1": 0, "p2": 0 },
+                "extraCrowns": { "p1": 0, "p2": 0 },
+                "extraAllocation": {
+                    "p1": {
+                        "blue": 0,
+                        "white": 0,
+                        "green": 0,
+                        "black": 0,
+                        "red": 0,
+                        "gold": 0,
+                        "pearl": 0
+                    },
+                    "p2": {
+                        "blue": 0,
+                        "white": 0,
+                        "green": 0,
+                        "black": 0,
+                        "red": 0,
+                        "gold": 0,
+                        "pearl": 0
+                    }
+                },
+                "extraPrivileges": { "p1": 0, "p2": 0 },
+                "playerBuffs": {
+                    "p1": {
+                        "buff": {
+                            "id": "royal_envoy",
+                            "level": 3,
+                            "state": { "envoyTriggered": true }
+                        }
+                    },
+                    "p2": {
+                        "buff": {
+                            "id": "echo_reservoir",
+                            "level": 3,
+                            "state": {
+                                "echoReservoirStoredAbilities": ["bonus_gem"],
+                                "echoReservoirStoredBonusColor": "green"
+                            }
+                        }
+                    }
+                },
+                "draftPool": ["collector", "royal_envoy", "minimalist"],
+                "p2DraftPool": ["royal_envoy", "echo_reservoir", "collector", "minimalist"],
+                "p1SelectedBuffId": "royal_envoy",
+                "draftOrder": [],
+                "buffLevel": 3,
+                "p2DraftLevel": 3,
+                "privilegeGemCount": 0,
+                "pendingReserve": null,
+                "pendingBuy": null,
+                "bonusGemTarget": null,
+                "nextPlayerAfterRoyal": "p1",
+                "pendingExtraTurn": false,
+                "playerTurnCounts": { "p1": 15, "p2": 14 },
                 "abilityResolution": null
             }
         },

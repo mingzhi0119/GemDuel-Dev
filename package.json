@@ -27,6 +27,7 @@
         "electron:dev": "turbo run electron:dev --filter=@gemduel/desktop",
         "electron:lan:verify": "pnpm --dir tools/scripts run electron:lan:verify",
         "electron:open": "pnpm --dir apps/desktop run electron:open",
+        "parity:electron-unity": "node tools/migration/electron-unity-parity-runner.mjs",
         "governance:artifacts": "turbo run governance:artifacts --filter=@gemduel/tools-scripts --",
         "governance:dashboard": "turbo run governance:dashboard --filter=@gemduel/tools-scripts --",
         "governance:evidence:check": "turbo run governance:evidence:check --filter=@gemduel/tools-scripts --",

@@ -55,6 +55,19 @@ Unity is allowed to continue beyond the slice only after:
 - platform concept slots stay behind interfaces and do not leak into gameplay rules;
 - no untracked Unity cache or local settings are required for a clean checkout.
 
+The next gate is specifically the non-debug local PvP path. A user must be able to complete a local
+PvP match through visible board/card/royal interactions without `Space` replay stepping, synthetic
+keyboard shortcuts, direct fixture checkpoint jumps, or scene-only state mutation.
+
+Before broad UI, card-art, animation, or platform work expands, the parity corpus should grow beyond
+the current three fixtures and checkpoint reliance should be reduced where practical. New C# rule
+behavior must be driven by committed replay fixtures and checked against the TypeScript oracle first.
+
+Steamworks.NET, Epic Online Services, Unity platform-toolkit packages, app IDs, product IDs, partner
+configuration, upload output, and live platform SDK behavior remain deferred. LocalDev stubs are the
+only approved platform-service implementation until replay parity, local PvP, and Windows build
+repeatability are green.
+
 ## Stop Conditions
 
 Stop the Unity branch and keep Electron as the shipping client if:

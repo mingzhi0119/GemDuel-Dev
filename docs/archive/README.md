@@ -11,6 +11,7 @@ This archive keeps historical audit, remediation, certification, and planning ar
 ## Roadmaps And Implementation Plans
 
 - [Remaining Unstarted Backlog 2026-05-02](roadmaps/remaining-unstarted-backlog-2026-05-02.md)
+- [Electron vs Unity Sync Parity Baseline 2026-05-09](electron-unity-sync-parity-2026-05-09.md)
 - Historical roadmaps: [Multiplayer Hidden Information 2026-05-05](roadmaps/multiplayer-hidden-information-roadmap-2026-05-05.md), [Replay-Only History Controls 2026-05-04](roadmaps/replay-only-history-controls-layout-requirement-2026-05-04.md), [GPT-5.5 Pro Remediation 2026-04-28](roadmaps/gpt-5.5-pro-2026-04-28-remediation-plan.md), [Market Card Preview 2026-04-28](roadmaps/market-card-preview-interaction-upgrade-2026-04-28.md), [Opus 4.7 Audit Roadmap 2026-04-27](roadmaps/opus-4.7-engineering-audit-roadmap-2026-04-27.md), [Player Zone Special Stacks 2026-04-27](roadmaps/player-zone-special-stacks-and-icon-retirement-plan-2026-04-27.md), [Light/Dark Runtime Theme Retirement 2026-04-27](roadmaps/theme-retirement-plan-2026-04-27.md).
 
 ## Certifications

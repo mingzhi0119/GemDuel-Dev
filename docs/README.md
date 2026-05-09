@@ -18,6 +18,11 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 
 - [Monorepo Overview](architecture/overview.md)
 
+## Migration
+
+- [Electron vs Unity Sync Parity Baseline](archive/electron-unity-sync-parity-2026-05-09.md)
+- [Unity Electron 90% Scoped Parity Report](migration/unity-electron-90-parity-report.md)
+
 ## Governance
 
 - [Architecture Layer Map](governance/architecture-layer-map.md)

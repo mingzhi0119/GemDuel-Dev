@@ -89,9 +89,15 @@ namespace GemDuel.Core
             switch (eventType)
             {
                 case "take_gems":
+                    TakeBoardGems(state, actor, (JArray)replayEvent["coords"]);
+                    MoveTurn(state, actor);
+                    break;
+                case "take_bonus_gem":
+                    TakeBoardGem(state, actor, (JObject)replayEvent["coord"]);
                     MoveTurn(state, actor);
                     break;
                 case "replenish":
+                    ReplenishBoard(state);
                     MoveTurn(state, actor);
                     break;
                 case "reserve_card":
@@ -108,6 +114,13 @@ namespace GemDuel.Core
                 case "select_buff":
                     SetBuff(state, actor, replayEvent.Value<string>("buffId"));
                     break;
+                case "steal_gem":
+                    StealGem(state, actor, replayEvent.Value<string>("gemId"));
+                    MoveTurn(state, actor);
+                    break;
+                case "discard_gem":
+                    DiscardGem(state, actor, replayEvent.Value<string>("gemId"));
+                    break;
                 default:
                     break;
             }
@@ -116,6 +129,152 @@ namespace GemDuel.Core
         private static void MoveTurn(GameState state, string actor)
         {
             state.Snapshot["turn"] = actor == "p1" ? "p2" : "p1";
+        }
+
+        private static void TakeBoardGems(GameState state, string actor, JArray coords)
+        {
+            if (coords == null)
+            {
+                return;
+            }
+
+            var colorCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var pearlCount = 0;
+            foreach (var coord in coords.OfType<JObject>())
+            {
+                var gemId = TakeBoardGem(state, actor, coord);
+                if (string.IsNullOrEmpty(gemId))
+                {
+                    continue;
+                }
+
+                if (gemId == "pearl")
+                {
+                    pearlCount += 1;
+                }
+
+                colorCounts.TryGetValue(gemId, out var currentCount);
+                colorCounts[gemId] = currentCount + 1;
+            }
+
+            if (pearlCount >= 2 || colorCounts.Values.Any(count => count >= 3))
+            {
+                IncrementInventoryValue(state, "privileges", OpponentOf(actor), 1);
+            }
+        }
+
+        private static string TakeBoardGem(GameState state, string actor, JObject coord)
+        {
+            if (coord == null)
+            {
+                return string.Empty;
+            }
+
+            var row = coord.Value<int>("r");
+            var column = coord.Value<int>("c");
+            var board = (JArray)state.Snapshot["board"];
+            if (row < 0 || row >= board.Count)
+            {
+                return string.Empty;
+            }
+
+            var rowArray = (JArray)board[row];
+            if (column < 0 || column >= rowArray.Count)
+            {
+                return string.Empty;
+            }
+
+            var gemId = rowArray[column].Value<string>();
+            if (string.IsNullOrEmpty(gemId) || gemId == "empty")
+            {
+                return string.Empty;
+            }
+
+            rowArray[column] = "empty";
+            IncrementInventoryValue(state, "inventories", actor, gemId, 1);
+            return gemId;
+        }
+
+        private static void ReplenishBoard(GameState state)
+        {
+            var board = (JArray)state.Snapshot["board"];
+            var bag = (JArray)state.Snapshot["bag"];
+            if (bag == null)
+            {
+                return;
+            }
+
+            for (var row = 0; row < board.Count; row += 1)
+            {
+                var rowArray = (JArray)board[row];
+                for (var column = 0; column < rowArray.Count; column += 1)
+                {
+                    if (rowArray[column].Value<string>() != "empty" || bag.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var bagIndex = bag.Count - 1;
+                    rowArray[column] = bag[bagIndex].DeepClone();
+                    bag.RemoveAt(bagIndex);
+                }
+            }
+        }
+
+        private static void StealGem(GameState state, string actor, string gemId)
+        {
+            if (string.IsNullOrEmpty(gemId) || gemId == "gold")
+            {
+                return;
+            }
+
+            var opponent = OpponentOf(actor);
+            if (IncrementInventoryValue(state, "inventories", opponent, gemId, -1))
+            {
+                IncrementInventoryValue(state, "inventories", actor, gemId, 1);
+            }
+        }
+
+        private static void DiscardGem(GameState state, string actor, string gemId)
+        {
+            if (string.IsNullOrEmpty(gemId))
+            {
+                return;
+            }
+
+            if (!IncrementInventoryValue(state, "inventories", actor, gemId, -1))
+            {
+                return;
+            }
+
+            var bag = (JArray)state.Snapshot["bag"];
+            bag?.Add(gemId);
+        }
+
+        private static bool IncrementInventoryValue(GameState state, string root, string player, string key, int delta)
+        {
+            var rootObject = (JObject)state.Snapshot[root];
+            var playerObject = (JObject)rootObject[player];
+            var current = playerObject.Value<int>(key);
+            if (delta < 0 && current <= 0)
+            {
+                return false;
+            }
+
+            playerObject[key] = Math.Max(0, current + delta);
+            return true;
+        }
+
+        private static void IncrementInventoryValue(GameState state, string root, string player, int delta)
+        {
+            var rootObject = (JObject)state.Snapshot[root];
+            var current = rootObject.Value<int>(player);
+            rootObject[player] = Math.Max(0, current + delta);
+        }
+
+        private static string OpponentOf(string actor)
+        {
+            return actor == "p1" ? "p2" : "p1";
         }
 
         private static void AddReserved(GameState state, string actor, string instanceId)

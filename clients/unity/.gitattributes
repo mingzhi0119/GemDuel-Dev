@@ -1,5 +1,9 @@
 # Local Unity-side Git LFS recommendations only. This file intentionally does
 # not change repository-wide LFS policy.
+*.meta -whitespace
+*.asset -whitespace
+*.unity -whitespace
+
 *.psd filter=lfs diff=lfs merge=lfs -text
 *.tif filter=lfs diff=lfs merge=lfs -text
 *.tiff filter=lfs diff=lfs merge=lfs -text

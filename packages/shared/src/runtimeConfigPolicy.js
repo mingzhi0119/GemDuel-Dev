@@ -114,6 +114,15 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         secretHandling: 'Operational local profile routing only. Never store secrets here.',
         failureMode: 'Falls back to the default Electron userData directory when absent.',
     },
+    UNITY_EXE: {
+        owner: 'Client Parity',
+        defaultValue: 'unset',
+        validation:
+            'Absolute filesystem path to the Unity Editor executable used by Electron-vs-Unity parity automation.',
+        secretHandling: 'Local tooling path only. Never store credentials here.',
+        failureMode:
+            'The parity runner falls back to the governed default Unity Hub editor path and records a Unity blocker if no executable is found.',
+    },
     CSC_LINK: {
         owner: 'Release Engineering',
         defaultValue: 'unset',

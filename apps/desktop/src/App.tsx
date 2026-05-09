@@ -12,14 +12,15 @@ import { useLanDevVerification } from './hooks/useLanDevVerification';
 import { useLanMatchmaking } from './hooks/useLanMatchmaking';
 import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import { useSettings } from './hooks/useSettings';
-import { createSurfaceThemeSelections, type SurfaceThemeVariant } from './app/shell/surfaceTheme';
+import { createSurfaceThemeSelections } from './app/shell/surfaceTheme';
 import {
-    clearSurfacePreviewArtworkQuery,
     getSurfacePreviewStartMode,
     getSurfacePreviewVariant,
 } from './app/shell/surfacePreviewQuery';
+import { createSurfaceThemeSelector } from './app/shell/surfaceThemeSelection';
+import { useElectronUnityParityHarness } from './app/parity/electronUnityParityHarness';
 import type { PlayerKey } from '@gemduel/shared/types';
-import type { AppVisualLabMode, MatchmakingRoute, StartSetupRoute } from './types/ui';
+import type { MatchmakingRoute, StartSetupRoute } from './types/ui';
 import { getDocumentLanguage } from '@gemduel/shared';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
 import {
@@ -28,6 +29,7 @@ import {
     writeSearchRouteHistory,
     type AppSearchRouteState,
 } from './app/routes/searchRouteState';
+import { createVisualLabNavigation } from './app/visual-lab/visualLabNavigation';
 import { useVisualLabExitReset } from './app/visual-lab/useVisualLabExitReset';
 
 export default function GemDuelBoard() {
@@ -44,6 +46,7 @@ export default function GemDuelBoard() {
     const didSurfacePreviewStartRef = useRef(false);
 
     const { appVersion } = useRuntimeAppConfig();
+    const runtimeSettings = useSettings();
     const {
         theme,
         locale,
@@ -56,11 +59,8 @@ export default function GemDuelBoard() {
         setLanShowOpponentPlayerZoneCards,
         lanShowOpponentGems,
         setLanShowOpponentGems,
-    } = useSettings();
-    const initialSurfacePreviewVariant = useMemo(getSurfacePreviewVariant, []);
-    const [surfacePreviewVariant, setSurfacePreviewVariant] = useState(
-        initialSurfacePreviewVariant
-    );
+    } = runtimeSettings;
+    const [surfacePreviewVariant, setSurfacePreviewVariant] = useState(getSurfacePreviewVariant);
     const surfacePreviewStartMode = useMemo(getSurfacePreviewStartMode, []);
     const effectiveSurfaceTheme = useMemo(
         () =>
@@ -259,27 +259,15 @@ export default function GemDuelBoard() {
         lastHostStartRoomRef.current = null;
     };
 
-    const handleSelectSurfaceTheme = (variant: SurfaceThemeVariant) => {
-        clearSurfacePreviewArtworkQuery();
-        setSurfacePreviewVariant(undefined);
-        setSurfaceTheme(createSurfaceThemeSelections(variant));
-    };
+    const handleSelectSurfaceTheme = createSurfaceThemeSelector(
+        setSurfacePreviewVariant,
+        setSurfaceTheme
+    );
 
-    const handleOpenVisualLab = (mode: AppVisualLabMode) => {
-        markVisualLabOpened();
-        navigateSearchRoute(
-            {
-                setupRoute: 'none',
-                matchmakingRoute: 'none',
-                visualLabMode: mode,
-            },
-            'push'
-        );
-    };
-
-    const handleCloseVisualLabToStartPage = () => {
-        navigateSearchRoute(EMPTY_SEARCH_ROUTE, 'replace');
-    };
+    const { handleOpenVisualLab, handleCloseVisualLabToStartPage } = createVisualLabNavigation(
+        markVisualLabOpened,
+        navigateSearchRoute
+    );
 
     useEffect(() => {
         if (matchmakingRoute === 'lan' && lan.state.phase === 'idle') {
@@ -342,11 +330,22 @@ export default function GemDuelBoard() {
 
     const startGameAndClearRoute = (
         mode: Parameters<typeof handlers.startGame>[0],
-        config: Parameters<typeof handlers.startGame>[1]
+        config: Parameters<typeof handlers.startGame>[1] & { seed?: string }
     ) => {
         navigateSearchRoute(EMPTY_SEARCH_ROUTE, 'replace');
         handlers.startGame(mode, config);
     };
+
+    useElectronUnityParityHarness({
+        game,
+        layout,
+        ...runtimeSettings,
+        ...searchRoute,
+        setStartSetupRoute,
+        startGame: startGameAndClearRoute,
+        selectSurfaceTheme: handleSelectSurfaceTheme,
+        reset: handleRestart,
+    });
 
     return (
         <LocaleProvider locale={locale} setLocale={setLocale}>

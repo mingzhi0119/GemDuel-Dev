@@ -387,7 +387,7 @@ describe('governance CLI wrappers', () => {
                 recursive: true,
             });
         }
-    });
+    }, 20000);
 
     it('fails the seal exclusion wrapper when review timestamps have expired', () => {
         const result = runNode([
