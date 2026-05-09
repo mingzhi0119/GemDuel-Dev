@@ -953,9 +953,12 @@ namespace GemDuel.Presentation
             }
 
             CreatePanelPx("Preview Overlay", 0f, 0f, 1920f, 1080f, -0.28f, new Color(0.02f, 0.03f, 0.06f, 0.22f), false, null, "card.preview.overlay");
-            CreateText("Preview Title", ViewportPoint(960f, 133f, -0.3f), "CARD PREVIEW", 0.18f, new Color(1f, 0.94f, 0.65f), TextAnchor.MiddleCenter);
-            CreatePanelPx("Preview Close", 1848f, 24f, 48f, 48f, -0.3f, new Color(0.03f, 0.04f, 0.08f, 0.82f));
-            CreateText("Preview Close Text", ViewportPoint(1872f, 48f, -0.32f), "×", 0.15f, Color.white, TextAnchor.MiddleCenter);
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("Preview Title", ViewportPoint(960f, 132f, -0.3f), "C A R D   P R E V I E W", 0.2f, new Color(1f, 0.94f, 0.65f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            });
+            CreateRoundedPanelPx("Preview Close", 1848f, 24f, 48f, 48f, 24f, 1f, new Color(1f, 1f, 1f, 0.2f), new Color(0.02f, 0.04f, 0.08f, 0.75f), -0.3f);
+            CreateText("Preview Close Text", ViewportPoint(1872f, 48f, -0.32f), "×", 0.13f, Color.white, TextAnchor.MiddleCenter);
             var previewRect = new Rect(754f, 264f, 412f, 552f);
             if (!string.IsNullOrEmpty(cardLabel))
             {
@@ -2397,7 +2400,7 @@ namespace GemDuel.Presentation
                 sourceTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                 sourceTexture.Apply();
 
-                var downsample = 8;
+                var downsample = 2;
                 var previewWidth = Math.Max(1, width / downsample);
                 var previewHeight = Math.Max(1, height / downsample);
                 var previewTexture = new Texture2D(previewWidth, previewHeight, TextureFormat.RGB24, false)
@@ -2412,12 +2415,20 @@ namespace GemDuel.Presentation
                     {
                         var u = (x + 0.5f) / previewWidth;
                         var v = (y + 0.5f) / previewHeight;
-                        var color = (
-                            sourceTexture.GetPixelBilinear(Mathf.Clamp01(u - 0.006f), Mathf.Clamp01(v - 0.006f))
-                            + sourceTexture.GetPixelBilinear(Mathf.Clamp01(u + 0.006f), Mathf.Clamp01(v - 0.006f))
-                            + sourceTexture.GetPixelBilinear(Mathf.Clamp01(u - 0.006f), Mathf.Clamp01(v + 0.006f))
-                            + sourceTexture.GetPixelBilinear(Mathf.Clamp01(u + 0.006f), Mathf.Clamp01(v + 0.006f))
-                        ) * 0.25f;
+                        var color = Color.black;
+                        var sampleCount = 0f;
+                        for (var oy = -2; oy <= 2; oy += 1)
+                        {
+                            for (var ox = -2; ox <= 2; ox += 1)
+                            {
+                                var sampleU = Mathf.Clamp01(u + ox / (float)width * 4f);
+                                var sampleV = Mathf.Clamp01(v + oy / (float)height * 4f);
+                                color += sourceTexture.GetPixelBilinear(sampleU, sampleV);
+                                sampleCount += 1f;
+                            }
+                        }
+
+                        color *= 1f / sampleCount;
                         previewTexture.SetPixel(x, y, color);
                     }
                 }
