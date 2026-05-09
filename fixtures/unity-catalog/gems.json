@@ -1,0 +1,45 @@
+[
+    {
+        "id": "black",
+        "color": "from-slate-500 via-slate-700 to-slate-950",
+        "border": "border-slate-300",
+        "label": "Black"
+    },
+    {
+        "id": "blue",
+        "color": "from-blue-400 to-blue-700",
+        "border": "border-blue-300",
+        "label": "Blue"
+    },
+    {
+        "id": "empty",
+        "color": "from-slate-500 to-slate-700",
+        "border": "border-slate-400",
+        "label": "Neutral"
+    },
+    {
+        "id": "gold",
+        "color": "from-yellow-300 via-yellow-500 to-yellow-700",
+        "border": "border-yellow-200",
+        "label": "Gold"
+    },
+    {
+        "id": "green",
+        "color": "from-emerald-400 to-emerald-700",
+        "border": "border-emerald-300",
+        "label": "Green"
+    },
+    {
+        "id": "pearl",
+        "color": "from-pink-300 to-pink-500",
+        "border": "border-pink-300",
+        "label": "Pearl"
+    },
+    { "id": "red", "color": "from-red-400 to-red-700", "border": "border-red-300", "label": "Red" },
+    {
+        "id": "white",
+        "color": "from-slate-100 to-slate-400",
+        "border": "border-white",
+        "label": "White"
+    }
+]

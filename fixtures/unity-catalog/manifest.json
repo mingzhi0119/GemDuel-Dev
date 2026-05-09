@@ -1,0 +1,20 @@
+{
+    "schemaVersion": 1,
+    "generatedAt": "2026-05-09T00:00:00.000Z",
+    "generatedBy": "tools/migration/export-unity-catalogs.ts",
+    "rulesVersion": "5.2.11",
+    "replaySchemaVersion": "1.0",
+    "files": {
+        "cards": "cards.json",
+        "royals": "royals.json",
+        "buffs": "buffs.json",
+        "gems": "gems.json"
+    },
+    "counts": { "cards": 79, "royals": 4, "buffs": 32, "gems": 8 },
+    "replayCoverage": {
+        "fixtureDirectory": "fixtures/replay-golden",
+        "referencedCards": 79,
+        "referencedRoyals": 4,
+        "referencedBuffs": 4
+    }
+}

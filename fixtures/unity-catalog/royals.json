@@ -1,0 +1,34 @@
+[
+    {
+        "id": "r91-ro",
+        "points": 3,
+        "bonusColor": "gold",
+        "crowns": 0,
+        "ability": ["none"],
+        "label": "The Queen"
+    },
+    {
+        "id": "r92-ro",
+        "points": 2,
+        "bonusColor": "gold",
+        "crowns": 0,
+        "ability": ["again"],
+        "label": "The Merchant"
+    },
+    {
+        "id": "r93-ro",
+        "points": 2,
+        "bonusColor": "gold",
+        "crowns": 0,
+        "ability": ["scroll"],
+        "label": "The Judge"
+    },
+    {
+        "id": "r94-ro",
+        "points": 2,
+        "bonusColor": "gold",
+        "crowns": 0,
+        "ability": ["steal"],
+        "label": "The Thief"
+    }
+]

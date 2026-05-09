@@ -4,6 +4,7 @@
 执行素材重生成与 Theme 整理。
 
 硬性要求：
+
 - 以当前 `tmp/visual-lab/surface-review-state.json` 为源；若 manifest stale 导致评分对不上，先修复 stale manifest 并冻结本轮 plan。
 - 1 分 candidate Theme 整组删除，不生成替换图，不备份，但必须写删除报告。
 - 4/7/10 分 candidate Theme 保留，rating 数值不变。
@@ -21,6 +22,7 @@
 - 若有任何重生成失败，不清空对应失败项的 regen mark/comment，报告失败并保留未完成项。
 
 验证要求：
+
 - `pnpm visual-lab:surface:review:validate`
 - focused Visual Lab review tooling tests
 - `pnpm typecheck`

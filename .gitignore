@@ -4,6 +4,8 @@ dist/
 dist-ssr/
 dist_electron/
 Replay/
+!clients/unity/Assets/GemDuel/Scripts/Replay/
+!clients/unity/Assets/GemDuel/Scripts/Replay/**
 *.local
 
 # Editor directories and files

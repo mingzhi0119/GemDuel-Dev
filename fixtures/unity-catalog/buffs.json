@@ -1,0 +1,270 @@
+[
+    {
+        "id": "aggressive_expansion",
+        "level": 2,
+        "category": "control",
+        "label": "Aggressive Expansion",
+        "desc": "Gain 1 random Basic Gem when you Replenish.",
+        "effects": { "passive": { "refillBonus": true } }
+    },
+    {
+        "id": "all_seeing_eye",
+        "level": 3,
+        "category": "victory",
+        "label": "All-Seeing Eye",
+        "desc": "Reveal 2 extra L3 cards. Gold pays double toward missing L3 costs.",
+        "effects": {
+            "passive": { "extraL3": true, "goldBuff": true },
+            "winCondition": { "singleColor": 13 }
+        }
+    },
+    {
+        "id": "backup_supply",
+        "level": 1,
+        "category": "economy",
+        "label": "Backup Supply",
+        "desc": "Start with 2 random Basic Gems.",
+        "effects": { "onInit": { "randomGem": 2 } }
+    },
+    {
+        "id": "bounty_hunter",
+        "level": 2,
+        "category": "economy",
+        "label": "Bounty Hunter",
+        "desc": "Gain 1 random Basic Gem when you buy a card with Crowns.",
+        "effects": { "passive": { "crownBonusGem": true } }
+    },
+    {
+        "id": "collector",
+        "level": 3,
+        "category": "control",
+        "label": "The Collector",
+        "desc": "You may reserve cards from your opponent's reserved area.",
+        "effects": { "passive": { "stealReserved": true }, "winCondition": { "points": 22 } }
+    },
+    {
+        "id": "color_preference",
+        "level": 2,
+        "category": "discount",
+        "label": "Color Preference",
+        "desc": "Random color costs -1 for you (assigned at start).",
+        "effects": { "passive": { "discountRandom": 1 } }
+    },
+    {
+        "id": "deep_pockets",
+        "level": 1,
+        "category": "economy",
+        "label": "Deep Pockets",
+        "desc": "Gem Cap increased to 12.",
+        "effects": { "passive": { "gemCap": 12 } }
+    },
+    {
+        "id": "desperate_gamble",
+        "level": 3,
+        "category": "control",
+        "label": "Desperate Gamble",
+        "desc": "Start with 2 Extra Gold. You cannot take 3 Gems with the Take Gems action. Gain 1 Special Privilege every 2 turns.",
+        "effects": {
+            "onInit": { "gold": 2 },
+            "passive": { "noTake3": true, "periodicPrivilege": 2 }
+        }
+    },
+    {
+        "id": "double_agent",
+        "level": 3,
+        "category": "control",
+        "label": "Double Agent",
+        "desc": "Each Privilege Scroll takes 2 gems instead of 1. Gem Cap: 8.",
+        "effects": { "passive": { "privilegeBuff": 2, "gemCap": 8 } }
+    },
+    {
+        "id": "down_payment",
+        "level": 1,
+        "category": "discount",
+        "label": "Down Payment",
+        "desc": "Reserved Cards cost 1 less (basic gems only).",
+        "effects": { "passive": { "reservedDiscount": 1 } }
+    },
+    {
+        "id": "echo_reservoir",
+        "level": 3,
+        "category": "intel",
+        "label": "Echo Reservoir",
+        "desc": "Remember your opponent's last purchased card abilities. Each development-card purchase echoes that memory once, then clears it.",
+        "effects": { "passive": { "echoReservoir": true } }
+    },
+    {
+        "id": "extortion",
+        "level": 2,
+        "category": "control",
+        "label": "Extortion",
+        "desc": "Every 2nd time you Replenish, steal 1 Basic Gem from opponent.",
+        "effects": { "active": "replenish_steal" }
+    },
+    {
+        "id": "flexible_discount",
+        "level": 2,
+        "category": "discount",
+        "label": "Flexible Discount",
+        "desc": "Reduce cost of Level 2 and 3 cards by 1 (basic gems only).",
+        "effects": { "passive": { "discountAny": 1 } }
+    },
+    {
+        "id": "gold_reserve",
+        "level": 2,
+        "category": "economy",
+        "label": "Gold Reserve",
+        "desc": "Start with 1 Extra Gold and 1 random Reserved Card.",
+        "effects": { "onInit": { "gold": 1, "reserveCard": 1 } }
+    },
+    {
+        "id": "greed_king",
+        "level": 3,
+        "category": "victory",
+        "label": "King of Greed",
+        "desc": "All cards give +1 Point.",
+        "effects": { "passive": { "pointBonus": 1 }, "winCondition": { "points": 25 } }
+    },
+    {
+        "id": "head_start",
+        "level": 1,
+        "category": "victory",
+        "label": "Head Start",
+        "desc": "Start with 1 random Basic Gem.",
+        "effects": { "onInit": { "randomGem": 1 }, "winCondition": { "points": 18 } }
+    },
+    {
+        "id": "hoarder",
+        "level": 2,
+        "category": "economy",
+        "label": "Hoarder",
+        "desc": "If holding 3 Reserved Cards, gain 1 random Basic Gem at start of turn.",
+        "effects": { "passive": { "hoarderBonus": true } }
+    },
+    {
+        "id": "insight",
+        "level": 1,
+        "category": "intel",
+        "label": "Insight",
+        "desc": "Reveal the top card of the Level 1 Deck.",
+        "effects": { "passive": { "revealDeck1": true } }
+    },
+    {
+        "id": "intelligence",
+        "level": 1,
+        "category": "intel",
+        "label": "Intelligence",
+        "desc": "Gain Optional Action: Peek at the top 3 cards of any deck.",
+        "effects": { "active": "peek_deck" }
+    },
+    {
+        "id": "minimalist",
+        "level": 3,
+        "category": "economy",
+        "label": "Minimalist",
+        "desc": "Your first 2 purchased cards provide double Bonuses. Gem Cap: 8.",
+        "effects": { "passive": { "doubleBonusFirst2": true, "gemCap": 8 } }
+    },
+    {
+        "id": "nimble_fingers",
+        "level": 1,
+        "category": "economy",
+        "label": "Nimble Fingers",
+        "desc": "Gain 1 random Basic Gem when you Reserve a card.",
+        "effects": { "passive": { "reserveBonusGem": true } }
+    },
+    {
+        "id": "none",
+        "level": 0,
+        "category": "none",
+        "label": "Classic",
+        "desc": "No buffs.",
+        "effects": {}
+    },
+    {
+        "id": "pacifist",
+        "level": 3,
+        "category": "victory",
+        "label": "Pacifist",
+        "desc": "Immune to all negative effects, including opponent Steal, and your standard Privilege Scrolls cannot be transferred away when the board Privilege supply is empty. Start with 1 Extra Gold and 1 Special Privilege.",
+        "effects": {
+            "onInit": { "gold": 1, "privilege": 1 },
+            "passive": { "immuneNegative": true, "protectPrivilegeTransfer": true }
+        }
+    },
+    {
+        "id": "patient_investor",
+        "level": 1,
+        "category": "economy",
+        "label": "Patient Investor",
+        "desc": "Gain 1 Extra Gold on your first Reserve action.",
+        "effects": { "passive": { "firstReserveBonus": 1 } }
+    },
+    {
+        "id": "pearl_trader",
+        "level": 2,
+        "category": "economy",
+        "label": "Pearl Trader",
+        "desc": "Gem Cap increased to 11. Start with 1 Extra Pearl.",
+        "effects": { "onInit": { "pearl": 1 }, "passive": { "gemCap": 11 } }
+    },
+    {
+        "id": "privilege_favor",
+        "level": 1,
+        "category": "victory",
+        "label": "Privilege Favor",
+        "desc": "Start with 1 Special Privilege.",
+        "effects": { "onInit": { "privilege": 1 } }
+    },
+    {
+        "id": "puppet_master",
+        "level": 3,
+        "category": "intel",
+        "label": "The Puppet Master",
+        "desc": "Gain Optional Action: discard one reserved card, return it to the bottom of its deck, and gain 1 random Basic Gem. You may take this action multiple times in the same turn.",
+        "effects": { "active": "discard_reserved" }
+    },
+    {
+        "id": "recycler",
+        "level": 2,
+        "category": "economy",
+        "label": "Recycler",
+        "desc": "Start with 1 random Basic Gem. Refund 1 Basic Gem when buying a Level 2 or 3 card.",
+        "effects": { "onInit": { "randomGem": 1 }, "passive": { "recycler": true } }
+    },
+    {
+        "id": "royal_blood",
+        "level": 1,
+        "category": "victory",
+        "label": "Royal Blood",
+        "desc": "Start with 1 Crown.",
+        "effects": { "onInit": { "crowns": 1 } }
+    },
+    {
+        "id": "royal_envoy",
+        "level": 3,
+        "category": "victory",
+        "label": "Royal Envoy",
+        "desc": "After your 5th turn fully resolves, pick 1 remaining Royal Card.",
+        "effects": { "active": "turn5_royal", "winCondition": { "disableSingleColor": true } }
+    },
+    {
+        "id": "speculator",
+        "level": 2,
+        "category": "intel",
+        "label": "Speculator",
+        "desc": "Gain 2 random Basic Gems after buying a reserved card.",
+        "effects": { "passive": { "buyReservedBonus": 2 } }
+    },
+    {
+        "id": "wonder_architect",
+        "level": 3,
+        "category": "discount",
+        "label": "Wonder Architect",
+        "desc": "Your first 3 Level 3 cards cost 3 less (basic gems only).",
+        "effects": {
+            "passive": { "l3Discount": 3 },
+            "winCondition": { "crowns": 13, "disableSingleColor": true }
+        }
+    }
+]

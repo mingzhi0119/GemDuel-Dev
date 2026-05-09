@@ -1,0 +1,62 @@
+{
+    "schemaVersion": 1,
+    "generatedAt": "2026-05-09T00:00:00.000Z",
+    "generatedBy": "tools/migration/export-unity-fixtures.ts",
+    "rulesVersion": "5.2.11",
+    "replaySchemaVersion": "1.0",
+    "hashContract": {
+        "id": "replay-state-hash-v1",
+        "implementation": "packages/shared/src/replay/stateHash.ts",
+        "serializer": "serializeReplayStateSnapshot + stableJsonStringify"
+    },
+    "requiredCoverage": [
+        "local-pvp-opening",
+        "reserve",
+        "buy",
+        "royal-selection",
+        "extra-turn",
+        "buff",
+        "game-over"
+    ],
+    "fixtures": [
+        {
+            "id": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "tags": ["local-pvp-opening"],
+            "schemaVersion": "1.0",
+            "replayRevision": 0,
+            "expectedFinalStateHash": "e1b5e1bf",
+            "expectedWinner": null,
+            "expectedEndReason": null,
+            "expectedTotalEvents": 0,
+            "expectedTurnCount": 0,
+            "source": "Deterministic INIT replay with no post-bootstrap events."
+        },
+        {
+            "id": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "tags": ["buff"],
+            "schemaVersion": "1.0",
+            "replayRevision": 2,
+            "expectedFinalStateHash": "e0f3316a",
+            "expectedWinner": null,
+            "expectedEndReason": null,
+            "expectedTotalEvents": 2,
+            "expectedTurnCount": 0,
+            "source": "Deterministic INIT_DRAFT replay with both players selecting buffs."
+        },
+        {
+            "id": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "tags": ["reserve", "buy", "royal-selection", "extra-turn", "game-over"],
+            "schemaVersion": "1.0",
+            "replayRevision": 93,
+            "expectedFinalStateHash": "d161e8c",
+            "expectedWinner": "p1",
+            "expectedEndReason": "normal",
+            "expectedTotalEvents": 93,
+            "expectedTurnCount": 63,
+            "source": "Deterministic AI local PvP replay selected for reserve/buy/royal extra-turn/game-over coverage."
+        }
+    ]
+}

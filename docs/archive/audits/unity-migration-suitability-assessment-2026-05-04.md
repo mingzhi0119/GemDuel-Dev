@@ -40,7 +40,8 @@ Current official Unity facts checked on 2026-05-04:
 - Unity Personal eligibility and commercial-use threshold: <https://unity.com/products/unity-personal>
 - Unity 2026 plan/pricing threshold and Pro requirement: <https://unity.com/products/pricing-updates>
 - Runtime Fee cancellation and return to seat-based subscriptions: <https://support.unity.com/hc/en-us/articles/30322080156692-Cancellation-of-the-Runtime-Fee-and-Pricing-Changes>
-- Unity 6 editor/player platform requirements: <https://docs.unity3d.com/6000.0/Documentation/Manual/system-requirements.html>
+- Unity 6000.4.6f1 project version lock target, verified 2026-05-09:
+  <https://unity.com/releases/editor/whats-new/6000.4.6f1>
 - Unity platform browser/build-profile support model: <https://docs.unity3d.com/ja/current/Manual/platform-browser-reference.html>
 - UI Toolkit runtime UI model: <https://docs.unity3d.com/2023.2/Documentation/Manual/UIElements.html>
 

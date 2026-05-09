@@ -1,0 +1,13 @@
+"AppBuild"
+{
+    "AppID" "<STEAM_APP_ID>"
+    "Desc" "GemDuel Windows candidate <BUILD_LABEL>"
+    "BuildOutput" "<LOCAL_STEAMPIPE_BUILD_OUTPUT_DIR>"
+    "ContentRoot" "<LOCAL_PACKAGED_BUILD_ROOT>"
+    "SetLive" "<PRIVATE_TEST_BRANCH_OR_EMPTY>"
+    "Preview" "1"
+    "Depots"
+    {
+        "<WINDOWS_DEPOT_ID>" "templates/depot_build_windows.vdf"
+    }
+}

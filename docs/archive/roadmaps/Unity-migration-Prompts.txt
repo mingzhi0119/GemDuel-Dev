@@ -1,0 +1,86 @@
+已按只读方式检查了当前仓库结构、release/governance 脚本、Replay/contract 现状和已有 Unity 迁移文档；我没有改任何文件。下面是更贴合本项目的四个可直接复用 Prompt。
+
+**Prompt 1：Steam/Epic 发行准备**
+
+```text
+你是 GemDuel-Dev 的发行准备工程师。当前项目是 pnpm + Turborepo + Electron/React 桌面游戏，已有 Windows NSIS release governance、release health、provenance、lifecycle certification。不要重写游戏，不创建 Unity 项目，不提交 Steamworks/EOS SDK、账号、token、appid、secret 或二进制。
+
+目标：在现有 release/governance 体系上补充 Steam + Epic Games Store 的前期发行文档和安全模板。
+
+请先只读审查 package.json scripts、tools/scripts 中 release/provenance/artifact/governance 相关脚本、docs/governance/release-health-checklist.md、docs/archive/roadmaps/unity-migration-preparation-plan-2026-05-08.md、docs/archive/audits/unity-migration-suitability-assessment-2026-05-04.md，列出可复用项和缺口。
+
+允许新增的内容仅限 docs/release/*、tools/steam/README.md、tools/steam/templates/*.vdf.example 这类无密钥文档/模板。新增：
+1. docs/release/steam-release-checklist.md
+2. docs/release/epic-release-checklist.md
+3. docs/release/platform-feature-matrix.md
+4. tools/steam/README.md 和 VDF example 模板
+
+要求覆盖 Steam/Epic store metadata、build upload、branch/depot、review、Coming Soon、assets、privacy、EULA、third-party notice、asset provenance、achievement parity、cloud save、controller/Steam Deck、crossplay 风险。外部平台规则必须标注“需以官方文档复核”或给出 verified date，不要硬编码可能过期的政策结论。
+
+验证：如果只改 Markdown/模板，至少跑 pnpm secrets:check；如新增脚本或影响 workspace，再跑 pnpm lint、pnpm typecheck、pnpm test、pnpm release:check。最后输出变更摘要、验证结果、仍需人工完成的账号/商店后台步骤。
+```
+
+**Prompt 2：规则迁移合同和 Replay Parity**
+
+```text
+你是 GemDuel-Dev 的 Unity 迁移规则合同工程师。目标不是迁移 UI，而是把 packages/shared 的 TypeScript 规则引擎固化为 Unity 可验证的规则 oracle。不要改 React UI、Electron packaging、Steam/Epic 接入或视觉资产。
+
+先只读审查 packages/shared/src/types/domain-core.ts、domain-actions.ts、logic/contractSchemas*.ts、logic/gameReducer.ts、replay/schema.ts、replay/runtime.ts、replay/stateHash.ts、docs/guides/replay-vnext.md。注意：项目已有 Replay vNext、strict replay schema、gameActionSchema，以及 generateReplayStateHash；不要重复造一套 hash，除非证明现有 hash 不适合作为 Unity parity contract。
+
+请新增/更新：
+1. docs/migration/game-state-contract.md
+2. docs/migration/game-action-contract.md
+3. docs/migration/replay-parity-contract.md
+4. fixtures/replay-golden/manifest.json 和小型 golden corpus
+5. tools/migration/export-unity-fixtures.ts
+6. tools/migration/verify-replay-parity.ts
+
+Golden corpus 只覆盖最小高价值场景：local PvP opening、reserve、buy、royal selection、extra turn、buff、game over。不要提交 tools/artifacts/replay-audit 的大批量历史输出；夹具必须是小型、可审查、确定性的 JSON，并记录 replay schema version、rules version、expected final state hash。
+
+如果需要调整 hash，必须版本化 hash contract、保留旧兼容说明，并补 targeted tests。验证运行 pnpm typecheck、pnpm test、相关 shared/replay targeted tests；如新增 tools/scripts workspace 脚本，再跑对应 tools/scripts test。输出 parity 报告和 Unity 端待实现事项。
+```
+
+**Prompt 3：Unity Vertical Slice 骨架**
+
+```text
+你是 GemDuel-Dev 的 Unity vertical slice 架构员。只建立安全、可回滚、可审查的骨架；不要做玩法重写，不复制 React UI，不引入 Unity/Steamworks/EOS 二进制，不破坏 pnpm workspace。
+
+先复用 docs/archive/roadmaps/unity-migration-preparation-plan-2026-05-08.md 和 docs/archive/audits/unity-migration-suitability-assessment-2026-05-04.md 的结论：当前 TS/Electron 版本仍是规则 oracle，Unity 只做旁路 vertical slice。
+
+允许新增 clients/unity/ 下的最小结构：
+Assets/GemDuel/{Art,Materials,Prefabs,Scenes,Scripts,Tests}
+Packages
+ProjectSettings
+并用 README.md 或 .gitkeep 保留空目录。必须忽略 Unity 生成目录 Library、Temp、Obj、Logs、UserSettings、Builds，不提交真实 Library 缓存或本机设置。
+
+新增：
+1. clients/unity/.gitignore
+2. clients/unity/.gitattributes 或 docs 中的 Git LFS 建议；不要强行影响全仓库 LFS 策略，除非明确需要
+3. docs/migration/unity-version-lock.md
+4. docs/migration/unity-vertical-slice-scope.md
+5. docs/migration/unity-fixture-reader-design.md
+
+Vertical slice 范围限定为 Windows build、5x5 GemBoard、Local PvP、buy/reserve/royal selection、SteamAPI init 概念位、Overlay check 概念位、test achievement 概念位、本地存档路径。不要实现 Online/LAN、完整 AI、完整 buff、Steam Deck Verified、真实 appid 或 SDK 接入。
+
+验证：确认 pnpm-workspace.yaml 未被破坏；运行 pnpm lint、pnpm typecheck、pnpm test、pnpm boundaries:check。如只新增纯文档/占位结构且 gates 过重，说明跳过原因和推荐后续 gate。
+```
+
+**Prompt 4：平台抽象层设计**
+
+```text
+你是 GemDuel-Dev 的平台服务架构师。目标是避免未来 Unity/Steam/Epic 发行时把 gameplay 绑死到 Steamworks.NET 或 Epic Online Services。第一版优先文档和接口草案，不做真实 SDK 接入。
+
+先只读审查 packages/shared 的纯领域边界、apps/desktop 的 platform/runtime/release health 现状、docs/governance/architecture-layer-map.md、docs/governance/boundary-inventory.md。保持 packages/shared 纯净：不得引入 React、Electron、Steamworks、EOS 或 Unity 依赖。
+
+新增 docs/migration/platform-services-abstraction.md，必须包含：
+1. IPlatformServices 能力：Init、GetUserId、IsOverlayAvailable、UnlockAchievement、ReadCloudSave、WriteCloudSave、GetLaunchSource、OpenStorePage、Multiplayer capability flags
+2. Steam adapter、Epic adapter、LocalDev adapter 职责边界
+3. Unity C# interface 草案，作为文档代码块或 clients/unity stub；没有明确授权时不要新增运行时代码
+4. 当前 TS 端概念映射：runtime config、release health、local save/replay、network capability、desktop shell 的对应关系
+5. Steam + Epic 双平台首发时的 PC crossplay、achievement parity、cloud save parity、store branch/build upload 差异
+6. 测试计划：LocalDev fake、adapter contract tests、manual overlay/cloud/achievement smoke、failure mode matrix
+
+禁止提交 Steamworks.NET、EOS SDK、appid、secret、token、真实账号配置。输出设计摘要、开放问题、后续实现顺序，以及哪些决策需要人工平台后台确认。
+```
+
+关键调整是：Prompt 2 不再盲目要求“新增 hash”，而是先审查现有 `packages/shared/src/replay/stateHash.ts`；Prompt 3 把 Unity 限定为旁路 skeleton；Prompt 1/4 都明确复用现有 release/governance 体系，并把外部平台规则标成需官方复核。
