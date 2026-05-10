@@ -6,6 +6,10 @@ namespace GemDuel.Presentation
     {
         private GemDuelVerticalSlice verticalSlice;
 
+        public bool LastMouseDispatchOk { get; private set; }
+        public string LastMouseDispatchDetail { get; private set; } = string.Empty;
+        public Vector3 LastMouseDispatchScreenPosition { get; private set; }
+
         private void Awake()
         {
             verticalSlice = FindAnyObjectByType<GemDuelVerticalSlice>();
@@ -25,24 +29,44 @@ namespace GemDuel.Presentation
 
             if (Input.GetMouseButtonDown(0))
             {
-                CaptureVisibleTarget();
+                LastMouseDispatchScreenPosition = Input.mousePosition;
+                LastMouseDispatchOk = TryDispatchScreenPointForEvidence(Input.mousePosition, out var detail);
+                LastMouseDispatchDetail = detail;
             }
         }
 
-        private void CaptureVisibleTarget()
+        public bool TryDispatchScreenPointForEvidence(Vector3 screenPosition, out string detail)
         {
+            detail = string.Empty;
+            if (verticalSlice == null)
+            {
+                verticalSlice = FindAnyObjectByType<GemDuelVerticalSlice>();
+            }
+
+            if (verticalSlice == null)
+            {
+                detail = "No GemDuelVerticalSlice is available for input dispatch.";
+                return false;
+            }
+
             var mainCamera = Camera.main;
             if (mainCamera == null)
             {
-                return;
+                detail = "No main camera is available for input dispatch.";
+                return false;
             }
 
-            var world = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            var world = mainCamera.ScreenToWorldPoint(screenPosition);
             var target = FindVisibleTargetAtWorld(world);
-            if (target != null)
+            if (target == null)
             {
-                verticalSlice.HandleVisibleTarget(target);
+                detail = "No clickable GemDuelViewTarget at screen point " + screenPosition + ".";
+                return false;
             }
+
+            verticalSlice.HandleVisibleTarget(target);
+            detail = DescribeTarget(target);
+            return true;
         }
 
         public static GemDuelViewTarget FindVisibleTargetAtWorld(Vector3 world)
@@ -79,6 +103,26 @@ namespace GemDuel.Presentation
             }
 
             return best;
+        }
+
+        private static string DescribeTarget(GemDuelViewTarget target)
+        {
+            if (target.Kind == "Buff")
+            {
+                return "Buff " + target.BuffId + " at draft index " + target.Index;
+            }
+
+            if (target.Kind == "MarketCard")
+            {
+                return "Market card " + target.InstanceId + " L" + target.Level + " #" + target.Index;
+            }
+
+            if (target.Kind == "Royal")
+            {
+                return "Royal " + target.RoyalId + " #" + target.Index;
+            }
+
+            return target.Kind + " " + target.EventType;
         }
     }
 }

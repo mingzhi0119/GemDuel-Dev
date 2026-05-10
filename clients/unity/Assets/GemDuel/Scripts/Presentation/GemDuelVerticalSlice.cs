@@ -2910,10 +2910,11 @@ namespace GemDuel.Presentation
         {
             if (renderRoot != null)
             {
-                DestroyUnityObject(renderRoot);
+                RetireRenderedStateObject(renderRoot);
+                renderRoot = null;
             }
 
-            foreach (var obj in FindObjectsByType<GameObject>())
+            foreach (var obj in FindObjectsByType<GameObject>(FindObjectsSortMode.None))
             {
                 if (obj == null)
                 {
@@ -2922,9 +2923,20 @@ namespace GemDuel.Presentation
 
                 if (obj.name == "GemDuel Rendered State")
                 {
-                    DestroyUnityObject(obj);
+                    RetireRenderedStateObject(obj);
                 }
             }
+        }
+
+        private static void RetireRenderedStateObject(GameObject target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            target.SetActive(false);
+            DestroyUnityObject(target);
         }
 
         private void PreparePreviewBackgroundCapture()

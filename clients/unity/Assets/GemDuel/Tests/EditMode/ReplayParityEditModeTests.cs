@@ -131,14 +131,20 @@ namespace GemDuel.Tests.EditMode
                         target =>
                             target.Value<string>("semanticKey") == "draft.buff.1"
                             && target.Value<string>("buffId") == "royal_envoy"
-                    )
+                        )
                 );
 
+                var controller = root.AddComponent<GemDuelInputController>();
+                var royalEnvoyTarget = Object
+                    .FindObjectsByType<GemDuelViewTarget>()
+                    .First(target =>
+                        target.Kind == "Buff" && target.BuffId == "royal_envoy" && target.Clickable
+                    );
+                var screenPoint = Camera.main.WorldToScreenPoint(royalEnvoyTarget.transform.position);
                 Assert.IsTrue(
-                    slice.ClickViewportPointForAutomation(960f, 680f, 1920, 1080, out var error),
+                    controller.TryDispatchScreenPointForEvidence(screenPoint, out var error),
                     error
                 );
-                Assert.AreEqual("unity-hit-target", slice.LastAutomationDriver);
                 Assert.AreEqual(1, slice.GuidedEventsCompleted);
 
                 var after = slice.BuildAutomationStateSnapshot(1920, 1080);
@@ -150,6 +156,21 @@ namespace GemDuel.Tests.EditMode
                 Assert.NotNull(p2DraftPool);
                 Assert.AreEqual(4, p2DraftPool.Count);
                 CollectionAssert.Contains(p2DraftPool.Values<string>().ToList(), "echo_reservoir");
+                var afterBuffTargets = ((JArray)after["visibleTargets"])
+                    .Where(
+                        target =>
+                            target.Value<string>("kind") == "Buff"
+                            && target.Value<bool?>("clickable") == true
+                    )
+                    .ToList();
+                Assert.AreEqual(4, afterBuffTargets.Count);
+                Assert.IsTrue(
+                    afterBuffTargets.Any(
+                        target =>
+                            target.Value<string>("semanticKey") == "draft.buff.1"
+                            && target.Value<string>("buffId") == "echo_reservoir"
+                    )
+                );
             }
             finally
             {
