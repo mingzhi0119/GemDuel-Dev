@@ -91,9 +91,14 @@ namespace GemDuel.Editor
             new ParityScenario(
                 "settings-theme-equivalent",
                 2,
-                "Unity settings/theme shell opened through the semantic action.",
+                "Unity settings/theme shell opened and mutated through visible settings controls.",
                 false,
-                new[] { new ParityActionStep("open_settings") }
+                new[]
+                {
+                    new ParityActionStep("open_settings"),
+                    new ParityActionStep("change_setting", new JObject { ["name"] = "locale", ["value"] = "zh" }),
+                    new ParityActionStep("change_setting", new JObject { ["name"] = "soundEnabled", ["value"] = false }),
+                }
             ),
             new ParityScenario(
                 "invalid-action-state",

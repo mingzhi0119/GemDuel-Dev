@@ -22,6 +22,7 @@ export function LocaleSwitch({ theme, className = '' }: LocaleSwitchProps) {
                     <button
                         key={option}
                         type="button"
+                        data-locale-option={option}
                         onClick={() => setLocale(option)}
                         className={`rounded-full px-3 py-1.5 text-xs font-black tracking-[0.08em] transition-colors ${
                             selected

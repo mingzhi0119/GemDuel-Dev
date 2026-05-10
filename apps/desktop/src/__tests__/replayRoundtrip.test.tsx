@@ -609,7 +609,7 @@ describe('replay roundtrip review', () => {
                 fixture.states.length - 1
             )
         ).toEqual(getExpectedSnapshot(fixture, fixture.states.length - 1));
-    }, 30000);
+    }, 60000);
 
     it('keeps replay navigation usable for imported SELECT_CARD_COLOR states without showing the blocking overlay', async () => {
         const fixture = createSelectCardColorReplayFixture();

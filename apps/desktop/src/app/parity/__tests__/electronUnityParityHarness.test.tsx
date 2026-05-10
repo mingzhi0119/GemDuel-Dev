@@ -370,6 +370,51 @@ describe('useElectronUnityParityHarness', () => {
         );
     });
 
+    it('drives settings mutations through visible DOM controls when present', async () => {
+        const { params } = createParams();
+        const api = createApi(params);
+        const soundToggle = document.createElement('button');
+        soundToggle.dataset.appSoundToggle = 'true';
+        soundToggle.addEventListener('click', () => {
+            params.soundEnabled = !params.soundEnabled;
+        });
+        const surfaceOption = document.createElement('button');
+        surfaceOption.dataset.appSurfaceThemeOption = 'royal-luxury';
+        surfaceOption.addEventListener('click', () => {
+            params.selectSurfaceTheme('royal-luxury');
+        });
+        document.body.append(soundToggle, surfaceOption);
+
+        await expect(
+            api.dispatch('change_setting', { name: 'soundEnabled', value: false })
+        ).resolves.toMatchObject({
+            ok: true,
+            action: 'change_setting',
+            driver: 'dom-click',
+            detail: 'Clicked sound toggle to false.',
+        });
+        expect(params.soundEnabled).toBe(false);
+
+        await expect(
+            api.dispatch('change_setting', { name: 'soundEnabled', value: false })
+        ).resolves.toMatchObject({
+            ok: true,
+            action: 'change_setting',
+            driver: 'dom-click',
+            detail: 'Clicked sound toggle twice to preserve false.',
+        });
+        expect(params.soundEnabled).toBe(false);
+
+        await expect(
+            api.dispatch('change_setting', { name: 'surfaceTheme', value: 'royal-luxury' })
+        ).resolves.toMatchObject({
+            ok: true,
+            action: 'change_setting',
+            driver: 'dom-click',
+        });
+        expect(params.selectSurfaceTheme).toHaveBeenCalledWith('royal-luxury');
+    });
+
     it('loads replay fixtures and falls back to replay-backed semantic events', async () => {
         const { params } = createParams();
         const api = createApi(params);

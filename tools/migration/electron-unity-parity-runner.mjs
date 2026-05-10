@@ -152,8 +152,13 @@ const scenarioDefinitions = [
         id: 'settings-theme-equivalent',
         name: 'Settings or theme-equivalent parity',
         revision: 2,
-        expectedSharedState: 'Settings menu can open and locale/theme/sound state can be dumped.',
-        actionsAfterLoad: [{ action: 'open_settings' }],
+        expectedSharedState:
+            'Settings menu can open and locale/sound mutations use real controls and dump persisted state.',
+        actionsAfterLoad: [
+            { action: 'open_settings' },
+            { action: 'change_setting', payload: { name: 'locale', value: 'zh' } },
+            { action: 'change_setting', payload: { name: 'soundEnabled', value: false } },
+        ],
     },
     {
         id: 'invalid-action-state',
@@ -624,7 +629,10 @@ const normalizeElectronState = (electronState) => {
     };
 };
 
-const diffState = (electronState, unityState) => {
+const semanticBoxText = (state, semanticKey) =>
+    state?.visible?.boxes?.find((box) => box.semanticKey === semanticKey)?.text ?? null;
+
+const diffState = (electronState, unityState, scenario) => {
     const electron = normalizeElectronState(electronState);
     const unity = normalizeUnitySnapshot(unityState);
     const mismatches = [];
@@ -634,6 +642,52 @@ const diffState = (electronState, unityState) => {
         const right = JSON.stringify(unity[field]);
         if (left !== right) {
             mismatches.push({ field, electron: electron[field], unity: unity[field] });
+        }
+    }
+
+    if (scenario?.id === 'settings-theme-equivalent') {
+        const electronSettings = electronState?.settings ?? {};
+        const unitySettings = unityState?.settings ?? {};
+        const settingsFields = ['locale', 'theme', 'soundEnabled'];
+        for (const field of settingsFields) {
+            if (electronSettings[field] !== unitySettings[field]) {
+                mismatches.push({
+                    field: `settings.${field}`,
+                    electron: electronSettings[field],
+                    unity: unitySettings[field],
+                });
+            }
+        }
+
+        const electronPanelOpen = Boolean(
+            electronState?.visible?.boxes?.some((box) => box.semanticKey === 'settings.panel')
+        );
+        if (electronPanelOpen !== Boolean(unitySettings.panelOpen)) {
+            mismatches.push({
+                field: 'settings.panelOpen',
+                electron: electronPanelOpen,
+                unity: unitySettings.panelOpen,
+            });
+        }
+
+        if (unitySettings?.persistence?.status !== 'saved') {
+            mismatches.push({
+                field: 'settings.persistence.status',
+                electron: 'settings mutation committed',
+                unity: unitySettings?.persistence?.status ?? null,
+            });
+        }
+    }
+
+    if (scenario?.id === 'invalid-action-state') {
+        const electronError = semanticBoxText(electronState, 'error.banner');
+        const unityError = unityState?.errorBanner ?? null;
+        if (electronError !== unityError) {
+            mismatches.push({
+                field: 'errorBanner',
+                electron: electronError,
+                unity: unityError,
+            });
         }
     }
 
@@ -647,7 +701,7 @@ const setupActionKeys = new Set([
     'choose_mode',
     'force_royal_selection',
 ]);
-const acceptedNonClickActions = new Set(['invalid_action', 'change_setting']);
+const acceptedNonClickActions = new Set(['invalid_action']);
 
 const normalizeActionResults = (results) =>
     (results ?? []).filter((result) => result?.action && !setupActionKeys.has(result.action));
@@ -1097,7 +1151,7 @@ const main = async () => {
                     existsSync(unityScreenshotPath)
                 ) {
                     const unityState = JSON.parse(await readFile(unityStatePath, 'utf8'));
-                    stateDiff = diffState(electron.state, unityState);
+                    stateDiff = diffState(electron.state, unityState, scenario);
                     actionBehavior = buildActionBehaviorReport(electron.results, unityState);
                     visualDiff = await compareScreenshots(
                         electron.screenshotPath,

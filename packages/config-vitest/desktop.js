@@ -57,6 +57,7 @@ export const createDesktopVitestSettings = () => ({
         '**/artifacts/**',
     ],
     coverage: DESKTOP_SEAL_COVERAGE,
+    maxWorkers: 4,
 });
 
 export { SEAL_COVERAGE_EXCLUSIONS, SEAL_COVERAGE_EXCLUSION_GOVERNANCE_POLICY };

@@ -318,19 +318,59 @@ export const createElectronUnityClickActions = ({
     const changeSetting = async (action: ParityAction, payload: Record<string, unknown>) => {
         const name = payload.name;
         if (name === 'locale' && (payload.value === 'en' || payload.value === 'zh')) {
+            const clicked = clickElement(`[data-locale-option="${payload.value}"]`);
+            if (clicked) {
+                await waitForStableFrame();
+                return result(action, true, `Clicked locale option ${payload.value}.`, 'dom-click');
+            }
+
             currentParams().setLocale(payload.value);
             await waitForStableFrame();
-            return result(action, true);
+            return result(action, true, `Set locale ${payload.value} through harness fallback.`);
         }
         if (name === 'soundEnabled' && typeof payload.value === 'boolean') {
+            const selector = 'button[data-app-sound-toggle="true"]';
+            const target = document.querySelector<HTMLButtonElement>(selector);
+            if (target && !target.disabled) {
+                const alreadyDesired = currentParams().soundEnabled === payload.value;
+                const firstClick = clickElement(selector);
+                await waitForStableFrame();
+                const secondClick = alreadyDesired ? clickElement(selector) : true;
+                if (alreadyDesired) {
+                    await waitForStableFrame();
+                }
+
+                return result(
+                    action,
+                    firstClick && secondClick,
+                    alreadyDesired
+                        ? `Clicked sound toggle twice to preserve ${String(payload.value)}.`
+                        : `Clicked sound toggle to ${String(payload.value)}.`,
+                    firstClick && secondClick ? 'dom-click' : 'missing-dom-target'
+                );
+            }
+
             currentParams().setSoundEnabled(payload.value);
             await waitForStableFrame();
             return result(action, true);
         }
         if (name === 'surfaceTheme' && typeof payload.value === 'string') {
+            const optionSelector = `[data-app-surface-theme-option="${payload.value}"]`;
+            if (
+                document.querySelector(optionSelector) ||
+                clickElement('[data-app-surface-theme-select="true"]')
+            ) {
+                await waitForStableFrame();
+                const optionClicked = clickElement(optionSelector);
+                if (optionClicked) {
+                    await waitForStableFrame();
+                    return result(action, true, undefined, 'dom-click');
+                }
+            }
+
             currentParams().selectSurfaceTheme(payload.value as SurfaceThemeVariant);
             await waitForStableFrame();
-            return result(action, true);
+            return result(action, true, `Set surface theme ${payload.value} through fallback.`);
         }
 
         await waitForStableFrame();

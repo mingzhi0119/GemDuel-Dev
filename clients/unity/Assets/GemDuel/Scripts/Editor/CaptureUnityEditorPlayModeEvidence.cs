@@ -22,6 +22,8 @@ namespace GemDuel.Editor
         private const string VisibleOsClickMode = "visible-os-click";
         private const string VisibleHoverProbeMode = "visible-hover-probe";
         private const string VisiblePreviewBlankDismissMode = "visible-preview-blank-dismiss";
+        private const string SettingsSoundToggleMode = "settings-sound-toggle";
+        private const string FixtureFileName = "local-pvp-royal-extra-turn-game-over.replay.json";
         private const string ScenePath = "Assets/GemDuel/Scenes/GemDuelVerticalSlice.unity";
         private const int EvidenceWidth = 1920;
         private const int EvidenceHeight = 1080;
@@ -120,6 +122,27 @@ namespace GemDuel.Editor
             EditorApplication.EnterPlaymode();
         }
 
+        public static void CaptureSettingsSoundToggle()
+        {
+            var outputRoot = GetArgumentValue("-gemduelPlayModeEvidenceOut")
+                ?? RepositoryPaths.ResolveFromRoot(
+                    "artifacts",
+                    "unity",
+                    "editor-playmode-settings-sound",
+                    DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")
+                );
+            Directory.CreateDirectory(outputRoot);
+
+            EditorPrefs.SetBool(PendingKey, true);
+            EditorPrefs.SetString(OutputKey, outputRoot);
+            EditorPrefs.SetString(ModeKey, SettingsSoundToggleMode);
+            playModeTicks = 0;
+            evidenceRunning = false;
+            visibleClickArmed = false;
+            EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            EditorApplication.EnterPlaymode();
+        }
+
         private static void Tick()
         {
             if (!EditorPrefs.GetBool(PendingKey, false) || evidenceRunning)
@@ -153,6 +176,15 @@ namespace GemDuel.Editor
                 else if (mode == VisiblePreviewBlankDismissMode)
                 {
                     TickVisiblePreviewBlankDismissEvidence();
+                }
+                else if (mode == SettingsSoundToggleMode)
+                {
+                    RunSettingsSoundToggleEvidence();
+                    ClearPending();
+                    if (Application.isBatchMode)
+                    {
+                        EditorApplication.Exit(0);
+                    }
                 }
                 else
                 {
@@ -315,6 +347,128 @@ namespace GemDuel.Editor
             }
 
             Debug.Log("GemDuel Unity Editor Play Mode evidence written: " + evidencePath);
+        }
+
+        private static void RunSettingsSoundToggleEvidence()
+        {
+            var outputRoot = EditorPrefs.GetString(
+                OutputKey,
+                RepositoryPaths.ResolveFromRoot("artifacts", "unity", "editor-playmode-settings-sound")
+            );
+            Directory.CreateDirectory(outputRoot);
+
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var controller = UnityEngine.Object.FindAnyObjectByType<GemDuelInputController>();
+            var camera = Camera.main;
+            if (slice == null || controller == null || camera == null)
+            {
+                throw new InvalidOperationException("Unity Editor Play Mode did not create the GemDuel runtime input scene.");
+            }
+
+            slice.SetAutomationViewport(EvidenceWidth, EvidenceHeight);
+            slice.LoadFixtureForRuntime(FixtureFileName);
+            if (!slice.ApplyFixtureEventsForAutomation(2, out var prepareError))
+            {
+                throw new InvalidOperationException("Could not prepare settings evidence fixture state: " + prepareError);
+            }
+
+            var beforeState = slice.BuildAutomationStateSnapshot(EvidenceWidth, EvidenceHeight);
+            var beforeStatePath = Path.Combine(outputRoot, "before-settings-open-state.json");
+            var beforeScreenshotPath = Path.Combine(outputRoot, "before-settings-open.png");
+            File.WriteAllText(beforeStatePath, beforeState.ToString(Formatting.Indented));
+            CaptureScreenshot(beforeScreenshotPath, EvidenceWidth, EvidenceHeight);
+
+            var settingsTarget = FindClickableRuntimeTarget(
+                target => target.Kind == "ActionButton" && target.EventType == "open_settings",
+                "settings topbar button"
+            );
+            var settingsScreenPoint = camera.WorldToScreenPoint(settingsTarget.transform.position);
+            var settingsDispatchOk = controller.TryDispatchScreenPointForEvidence(
+                settingsScreenPoint,
+                out var settingsDispatchDetail
+            );
+            var openedState = slice.BuildAutomationStateSnapshot(EvidenceWidth, EvidenceHeight);
+            var openedStatePath = Path.Combine(outputRoot, "after-settings-open-state.json");
+            var openedScreenshotPath = Path.Combine(outputRoot, "after-settings-open.png");
+            File.WriteAllText(openedStatePath, openedState.ToString(Formatting.Indented));
+            CaptureScreenshot(openedScreenshotPath, EvidenceWidth, EvidenceHeight);
+
+            var soundTarget = FindClickableRuntimeTarget(
+                target => target.Kind == "SettingsControl" && target.EventType == "settings-sound-toggle",
+                "settings sound toggle"
+            );
+            var soundScreenPoint = camera.WorldToScreenPoint(soundTarget.transform.position);
+            var soundDispatchOk = controller.TryDispatchScreenPointForEvidence(
+                soundScreenPoint,
+                out var soundDispatchDetail
+            );
+            var afterState = slice.BuildAutomationStateSnapshot(EvidenceWidth, EvidenceHeight);
+            var afterStatePath = Path.Combine(outputRoot, "after-settings-sound-toggle-state.json");
+            var afterScreenshotPath = Path.Combine(outputRoot, "after-settings-sound-toggle.png");
+            File.WriteAllText(afterStatePath, afterState.ToString(Formatting.Indented));
+            CaptureScreenshot(afterScreenshotPath, EvidenceWidth, EvidenceHeight);
+
+            var settings = (JObject)afterState["settings"];
+            var persistence = (JObject)settings["persistence"];
+            var actionOk =
+                settingsDispatchOk
+                && soundDispatchOk
+                && settings.Value<bool>("panelOpen")
+                && settings.Value<bool>("soundEnabled") == false
+                && persistence.Value<string>("status") == "saved";
+            var evidence = new JObject
+            {
+                ["source"] = "unity-editor-play-mode-settings-sound",
+                ["scene"] = ScenePath,
+                ["isPlaying"] = EditorApplication.isPlaying,
+                ["viewport"] = new JObject
+                {
+                    ["width"] = EvidenceWidth,
+                    ["height"] = EvidenceHeight,
+                },
+                ["beforeStatePath"] = beforeStatePath,
+                ["beforeScreenshotPath"] = beforeScreenshotPath,
+                ["openedStatePath"] = openedStatePath,
+                ["openedScreenshotPath"] = openedScreenshotPath,
+                ["afterStatePath"] = afterStatePath,
+                ["afterScreenshotPath"] = afterScreenshotPath,
+                ["action"] = new JObject
+                {
+                    ["intent"] = "open settings and toggle sound through Unity runtime input targets",
+                    ["driver"] = "GemDuelInputController.TryDispatchScreenPointForEvidence",
+                    ["settingsOpenDispatchOk"] = settingsDispatchOk,
+                    ["settingsOpenDispatchDetail"] = settingsDispatchDetail,
+                    ["settingsScreenPoint"] = new JObject
+                    {
+                        ["x"] = settingsScreenPoint.x,
+                        ["y"] = settingsScreenPoint.y,
+                        ["z"] = settingsScreenPoint.z,
+                    },
+                    ["soundDispatchOk"] = soundDispatchOk,
+                    ["soundDispatchDetail"] = soundDispatchDetail,
+                    ["soundScreenPoint"] = new JObject
+                    {
+                        ["x"] = soundScreenPoint.x,
+                        ["y"] = soundScreenPoint.y,
+                        ["z"] = soundScreenPoint.z,
+                    },
+                    ["soundTarget"] = DescribeRuntimeTarget(soundTarget),
+                },
+                ["result"] = new JObject
+                {
+                    ["ok"] = actionOk,
+                    ["settings"] = settings,
+                },
+            };
+
+            var evidencePath = Path.Combine(outputRoot, "editor-playmode-settings-sound-evidence.json");
+            File.WriteAllText(evidencePath, evidence.ToString(Formatting.Indented));
+            if (!actionOk)
+            {
+                throw new InvalidOperationException("Unity Editor Play Mode settings evidence failed: " + evidence);
+            }
+
+            Debug.Log("GemDuel Unity Editor settings evidence written: " + evidencePath);
         }
 
         private static void TickVisibleOsClickEvidence()
@@ -839,18 +993,31 @@ namespace GemDuel.Editor
 
         private static GemDuelViewTarget FindClickableBuffTarget(string buffId)
         {
-            var target = UnityEngine.Object
-                .FindObjectsByType<GemDuelViewTarget>()
-                .Where(candidate =>
-                    candidate.Clickable
-                    && candidate.Kind == "Buff"
-                    && candidate.BuffId == buffId
-                )
-                .OrderBy(candidate => candidate.Index)
-                .FirstOrDefault();
+            var target = FindClickableRuntimeTarget(
+                candidate => candidate.Kind == "Buff" && candidate.BuffId == buffId,
+                buffId + " draft boon"
+            );
             if (target == null)
             {
                 throw new InvalidOperationException("No clickable " + buffId + " draft boon target was visible in Play Mode.");
+            }
+
+            return target;
+        }
+
+        private static GemDuelViewTarget FindClickableRuntimeTarget(
+            Func<GemDuelViewTarget, bool> predicate,
+            string description
+        )
+        {
+            var target = UnityEngine.Object
+                .FindObjectsByType<GemDuelViewTarget>()
+                .Where(candidate => candidate.Clickable && predicate(candidate))
+                .OrderBy(candidate => candidate.Index < 0 ? int.MaxValue : candidate.Index)
+                .FirstOrDefault();
+            if (target == null)
+            {
+                throw new InvalidOperationException("No clickable " + description + " target was visible in Play Mode.");
             }
 
             return target;

@@ -328,6 +328,98 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void SettingsMutationsUseVisibleHitTargetsAndPersistFeedback()
+        {
+            var root = new GameObject("GemDuel Settings Contract Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+                Assert.IsTrue(slice.ApplyFixtureEventsForAutomation(2, out var prepareError), prepareError);
+                Assert.IsTrue(slice.RunSemanticActionForAutomation("open_settings", null, out var openError), openError);
+                Assert.AreEqual("unity-hit-target", slice.LastAutomationDriver);
+
+                var opened = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var soundTarget = FindVisibleTarget(opened, "settings.sound");
+                Assert.AreEqual("SettingsControl", soundTarget.Value<string>("kind"));
+                Assert.IsTrue(soundTarget.Value<bool?>("clickable") == true);
+
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "change_setting",
+                        new JObject { ["name"] = "locale", ["value"] = "zh" },
+                        out var localeError
+                    ),
+                    localeError
+                );
+                Assert.AreEqual("unity-hit-target", slice.LastAutomationDriver);
+
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "change_setting",
+                        new JObject { ["name"] = "soundEnabled", ["value"] = false },
+                        out var soundError
+                    ),
+                    soundError
+                );
+                Assert.AreEqual("unity-hit-target", slice.LastAutomationDriver);
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var settings = (JObject)after["settings"];
+                Assert.AreEqual("zh", settings.Value<string>("locale"));
+                Assert.AreEqual("dark", settings.Value<string>("theme"));
+                Assert.AreEqual("royal-luxury", settings.Value<string>("surfaceTheme"));
+                Assert.IsFalse(settings.Value<bool>("soundEnabled"));
+                Assert.IsTrue(settings.Value<bool>("panelOpen"));
+                Assert.AreEqual("Sound disabled.", after.Value<string>("statusText"));
+
+                var persistence = (JObject)settings["persistence"];
+                Assert.AreEqual("saved", persistence.Value<string>("status"));
+                var persistencePath = persistence.Value<string>("path");
+                Assert.IsFalse(string.IsNullOrWhiteSpace(persistencePath));
+                Assert.IsTrue(File.Exists(persistencePath), persistencePath);
+                var persisted = JObject.Parse(File.ReadAllText(persistencePath));
+                Assert.AreEqual("zh", persisted.Value<string>("locale"));
+                Assert.AreEqual("dark", persisted.Value<string>("theme"));
+                Assert.AreEqual("royal-luxury", persisted.Value<string>("surfaceTheme"));
+                Assert.IsFalse(persisted.Value<bool>("soundEnabled"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void InvalidActionExposesElectronEquivalentErrorBanner()
+        {
+            var root = new GameObject("GemDuel Invalid Action Contract Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+                Assert.IsTrue(slice.ApplyFixtureEventsForAutomation(2, out var prepareError), prepareError);
+
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation("invalid_action", null, out var actionError),
+                    actionError
+                );
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual("Invalid semantic action", after.Value<string>("errorBanner"));
+                Assert.AreEqual("Invalid semantic action rejected.", after.Value<string>("statusText"));
+                var errorTarget = FindVisibleTarget(after, "error.banner");
+                Assert.AreEqual("ErrorBanner", errorTarget.Value<string>("kind"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
         public void MinimalTakeGemsMutationUpdatesBoardAndInventoryBetweenCheckpoints()
         {
             var replay = LoadReplay("local-pvp-royal-extra-turn-game-over.replay.json");
@@ -501,6 +593,26 @@ namespace GemDuel.Tests.EditMode
                 .FirstOrDefault(candidate => candidate.Value<string>("semanticKey") == semanticKey);
             Assert.NotNull(target, "Missing visible target " + semanticKey);
             return target;
+        }
+
+        private static void CleanupRenderedSceneObjects()
+        {
+            foreach (var obj in Object.FindObjectsByType<GameObject>())
+            {
+                if (obj == null)
+                {
+                    continue;
+                }
+
+                if (
+                    obj.name == "GemDuel Rendered State"
+                    || obj.name == "Status Topbar"
+                    || obj.name == "GemDuel Camera"
+                )
+                {
+                    Object.DestroyImmediate(obj);
+                }
+            }
         }
     }
 }

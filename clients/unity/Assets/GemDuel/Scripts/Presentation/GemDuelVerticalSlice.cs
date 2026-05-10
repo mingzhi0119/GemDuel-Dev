@@ -15,6 +15,7 @@ namespace GemDuel.Presentation
     public sealed class GemDuelVerticalSlice : MonoBehaviour
     {
         private const string DefaultFixtureFileName = "local-pvp-royal-extra-turn-game-over.replay.json";
+        private const float CardPreviewAspectRatio = 1448f / 1086f;
         private static readonly string[] GemOrder = { "blue", "white", "green", "black", "red", "pearl", "gold" };
         private static readonly string[] PlayerZoneResourceOrder = { "red", "green", "blue", "white", "black", "pearl", "gold" };
         private static readonly string[] PlayerZoneTableauOrder = { "red", "green", "blue", "white", "black", "pure-royal" };
@@ -31,6 +32,13 @@ namespace GemDuel.Presentation
         private int nextFixtureEventIndex;
         private bool isMainMenu;
         private bool settingsOpen;
+        private string settingsLocale = "zh";
+        private readonly string settingsTheme = "dark";
+        private string settingsSurfaceTheme = "royal-luxury";
+        private bool settingsSoundEnabled = true;
+        private string settingsPersistenceStatus = "not-written";
+        private string settingsPersistencePath = string.Empty;
+        private string settingsPersistenceError = string.Empty;
         private string errorBanner = string.Empty;
         private PreviewContext previewContext;
         private HoverContext hoverContext;
@@ -231,14 +239,11 @@ namespace GemDuel.Presentation
                 case "open_settings":
                     return ClickSettingsForAutomation(out error);
                 case "change_setting":
-                    SetStatus("Setting changed: " + (payload.Value<string>("name") ?? "unknown"));
-                    lastAutomationDriver = "settings-state";
-                    lastAutomationDetail = "Changed Unity settings shell state.";
-                    return true;
+                    return ClickSettingForAutomation(payload, out error);
                 case "invalid_action":
-                    errorBanner = "Invalid action";
+                    errorBanner = "Invalid semantic action";
                     RenderState();
-                    SetStatus("Invalid action rejected.");
+                    SetStatus("Invalid semantic action rejected.");
                     lastAutomationDriver = "rejected-intent";
                     lastAutomationDetail = "Rejected invalid semantic intent without mutating shared state.";
                     return true;
@@ -270,13 +275,7 @@ namespace GemDuel.Presentation
                 ["snapshot"] = snapshot,
                 ["visibleTargets"] = BuildVisibleTargetSnapshot(viewportWidth, viewportHeight),
                 ["typography"] = BuildTypographySnapshot(),
-                ["settings"] = new JObject
-                {
-                    ["locale"] = "zh",
-                    ["theme"] = "dark",
-                    ["soundEnabled"] = true,
-                    ["panelOpen"] = settingsOpen,
-                },
+                ["settings"] = BuildSettingsSnapshot(),
                 ["preview"] = previewContext == null
                     ? null
                     : new JObject
@@ -295,6 +294,24 @@ namespace GemDuel.Presentation
             state["mode"] = snapshot.Value<string>("mode");
 
             return state;
+        }
+
+        private JObject BuildSettingsSnapshot()
+        {
+            return new JObject
+            {
+                ["locale"] = settingsLocale,
+                ["theme"] = settingsTheme,
+                ["surfaceTheme"] = settingsSurfaceTheme,
+                ["soundEnabled"] = settingsSoundEnabled,
+                ["panelOpen"] = settingsOpen,
+                ["persistence"] = new JObject
+                {
+                    ["status"] = settingsPersistenceStatus,
+                    ["path"] = string.IsNullOrEmpty(settingsPersistencePath) ? null : settingsPersistencePath,
+                    ["error"] = string.IsNullOrEmpty(settingsPersistenceError) ? null : settingsPersistenceError,
+                },
+            };
         }
 
         private JObject BuildHoverSnapshot()
@@ -525,6 +542,12 @@ namespace GemDuel.Presentation
                 return;
             }
 
+            if (target.Kind == "SettingsControl")
+            {
+                HandleSettingsControl(target);
+                return;
+            }
+
             if (target.Kind == "ActionButton" && target.EventType == "preview-close")
             {
                 previewContext = null;
@@ -655,6 +678,77 @@ namespace GemDuel.Presentation
             }
 
             SetStatus("Next action: " + DescribeEvent(nextEvent));
+        }
+
+        private void HandleSettingsControl(GemDuelViewTarget target)
+        {
+            hoverContext = null;
+            settingsOpen = true;
+            errorBanner = string.Empty;
+
+            var status = string.Empty;
+            switch (target.EventType)
+            {
+                case "settings-locale-en":
+                    settingsLocale = "en";
+                    status = "Locale changed: English.";
+                    break;
+                case "settings-locale-zh":
+                    settingsLocale = "zh";
+                    status = "Locale changed: Chinese.";
+                    break;
+                case "settings-sound-toggle":
+                    settingsSoundEnabled = !settingsSoundEnabled;
+                    status = settingsSoundEnabled ? "Sound enabled." : "Sound disabled.";
+                    break;
+                case "settings-surface-royal-luxury":
+                    settingsSurfaceTheme = "royal-luxury";
+                    status = "Theme selected: royal-luxury.";
+                    break;
+                default:
+                    errorBanner = "Unsupported settings control.";
+                    RenderState();
+                    SetStatus(errorBanner);
+                    return;
+            }
+
+            if (!PersistSettings())
+            {
+                status = "Settings persistence failed: " + settingsPersistenceError;
+            }
+
+            RenderState();
+            SetStatus(status);
+        }
+
+        private bool PersistSettings()
+        {
+            try
+            {
+                var directory = RepositoryPaths.ResolveFromRoot("artifacts", "unity", "settings");
+                Directory.CreateDirectory(directory);
+                settingsPersistencePath = Path.Combine(directory, "gemduel.preferences.v1.json");
+                var payload = new JObject
+                {
+                    ["locale"] = settingsLocale,
+                    ["theme"] = settingsTheme,
+                    ["surfaceTheme"] = settingsSurfaceTheme,
+                    ["soundEnabled"] = settingsSoundEnabled,
+                    ["updatedAt"] = DateTime.UtcNow.ToString("O"),
+                    ["source"] = "unity-local-pvp",
+                };
+                File.WriteAllText(settingsPersistencePath, payload.ToString(Formatting.Indented));
+                settingsPersistenceStatus = "saved";
+                settingsPersistenceError = string.Empty;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                settingsPersistenceStatus = "error";
+                settingsPersistenceError = ex.Message;
+                errorBanner = "Settings persistence failed.";
+                return false;
+            }
         }
 
         private void ApplyVisibleEvent(JObject replayEvent)
@@ -1071,6 +1165,83 @@ namespace GemDuel.Presentation
             var x = payload.Value<float?>("x") ?? 240f;
             var y = payload.Value<float?>("y") ?? 280f;
             return ClickViewportPointForAutomation(x, y, viewportWidth, viewportHeight, out error);
+        }
+
+        private bool ClickSettingForAutomation(JObject payload, out string error)
+        {
+            error = string.Empty;
+            if (!settingsOpen)
+            {
+                error = "Settings panel is not open.";
+                return RejectSemanticAction(error);
+            }
+
+            var name = payload.Value<string>("name") ?? string.Empty;
+            if (name == "locale")
+            {
+                var value = payload.Value<string>("value") ?? string.Empty;
+                if (value != "en" && value != "zh")
+                {
+                    error = "Unsupported locale setting value: " + value + ".";
+                    return RejectSemanticAction(error);
+                }
+
+                return ClickVisibleTargetForAutomation(
+                    target => target.Kind == "SettingsControl" && target.EventType == "settings-locale-" + value,
+                    "settings locale " + value,
+                    out error
+                );
+            }
+
+            if (name == "soundEnabled")
+            {
+                var value = payload["value"];
+                if (value == null || value.Type != JTokenType.Boolean)
+                {
+                    error = "soundEnabled setting requires a boolean value.";
+                    return RejectSemanticAction(error);
+                }
+
+                var desired = value.Value<bool>();
+                if (settingsSoundEnabled == desired)
+                {
+                    if (
+                        !ClickVisibleTargetForAutomation(
+                            target => target.Kind == "SettingsControl" && target.EventType == "settings-sound-toggle",
+                            "settings sound toggle",
+                            out error
+                        )
+                    )
+                    {
+                        return false;
+                    }
+                }
+
+                return ClickVisibleTargetForAutomation(
+                    target => target.Kind == "SettingsControl" && target.EventType == "settings-sound-toggle",
+                    "settings sound toggle",
+                    out error
+                );
+            }
+
+            if (name == "surfaceTheme")
+            {
+                var value = payload.Value<string>("value") ?? string.Empty;
+                if (value != "royal-luxury")
+                {
+                    error = "Unity local PvP currently exposes only the royal-luxury surface theme.";
+                    return RejectSemanticAction(error);
+                }
+
+                return ClickVisibleTargetForAutomation(
+                    target => target.Kind == "SettingsControl" && target.EventType == "settings-surface-royal-luxury",
+                    "settings surface theme " + value,
+                    out error
+                );
+            }
+
+            error = "Unsupported setting: " + name + ".";
+            return RejectSemanticAction(error);
         }
 
         private bool ClickSettingsForAutomation(out string error)
@@ -1536,7 +1707,7 @@ namespace GemDuel.Presentation
                 target.EventType = "preview-close";
             }, "card.preview.close");
             CreateText("Preview Close Text", ViewportPoint(1872f, 48f, -0.32f), "×", 0.13f, Color.white, TextAnchor.MiddleCenter);
-            var previewRect = new Rect(754f, 264f, 412f, 552f);
+            var previewRect = GetSingleCardPreviewRect();
             if (!string.IsNullOrEmpty(cardLabel))
             {
                 CreateCardArtwork("Preview Card", cardLabel, previewRect, -0.34f);
@@ -1579,6 +1750,27 @@ namespace GemDuel.Presentation
             }
         }
 
+        private Rect GetSingleCardPreviewRect()
+        {
+            var viewportWidth = Math.Max(1f, automationViewportWidth);
+            var viewportHeight = Math.Max(1f, automationViewportHeight);
+            var gapPx = 24f;
+            var widthByFourCardRow = (viewportWidth * 0.9f - gapPx * 3f) / 4f;
+            var availableCardAreaHeight = Math.Max(180f, viewportHeight - 230f);
+            var widthByRows = availableCardAreaHeight / CardPreviewAspectRatio;
+            var widthPx = Mathf.Round(Mathf.Max(72f, Math.Min(1086f, Math.Min(widthByFourCardRow, widthByRows))));
+            var heightPx = Mathf.Round(widthPx * CardPreviewAspectRatio);
+            var xPx = (viewportWidth - widthPx) * 0.5f;
+            var yPx = (viewportHeight - heightPx) * 0.5f;
+
+            return new Rect(
+                xPx / viewportWidth * 1920f,
+                yPx / viewportHeight * 1080f,
+                widthPx / viewportWidth * 1920f,
+                heightPx / viewportHeight * 1080f
+            );
+        }
+
         private void RenderSettingsOverlay()
         {
             var rect = new Rect(1722f, 60f, 186f, 228.83f);
@@ -1590,21 +1782,44 @@ namespace GemDuel.Presentation
                 CreateText("Settings Locale Label", ViewportPoint(1734f, 96f, -0.32f), "语言", 0.032f, new Color(0.63f, 0.69f, 0.8f), TextAnchor.MiddleLeft, FontStyle.Bold);
             });
             CreateRoundedPanelPx("Settings Locale Segmented", 1731f, 106f, 165f, 30f, 15f, 1f, new Color(0.18f, 0.24f, 0.36f), new Color(0.04f, 0.08f, 0.15f), -0.32f);
-            CreateRoundedPanelPx("Settings Locale Active", 1827f, 111f, 36f, 20f, 10f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+            if (settingsLocale == "en")
+            {
+                CreateRoundedPanelPx("Settings Locale Active", 1740f, 111f, 78f, 20f, 10f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+            }
+            else
+            {
+                CreateRoundedPanelPx("Settings Locale Active", 1827f, 111f, 36f, 20f, 10f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+            }
+            CreateSettingsControlTarget("Settings Locale English Target", 1738f, 106f, 88f, 30f, "settings-locale-en", "settings.locale.en");
+            CreateSettingsControlTarget("Settings Locale Chinese Target", 1826f, 106f, 70f, 30f, "settings-locale-zh", "settings.locale.zh");
             WithTextWeightCompensation(() =>
             {
                 CreateText("Settings Locale English", ViewportPoint(1792f, 122f, -0.34f), "English", 0.034f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
                 CreateText("Settings Locale Chinese", ViewportPoint(1845f, 122f, -0.34f), "中文", 0.034f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
             });
-            RenderSettingsRow("Sound", 1730f, 142f, "♬", "音效", false);
+            RenderSettingsRow("Sound", 1730f, 142f, settingsSoundEnabled ? "♬" : "×", "音效", false, "settings-sound-toggle", "settings.sound");
             RenderSettingsRow("Save", 1730f, 178f, "▣", "保存", false);
             RenderSettingsRow("Load", 1730f, 214f, "▤", "读取", false);
-            RenderSettingsRow("Theme", 1730f, 250f, "⚙", "皇室奢华", true);
+            RenderSettingsRow("Theme", 1730f, 250f, "⚙", "皇室奢华", true, "settings-surface-royal-luxury", "settings.surface.royal-luxury");
         }
 
-        private void RenderSettingsRow(string name, float x, float y, string icon, string label, bool dropdown)
+        private void RenderSettingsRow(
+            string name,
+            float x,
+            float y,
+            string icon,
+            string label,
+            bool dropdown,
+            string eventType = null,
+            string semanticKey = null
+        )
         {
             CreateRoundedPanelPx("Settings Row " + name, x, y, 168f, 30f, 5f, 1f, new Color(0.18f, 0.24f, 0.36f), new Color(0.05f, 0.08f, 0.14f), -0.32f);
+            if (!string.IsNullOrEmpty(eventType))
+            {
+                CreateSettingsControlTarget("Settings Row Target " + name, x, y, 168f, 30f, eventType, semanticKey);
+            }
+
             WithTextWeightCompensation(() =>
             {
                 CreateText("Settings Row Icon " + name, ViewportPoint(x + 18f, y + 16f, -0.34f), icon, 0.035f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -1616,9 +1831,29 @@ namespace GemDuel.Presentation
             });
         }
 
+        private void CreateSettingsControlTarget(
+            string name,
+            float x,
+            float y,
+            float width,
+            float height,
+            string eventType,
+            string semanticKey
+        )
+        {
+            CreatePanelPx(name, x, y, width, height, -0.36f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "SettingsControl";
+                target.EventType = eventType;
+            }, semanticKey);
+        }
+
         private void RenderErrorBanner()
         {
-            CreatePanel("Error Banner", new Vector3(0f, 3.72f, -0.35f), new Vector2(5.6f, 0.48f), new Color(0.5f, 0.12f, 0.12f), false, null, "error.banner");
+            CreatePanel("Error Banner", new Vector3(0f, 3.72f, -0.35f), new Vector2(5.6f, 0.48f), new Color(0.5f, 0.12f, 0.12f), false, target =>
+            {
+                target.Kind = "ErrorBanner";
+            }, "error.banner");
             CreateText("Error Banner Text", new Vector3(0f, 3.72f, -0.38f), errorBanner, 0.13f, Color.white, TextAnchor.MiddleCenter);
         }
 
