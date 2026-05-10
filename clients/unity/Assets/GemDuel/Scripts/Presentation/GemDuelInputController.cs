@@ -9,6 +9,9 @@ namespace GemDuel.Presentation
         public bool LastMouseDispatchOk { get; private set; }
         public string LastMouseDispatchDetail { get; private set; } = string.Empty;
         public Vector3 LastMouseDispatchScreenPosition { get; private set; }
+        public bool LastHoverDispatchOk { get; private set; }
+        public string LastHoverDispatchDetail { get; private set; } = string.Empty;
+        public Vector3 LastHoverDispatchScreenPosition { get; private set; }
 
         private void Awake()
         {
@@ -26,6 +29,10 @@ namespace GemDuel.Presentation
             {
                 verticalSlice.ApplyNextFixtureEvent();
             }
+
+            LastHoverDispatchScreenPosition = Input.mousePosition;
+            LastHoverDispatchOk = TryHoverScreenPointForEvidence(Input.mousePosition, out var hoverDetail);
+            LastHoverDispatchDetail = hoverDetail;
 
             if (Input.GetMouseButtonDown(0))
             {
@@ -66,6 +73,41 @@ namespace GemDuel.Presentation
 
             verticalSlice.HandleVisibleTarget(target);
             detail = DescribeTarget(target);
+            return true;
+        }
+
+        public bool TryHoverScreenPointForEvidence(Vector3 screenPosition, out string detail)
+        {
+            detail = string.Empty;
+            if (verticalSlice == null)
+            {
+                verticalSlice = FindAnyObjectByType<GemDuelVerticalSlice>();
+            }
+
+            if (verticalSlice == null)
+            {
+                detail = "No GemDuelVerticalSlice is available for hover dispatch.";
+                return false;
+            }
+
+            var mainCamera = Camera.main;
+            if (mainCamera == null)
+            {
+                detail = "No main camera is available for hover dispatch.";
+                return false;
+            }
+
+            var world = mainCamera.ScreenToWorldPoint(screenPosition);
+            var target = FindVisibleTargetAtWorld(world);
+            if (target == null)
+            {
+                verticalSlice.SetHoveredTarget(null);
+                detail = "No clickable GemDuelViewTarget at hover screen point " + screenPosition + ".";
+                return false;
+            }
+
+            detail = DescribeTarget(target);
+            verticalSlice.SetHoveredTarget(target);
             return true;
         }
 

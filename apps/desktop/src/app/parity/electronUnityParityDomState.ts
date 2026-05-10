@@ -15,6 +15,7 @@ const BOX_SELECTORS = [
     '[data-player-zone-gem]',
     '[data-reserved-slot]',
     '[data-card-preview-overlay]',
+    '[data-card-preview-backdrop]',
     '[data-card-preview-card]',
     '[data-card-preview-action]',
     '[data-settings-menu]',
@@ -87,6 +88,12 @@ const semanticKeyForElement = (
     }
     if (selector === '[data-card-preview-overlay]') {
         return 'card.preview.overlay';
+    }
+    if (selector === '[data-card-preview-backdrop]') {
+        return 'card.preview.backdrop';
+    }
+    if (selector === '[data-card-preview-card]') {
+        return 'card.preview.card';
     }
     if (dataset.cardPreviewAction === 'buy') {
         return 'card.preview.primaryAction';

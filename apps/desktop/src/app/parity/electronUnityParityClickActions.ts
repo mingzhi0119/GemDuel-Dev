@@ -1,5 +1,10 @@
 import type { SurfaceThemeVariant } from '../shell/surfaceTheme';
-import { clickElement, waitForCondition, waitForStableFrame } from './electronUnityParityDom';
+import {
+    clickElement,
+    hoverElement,
+    waitForCondition,
+    waitForStableFrame,
+} from './electronUnityParityDom';
 import type {
     ParityAction,
     ParityActionResult,
@@ -97,6 +102,24 @@ export const createElectronUnityClickActions = ({
         );
     };
 
+    const hoverBoon = async (action: ParityAction, payload: Record<string, unknown>) => {
+        const buffId = typeof payload.buffId === 'string' ? payload.buffId : undefined;
+        const index = Number(payload.index ?? 0);
+        const selector = buffId
+            ? `[data-draft-buff-id="${buffId}"]`
+            : `[data-draft-buff-index="${index}"]`;
+        const ok = hoverElement(selector);
+        await waitForStableFrame();
+        return result(
+            action,
+            ok,
+            ok
+                ? `Hovered draft boon ${buffId ?? index}.`
+                : `No draft boon target for ${buffId ?? index}.`,
+            ok ? 'dom-hover' : 'missing-dom-target'
+        );
+    };
+
     const clickMarketCard = async (action: ParityAction, payload: Record<string, unknown>) => {
         const level = Number(payload.level);
         const index = Number(payload.index);
@@ -107,6 +130,17 @@ export const createElectronUnityClickActions = ({
             action,
             ok,
             ok ? undefined : `No market card target for ${level}-${index}.`,
+            ok ? 'dom-click' : 'missing-dom-target'
+        );
+    };
+
+    const clickPreviewBlank = async (action: ParityAction) => {
+        const ok = clickElement('[data-card-preview-backdrop="true"]');
+        await waitForStableFrame();
+        return result(
+            action,
+            ok,
+            ok ? 'Clicked preview blank backdrop.' : 'No preview blank backdrop target.',
             ok ? 'dom-click' : 'missing-dom-target'
         );
     };
@@ -307,11 +341,13 @@ export const createElectronUnityClickActions = ({
         changeSetting,
         chooseBoon,
         chooseRoyal,
+        clickPreviewBlank,
         clickMarketCard,
         clickPlayerReserved,
         confirmPreviewAction,
         dispatchPreviewAction,
         endTurn,
+        hoverBoon,
         openSettings,
     };
 };

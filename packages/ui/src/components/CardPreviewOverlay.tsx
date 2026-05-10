@@ -132,6 +132,7 @@ export function CardPreviewOverlay({
                     transition={{ duration: 0.16, ease: 'easeOut' }}
                 >
                     <div
+                        data-card-preview-backdrop="true"
                         className="absolute inset-0 cursor-default"
                         aria-hidden="true"
                         onClick={onClose}

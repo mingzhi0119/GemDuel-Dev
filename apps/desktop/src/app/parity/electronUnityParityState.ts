@@ -1,6 +1,7 @@
 import type { Card, GameState, ReservedCardView, RoyalCard } from '@gemduel/shared/types';
 import type { GameLogicController, MatchmakingRoute, StartSetupRoute } from '../../types/ui';
 import type {
+    DomTypographySample,
     ElectronParityStateDump,
     UseElectronUnityParityHarnessParams,
 } from './electronUnityParityTypes';
@@ -97,6 +98,39 @@ const normalizeGameState = (state: GameState & { errorMsg?: string | null }) => 
         : null,
 });
 
+const TYPOGRAPHY_SELECTORS = [
+    '[data-draft-buff-title]',
+    '[data-draft-buff-description]',
+    '[data-card-preview-action]',
+    '[data-game-action]',
+    '[data-settings-menu]',
+];
+
+const getTypographySamples = (): DomTypographySample[] =>
+    TYPOGRAPHY_SELECTORS.flatMap((selector) =>
+        Array.from(document.querySelectorAll<HTMLElement>(selector)).map((element, index) => {
+            const styles = window.getComputedStyle(element);
+            const semanticSuffix =
+                element.dataset.draftBuffTitle ??
+                element.dataset.draftBuffDescription ??
+                element.dataset.cardPreviewAction ??
+                element.dataset.gameAction ??
+                String(index);
+            return {
+                key: `${selector}:${semanticSuffix}`,
+                selector,
+                text: (element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim(),
+                fontFamily: styles.fontFamily,
+                fontSize: styles.fontSize,
+                fontWeight: styles.fontWeight,
+                lineHeight: styles.lineHeight,
+                letterSpacing: styles.letterSpacing,
+                textAlign: styles.textAlign,
+                padding: styles.padding,
+            };
+        })
+    );
+
 export const hasRenderedRouteForState = (
     game: GameLogicController,
     route: { setupRoute: StartSetupRoute; matchmakingRoute: MatchmakingRoute }
@@ -153,5 +187,6 @@ export const buildStateDump = ({
         title: document.title,
         textDigest: (document.body.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 2000),
         boxes: getDomBoxes(game.state, game.historyControls.historyLength),
+        typography: getTypographySamples(),
     },
 });

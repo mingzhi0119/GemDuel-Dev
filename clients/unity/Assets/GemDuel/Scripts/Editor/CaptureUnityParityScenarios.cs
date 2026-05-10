@@ -29,6 +29,17 @@ namespace GemDuel.Editor
                     new ParityActionStep("choose_boon", new JObject { ["index"] = 1, ["buffId"] = "royal_envoy" }),
                 }
             ),
+            new ParityScenario(
+                "draft-hover-feedback",
+                null,
+                "Unity level-3 boon hover driven through a real visible card hover target.",
+                true,
+                new[]
+                {
+                    new ParityActionStep("start_local_game"),
+                    new ParityActionStep("hover_boon", new JObject { ["index"] = 1, ["buffId"] = "royal_envoy" }),
+                }
+            ),
             new ParityScenario("initial-board-render", 2, "Post-draft replay board render."),
             new ParityScenario(
                 "market-card-preview",
@@ -36,6 +47,17 @@ namespace GemDuel.Editor
                 "Unity semantic market preview action.",
                 false,
                 new[] { new ParityActionStep("click_market_card", new JObject { ["level"] = 1, ["index"] = 0 }) }
+            ),
+            new ParityScenario(
+                "preview-blank-dismiss",
+                2,
+                "Unity preview opens and closes through a blank backdrop hit target.",
+                false,
+                new[]
+                {
+                    new ParityActionStep("click_market_card", new JObject { ["level"] = 1, ["index"] = 0 }),
+                    new ParityActionStep("click_preview_blank", new JObject { ["x"] = 240, ["y"] = 280 }),
+                }
             ),
             new ParityScenario(
                 "buy-card",

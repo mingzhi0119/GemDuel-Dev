@@ -143,6 +143,7 @@ const installDomTargets = () => {
                 <button name="buff-selection" data-draft-buff-id="royal_envoy" data-draft-buff-index="1">Royal Envoy</button>
             </div>
             <div data-market-slot="1-0"><button data-card-preview-click="true">Preview</button></div>
+            <button data-card-preview-backdrop="true">Backdrop</button>
             <button data-card-preview-action="buy">Buy</button>
             <button data-card-preview-action="reserve">Reserve</button>
             <div data-reserved-slot="p1-0"><button data-card-preview-click="true">Reserved</button></div>
@@ -247,6 +248,8 @@ describe('useElectronUnityParityHarness', () => {
         expect(api.version).toBe(1);
         expect(api.actions).toContain('start_local_game');
         expect(api.actions).toContain('choose_boon');
+        expect(api.actions).toContain('hover_boon');
+        expect(api.actions).toContain('click_preview_blank');
         expect(api.isReady()).toBe(true);
         expect(api.dumpState()).toMatchObject({
             source: 'electron',
@@ -285,10 +288,22 @@ describe('useElectronUnityParityHarness', () => {
             action: 'choose_boon',
             driver: 'dom-click',
         });
+        await expect(
+            api.dispatch('hover_boon', { buffId: 'royal_envoy', index: 1 })
+        ).resolves.toMatchObject({
+            ok: true,
+            action: 'hover_boon',
+            driver: 'dom-hover',
+        });
 
         await expect(
             api.dispatch('click_market_card', { level: 1, index: 0 })
         ).resolves.toMatchObject({ ok: true, action: 'click_market_card', driver: 'dom-click' });
+        await expect(api.dispatch('click_preview_blank')).resolves.toMatchObject({
+            ok: true,
+            action: 'click_preview_blank',
+            driver: 'dom-click',
+        });
         await expect(api.dispatch('buy_card', { level: 1, index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'buy_card',
@@ -401,6 +416,24 @@ describe('useElectronUnityParityHarness', () => {
             ok: false,
             action: 'change_setting',
             detail: 'Unsupported setting unknown.',
+        });
+
+        document.querySelector('[data-draft-buff-id="royal_envoy"]')?.remove();
+        await expect(
+            api.dispatch('hover_boon', { buffId: 'royal_envoy', index: 1 })
+        ).resolves.toMatchObject({
+            ok: false,
+            action: 'hover_boon',
+            detail: 'No draft boon target for royal_envoy.',
+            driver: 'missing-dom-target',
+        });
+
+        document.querySelector('[data-card-preview-backdrop="true"]')?.remove();
+        await expect(api.dispatch('click_preview_blank')).resolves.toMatchObject({
+            ok: false,
+            action: 'click_preview_blank',
+            detail: 'No preview blank backdrop target.',
+            driver: 'missing-dom-target',
         });
 
         document.querySelector('[data-market-slot="1-0"]')?.remove();

@@ -189,6 +189,14 @@ describe('electronUnityParityState', () => {
             'data-card-preview-overlay',
             'true'
         );
+        appendElement('div', { cardPreviewBackdrop: 'true' }).setAttribute(
+            'data-card-preview-backdrop',
+            'true'
+        );
+        appendElement('div', { cardPreviewCard: 'c11-re' }).setAttribute(
+            'data-card-preview-card',
+            'c11-re'
+        );
         appendElement('button', { cardPreviewAction: 'buy' });
         appendElement('div', { settingsMenu: 'true' }).setAttribute('data-settings-menu', 'true');
         appendElement('div', { parityErrorBanner: 'true' }).setAttribute(
@@ -242,6 +250,8 @@ describe('electronUnityParityState', () => {
                 'player.score',
                 'player.reserved.0',
                 'card.preview.overlay',
+                'card.preview.backdrop',
+                'card.preview.card',
                 'card.preview.primaryAction',
                 'settings.panel',
                 'error.banner',

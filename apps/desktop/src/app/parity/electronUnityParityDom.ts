@@ -33,6 +33,28 @@ export const clickElement = (selector: string): boolean => {
     return true;
 };
 
+export const hoverElement = (selector: string): boolean => {
+    const element = document.querySelector<HTMLElement>(selector);
+    if (!element) {
+        return false;
+    }
+
+    const rect = element.getBoundingClientRect();
+    const clientX = rect.x + rect.width / 2;
+    const clientY = rect.y + rect.height / 2;
+    const eventInit = {
+        bubbles: true,
+        cancelable: true,
+        clientX,
+        clientY,
+        view: window,
+    };
+    element.dispatchEvent(new MouseEvent('mouseover', eventInit));
+    element.dispatchEvent(new MouseEvent('mouseenter', { ...eventInit, bubbles: false }));
+    element.dispatchEvent(new MouseEvent('mousemove', eventInit));
+    return true;
+};
+
 export const clearParityErrorBanner = () => {
     document.querySelector('[data-parity-error-banner]')?.remove();
 };

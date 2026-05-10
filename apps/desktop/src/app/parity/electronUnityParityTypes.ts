@@ -11,7 +11,9 @@ export type ParityAction =
     | 'start_local_game'
     | 'choose_mode'
     | 'choose_boon'
+    | 'hover_boon'
     | 'click_market_card'
+    | 'click_preview_blank'
     | 'buy_card'
     | 'reserve_card'
     | 'click_player_reserved'
@@ -60,6 +62,7 @@ export interface ElectronParityStateDump {
         title: string;
         textDigest: string;
         boxes: DomBox[];
+        typography: DomTypographySample[];
     };
 }
 
@@ -75,6 +78,19 @@ export interface DomBox {
         width: number;
         height: number;
     };
+}
+
+export interface DomTypographySample {
+    key: string;
+    selector: string;
+    text: string;
+    fontFamily: string;
+    fontSize: string;
+    fontWeight: string;
+    lineHeight: string;
+    letterSpacing: string;
+    textAlign: string;
+    padding: string;
 }
 
 export interface UseElectronUnityParityHarnessParams {
@@ -121,7 +137,9 @@ export const ACTIONS: ParityAction[] = [
     'start_local_game',
     'choose_mode',
     'choose_boon',
+    'hover_boon',
     'click_market_card',
+    'click_preview_blank',
     'buy_card',
     'reserve_card',
     'click_player_reserved',

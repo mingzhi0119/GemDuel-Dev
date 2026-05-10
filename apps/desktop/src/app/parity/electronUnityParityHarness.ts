@@ -162,12 +162,18 @@ export const createElectronUnityParityApi = (
                 case 'choose_boon':
                     return await clickActions.chooseBoon(action, payload);
 
+                case 'hover_boon':
+                    return await clickActions.hoverBoon(action, payload);
+
                 case 'load_replay_fixture':
                     clearParityErrorBanner();
                     return await loadReplayFixture(action, payload);
 
                 case 'click_market_card':
                     return await clickActions.clickMarketCard(action, payload);
+
+                case 'click_preview_blank':
+                    return await clickActions.clickPreviewBlank(action);
 
                 case 'buy_card':
                 case 'reserve_card':

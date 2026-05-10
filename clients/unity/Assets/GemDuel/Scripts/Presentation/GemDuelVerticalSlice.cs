@@ -33,11 +33,13 @@ namespace GemDuel.Presentation
         private bool settingsOpen;
         private string errorBanner = string.Empty;
         private PreviewContext previewContext;
+        private HoverContext hoverContext;
         private Texture2D previewBackgroundTexture;
         private int automationViewportWidth = 1920;
         private int automationViewportHeight = 1080;
         private bool previewBackdropCaptureEnabled;
         private bool automationInteractiveReplayMode;
+        private bool previewInteractionLayoutSticky;
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> grayscaleTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
@@ -115,6 +117,7 @@ namespace GemDuel.Presentation
             }
 
             previewContext = null;
+            previewInteractionLayoutSticky = false;
             ClearPreviewBackgroundTexture();
             settingsOpen = false;
             errorBanner = string.Empty;
@@ -149,6 +152,8 @@ namespace GemDuel.Presentation
             nextFixtureEventIndex = 0;
             selectedGemCoords.Clear();
             previewContext = null;
+            hoverContext = null;
+            previewInteractionLayoutSticky = false;
             ClearPreviewBackgroundTexture();
             settingsOpen = false;
             errorBanner = string.Empty;
@@ -180,6 +185,8 @@ namespace GemDuel.Presentation
                     isMainMenu = true;
                     settingsOpen = false;
                     previewContext = null;
+                    hoverContext = null;
+                    previewInteractionLayoutSticky = false;
                     ClearPreviewBackgroundTexture();
                     errorBanner = string.Empty;
                     RenderState();
@@ -189,8 +196,12 @@ namespace GemDuel.Presentation
                     return true;
                 case "choose_boon":
                     return ClickVisibleBuffForAutomation(payload, out error);
+                case "hover_boon":
+                    return HoverVisibleBuffForAutomation(payload, out error);
                 case "click_market_card":
                     return ClickVisibleMarketCardForAutomation(payload, out error);
+                case "click_preview_blank":
+                    return ClickPreviewBlankForAutomation(payload, out error);
                 case "buy_card":
                     return RunPreviewAction("buy_card", payload, out error);
                 case "reserve_card":
@@ -258,6 +269,7 @@ namespace GemDuel.Presentation
                 },
                 ["snapshot"] = snapshot,
                 ["visibleTargets"] = BuildVisibleTargetSnapshot(viewportWidth, viewportHeight),
+                ["typography"] = BuildTypographySnapshot(),
                 ["settings"] = new JObject
                 {
                     ["locale"] = "zh",
@@ -274,6 +286,7 @@ namespace GemDuel.Presentation
                         ["index"] = previewContext.Index,
                         ["instanceId"] = previewContext.InstanceId,
                     },
+                ["hover"] = BuildHoverSnapshot(),
                 ["errorBanner"] = string.IsNullOrEmpty(errorBanner) ? null : errorBanner,
             };
 
@@ -282,6 +295,70 @@ namespace GemDuel.Presentation
             state["mode"] = snapshot.Value<string>("mode");
 
             return state;
+        }
+
+        private JObject BuildHoverSnapshot()
+        {
+            if (hoverContext == null)
+            {
+                return null;
+            }
+
+            return new JObject
+            {
+                ["semanticKey"] = hoverContext.SemanticKey,
+                ["kind"] = hoverContext.Kind,
+                ["eventType"] = hoverContext.EventType,
+                ["row"] = hoverContext.Row,
+                ["column"] = hoverContext.Column,
+                ["level"] = hoverContext.Level,
+                ["index"] = hoverContext.Index,
+                ["instanceId"] = string.IsNullOrEmpty(hoverContext.InstanceId) ? null : hoverContext.InstanceId,
+                ["royalId"] = string.IsNullOrEmpty(hoverContext.RoyalId) ? null : hoverContext.RoyalId,
+                ["gemId"] = string.IsNullOrEmpty(hoverContext.GemId) ? null : hoverContext.GemId,
+                ["buffId"] = string.IsNullOrEmpty(hoverContext.BuffId) ? null : hoverContext.BuffId,
+                ["cursor"] = "pointer",
+                ["visualState"] = "hover",
+            };
+        }
+
+        private JArray BuildTypographySnapshot()
+        {
+            var samples = new JArray();
+            foreach (var mesh in FindObjectsByType<TextMesh>(FindObjectsSortMode.None))
+            {
+                if (mesh == null || string.IsNullOrEmpty(mesh.name) || !IsTypographyEvidenceText(mesh.name))
+                {
+                    continue;
+                }
+
+                samples.Add(
+                    new JObject
+                    {
+                        ["key"] = mesh.name,
+                        ["text"] = mesh.text,
+                        ["font"] = mesh.font == null ? null : mesh.font.name,
+                        ["fontSize"] = mesh.fontSize,
+                        ["characterSize"] = Math.Round(mesh.characterSize, 5),
+                        ["fontStyle"] = mesh.fontStyle.ToString(),
+                        ["alignment"] = mesh.alignment.ToString(),
+                        ["anchor"] = mesh.anchor.ToString(),
+                        ["lineSpacing"] = Math.Round(mesh.lineSpacing, 3),
+                    }
+                );
+            }
+
+            return samples;
+        }
+
+        private static bool IsTypographyEvidenceText(string name)
+        {
+            return name.StartsWith("Draft Title ", StringComparison.Ordinal)
+                || name.StartsWith("Draft Description ", StringComparison.Ordinal)
+                || name.StartsWith("Draft Footer ", StringComparison.Ordinal)
+                || name.StartsWith("Preview Action Text ", StringComparison.Ordinal)
+                || name.StartsWith("Action Text ", StringComparison.Ordinal)
+                || name.StartsWith("Settings ", StringComparison.Ordinal);
         }
 
         public string DumpAutomationStateJson(int viewportWidth, int viewportHeight)
@@ -318,6 +395,19 @@ namespace GemDuel.Presentation
             return true;
         }
 
+        public bool SetHoveredTarget(GemDuelViewTarget target)
+        {
+            var nextHover = target == null || !target.Clickable ? null : HoverContext.FromTarget(target);
+            if (HoverContext.SameTarget(hoverContext, nextHover))
+            {
+                return nextHover != null;
+            }
+
+            hoverContext = nextHover;
+            RenderState();
+            return nextHover != null;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void EnsureSceneController()
         {
@@ -344,6 +434,7 @@ namespace GemDuel.Presentation
             isMainMenu = false;
             settingsOpen = false;
             previewContext = null;
+            previewInteractionLayoutSticky = false;
             ClearPreviewBackgroundTexture();
             errorBanner = string.Empty;
             automationInteractiveReplayMode = false;
@@ -408,6 +499,7 @@ namespace GemDuel.Presentation
 
             if (target.Kind == "Mode" && target.EventType == "start_local_game")
             {
+                hoverContext = null;
                 LoadFixtureForRuntime(DefaultFixtureFileName);
                 automationInteractiveReplayMode = true;
                 RenderState();
@@ -424,6 +516,7 @@ namespace GemDuel.Presentation
 
             if (target.Kind == "ActionButton" && target.EventType == "open_settings")
             {
+                hoverContext = null;
                 settingsOpen = true;
                 isMainMenu = false;
                 errorBanner = string.Empty;
@@ -435,6 +528,8 @@ namespace GemDuel.Presentation
             if (target.Kind == "ActionButton" && target.EventType == "preview-close")
             {
                 previewContext = null;
+                hoverContext = null;
+                previewInteractionLayoutSticky = true;
                 ClearPreviewBackgroundTexture();
                 errorBanner = string.Empty;
                 RenderState();
@@ -442,26 +537,36 @@ namespace GemDuel.Presentation
                 return;
             }
 
+            if (target.Kind == "PreviewCard")
+            {
+                SetStatus("Previewing card.");
+                return;
+            }
+
             if (target.Kind == "ActionButton" && target.EventType == "preview-buy")
             {
+                hoverContext = null;
                 ConfirmPreviewAction("buy", out _);
                 return;
             }
 
             if (target.Kind == "ActionButton" && target.EventType == "preview-reserve")
             {
+                hoverContext = null;
                 ConfirmPreviewAction("reserve", out _);
                 return;
             }
 
             if (target.Kind == "MarketCard")
             {
+                hoverContext = null;
                 PreviewMarketCard(target.Level, target.Index, out _);
                 return;
             }
 
             if (target.Kind == "ReservedCard")
             {
+                hoverContext = null;
                 PreviewReservedCard(target.Index, out _);
                 return;
             }
@@ -554,6 +659,7 @@ namespace GemDuel.Presentation
 
         private void ApplyVisibleEvent(JObject replayEvent)
         {
+            hoverContext = null;
             var result = ApplyReplayEvent(replayEvent);
             if (!result.Ok)
             {
@@ -680,6 +786,7 @@ namespace GemDuel.Presentation
                 Index = index,
                 InstanceId = row[index].Value<string>(),
             };
+            hoverContext = null;
             isMainMenu = false;
             settingsOpen = false;
             errorBanner = string.Empty;
@@ -713,6 +820,7 @@ namespace GemDuel.Presentation
                 Index = index,
                 InstanceId = reserved[index].Value<string>(),
             };
+            hoverContext = null;
             settingsOpen = false;
             errorBanner = string.Empty;
             RenderState();
@@ -803,6 +911,7 @@ namespace GemDuel.Presentation
                 ["card"] = previewContext.InstanceId,
             };
             previewContext = null;
+            hoverContext = null;
             ClearPreviewBackgroundTexture();
             RenderState();
             var goldCoord = (JObject)reserveEvent["goldCoord"];
@@ -889,6 +998,61 @@ namespace GemDuel.Presentation
             );
         }
 
+        private bool HoverVisibleBuffForAutomation(JObject payload, out string error)
+        {
+            error = string.Empty;
+            var buffId = payload.Value<string>("buffId");
+            var index = payload.Value<int?>("index");
+            var candidates = FindObjectsByType<GemDuelViewTarget>(FindObjectsSortMode.None)
+                .Where(target =>
+                    target != null
+                    && target.Clickable
+                    && target.Kind == "Buff"
+                    && (
+                        (!string.IsNullOrEmpty(buffId) && target.BuffId == buffId)
+                        || (!index.HasValue && string.IsNullOrEmpty(buffId))
+                        || (index.HasValue && target.Index == index.Value)
+                    )
+                )
+                .OrderBy(target => target.Index < 0 ? int.MaxValue : target.Index)
+                .ToList();
+            if (candidates.Count == 0)
+            {
+                error = "No clickable Unity hover target for visible boon card.";
+                return RejectSemanticAction(error);
+            }
+
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                error = "Unity scene has no camera for hover dispatch.";
+                return RejectSemanticAction(error);
+            }
+
+            var target = candidates[0];
+            var hit = GemDuelInputController.FindVisibleTargetAtWorld(target.transform.position);
+            if (hit != target)
+            {
+                error = "Clickable Unity hover target for visible boon card is blocked by " + DescribeTarget(hit) + ".";
+                return RejectSemanticAction(error);
+            }
+
+            var controller = FindAnyObjectByType<GemDuelInputController>() ?? gameObject.AddComponent<GemDuelInputController>();
+            var screenPoint = camera.WorldToScreenPoint(target.transform.position);
+            var targetDescription = DescribeTarget(target);
+            var ok = controller.TryHoverScreenPointForEvidence(screenPoint, out var detail);
+            lastAutomationDriver = ok ? "unity-hover-target" : "missing-unity-hover-target";
+            lastAutomationDetail = ok
+                ? "Hovered " + targetDescription + " through GemDuelInputController hit testing."
+                : detail;
+            if (!ok)
+            {
+                error = detail;
+            }
+
+            return ok;
+        }
+
         private bool ClickVisibleMarketCardForAutomation(JObject payload, out string error)
         {
             var level = payload.Value<int?>("level") ?? 1;
@@ -898,6 +1062,15 @@ namespace GemDuel.Presentation
                 "market card " + level + "-" + index,
                 out error
             );
+        }
+
+        private bool ClickPreviewBlankForAutomation(JObject payload, out string error)
+        {
+            var viewportWidth = payload.Value<int?>("viewportWidth") ?? automationViewportWidth;
+            var viewportHeight = payload.Value<int?>("viewportHeight") ?? automationViewportHeight;
+            var x = payload.Value<float?>("x") ?? 240f;
+            var y = payload.Value<float?>("y") ?? 280f;
+            return ClickViewportPointForAutomation(x, y, viewportWidth, viewportHeight, out error);
         }
 
         private bool ClickSettingsForAutomation(out string error)
@@ -967,6 +1140,11 @@ namespace GemDuel.Presentation
             currentState = ReplayBootstrapper.Bootstrap(activeReplay);
             nextFixtureEventIndex = 0;
             selectedGemCoords.Clear();
+            previewContext = null;
+            hoverContext = null;
+            settingsOpen = false;
+            errorBanner = string.Empty;
+            ClearPreviewBackgroundTexture();
         }
 
         private float AutomationAspect
@@ -1119,25 +1297,27 @@ namespace GemDuel.Presentation
                 CreateText("Draft L2", ViewportPoint(1810f, 100f, -0.02f), "L2", 0.068f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
                 CreateRoundedPanelPx("Draft L3 Active", 1840f, 75f, 48f, 48f, 12f, 0f, new Color(0f, 0f, 0f, 0f), new Color(1f, 0.78f, 0.17f), -0.01f);
                 CreateText("Draft L3", ViewportPoint(1864f, 100f, -0.02f), "L3", 0.068f, new Color(0.16f, 0.11f, 0.02f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Draft Header", ViewportPoint(960f, 168f, 0f), "✧ 肉鸽选增益 ✧", 0.36f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Draft Mode", ViewportPoint(960f, 225f, 0f), "三级规则改变选秀", 0.19f, new Color(0.62f, 0.62f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft Header", ViewportPoint(960f, 168f, 0f), "✧ 肉鸽选增益 ✧", 0.4f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft Mode", ViewportPoint(960f, 225f, 0f), "三级规则改变选秀", 0.2f, new Color(0.62f, 0.62f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
             });
             CreateRoundedPanelPx("Draft Player Pill", 822f, 311f, 276f, 80f, 40f, 2f, new Color(0.02f, 0.73f, 0.55f), new Color(0.0f, 0.18f, 0.17f, 0.78f));
             WithTextWeightCompensation(() =>
             {
                 CreateText("Draft Player Shield", ViewportPoint(879f, 352f, -0.02f), "♢", 0.14f, new Color(0.04f, 0.78f, 0.58f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Draft Player", ViewportPoint(987f, 353f, -0.02f), DraftPromptLabel(), 0.19f, new Color(0.04f, 0.78f, 0.58f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Draft Player", ViewportPoint(987f, 353f, -0.02f), DraftPromptLabel(), 0.2f, new Color(0.04f, 0.78f, 0.58f), TextAnchor.MiddleCenter, FontStyle.Bold);
             });
 
             var draftPool = GetVisibleDraftPool();
             const float cardWidth = 384f;
             const float gap = 36f;
             var startX = (1920f - draftPool.Count * cardWidth - Math.Max(0, draftPool.Count - 1) * gap) * 0.5f;
+            const float rootWidth = 1644f;
+            const float rootX = (1920f - rootWidth) * 0.5f;
             CreatePanelPx(
                 "Draft Card Scale Reference",
-                startX,
+                rootX,
                 440f,
-                draftPool.Count * cardWidth + Math.Max(0, draftPool.Count - 1) * gap,
+                rootWidth,
                 480f,
                 -0.07f,
                 new Color(0f, 0f, 0f, 0f),
@@ -1187,6 +1367,26 @@ namespace GemDuel.Presentation
             return player + "：" + Math.Max(1, count) + " 选 1";
         }
 
+        private bool IsHovered(string semanticKey)
+        {
+            return hoverContext != null && hoverContext.SemanticKey == semanticKey;
+        }
+
+        private bool IsHoveredAction(string eventType, string semanticKey = null)
+        {
+            if (hoverContext == null || hoverContext.Kind != "ActionButton")
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(semanticKey) && hoverContext.SemanticKey == semanticKey)
+            {
+                return true;
+            }
+
+            return hoverContext.EventType == eventType;
+        }
+
         private DraftBuffCopy ResolveDraftBuffCopy(string buffId)
         {
             var fallback = catalog != null && catalog.Buffs.TryGetValue(buffId, out var buff)
@@ -1197,11 +1397,11 @@ namespace GemDuel.Presentation
                 case "collector":
                     return new DraftBuffCopy("⚡", "控制", "收藏狂人", "你可以从对手的保留区直接保留卡牌。", "声望值:", "22");
                 case "royal_envoy":
-                    return new DraftBuffCopy("🏆", "胜利", "皇家特使", "在你的第 5 个回合完整结算后，拿取 1\n张剩余皇家卡。", "单色分数获胜:", "关闭");
+                    return new DraftBuffCopy("🏆", "胜利", "皇家特使", "在你的第 5 个回合完整结算后，拿取 1\n张剩余皇室卡。", "单色分数获胜:", "关闭");
                 case "minimalist":
-                    return new DraftBuffCopy("◎", "经济", "极简主义", "你购买的前 2 张卡提供双倍奖励。宝石\n持有上限：8。", string.Empty, string.Empty);
+                    return new DraftBuffCopy("◎", "经济", "极简主义", "你购买的前 2 张卡提供双倍奖励。\n宝石持有上限：8。", string.Empty, string.Empty);
                 case "echo_reservoir":
-                    return new DraftBuffCopy("◉", "情报", "回声水库", "记住对手上次购买卡牌的能力。你的发展卡\n购买会回响该记忆一次。", string.Empty, string.Empty);
+                    return new DraftBuffCopy("◉", "情报", "蓄能回响", "记住对手上一张已购买发展卡的特殊能力。\n你每次购买发展卡时都会结算一次回响，并在结算后清空记忆。", string.Empty, string.Empty);
                 case "wonder_architect":
                     return new DraftBuffCopy("◇", "胜利", "奇观建筑师", "你的皇家卡和特殊得分路线更容易\n形成终局压力。", string.Empty, string.Empty);
                 default:
@@ -1266,6 +1466,13 @@ namespace GemDuel.Presentation
             string footerValue
         )
         {
+            var semanticKey = "draft.buff." + index;
+            var isHovered = IsHovered(semanticKey);
+            if (isHovered)
+            {
+                CreateHoverFramePx("Draft Hover " + title, x - 8f, 432f, 400f, 496f, 28f, -0.06f);
+            }
+
             CreateRoundedPanelPx("Draft Card " + title, x, 440f, 384f, 480f, 24f, 3f, new Color(0.95f, 0.68f, 0.04f), new Color(0.15f, 0.08f, 0.085f));
             CreatePanelPx("Draft Card Target " + title, x, 440f, 384f, 480f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
@@ -1273,7 +1480,7 @@ namespace GemDuel.Presentation
                 target.EventType = "select_buff";
                 target.Index = index;
                 target.BuffId = buffId;
-            }, "draft.buff." + index);
+            }, semanticKey);
             CreateRoundedPanelPx("Draft Icon " + title, x + 32f, 472f, 56f, 56f, 16f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.32f, 0.21f, 0.22f), -0.04f);
             CreateRoundedPanelPx("Draft Level " + title, x + 279f, 472f, 68f, 40f, 20f, 1f, new Color(0.41f, 0.32f, 0.31f), new Color(0.23f, 0.11f, 0.12f), -0.04f);
             WithTextWeightCompensation(() =>
@@ -1281,16 +1488,16 @@ namespace GemDuel.Presentation
                 CreateText("Draft Icon Text " + title, ViewportPoint(x + 60f, 502f, -0.02f), icon, 0.16f, new Color(1f, 0.71f, 0.08f), TextAnchor.MiddleCenter, FontStyle.Bold);
                 CreateText("Draft Level Text " + title, ViewportPoint(x + 313f, 493f, -0.02f), "LVL 3", 0.1f, new Color(0.75f, 0.65f, 0.35f), TextAnchor.MiddleCenter, FontStyle.Bold);
                 CreateText("Draft Category " + title, ViewportPoint(x + 331f, 528f, -0.02f), category, 0.07f, new Color(0.7f, 0.58f, 0.34f), TextAnchor.MiddleRight, FontStyle.Bold);
-                CreateText("Draft Title " + title, ViewportPoint(x + 33f, 576f, -0.02f), title, 0.18f, new Color(1f, 0.93f, 0.54f), TextAnchor.MiddleLeft, FontStyle.Bold);
-                CreateText("Draft Description " + title, ViewportPoint(x + 33f, 646f, -0.02f), description, 0.1f, new Color(0.86f, 0.74f, 0.33f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Draft Title " + title, ViewportPoint(x + 33f, 576f, -0.02f), title, 0.195f, isHovered ? Color.white : new Color(1f, 0.93f, 0.54f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Draft Description " + title, ViewportPoint(x + 33f, 646f, -0.02f), description, 0.105f, isHovered ? new Color(1f, 0.89f, 0.5f) : new Color(0.86f, 0.74f, 0.33f), TextAnchor.MiddleLeft, FontStyle.Bold);
             });
             CreatePanelPx("Draft Divider " + title, x + 32f, 814f, 318f, 2f, -0.04f, new Color(0.34f, 0.22f, 0.2f));
             if (!string.IsNullOrEmpty(footerLabel))
             {
                 WithTextWeightCompensation(() =>
                 {
-                    CreateText("Draft Footer Label " + title, ViewportPoint(x + 33f, 848f, -0.02f), footerLabel, 0.08f, new Color(0.74f, 0.62f, 0.3f), TextAnchor.MiddleLeft, FontStyle.Bold);
-                    CreateText("Draft Footer Value " + title, ViewportPoint(x + 350f, 878f, -0.02f), footerValue, 0.08f, new Color(1f, 0.84f, 0.22f), TextAnchor.MiddleRight, FontStyle.Bold);
+                    CreateText("Draft Footer Label " + title, ViewportPoint(x + 33f, 848f, -0.02f), footerLabel, 0.085f, new Color(0.74f, 0.62f, 0.3f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                    CreateText("Draft Footer Value " + title, ViewportPoint(x + 350f, 878f, -0.02f), footerValue, 0.085f, new Color(1f, 0.84f, 0.22f), TextAnchor.MiddleRight, FontStyle.Bold);
                 });
             }
         }
@@ -1309,16 +1516,25 @@ namespace GemDuel.Presentation
             }
 
             CreatePanelPx("Preview Overlay", 0f, 0f, 1920f, 1080f, -0.28f, new Color(0.02f, 0.03f, 0.06f, 0.22f), false, null, "card.preview.overlay");
+            CreatePanelPx("Preview Backdrop Target", 0f, 0f, 1920f, 1080f, -0.35f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "ActionButton";
+                target.EventType = "preview-close";
+            }, "card.preview.backdrop");
             WithTextWeightCompensation(() =>
             {
                 CreateText("Preview Title", ViewportPoint(960f, 132f, -0.3f), "C A R D   P R E V I E W", 0.2f, new Color(1f, 0.94f, 0.65f), TextAnchor.MiddleCenter, FontStyle.Bold);
             });
+            if (IsHovered("card.preview.close"))
+            {
+                CreateRoundedPanelPx("Preview Close Hover", 1844f, 20f, 56f, 56f, 28f, 2f, new Color(1f, 0.92f, 0.45f, 0.95f), new Color(1f, 0.88f, 0.2f, 0.08f), -0.355f);
+            }
             CreateRoundedPanelPx("Preview Close", 1848f, 24f, 48f, 48f, 24f, 1f, new Color(1f, 1f, 1f, 0.2f), new Color(0.02f, 0.04f, 0.08f, 0.75f), -0.3f);
             CreatePanelPx("Preview Close Target", 1848f, 24f, 48f, 48f, -0.36f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "ActionButton";
                 target.EventType = "preview-close";
-            });
+            }, "card.preview.close");
             CreateText("Preview Close Text", ViewportPoint(1872f, 48f, -0.32f), "×", 0.13f, Color.white, TextAnchor.MiddleCenter);
             var previewRect = new Rect(754f, 264f, 412f, 552f);
             if (!string.IsNullOrEmpty(cardLabel))
@@ -1329,6 +1545,12 @@ namespace GemDuel.Presentation
             {
                 CreatePanelPx("Preview Card", previewRect.x, previewRect.y, previewRect.width, previewRect.height, -0.34f, new Color(0.86f, 0.83f, 0.74f));
             }
+            CreatePanelPx("Preview Card Hit Blocker", previewRect.x, previewRect.y, previewRect.width, previewRect.height, -0.37f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "PreviewCard";
+                target.EventType = "preview-card";
+                target.InstanceId = cardLabel;
+            }, "card.preview.card");
             if (CanConfirmPreviewAction("buy_card"))
             {
                 CreatePreviewActionButtonPx(
@@ -1457,6 +1679,12 @@ namespace GemDuel.Presentation
 
         private void CreateTopbarControl(float centerX, string label)
         {
+            var semanticKey = label == "⚙" ? "settings.control" : string.Empty;
+            if (!string.IsNullOrEmpty(semanticKey) && IsHovered(semanticKey))
+            {
+                CreateHoverFramePx("Topbar Control Hover " + label, centerX - 27f, 3f, 54f, 54f, 27f, -0.07f);
+            }
+
             CreateRoundedPanelPx("Topbar Control " + label, centerX - 24f, 6f, 48f, 48f, 24f, 1f, new Color(0.72f, 0.78f, 0.9f, 0.56f), new Color(0.03f, 0.04f, 0.08f, 0.68f), -0.04f);
             if (label == "⚙")
             {
@@ -1464,7 +1692,7 @@ namespace GemDuel.Presentation
                 {
                     target.Kind = "ActionButton";
                     target.EventType = "open_settings";
-                });
+                }, semanticKey);
             }
 
             CreateText("Topbar Control Label " + label, ViewportPoint(centerX, 30f, -0.06f), label, 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -1780,13 +2008,23 @@ namespace GemDuel.Presentation
             if (eventType == "replenish")
             {
                 var board = BoardFrameRect();
+                var actionWidth = 184f;
+                var actionHeight = 44f;
+                var actionTopGap = 16f;
+                if (UseCompactLiveActionLayout())
+                {
+                    actionWidth = board.width * (136.51f / 412.87f);
+                    actionHeight = board.height * (38.36f / 412.87f);
+                    actionTopGap = board.height * (17.36f / 412.87f);
+                }
+
                 CreateActionButtonPx(
                     "Replenish",
                     "replenish",
-                    board.x + board.width * 0.5f - 92f,
-                    board.y + board.height + 16f,
-                    184f,
-                    44f,
+                    board.x + board.width * 0.5f - actionWidth * 0.5f,
+                    board.y + board.height + actionTopGap,
+                    actionWidth,
+                    actionHeight,
                     new Color(0.18f, 0.55f, 0.86f),
                     "turn.end"
                 );
@@ -1821,6 +2059,12 @@ namespace GemDuel.Presentation
             var pos = ViewportRectCenter(rect, 0f);
             var isExpected = IsNextCoord(row, column);
             var isSelected = selectedGemCoords.Contains(new Vector2Int(row, column));
+            var semanticKey = "board.cell." + row + "." + column;
+            if (IsHovered(semanticKey))
+            {
+                CreateHoverFramePx("Gem Hover " + row + "," + column, rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f, 16f, -0.07f);
+            }
+
             if (isExpected || isSelected)
             {
                 CreatePanelPx(
@@ -1835,7 +2079,7 @@ namespace GemDuel.Presentation
 
             if (gemId == "empty")
             {
-                CreatePanelPx("Gem " + row + "," + column + " empty", rect.x, rect.y, rect.width, rect.height, new Color(0f, 0f, 0f, 0f), false, null, "board.cell." + row + "." + column);
+                CreatePanelPx("Gem " + row + "," + column + " empty", rect.x, rect.y, rect.width, rect.height, new Color(0f, 0f, 0f, 0f), false, null, semanticKey);
                 return;
             }
 
@@ -1845,7 +2089,7 @@ namespace GemDuel.Presentation
                 target.Row = row;
                 target.Column = column;
                 target.GemId = gemId;
-            }, "board.cell." + row + "." + column);
+            }, semanticKey);
         }
 
         private Rect MarketDeckRect(int level)
@@ -1939,6 +2183,11 @@ namespace GemDuel.Presentation
                 return 49.45f;
             }
 
+            if (previewInteractionLayoutSticky)
+            {
+                return 49.45f;
+            }
+
             var previousEventType = PreviousReplayEventType();
             var keepsLiveLayout =
                 previousEventType == "buy_card" ||
@@ -1993,6 +2242,12 @@ namespace GemDuel.Presentation
         private void CreateMarketCard(string instanceId, int level, int index, Rect rect)
         {
             var isTarget = IsNextMarketCard(instanceId, level, index);
+            var semanticKey = "market.card." + level + "." + index;
+            if (IsHovered(semanticKey))
+            {
+                CreateHoverFramePx("Market Hover " + instanceId, rect.x - 4f, rect.y - 4f, rect.width + 8f, rect.height + 8f, 8f, -0.07f);
+            }
+
             if (isTarget)
             {
                 CreatePanelPx("Market Highlight " + instanceId, rect.x - 2f, rect.y - 2f, rect.width + 4f, rect.height + 4f, new Color(1f, 0.82f, 0.22f));
@@ -2004,7 +2259,7 @@ namespace GemDuel.Presentation
                 target.Level = level;
                 target.Index = index;
                 target.InstanceId = instanceId;
-            }, "market.card." + level + "." + index);
+            }, semanticKey);
         }
 
         private void CreateRoyalCard(string royalId, Rect rect)
@@ -2066,6 +2321,21 @@ namespace GemDuel.Presentation
 
         private void CreateActionButton(string text, string eventType, Vector3 pos, Vector2 size, Color color, string semanticKey = null)
         {
+            if (IsHoveredAction(eventType, semanticKey))
+            {
+                var center = WorldToReferenceViewport(pos);
+                var rectSize = new Vector2(size.x / AutomationViewportWorldSize().x * 1920f, size.y / AutomationViewportWorldSize().y * 1080f);
+                CreateHoverFramePx(
+                    "Action Hover " + eventType,
+                    center.x - rectSize.x * 0.5f - 4f,
+                    center.y - rectSize.y * 0.5f - 4f,
+                    rectSize.x + 8f,
+                    rectSize.y + 8f,
+                    12f,
+                    pos.z - 0.03f
+                );
+            }
+
             CreatePanel("Action " + eventType, pos, size, color, true, target =>
             {
                 target.Kind = "ActionButton";
@@ -2085,6 +2355,11 @@ namespace GemDuel.Presentation
             string semanticKey = null
         )
         {
+            if (IsHoveredAction(eventType, semanticKey))
+            {
+                CreateHoverFramePx("Action Hover " + eventType, x - 4f, y - 4f, width + 8f, height + 8f, 16f, -0.13f);
+            }
+
             CreatePanelPx("Action " + eventType, x, y, width, height, -0.12f, color, true, target =>
             {
                 target.Kind = "ActionButton";
@@ -2111,6 +2386,11 @@ namespace GemDuel.Presentation
             string semanticKey = null
         )
         {
+            if (IsHoveredAction(eventType, semanticKey))
+            {
+                CreateHoverFramePx("Preview Action Hover " + eventType, x - 4f, y - 4f, width + 8f, height + 8f, 16f, -0.405f);
+            }
+
             CreateRoundedPanelPx(
                 "Preview Action " + eventType,
                 x,
@@ -2591,6 +2871,22 @@ namespace GemDuel.Presentation
             );
         }
 
+        private void CreateHoverFramePx(string name, float x, float y, float width, float height, float radiusPx, float z)
+        {
+            CreateRoundedPanelPx(
+                name,
+                x,
+                y,
+                width,
+                height,
+                radiusPx,
+                4f,
+                new Color(1f, 0.86f, 0.22f, 0.95f),
+                new Color(1f, 0.74f, 0.08f, 0.08f),
+                z
+            );
+        }
+
         private Texture2D GetRoundedRectTexture(
             float width,
             float height,
@@ -2724,8 +3020,13 @@ namespace GemDuel.Presentation
                         TextPixelOffset(0.55f, 0f),
                         TextPixelOffset(-0.35f, 0f),
                         TextPixelOffset(0f, 0.4f),
+                        TextPixelOffset(0.25f, -0.25f),
                     }
-                    : new[] { TextPixelOffset(0.45f, 0f) };
+                    : new[]
+                    {
+                        TextPixelOffset(0.45f, 0f),
+                        TextPixelOffset(0f, 0.32f),
+                    };
                 for (var index = 0; index < offsets.Length; index += 1)
                 {
                     CreateTextMesh(
@@ -2755,7 +3056,8 @@ namespace GemDuel.Presentation
             mesh.characterSize = size * (14f / mesh.fontSize);
             mesh.fontStyle = style;
             mesh.anchor = anchor;
-            mesh.alignment = TextAlignment.Center;
+            mesh.alignment = TextAlignmentForAnchor(anchor);
+            mesh.lineSpacing = 1.12f;
             mesh.color = ApplyRenderOpacity(color);
             var meshRenderer = label.GetComponent<MeshRenderer>();
             if (meshRenderer != null && mesh.font != null)
@@ -2793,6 +3095,23 @@ namespace GemDuel.Presentation
         {
             var size = AutomationViewportWorldSize();
             return new Vector3((x / 1920f) * size.x, (-y / 1080f) * size.y, 0f);
+        }
+
+        private static TextAlignment TextAlignmentForAnchor(TextAnchor anchor)
+        {
+            switch (anchor)
+            {
+                case TextAnchor.LowerLeft:
+                case TextAnchor.MiddleLeft:
+                case TextAnchor.UpperLeft:
+                    return TextAlignment.Left;
+                case TextAnchor.LowerRight:
+                case TextAnchor.MiddleRight:
+                case TextAnchor.UpperRight:
+                    return TextAlignment.Right;
+                default:
+                    return TextAlignment.Center;
+            }
         }
 
         private void WithRenderOpacity(float opacity, Action render)
@@ -2844,6 +3163,9 @@ namespace GemDuel.Presentation
                     "Source Han Sans SC",
                     "Microsoft YaHei",
                     "Microsoft YaHei UI",
+                    "PingFang SC",
+                    "Hiragino Sans GB",
+                    "Segoe UI Variable Text",
                     "Segoe UI",
                     "Arial",
                 },
@@ -3277,8 +3599,26 @@ namespace GemDuel.Presentation
                 return true;
             }
 
+            if (previewInteractionLayoutSticky)
+            {
+                return true;
+            }
+
             var previousEventType = PreviousReplayEventType();
             return previousEventType == "replenish" || previousEventType == "select_royal";
+        }
+
+        private bool UseCompactLiveActionLayout()
+        {
+            if (!automationInteractiveReplayMode)
+            {
+                return false;
+            }
+
+            return previewContext != null
+                || previewInteractionLayoutSticky
+                || settingsOpen
+                || !string.IsNullOrEmpty(errorBanner);
         }
 
         private static JObject FindSemanticTarget(JArray targets, string semanticKey)
@@ -3847,6 +4187,79 @@ namespace GemDuel.Presentation
             public int Level;
             public int Index;
             public string InstanceId;
+        }
+
+        private sealed class HoverContext
+        {
+            public string SemanticKey;
+            public string Kind;
+            public string EventType;
+            public int Row;
+            public int Column;
+            public int Level;
+            public int Index;
+            public string InstanceId;
+            public string RoyalId;
+            public string GemId;
+            public string BuffId;
+
+            public static HoverContext FromTarget(GemDuelViewTarget target)
+            {
+                return new HoverContext
+                {
+                    SemanticKey = string.IsNullOrEmpty(target.SemanticKey)
+                        ? BuildTargetKey(target)
+                        : target.SemanticKey,
+                    Kind = target.Kind,
+                    EventType = target.EventType,
+                    Row = target.Row,
+                    Column = target.Column,
+                    Level = target.Level,
+                    Index = target.Index,
+                    InstanceId = target.InstanceId,
+                    RoyalId = target.RoyalId,
+                    GemId = target.GemId,
+                    BuffId = target.BuffId,
+                };
+            }
+
+            public static bool SameTarget(HoverContext left, HoverContext right)
+            {
+                if (left == null || right == null)
+                {
+                    return left == null && right == null;
+                }
+
+                return left.SemanticKey == right.SemanticKey
+                    && left.Kind == right.Kind
+                    && left.EventType == right.EventType
+                    && left.Row == right.Row
+                    && left.Column == right.Column
+                    && left.Level == right.Level
+                    && left.Index == right.Index
+                    && left.InstanceId == right.InstanceId
+                    && left.RoyalId == right.RoyalId
+                    && left.GemId == right.GemId
+                    && left.BuffId == right.BuffId;
+            }
+
+            private static string BuildTargetKey(GemDuelViewTarget target)
+            {
+                var parts = new[]
+                {
+                    target.Kind,
+                    target.EventType,
+                    target.Level >= 0 ? "level:" + target.Level : string.Empty,
+                    target.Index >= 0 ? "index:" + target.Index : string.Empty,
+                    target.Row >= 0 ? "row:" + target.Row : string.Empty,
+                    target.Column >= 0 ? "column:" + target.Column : string.Empty,
+                    target.InstanceId,
+                    target.RoyalId,
+                    target.GemId,
+                    target.BuffId,
+                };
+                return string.Join("|", parts.Where(part => !string.IsNullOrEmpty(part)));
+            }
         }
 
         private sealed class DraftBuffCopy

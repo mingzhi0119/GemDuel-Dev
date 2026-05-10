@@ -69,6 +69,22 @@ const scenarioDefinitions = [
         ],
     },
     {
+        id: 'draft-hover-feedback',
+        name: 'Draft hover feedback parity',
+        revision: null,
+        expectedSharedState:
+            'P1 hovers the visible Royal Envoy level-3 boon card; both clients expose a real hover target and visible hover affordance without committing the draft.',
+        actions: [
+            { action: 'reset' },
+            {
+                action: 'start_local_game',
+                payload: { rawText: { __replayText: true }, revision: 0, interactive: true },
+            },
+            { action: 'hover_boon', payload: { index: 1, buffId: 'royal_envoy' } },
+        ],
+        electronHoverSelector: '[data-draft-buff-id="royal_envoy"]',
+    },
+    {
         id: 'initial-board-render',
         name: 'Initial board render parity',
         revision: 2,
@@ -81,6 +97,17 @@ const scenarioDefinitions = [
         revision: 2,
         expectedSharedState: 'Preview opens without mutating shared state.',
         actionsAfterLoad: [{ action: 'click_market_card', payload: { level: 1, index: 0 } }],
+    },
+    {
+        id: 'preview-blank-dismiss',
+        name: 'Preview blank dismiss parity',
+        revision: 2,
+        expectedSharedState:
+            'A market-card preview opens, then a blank/background click closes it and returns to the game without mutating shared state.',
+        actionsAfterLoad: [
+            { action: 'click_market_card', payload: { level: 1, index: 0 } },
+            { action: 'click_preview_blank', payload: { x: 240, y: 280 } },
+        ],
     },
     {
         id: 'buy-card',
@@ -439,6 +466,12 @@ JSON.stringify(Boolean(window.__GEMDUEL_PARITY__ && window.__GEMDUEL_PARITY__.is
         buildElectronScript(scenario, replayBase64),
         90000
     );
+    if (scenario.electronHoverSelector) {
+        await agentNoOutput(session, ['hover', scenario.electronHoverSelector], {
+            timeoutMs: 60000,
+        });
+        await agentNoOutput(session, ['wait', '300'], { timeoutMs: 60000 });
+    }
     const screenshotPath = path.join(scenarioDir, `${viewportId}.png`);
     const statePath = path.join(scenarioDir, `${viewportId}-state.json`);
     await agentNoOutput(session, ['screenshot', screenshotPath], { timeoutMs: 60000 });
@@ -628,6 +661,12 @@ const actionDriverOk = (source, result) => {
         return true;
     }
 
+    if (result.action === 'hover_boon') {
+        return source === 'unity'
+            ? result.driver === 'unity-hover-target'
+            : result.driver === 'dom-hover';
+    }
+
     return source === 'unity'
         ? result.driver === 'unity-hit-target'
         : result.driver === 'dom-click';
@@ -786,6 +825,8 @@ const requiredSemanticKeys = [
     'market.card.2.0',
     'market.card.3.0',
     'card.preview.overlay',
+    'card.preview.backdrop',
+    'card.preview.card',
     'card.preview.primaryAction',
     'player.current.zone',
     'player.opponent.zone',
@@ -850,6 +891,73 @@ const buildBoundingBoxReport = (electronState, unityState) => {
         comparisons,
         electron,
         unity,
+    };
+};
+
+const buildTypographyReport = (electronState, unityState) => {
+    const normalizeText = (value) =>
+        String(value ?? '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    const compactText = (value) => normalizeText(value).replace(/\s/g, '');
+    const electron = electronState?.visible?.typography ?? [];
+    const unity = unityState?.typography ?? [];
+    const failures = [];
+    const electronDraftTexts = electron
+        .filter(
+            (sample) =>
+                sample.selector === '[data-draft-buff-title]' ||
+                sample.selector === '[data-draft-buff-description]'
+        )
+        .map((sample) => compactText(sample.text))
+        .filter(Boolean);
+    const unityDraftSamples = unity.filter(
+        (sample) =>
+            String(sample.key ?? '').startsWith('Draft Title ') ||
+            String(sample.key ?? '').startsWith('Draft Description ')
+    );
+
+    for (const text of electronDraftTexts) {
+        if (!unityDraftSamples.some((sample) => compactText(sample.text).includes(text))) {
+            failures.push({ reason: 'Missing Unity draft typography text sample.', text });
+        }
+    }
+
+    for (const sample of unityDraftSamples) {
+        if (String(sample.alignment) !== 'Left') {
+            failures.push({
+                reason: 'Unity draft card text is not left aligned like Electron.',
+                key: sample.key,
+                alignment: sample.alignment,
+            });
+        }
+        if (!sample.font) {
+            failures.push({
+                reason: 'Unity typography sample did not resolve a runtime font.',
+                key: sample.key,
+            });
+        }
+        if (Number(sample.lineSpacing) < 1.05) {
+            failures.push({
+                reason: 'Unity typography line spacing is below the Electron-aligned minimum.',
+                key: sample.key,
+                lineSpacing: sample.lineSpacing,
+            });
+        }
+    }
+
+    if (electronDraftTexts.length > 0 && unityDraftSamples.length === 0) {
+        failures.push({
+            reason: 'Electron draft typography was visible but Unity emitted no draft typography samples.',
+        });
+    }
+
+    return {
+        ok: failures.length === 0,
+        failureCount: failures.length,
+        electronSampleCount: electron.length,
+        unitySampleCount: unity.length,
+        failures,
     };
 };
 
@@ -999,8 +1107,11 @@ const main = async () => {
                     visualDiff.visualMetricOk = Boolean(visualDiff.ok);
                     visualDiff.pixelOk = Boolean(visualDiff.ok);
                     visualDiff.boundingBoxes = buildBoundingBoxReport(electron.state, unityState);
+                    visualDiff.typography = buildTypographyReport(electron.state, unityState);
                     visualDiff.ok = Boolean(
-                        visualDiff.visualMetricOk && visualDiff.boundingBoxes.ok
+                        visualDiff.visualMetricOk &&
+                        visualDiff.boundingBoxes.ok &&
+                        visualDiff.typography.ok
                     );
                 }
 

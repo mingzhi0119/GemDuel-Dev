@@ -195,6 +195,139 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void DraftBoonCardsExposeHoverStateThroughInputController()
+        {
+            var root = new GameObject("GemDuel Draft Boon Hover Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+                var controller = root.AddComponent<GemDuelInputController>();
+                var royalEnvoyTarget = Object
+                    .FindObjectsByType<GemDuelViewTarget>()
+                    .First(target =>
+                        target.Kind == "Buff" && target.BuffId == "royal_envoy" && target.Clickable
+                    );
+                var screenPoint = Camera.main.WorldToScreenPoint(royalEnvoyTarget.transform.position);
+
+                Assert.IsTrue(
+                    controller.TryHoverScreenPointForEvidence(screenPoint, out var error),
+                    error
+                );
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var hover = (JObject)after["hover"];
+                Assert.NotNull(hover);
+                Assert.AreEqual("draft.buff.1", hover.Value<string>("semanticKey"));
+                Assert.AreEqual("royal_envoy", hover.Value<string>("buffId"));
+                Assert.AreEqual("pointer", hover.Value<string>("cursor"));
+                var draftRoot = FindVisibleTarget(after, "draft.root");
+                var draftRootRect = (JObject)draftRoot["rect"];
+                Assert.AreEqual(138d, draftRootRect.Value<double>("x"), 0.02d);
+                Assert.AreEqual(1644d, draftRootRect.Value<double>("width"), 0.02d);
+                Assert.NotNull(FindTextMesh("Draft Title 皇家特使"));
+                var descriptionText = FindTextMesh("Draft Description 皇家特使");
+                Assert.NotNull(descriptionText);
+                Assert.AreEqual(TextAlignment.Left, descriptionText.alignment);
+                Assert.IsTrue(
+                    Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None)
+                        .Any(obj => obj != null && obj.name == "Draft Hover 皇家特使")
+                );
+
+                controller.TryHoverScreenPointForEvidence(new Vector3(-1000f, -1000f, 0f), out _);
+                var cleared = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.IsTrue(cleared["hover"] == null || cleared["hover"].Type == JTokenType.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                foreach (var obj in Object.FindObjectsByType<GameObject>())
+                {
+                    if (obj == null)
+                    {
+                        continue;
+                    }
+
+                    if (
+                        obj.name == "GemDuel Rendered State"
+                        || obj.name == "Status Topbar"
+                        || obj.name == "GemDuel Camera"
+                    )
+                    {
+                        Object.DestroyImmediate(obj);
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void PreviewBackdropBlankClickDismissesThroughViewportHitTarget()
+        {
+            var root = new GameObject("GemDuel Preview Blank Dismiss Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+                Assert.IsTrue(slice.ApplyFixtureEventsForAutomation(2, out var prepareError), prepareError);
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "click_market_card",
+                        new JObject { ["level"] = 1, ["index"] = 0 },
+                        out var previewError
+                    ),
+                    previewError
+                );
+
+                var beforeDismiss = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.NotNull(beforeDismiss["preview"]);
+                Assert.IsTrue(
+                    ((JArray)beforeDismiss["visibleTargets"]).Any(target =>
+                        target.Value<string>("semanticKey") == "card.preview.backdrop"
+                        && target.Value<bool?>("clickable") == true
+                    )
+                );
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "click_preview_blank",
+                        new JObject { ["x"] = 240, ["y"] = 280 },
+                        out var dismissError
+                    ),
+                    dismissError
+                );
+
+                var afterDismiss = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.IsTrue(afterDismiss["preview"] == null || afterDismiss["preview"].Type == JTokenType.Null);
+                Assert.AreEqual("Preview closed.", afterDismiss.Value<string>("statusText"));
+                var turnEnd = FindVisibleTarget(afterDismiss, "turn.end");
+                var turnEndRect = (JObject)turnEnd["rect"];
+                Assert.AreEqual(136.51d, turnEndRect.Value<double>("width"), 0.02d);
+                var royalFeatured = FindVisibleTarget(afterDismiss, "royal.featured");
+                var royalFeaturedRect = (JObject)royalFeatured["rect"];
+                Assert.AreEqual(255.85d, royalFeaturedRect.Value<double>("y"), 0.02d);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                foreach (var obj in Object.FindObjectsByType<GameObject>())
+                {
+                    if (obj == null)
+                    {
+                        continue;
+                    }
+
+                    if (
+                        obj.name == "GemDuel Rendered State"
+                        || obj.name == "Status Topbar"
+                        || obj.name == "GemDuel Camera"
+                    )
+                    {
+                        Object.DestroyImmediate(obj);
+                    }
+                }
+            }
+        }
+
+        [Test]
         public void MinimalTakeGemsMutationUpdatesBoardAndInventoryBetweenCheckpoints()
         {
             var replay = LoadReplay("local-pvp-royal-extra-turn-game-over.replay.json");
@@ -359,6 +492,15 @@ namespace GemDuel.Tests.EditMode
             }
 
             return null;
+        }
+
+        private static JObject FindVisibleTarget(JObject automationState, string semanticKey)
+        {
+            var target = ((JArray)automationState["visibleTargets"])
+                .OfType<JObject>()
+                .FirstOrDefault(candidate => candidate.Value<string>("semanticKey") == semanticKey);
+            Assert.NotNull(target, "Missing visible target " + semanticKey);
+            return target;
         }
     }
 }

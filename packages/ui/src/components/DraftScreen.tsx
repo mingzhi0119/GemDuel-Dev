@@ -258,6 +258,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
 
                                     {/* Title */}
                                     <h3
+                                        data-draft-buff-title={buff.id}
                                         className={`text-xl font-black mb-3 leading-tight transition-colors
                                 ${theme === 'dark' ? 'group-hover:text-white' : 'text-slate-900 group-hover:text-amber-600'}`}
                                     >
@@ -266,6 +267,7 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
 
                                     {/* Description */}
                                     <p
+                                        data-draft-buff-description={buff.id}
                                         className={`text-xs font-medium leading-relaxed mb-4 flex-grow
                                 ${theme === 'dark' ? 'opacity-80' : 'text-slate-600'}`}
                                     >
