@@ -41,6 +41,7 @@ namespace GemDuel.Presentation
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> grayscaleTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> displayTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private Texture2D draftBackgroundTexture;
         private Font uiFont;
         private float renderOpacity = 1f;
         private bool compensateTextWeight;
@@ -856,7 +857,7 @@ namespace GemDuel.Presentation
         {
             ClearRenderedState();
             renderRoot = new GameObject("GemDuel Rendered State");
-            CreatePanel("Draft Background", new Vector3(0f, 0f, 0.45f), AutomationViewportWorldSize(), new Color(0f, 0.01f, 0.055f), false, null, "app.shell");
+            CreateImagePanel("Draft Background", new Vector3(0f, 0f, 0.45f), AutomationViewportWorldSize(), GetDraftBackgroundTexture(), false, null, "app.shell");
             WithTextWeightCompensation(() =>
             {
                 CreateText("Draft Shell Label", ViewportPoint(1840f, 29f, 0f), "▱ 草稿自定义", 0.055f, new Color(0.95f, 0.72f, 0.05f), TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -917,7 +918,7 @@ namespace GemDuel.Presentation
             string footerValue
         )
         {
-            CreateRoundedPanelPx("Draft Card " + title, x, 440f, 384f, 480f, 24f, 3f, new Color(0.95f, 0.68f, 0.04f), new Color(0.18f, 0.055f, 0.06f));
+            CreateRoundedPanelPx("Draft Card " + title, x, 440f, 384f, 480f, 24f, 3f, new Color(0.95f, 0.68f, 0.04f), new Color(0.15f, 0.08f, 0.085f));
             CreateRoundedPanelPx("Draft Icon " + title, x + 32f, 472f, 56f, 56f, 16f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.32f, 0.21f, 0.22f), -0.04f);
             CreateRoundedPanelPx("Draft Level " + title, x + 279f, 472f, 68f, 40f, 20f, 1f, new Color(0.41f, 0.32f, 0.31f), new Color(0.23f, 0.11f, 0.12f), -0.04f);
             WithTextWeightCompensation(() =>
@@ -1888,6 +1889,43 @@ namespace GemDuel.Presentation
             {
                 return source;
             }
+        }
+
+        private Texture2D GetDraftBackgroundTexture()
+        {
+            if (draftBackgroundTexture != null)
+            {
+                return draftBackgroundTexture;
+            }
+
+            const int width = 960;
+            const int height = 540;
+            var baseColor = new Color(0.008f, 0.024f, 0.09f, 1f);
+            var purple = new Color(0.34f, 0.11f, 0.53f, 1f);
+            var pixels = new Color32[width * height];
+            var center = new Vector2(width * 0.5f, height * 0.5f);
+            var radius = height * 0.48f;
+
+            for (var y = 0; y < height; y += 1)
+            {
+                for (var x = 0; x < width; x += 1)
+                {
+                    var distance = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center);
+                    var falloff = Mathf.Clamp01(1f - distance / radius);
+                    falloff = falloff * falloff * 0.12f;
+                    pixels[y * width + x] = (Color32)Color.Lerp(baseColor, purple, falloff);
+                }
+            }
+
+            draftBackgroundTexture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+            {
+                name = "GemDuel Draft Radial Background",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+            };
+            draftBackgroundTexture.SetPixels32(pixels);
+            draftBackgroundTexture.Apply(false, true);
+            return draftBackgroundTexture;
         }
 
         private GameObject CreateImagePanel(
