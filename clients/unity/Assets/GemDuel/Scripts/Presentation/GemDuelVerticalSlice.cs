@@ -839,8 +839,8 @@ namespace GemDuel.Presentation
             }, "mode.local");
 
             CreatePanelPx("Menu Divider", 800f, 792f, 320f, 1f, new Color(0.08f, 0.11f, 0.18f));
-            CreateRoundedPanelPx("Mode Online", 672f, 817f, 263f, 118f, 24f, 3f, new Color(0.06f, 0.21f, 0.43f), new Color(0.015f, 0.045f, 0.1f));
-            CreateRoundedPanelPx("Mode LAN", 960f, 817f, 288f, 118f, 24f, 3f, new Color(0.02f, 0.35f, 0.29f), new Color(0.01f, 0.09f, 0.08f));
+                CreateRoundedPanelPx("Mode Online", 672f, 817f, 263f, 118f, 24f, 3f, new Color(0.06f, 0.21f, 0.43f), new Color(0.02f, 0.05f, 0.14f));
+                CreateRoundedPanelPx("Mode LAN", 960f, 817f, 288f, 118f, 24f, 3f, new Color(0.02f, 0.35f, 0.29f), new Color(0.012f, 0.059f, 0.114f));
             WithTextWeightCompensation(() =>
             {
                 CreateGlobeIconPx(738f, 876f, new Color(0.38f, 0.65f, 0.98f));
@@ -983,9 +983,38 @@ namespace GemDuel.Presentation
         private void RenderSettingsOverlay()
         {
             var rect = new Rect(1722f, 60f, 186f, 228.83f);
-            CreatePanelPx("Settings Panel", rect.x, rect.y, rect.width, rect.height, -0.3f, new Color(0.1f, 0.12f, 0.16f), false, null, "settings.panel");
-            CreateText("Settings Title", ViewportPoint(1815f, 92f, -0.32f), "设置", 0.16f, Color.white, TextAnchor.MiddleCenter);
-            CreateText("Settings Body", ViewportPoint(1815f, 172f, -0.32f), "English   中文\nTheme: dark\nSound: on", 0.09f, new Color(0.86f, 0.89f, 0.95f), TextAnchor.MiddleCenter);
+            CreateRoundedPanelPx("Settings Panel", rect.x, rect.y, rect.width, rect.height, 8f, 1f, new Color(0.17f, 0.21f, 0.31f), new Color(0.06f, 0.08f, 0.13f, 0.96f), -0.3f);
+            CreatePanelPx("Settings Panel Target", rect.x, rect.y, rect.width, rect.height, -0.31f, new Color(0f, 0f, 0f, 0f), false, null, "settings.panel");
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("Settings Title", ViewportPoint(1734f, 76f, -0.32f), "设置", 0.032f, new Color(0.63f, 0.69f, 0.8f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Settings Locale Label", ViewportPoint(1734f, 96f, -0.32f), "语言", 0.032f, new Color(0.63f, 0.69f, 0.8f), TextAnchor.MiddleLeft, FontStyle.Bold);
+            });
+            CreateRoundedPanelPx("Settings Locale Segmented", 1731f, 106f, 165f, 30f, 15f, 1f, new Color(0.18f, 0.24f, 0.36f), new Color(0.04f, 0.08f, 0.15f), -0.32f);
+            CreateRoundedPanelPx("Settings Locale Active", 1827f, 111f, 36f, 20f, 10f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("Settings Locale English", ViewportPoint(1792f, 122f, -0.34f), "English", 0.034f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Settings Locale Chinese", ViewportPoint(1845f, 122f, -0.34f), "中文", 0.034f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            });
+            RenderSettingsRow("Sound", 1730f, 142f, "♬", "音效", false);
+            RenderSettingsRow("Save", 1730f, 178f, "▣", "保存", false);
+            RenderSettingsRow("Load", 1730f, 214f, "▤", "读取", false);
+            RenderSettingsRow("Theme", 1730f, 250f, "⚙", "皇室奢华", true);
+        }
+
+        private void RenderSettingsRow(string name, float x, float y, string icon, string label, bool dropdown)
+        {
+            CreateRoundedPanelPx("Settings Row " + name, x, y, 168f, 30f, 5f, 1f, new Color(0.18f, 0.24f, 0.36f), new Color(0.05f, 0.08f, 0.14f), -0.32f);
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("Settings Row Icon " + name, ViewportPoint(x + 18f, y + 16f, -0.34f), icon, 0.035f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Settings Row Label " + name, ViewportPoint(x + 55f, y + 16f, -0.34f), label, 0.034f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                if (dropdown)
+                {
+                    CreateText("Settings Row Dropdown " + name, ViewportPoint(x + 154f, y + 16f, -0.34f), "⌄", 0.036f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                }
+            });
         }
 
         private void RenderErrorBanner()
