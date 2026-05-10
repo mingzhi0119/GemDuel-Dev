@@ -25,6 +25,8 @@ type ReplayEventLike = {
     royalId?: string;
 };
 type ParityParamsRef = { current: UseElectronUnityParityHarnessParams };
+const SETTINGS_CONTROL_SELECTOR =
+    'button[aria-label="Settings"], button[aria-label="设置"], [data-game-glyph="settings"]';
 
 export const createElectronUnityParityApi = (
     paramsRef: ParityParamsRef
@@ -205,13 +207,21 @@ export const createElectronUnityParityApi = (
         loadedReplayHistory = history;
         loadedReplayEvents = replay.events as ReplayEventLike[];
         loadedReplayRevision = clampedRevision;
-        await waitForCondition(
-            () =>
-                currentParams().game.historyControls.historySource === 'replay-import' &&
-                currentParams().game.historyControls.historyLength === clampedRevision + 1 &&
+        const rendered = await waitForCondition(() => {
+            const controls = currentParams().game.historyControls;
+            return (
+                controls.historySource === 'replay-import' &&
+                controls.historyLength === clampedRevision + 1 &&
                 hasRenderedCurrentRoute()
+            );
+        }, 240);
+        return result(
+            action,
+            rendered,
+            rendered
+                ? `Loaded replay revision ${clampedRevision}.`
+                : `Replay revision ${clampedRevision} did not render before timeout.`
         );
-        return result(action, true, `Loaded replay revision ${clampedRevision}.`);
     };
 
     const clickMarketCard = async (action: ParityAction, payload: Record<string, unknown>) => {
@@ -316,11 +326,16 @@ export const createElectronUnityParityApi = (
     };
 
     const openSettings = async (action: ParityAction) => {
-        const ok = clickElement(
-            'button[aria-label="Settings"], button[aria-label="设置"], [data-game-glyph="settings"]'
+        const hasControl = () => Boolean(document.querySelector(SETTINGS_CONTROL_SELECTOR));
+        const hasPanel = () => Boolean(document.querySelector('[data-settings-menu]'));
+        const ready = await waitForCondition(() => hasRenderedCurrentRoute() && hasControl(), 240);
+        const ok = ready && clickElement(SETTINGS_CONTROL_SELECTOR);
+        const panelVisible = ok && (await waitForCondition(hasPanel, 120));
+        return result(
+            action,
+            panelVisible,
+            panelVisible ? undefined : 'Settings control or panel not found.'
         );
-        await waitForStableFrame();
-        return result(action, ok, ok ? undefined : 'Settings control not found.');
     };
 
     const changeSetting = async (action: ParityAction, payload: Record<string, unknown>) => {

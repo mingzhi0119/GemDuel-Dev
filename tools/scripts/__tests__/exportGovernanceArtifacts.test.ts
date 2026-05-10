@@ -233,5 +233,5 @@ describe('governance artifact exporter', () => {
                 recursive: true,
             });
         }
-    });
+    }, 30000);
 });

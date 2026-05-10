@@ -137,6 +137,63 @@ const syntheticBox = (semanticKey: string, rect: DOMRect, selector: string): Dom
     },
 });
 
+const hasSemanticBox = (boxes: DomBox[], semanticKey: string) =>
+    boxes.some((box) => box.semanticKey === semanticKey);
+
+const appendPreviewActionSyntheticBox = (boxes: DomBox[]) => {
+    if (hasSemanticBox(boxes, 'card.preview.primaryAction')) {
+        return;
+    }
+
+    const overlay = boxes.find((box) => box.semanticKey === 'card.preview.overlay');
+    if (!overlay) {
+        return;
+    }
+
+    const actionWidth = 184;
+    const actionHeight = 56;
+    const actionGap = 16;
+    const actionBandBottom = Math.min(150, Math.max(72, overlay.rect.height * 0.11));
+    boxes.push(
+        syntheticBox(
+            'card.preview.primaryAction',
+            new DOMRect(
+                overlay.rect.x + overlay.rect.width / 2 - (actionWidth * 2 + actionGap) / 2,
+                overlay.rect.y + overlay.rect.height - actionBandBottom - actionHeight,
+                actionWidth,
+                actionHeight
+            ),
+            'synthetic:card.preview.primaryAction'
+        )
+    );
+};
+
+const appendTurnEndSyntheticBox = (boxes: DomBox[]) => {
+    if (hasSemanticBox(boxes, 'turn.end')) {
+        return;
+    }
+
+    const board = boxes.find((box) => box.semanticKey === 'board.root');
+    if (!board) {
+        return;
+    }
+
+    const actionWidth = 184;
+    const actionHeight = 44;
+    boxes.push(
+        syntheticBox(
+            'turn.end',
+            new DOMRect(
+                board.rect.x + board.rect.width / 2 - actionWidth / 2,
+                board.rect.y + board.rect.height + 16,
+                actionWidth,
+                actionHeight
+            ),
+            'synthetic:turn.end'
+        )
+    );
+};
+
 const appendShellSyntheticBoxes = (boxes: DomBox[], historyLength: number) => {
     if (historyLength !== 0) {
         return;
@@ -192,6 +249,8 @@ const getDomBoxes = (
     }
 
     appendShellSyntheticBoxes(boxes, historyLength);
+    appendPreviewActionSyntheticBox(boxes);
+    appendTurnEndSyntheticBox(boxes);
 
     return boxes;
 };

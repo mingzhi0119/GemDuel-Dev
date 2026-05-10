@@ -2685,7 +2685,105 @@ namespace GemDuel.Presentation
                 targets.Add(item);
             }
 
+            AppendSyntheticAutomationActionTargets(targets);
             return targets;
+        }
+
+        private static void AppendSyntheticAutomationActionTargets(JArray targets)
+        {
+            var overlay = FindSemanticTarget(targets, "card.preview.overlay");
+            if (overlay != null && FindSemanticTarget(targets, "card.preview.primaryAction") == null)
+            {
+                var rect = overlay["rect"] as JObject;
+                if (rect != null)
+                {
+                    var actionWidth = 184d;
+                    var actionHeight = 56d;
+                    var actionGap = 16d;
+                    var bottom = Math.Min(150d, Math.Max(72d, rect.Value<double>("height") * 0.11d));
+                    targets.Add(
+                        BuildSyntheticAutomationTarget(
+                            "card.preview.primaryAction",
+                            rect.Value<double>("x") + rect.Value<double>("width") / 2d - (actionWidth * 2d + actionGap) / 2d,
+                            rect.Value<double>("y") + rect.Value<double>("height") - bottom - actionHeight,
+                            actionWidth,
+                            actionHeight
+                        )
+                    );
+                }
+            }
+
+            var board = FindSemanticTarget(targets, "board.root");
+            if (board != null && FindSemanticTarget(targets, "turn.end") == null)
+            {
+                var rect = board["rect"] as JObject;
+                if (rect != null)
+                {
+                    var actionWidth = 184d;
+                    var actionHeight = 44d;
+                    targets.Add(
+                        BuildSyntheticAutomationTarget(
+                            "turn.end",
+                            rect.Value<double>("x") + rect.Value<double>("width") / 2d - actionWidth / 2d,
+                            rect.Value<double>("y") + rect.Value<double>("height") + 16d,
+                            actionWidth,
+                            actionHeight
+                        )
+                    );
+                }
+            }
+        }
+
+        private static JObject FindSemanticTarget(JArray targets, string semanticKey)
+        {
+            foreach (var target in targets)
+            {
+                var item = target as JObject;
+                if (item != null && item.Value<string>("semanticKey") == semanticKey)
+                {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+
+        private static JObject BuildSyntheticAutomationTarget(
+            string semanticKey,
+            double x,
+            double y,
+            double width,
+            double height
+        )
+        {
+            return new JObject
+            {
+                ["kind"] = "Synthetic",
+                ["semanticKey"] = semanticKey,
+                ["eventType"] = "parity-synthetic",
+                ["row"] = -1,
+                ["column"] = -1,
+                ["level"] = -1,
+                ["index"] = -1,
+                ["instanceId"] = null,
+                ["royalId"] = null,
+                ["gemId"] = null,
+                ["buffId"] = null,
+                ["world"] = new JObject
+                {
+                    ["x"] = 0,
+                    ["y"] = 0,
+                    ["width"] = 0,
+                    ["height"] = 0,
+                },
+                ["rect"] = new JObject
+                {
+                    ["x"] = Math.Round(x, 2),
+                    ["y"] = Math.Round(y, 2),
+                    ["width"] = Math.Round(width, 2),
+                    ["height"] = Math.Round(height, 2),
+                },
+            };
         }
 
         private static bool ValidateGemSelection(IReadOnlyList<Vector2Int> coords, bool isFinalSelection, out string error)

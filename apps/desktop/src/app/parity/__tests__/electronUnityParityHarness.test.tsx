@@ -67,7 +67,7 @@ const createParams = () => {
                 game.historyControls.historySource = 'replay-import';
             }),
             handleForceRoyal: vi.fn(() => {
-                game.state = createState({ phase: 'ROYAL_SELECTION' } as Partial<GameState>);
+                game.state = createState({ phase: 'SELECT_ROYAL' });
             }),
             handleSelectRoyal: vi.fn(() => {
                 game.historyControls.currentIndex += 1;
@@ -125,6 +125,12 @@ const installDomTargets = () => {
             <button aria-label="Settings">Settings</button>
         </main>
     `;
+    document.querySelector('button[aria-label="Settings"]')?.addEventListener('click', () => {
+        const settingsMenu = document.createElement('div');
+        settingsMenu.dataset.settingsMenu = 'true';
+        settingsMenu.textContent = 'Settings panel';
+        document.body.appendChild(settingsMenu);
+    });
 };
 
 const Harness = ({ params }: { params: UseElectronUnityParityHarnessParams }) => {
@@ -356,7 +362,7 @@ describe('useElectronUnityParityHarness', () => {
             detail: 'No market card target for 1-0.',
         });
 
-        params.game.state.royalDeck = [];
+        (params.game as unknown as { state: GameState }).state = createState({ royalDeck: [] });
         await expect(api.dispatch('choose_royal', { index: 0 })).resolves.toMatchObject({
             ok: false,
             action: 'choose_royal',

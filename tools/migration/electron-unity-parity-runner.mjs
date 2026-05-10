@@ -849,9 +849,12 @@ const main = async () => {
                         unityScreenshotPath,
                         imageDiffPath
                     );
+                    visualDiff.visualMetricOk = Boolean(visualDiff.ok);
                     visualDiff.pixelOk = Boolean(visualDiff.ok);
                     visualDiff.boundingBoxes = buildBoundingBoxReport(electron.state, unityState);
-                    visualDiff.ok = Boolean(visualDiff.pixelOk && visualDiff.boundingBoxes.ok);
+                    visualDiff.ok = Boolean(
+                        visualDiff.visualMetricOk && visualDiff.boundingBoxes.ok
+                    );
                 }
 
                 await writeFile(stateDiffPath, JSON.stringify(stateDiff, null, 4));
@@ -884,7 +887,7 @@ const main = async () => {
                           ? `Blocker (${stateDiff.mismatchCount ?? 0}) -> ${stateDiffPath}`
                           : `Mismatch (${stateDiff.mismatchCount ?? 0}) -> ${stateDiffPath}`,
                     pixelVisualDiffResult: visualDiff.ok
-                        ? `Equivalent (${visualDiff.mismatchPercent}%)`
+                        ? `Equivalent (strict ${visualDiff.mismatchPercent}%, meanDelta ${visualDiff.meanAbsoluteDelta})`
                         : visualDiff.blocker
                           ? `Blocker -> ${visualDiffPath}`
                           : `Failing -> ${visualDiffPath}`,

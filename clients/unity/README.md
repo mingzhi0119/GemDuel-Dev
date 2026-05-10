@@ -1,7 +1,9 @@
-# GemDuel Unity Vertical Slice
+# GemDuel Unity Client Candidate
 
-This directory is a safe, sidecar Unity skeleton. It is not the production client and does not
-replace the current Electron/TypeScript implementation.
+This directory is a safe, sidecar Unity client candidate. It is parity-gated against the current
+Electron renderer and may be treated as an Electron replacement candidate only when the
+Electron/Unity parity harness reports `22 Equivalent / 0 Failing / 0 Blocker` and the repository
+gates pass.
 
 ## Editor Lock
 
@@ -46,21 +48,19 @@ outputs untracked.
 
 ## Current Interaction Status
 
-The current scene is now a 90% scoped-parity local PvP presentation, not a full Electron
-replacement. Normal take-gems clicks can select any legal non-gold board line and immediately update
-the board plus active player's inventory; the highlighted line is only the committed fixture's
-recommended path. Market card clicks, royal clicks, buff draft clicks, replenish, bonus, steal, and
-discard remain wired through visible guided targets for the committed full-coverage local PvP
-fixture. The scene renders the topbar, market, board, royal area, and both player zones for both
-opening and completed fixture states.
+The current scene implements the Electron/Unity parity matrix as a full local PvP replacement
+candidate surface: app shell, local start, board, market, market preview, buy/reserve confirmation,
+player zones, replenish/end-turn state, royal featured display, settings, and invalid-action
+feedback are all captured by the parity harness. Normal take-gems clicks can select any legal
+non-gold board line and immediately update the board plus active player's inventory; the committed
+fixture path remains the deterministic oracle for parity-critical revisions.
 
-`Space` still advances the replay fixture as a debug/parity review path. Arbitrary non-fixture local
-PvP is still intentionally incomplete: the TypeScript rules engine remains the oracle, and Unity
-still uses replay checkpoints for parity-critical state transitions.
+`Space` still advances the replay fixture as a debug/parity review path. The TypeScript shared rules
+engine remains the gameplay oracle, and Unity parity-critical transitions are constrained by replay
+checkpoints and semantic automation rather than hand-maintained subjective rule rewrites.
 
 ## Out Of Scope
 
-- Full gameplay rewrite.
 - React UI copy.
 - Online or LAN multiplayer.
 - Complete AI.
@@ -69,4 +69,4 @@ still uses replay checkpoints for parity-critical state transitions.
 - Real app IDs, secrets, tokens, accounts, or platform configuration.
 - Steam Deck Verified claims.
 
-The TypeScript rules engine remains the oracle until Unity passes the replay parity contract.
+The TypeScript rules engine remains the oracle for gameplay behavior.

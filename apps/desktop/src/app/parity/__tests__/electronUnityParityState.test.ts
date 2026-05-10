@@ -68,7 +68,7 @@ const buildGame = (
             historyLength,
             historySource: historyLength > 0 ? 'local' : 'empty',
         },
-    }) as UseElectronUnityParityHarnessParams['game'];
+    }) as unknown as UseElectronUnityParityHarnessParams['game'];
 
 const buildParams = (
     state = buildGameState(),
@@ -249,6 +249,31 @@ describe('electronUnityParityState', () => {
         );
     });
 
+    it('adds replay-review action semantic keys when visible controls are disabled', () => {
+        const board = appendElement('div', { surfaceSlot: 'gem-panel' });
+        board.getBoundingClientRect = () => rect(1000, 220, 420, 420);
+        const overlay = appendElement('div', { cardPreviewOverlay: 'true' });
+        overlay.setAttribute('data-card-preview-overlay', 'true');
+        overlay.getBoundingClientRect = () => rect(0, 0, 1920, 1080);
+
+        const dump = buildStateDump(buildParams(buildGameState({ phase: 'IDLE' })));
+
+        expect(dump.visible.boxes).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    semanticKey: 'card.preview.primaryAction',
+                    selector: 'synthetic:card.preview.primaryAction',
+                    rect: expect.objectContaining({ x: 768, y: 905.2, width: 184, height: 56 }),
+                }),
+                expect.objectContaining({
+                    semanticKey: 'turn.end',
+                    selector: 'synthetic:turn.end',
+                    rect: expect.objectContaining({ x: 1118, y: 656, width: 184, height: 44 }),
+                }),
+            ])
+        );
+    });
+
     it('detects rendered routes for menu, matchmaking, draft, and board states', () => {
         const game = buildGame(buildGameState(), 0);
         document.body.textContent = '选择一个模式开始';
@@ -261,7 +286,7 @@ describe('electronUnityParityState', () => {
             hasRenderedRouteForState(game, { setupRoute: 'classic', matchmakingRoute: 'online' })
         ).toBe(true);
 
-        const draftGame = buildGame(buildGameState({ phase: 'DRAFT_P1' } as Partial<GameState>), 1);
+        const draftGame = buildGame(buildGameState({ phase: 'DRAFT_PHASE' }), 1);
         expect(
             hasRenderedRouteForState(draftGame, { setupRoute: 'classic', matchmakingRoute: 'none' })
         ).toBe(false);

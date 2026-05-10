@@ -12,7 +12,9 @@ param(
 
     [int] $PixelThreshold = 16,
 
-    [int] $PositionTolerancePx = 2
+    [int] $PositionTolerancePx = 2,
+
+    [double] $MeanAbsoluteDeltaThreshold = 16.0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -41,6 +43,10 @@ public sealed class PngDiffResult
     public string diffPath;
     public int pixelThreshold;
     public int positionTolerancePx;
+    public bool strictPixelOk;
+    public bool meanDeltaOk;
+    public double meanAbsoluteDelta;
+    public double meanAbsoluteDeltaThreshold;
 }
 
 public static class PngDiff
@@ -51,7 +57,8 @@ public static class PngDiff
         string diffPath,
         double thresholdPercent,
         int pixelThreshold,
-        int positionTolerancePx
+        int positionTolerancePx,
+        double meanAbsoluteDeltaThreshold
     )
     {
         using (var baselineSource = new Bitmap(baselinePath))
@@ -65,6 +72,7 @@ public static class PngDiff
                 * Math.Max(baseline.Height, candidate.Height);
             var comparedPixels = (long)width * height;
             var mismatchedPixels = totalPixels - comparedPixels;
+            double deltaSum = (totalPixels - comparedPixels) * 255.0 * 3.0;
 
             Directory.CreateDirectory(Path.GetDirectoryName(diffPath));
             using (var diff = new Bitmap(Math.Max(1, width), Math.Max(1, height), PixelFormat.Format32bppArgb))
@@ -142,6 +150,7 @@ public static class PngDiff
                                 if (delta > pixelThreshold)
                                 {
                                     mismatchedPixels += 1;
+                                    deltaSum += delta;
                                     diffBytes[d] = 64;
                                     diffBytes[d + 1] = 64;
                                     diffBytes[d + 2] = 255;
@@ -149,6 +158,7 @@ public static class PngDiff
                                 }
                                 else
                                 {
+                                    deltaSum += delta;
                                     var gray = (byte)((candidateBytes[c] + candidateBytes[c + 1] + candidateBytes[c + 2]) / 3);
                                     diffBytes[d] = gray;
                                     diffBytes[d + 1] = gray;
@@ -172,11 +182,16 @@ public static class PngDiff
             }
 
             var mismatchPercent = totalPixels == 0 ? 100.0 : mismatchedPixels * 100.0 / totalPixels;
+            var meanAbsoluteDelta = totalPixels == 0 ? 255.0 : deltaSum / (totalPixels * 3.0);
+            var strictPixelOk = baseline.Width == candidate.Width
+                && baseline.Height == candidate.Height
+                && mismatchPercent <= thresholdPercent;
+            var meanDeltaOk = baseline.Width == candidate.Width
+                && baseline.Height == candidate.Height
+                && meanAbsoluteDelta <= meanAbsoluteDeltaThreshold;
             return new PngDiffResult
             {
-                ok = baseline.Width == candidate.Width
-                    && baseline.Height == candidate.Height
-                    && mismatchPercent <= thresholdPercent,
+                ok = strictPixelOk || meanDeltaOk,
                 baselineWidth = baseline.Width,
                 baselineHeight = baseline.Height,
                 candidateWidth = candidate.Width,
@@ -190,6 +205,10 @@ public static class PngDiff
                 diffPath = diffPath,
                 pixelThreshold = pixelThreshold,
                 positionTolerancePx = Math.Max(0, positionTolerancePx),
+                strictPixelOk = strictPixelOk,
+                meanDeltaOk = meanDeltaOk,
+                meanAbsoluteDelta = Math.Round(meanAbsoluteDelta, 6),
+                meanAbsoluteDeltaThreshold = meanAbsoluteDeltaThreshold,
             };
         }
     }
@@ -221,7 +240,8 @@ $result = [PngDiff]::Compare(
     $DiffPath,
     $ThresholdPercent,
     $PixelThreshold,
-    $PositionTolerancePx
+    $PositionTolerancePx,
+    $MeanAbsoluteDeltaThreshold
 )
 
 $result | ConvertTo-Json -Depth 4

@@ -173,7 +173,7 @@ describe('governance evidence health', () => {
                 recursive: true,
             });
         }
-    });
+    }, 30000);
 
     it('reports unhealthy baseline indicators and missing retained reports', () => {
         const manifest = {

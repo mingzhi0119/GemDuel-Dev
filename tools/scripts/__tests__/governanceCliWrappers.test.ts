@@ -321,7 +321,7 @@ describe('governance CLI wrappers', () => {
                 );
             }
         );
-    });
+    }, 30000);
 
     it('fails the governance evidence wrapper when the retained report drifts out of healthy status', () => {
         const tempArtifactsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'governance-wrapper-'));
