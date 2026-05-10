@@ -19,11 +19,15 @@ namespace GemDuel.Editor
         {
             new ParityScenario("app-launch-main-menu", null, "Unity semantic app shell entry.", true),
             new ParityScenario(
-                "local-game-start",
+                "level-3-boon-selection",
                 null,
-                "Unity semantic local-game start action.",
+                "Unity level-3 boon selection driven through a real visible card hit target.",
                 true,
-                new[] { new ParityActionStep("start_local_game") }
+                new[]
+                {
+                    new ParityActionStep("start_local_game"),
+                    new ParityActionStep("choose_boon", new JObject { ["index"] = 1, ["buffId"] = "royal_envoy" }),
+                }
             ),
             new ParityScenario("initial-board-render", 2, "Post-draft replay board render."),
             new ParityScenario(
@@ -150,6 +154,8 @@ namespace GemDuel.Editor
                         ["action"] = action.Action,
                         ["ok"] = ok,
                         ["detail"] = string.IsNullOrEmpty(actionError) ? null : actionError,
+                        ["driver"] = slice.LastAutomationDriver,
+                        ["inputEvidence"] = slice.LastAutomationDetail,
                     }
                 );
                 if (!ok && !action.AllowFailure)

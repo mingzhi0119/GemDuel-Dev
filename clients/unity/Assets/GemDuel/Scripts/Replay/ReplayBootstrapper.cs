@@ -11,7 +11,7 @@ namespace GemDuel.Replay
             var checkpoint = replay.Checkpoints.FirstOrDefault(candidate => candidate.Revision == 0);
             if (checkpoint != null)
             {
-                return new GameState(checkpoint.State, checkpoint.Revision);
+                return new GameState(NormalizeSnapshotForRuntime(checkpoint.State), checkpoint.Revision);
             }
 
             return new GameState(BuildSnapshotFromInit(replay), 0);
@@ -20,7 +20,6 @@ namespace GemDuel.Replay
         private static JObject BuildSnapshotFromInit(ReplayVNext replay)
         {
             var init = replay.Init;
-            var playerBuffs = JObject.FromObject(replay.Players);
             var emptyInventory = new JObject
             {
                 ["blue"] = 0,
@@ -67,12 +66,12 @@ namespace GemDuel.Replay
                     ["p2"] = emptyInventory.DeepClone(),
                 },
                 ["extraPrivileges"] = new JObject { ["p1"] = 0, ["p2"] = 0 },
-                ["playerBuffs"] = playerBuffs,
+                ["playerBuffs"] = BuildInitialPlayerBuffs(),
                 ["draftPool"] = JArray.FromObject(init.DraftPool),
                 ["p1SelectedBuffId"] = null,
-                ["draftOrder"] = new JArray(),
+                ["draftOrder"] = phase == "DRAFT_PHASE" ? new JArray("p1", "p2") : new JArray(),
                 ["buffLevel"] = init.BuffLevel ?? 0,
-                ["p2DraftLevel"] = 0,
+                ["p2DraftLevel"] = phase == "DRAFT_PHASE" ? init.BuffLevel ?? 0 : 0,
                 ["privilegeGemCount"] = 0,
                 ["pendingReserve"] = null,
                 ["pendingBuy"] = null,
@@ -84,6 +83,52 @@ namespace GemDuel.Replay
             };
 
             return snapshot;
+        }
+
+        private static JObject BuildInitialPlayerBuffs()
+        {
+            JObject BuildPlayer()
+            {
+                return new JObject
+                {
+                    ["buff"] = new JObject
+                    {
+                        ["id"] = "none",
+                        ["level"] = 0,
+                        ["state"] = null,
+                    },
+                };
+            }
+
+            return new JObject
+            {
+                ["p1"] = BuildPlayer(),
+                ["p2"] = BuildPlayer(),
+            };
+        }
+
+        private static JObject NormalizeSnapshotForRuntime(JObject snapshot)
+        {
+            var clone = (JObject)snapshot.DeepClone();
+            NormalizePlayerBuffState(clone, "p1");
+            NormalizePlayerBuffState(clone, "p2");
+            return clone;
+        }
+
+        private static void NormalizePlayerBuffState(JObject snapshot, string playerKey)
+        {
+            if (!(snapshot["playerBuffs"] is JObject playerBuffs) ||
+                !(playerBuffs[playerKey] is JObject player) ||
+                !(player["buff"] is JObject buff))
+            {
+                return;
+            }
+
+            var id = buff.Value<string>("id");
+            if (!string.IsNullOrEmpty(id) && id != "none" && buff["state"] == null)
+            {
+                buff["state"] = new JObject();
+            }
         }
     }
 }

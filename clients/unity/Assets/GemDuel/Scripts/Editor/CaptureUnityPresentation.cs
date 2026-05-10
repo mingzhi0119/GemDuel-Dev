@@ -88,6 +88,7 @@ namespace GemDuel.Editor
             target.Row = row;
             target.Column = column;
             target.GemId = gemId;
+            target.Clickable = true;
             return target;
         }
     }

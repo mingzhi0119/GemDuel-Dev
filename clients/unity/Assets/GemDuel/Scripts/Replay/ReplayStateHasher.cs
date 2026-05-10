@@ -11,7 +11,7 @@ namespace GemDuel.Replay
     {
         public string Hash(GameState state)
         {
-            var sorted = SortToken(state.Snapshot);
+            var sorted = SortToken(NormalizeHashToken(state.Snapshot));
             var json = JsonConvert.SerializeObject(
                 sorted,
                 Formatting.None,
@@ -22,13 +22,20 @@ namespace GemDuel.Replay
 
         public string HashSnapshot(JObject snapshot)
         {
-            var sorted = SortToken(snapshot);
+            var sorted = SortToken(NormalizeHashToken(snapshot));
             var json = JsonConvert.SerializeObject(
                 sorted,
                 Formatting.None,
                 new JsonSerializerSettings { Culture = CultureInfo.InvariantCulture }
             );
             return HashString(json);
+        }
+
+        public static JToken NormalizeHashToken(JToken token)
+        {
+            var clone = token.DeepClone();
+            RemoveEmptyBuffStateObjects(clone);
+            return clone;
         }
 
         public static JToken SortToken(JToken token)
@@ -50,6 +57,33 @@ namespace GemDuel.Replay
             }
 
             return token.DeepClone();
+        }
+
+        private static void RemoveEmptyBuffStateObjects(JToken token)
+        {
+            if (token is JObject obj)
+            {
+                if (obj["buff"] is JObject buff &&
+                    buff["state"] is JObject state &&
+                    !state.Properties().Any())
+                {
+                    buff.Property("state")?.Remove();
+                }
+
+                foreach (var property in obj.Properties().ToList())
+                {
+                    RemoveEmptyBuffStateObjects(property.Value);
+                }
+                return;
+            }
+
+            if (token is JArray array)
+            {
+                foreach (var item in array.ToList())
+                {
+                    RemoveEmptyBuffStateObjects(item);
+                }
+            }
         }
 
         private static string HashString(string value)

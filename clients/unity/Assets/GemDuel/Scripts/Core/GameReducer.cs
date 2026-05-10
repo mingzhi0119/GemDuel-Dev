@@ -68,11 +68,11 @@ namespace GemDuel.Core
             var checkpoint = checkpoints.FirstOrDefault(candidate => candidate.Revision == state.Revision);
             if (checkpoint != null)
             {
-                state.ReplaceSnapshot(checkpoint.State, checkpoint.Revision);
+                state.ReplaceSnapshot(NormalizeSnapshotForRuntime(checkpoint.State), checkpoint.Revision);
                 return ReducerResult.Pass();
             }
 
-            ApplyMinimalMutation(state, replayEvent, eventType, actor);
+            ApplyMinimalMutation(state, replayEvent, eventType, actor, checkpoints);
             return ReducerResult.Pass();
         }
 
@@ -80,7 +80,8 @@ namespace GemDuel.Core
             GameState state,
             JObject replayEvent,
             string eventType,
-            string actor
+            string actor,
+            IReadOnlyList<ReplayCheckpoint> checkpoints
         )
         {
             // The committed fixtures carry TS-authored checkpoints for parity-critical revisions.
@@ -112,7 +113,7 @@ namespace GemDuel.Core
                     AddRoyal(state, actor, replayEvent.Value<string>("royalId"));
                     break;
                 case "select_buff":
-                    SetBuff(state, actor, replayEvent.Value<string>("buffId"));
+                    SetBuff(state, actor, replayEvent, checkpoints);
                     break;
                 case "steal_gem":
                     StealGem(state, actor, replayEvent.Value<string>("gemId"));
@@ -315,8 +316,14 @@ namespace GemDuel.Core
             existing?.Remove();
         }
 
-        private static void SetBuff(GameState state, string actor, string buffId)
+        private static void SetBuff(
+            GameState state,
+            string actor,
+            JObject replayEvent,
+            IReadOnlyList<ReplayCheckpoint> checkpoints
+        )
         {
+            var buffId = replayEvent.Value<string>("buffId");
             if (string.IsNullOrEmpty(buffId))
             {
                 return;
@@ -326,6 +333,124 @@ namespace GemDuel.Core
             var player = (JObject)playerBuffs[actor];
             var buff = (JObject)player["buff"];
             buff["id"] = buffId;
+            buff["level"] = state.Snapshot.Value<int?>("buffLevel") ?? 0;
+            buff["state"] = new JObject();
+
+            if (state.Snapshot.Value<string>("phase") != "DRAFT_PHASE")
+            {
+                return;
+            }
+
+            if (actor == "p1")
+            {
+                state.Snapshot["p1SelectedBuffId"] = buffId;
+                state.Snapshot["turn"] = "p2";
+                var p2DraftPool = ResolveP2DraftPoolFromEvent(replayEvent) ??
+                    ResolveP2DraftPoolFromCheckpoints(state, checkpoints);
+                if (p2DraftPool != null)
+                {
+                    state.Snapshot["p2DraftPool"] = p2DraftPool.DeepClone();
+                }
+                state.Snapshot["p2DraftLevel"] = ResolveP2DraftLevelFromCheckpoints(state, checkpoints);
+                return;
+            }
+
+            state.Snapshot["phase"] = "IDLE";
+            state.Snapshot["turn"] = "p1";
+            state.Snapshot["draftOrder"] = new JArray();
         }
+
+        private static JArray ResolveP2DraftPoolFromCheckpoints(
+            GameState state,
+            IReadOnlyList<ReplayCheckpoint> checkpoints
+        )
+        {
+            if (state.Snapshot["p2DraftPool"] is JArray existingPool && existingPool.Count > 0)
+            {
+                return existingPool;
+            }
+
+            var checkpoint = checkpoints
+                .Where(candidate => candidate.Revision >= state.Revision)
+                .OrderBy(candidate => candidate.Revision)
+                .FirstOrDefault(candidate => candidate.State["p2DraftPool"] is JArray);
+            return checkpoint?.State["p2DraftPool"] as JArray;
+        }
+
+        private static JArray ResolveP2DraftPoolFromEvent(JObject replayEvent)
+        {
+            if (!(replayEvent["p2DraftPoolIndices"] is JArray indices))
+            {
+                return null;
+            }
+
+            var levelBuffs = Level3BuffIds;
+            var pool = new JArray();
+            foreach (var token in indices)
+            {
+                var index = token.Value<int?>();
+                if (!index.HasValue || index.Value < 0 || index.Value >= levelBuffs.Length)
+                {
+                    return null;
+                }
+
+                pool.Add(levelBuffs[index.Value]);
+            }
+
+            return pool.Count == 4 ? pool : null;
+        }
+
+        private static int ResolveP2DraftLevelFromCheckpoints(
+            GameState state,
+            IReadOnlyList<ReplayCheckpoint> checkpoints
+        )
+        {
+            var checkpoint = checkpoints
+                .Where(candidate => candidate.Revision >= state.Revision)
+                .OrderBy(candidate => candidate.Revision)
+                .FirstOrDefault(candidate => candidate.State["p2DraftLevel"] != null);
+            return checkpoint?.State.Value<int?>("p2DraftLevel") ??
+                state.Snapshot.Value<int?>("buffLevel") ??
+                0;
+        }
+
+        private static JObject NormalizeSnapshotForRuntime(JObject snapshot)
+        {
+            var clone = (JObject)snapshot.DeepClone();
+            NormalizePlayerBuffState(clone, "p1");
+            NormalizePlayerBuffState(clone, "p2");
+            return clone;
+        }
+
+        private static void NormalizePlayerBuffState(JObject snapshot, string playerKey)
+        {
+            if (!(snapshot["playerBuffs"] is JObject playerBuffs) ||
+                !(playerBuffs[playerKey] is JObject player) ||
+                !(player["buff"] is JObject buff))
+            {
+                return;
+            }
+
+            var id = buff.Value<string>("id");
+            if (!string.IsNullOrEmpty(id) && id != "none" && buff["state"] == null)
+            {
+                buff["state"] = new JObject();
+            }
+        }
+
+        private static readonly string[] Level3BuffIds =
+        {
+            "greed_king",
+            "royal_envoy",
+            "double_agent",
+            "all_seeing_eye",
+            "echo_reservoir",
+            "wonder_architect",
+            "minimalist",
+            "pacifist",
+            "desperate_gamble",
+            "puppet_master",
+            "collector",
+        };
     }
 }

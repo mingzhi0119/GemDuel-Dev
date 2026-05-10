@@ -54,16 +54,18 @@ const scenarioDefinitions = [
         actions: [{ action: 'reset' }],
     },
     {
-        id: 'local-game-start',
-        name: 'Local game start parity',
+        id: 'level-3-boon-selection',
+        name: 'Level-3 boon selection parity',
         revision: null,
-        expectedSharedState: 'Replay bootstrap at revision 0 with LOCAL_PVP, p1 turn, IDLE phase.',
+        expectedSharedState:
+            'P1 selects Royal Envoy through a visible level-3 boon card; both clients advance to P2 draft with the same available boon pool and feedback.',
         actions: [
             { action: 'reset' },
             {
                 action: 'start_local_game',
-                payload: { rawText: { __replayText: true }, revision: 0 },
+                payload: { rawText: { __replayText: true }, revision: 0, interactive: true },
             },
+            { action: 'choose_boon', payload: { index: 1, buffId: 'royal_envoy' } },
         ],
     },
     {
@@ -386,6 +388,7 @@ const buildElectronScript = (scenario, replayBase64) => {
             payload: {
                 rawText: { __replayText: true },
                 revision: scenario.revision,
+                interactive: Boolean(scenario.actionsAfterLoad?.length),
             },
         });
         steps.push(...(scenario.actionsAfterLoad ?? []));
@@ -493,6 +496,24 @@ const normalizeInstance = (value) => {
     return value.instanceId ?? value.uid ?? value.id ?? value.slotKey ?? JSON.stringify(value);
 };
 
+const normalizeBuffRef = (value) => {
+    const buff = value?.buff ?? value;
+    if (!buff || typeof buff !== 'object') {
+        return null;
+    }
+
+    return {
+        id: buff.id ?? null,
+        state: buff.state ?? null,
+    };
+};
+
+const normalizeUnityBuffRef = (value) =>
+    normalizeBuffRef(value) ?? {
+        id: 'none',
+        state: null,
+    };
+
 const normalizeUnitySnapshot = (unityState) => {
     const snapshot = unityState?.snapshot ?? {};
     return {
@@ -507,6 +528,16 @@ const normalizeUnitySnapshot = (unityState) => {
             3: (snapshot.market?.[3] ?? snapshot.market?.['3'] ?? []).map(normalizeInstance),
         },
         royalDeck: (snapshot.royalDeck ?? []).map(normalizeInstance),
+        playerBuffs: {
+            p1: normalizeUnityBuffRef(snapshot.playerBuffs?.p1),
+            p2: normalizeUnityBuffRef(snapshot.playerBuffs?.p2),
+        },
+        draftPool: snapshot.draftPool ?? [],
+        p2DraftPool: snapshot.p2DraftPool ?? null,
+        p1SelectedBuffId: snapshot.p1SelectedBuffId ?? null,
+        draftOrder: snapshot.draftOrder ?? [],
+        buffLevel: snapshot.buffLevel ?? 0,
+        p2DraftLevel: snapshot.p2DraftLevel ?? 0,
         playerTableau: {
             p1: (snapshot.playerTableau?.p1 ?? []).map(normalizeInstance),
             p2: (snapshot.playerTableau?.p2 ?? []).map(normalizeInstance),
@@ -538,6 +569,16 @@ const normalizeElectronState = (electronState) => {
         board: game.board ?? [],
         market: game.market ?? {},
         royalDeck: game.royalDeck ?? [],
+        playerBuffs: {
+            p1: normalizeBuffRef(game.playerBuffs?.p1),
+            p2: normalizeBuffRef(game.playerBuffs?.p2),
+        },
+        draftPool: game.draftPool ?? [],
+        p2DraftPool: game.p2DraftPool ?? null,
+        p1SelectedBuffId: game.p1SelectedBuffId ?? null,
+        draftOrder: game.draftOrder ?? [],
+        buffLevel: game.buffLevel ?? null,
+        p2DraftLevel: game.p2DraftLevel ?? null,
         playerTableau: game.playerTableau ?? {},
         playerReserved: game.playerReserved ?? {},
         playerRoyals: game.playerRoyals ?? {},
@@ -564,6 +605,95 @@ const diffState = (electronState, unityState) => {
     }
 
     return { ok: mismatches.length === 0, mismatchCount: mismatches.length, mismatches };
+};
+
+const setupActionKeys = new Set([
+    'reset',
+    'start_local_game',
+    'load_replay_fixture',
+    'choose_mode',
+    'force_royal_selection',
+]);
+const acceptedNonClickActions = new Set(['invalid_action', 'change_setting']);
+
+const normalizeActionResults = (results) =>
+    (results ?? []).filter((result) => result?.action && !setupActionKeys.has(result.action));
+
+const actionDriverOk = (source, result) => {
+    if (!result?.ok) {
+        return false;
+    }
+
+    if (acceptedNonClickActions.has(result.action)) {
+        return true;
+    }
+
+    return source === 'unity'
+        ? result.driver === 'unity-hit-target'
+        : result.driver === 'dom-click';
+};
+
+const buildActionBehaviorReport = (electronResults, unityState) => {
+    const electron = normalizeActionResults(electronResults);
+    const unity = normalizeActionResults(unityState?.semanticActionResults);
+    const failures = [];
+    const maxLength = Math.max(electron.length, unity.length);
+
+    for (let index = 0; index < maxLength; index += 1) {
+        const electronResult = electron[index] ?? null;
+        const unityResult = unity[index] ?? null;
+        if (!electronResult || !unityResult) {
+            failures.push({
+                index,
+                reason: 'Missing action result on one side.',
+                electron: electronResult,
+                unity: unityResult,
+            });
+            continue;
+        }
+
+        if (electronResult.action !== unityResult.action) {
+            failures.push({
+                index,
+                reason: 'Action order or name diverged.',
+                electron: electronResult,
+                unity: unityResult,
+            });
+        }
+
+        if (Boolean(electronResult.ok) !== Boolean(unityResult.ok)) {
+            failures.push({
+                index,
+                reason: 'Accepted/rejected action result diverged.',
+                electron: electronResult,
+                unity: unityResult,
+            });
+        }
+
+        if (!actionDriverOk('electron', electronResult)) {
+            failures.push({
+                index,
+                reason: 'Electron action was not driven through a live DOM click path.',
+                electron: electronResult,
+            });
+        }
+
+        if (!actionDriverOk('unity', unityResult)) {
+            failures.push({
+                index,
+                reason: 'Unity action was not driven through a live hit-tested target.',
+                unity: unityResult,
+            });
+        }
+    }
+
+    return {
+        ok: failures.length === 0,
+        failureCount: failures.length,
+        electron,
+        unity,
+        failures,
+    };
 };
 
 const compareScreenshots = async (electronPath, unityPath, diffPath) => {
@@ -603,6 +733,8 @@ const summarizeElectronBoxes = (electronState) =>
         rawKey: box.key,
         semanticKey: box.semanticKey || null,
         selector: box.selector,
+        clickable: null,
+        inputDriver: box.selector?.startsWith('synthetic:') ? 'synthetic-bounds' : 'dom-bounds',
         text: box.text ? String(box.text).slice(0, 160) : '',
         rect: normalizeRect(box.rect),
     }));
@@ -631,6 +763,8 @@ const summarizeUnityBoxes = (unityState) =>
             royalId: target.royalId || null,
             gemId: target.gemId || null,
             buffId: target.buffId || null,
+            clickable: Boolean(target.clickable),
+            inputDriver: target.inputDriver || null,
             rect: normalizeRect(target.rect),
         };
     });
@@ -639,6 +773,11 @@ const requiredSemanticKeys = [
     'app.shell',
     'main.menu',
     'mode.local',
+    'draft.root',
+    'draft.buff.0',
+    'draft.buff.1',
+    'draft.buff.2',
+    'draft.buff.3',
     'board.root',
     'market.level.1',
     'market.level.2',
@@ -722,8 +861,8 @@ const writeMatrix = async (options, matrixRows) => {
         '',
         `Generated: ${new Date().toISOString()}`,
         '',
-        '| Scenario | Electron entry | Unity entry | Input script | Expected shared state | Screenshot path | State diff result | Pixel/visual diff result | Status |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        '| Scenario | Electron entry | Unity entry | Input script | Expected shared state | Screenshot path | State diff result | Action behavior result | Pixel/visual diff result | Status |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ];
 
     for (const row of matrixRows) {
@@ -736,6 +875,7 @@ const writeMatrix = async (options, matrixRows) => {
                 row.expectedSharedState,
                 row.screenshotPath,
                 row.stateDiffResult,
+                row.actionBehaviorResult,
                 row.pixelVisualDiffResult,
                 row.status,
             ]
@@ -836,6 +976,12 @@ const main = async () => {
                     blocker: unityResult.blocker ?? 'Unity screenshot unavailable.',
                     diffPath: imageDiffPath,
                 };
+                let actionBehavior = {
+                    ok: false,
+                    blocker: unityResult.blocker ?? 'Unity action result capture unavailable.',
+                    failureCount: 0,
+                    failures: [],
+                };
 
                 if (
                     unityResult.ok &&
@@ -844,6 +990,7 @@ const main = async () => {
                 ) {
                     const unityState = JSON.parse(await readFile(unityStatePath, 'utf8'));
                     stateDiff = diffState(electron.state, unityState);
+                    actionBehavior = buildActionBehaviorReport(electron.results, unityState);
                     visualDiff = await compareScreenshots(
                         electron.screenshotPath,
                         unityScreenshotPath,
@@ -858,6 +1005,13 @@ const main = async () => {
                 }
 
                 await writeFile(stateDiffPath, JSON.stringify(stateDiff, null, 4));
+                const actionBehaviorPath = path.join(
+                    options.outputRoot,
+                    'diff',
+                    scenario.id,
+                    `${viewportId}-action-behavior.json`
+                );
+                await writeFile(actionBehaviorPath, JSON.stringify(actionBehavior, null, 4));
                 const visualDiffPath = path.join(
                     options.outputRoot,
                     'diff',
@@ -868,7 +1022,7 @@ const main = async () => {
 
                 const status = scenario.blocker
                     ? 'Blocker'
-                    : stateDiff.ok && visualDiff.ok
+                    : stateDiff.ok && actionBehavior.ok && visualDiff.ok
                       ? 'Equivalent'
                       : unityResult.ok
                         ? 'Failing'
@@ -886,6 +1040,11 @@ const main = async () => {
                         : stateDiff.blocker
                           ? `Blocker (${stateDiff.mismatchCount ?? 0}) -> ${stateDiffPath}`
                           : `Mismatch (${stateDiff.mismatchCount ?? 0}) -> ${stateDiffPath}`,
+                    actionBehaviorResult: actionBehavior.ok
+                        ? 'Equivalent real-action path'
+                        : actionBehavior.blocker
+                          ? `Blocker -> ${actionBehaviorPath}`
+                          : `Failing (${actionBehavior.failureCount ?? 0}) -> ${actionBehaviorPath}`,
                     pixelVisualDiffResult: visualDiff.ok
                         ? `Equivalent (strict ${visualDiff.mismatchPercent}%, meanDelta ${visualDiff.meanAbsoluteDelta})`
                         : visualDiff.blocker
@@ -898,6 +1057,7 @@ const main = async () => {
                         unityScreenshot: unityScreenshotPath,
                         unityState: unityStatePath,
                         stateDiff: stateDiffPath,
+                        actionBehavior: actionBehaviorPath,
                         visualDiff: visualDiffPath,
                         visualDiffImage: imageDiffPath,
                     },
@@ -914,9 +1074,7 @@ const main = async () => {
             env: { AGENT_BROWSER_HEADED: 'false' },
         }).catch(() => {});
         if (rendererDev?.child) {
-            await writeFile(rendererDev.logPath, Buffer.concat(rendererDev.chunks)).catch(
-                () => {}
-            );
+            await writeFile(rendererDev.logPath, Buffer.concat(rendererDev.chunks)).catch(() => {});
             stopProcessTree(rendererDev.child.pid);
         }
     }

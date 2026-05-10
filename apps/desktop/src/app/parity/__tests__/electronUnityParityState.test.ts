@@ -33,6 +33,16 @@ const buildGameState = (
             3: [card('353-bk')],
         },
         royalDeck: [royal('r91-ro'), royal('r92-ro')],
+        playerBuffs: {
+            p1: { id: 'royal_envoy', state: { envoyTriggered: true } },
+            p2: { id: 'echo_reservoir', state: null },
+        },
+        draftPool: ['collector', 'royal_envoy', 'minimalist'],
+        p2DraftPool: ['royal_envoy', 'echo_reservoir', 'wonder_architect', 'minimalist'],
+        p1SelectedBuff: { id: 'royal_envoy' },
+        draftOrder: [],
+        buffLevel: 3,
+        p2DraftLevel: 3,
         playerTableau: {
             p1: [card('112-re')],
             p2: [card('122-gr')],
@@ -152,6 +162,11 @@ describe('electronUnityParityState', () => {
         const canvas = appendElement('main', { testid: 'desktop-stage-canvas' });
         canvas.setAttribute('data-testid', 'desktop-stage-canvas');
         appendElement('div', { surfaceSlot: 'gem-panel' });
+        appendElement('div', { draftCardScaleReference: '4' }).setAttribute(
+            'data-draft-card-scale-reference',
+            '4'
+        );
+        appendElement('button', { draftBuffId: 'royal_envoy', draftBuffIndex: '1' });
         appendElement('div', { marketDeck: '1' });
         appendElement('div', { marketSlot: '1-0' });
         appendElement('div', { boardCell: '0-1' });
@@ -202,12 +217,21 @@ describe('electronUnityParityState', () => {
             turn: 'p1',
             market: { 1: ['112-re', '122-gr'] },
             playerReserved: { p1: ['171-jo', 'hidden-p1-1'] },
+            playerBuffs: {
+                p1: { id: 'royal_envoy', state: { envoyTriggered: true } },
+                p2: { id: 'echo_reservoir', state: null },
+            },
+            draftPool: ['collector', 'royal_envoy', 'minimalist'],
+            p2DraftPool: ['royal_envoy', 'echo_reservoir', 'wonder_architect', 'minimalist'],
+            p1SelectedBuffId: 'royal_envoy',
             pendingReserve: { level: 1, idx: 0, isDeck: false, card: '112-re' },
             pendingBuy: { source: 'market', card: '122-gr' },
         });
         expect([...semanticKeys]).toEqual(
             expect.arrayContaining([
                 'app.shell',
+                'draft.root',
+                'draft.buff.1',
                 'board.root',
                 'market.level.1',
                 'market.card.1.0',

@@ -38,20 +38,25 @@ namespace GemDuel.Presentation
             }
 
             var world = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            var target = FindVisibleTargetAt(world);
+            var target = FindVisibleTargetAtWorld(world);
             if (target != null)
             {
                 verticalSlice.HandleVisibleTarget(target);
             }
         }
 
-        private static GemDuelViewTarget FindVisibleTargetAt(Vector3 world)
+        public static GemDuelViewTarget FindVisibleTargetAtWorld(Vector3 world)
         {
             var targets = FindObjectsByType<GemDuelViewTarget>();
             GemDuelViewTarget best = null;
             var bestZ = float.MaxValue;
             foreach (var target in targets)
             {
+                if (!target.Clickable)
+                {
+                    continue;
+                }
+
                 var size = target.Size;
                 if (size.x <= 0f || size.y <= 0f)
                 {

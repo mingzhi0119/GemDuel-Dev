@@ -37,6 +37,16 @@ const createState = (overrides: Partial<GameState> = {}): GameState =>
         },
         decks: { 1: [], 2: [], 3: [] },
         royalDeck: [royal('r91-ro')],
+        playerBuffs: {
+            p1: { id: 'royal_envoy', state: null },
+            p2: { id: 'echo_reservoir', state: null },
+        },
+        draftPool: ['collector', 'royal_envoy', 'minimalist'],
+        p2DraftPool: ['royal_envoy', 'echo_reservoir', 'wonder_architect', 'minimalist'],
+        p1SelectedBuff: null,
+        draftOrder: [],
+        buffLevel: 3,
+        p2DraftLevel: 3,
         playerTableau: { p1: [], p2: [] },
         playerReserved: { p1: [card('171-jo')], p2: [] },
         playerRoyals: { p1: [], p2: [] },
@@ -70,6 +80,19 @@ const createParams = () => {
                 game.state = createState({ phase: 'SELECT_ROYAL' });
             }),
             handleSelectRoyal: vi.fn(() => {
+                const [selectedRoyal, ...remainingRoyalDeck] = game.state.royalDeck;
+                if (selectedRoyal) {
+                    game.state = createState({
+                        ...game.state,
+                        phase: 'IDLE',
+                        turn: 'p2',
+                        royalDeck: remainingRoyalDeck,
+                        playerRoyals: {
+                            ...game.state.playerRoyals,
+                            p1: [...game.state.playerRoyals.p1, selectedRoyal],
+                        },
+                    });
+                }
                 game.historyControls.currentIndex += 1;
                 game.historyControls.historyLength += 1;
             }),
@@ -116,6 +139,9 @@ const installDomTargets = () => {
         <main data-testid="desktop-stage-canvas">
             <span>选择一个模式开始</span>
             <div data-board-cell="0-0"></div>
+            <div data-draft-card-scale-reference="4">
+                <button name="buff-selection" data-draft-buff-id="royal_envoy" data-draft-buff-index="1">Royal Envoy</button>
+            </div>
             <div data-market-slot="1-0"><button data-card-preview-click="true">Preview</button></div>
             <button data-card-preview-action="buy">Buy</button>
             <button data-card-preview-action="reserve">Reserve</button>
@@ -220,6 +246,7 @@ describe('useElectronUnityParityHarness', () => {
 
         expect(api.version).toBe(1);
         expect(api.actions).toContain('start_local_game');
+        expect(api.actions).toContain('choose_boon');
         expect(api.isReady()).toBe(true);
         expect(api.dumpState()).toMatchObject({
             source: 'electron',
@@ -245,39 +272,62 @@ describe('useElectronUnityParityHarness', () => {
             seed: 'parity-seed',
         });
 
+        document
+            .querySelector('[data-draft-buff-id="royal_envoy"]')
+            ?.addEventListener('click', () => {
+                params.game.historyControls.currentIndex += 1;
+                params.game.historyControls.historyLength += 1;
+            });
+        await expect(
+            api.dispatch('choose_boon', { buffId: 'royal_envoy', index: 1 })
+        ).resolves.toMatchObject({
+            ok: true,
+            action: 'choose_boon',
+            driver: 'dom-click',
+        });
+
         await expect(
             api.dispatch('click_market_card', { level: 1, index: 0 })
-        ).resolves.toMatchObject({ ok: true, action: 'click_market_card' });
+        ).resolves.toMatchObject({ ok: true, action: 'click_market_card', driver: 'dom-click' });
         await expect(api.dispatch('buy_card', { level: 1, index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'buy_card',
+            driver: 'dom-click',
         });
         await expect(api.dispatch('reserve_card', { level: 1, index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'reserve_card',
+            driver: 'dom-click',
         });
         await expect(api.dispatch('click_player_reserved', { index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'click_player_reserved',
+            driver: 'dom-click',
         });
         await expect(
             api.dispatch('confirm_preview_action', { actionId: 'reserve' })
         ).resolves.toMatchObject({
             ok: true,
             action: 'confirm_preview_action',
+            driver: 'dom-click',
         });
         await expect(api.dispatch('end_turn')).resolves.toMatchObject({
             ok: true,
             action: 'end_turn',
+            driver: 'dom-click',
         });
         await expect(api.dispatch('force_royal_selection')).resolves.toMatchObject({
             ok: true,
             action: 'force_royal_selection',
         });
         expect(params.game.handlers.handleForceRoyal).toHaveBeenCalledTimes(1);
+        document.querySelector('[data-royal-card="r91-ro"]')?.addEventListener('click', () => {
+            params.game.handlers.handleSelectRoyal(params.game.state.royalDeck[0]);
+        });
         await expect(api.dispatch('choose_royal', { index: 0 })).resolves.toMatchObject({
             ok: true,
             action: 'choose_royal',
+            driver: 'dom-click',
         });
         expect(params.game.handlers.handleSelectRoyal).toHaveBeenCalledTimes(1);
         await expect(api.dispatch('open_settings')).resolves.toMatchObject({

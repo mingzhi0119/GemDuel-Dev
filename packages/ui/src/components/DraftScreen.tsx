@@ -212,6 +212,8 @@ export const DraftScreen: React.FC<DraftScreenProps> = ({
                                     key={buff.id}
                                     id={`buff-select-${buff.id}`}
                                     name="buff-selection"
+                                    data-draft-buff-id={buff.id}
+                                    data-draft-buff-index={idx}
                                     disabled={!canInteract}
                                     onClick={() => canInteract && onSelectBuff(buff.id)}
                                     className={`group relative flex flex-col w-64 h-80 p-5 rounded-2xl border-2 text-left transition-all duration-300

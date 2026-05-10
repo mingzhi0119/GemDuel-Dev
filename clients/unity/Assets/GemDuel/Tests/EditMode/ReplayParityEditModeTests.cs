@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using GemDuel.Catalog;
 using GemDuel.Core;
 using GemDuel.Presentation;
@@ -99,6 +100,72 @@ namespace GemDuel.Tests.EditMode
                     }
 
                     if (obj.name == "GemDuel Rendered State" || obj.name == "Status Topbar")
+                    {
+                        Object.DestroyImmediate(obj);
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void DraftBoonCardsAreClickTargetsAndSelectThroughViewportClick()
+        {
+            var root = new GameObject("GemDuel Draft Boon Click Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var visibleTargets = (JArray)before["visibleTargets"];
+                var buffTargets = visibleTargets
+                    .Where(
+                        target =>
+                            target.Value<string>("kind") == "Buff"
+                            && target.Value<bool?>("clickable") == true
+                    )
+                    .ToList();
+                Assert.AreEqual(3, buffTargets.Count);
+                Assert.IsTrue(
+                    buffTargets.Any(
+                        target =>
+                            target.Value<string>("semanticKey") == "draft.buff.1"
+                            && target.Value<string>("buffId") == "royal_envoy"
+                    )
+                );
+
+                Assert.IsTrue(
+                    slice.ClickViewportPointForAutomation(960f, 680f, 1920, 1080, out var error),
+                    error
+                );
+                Assert.AreEqual("unity-hit-target", slice.LastAutomationDriver);
+                Assert.AreEqual(1, slice.GuidedEventsCompleted);
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var snapshot = (JObject)after["snapshot"];
+                Assert.AreEqual("DRAFT_PHASE", snapshot.Value<string>("phase"));
+                Assert.AreEqual("p2", snapshot.Value<string>("turn"));
+                Assert.AreEqual("royal_envoy", snapshot.Value<string>("p1SelectedBuffId"));
+                var p2DraftPool = (JArray)snapshot["p2DraftPool"];
+                Assert.NotNull(p2DraftPool);
+                Assert.AreEqual(4, p2DraftPool.Count);
+                CollectionAssert.Contains(p2DraftPool.Values<string>().ToList(), "echo_reservoir");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                foreach (var obj in Object.FindObjectsByType<GameObject>())
+                {
+                    if (obj == null)
+                    {
+                        continue;
+                    }
+
+                    if (
+                        obj.name == "GemDuel Rendered State"
+                        || obj.name == "Status Topbar"
+                        || obj.name == "GemDuel Camera"
+                    )
                     {
                         Object.DestroyImmediate(obj);
                     }
@@ -238,7 +305,13 @@ namespace GemDuel.Tests.EditMode
                 Assert.IsTrue(result.Ok, result.Error);
             }
 
-            Assert.IsTrue(JToken.DeepEquals(checkpoint.State, state.Snapshot));
+            var expected = ReplayStateHasher.SortToken(
+                ReplayStateHasher.NormalizeHashToken(checkpoint.State)
+            );
+            var actual = ReplayStateHasher.SortToken(
+                ReplayStateHasher.NormalizeHashToken(state.Snapshot)
+            );
+            Assert.IsTrue(JToken.DeepEquals(expected, actual));
         }
 
         private static GemDuelViewTarget CreateGemTarget(GameObject root, int row, int column, string gemId)
@@ -250,6 +323,7 @@ namespace GemDuel.Tests.EditMode
             target.Row = row;
             target.Column = column;
             target.GemId = gemId;
+            target.Clickable = true;
             return target;
         }
 

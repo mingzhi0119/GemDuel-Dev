@@ -10,6 +10,7 @@ import type {
 export type ParityAction =
     | 'start_local_game'
     | 'choose_mode'
+    | 'choose_boon'
     | 'click_market_card'
     | 'buy_card'
     | 'reserve_card'
@@ -29,6 +30,7 @@ export interface ParityActionResult {
     action: ParityAction;
     detail?: string;
     debt?: string;
+    driver?: string;
     state?: ElectronParityStateDump;
 }
 
@@ -91,6 +93,7 @@ export interface UseElectronUnityParityHarnessParams {
         config: { useBuffs: boolean; isHost?: boolean; hostPlayer?: PlayerKey; seed?: string }
     ) => void;
     selectSurfaceTheme: (variant: SurfaceThemeVariant) => void;
+    setReplayReviewing?: (value: boolean) => void;
     reset: () => void;
 }
 
@@ -117,6 +120,7 @@ declare global {
 export const ACTIONS: ParityAction[] = [
     'start_local_game',
     'choose_mode',
+    'choose_boon',
     'click_market_card',
     'buy_card',
     'reserve_card',

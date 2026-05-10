@@ -1,15 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { buildReplaySyntheticHistory, readReplayVNext } from '@gemduel/shared/replay';
 import type { GameAction } from '@gemduel/shared/types';
-import type { SurfaceThemeVariant } from '../shell/surfaceTheme';
 import {
     canInstallParityHarness,
     clearParityErrorBanner,
-    clickElement,
     showParityErrorBanner,
     waitForCondition,
     waitForStableFrame,
 } from './electronUnityParityDom';
+import {
+    createElectronUnityClickActions,
+    type ReplayEventLike,
+} from './electronUnityParityClickActions';
 import { buildStateDump, hasRenderedRouteForState } from './electronUnityParityState';
 import {
     ACTIONS,
@@ -19,14 +21,7 @@ import {
     type UseElectronUnityParityHarnessParams,
 } from './electronUnityParityTypes';
 
-type ReplayEventLike = {
-    type?: string;
-    marketRef?: { level?: number; idx?: number };
-    royalId?: string;
-};
 type ParityParamsRef = { current: UseElectronUnityParityHarnessParams };
-const SETTINGS_CONTROL_SELECTOR =
-    'button[aria-label="Settings"], button[aria-label="设置"], [data-game-glyph="settings"]';
 
 export const createElectronUnityParityApi = (
     paramsRef: ParityParamsRef
@@ -36,14 +31,21 @@ export const createElectronUnityParityApi = (
     let loadedReplayEvents: ReplayEventLike[] = [];
     let loadedReplayRevision = 0;
 
-    const result = (action: ParityAction, ok: boolean, detail?: string): ParityActionResult => ({
+    const result = (
+        action: ParityAction,
+        ok: boolean,
+        detail?: string,
+        driver = 'semantic'
+    ): ParityActionResult => ({
         ok,
         action,
         detail,
+        driver,
         state: buildStateDump(currentParams()),
     });
     const hasRenderedCurrentRoute = () =>
         hasRenderedRouteForState(currentParams().game, currentParams());
+
     const replayEventMatchesPayload = (
         event: ReplayEventLike,
         expectedType: string,
@@ -62,6 +64,10 @@ export const createElectronUnityParityApi = (
 
         if (expectedType === 'select_royal' && typeof payload.royalId === 'string') {
             return event.royalId === payload.royalId;
+        }
+
+        if (expectedType === 'select_buff' && typeof payload.buffId === 'string') {
+            return event.buffId === payload.buffId;
         }
 
         return true;
@@ -89,8 +95,21 @@ export const createElectronUnityParityApi = (
                 currentParams().game.historyControls.currentIndex === nextRevision &&
                 hasRenderedCurrentRoute()
         );
-        return result(action, true, `Applied replay-backed semantic ${expectedType} action.`);
+        return result(
+            action,
+            true,
+            `Applied replay-backed semantic ${expectedType} action.`,
+            'replay-state-import'
+        );
     };
+
+    const clickActions = createElectronUnityClickActions({
+        currentParams,
+        result,
+        hasRenderedCurrentRoute,
+        getLoadedReplayEvent: () => loadedReplayEvents[loadedReplayRevision],
+        advanceLoadedReplayEvent,
+    });
 
     const dispatch = async (
         action: ParityAction,
@@ -140,25 +159,28 @@ export const createElectronUnityParityApi = (
                     await waitForStableFrame();
                     return result(action, true);
 
+                case 'choose_boon':
+                    return await clickActions.chooseBoon(action, payload);
+
                 case 'load_replay_fixture':
                     clearParityErrorBanner();
                     return await loadReplayFixture(action, payload);
 
                 case 'click_market_card':
-                    return await clickMarketCard(action, payload);
+                    return await clickActions.clickMarketCard(action, payload);
 
                 case 'buy_card':
                 case 'reserve_card':
-                    return await dispatchPreviewAction(action, payload, dispatch);
+                    return await clickActions.dispatchPreviewAction(action, payload);
 
                 case 'click_player_reserved':
-                    return await clickPlayerReserved(action, payload);
+                    return await clickActions.clickPlayerReserved(action, payload);
 
                 case 'confirm_preview_action':
-                    return await confirmPreviewAction(action, payload);
+                    return await clickActions.confirmPreviewAction(action, payload);
 
                 case 'end_turn':
-                    return await endTurn(action);
+                    return await clickActions.endTurn(action);
 
                 case 'force_royal_selection':
                     currentParams().game.handlers.handleForceRoyal();
@@ -166,13 +188,13 @@ export const createElectronUnityParityApi = (
                     return result(action, true);
 
                 case 'choose_royal':
-                    return await chooseRoyal(action, payload);
+                    return await clickActions.chooseRoyal(action, payload);
 
                 case 'open_settings':
-                    return await openSettings(action);
+                    return await clickActions.openSettings(action);
 
                 case 'change_setting':
-                    return await changeSetting(action, payload);
+                    return await clickActions.changeSetting(action, payload);
 
                 case 'invalid_action':
                     showParityErrorBanner('Invalid semantic action');
@@ -215,151 +237,18 @@ export const createElectronUnityParityApi = (
                 hasRenderedCurrentRoute()
             );
         }, 240);
+        if (rendered && payload.interactive === true) {
+            currentParams().setReplayReviewing?.(false);
+            await waitForStableFrame();
+        }
         return result(
             action,
             rendered,
             rendered
                 ? `Loaded replay revision ${clampedRevision}.`
-                : `Replay revision ${clampedRevision} did not render before timeout.`
+                : `Replay revision ${clampedRevision} did not render before timeout.`,
+            payload.interactive === true ? 'setup-replay-load-interactive' : 'setup-replay-load'
         );
-    };
-
-    const clickMarketCard = async (action: ParityAction, payload: Record<string, unknown>) => {
-        const level = Number(payload.level);
-        const index = Number(payload.index);
-        const selector = `[data-market-slot="${level}-${index}"] [data-card-preview-click="true"], [data-market-slot="${level}-${index}"][data-card-preview-click="true"], [data-market-slot="${level}-${index}"] button, [data-market-slot="${level}-${index}"] [role="button"]`;
-        const ok = clickElement(selector);
-        await waitForStableFrame();
-        return result(action, ok, ok ? undefined : `No market card target for ${level}-${index}.`);
-    };
-
-    const dispatchPreviewAction = async (
-        action: ParityAction,
-        payload: Record<string, unknown>,
-        dispatch: (
-            action: ParityAction,
-            payload?: Record<string, unknown>
-        ) => Promise<ParityActionResult>
-    ) => {
-        const level = Number(payload.level);
-        const index = Number(payload.index);
-        await dispatch('click_market_card', { level, index });
-        const actionId = action === 'buy_card' ? 'buy' : 'reserve';
-        const ok = clickElement(`[data-card-preview-action="${actionId}"]:not(:disabled)`);
-        await waitForStableFrame();
-        if (ok) {
-            return result(action, true);
-        }
-
-        return await advanceLoadedReplayEvent(
-            action,
-            action === 'buy_card' ? 'buy_card' : 'reserve_card',
-            payload
-        );
-    };
-
-    const clickPlayerReserved = async (action: ParityAction, payload: Record<string, unknown>) => {
-        const index = Number(payload.index ?? 0);
-        const ok = clickElement(
-            `[data-reserved-slot="p1-${index}"] [data-card-preview-click="true"], [data-reserved-slot="p1-${index}"] button, [data-reserved-slot="p1-${index}"] [role="button"]`
-        );
-        await waitForStableFrame();
-        return result(action, ok, ok ? undefined : `No p1 reserved slot ${index}.`);
-    };
-
-    const confirmPreviewAction = async (action: ParityAction, payload: Record<string, unknown>) => {
-        const actionId = typeof payload.actionId === 'string' ? payload.actionId : undefined;
-        const selector = actionId
-            ? `[data-card-preview-action="${actionId}"]:not(:disabled)`
-            : '[data-card-preview-action]:not(:disabled)';
-        const ok = clickElement(selector);
-        await waitForStableFrame();
-        return result(action, ok, ok ? undefined : 'No enabled preview action.');
-    };
-
-    const endTurn = async (action: ParityAction) => {
-        if (loadedReplayEvents[loadedReplayRevision]?.type === 'replenish') {
-            return await advanceLoadedReplayEvent(action, 'replenish');
-        }
-
-        const ok = clickElement(
-            '[data-game-action="confirm-take"], [data-game-action="replenish"]'
-        );
-        await waitForStableFrame();
-        if (ok) {
-            return result(action, true);
-        }
-
-        return await advanceLoadedReplayEvent(action, 'replenish');
-    };
-
-    const chooseRoyal = async (action: ParityAction, payload: Record<string, unknown>) => {
-        const index = Number(payload.index ?? 0);
-        const royal = currentParams().game.state.royalDeck[index];
-        if (!royal) {
-            await waitForStableFrame();
-            return result(action, false, `No royal at index ${index}.`);
-        }
-
-        const beforeIndex = currentParams().game.historyControls.currentIndex;
-        const clicked = clickElement(
-            `button[data-royal-card="${royal.id}"], [data-royal-card="${royal.id}"]`
-        );
-        if (clicked) {
-            await waitForCondition(
-                () => currentParams().game.historyControls.currentIndex > beforeIndex
-            );
-            if (currentParams().game.historyControls.currentIndex > beforeIndex) {
-                return result(action, true);
-            }
-        }
-
-        currentParams().game.handlers.handleSelectRoyal(royal);
-        await waitForCondition(
-            () => currentParams().game.historyControls.currentIndex > beforeIndex
-        );
-        if (currentParams().game.historyControls.currentIndex > beforeIndex) {
-            return result(action, true);
-        }
-
-        return await advanceLoadedReplayEvent(action, 'select_royal', { royalId: royal.id });
-    };
-
-    const openSettings = async (action: ParityAction) => {
-        const hasControl = () => Boolean(document.querySelector(SETTINGS_CONTROL_SELECTOR));
-        const hasPanel = () => Boolean(document.querySelector('[data-settings-menu]'));
-        const ready = await waitForCondition(() => hasRenderedCurrentRoute() && hasControl(), 240);
-        const ok = ready && clickElement(SETTINGS_CONTROL_SELECTOR);
-        const panelVisible = ok && (await waitForCondition(hasPanel, 120));
-        return result(
-            action,
-            panelVisible,
-            panelVisible ? undefined : 'Settings control or panel not found.'
-        );
-    };
-
-    const changeSetting = async (action: ParityAction, payload: Record<string, unknown>) => {
-        const name = payload.name;
-        if (name === 'locale' && (payload.value === 'en' || payload.value === 'zh')) {
-            currentParams().setLocale(payload.value);
-            await waitForStableFrame();
-            return result(action, true);
-        }
-
-        if (name === 'soundEnabled' && typeof payload.value === 'boolean') {
-            currentParams().setSoundEnabled(payload.value);
-            await waitForStableFrame();
-            return result(action, true);
-        }
-
-        if (name === 'surfaceTheme' && typeof payload.value === 'string') {
-            currentParams().selectSurfaceTheme(payload.value as SurfaceThemeVariant);
-            await waitForStableFrame();
-            return result(action, true);
-        }
-
-        await waitForStableFrame();
-        return result(action, false, `Unsupported setting ${String(name)}.`);
     };
 
     return {

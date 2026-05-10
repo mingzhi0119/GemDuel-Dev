@@ -344,6 +344,7 @@ export default function GemDuelBoard() {
         setStartSetupRoute,
         startGame: startGameAndClearRoute,
         selectSurfaceTheme: handleSelectSurfaceTheme,
+        setReplayReviewing: setIsReviewing,
         reset: handleRestart,
     });
 
