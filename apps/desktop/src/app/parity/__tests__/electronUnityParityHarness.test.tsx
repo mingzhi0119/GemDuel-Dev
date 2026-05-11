@@ -506,6 +506,266 @@ describe('useElectronUnityParityHarness', () => {
         });
     });
 
+    it('covers replay setup variants, mismatch recovery, and dispatch errors', async () => {
+        const { params } = createParams();
+        (
+            params as UseElectronUnityParityHarnessParams & { setReplayReviewing: () => void }
+        ).setReplayReviewing = vi.fn();
+        (params.game as unknown as { getters: { isMyTurn: boolean } }).getters = {
+            isMyTurn: true,
+        };
+        const api = createApi(params);
+
+        await expect(
+            api.dispatch('start_local_game', {
+                rawText: '{"events":[]}',
+                revision: -4,
+                interactive: true,
+            })
+        ).resolves.toMatchObject({
+            ok: true,
+            action: 'start_local_game',
+            detail: 'Loaded replay revision 0.',
+            driver: 'setup-replay-load-interactive',
+        });
+        expect(params.startGame).toHaveBeenCalledWith('LOCAL_PVP', {
+            useBuffs: false,
+            seed: 'electron-unity-parity',
+        });
+        expect(params.setReplayReviewing).toHaveBeenCalledWith(false);
+
+        await expect(api.dispatch('load_replay_fixture', { revision: 99 })).resolves.toMatchObject({
+            ok: true,
+            action: 'load_replay_fixture',
+            detail: 'Loaded replay revision 4.',
+        });
+        expect(replayMocks.readReplayVNext).toHaveBeenCalledWith('', { verifySummary: 'sample' });
+
+        document.querySelector('[data-card-preview-action="buy"]')?.remove();
+        document.querySelector('[data-card-preview-action="reserve"]')?.remove();
+        await expect(
+            api.dispatch('load_replay_fixture', { rawText: '{"events":[]}', revision: 0 })
+        ).resolves.toMatchObject({ ok: true });
+        await expect(api.dispatch('buy_card', { level: 2, index: 0 })).resolves.toMatchObject({
+            ok: false,
+            action: 'buy_card',
+            detail: 'No loaded replay event buy_card at revision 0.',
+        });
+        await expect(api.dispatch('reserve_card', { level: 1, index: 0 })).resolves.toMatchObject({
+            ok: false,
+            action: 'reserve_card',
+            detail: 'No loaded replay event reserve_card at revision 0.',
+        });
+
+        const throwingParams = createParams().params;
+        throwingParams.startGame = vi.fn(() => {
+            throw new Error('start failed');
+        });
+        const throwingApi = createApi(throwingParams);
+        await expect(throwingApi.dispatch('start_local_game')).resolves.toMatchObject({
+            ok: false,
+            action: 'start_local_game',
+            detail: 'start failed',
+        });
+    });
+
+    it('drives chrome, hover, board, gem, and settings controls through DOM paths', async () => {
+        const { game, params } = createParams();
+        const api = createApi(params);
+
+        document
+            .querySelector('[data-draft-buff-id="royal_envoy"]')
+            ?.removeAttribute('data-draft-buff-id');
+        document
+            .querySelector('[name="buff-selection"]')
+            ?.setAttribute('data-draft-buff-index', '1');
+        document.querySelector('[name="buff-selection"]')?.addEventListener('click', () => {
+            game.historyControls.currentIndex += 1;
+            game.historyControls.historyLength += 1;
+        });
+
+        const restart = document.querySelector('[data-app-restart-button="true"]');
+        restart?.addEventListener(
+            'click',
+            () => {
+                const confirm = document.createElement('button');
+                confirm.dataset.appRestartConfirm = 'true';
+                confirm.addEventListener('click', () => {
+                    params.reset();
+                    confirm.remove();
+                });
+                document.body.prepend(confirm);
+            },
+            { once: true }
+        );
+
+        const boardCell = document.querySelector('[data-board-cell="0-0"]');
+        const boardButton = document.createElement('button');
+        boardButton.textContent = 'Gem';
+        boardButton.addEventListener('click', () => {
+            game.historyControls.currentIndex += 1;
+            game.historyControls.historyLength += 1;
+            const nextState = createState({
+                ...game.state,
+                phase: 'IDLE',
+            }) as GameState & { selectedGems: Array<{ r: number; c: number }> };
+            nextState.selectedGems = [{ r: 0, c: 0 }];
+            game.state = nextState;
+        });
+        boardCell?.appendChild(boardButton);
+
+        const confirmTake = document.createElement('button');
+        confirmTake.dataset.gameAction = 'confirm-take';
+        confirmTake.addEventListener('click', () => {
+            game.historyControls.currentIndex += 1;
+            game.historyControls.historyLength += 1;
+            const nextState = createState({ ...game.state, turn: 'p2' }) as GameState & {
+                selectedGems: [];
+            };
+            nextState.selectedGems = [];
+            game.state = nextState;
+        });
+        const cancelTake = document.createElement('button');
+        cancelTake.dataset.gameAction = 'cancel-take';
+        document.body.append(confirmTake, cancelTake);
+
+        document.querySelector('[data-player-zone-gem="p2-red"]')?.addEventListener('click', () => {
+            game.historyControls.currentIndex += 1;
+            game.historyControls.historyLength += 1;
+            game.state = createState({ ...game.state, phase: 'IDLE', turn: 'p2' });
+        });
+        document.querySelector('[data-player-zone-gem="p1-red"]')?.addEventListener('click', () => {
+            game.historyControls.currentIndex += 1;
+            game.historyControls.historyLength += 1;
+            game.state = createState({ ...game.state, phase: 'IDLE', turn: 'p2' });
+        });
+
+        document.addEventListener(
+            'pointerdown',
+            () => document.querySelector('[data-settings-menu]')?.remove(),
+            { once: true }
+        );
+
+        await expect(api.dispatch('choose_mode', { mode: 'classic' })).resolves.toMatchObject({
+            ok: true,
+        });
+        expect(params.setStartSetupRoute).toHaveBeenCalledWith('classic');
+
+        await expect(api.dispatch('choose_boon', { index: 1 })).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(api.dispatch('hover_boon', { index: 1 })).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+        await expect(api.dispatch('click_chrome_rulebook')).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(api.dispatch('click_chrome_restart')).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(
+            api.dispatch('hover_chrome_control', { control: 'rulebook' })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+        await expect(
+            api.dispatch('hover_chrome_control', { control: 'restart' })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+        await expect(api.dispatch('hover_chrome_control')).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+
+        await expect(
+            api.dispatch('hover_market_card', { level: 1, index: 0 })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+        await expect(api.dispatch('hover_market_deck', { level: 1 })).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+        await expect(
+            api.dispatch('hover_player_reserved', { player: 'p1', index: 0 })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+        await expect(
+            api.dispatch('click_board_cell', { row: 0, column: 0 })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(api.dispatch('hover_board_cell', { r: 0, c: 0 })).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+        await expect(api.dispatch('confirm_gem_selection')).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(api.dispatch('cancel_gem_selection')).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(api.dispatch('take_bonus_gem', { row: 0, column: 0 })).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(api.dispatch('steal_gem', { gemId: 'red' })).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(
+            api.dispatch('discard_gem', { player: 'p1', gemId: 'red' })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(
+            api.dispatch('hover_player_gem', { role: 'opponent', gemId: 'red' })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
+
+        await expect(api.dispatch('open_settings')).resolves.toMatchObject({ ok: true });
+        await expect(api.dispatch('settings_save')).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(api.dispatch('settings_load')).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+        });
+        await expect(
+            api.dispatch('change_setting', { name: 'locale', value: 'zh' })
+        ).resolves.toMatchObject({
+            ok: true,
+            detail: 'Set locale zh through harness fallback.',
+        });
+        await expect(
+            api.dispatch('change_setting', { name: 'surfaceTheme', value: 'anime' })
+        ).resolves.toMatchObject({
+            ok: true,
+            detail: 'Set surface theme anime through fallback.',
+        });
+        await expect(api.dispatch('close_settings')).resolves.toMatchObject({
+            ok: true,
+            detail: 'Closed settings panel.',
+        });
+    });
+
     it('reports unsupported or missing semantic targets without mutating through shortcuts', async () => {
         const { params } = createParams();
         const api = createApi(params);
@@ -558,6 +818,141 @@ describe('useElectronUnityParityHarness', () => {
             ok: false,
             action: 'choose_royal',
             detail: 'No royal at index 0.',
+        });
+    });
+
+    it('reports missing DOM paths and uses replay fallback for board and gem actions', async () => {
+        const { params } = createParams();
+        replayMocks.readReplayVNext.mockReturnValue({
+            replay: {
+                replayRevision: 0,
+                events: [
+                    { type: 'take_bonus_gem', coord: { r: 0, c: 0 } },
+                    { type: 'steal_gem', gemId: 'red' },
+                    { type: 'discard_gem', gemId: 'red' },
+                    { type: 'replenish' },
+                ],
+            },
+        });
+        replayMocks.buildReplaySyntheticHistory.mockReturnValue([
+            { type: 'INIT' },
+            { type: 'TAKE_BONUS_GEM' },
+            { type: 'STEAL_GEM' },
+            { type: 'DISCARD_GEM' },
+            { type: 'REPLENISH' },
+        ]);
+        const api = createApi(params);
+
+        document.querySelector('[data-app-rulebook-button="true"]')?.remove();
+        document.querySelector('[data-app-restart-button="true"]')?.remove();
+        document.querySelector('button[aria-label="Settings"]')?.remove();
+        document.querySelector('[name="buff-selection"]')?.setAttribute('disabled', 'true');
+        document.querySelector('[data-market-slot="1-0"]')?.remove();
+        document.querySelector('[data-market-deck="1"]')?.remove();
+        document.querySelector('[data-card-preview-action="buy"]')?.remove();
+        document.querySelector('[data-card-preview-action="reserve"]')?.remove();
+        document.querySelector('[data-reserved-slot="p1-0"]')?.remove();
+        document.querySelector('[data-game-action="replenish"]')?.remove();
+        document.querySelector('[data-player-zone-gem="p2-red"]')?.remove();
+        document.querySelector('[data-player-zone-gem="p1-red"]')?.remove();
+
+        await expect(api.dispatch('choose_boon')).resolves.toMatchObject({
+            ok: false,
+            detail: 'No enabled draft boon target for 0.',
+        });
+        await expect(api.dispatch('click_chrome_rulebook')).resolves.toMatchObject({
+            ok: false,
+            detail: 'Rulebook control or panel not found.',
+        });
+        await expect(api.dispatch('click_chrome_restart')).resolves.toMatchObject({
+            ok: false,
+            detail: 'Restart control, confirmation, or reset state was not observed.',
+        });
+        await expect(
+            api.dispatch('hover_chrome_control', { control: 'unknown' })
+        ).resolves.toMatchObject({
+            ok: false,
+            detail: 'Chrome control not found.',
+        });
+        await expect(api.dispatch('open_settings')).resolves.toMatchObject({
+            ok: false,
+            detail: 'Settings control or panel not found.',
+        });
+        await expect(api.dispatch('settings_save')).resolves.toMatchObject({
+            ok: false,
+            detail: 'Settings save replay control not found.',
+        });
+        await expect(api.dispatch('settings_load')).resolves.toMatchObject({
+            ok: false,
+            detail: 'Settings load replay control not found.',
+        });
+        await expect(api.dispatch('close_settings')).resolves.toMatchObject({
+            ok: true,
+            detail: 'Closed settings panel.',
+        });
+        await expect(
+            api.dispatch('hover_market_card', { level: 1, index: 0 })
+        ).resolves.toMatchObject({
+            ok: false,
+            detail: 'No market card target for 1-0.',
+        });
+        await expect(api.dispatch('hover_market_deck', { level: 1 })).resolves.toMatchObject({
+            ok: false,
+            detail: 'No market deck target for 1.',
+        });
+        await expect(api.dispatch('click_player_reserved')).resolves.toMatchObject({
+            ok: false,
+            detail: 'No preview opened for p1 reserved slot 0.',
+        });
+        await expect(api.dispatch('hover_player_reserved')).resolves.toMatchObject({
+            ok: false,
+            detail: 'No p1 reserved slot 0.',
+        });
+        await expect(api.dispatch('confirm_preview_action')).resolves.toMatchObject({
+            ok: false,
+            detail: 'No enabled preview action.',
+        });
+        await expect(api.dispatch('click_board_cell', { r: 9, c: 9 })).resolves.toMatchObject({
+            ok: false,
+            detail: 'No board cell target for 9-9.',
+        });
+        await expect(
+            api.dispatch('hover_board_cell', { row: 9, column: 9 })
+        ).resolves.toMatchObject({
+            ok: false,
+            detail: 'No board cell target for 9-9.',
+        });
+        await expect(api.dispatch('confirm_gem_selection')).resolves.toMatchObject({
+            ok: false,
+            detail: 'No enabled gem-selection confirm action.',
+        });
+        await expect(api.dispatch('cancel_gem_selection')).resolves.toMatchObject({
+            ok: false,
+            detail: 'No enabled gem-selection cancel action.',
+        });
+
+        await expect(
+            api.dispatch('load_replay_fixture', { rawText: '{"events":[]}', revision: 0 })
+        ).resolves.toMatchObject({ ok: true });
+        await expect(api.dispatch('take_bonus_gem')).resolves.toMatchObject({
+            ok: true,
+            detail: 'Applied replay-backed semantic take_bonus_gem action.',
+            driver: 'replay-state-import',
+        });
+        await expect(api.dispatch('steal_gem')).resolves.toMatchObject({
+            ok: true,
+            detail: 'Applied replay-backed semantic steal_gem action.',
+            driver: 'replay-state-import',
+        });
+        await expect(api.dispatch('discard_gem')).resolves.toMatchObject({
+            ok: true,
+            detail: 'Applied replay-backed semantic discard_gem action.',
+            driver: 'replay-state-import',
+        });
+        await expect(api.dispatch('end_turn')).resolves.toMatchObject({
+            ok: true,
+            detail: 'Applied replay-backed semantic replenish action.',
+            driver: 'replay-state-import',
         });
     });
 

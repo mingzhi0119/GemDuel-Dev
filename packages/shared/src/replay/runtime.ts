@@ -212,18 +212,38 @@ export const resolveRuntimeCardIdToInstanceId = (
 const serializeReplayTableauCard = (
     card: Card,
     runtimeToInstance: Map<string, ReplayCardInstanceId>
-): ReplayTableauCard =>
-    card.isBuff
-        ? {
-              kind: 'buff_dummy',
-              cardId: card.id,
-              bonusColor: (card.bonusColor ?? 'red') as GemColor,
-              bonusCount: card.bonusCount ?? 1,
-          }
-        : {
-              kind: 'instance',
-              instanceId: resolveInstanceId(card, runtimeToInstance),
-          };
+): ReplayTableauCard => {
+    if (card.isBuff) {
+        return {
+            kind: 'buff_dummy',
+            cardId: card.id,
+            bonusColor: (card.bonusColor ?? 'red') as GemColor,
+            bonusCount: card.bonusCount ?? 1,
+        };
+    }
+
+    const instanceId = resolveInstanceId(card, runtimeToInstance);
+    const templateId = parseReplayCardInstanceId(instanceId).templateId;
+    const template = CARD_TEMPLATE_MAP.get(templateId);
+    const serialized: ReplayTableauCard = {
+        kind: 'instance',
+        instanceId,
+    };
+
+    if (
+        card.bonusColor !== undefined &&
+        card.bonusColor !== 'null' &&
+        card.bonusColor !== template?.bonusColor
+    ) {
+        serialized.bonusColor = card.bonusColor;
+    }
+
+    if (card.bonusCount !== undefined && card.bonusCount !== template?.bonusCount) {
+        serialized.bonusCount = card.bonusCount;
+    }
+
+    return serialized;
+};
 
 const inflateReplayTableauCard = (
     card: ReplayTableauCard,
@@ -240,7 +260,10 @@ const inflateReplayTableauCard = (
               cost: { red: 0, green: 0, blue: 0, white: 0, black: 0, pearl: 0, gold: 0 },
               isBuff: true,
           }
-        : inflateCardFromInstance(card.instanceId, cardInstances);
+        : inflateCardFromInstance(card.instanceId, cardInstances, {
+              ...(card.bonusColor ? { bonusColor: card.bonusColor } : {}),
+              ...(card.bonusCount !== undefined ? { bonusCount: card.bonusCount } : {}),
+          });
 
 const serializeReplayMarket = (
     market: GameState['market'],
@@ -347,6 +370,25 @@ export const serializeReplayPlayers = (state: GameState): ReplayPlayers => ({
     p2: { buff: serializeReplayBuffRef(state.playerBuffs?.p2) },
 });
 
+const serializeReplayActiveModal = (
+    state: GameState,
+    runtimeToInstance: Map<string, ReplayCardInstanceId>
+): ReplayStateSnapshot['activeModal'] => {
+    if (state.activeModal?.type !== 'PEEK') {
+        return undefined;
+    }
+
+    return {
+        type: 'PEEK',
+        data: {
+            cards: state.activeModal.data.cards.map((card) =>
+                resolveInstanceId(card, runtimeToInstance)
+            ),
+            initiator: state.activeModal.data.initiator,
+        },
+    };
+};
+
 export const serializeReplayStateSnapshot = (
     state: GameState,
     runtimeToInstance: Map<string, ReplayCardInstanceId>
@@ -424,6 +466,9 @@ export const serializeReplayStateSnapshot = (
     nextPlayerAfterRoyal: state.nextPlayerAfterRoyal,
     pendingExtraTurn: state.pendingExtraTurn,
     playerTurnCounts: cloneJson(state.playerTurnCounts),
+    ...(state.activeModal
+        ? { activeModal: serializeReplayActiveModal(state, runtimeToInstance) }
+        : {}),
     abilityResolution: state.abilityResolution
         ? cloneJson({
               nextPlayer: state.abilityResolution.nextPlayer,
@@ -580,7 +625,17 @@ export const inflateReplayStateSnapshot = (
     base.nextPlayerAfterRoyal = snapshot.nextPlayerAfterRoyal;
     base.pendingExtraTurn = snapshot.pendingExtraTurn;
     base.playerTurnCounts = cloneJson(snapshot.playerTurnCounts);
-    base.activeModal = null;
+    base.activeModal = snapshot.activeModal
+        ? {
+              type: 'PEEK',
+              data: {
+                  cards: snapshot.activeModal.data.cards.map((instanceId) =>
+                      inflateCardFromInstance(instanceId, init.cardInstances)
+                  ),
+                  initiator: snapshot.activeModal.data.initiator,
+              },
+          }
+        : null;
     base.lastFeedback = null;
     base.toastMessage = null;
     base.abilityResolution = snapshot.abilityResolution
@@ -650,6 +705,24 @@ export const inflateReplayEventToGameAction = (
                 type: 'STEAL_GEM',
                 payload: { gemId: event.gemId },
             };
+        case 'initiate_buy_joker': {
+            const card =
+                event.source === 'reserved'
+                    ? findCardByInstance(state, event.instanceId, event.actor)
+                    : event.marketRef
+                      ? findCardInMarket(state, event.marketRef)
+                      : null;
+            return {
+                type: 'INITIATE_BUY_JOKER',
+                payload: {
+                    card: cloneJson(
+                        card ?? inflateCardFromInstance(event.instanceId, init.cardInstances)
+                    ),
+                    source: event.source ?? 'market',
+                    ...(event.marketRef ? { marketInfo: cloneJson(event.marketRef) } : {}),
+                },
+            };
+        }
         case 'buy_card': {
             const card =
                 event.source === 'market' && event.marketRef
@@ -671,6 +744,30 @@ export const inflateReplayEventToGameAction = (
                 },
             };
         }
+        case 'initiate_reserve': {
+            const card = findCardInMarket(state, event.marketRef);
+            return {
+                type: 'INITIATE_RESERVE',
+                payload: {
+                    card: cloneJson(
+                        card ?? inflateCardFromInstance(event.instanceId, init.cardInstances)
+                    ),
+                    level: event.marketRef.level,
+                    idx: event.marketRef.idx,
+                    ...(event.marketRef.isExtra ? { isExtra: true } : {}),
+                    ...(event.marketRef.extraIdx !== undefined
+                        ? { extraIdx: event.marketRef.extraIdx }
+                        : {}),
+                },
+            };
+        }
+        case 'initiate_reserve_deck':
+            return {
+                type: 'INITIATE_RESERVE_DECK',
+                payload: { level: event.level },
+            };
+        case 'cancel_reserve':
+            return { type: 'CANCEL_RESERVE' };
         case 'reserve_card': {
             const card = event.isSteal
                 ? findCardByInstance(state, event.instanceId, event.actor === 'p1' ? 'p2' : 'p1')
@@ -708,11 +805,15 @@ export const inflateReplayEventToGameAction = (
                 type: 'DISCARD_RESERVED',
                 payload: { cardId: event.instanceId },
             };
+        case 'activate_privilege':
+            return { type: 'ACTIVATE_PRIVILEGE' };
         case 'use_privilege':
             return {
                 type: 'USE_PRIVILEGE',
                 payload: cloneJson(event.coord),
             };
+        case 'cancel_privilege':
+            return { type: 'CANCEL_PRIVILEGE' };
         case 'select_royal': {
             const royal =
                 state.royalDeck.find((card) => card.id === event.royalId) ??
@@ -722,6 +823,23 @@ export const inflateReplayEventToGameAction = (
                 payload: { card: cloneJson(royal) },
             };
         }
+        case 'reroll_draft_pool':
+            return {
+                type: 'REROLL_DRAFT_POOL',
+                payload: {
+                    ...(event.level ? { level: event.level } : {}),
+                },
+            };
+        case 'peek_deck':
+            return {
+                type: 'PEEK_DECK',
+                payload: {
+                    ...(event.level ? { level: event.level } : {}),
+                    ...(event.levels ? { levels: cloneJson(event.levels) } : {}),
+                },
+            };
+        case 'close_modal':
+            return { type: 'CLOSE_MODAL' };
     }
 };
 

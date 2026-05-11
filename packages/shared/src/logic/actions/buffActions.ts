@@ -291,7 +291,12 @@ export const handleRerollDraftPool = (state: GameState, payload: { level?: 1 | 2
         }
 
         state.buffLevel = level;
-        state.draftPool = buildDraftPoolForLevel(level);
+        state.draftPool = buildDraftPoolForLevel(
+            level,
+            createSeededRandomSource(
+                `draft-reroll:${state.mode}:${level}:${state.turn}:${state.draftPool.join('|')}`
+            )
+        );
         return;
     }
 
@@ -308,7 +313,13 @@ export const handleRerollDraftPool = (state: GameState, payload: { level?: 1 | 2
         return;
     }
 
-    const p2DraftPool = buildP2AsymmetricDraftPool(level, state.p1SelectedBuff.id);
+    const p2DraftPool = buildP2AsymmetricDraftPool(
+        level,
+        state.p1SelectedBuff.id,
+        createSeededRandomSource(
+            `draft-reroll:${state.mode}:${level}:${state.turn}:${state.p1SelectedBuff.id}:${state.p2DraftPool?.join('|') ?? 'none'}`
+        )
+    );
     if (!p2DraftPool) {
         return;
     }

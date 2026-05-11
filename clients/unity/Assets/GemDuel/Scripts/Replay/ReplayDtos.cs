@@ -60,6 +60,9 @@ namespace GemDuel.Replay
         [JsonProperty("gameVersion")]
         public string GameVersion { get; set; } = string.Empty;
 
+        [JsonProperty("createdAt")]
+        public string CreatedAt { get; set; } = string.Empty;
+
         [JsonProperty("match")]
         public ReplayMatchInfo Match { get; set; } = new ReplayMatchInfo();
 
@@ -82,6 +85,18 @@ namespace GemDuel.Replay
 
     public sealed class ReplayMatchInfo
     {
+        [JsonProperty("mode")]
+        public string Mode { get; set; } = "LOCAL_PVP";
+
+        [JsonProperty("seed")]
+        public string Seed { get; set; }
+
+        [JsonProperty("started")]
+        public bool Started { get; set; }
+
+        [JsonProperty("ended")]
+        public bool Ended { get; set; }
+
         [JsonProperty("winner")]
         public string Winner { get; set; }
 

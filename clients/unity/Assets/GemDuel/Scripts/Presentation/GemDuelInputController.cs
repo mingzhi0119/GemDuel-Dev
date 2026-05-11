@@ -4,7 +4,7 @@ namespace GemDuel.Presentation
 {
     public sealed class GemDuelInputController : MonoBehaviour
     {
-        private GemDuelVerticalSlice verticalSlice;
+        private GemDuelGameController gameController;
         private readonly System.Collections.Generic.HashSet<string> draggedBoardGemKeys =
             new System.Collections.Generic.HashSet<string>();
         private bool boardGemDragActive;
@@ -18,19 +18,19 @@ namespace GemDuel.Presentation
 
         private void Awake()
         {
-            verticalSlice = FindAnyObjectByType<GemDuelVerticalSlice>();
+            gameController = FindAnyObjectByType<GemDuelGameController>();
         }
 
         private void Update()
         {
-            if (verticalSlice == null)
+            if (gameController == null)
             {
                 return;
             }
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                verticalSlice.ApplyNextFixtureEvent();
+                gameController.ApplyNextFixtureEvent();
             }
 
             if (!Input.GetMouseButton(0))
@@ -48,7 +48,7 @@ namespace GemDuel.Presentation
                     : null;
                 LastMouseDispatchOk = TryDispatchScreenPointForEvidence(Input.mousePosition, out var detail);
                 LastMouseDispatchDetail = detail;
-                boardGemDragActive = verticalSlice.IsTakeGemsBoardGemTarget(dragTarget);
+                boardGemDragActive = gameController.IsTakeGemsBoardGemTarget(dragTarget);
                 draggedBoardGemKeys.Clear();
                 if (boardGemDragActive && dragTarget != null)
                 {
@@ -76,7 +76,7 @@ namespace GemDuel.Presentation
                 return false;
             }
 
-            verticalSlice.HandleVisibleTarget(target);
+            gameController.HandleVisibleTarget(target);
             detail = DescribeTarget(target);
             return true;
         }
@@ -84,14 +84,14 @@ namespace GemDuel.Presentation
         public bool TryHoverScreenPointForEvidence(Vector3 screenPosition, out string detail)
         {
             detail = string.Empty;
-            if (verticalSlice == null)
+            if (gameController == null)
             {
-                verticalSlice = FindAnyObjectByType<GemDuelVerticalSlice>();
+                gameController = FindAnyObjectByType<GemDuelGameController>();
             }
 
-            if (verticalSlice == null)
+            if (gameController == null)
             {
-                detail = "No GemDuelVerticalSlice is available for hover dispatch.";
+                detail = "No GemDuelGameController is available for hover dispatch.";
                 return false;
             }
 
@@ -106,20 +106,20 @@ namespace GemDuel.Presentation
             var target = FindVisibleTargetAtWorld(world);
             if (target == null)
             {
-                verticalSlice.SetHoveredTarget(null);
+                gameController.SetHoveredTarget(null);
                 detail = "No clickable GemDuelViewTarget at hover screen point " + screenPosition + ".";
                 return false;
             }
 
-            if (!verticalSlice.IsStableHoverTarget(target))
+            if (!gameController.IsStableHoverTarget(target))
             {
-                verticalSlice.SetHoveredTarget(null);
+                gameController.SetHoveredTarget(null);
                 detail = "GemDuelViewTarget is not hover-stable: " + DescribeTarget(target) + ".";
                 return false;
             }
 
             detail = DescribeTarget(target);
-            verticalSlice.SetHoveredTarget(target);
+            gameController.SetHoveredTarget(target);
             return true;
         }
 
@@ -130,7 +130,7 @@ namespace GemDuel.Presentation
                 return false;
             }
 
-            if (!verticalSlice.IsTakeGemsBoardGemTarget(target))
+            if (!gameController.IsTakeGemsBoardGemTarget(target))
             {
                 detail = "Board gem drag ignored non-selectable target " + DescribeTarget(target) + ".";
                 return false;
@@ -143,7 +143,7 @@ namespace GemDuel.Presentation
                 return true;
             }
 
-            verticalSlice.HandleVisibleTarget(target);
+            gameController.HandleVisibleTarget(target);
             draggedBoardGemKeys.Add(key);
             detail = "Dragged " + DescribeTarget(target) + ".";
             return true;
@@ -157,14 +157,14 @@ namespace GemDuel.Presentation
         {
             target = null;
             detail = string.Empty;
-            if (verticalSlice == null)
+            if (gameController == null)
             {
-                verticalSlice = FindAnyObjectByType<GemDuelVerticalSlice>();
+                gameController = FindAnyObjectByType<GemDuelGameController>();
             }
 
-            if (verticalSlice == null)
+            if (gameController == null)
             {
-                detail = "No GemDuelVerticalSlice is available for input dispatch.";
+                detail = "No GemDuelGameController is available for input dispatch.";
                 return false;
             }
 

@@ -15,6 +15,6 @@
         "fixtureDirectory": "fixtures/replay-golden",
         "referencedCards": 79,
         "referencedRoyals": 4,
-        "referencedBuffs": 4
+        "referencedBuffs": 12
     }
 }

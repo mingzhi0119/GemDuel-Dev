@@ -93,6 +93,8 @@ export interface ReplayInitSnapshot {
 export interface ReplayTableauInstanceCard {
     kind: 'instance';
     instanceId: ReplayCardInstanceId;
+    bonusColor?: GemColor;
+    bonusCount?: number;
 }
 
 export interface ReplayTableauBuffCard {
@@ -131,6 +133,14 @@ export interface ReplayAbilityResolutionSnapshot {
     };
 }
 
+export interface ReplayActiveModalSnapshot {
+    type: 'PEEK';
+    data: {
+        cards: ReplayCardInstanceId[];
+        initiator: PlayerKey;
+    };
+}
+
 export interface ReplayStateSnapshot {
     board: ReplayGemId[][];
     bag: ReplayGemId[];
@@ -165,6 +175,7 @@ export interface ReplayStateSnapshot {
     nextPlayerAfterRoyal: PlayerKey | null;
     pendingExtraTurn: boolean;
     playerTurnCounts: Record<PlayerKey, number>;
+    activeModal?: ReplayActiveModalSnapshot;
     abilityResolution: ReplayAbilityResolutionSnapshot | null;
 }
 
@@ -213,6 +224,13 @@ export interface ReplayStealGemEvent extends ReplayBaseEvent {
     gemId: GemColor;
 }
 
+export interface ReplayInitiateBuyJokerEvent extends ReplayBaseEvent {
+    type: 'initiate_buy_joker';
+    instanceId: ReplayCardInstanceId;
+    source?: CardActionSource;
+    marketRef?: ReplayMarketRef;
+}
+
 export interface ReplayBuyCardEvent extends ReplayBaseEvent {
     type: 'buy_card';
     instanceId: ReplayCardInstanceId;
@@ -222,6 +240,22 @@ export interface ReplayBuyCardEvent extends ReplayBaseEvent {
     randoms?: {
         bountyHunterColor?: GemColor;
     };
+}
+
+export interface ReplayInitiateReserveEvent extends ReplayBaseEvent {
+    type: 'initiate_reserve';
+    instanceId: ReplayCardInstanceId;
+    marketRef: ReplayMarketRef;
+}
+
+export interface ReplayInitiateReserveDeckEvent extends ReplayBaseEvent {
+    type: 'initiate_reserve_deck';
+    level: 1 | 2 | 3;
+    instanceId?: ReplayCardInstanceId;
+}
+
+export interface ReplayCancelReserveEvent extends ReplayBaseEvent {
+    type: 'cancel_reserve';
 }
 
 export interface ReplayReserveCardEvent extends ReplayBaseEvent {
@@ -246,14 +280,38 @@ export interface ReplayDiscardReservedEvent extends ReplayBaseEvent {
     instanceId: ReplayCardInstanceId;
 }
 
+export interface ReplayActivatePrivilegeEvent extends ReplayBaseEvent {
+    type: 'activate_privilege';
+}
+
 export interface ReplayUsePrivilegeEvent extends ReplayBaseEvent {
     type: 'use_privilege';
     coord: { r: number; c: number };
 }
 
+export interface ReplayCancelPrivilegeEvent extends ReplayBaseEvent {
+    type: 'cancel_privilege';
+}
+
 export interface ReplaySelectRoyalEvent extends ReplayBaseEvent {
     type: 'select_royal';
     royalId: ReplayRoyalId;
+}
+
+export interface ReplayRerollDraftPoolEvent extends ReplayBaseEvent {
+    type: 'reroll_draft_pool';
+    level?: BuffLevel;
+}
+
+export interface ReplayPeekDeckEvent extends ReplayBaseEvent {
+    type: 'peek_deck';
+    level?: 1 | 2 | 3;
+    levels?: Array<1 | 2 | 3>;
+    cards?: ReplayCardInstanceId[];
+}
+
+export interface ReplayCloseModalEvent extends ReplayBaseEvent {
+    type: 'close_modal';
 }
 
 export type ReplayEvent =
@@ -263,12 +321,21 @@ export type ReplayEvent =
     | ReplayTakeBonusGemEvent
     | ReplayDiscardGemEvent
     | ReplayStealGemEvent
+    | ReplayInitiateBuyJokerEvent
     | ReplayBuyCardEvent
+    | ReplayInitiateReserveEvent
+    | ReplayInitiateReserveDeckEvent
+    | ReplayCancelReserveEvent
     | ReplayReserveCardEvent
     | ReplayReserveDeckEvent
     | ReplayDiscardReservedEvent
+    | ReplayActivatePrivilegeEvent
     | ReplayUsePrivilegeEvent
-    | ReplaySelectRoyalEvent;
+    | ReplayCancelPrivilegeEvent
+    | ReplaySelectRoyalEvent
+    | ReplayRerollDraftPoolEvent
+    | ReplayPeekDeckEvent
+    | ReplayCloseModalEvent;
 
 export interface ReplaySummary {
     turnCount: number;

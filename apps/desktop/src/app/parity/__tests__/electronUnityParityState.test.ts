@@ -327,6 +327,82 @@ describe('electronUnityParityState', () => {
         );
     });
 
+    it('captures chrome, settings, player-gem, and contextual action semantics', () => {
+        appendElement('button', { appRulebookButton: 'true' });
+        appendElement('button', { appRestartButton: 'true' });
+        appendElement('button', { appSettingsButton: 'true' });
+        appendElement('button', { appRestartConfirm: 'true' });
+        appendElement('div', { rulebookOverlay: 'true' }).setAttribute(
+            'data-rulebook-overlay',
+            'true'
+        );
+        appendElement('div', { rulebookPanel: 'preview-style' }).setAttribute(
+            'data-rulebook-panel',
+            'preview-style'
+        );
+        appendElement('button', { localeOption: 'en' });
+        appendElement('button', { appSoundToggle: 'true' });
+        appendElement('button', { appSaveReplayButton: 'true' });
+        appendElement('label', { appLoadReplayControl: 'true' });
+        appendElement('button', { appSurfaceThemeControl: 'true' });
+        appendElement('button', { appSurfaceThemeOption: 'anime' });
+        appendElement('button', { playerZoneGem: 'p1-red' });
+        appendElement('button', { playerZoneGem: 'p2-green' });
+        appendElement('button', { playerZoneGem: 'malformed' });
+        appendElement('button', { reservedSlot: 'p2-0' });
+        appendElement('div', { marketSlot: 'bad' });
+        appendElement('div', { boardCell: 'bad' });
+        appendElement('button', { gameAction: 'confirm-take' }).setAttribute(
+            'data-game-action',
+            'confirm-take'
+        );
+        appendElement('button', { gameAction: 'cancel-take' }).setAttribute(
+            'data-game-action',
+            'cancel-take'
+        );
+        appendElement('button', { gameAction: 'cancel-reserve' }).setAttribute(
+            'data-game-action',
+            'cancel-reserve'
+        );
+        appendElement('button', { gameAction: 'cancel-privilege' }).setAttribute(
+            'data-game-action',
+            'cancel-privilege'
+        );
+
+        const p1Zone = appendElement('section', { playerZone: 'p1' });
+        const unknownColumn = document.createElement('div');
+        unknownColumn.dataset.playerZoneColumn = 'other';
+        unknownColumn.getBoundingClientRect = () => rect(20, 20, 80, 30);
+        p1Zone.appendChild(unknownColumn);
+
+        const winnerDump = buildStateDump(buildParams(buildGameState({ winner: 'p1' })));
+        const keys = winnerDump.visible.boxes.map((box) => box.semanticKey);
+
+        expect(keys).toEqual(
+            expect.arrayContaining([
+                'chrome.rulebook',
+                'chrome.restart',
+                'settings.control',
+                'chrome.restart.confirm',
+                'rulebook.overlay',
+                'rulebook.panel',
+                'settings.locale.en',
+                'settings.sound',
+                'settings.save',
+                'settings.load',
+                'settings.surface.control',
+                'settings.surface.anime',
+                'board.selection.confirm',
+                'board.selection.cancel',
+                'reserve.cancel',
+                'privilege.cancel',
+                'player.opponent.zone',
+            ])
+        );
+        expect(keys).not.toContain('player.current.gem.red');
+        expect(keys).not.toContain('player.reserved.0');
+    });
+
     it('detects rendered routes for menu, matchmaking, draft, and board states', () => {
         const game = buildGame(buildGameState(), 0);
         document.body.textContent = '选择一个模式开始';

@@ -24,4 +24,18 @@ describe('resolveManualChunk', () => {
             'network-vendor'
         );
     });
+
+    it('splits main game UI and presentation code out of the GameShell route chunk', () => {
+        expect(resolveManualChunk('E:/GemDuel-Dev/packages/ui/src/components/GameBoard.tsx')).toBe(
+            'game-ui'
+        );
+        expect(
+            resolveManualChunk(
+                'E:/GemDuel-Dev/apps/desktop/src/app/presentation/PresentationLayer.tsx'
+            )
+        ).toBe('presentation-layer');
+        expect(
+            resolveManualChunk('E:/GemDuel-Dev/packages/ui/src/components/Rulebook.tsx')
+        ).toBeUndefined();
+    });
 });

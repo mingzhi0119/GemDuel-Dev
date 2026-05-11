@@ -26,7 +26,17 @@ Required scenario tags:
 - `local-pvp-opening`
 - `reserve`
 - `buy`
+- `joker-buy`
+- `reserved-buy`
+- `reserve-cancel`
+- `reserve-deck`
+- `discard-reserved`
+- `privilege`
+- `peek-modal`
+- `draft-reroll`
+- `draft-p2-reroll`
 - `royal-selection`
+- `royal-handoff`
 - `extra-turn`
 - `buff`
 - `game-over`
@@ -56,6 +66,22 @@ migration.
 - `requiredCoverage`: scenario tags the corpus must cover.
 - `fixtures`: fixture file names, tags, expected final hash, winner, end reason, event count, and
   source note.
+- `rejectionManifestFile`: companion wrong-phase, resource, ownership, mismatch, follow-up, and
+  no-mutation rejection oracle.
+
+`fixtures/replay-golden/rejection-manifest.json` records:
+
+- `schemaVersion`: rejection manifest schema version.
+- `generatedAt`: export timestamp.
+- `expectedRejectionCode`: current command-gate convention, `COMMAND_REJECTED`.
+- `requiredCoverage`: rejection coverage tags that must appear.
+- `cases`: source fixture, source revision, optional deterministic `stateSetupId`, action payload,
+  expected rejection reason, and before and after `replay-state-hash-v1` values.
+
+The rejection manifest is intentionally separate from Replay vNext event streams because rejected
+commands must not append replay events. The verifier reloads the source fixture revision, evaluates
+any declared derived-state setup, evaluates the rejection with the TypeScript command gate, applies
+the reducer, and requires the same state object plus an unchanged hash.
 
 ## Verification
 
@@ -72,7 +98,19 @@ The verifier:
 - validates Replay vNext schema and summary integrity;
 - reloads the replay through the TypeScript oracle;
 - compares expected final state hash, winner, end reason, and event count;
-- verifies required coverage tags are present.
+- verifies required coverage tags are present;
+- verifies semantic coverage tags such as `local-pvp-opening`, `reserve`, `buy`, `joker-buy`,
+  `reserved-buy`, `reserve-cancel`, `reserve-deck`, `discard-reserved`, `privilege`, `peek-modal`,
+  `draft-reroll`, `draft-p2-reroll`, `royal-selection`, `royal-handoff`, `extra-turn`, `buff`, and
+  `game-over` are backed by matching Replay vNext events or completed summary fields, not just
+  manifest labels. The `joker-buy` tag specifically requires `initiate_buy_joker` followed by
+  `buy_card` for the same Joker instance. The `draft-p2-reroll` tag requires P1 to select a buff
+  before P2 rerolls, then P2 selects from the rerolled pool. The `royal-handoff` tag requires the
+  event after `select_royal` to belong to the next player, separate from the `extra-turn` tag's
+  same-actor evidence.
+- verifies every required rejection tag in `rejection-manifest.json`;
+- verifies each rejected command reports the expected reason and leaves the source or derived-state
+  revision hash unchanged.
 
 Unity should implement an equivalent verifier that reads the same manifest, applies fixture events
 with the C# reducer, serializes the final state using the documented contract, and compares the

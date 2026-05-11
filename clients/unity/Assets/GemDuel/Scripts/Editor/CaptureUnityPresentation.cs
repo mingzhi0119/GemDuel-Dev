@@ -18,9 +18,9 @@ namespace GemDuel.Editor
         {
             Capture("completed-fixture", (slice, root) =>
             {
-                if (!slice.PlayGuidedFixtureToEndForAutomation(out var error))
+                if (!slice.PlayReplayToEndForAutomation(out var error))
                 {
-                    throw new InvalidOperationException("Guided fixture playback failed: " + error);
+                    throw new InvalidOperationException("Replay playback failed: " + error);
                 }
             });
         }
@@ -37,11 +37,11 @@ namespace GemDuel.Editor
             });
         }
 
-        private static void Capture(string label, Action<GemDuelVerticalSlice, GameObject> prepare)
+        private static void Capture(string label, Action<GemDuelGameController, GameObject> prepare)
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var root = new GameObject("GemDuel Capture Harness");
-            var slice = root.AddComponent<GemDuelVerticalSlice>();
+            var slice = root.AddComponent<GemDuelGameController>();
             slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
             prepare(slice, root);
 

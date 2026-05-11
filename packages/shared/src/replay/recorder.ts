@@ -123,6 +123,19 @@ const normalizeReplayEvent = (
                 actor,
                 gemId: action.payload.gemId,
             };
+        case 'INITIATE_BUY_JOKER':
+            return {
+                type: 'initiate_buy_joker',
+                actor,
+                instanceId: resolveRuntimeCardIdToInstanceId(
+                    action.payload.card.id,
+                    runtimeToInstance
+                ),
+                source: action.payload.source,
+                ...(action.payload.marketInfo
+                    ? { marketRef: JSON.parse(JSON.stringify(action.payload.marketInfo)) }
+                    : {}),
+            };
         case 'BUY_CARD':
             return {
                 type: 'buy_card',
@@ -139,6 +152,38 @@ const normalizeReplayEvent = (
                 ...(action.payload.randoms
                     ? { randoms: JSON.parse(JSON.stringify(action.payload.randoms)) }
                     : {}),
+            };
+        case 'INITIATE_RESERVE':
+            return {
+                type: 'initiate_reserve',
+                actor,
+                instanceId: resolveRuntimeCardIdToInstanceId(
+                    action.payload.card.id,
+                    runtimeToInstance
+                ),
+                marketRef:
+                    action.payload.isExtra && action.payload.extraIdx !== undefined
+                        ? {
+                              level: action.payload.level,
+                              idx: action.payload.idx,
+                              isExtra: true,
+                              extraIdx: action.payload.extraIdx,
+                          }
+                        : {
+                              level: action.payload.level,
+                              idx: action.payload.idx,
+                          },
+            };
+        case 'INITIATE_RESERVE_DECK':
+            return {
+                type: 'initiate_reserve_deck',
+                actor,
+                level: action.payload.level,
+            };
+        case 'CANCEL_RESERVE':
+            return {
+                type: 'cancel_reserve',
+                actor,
             };
         case 'RESERVE_CARD':
             return {
@@ -188,17 +233,47 @@ const normalizeReplayEvent = (
                     runtimeToInstance
                 ),
             };
+        case 'ACTIVATE_PRIVILEGE':
+            return {
+                type: 'activate_privilege',
+                actor,
+            };
         case 'USE_PRIVILEGE':
             return {
                 type: 'use_privilege',
                 actor,
                 coord: JSON.parse(JSON.stringify(action.payload)),
             };
+        case 'CANCEL_PRIVILEGE':
+            return {
+                type: 'cancel_privilege',
+                actor,
+            };
         case 'SELECT_ROYAL_CARD':
             return {
                 type: 'select_royal',
                 actor,
                 royalId: action.payload.card.id,
+            };
+        case 'REROLL_DRAFT_POOL':
+            return {
+                type: 'reroll_draft_pool',
+                actor,
+                ...(action.payload.level ? { level: action.payload.level } : {}),
+            };
+        case 'PEEK_DECK':
+            return {
+                type: 'peek_deck',
+                actor,
+                ...(action.payload.level ? { level: action.payload.level } : {}),
+                ...(action.payload.levels
+                    ? { levels: JSON.parse(JSON.stringify(action.payload.levels)) }
+                    : {}),
+            };
+        case 'CLOSE_MODAL':
+            return {
+                type: 'close_modal',
+                actor,
             };
         default:
             return null;

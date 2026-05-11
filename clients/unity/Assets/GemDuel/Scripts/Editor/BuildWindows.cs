@@ -22,9 +22,9 @@ namespace GemDuel.Editor
             var report = BuildPipeline.BuildPlayer(
                 new[]
                 {
-                    "Assets/GemDuel/Scenes/GemDuelVerticalSlice.unity",
+                    "Assets/GemDuel/Scenes/GemDuelGame.unity",
                 },
-                Path.Combine(outputDirectory, "GemDuelUnitySlice.exe"),
+                Path.Combine(outputDirectory, "GemDuelUnity.exe"),
                 BuildTarget.StandaloneWindows64,
                 BuildOptions.None
             );

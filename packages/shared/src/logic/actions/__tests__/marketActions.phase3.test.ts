@@ -157,6 +157,11 @@ describe('marketActions phase 3 coverage', () => {
             },
             market: { 1: [createCard({ id: 'expensive' })], 2: [], 3: [] },
         });
+        state.pendingBuy = {
+            card: createCard({ id: 'pending-joker', bonusColor: 'gold' }),
+            source: 'market',
+            marketInfo: { level: 1, idx: 0 },
+        };
 
         const nextState = handleBuyCard(state, {
             card: createCard({ id: 'expensive' }),
@@ -167,6 +172,7 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.toastMessage).toBe('Cannot afford this card!');
         expect(nextState.playerTableau.p1).toHaveLength(0);
         expect(nextState.market[1][0]?.id).toBe('expensive');
+        expect(nextState.pendingBuy).toEqual(state.pendingBuy);
     });
 
     it('removes reserved purchases from hand and grants speculator bonus gems', () => {

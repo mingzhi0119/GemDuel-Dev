@@ -290,7 +290,7 @@ const scenarioDefinitions = [
     {
         id: 'reserve-card',
         name: 'Reserve card parity',
-        revision: 43,
+        revision: 44,
         expectedSharedState:
             'First committed reserve_card event applied through the semantic preview action.',
         actionsAfterLoad: [{ action: 'reserve_card', payload: { level: 3, index: 0 } }],
@@ -298,7 +298,7 @@ const scenarioDefinitions = [
     {
         id: 'reserved-card-preview',
         name: 'Reserved-card preview parity',
-        revision: 44,
+        revision: 45,
         expectedSharedState:
             'A current-player reserved card opens the preview through the same reserved-card operation target without mutating gameplay state.',
         actionsAfterLoad: [
@@ -316,7 +316,7 @@ const scenarioDefinitions = [
     {
         id: 'discard-gem-follow-up',
         name: 'Discard gem follow-up parity',
-        revision: 44,
+        revision: 45,
         expectedSharedState:
             'Discard excess gems is committed by clicking the current player gem target.',
         actionsAfterLoad: [{ action: 'discard_gem', payload: { gemId: 'black' } }],
@@ -353,7 +353,7 @@ const scenarioDefinitions = [
     {
         id: 'steal-gem-follow-up',
         name: 'Steal gem follow-up parity',
-        revision: 30,
+        revision: 31,
         expectedSharedState:
             'A steal-gem follow-up is committed by clicking the opponent gem target.',
         actionsAfterLoad: [{ action: 'steal_gem', payload: { gemId: 'red' } }],

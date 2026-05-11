@@ -16,6 +16,7 @@ import {
     seedReplayRecorderState,
 } from './recorder';
 import { createReplayCheckpoint } from './runtime';
+import { generateReplayStateHash } from './stateHash';
 import { saveReplayVNext } from './writer';
 import type {
     LoadedReplaySession,
@@ -34,6 +35,14 @@ const DEFAULT_RANDOMS = {
 const BASIC_DISCARD_ORDER = ['red', 'green', 'blue', 'white', 'black', 'pearl', 'gold'] as const;
 
 const getOpponent = (player: PlayerKey): PlayerKey => (player === 'p1' ? 'p2' : 'p1');
+
+const hasReplayStateTransition = (
+    previousState: GameState,
+    nextState: GameState,
+    runtimeToInstance: ReturnType<typeof createReplayRecorderInternalState>['runtimeToInstance']
+): boolean =>
+    generateReplayStateHash(previousState, runtimeToInstance) !==
+    generateReplayStateHash(nextState, runtimeToInstance);
 
 const resolveWinnerOnMaxActions = (state: GameState): PlayerKey => {
     const p1Score = getPlayerScore(state, 'p1');
@@ -211,14 +220,13 @@ const buildFallbackCandidates = (state: GameState): GameAction[] => {
             }
 
             if (card.bonusColor === 'gold') {
-                if (canActionRunInPhase('BUY_CARD', state.phase)) {
+                if (canActionRunInPhase('INITIATE_BUY_JOKER', state.phase)) {
                     candidates.push({
-                        type: 'BUY_CARD',
+                        type: 'INITIATE_BUY_JOKER',
                         payload: {
-                            card: { ...card, bonusColor: DEFAULT_RANDOMS.bountyHunterColor },
+                            card,
                             source: 'market',
                             marketInfo: { level, idx },
-                            randoms: { bountyHunterColor: DEFAULT_RANDOMS.bountyHunterColor },
                         },
                     });
                 }
@@ -250,13 +258,12 @@ const buildFallbackCandidates = (state: GameState): GameAction[] => {
 
     for (const card of getVisibleReservedCards(state.playerReserved[actor])) {
         if (card.bonusColor === 'gold') {
-            if (canActionRunInPhase('BUY_CARD', state.phase)) {
+            if (canActionRunInPhase('INITIATE_BUY_JOKER', state.phase)) {
                 candidates.push({
-                    type: 'BUY_CARD',
+                    type: 'INITIATE_BUY_JOKER',
                     payload: {
-                        card: { ...card, bonusColor: DEFAULT_RANDOMS.bountyHunterColor },
+                        card,
                         source: 'reserved',
-                        randoms: { bountyHunterColor: DEFAULT_RANDOMS.bountyHunterColor },
                     },
                 });
             }
@@ -301,13 +308,20 @@ const buildFallbackCandidates = (state: GameState): GameAction[] => {
     return candidates;
 };
 
-const computeFallbackAiAction = (state: GameState): GameAction | null => {
+const computeFallbackAiAction = (
+    state: GameState,
+    runtimeToInstance: ReturnType<typeof createReplayRecorderInternalState>['runtimeToInstance']
+): GameAction | null => {
     for (const candidate of buildFallbackCandidates(state)) {
         if (getActionRejectionReason(state, candidate)) {
             continue;
         }
         const nextState = applyAction(state, candidate);
-        if (nextState && nextState !== state) {
+        if (
+            nextState &&
+            nextState !== state &&
+            hasReplayStateTransition(state, nextState, runtimeToInstance)
+        ) {
             return candidate;
         }
     }
@@ -317,20 +331,6 @@ const computeFallbackAiAction = (state: GameState): GameAction | null => {
 
 const stabilizeAiAction = (state: GameState, action: GameAction): GameAction => {
     if (action.type !== 'SELECT_BUFF') {
-        if (action.type === 'INITIATE_BUY_JOKER') {
-            return {
-                type: 'BUY_CARD',
-                payload: {
-                    card: {
-                        ...action.payload.card,
-                        bonusColor: DEFAULT_RANDOMS.bountyHunterColor,
-                    },
-                    source: action.payload.source,
-                    ...(action.payload.marketInfo ? { marketInfo: action.payload.marketInfo } : {}),
-                    randoms: { bountyHunterColor: DEFAULT_RANDOMS.bountyHunterColor },
-                },
-            };
-        }
         return action;
     }
 
@@ -440,12 +440,21 @@ export const simulateAiVsAiReplay = (options: ReplaySimulationOptions): ReplaySi
         let nextState =
             action && !getActionRejectionReason(state, action) ? applyAction(state, action) : null;
 
-        if (!nextState || nextState === state) {
-            action = computeFallbackAiAction(state);
+        if (
+            !nextState ||
+            nextState === state ||
+            !hasReplayStateTransition(state, nextState, recorder.runtimeToInstance)
+        ) {
+            action = computeFallbackAiAction(state, recorder.runtimeToInstance);
             nextState = action ? applyAction(state, action) : null;
         }
 
-        if (!action || !nextState || nextState === state) {
+        if (
+            !action ||
+            !nextState ||
+            nextState === state ||
+            !hasReplayStateTransition(state, nextState, recorder.runtimeToInstance)
+        ) {
             abortReason = 'no_action';
             break;
         }

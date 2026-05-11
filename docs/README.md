@@ -21,6 +21,13 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 ## Migration
 
 - [Unity Full Migration Governance](migration/unity-migration-governance.md)
+- [Current Unity Migration Task Plan](migration/current-migration-task-plan.md)
+- [Unity Product Scope Map](migration/unity-product-scope-map.md)
+- [Unity Action/FSM Coverage Matrix](migration/unity-action-fsm-coverage-matrix.md)
+- [Unity Full Parity Matrix](migration/unity-full-parity-matrix.md)
+- [Unity Migration Risk Table](migration/unity-migration-risk-table.md)
+- [Unity Platform Release Checklist](migration/unity-platform-release-checklist.md)
+- [Unity Full Migration Completion Report](migration/unity-full-migration-completion-report.md)
 - [Electron vs Unity Sync Parity Baseline](archive/electron-unity-sync-parity-2026-05-09.md)
 - [Electron/Unity Operation Parity Contract](migration/electron-unity-operation-parity-contract.md)
 - [Electron/Unity Parity Runner Operations](migration/electron-unity-parity-runner-operations.md)

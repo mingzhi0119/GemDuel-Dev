@@ -105,6 +105,8 @@ const replayTableauCardSchema = z.discriminatedUnion('kind', [
         .object({
             kind: z.literal('instance'),
             instanceId: replayCardInstanceIdSchema,
+            bonusColor: gemColorSchema.optional(),
+            bonusCount: z.number().int().min(0).optional(),
         })
         .strict(),
     z
@@ -241,6 +243,18 @@ export const replayStateSnapshotSchema: z.ZodType<ReplayStateSnapshot> = z
                 p2: z.number(),
             })
             .strict(),
+        activeModal: z
+            .object({
+                type: z.literal('PEEK'),
+                data: z
+                    .object({
+                        cards: z.array(replayCardInstanceIdSchema),
+                        initiator: playerKeySchema,
+                    })
+                    .strict(),
+            })
+            .strict()
+            .optional(),
         abilityResolution: replayAbilityResolutionSchema.nullable(),
     })
     .strict();
@@ -326,6 +340,15 @@ export const replayEventSchema: z.ZodType<ReplayEvent> = z.discriminatedUnion('t
         .strict(),
     z
         .object({
+            type: z.literal('initiate_buy_joker'),
+            actor: playerKeySchema,
+            instanceId: replayCardInstanceIdSchema,
+            source: cardActionSourceSchema.optional(),
+            marketRef: marketCardRefSchema.optional(),
+        })
+        .strict(),
+    z
+        .object({
             type: z.literal('buy_card'),
             actor: playerKeySchema,
             instanceId: replayCardInstanceIdSchema,
@@ -338,6 +361,28 @@ export const replayEventSchema: z.ZodType<ReplayEvent> = z.discriminatedUnion('t
                 })
                 .strict()
                 .optional(),
+        })
+        .strict(),
+    z
+        .object({
+            type: z.literal('initiate_reserve'),
+            actor: playerKeySchema,
+            instanceId: replayCardInstanceIdSchema,
+            marketRef: marketCardRefSchema,
+        })
+        .strict(),
+    z
+        .object({
+            type: z.literal('initiate_reserve_deck'),
+            actor: playerKeySchema,
+            level: levelSchema,
+            instanceId: replayCardInstanceIdSchema.optional(),
+        })
+        .strict(),
+    z
+        .object({
+            type: z.literal('cancel_reserve'),
+            actor: playerKeySchema,
         })
         .strict(),
     z
@@ -382,6 +427,12 @@ export const replayEventSchema: z.ZodType<ReplayEvent> = z.discriminatedUnion('t
         .strict(),
     z
         .object({
+            type: z.literal('activate_privilege'),
+            actor: playerKeySchema,
+        })
+        .strict(),
+    z
+        .object({
             type: z.literal('use_privilege'),
             actor: playerKeySchema,
             coord: z
@@ -394,9 +445,37 @@ export const replayEventSchema: z.ZodType<ReplayEvent> = z.discriminatedUnion('t
         .strict(),
     z
         .object({
+            type: z.literal('cancel_privilege'),
+            actor: playerKeySchema,
+        })
+        .strict(),
+    z
+        .object({
             type: z.literal('select_royal'),
             actor: playerKeySchema,
             royalId: replayRoyalIdSchema,
+        })
+        .strict(),
+    z
+        .object({
+            type: z.literal('reroll_draft_pool'),
+            actor: playerKeySchema,
+            level: levelSchema.optional(),
+        })
+        .strict(),
+    z
+        .object({
+            type: z.literal('peek_deck'),
+            actor: playerKeySchema,
+            level: levelSchema.optional(),
+            levels: z.array(levelSchema).optional(),
+            cards: z.array(replayCardInstanceIdSchema).optional(),
+        })
+        .strict(),
+    z
+        .object({
+            type: z.literal('close_modal'),
+            actor: playerKeySchema,
         })
         .strict(),
 ]);
@@ -408,12 +487,21 @@ const replayEventTypeSchema = z.enum([
     'take_bonus_gem',
     'discard_gem',
     'steal_gem',
+    'initiate_buy_joker',
     'buy_card',
+    'initiate_reserve',
+    'initiate_reserve_deck',
+    'cancel_reserve',
     'reserve_card',
     'reserve_deck',
     'discard_reserved',
+    'activate_privilege',
     'use_privilege',
+    'cancel_privilege',
     'select_royal',
+    'reroll_draft_pool',
+    'peek_deck',
+    'close_modal',
 ]);
 
 export const replaySummarySchema: z.ZodType<ReplaySummary> = z

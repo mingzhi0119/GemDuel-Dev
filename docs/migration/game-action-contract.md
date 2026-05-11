@@ -1,6 +1,6 @@
 # Game Action Contract
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
 
 Unity must consume the same action semantics as the TypeScript rules oracle. Do not bind gameplay
 commands to Unity input events, Steam overlay callbacks, or Epic callbacks directly.
@@ -20,10 +20,11 @@ commands to Unity input events, Steam overlay callbacks, or Epic callbacks direc
 - `INIT`: starts a non-draft game from a deterministic setup payload.
 - `INIT_DRAFT`: starts a draft-enabled game and includes draft pool metadata.
 
-Unity should load golden replay fixtures through Replay vNext bootstrap data instead of creating a
-parallel Unity-only setup path.
+Unity should start live LocalDev games through the governed rules boundary and load golden replay
+fixtures through Replay vNext bootstrap data only for audit, parity, and review evidence. Do not
+create a parallel Unity-only setup path.
 
-## Gameplay Actions Covered By Replay Parity
+## Gameplay Actions With Replay Schema Support
 
 - `SELECT_BUFF`
 - `TAKE_GEMS`
@@ -39,13 +40,16 @@ parallel Unity-only setup path.
 - `SELECT_ROYAL_CARD`
 
 These actions map to Replay vNext event names such as `select_buff`, `take_gems`, `buy_card`,
-`reserve_card`, and `select_royal`. Unity should replay event streams by inflating them to the
-equivalent C# commands and applying the C# reducer.
+`reserve_card`, and `select_royal`. Some are not yet present in committed golden fixtures. Unity
+replay review should replay event streams by inflating them to the equivalent command semantics;
+live LocalDev play should prefer the TypeScript rules bridge until any C# implementation has hash
+parity evidence.
 
-## UI-Only And Debug Actions
+## Full-Migration Actions
 
-The following TypeScript actions are not first-class Unity parity commands unless a future contract
-explicitly adds them:
+Full migration must map every non-debug `GameAction`, including UI-gated setup actions and replay
+review actions. The current fixture corpus does not yet prove these actions; gaps are tracked in
+`docs/migration/unity-action-fsm-coverage-matrix.md`.
 
 - `INITIATE_BUY_JOKER`
 - `INITIATE_RESERVE`
@@ -65,8 +69,12 @@ explicitly adds them:
 - `FORCE_SYNC`
 - `FLATTEN`
 
-Unity may implement local UI flows around these concepts, but parity should be proven with the
-normalized gameplay events that mutate the shared game state.
+`FORCE_SYNC`, `FLATTEN`, and `DEBUG_*` actions are not player-facing completion evidence. The Unity
+live bridge rejects them at normalization without state mutation, and they must still be identified
+as sync/debug exclusions rather than silently omitted. `UNDO`, `REDO`,
+`PEEK_DECK`, `REROLL_DRAFT_POOL`, `CLOSE_MODAL`, and the initiate/cancel actions are player-facing
+or review-surface actions when their Electron surfaces are supported, so they block full completion
+until implemented or explicitly excluded by user approval.
 
 ## Command Rules
 
@@ -83,6 +91,8 @@ normalized gameplay events that mutate the shared game state.
 ## Unity Implementation Notes
 
 - Build an input-to-command layer above the C# reducer.
+- For LocalDev live play, route product commands through `IGameRulesEngine` and keep replay fixture
+  loading explicit.
 - Keep reducer commands serializable for replay capture.
 - Do not store Unity object references inside command payloads.
 - Use replay card instance IDs to resolve cards; do not hash Unity prefab instance IDs.

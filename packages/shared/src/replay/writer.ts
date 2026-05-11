@@ -18,12 +18,21 @@ const REPLAY_EVENT_TYPES: ReplayEvent['type'][] = [
     'take_bonus_gem',
     'discard_gem',
     'steal_gem',
+    'initiate_buy_joker',
     'buy_card',
+    'initiate_reserve',
+    'initiate_reserve_deck',
+    'cancel_reserve',
     'reserve_card',
     'reserve_deck',
     'discard_reserved',
+    'activate_privilege',
     'use_privilege',
+    'cancel_privilege',
     'select_royal',
+    'reroll_draft_pool',
+    'peek_deck',
+    'close_modal',
 ];
 
 const countEventsByType = (events: ReplayEvent[]): ReplaySummary['eventsByType'] =>

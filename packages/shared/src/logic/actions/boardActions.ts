@@ -42,6 +42,7 @@ export const handleTakeGems = (state: GameState, payload: TakeGemsPayload): Game
     let pearlCount = 0;
     const colorCounts: Record<string, number> = {};
     const collectedTypes: string[] = [];
+    const emptyCellUidPrefix = createStateScopedUid(state, 'empty-take-gems', coords.length);
 
     // Take gems from board and update inventory
     coords.forEach(({ r, c }, index) => {
@@ -51,7 +52,7 @@ export const handleTakeGems = (state: GameState, payload: TakeGemsPayload): Game
         newInv[gemType as GemColor] = (newInv[gemType as GemColor] || 0) + 1;
         state.board[r][c] = {
             type: GEM_TYPES.EMPTY,
-            uid: createStateScopedUid(state, `empty-${r}-${c}`, index),
+            uid: `${emptyCellUidPrefix}-${r}-${c}-${index}`,
         };
 
         if (gemType === 'pearl') pearlCount++;

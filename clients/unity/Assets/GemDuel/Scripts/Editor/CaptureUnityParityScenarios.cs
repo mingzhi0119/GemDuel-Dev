@@ -25,7 +25,7 @@ namespace GemDuel.Editor
                 true,
                 new[]
                 {
-                    new ParityActionStep("start_local_game"),
+                    new ParityActionStep("start_local_game", new JObject { ["fixture"] = true }),
                     new ParityActionStep("choose_boon", new JObject { ["index"] = 1, ["buffId"] = "royal_envoy" }),
                 }
             ),
@@ -36,7 +36,7 @@ namespace GemDuel.Editor
                 true,
                 new[]
                 {
-                    new ParityActionStep("start_local_game"),
+                    new ParityActionStep("start_local_game", new JObject { ["fixture"] = true }),
                     new ParityActionStep("hover_boon", new JObject { ["index"] = 1, ["buffId"] = "royal_envoy" }),
                 }
             ),
@@ -130,21 +130,21 @@ namespace GemDuel.Editor
             ),
             new ParityScenario(
                 "reserve-card",
-                43,
+                44,
                 "First committed reserve_card event applied through the semantic preview action.",
                 false,
                 new[] { new ParityActionStep("reserve_card", new JObject { ["level"] = 3, ["index"] = 0 }) }
             ),
             new ParityScenario(
                 "reserved-card-preview",
-                44,
+                45,
                 "Unity current-player reserved-card preview operation.",
                 false,
                 new[] { new ParityActionStep("click_player_reserved", new JObject { ["index"] = 0, ["player"] = "p2" }) }
             ),
             new ParityScenario(
                 "discard-gem-follow-up",
-                44,
+                45,
                 "Unity discard gem follow-up operation.",
                 false,
                 new[] { new ParityActionStep("discard_gem", new JObject { ["gemId"] = "black" }) }
@@ -166,7 +166,7 @@ namespace GemDuel.Editor
             new ParityScenario("player-zone-resource-score", 14, "Player zone after early resources and royal."),
             new ParityScenario(
                 "steal-gem-follow-up",
-                30,
+                31,
                 "Unity steal gem follow-up operation.",
                 false,
                 new[] { new ParityActionStep("steal_gem", new JObject { ["gemId"] = "red" }) }
@@ -268,7 +268,7 @@ namespace GemDuel.Editor
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var root = new GameObject("GemDuel Unity Parity Harness");
-            var slice = root.AddComponent<GemDuelVerticalSlice>();
+            var slice = root.AddComponent<GemDuelGameController>();
             slice.SetAutomationViewport(viewport.Width, viewport.Height);
             slice.SetPreviewBackdropCaptureForAutomation(true);
 

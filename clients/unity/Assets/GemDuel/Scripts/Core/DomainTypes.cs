@@ -178,7 +178,7 @@ namespace GemDuel.Core
             Revision = revision;
         }
 
-        public void ReplaceSnapshot(JObject snapshot, int revision)
+        public void LoadReplayAuditSnapshot(JObject snapshot, int revision)
         {
             Snapshot = (JObject)snapshot.DeepClone();
             Revision = revision;

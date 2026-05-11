@@ -95,7 +95,6 @@ namespace GemDuel.Replay
                     {
                         ["id"] = "none",
                         ["level"] = 0,
-                        ["state"] = null,
                     },
                 };
             }

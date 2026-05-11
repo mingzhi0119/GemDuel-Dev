@@ -41,7 +41,19 @@ namespace GemDuel.Core
                 "select_royal",
                 "steal_gem",
                 "reserve_card",
+                "reserve_deck",
                 "discard_gem",
+                "initiate_buy_joker",
+                "initiate_reserve",
+                "initiate_reserve_deck",
+                "discard_reserved",
+                "activate_privilege",
+                "use_privilege",
+                "cancel_privilege",
+                "cancel_reserve",
+                "reroll_draft_pool",
+                "peek_deck",
+                "close_modal",
             },
             StringComparer.Ordinal
         );
@@ -65,13 +77,6 @@ namespace GemDuel.Core
             }
 
             state.AdvanceRevision();
-            var checkpoint = checkpoints.FirstOrDefault(candidate => candidate.Revision == state.Revision);
-            if (checkpoint != null)
-            {
-                state.ReplaceSnapshot(NormalizeSnapshotForRuntime(checkpoint.State), checkpoint.Revision);
-                return ReducerResult.Pass();
-            }
-
             ApplyMinimalMutation(state, replayEvent, eventType, actor, checkpoints);
             return ReducerResult.Pass();
         }
@@ -105,6 +110,10 @@ namespace GemDuel.Core
                     AddReserved(state, actor, replayEvent.Value<string>("instanceId"));
                     MoveTurn(state, actor);
                     break;
+                case "reserve_deck":
+                    AddReserved(state, actor, replayEvent.Value<string>("instanceId"));
+                    MoveTurn(state, actor);
+                    break;
                 case "buy_card":
                     AddTableau(state, actor, replayEvent.Value<string>("instanceId"));
                     MoveTurn(state, actor);
@@ -122,9 +131,41 @@ namespace GemDuel.Core
                 case "discard_gem":
                     DiscardGem(state, actor, replayEvent.Value<string>("gemId"));
                     break;
+                case "initiate_buy_joker":
+                case "initiate_reserve":
+                case "initiate_reserve_deck":
+                case "discard_reserved":
+                case "activate_privilege":
+                case "use_privilege":
+                case "cancel_privilege":
+                case "cancel_reserve":
+                case "reroll_draft_pool":
+                    break;
+                case "peek_deck":
+                    ApplyPeekDeckModal(state, replayEvent, actor);
+                    break;
+                case "close_modal":
+                    state.Snapshot.Property("activeModal")?.Remove();
+                    break;
                 default:
                     break;
             }
+        }
+
+        private static void ApplyPeekDeckModal(GameState state, JObject replayEvent, string actor)
+        {
+            var cards = replayEvent["cards"] is JArray eventCards
+                ? (JArray)eventCards.DeepClone()
+                : new JArray();
+            state.Snapshot["activeModal"] = new JObject
+            {
+                ["type"] = "PEEK",
+                ["data"] = new JObject
+                {
+                    ["cards"] = cards,
+                    ["initiator"] = actor,
+                },
+            };
         }
 
         private static void MoveTurn(GameState state, string actor)
@@ -414,7 +455,7 @@ namespace GemDuel.Core
                 0;
         }
 
-        private static JObject NormalizeSnapshotForRuntime(JObject snapshot)
+        public static JObject NormalizeReplayAuditSnapshot(JObject snapshot)
         {
             var clone = (JObject)snapshot.DeepClone();
             NormalizePlayerBuffState(clone, "p1");

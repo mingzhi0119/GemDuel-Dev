@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { loadReplaySession } from '../loader';
+import { loadReplaySession, loadReplayStateAtRevision } from '../loader';
 import { readReplayVNext } from '../reader';
+import { buildIdentityRuntimeToInstanceMap } from '../runtime';
 import { replayVNextSchema } from '../schema';
 import { simulateAiVsAiReplay, simulateAiVsAiReplayBatch } from '../simulation';
+import { generateReplayStateHash } from '../stateHash';
 
 const createDeterministicRandom = (seed = 123_456_789) => {
     let current = seed >>> 0;
@@ -110,6 +112,33 @@ describe('AI vs AI replay simulation', () => {
 
         expect(readResult.diagnostics.summaryIntegrity).toBe('ok');
         expect(session.finalStateHash).toBe(result.replay.summary.finalStateHash);
+    });
+
+    it('does not record replay events that leave the replay-state hash unchanged', () => {
+        vi.spyOn(Math, 'random').mockImplementation(createDeterministicRandom(0x5eed_0002));
+
+        const result = simulateAiVsAiReplay({
+            gameVersion: '5.2.11',
+            useBuffs: true,
+            mode: 'LOCAL_PVP',
+            createdAt: '2026-05-09T01:00:00.000Z',
+        });
+        const runtimeToInstance = buildIdentityRuntimeToInstanceMap(
+            result.replay.init.cardInstances
+        );
+        let previousHash = generateReplayStateHash(
+            loadReplayStateAtRevision(result.replay, 0),
+            runtimeToInstance
+        );
+
+        for (let revision = 1; revision <= result.replay.replayRevision; revision += 1) {
+            const nextHash = generateReplayStateHash(
+                loadReplayStateAtRevision(result.replay, revision),
+                runtimeToInstance
+            );
+            expect(nextHash, `revision ${revision}`).not.toBe(previousHash);
+            previousHash = nextHash;
+        }
     });
 
     it('replays buff-enabled simulation batches without command-gate or FSM warnings', () => {

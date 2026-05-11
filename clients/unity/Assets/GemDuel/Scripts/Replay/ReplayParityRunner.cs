@@ -16,6 +16,14 @@ namespace GemDuel.Replay
             "local-pvp-opening",
             "reserve",
             "buy",
+            "joker-buy",
+            "reserved-buy",
+            "reserve-cancel",
+            "reserve-deck",
+            "discard-reserved",
+            "privilege",
+            "peek-modal",
+            "draft-reroll",
             "royal-selection",
             "extra-turn",
             "buff",
@@ -102,6 +110,8 @@ namespace GemDuel.Replay
                         result.Mismatches.Add(reducerResult.Error);
                         break;
                     }
+
+                    LoadReplayAuditCheckpoint(state, replay.Checkpoints);
                 }
 
                 result.FinalStateHash = hasher.Hash(state);
@@ -163,6 +173,23 @@ namespace GemDuel.Replay
                 StringComparer.Ordinal
             );
             return RequiredCoverage.Where(tag => !tags.Contains(tag)).ToList();
+        }
+
+        private static void LoadReplayAuditCheckpoint(
+            GameState state,
+            IReadOnlyList<ReplayCheckpoint> checkpoints
+        )
+        {
+            var checkpoint = checkpoints.FirstOrDefault(candidate => candidate.Revision == state.Revision);
+            if (checkpoint == null)
+            {
+                return;
+            }
+
+            state.LoadReplayAuditSnapshot(
+                GameReducer.NormalizeReplayAuditSnapshot(checkpoint.State),
+                checkpoint.Revision
+            );
         }
 
         private static void AddMismatch(

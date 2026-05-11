@@ -17,6 +17,24 @@ const runtimeCoreTokens = [
     '/packages/shared/src/utils.ts',
 ];
 
+const routeOwnedUiTokens = [
+    '/packages/ui/src/components/Rulebook',
+    '/packages/ui/src/components/rulebook/',
+    '/packages/ui/src/components/CardAnatomy',
+    '/packages/ui/src/components/cardAnatomy/',
+];
+
+const gameUiTokens = [
+    '/packages/ui/src/components/',
+    '/packages/ui/src/hoc/',
+    '/packages/ui/src/i18n/',
+    '/packages/ui/src/lexicon/',
+    '/packages/ui/src/styles/',
+    '/packages/ui/src/utils.ts',
+];
+
+const presentationTokens = ['/apps/desktop/src/app/presentation/'];
+
 export const resolveManualChunk = (id: string) => {
     const normalizedId = normalizeModuleId(id);
 
@@ -40,6 +58,14 @@ export const resolveManualChunk = (id: string) => {
 
     if (matchesAny(normalizedId, runtimeCoreTokens)) {
         return 'runtime-core';
+    }
+
+    if (matchesAny(normalizedId, presentationTokens)) {
+        return 'presentation-layer';
+    }
+
+    if (matchesAny(normalizedId, gameUiTokens) && !matchesAny(normalizedId, routeOwnedUiTokens)) {
+        return 'game-ui';
     }
 
     return undefined;

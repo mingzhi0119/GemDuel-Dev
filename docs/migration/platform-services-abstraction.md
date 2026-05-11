@@ -1,6 +1,6 @@
 # Platform Services Abstraction
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
 
 GemDuel should avoid coupling gameplay to Steamworks.NET, Epic Online Services, Electron, or Unity
 platform APIs. Platform services are adapters around release/runtime capabilities; gameplay rules
@@ -63,8 +63,9 @@ public interface IPlatformServices
 }
 ```
 
-This is a documentation stub, not runtime code. Do not add SDK packages or live adapters until the
-Unity slice explicitly reaches platform smoke testing.
+This interface now has a LocalDev runtime implementation in Unity. Do not add SDK packages or live
+Steam/Epic adapters until full migration reaches a release-candidate platform review and the user
+explicitly authorizes official platform work.
 
 ## Current TypeScript Concept Mapping
 

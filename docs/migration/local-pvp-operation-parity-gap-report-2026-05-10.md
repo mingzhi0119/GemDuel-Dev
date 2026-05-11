@@ -1,3 +1,13 @@
+# Superseded: Local PVP Operation Parity Gap Report
+
+Last updated: 2026-05-11
+
+This report remains useful evidence for Local PVP operation gaps, but it is not the active
+migration target or completion standard. The active execution contract is
+`docs/migration/unity-migration-governance.md`.
+
+## Historical Report
+
 # Local PVP Operation Parity Gap Report
 
 Date: 2026-05-10

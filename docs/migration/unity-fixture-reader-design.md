@@ -1,9 +1,10 @@
 # Unity Fixture Reader Design
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
 
-Unity fixture reading is the first integration point between the sidecar client and the TypeScript
-rules oracle.
+Unity fixture reading is validation and audit infrastructure for the full migration. It is not a
+live-gameplay driver. Production Unity gameplay must apply normalized commands from current state
+through the governed rules boundary, then use fixtures and hashes only as parity evidence.
 
 ## Inputs
 
@@ -22,7 +23,7 @@ rules oracle.
 - Build a stable card instance registry from `init.cardInstances`.
 - Apply bootstrap state from `init`.
 - Inflate each replay event to the equivalent C# gameplay command.
-- Apply commands through the C# reducer.
+- Apply commands through the governed rules boundary.
 - Serialize final state with the documented replay state snapshot order.
 - Compute `replay-state-hash-v1`.
 - Compare final hash, winner, end reason, turn count, and event count against manifest
@@ -47,7 +48,8 @@ public sealed record ReplayParityResult(
 );
 ```
 
-This is a design stub only. Do not add runtime C# implementation until Unity work starts.
+This fixture reader is replay-audit tooling. It may use committed checkpoints to verify parity, but
+live Unity gameplay and presentation flows must not replace current state from checkpoints.
 
 ## Failure Modes
 
@@ -66,7 +68,7 @@ This is a design stub only. Do not add runtime C# implementation until Unity wor
 1. JSON DTOs for manifest and Replay vNext.
 2. Bootstrap state loader.
 3. Event DTOs and command inflation.
-4. C# reducer parity for the fixture subset.
+4. Rules-boundary parity for the fixture subset.
 5. Stable serializer and hash implementation.
 6. Editor/playmode parity test runner.
 7. Human-readable parity report artifact.

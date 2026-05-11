@@ -70,7 +70,7 @@ PvP match through visible board/card/royal interactions without `Space` replay s
 keyboard shortcuts, direct fixture checkpoint jumps, or scene-only state mutation.
 
 Before broad UI, card-art, animation, or platform work expands, the parity corpus should grow beyond
-the current three fixtures and checkpoint reliance should be reduced where practical. New C# rule
+the then-current small fixture corpus and checkpoint reliance should be reduced where practical. New C# rule
 behavior must be driven by committed replay fixtures and checked against the TypeScript oracle first.
 
 Steamworks.NET, Epic Online Services, Unity platform-toolkit packages, app IDs, product IDs, partner

@@ -51,6 +51,30 @@ const createDistDir = (sizeKb: number) => {
     };
 };
 
+const sleepSync = (milliseconds: number) => {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+};
+
+const retryFsOperation = (operation: () => void) => {
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        try {
+            operation();
+            return;
+        } catch (error) {
+            lastError = error;
+            const code = (error as NodeJS.ErrnoException).code;
+            if (code !== 'EPERM' && code !== 'EBUSY' && code !== 'ENOTEMPTY') {
+                throw error;
+            }
+            sleepSync(25 * (attempt + 1));
+        }
+    }
+
+    throw lastError;
+};
+
 const writeCoverageFixture = (tempDir: string) => {
     const coverageFile = path.join(tempDir, 'coverage-final.json');
     fs.writeFileSync(
@@ -80,7 +104,7 @@ const withReplacedRepoPath = (
     const hadExistingPath = fs.existsSync(targetPath);
 
     if (hadExistingPath) {
-        fs.renameSync(targetPath, backupPath);
+        retryFsOperation(() => fs.renameSync(targetPath, backupPath));
     }
 
     fs.mkdirSync(path.dirname(targetPath), {
@@ -91,13 +115,15 @@ const withReplacedRepoPath = (
         setup(targetPath);
         run();
     } finally {
-        fs.rmSync(targetPath, {
-            force: true,
-            recursive: true,
-        });
+        retryFsOperation(() =>
+            fs.rmSync(targetPath, {
+                force: true,
+                recursive: true,
+            })
+        );
 
         if (hadExistingPath) {
-            fs.renameSync(backupPath, targetPath);
+            retryFsOperation(() => fs.renameSync(backupPath, targetPath));
         }
     }
 };
@@ -236,33 +262,17 @@ const writeUnhealthyGovernanceArtifacts = (outDir: string) => {
 };
 
 describe('governance CLI wrappers', () => {
-    it('runs the build-budget wrapper against the default dist directory when the bundle stays healthy', () => {
-        const distAlreadyPresent = fs.existsSync(defaultDistDir);
+    it('runs the build-budget wrapper against the default dist directory when no dist flag is supplied', () => {
+        const defaultResult = runNode(['tools/scripts/check-build-budget.mjs']);
+        const explicitResult = runNode([
+            'tools/scripts/check-build-budget.mjs',
+            '--dist-dir',
+            path.relative(repoRoot, defaultDistDir),
+        ]);
 
-        if (!distAlreadyPresent) {
-            fs.mkdirSync(path.join(defaultDistDir, 'assets'), {
-                recursive: true,
-            });
-            fs.writeFileSync(
-                path.join(defaultDistDir, 'assets', 'runtime-core.js'),
-                'x'.repeat(220 * 1024),
-                'utf8'
-            );
-        }
-
-        try {
-            const result = runNode(['tools/scripts/check-build-budget.mjs']);
-
-            expect(result.status).toBe(0);
-            expect(result.stdout).toContain('Build budget check passed:');
-        } finally {
-            if (!distAlreadyPresent) {
-                fs.rmSync(defaultDistDir, {
-                    force: true,
-                    recursive: true,
-                });
-            }
-        }
+        expect(defaultResult.status).toBe(explicitResult.status);
+        expect(defaultResult.stdout).toBe(explicitResult.stdout);
+        expect(defaultResult.stderr).toBe(explicitResult.stderr);
     });
 
     it('surfaces warning, incident, and missing-dist outcomes from the build-budget wrapper', () => {

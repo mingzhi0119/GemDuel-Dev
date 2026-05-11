@@ -1,3 +1,13 @@
+# Superseded: Local PVP Operation Parity Closure
+
+Last updated: 2026-05-11
+
+This document is historical evidence only. It must not be used as the active migration goal,
+completion criteria, or a narrower replacement for `docs/migration/unity-migration-governance.md`.
+The current target is full Unity migration across the supported Electron product scope.
+
+## Historical Document
+
 # Codex Goal: Local PVP Operation Parity Closure
 
 Objective: make Local PVP behavior operation-equivalent between Electron and Unity. For the same

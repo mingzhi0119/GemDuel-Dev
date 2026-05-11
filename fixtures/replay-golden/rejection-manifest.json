@@ -1,0 +1,1164 @@
+{
+    "schemaVersion": 1,
+    "generatedAt": "2026-05-11T00:00:00.000Z",
+    "generatedBy": "tools/migration/export-unity-fixtures.ts",
+    "rulesVersion": "5.2.11",
+    "replaySchemaVersion": "1.0",
+    "hashContract": {
+        "id": "replay-state-hash-v1",
+        "implementation": "packages/shared/src/replay/stateHash.ts",
+        "serializer": "serializeReplayStateSnapshot + stableJsonStringify"
+    },
+    "requiredCoverage": [
+        "wrong-phase:SELECT_BUFF",
+        "wrong-phase:TAKE_GEMS",
+        "wrong-phase:REPLENISH",
+        "wrong-phase:TAKE_BONUS_GEM",
+        "wrong-phase:DISCARD_GEM",
+        "wrong-phase:STEAL_GEM",
+        "wrong-phase:INITIATE_BUY_JOKER",
+        "wrong-phase:BUY_CARD",
+        "wrong-phase:INITIATE_RESERVE",
+        "wrong-phase:INITIATE_RESERVE_DECK",
+        "wrong-phase:CANCEL_RESERVE",
+        "wrong-phase:RESERVE_CARD",
+        "wrong-phase:RESERVE_DECK",
+        "wrong-phase:DISCARD_RESERVED",
+        "wrong-phase:ACTIVATE_PRIVILEGE",
+        "wrong-phase:USE_PRIVILEGE",
+        "wrong-phase:CANCEL_PRIVILEGE",
+        "wrong-phase:SELECT_ROYAL_CARD",
+        "wrong-phase:REROLL_DRAFT_POOL",
+        "edge:SELECT_BUFF:unavailable",
+        "edge:REPLENISH:empty-bag",
+        "edge:TAKE_GEMS:empty",
+        "edge:TAKE_GEMS:gold-cell",
+        "edge:TAKE_GEMS:gapped",
+        "edge:TAKE_BONUS_GEM:wrong-color",
+        "edge:TAKE_BONUS_GEM:unavailable-cell",
+        "edge:DISCARD_GEM:not-owned",
+        "edge:STEAL_GEM:gold",
+        "edge:STEAL_GEM:not-owned",
+        "edge:INITIATE_BUY_JOKER:non-joker",
+        "edge:BUY_CARD:market-mismatch",
+        "edge:BUY_CARD:reserved-not-owned",
+        "edge:INITIATE_RESERVE:market-mismatch",
+        "edge:INITIATE_RESERVE_DECK:empty-deck",
+        "edge:RESERVE_CARD:missing-gold",
+        "edge:RESERVE_CARD:non-gold",
+        "edge:RESERVE_CARD:pending-mismatch",
+        "edge:RESERVE_CARD:full-row",
+        "edge:RESERVE_DECK:missing-gold",
+        "edge:RESERVE_DECK:non-gold",
+        "edge:RESERVE_DECK:pending-mismatch",
+        "edge:RESERVE_DECK:full-row",
+        "edge:DISCARD_RESERVED:no-ability",
+        "edge:DISCARD_RESERVED:not-owned",
+        "edge:ACTIVATE_PRIVILEGE:no-charge",
+        "edge:ACTIVATE_PRIVILEGE:no-target",
+        "edge:USE_PRIVILEGE:no-charge",
+        "edge:USE_PRIVILEGE:invalid-target",
+        "edge:SELECT_ROYAL_CARD:unavailable",
+        "edge:PEEK_DECK:no-ability",
+        "edge:CLOSE_MODAL:no-modal",
+        "edge:CLOSE_MODAL:blocked",
+        "edge:REROLL_DRAFT_POOL:online",
+        "edge:REROLL_DRAFT_POOL:p2-before-p1"
+    ],
+    "cases": [
+        {
+            "id": "reject-select-buff-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:SELECT_BUFF"],
+            "actionType": "SELECT_BUFF",
+            "action": { "type": "SELECT_BUFF", "payload": { "buffId": "privilege_favor" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "SELECT_BUFF is only allowed during the DRAFT_PHASE phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-gems-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:TAKE_GEMS"],
+            "actionType": "TAKE_GEMS",
+            "action": { "type": "TAKE_GEMS", "payload": { "coords": [{ "r": 0, "c": 1 }] } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "TAKE_GEMS is only allowed during the IDLE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-replenish-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:REPLENISH"],
+            "actionType": "REPLENISH",
+            "action": { "type": "REPLENISH" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "REPLENISH is only allowed during the IDLE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-bonus-gem-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:TAKE_BONUS_GEM"],
+            "actionType": "TAKE_BONUS_GEM",
+            "action": { "type": "TAKE_BONUS_GEM", "payload": { "r": 0, "c": 0 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "TAKE_BONUS_GEM is only allowed during the BONUS_ACTION phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-discard-gem-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:DISCARD_GEM"],
+            "actionType": "DISCARD_GEM",
+            "action": { "type": "DISCARD_GEM", "payload": "red" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "DISCARD_GEM is only allowed during the DISCARD_EXCESS_GEMS phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-steal-gem-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:STEAL_GEM"],
+            "actionType": "STEAL_GEM",
+            "action": { "type": "STEAL_GEM", "payload": { "gemId": "red" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "STEAL_GEM is only allowed during the STEAL_ACTION phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-initiate-buy-joker-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:INITIATE_BUY_JOKER"],
+            "actionType": "INITIATE_BUY_JOKER",
+            "action": {
+                "type": "INITIATE_BUY_JOKER",
+                "payload": {
+                    "card": {
+                        "id": "c:171-jo#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "gold",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 0,
+                            "green": 0,
+                            "blue": 0,
+                            "white": 0,
+                            "black": 4,
+                            "pearl": 1,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "source": "market",
+                    "marketInfo": { "level": 1, "idx": 0 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "INITIATE_BUY_JOKER is only allowed during the IDLE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-buy-card-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:BUY_CARD"],
+            "actionType": "BUY_CARD",
+            "action": {
+                "type": "BUY_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:171-jo#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "gold",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 0,
+                            "green": 0,
+                            "blue": 0,
+                            "white": 0,
+                            "black": 4,
+                            "pearl": 1,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "source": "market",
+                    "marketInfo": { "level": 1, "idx": 0 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "BUY_CARD is not allowed during the DRAFT_PHASE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-initiate-reserve-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:INITIATE_RESERVE"],
+            "actionType": "INITIATE_RESERVE",
+            "action": {
+                "type": "INITIATE_RESERVE",
+                "payload": {
+                    "card": {
+                        "id": "c:171-jo#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "gold",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 0,
+                            "green": 0,
+                            "blue": 0,
+                            "white": 0,
+                            "black": 4,
+                            "pearl": 1,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "level": 1,
+                    "idx": 0
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "INITIATE_RESERVE is only allowed during the IDLE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-initiate-reserve-deck-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:INITIATE_RESERVE_DECK"],
+            "actionType": "INITIATE_RESERVE_DECK",
+            "action": { "type": "INITIATE_RESERVE_DECK", "payload": { "level": 1 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "INITIATE_RESERVE_DECK is only allowed during the IDLE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-cancel-reserve-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:CANCEL_RESERVE"],
+            "actionType": "CANCEL_RESERVE",
+            "action": { "type": "CANCEL_RESERVE" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "CANCEL_RESERVE is only allowed during the RESERVE_WAITING_GEM phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-card-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:RESERVE_CARD"],
+            "actionType": "RESERVE_CARD",
+            "action": {
+                "type": "RESERVE_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:171-jo#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "gold",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 0,
+                            "green": 0,
+                            "blue": 0,
+                            "white": 0,
+                            "black": 4,
+                            "pearl": 1,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "level": 1,
+                    "idx": 0
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "RESERVE_CARD is not allowed during the DRAFT_PHASE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-deck-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:RESERVE_DECK"],
+            "actionType": "RESERVE_DECK",
+            "action": { "type": "RESERVE_DECK", "payload": { "level": 1 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "RESERVE_DECK is not allowed during the DRAFT_PHASE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-discard-reserved-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:DISCARD_RESERVED"],
+            "actionType": "DISCARD_RESERVED",
+            "action": { "type": "DISCARD_RESERVED", "payload": { "cardId": "missing-card" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "DISCARD_RESERVED is only allowed during the IDLE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-activate-privilege-draft",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:ACTIVATE_PRIVILEGE"],
+            "actionType": "ACTIVATE_PRIVILEGE",
+            "action": { "type": "ACTIVATE_PRIVILEGE" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "ACTIVATE_PRIVILEGE is only allowed during the IDLE phase.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-use-privilege-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:USE_PRIVILEGE"],
+            "actionType": "USE_PRIVILEGE",
+            "action": { "type": "USE_PRIVILEGE", "payload": { "r": 0, "c": 0 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "USE_PRIVILEGE is only allowed during the PRIVILEGE_ACTION phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-cancel-privilege-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:CANCEL_PRIVILEGE"],
+            "actionType": "CANCEL_PRIVILEGE",
+            "action": { "type": "CANCEL_PRIVILEGE" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "CANCEL_PRIVILEGE is only allowed during the PRIVILEGE_ACTION phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-select-royal-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:SELECT_ROYAL_CARD"],
+            "actionType": "SELECT_ROYAL_CARD",
+            "action": {
+                "type": "SELECT_ROYAL_CARD",
+                "payload": {
+                    "card": {
+                        "id": "r91-ro",
+                        "points": 3,
+                        "bonusColor": "gold",
+                        "ability": "none",
+                        "label": "The Queen"
+                    }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "SELECT_ROYAL_CARD is only allowed during the SELECT_ROYAL phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reroll-draft-pool-idle",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["wrong-phase:REROLL_DRAFT_POOL"],
+            "actionType": "REROLL_DRAFT_POOL",
+            "action": { "type": "REROLL_DRAFT_POOL", "payload": { "level": 1 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "REROLL_DRAFT_POOL is only allowed during the DRAFT_PHASE phase.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle wrong-phase rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-select-buff-unavailable",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:SELECT_BUFF:unavailable"],
+            "actionType": "SELECT_BUFF",
+            "action": { "type": "SELECT_BUFF", "payload": { "buffId": "missing-buff" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected buff is not available to the active player.",
+            "expectedBeforeStateHash": "31e876c5",
+            "expectedAfterStateHash": "31e876c5",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-replenish-empty-bag",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "stateSetupId": "empty-bag",
+            "tags": ["edge:REPLENISH:empty-bag"],
+            "actionType": "REPLENISH",
+            "action": { "type": "REPLENISH" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The bag is empty.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-gems-empty-selection",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:TAKE_GEMS:empty"],
+            "actionType": "TAKE_GEMS",
+            "action": { "type": "TAKE_GEMS", "payload": { "coords": [] } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Gem selection must contain between one and three coordinates.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-gems-gold-cell",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:TAKE_GEMS:gold-cell"],
+            "actionType": "TAKE_GEMS",
+            "action": { "type": "TAKE_GEMS", "payload": { "coords": [{ "r": 0, "c": 4 }] } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Gem selection includes an empty or gold cell.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-gems-gapped-selection",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:TAKE_GEMS:gapped"],
+            "actionType": "TAKE_GEMS",
+            "action": {
+                "type": "TAKE_GEMS",
+                "payload": {
+                    "coords": [
+                        { "r": 0, "c": 0 },
+                        { "r": 0, "c": 2 }
+                    ]
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Gap detected.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-bonus-gem-wrong-color",
+            "fixtureId": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "revision": 8,
+            "tags": ["edge:TAKE_BONUS_GEM:wrong-color"],
+            "actionType": "TAKE_BONUS_GEM",
+            "action": { "type": "TAKE_BONUS_GEM", "payload": { "r": 0, "c": 4 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected bonus gem does not match the required color.",
+            "expectedBeforeStateHash": "329600a9",
+            "expectedAfterStateHash": "329600a9",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-bonus-gem-unavailable-cell",
+            "fixtureId": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "revision": 8,
+            "tags": ["edge:TAKE_BONUS_GEM:unavailable-cell"],
+            "actionType": "TAKE_BONUS_GEM",
+            "action": { "type": "TAKE_BONUS_GEM", "payload": { "r": 0, "c": 0 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected bonus gem is not available.",
+            "expectedBeforeStateHash": "329600a9",
+            "expectedAfterStateHash": "329600a9",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-discard-gem-not-owned",
+            "fixtureId": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "revision": 45,
+            "tags": ["edge:DISCARD_GEM:not-owned"],
+            "actionType": "DISCARD_GEM",
+            "action": { "type": "DISCARD_GEM", "payload": "pearl" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The active player does not own that gem.",
+            "expectedBeforeStateHash": "d2bea44e",
+            "expectedAfterStateHash": "d2bea44e",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-steal-gem-gold",
+            "fixtureId": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "revision": 31,
+            "tags": ["edge:STEAL_GEM:gold"],
+            "actionType": "STEAL_GEM",
+            "action": { "type": "STEAL_GEM", "payload": { "gemId": "gold" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Gold cannot be stolen.",
+            "expectedBeforeStateHash": "c0faf08b",
+            "expectedAfterStateHash": "c0faf08b",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-steal-gem-not-owned",
+            "fixtureId": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "revision": 31,
+            "tags": ["edge:STEAL_GEM:not-owned"],
+            "actionType": "STEAL_GEM",
+            "action": { "type": "STEAL_GEM", "payload": { "gemId": "pearl" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The opponent does not own the requested gem.",
+            "expectedBeforeStateHash": "c0faf08b",
+            "expectedAfterStateHash": "c0faf08b",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-initiate-buy-joker-non-joker",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:INITIATE_BUY_JOKER:non-joker"],
+            "actionType": "INITIATE_BUY_JOKER",
+            "action": {
+                "type": "INITIATE_BUY_JOKER",
+                "payload": {
+                    "card": {
+                        "id": "c:124-gr#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "green",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 0,
+                            "green": 0,
+                            "blue": 0,
+                            "white": 3,
+                            "black": 2,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "source": "market",
+                    "marketInfo": { "level": 1, "idx": 0 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Only joker cards require bonus-color selection.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-buy-card-market-mismatch",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:BUY_CARD:market-mismatch"],
+            "actionType": "BUY_CARD",
+            "action": {
+                "type": "BUY_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:124-gr#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "green",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 0,
+                            "green": 0,
+                            "blue": 0,
+                            "white": 3,
+                            "black": 2,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "source": "market",
+                    "marketInfo": { "level": 1, "idx": 1 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected market card does not match the current state.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-buy-card-reserved-not-owned",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:BUY_CARD:reserved-not-owned"],
+            "actionType": "BUY_CARD",
+            "action": {
+                "type": "BUY_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:124-gr#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "green",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 0,
+                            "green": 0,
+                            "blue": 0,
+                            "white": 3,
+                            "black": 2,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "source": "reserved"
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Reserved card does not belong to the active player.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-initiate-reserve-market-mismatch",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:INITIATE_RESERVE:market-mismatch"],
+            "actionType": "INITIATE_RESERVE",
+            "action": {
+                "type": "INITIATE_RESERVE",
+                "payload": {
+                    "card": {
+                        "id": "c:124-gr#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "green",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 0,
+                            "green": 0,
+                            "blue": 0,
+                            "white": 3,
+                            "black": 2,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "level": 1,
+                    "idx": 1
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected reserve card does not match the market.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-initiate-reserve-deck-empty-deck",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "stateSetupId": "empty-deck",
+            "tags": ["edge:INITIATE_RESERVE_DECK:empty-deck"],
+            "actionType": "INITIATE_RESERVE_DECK",
+            "action": { "type": "INITIATE_RESERVE_DECK", "payload": { "level": 1 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected deck is empty.",
+            "expectedBeforeStateHash": "5d36dff",
+            "expectedAfterStateHash": "5d36dff",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-card-missing-gold",
+            "fixtureId": "local-pvp-reserve-cancel",
+            "fileName": "local-pvp-reserve-cancel.replay.json",
+            "revision": 1,
+            "tags": ["edge:RESERVE_CARD:missing-gold"],
+            "actionType": "RESERVE_CARD",
+            "action": {
+                "type": "RESERVE_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:141-wh#0",
+                        "level": 1,
+                        "points": 0,
+                        "bonusColor": "white",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 1,
+                            "green": 1,
+                            "blue": 1,
+                            "white": 0,
+                            "black": 1,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "level": 1,
+                    "idx": 0
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "A gold coordinate is required for this action.",
+            "expectedBeforeStateHash": "fd6d5832",
+            "expectedAfterStateHash": "fd6d5832",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-card-non-gold",
+            "fixtureId": "local-pvp-reserve-cancel",
+            "fileName": "local-pvp-reserve-cancel.replay.json",
+            "revision": 1,
+            "tags": ["edge:RESERVE_CARD:non-gold"],
+            "actionType": "RESERVE_CARD",
+            "action": {
+                "type": "RESERVE_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:141-wh#0",
+                        "level": 1,
+                        "points": 0,
+                        "bonusColor": "white",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 1,
+                            "green": 1,
+                            "blue": 1,
+                            "white": 0,
+                            "black": 1,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "level": 1,
+                    "idx": 0,
+                    "goldCoords": { "r": 0, "c": 0 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected coordinate does not contain a gold gem.",
+            "expectedBeforeStateHash": "fd6d5832",
+            "expectedAfterStateHash": "fd6d5832",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-card-pending-mismatch",
+            "fixtureId": "local-pvp-reserve-cancel",
+            "fileName": "local-pvp-reserve-cancel.replay.json",
+            "revision": 1,
+            "tags": ["edge:RESERVE_CARD:pending-mismatch"],
+            "actionType": "RESERVE_CARD",
+            "action": {
+                "type": "RESERVE_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:141-wh#0",
+                        "level": 1,
+                        "points": 0,
+                        "bonusColor": "white",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 1,
+                            "green": 1,
+                            "blue": 1,
+                            "white": 0,
+                            "black": 1,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "level": 1,
+                    "idx": 1,
+                    "goldCoords": { "r": 2, "c": 2 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Reserve resolution does not match the pending reserve action.",
+            "expectedBeforeStateHash": "fd6d5832",
+            "expectedAfterStateHash": "fd6d5832",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-card-full-row",
+            "fixtureId": "local-pvp-reserve-cancel",
+            "fileName": "local-pvp-reserve-cancel.replay.json",
+            "revision": 1,
+            "stateSetupId": "full-reserve-row",
+            "tags": ["edge:RESERVE_CARD:full-row"],
+            "actionType": "RESERVE_CARD",
+            "action": {
+                "type": "RESERVE_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:141-wh#0",
+                        "level": 1,
+                        "points": 0,
+                        "bonusColor": "white",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 1,
+                            "green": 1,
+                            "blue": 1,
+                            "white": 0,
+                            "black": 1,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "level": 1,
+                    "idx": 0,
+                    "goldCoords": { "r": 2, "c": 2 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The reserve limit has already been reached.",
+            "expectedBeforeStateHash": "161a958",
+            "expectedAfterStateHash": "161a958",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-deck-missing-gold",
+            "fixtureId": "local-pvp-reserve-deck",
+            "fileName": "local-pvp-reserve-deck.replay.json",
+            "revision": 1,
+            "tags": ["edge:RESERVE_DECK:missing-gold"],
+            "actionType": "RESERVE_DECK",
+            "action": { "type": "RESERVE_DECK", "payload": { "level": 1 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "A gold coordinate is required for this action.",
+            "expectedBeforeStateHash": "6173696c",
+            "expectedAfterStateHash": "6173696c",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-deck-non-gold",
+            "fixtureId": "local-pvp-reserve-deck",
+            "fileName": "local-pvp-reserve-deck.replay.json",
+            "revision": 1,
+            "tags": ["edge:RESERVE_DECK:non-gold"],
+            "actionType": "RESERVE_DECK",
+            "action": {
+                "type": "RESERVE_DECK",
+                "payload": { "level": 1, "goldCoords": { "r": 0, "c": 0 } }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected coordinate does not contain a gold gem.",
+            "expectedBeforeStateHash": "6173696c",
+            "expectedAfterStateHash": "6173696c",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-deck-pending-mismatch",
+            "fixtureId": "local-pvp-reserve-cancel",
+            "fileName": "local-pvp-reserve-cancel.replay.json",
+            "revision": 1,
+            "tags": ["edge:RESERVE_DECK:pending-mismatch"],
+            "actionType": "RESERVE_DECK",
+            "action": {
+                "type": "RESERVE_DECK",
+                "payload": { "level": 1, "goldCoords": { "r": 0, "c": 0 } }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Deck reserve resolution does not match the pending reserve action.",
+            "expectedBeforeStateHash": "fd6d5832",
+            "expectedAfterStateHash": "fd6d5832",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-deck-full-row",
+            "fixtureId": "local-pvp-reserve-deck",
+            "fileName": "local-pvp-reserve-deck.replay.json",
+            "revision": 1,
+            "stateSetupId": "full-reserve-row",
+            "tags": ["edge:RESERVE_DECK:full-row"],
+            "actionType": "RESERVE_DECK",
+            "action": {
+                "type": "RESERVE_DECK",
+                "payload": { "level": 1, "goldCoords": { "r": 0, "c": 3 } }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The reserve limit has already been reached.",
+            "expectedBeforeStateHash": "be497bcc",
+            "expectedAfterStateHash": "be497bcc",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-discard-reserved-no-ability",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:DISCARD_RESERVED:no-ability"],
+            "actionType": "DISCARD_RESERVED",
+            "action": { "type": "DISCARD_RESERVED", "payload": { "cardId": "missing-card" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The active player cannot discard reserved cards.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-discard-reserved-not-owned",
+            "fixtureId": "local-pvp-discard-reserved",
+            "fileName": "local-pvp-discard-reserved.replay.json",
+            "revision": 4,
+            "tags": ["edge:DISCARD_RESERVED:not-owned"],
+            "actionType": "DISCARD_RESERVED",
+            "action": { "type": "DISCARD_RESERVED", "payload": { "cardId": "missing-card" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected reserved card does not exist.",
+            "expectedBeforeStateHash": "8d041794",
+            "expectedAfterStateHash": "8d041794",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-activate-privilege-no-charge",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:ACTIVATE_PRIVILEGE:no-charge"],
+            "actionType": "ACTIVATE_PRIVILEGE",
+            "action": { "type": "ACTIVATE_PRIVILEGE" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The active player has no privilege to spend.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-activate-privilege-no-target",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "stateSetupId": "empty-board-with-privilege",
+            "tags": ["edge:ACTIVATE_PRIVILEGE:no-target"],
+            "actionType": "ACTIVATE_PRIVILEGE",
+            "action": { "type": "ACTIVATE_PRIVILEGE" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "There are no valid gems available for a privilege action.",
+            "expectedBeforeStateHash": "b27d7fcb",
+            "expectedAfterStateHash": "b27d7fcb",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-use-privilege-no-charge",
+            "fixtureId": "local-pvp-privilege",
+            "fileName": "local-pvp-privilege.replay.json",
+            "revision": 3,
+            "stateSetupId": "privilege-action-no-charge",
+            "tags": ["edge:USE_PRIVILEGE:no-charge"],
+            "actionType": "USE_PRIVILEGE",
+            "action": { "type": "USE_PRIVILEGE", "payload": { "r": 0, "c": 0 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The active player has no privilege charge available.",
+            "expectedBeforeStateHash": "c964cd47",
+            "expectedAfterStateHash": "c964cd47",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-use-privilege-invalid-target",
+            "fixtureId": "local-pvp-privilege",
+            "fileName": "local-pvp-privilege.replay.json",
+            "revision": 3,
+            "tags": ["edge:USE_PRIVILEGE:invalid-target"],
+            "actionType": "USE_PRIVILEGE",
+            "action": { "type": "USE_PRIVILEGE", "payload": { "r": 2, "c": 4 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected privilege gem is not available.",
+            "expectedBeforeStateHash": "d8141986",
+            "expectedAfterStateHash": "d8141986",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-select-royal-unavailable",
+            "fixtureId": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "revision": 13,
+            "tags": ["edge:SELECT_ROYAL_CARD:unavailable"],
+            "actionType": "SELECT_ROYAL_CARD",
+            "action": {
+                "type": "SELECT_ROYAL_CARD",
+                "payload": {
+                    "card": {
+                        "id": "missing-r91-ro",
+                        "points": 3,
+                        "bonusColor": "gold",
+                        "ability": "none",
+                        "label": "The Queen"
+                    }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Selected royal card is no longer available.",
+            "expectedBeforeStateHash": "1c9d774b",
+            "expectedAfterStateHash": "1c9d774b",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-peek-deck-no-ability",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:PEEK_DECK:no-ability"],
+            "actionType": "PEEK_DECK",
+            "action": { "type": "PEEK_DECK", "payload": { "level": 1 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The active player does not have a deck-peek ability.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-close-modal-without-modal",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:CLOSE_MODAL:no-modal"],
+            "actionType": "CLOSE_MODAL",
+            "action": { "type": "CLOSE_MODAL" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "There is no active modal to close.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-close-modal-blocked-actor",
+            "fixtureId": "local-pvp-peek-modal",
+            "fileName": "local-pvp-peek-modal.replay.json",
+            "revision": 3,
+            "stateSetupId": "blocked-peek-modal",
+            "tags": ["edge:CLOSE_MODAL:blocked"],
+            "actionType": "CLOSE_MODAL",
+            "action": { "type": "CLOSE_MODAL" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The active player cannot close this modal.",
+            "expectedBeforeStateHash": "cd957ea1",
+            "expectedAfterStateHash": "cd957ea1",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reroll-draft-pool-online",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "stateSetupId": "online-draft",
+            "tags": ["edge:REROLL_DRAFT_POOL:online"],
+            "actionType": "REROLL_DRAFT_POOL",
+            "action": { "type": "REROLL_DRAFT_POOL", "payload": { "level": 1 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Draft rerolls are only available in offline modes.",
+            "expectedBeforeStateHash": "aaeb97ab",
+            "expectedAfterStateHash": "aaeb97ab",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reroll-draft-pool-p2-before-p1-selection",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "stateSetupId": "p2-draft-before-p1-selection",
+            "tags": ["edge:REROLL_DRAFT_POOL:p2-before-p1"],
+            "actionType": "REROLL_DRAFT_POOL",
+            "action": { "type": "REROLL_DRAFT_POOL", "payload": { "level": 1 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "P2 draft rerolls require a locked-in P1 buff selection.",
+            "expectedBeforeStateHash": "59de49c6",
+            "expectedAfterStateHash": "59de49c6",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        }
+    ]
+}

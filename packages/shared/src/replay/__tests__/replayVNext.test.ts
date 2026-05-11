@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CLASSIC_CARDS } from '../../data/realCards';
 import { applyAction } from '../../logic/gameReducer';
 import { buildStartGameAction, createGameSetupPayload } from '../../logic/gameSetup';
 import { INITIAL_STATE_SKELETON } from '../../logic/initialState';
@@ -9,6 +10,7 @@ import {
     buildReplayFullSync,
     buildReplayInitSnapshot,
     buildReplayRecorderFromHistory,
+    createReplayCheckpoint,
     evaluateReplayPerformance,
     getReplaySummary,
     loadReplaySession,
@@ -138,6 +140,49 @@ describe('Replay vNext', () => {
         expect(readResult.diagnostics.summaryIntegrity).toBe('ok');
         expect(session.finalStateHash).toBe(replay.summary.finalStateHash);
         expect(session.finalState.winner).toBe(replay.match.winner);
+    });
+
+    it('preserves concrete Joker bonus colors on tableau snapshot reload', () => {
+        const setup = createGameSetupPayload('LOCAL_PVP');
+        const jokerTemplate = CLASSIC_CARDS.find(
+            (card) => card.level === 1 && card.bonusColor === 'gold'
+        );
+        if (!jokerTemplate) {
+            throw new Error('Expected a level 1 Joker card template.');
+        }
+
+        setup.market[1][0] = { ...jokerTemplate };
+        const initAction = { type: 'INIT', payload: setup } as const;
+        const initState = applyAction(INITIAL_STATE_SKELETON, initAction);
+        if (!initState?.market[1][0]) {
+            throw new Error('Failed to create a replay state with a visible Joker.');
+        }
+
+        const currentState: GameState = {
+            ...initState,
+            playerTableau: {
+                ...initState.playerTableau,
+                p1: [{ ...initState.market[1][0], bonusColor: 'red' }],
+            },
+        };
+        const { init, runtimeToInstance } = buildReplayInitSnapshot(initAction, initState);
+        const replay = saveReplayVNext({
+            replayRevision: 0,
+            gameVersion: '5.2.11',
+            createdAt: '2026-05-11T00:00:00.000Z',
+            init,
+            events: [],
+            checkpoints: [createReplayCheckpoint(0, currentState, runtimeToInstance)],
+            currentState,
+            runtimeToInstance,
+        });
+        const session = loadReplaySession(replay);
+
+        expect(session.finalState.playerTableau.p1[0]).toMatchObject({
+            bonusColor: 'red',
+            bonusCount: 1,
+        });
+        expect(session.finalStateHash).toBe(replay.summary.finalStateHash);
     });
 
     it('marks tampered summaries as mismatched during full verification', () => {

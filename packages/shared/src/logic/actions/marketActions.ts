@@ -98,8 +98,6 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
     const tableau = state.playerTableau[player];
     const buff = state.playerBuffs?.[player];
 
-    state.pendingBuy = null;
-
     const { affordable, goldCost, gemsPaid } = calculateTransaction(
         card,
         inv,
@@ -112,6 +110,8 @@ export const handleBuyCard = (state: GameState, payload: BuyCardPayload): GameSt
         state.toastMessage = 'Cannot afford this card!';
         return state;
     }
+
+    state.pendingBuy = null;
 
     returnPaidGemsToBag(state, player, gemsPaid);
     returnPaidGoldToBag(state, player, goldCost);

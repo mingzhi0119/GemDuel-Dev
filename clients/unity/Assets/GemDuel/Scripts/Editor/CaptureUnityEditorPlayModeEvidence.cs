@@ -24,7 +24,7 @@ namespace GemDuel.Editor
         private const string VisiblePreviewBlankDismissMode = "visible-preview-blank-dismiss";
         private const string SettingsSoundToggleMode = "settings-sound-toggle";
         private const string FixtureFileName = "local-pvp-royal-extra-turn-game-over.replay.json";
-        private const string ScenePath = "Assets/GemDuel/Scenes/GemDuelVerticalSlice.unity";
+        private const string ScenePath = "Assets/GemDuel/Scenes/GemDuelGame.unity";
         private const int EvidenceWidth = 1920;
         private const int EvidenceHeight = 1080;
         private const int VisibleClickTimeoutTicks = 1800;
@@ -224,7 +224,7 @@ namespace GemDuel.Editor
             );
             Directory.CreateDirectory(outputRoot);
 
-            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelGameController>();
             var controller = UnityEngine.Object.FindAnyObjectByType<GemDuelInputController>();
             var camera = Camera.main;
             if (slice == null || controller == null || camera == null)
@@ -357,7 +357,7 @@ namespace GemDuel.Editor
             );
             Directory.CreateDirectory(outputRoot);
 
-            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelGameController>();
             var controller = UnityEngine.Object.FindAnyObjectByType<GemDuelInputController>();
             var camera = Camera.main;
             if (slice == null || controller == null || camera == null)
@@ -493,7 +493,7 @@ namespace GemDuel.Editor
                 );
             }
 
-            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelGameController>();
             var controller = UnityEngine.Object.FindAnyObjectByType<GemDuelInputController>();
             if (slice == null || controller == null)
             {
@@ -593,7 +593,7 @@ namespace GemDuel.Editor
                 );
             }
 
-            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelGameController>();
             var controller = UnityEngine.Object.FindAnyObjectByType<GemDuelInputController>();
             var camera = Camera.main;
             if (slice == null || controller == null || camera == null)
@@ -681,7 +681,7 @@ namespace GemDuel.Editor
                 );
             }
 
-            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelGameController>();
             var controller = UnityEngine.Object.FindAnyObjectByType<GemDuelInputController>();
             if (slice == null || controller == null)
             {
@@ -738,7 +738,7 @@ namespace GemDuel.Editor
 
         private static void ArmVisibleOsClickEvidence(string outputRoot)
         {
-            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelGameController>();
             var controller = UnityEngine.Object.FindAnyObjectByType<GemDuelInputController>();
             var camera = Camera.main;
             if (slice == null || controller == null || camera == null)
@@ -821,7 +821,7 @@ namespace GemDuel.Editor
 
         private static void ArmVisibleHoverProbeEvidence(string outputRoot)
         {
-            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelGameController>();
             var camera = Camera.main;
             if (slice == null || camera == null)
             {
@@ -861,7 +861,7 @@ namespace GemDuel.Editor
 
         private static void ArmVisiblePreviewBlankDismissEvidence(string outputRoot)
         {
-            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelVerticalSlice>();
+            var slice = UnityEngine.Object.FindAnyObjectByType<GemDuelGameController>();
             var camera = Camera.main;
             if (slice == null || camera == null)
             {
@@ -1038,7 +1038,7 @@ namespace GemDuel.Editor
             return gameView;
         }
 
-        private static JObject WaitForDraftTargets(GemDuelVerticalSlice slice)
+        private static JObject WaitForDraftTargets(GemDuelGameController slice)
         {
             for (var attempt = 0; attempt < 120; attempt += 1)
             {
