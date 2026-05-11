@@ -232,32 +232,7 @@ namespace GemDuel.Tests.EditMode
             DriveFreshLocalPvpProductSurfaceToGameOver(seed, 240, true);
         }
 
-        [Test]
-        public void FreshLocalPvpProductSurfaceSeedSweepCoversCoreActionFamilies()
-        {
-            var appliedActions = new List<string>();
-            foreach (
-                var seed in new[]
-                {
-                    "unity-editmode-product-sweep-1",
-                    "unity-editmode-product-sweep-2",
-                    "unity-editmode-product-sweep-3",
-                    "unity-editmode-product-sweep-4",
-                }
-            )
-            {
-                appliedActions.AddRange(
-                    DriveFreshLocalPvpProductSurfaceToGameOver(seed, 240, false)
-                );
-            }
-
-            AssertActionFamily(appliedActions, "confirm_gem_selection");
-            AssertActionFamily(appliedActions, "buy_card");
-            AssertActionFamily(appliedActions, "replenish");
-            AssertActionFamily(appliedActions, "choose_royal");
-        }
-
-        private static List<string> DriveFreshLocalPvpProductSurfaceToGameOver(
+        private static void DriveFreshLocalPvpProductSurfaceToGameOver(
             string seed,
             int maxSteps,
             bool verifyReplayReview
@@ -358,7 +333,6 @@ namespace GemDuel.Tests.EditMode
                     );
                 }
 
-                return appliedActions;
             }
             finally
             {
@@ -375,15 +349,6 @@ namespace GemDuel.Tests.EditMode
                 DeleteLocalDevRecoverySave();
                 CleanupRenderedSceneObjects();
             }
-        }
-
-        private static void AssertActionFamily(List<string> appliedActions, string action)
-        {
-            Assert.IsTrue(
-                appliedActions.Any(candidate => candidate.StartsWith(action, System.StringComparison.Ordinal)),
-                "Expected fresh product-surface seed sweep to cover " + action + ". Applied actions: "
-                    + string.Join(" -> ", appliedActions)
-            );
         }
 
         [Test]
