@@ -1,7 +1,9 @@
 {
     "name": "GemDuel",
     "rootNamespace": "GemDuel",
-    "references": [],
+    "references": [
+        "Unity.TextMeshPro"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

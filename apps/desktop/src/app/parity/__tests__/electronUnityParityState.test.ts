@@ -85,7 +85,14 @@ const buildParams = (
     historyLength = 1
 ): Pick<
     UseElectronUnityParityHarnessParams,
-    'game' | 'layout' | 'locale' | 'theme' | 'soundEnabled' | 'setupRoute' | 'matchmakingRoute'
+    | 'game'
+    | 'layout'
+    | 'locale'
+    | 'theme'
+    | 'surfaceTheme'
+    | 'soundEnabled'
+    | 'setupRoute'
+    | 'matchmakingRoute'
 > => ({
     game: buildGame(state, historyLength),
     layout: {
@@ -96,6 +103,12 @@ const buildParams = (
     } as UseElectronUnityParityHarnessParams['layout'],
     locale: 'zh',
     theme: 'dark',
+    surfaceTheme: {
+        background: 'royal-luxury',
+        playerZone: 'royal-luxury',
+        gemPanel: 'royal-luxury',
+        effects: 'anime',
+    },
     soundEnabled: true,
     setupRoute: 'classic',
     matchmakingRoute: 'none',
@@ -197,7 +210,12 @@ describe('electronUnityParityState', () => {
             'data-card-preview-card',
             'c11-re'
         );
+        appendElement('div', { cardPreviewDeckReserve: '1' }).setAttribute(
+            'data-card-preview-deck-reserve',
+            '1'
+        );
         appendElement('button', { cardPreviewAction: 'buy' });
+        appendElement('button', { cardPreviewAction: 'reserve' });
         appendElement('div', { settingsMenu: 'true' }).setAttribute('data-settings-menu', 'true');
         appendElement('div', { parityErrorBanner: 'true' }).setAttribute(
             'data-parity-error-banner',
@@ -253,6 +271,7 @@ describe('electronUnityParityState', () => {
                 'card.preview.backdrop',
                 'card.preview.card',
                 'card.preview.primaryAction',
+                'card.preview.action.reserve',
                 'settings.panel',
                 'error.banner',
                 'turn.end',

@@ -1,11 +1,10 @@
-# Unity Migration Governance
+# Unity Full Migration Governance
 
 Last updated: 2026-05-11
 
-This document is binding for Codex agents working on GemDuel Unity migration tasks. The current
-phase is **migration preparation only**. Success is not "Unity looks playable"; success is
-"future Unity work can be judged equivalent by the existing TypeScript rules, replay corpus, state
-hash, contract docs, and verification scripts."
+This document is binding for Codex agents working on GemDuel Unity migration tasks. It supersedes
+all migration-preparation-only, vertical-slice, sidecar-prototype, guided-fixture, and scoped-parity
+execution contracts.
 
 Codex can read repository files, edit files, and run local commands in a workspace, so repo rules,
 acceptance commands, and explicit non-goals must be treated as enforceable controls rather than
@@ -13,139 +12,197 @@ soft preferences. Reference: [OpenAI Codex Help Center](https://help.openai.com/
 
 ## Current Phase
 
-Migration preparation only.
+Full Unity migration execution.
 
-The agent must not implement Unity gameplay, a playable Unity demo, a vertical slice, a fake game
-scene, or parallel C# gameplay rules unless the user explicitly says:
+This run is explicitly authorized to implement Unity gameplay, Unity UI wiring, replay/import/export,
+settings persistence, recovery behavior, platform-service abstraction, build automation, and parity
+validation required for Unity to become a replacement candidate for the Electron client.
+
+The agent must not stop at migration preparation, Unity skeleton, vertical slice, guided fixture
+playback, scoped parity, 90% parity, prototype, demo, readiness-only documentation, or a post-slice
+roadmap.
+
+Success means Unity can run the supported product scope from a fresh launch through real gameplay,
+replay/persistence flows, recovery flows, and release-candidate validation, with Electron/TypeScript
+remaining the oracle until parity evidence passes.
+
+## Authority And Source Of Truth
+
+- Electron is the only player-facing standard during migration.
+- `packages/shared` and the current Electron product behavior remain the rules and UX oracle until
+  explicit user approval changes that contract.
+- Do not change Electron gameplay, semantics, UI behavior, or tests merely to make Unity pass.
+- Unity may implement gameplay only by honoring the current TypeScript contracts, replay corpus,
+  deterministic state hash, Electron semantic keys, click rectangles, hover/click results, and FSM
+  state transitions.
+- Any Unity-engine-specific improvement is allowed only when it improves the Unity implementation
+  without weakening Electron parity evidence.
+
+## Supersession Policy
+
+The current execution contract is this file:
 
 ```text
-implement Unity vertical slice
+docs/migration/unity-migration-governance.md
 ```
 
-or
+Any active migration document that still describes a sidecar prototype, vertical slice, scoped 90%
+parity, guided replay playback, or post-slice roadmap must be archived or marked with a superseded
+banner before full migration work is claimed complete.
+
+The following documents are historical context only unless rewritten under this governance file:
 
 ```text
-implement Unity gameplay
+docs/migration/unity-goal-mode-implementation-plan.md
+docs/migration/unity-vertical-slice-scope.md
+docs/migration/unity-vertical-slice-implementation-report.md
+docs/migration/unity-electron-90-parity-report.md
 ```
 
-Any weaker wording such as "prepare Unity migration", "set up Unity", "make migration possible",
-"prove parity", or "fix migration foundation" does not authorize gameplay implementation.
+They must not be used as the current `/goal` execution contract, completion criteria, or parity
+success proof.
 
-## Binding Non-Goals
+## Product Scope To Migrate
 
-- Do not create a playable demo.
-- Do not create a fake Unity scene.
-- Do not create a visual-only board or gem demo.
-- Do not bypass `packages/shared`.
-- Do not reinvent gameplay rules in Unity or C#.
-- Do not use mock data to claim migration progress.
-- Do not change Electron gameplay behavior to make Unity easier.
-- Do not add Steamworks.NET, Epic Online Services, app IDs, secrets, tokens, credentials, or large
-  binary assets unless the user explicitly authorizes that scope.
+Unity migration is complete only when every currently supported Electron product surface is either:
 
-## Allowed Work
+1. implemented in Unity with parity evidence, or
+2. explicitly excluded by this document with a reason and user-approved replacement or fallback
+   policy.
 
-- Document the current TypeScript `GameState` contract.
-- Document the current TypeScript `GameAction` contract.
-- Document card, gem, royal, buff, replay, FSM, and state-hash contracts.
-- Export deterministic fixtures from `packages/shared`.
-- Maintain a small replay golden corpus.
-- Verify fixtures with the existing TypeScript reducer and deterministic state hash.
-- Design Unity fixture-reader behavior.
-- Design the platform abstraction layer.
-- Prepare Steam/Epic release checklists and platform feature matrices.
-- Create a Unity project skeleton only when explicitly requested.
-- Add docs, fixtures, tests, or verification scripts that prove migration readiness.
+At minimum, inspect and map:
 
-## Forbidden Work Without Explicit Authorization
+- start/config menu;
+- local PvP setup;
+- draft/buff selection;
+- main gameplay shell;
+- board, market, reserve, royal, gem rail, preview, discard, bonus, steal, and privilege flows;
+- replay review/import/export;
+- settings: locale, theme/surface, sound, and LAN visibility toggles if still supported;
+- restart, new game, and recovery;
+- LAN and online routes if they remain supported product scope;
+- visual lab and dev-only routes, either migrated or explicitly excluded as non-product tooling.
 
-- Unity gameplay implementation.
-- Unity scene gameplay wiring.
-- Fake board, fake market, fake gem interaction, or mock-only visual flows.
-- C# reducers that claim to replace `packages/shared` without replay/hash parity.
-- Parallel card, gem, royal, buff, FSM, or scoring rules.
-- Runtime behavior changes in Electron made only for Unity parity.
-- New platform SDK binaries or credential-bearing files.
-- Large generated Unity folders such as `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`, or
-  `Builds/`.
+Any unmapped Electron route or user-visible surface blocks full migration completion.
 
-## Required Evidence Artifacts
+## Completion Standard
 
-Every migration-preparation task must produce or preserve at least one of these evidence artifacts:
+Unity is complete only when it is a replacement candidate, not a slice.
 
-- Rule contract documentation.
-- Replay golden fixture.
-- Deterministic state hash validation.
-- Unity-readable fixture format.
-- Verification script.
-- Validation report.
-- Migration risk table.
-- Platform abstraction design.
-- Release checklist.
+The final result must support arbitrary legal local PvP gameplay from a fresh launch through game
+over. It must not depend on replay checkpoints, pre-authored fixture paths, debug shortcuts, mock
+state, or a manually stepped presentation script to advance normal gameplay.
 
-Work that only produces a visible Unity surface is not migration evidence.
+## Non-Negotiable Anti-Theater Rules
 
-## Gate Order
+Forbidden:
 
-Gate 1: Rule Contracts
+- claiming a demo, prototype, guided replay, sidecar slice, or visual-only surface as migration
+  completion;
+- using mock-only data as migration evidence;
+- using replay checkpoints to advance live gameplay state;
+- bypassing the TypeScript oracle before parity is proven;
+- changing Electron behavior merely to make Unity pass;
+- committing Steamworks SDKs, Epic SDKs, app IDs, product IDs, partner files, credentials, secrets,
+  Unity cache, build outputs, upload artifacts, or large generated assets without explicit user
+  authorization;
+- creating C# gameplay rules that cannot be checked against TypeScript replay/hash fixtures.
 
-- `GameState` contract.
-- `GameAction` contract.
-- Card, gem, royal, and buff data contracts.
-- FSM phase and command policy.
-- Schema strictness policy.
+Allowed full-migration work:
 
-Unity gameplay is forbidden in this gate.
+- real Unity gameplay implementation;
+- Unity UI wiring and interaction state;
+- replay import/export/review behavior;
+- settings persistence;
+- restart, recovery, and invalid-action handling;
+- LocalDev platform-service abstraction;
+- Unity editor tests, smoke validation, and Windows build automation;
+- parity scripts and evidence reports.
 
-Gate 2: Replay Corpus
+Allowed work must still produce verifiable evidence tied back to Electron, `packages/shared`, replay
+fixtures, deterministic hashes, and validation commands.
 
-- Golden replay fixtures.
-- Deterministic state hash.
-- Fixture validator.
-- Parity report.
+## No Checkpoint-Driven Gameplay
 
-Unity gameplay is forbidden in this gate.
+Replay checkpoints may be used only as validation or audit evidence.
 
-Gate 3: Release Preparation
+Production Unity gameplay must not advance state by copying checkpoint snapshots, replacing live
+state from replay snapshots, or following a pre-authored guided fixture path.
 
-- Steam checklist.
-- Epic checklist.
-- Platform feature matrix.
-- SteamPipe or upload-template docs.
-- Asset inventory.
-- License and provenance notes.
+The Unity rules layer must apply normalized gameplay commands from the current state and produce the
+next state independently. After applying commands, replay checkpoints and TypeScript hashes may be
+used to assert parity.
 
-Unity gameplay is forbidden in this gate.
+Any code path equivalent to `ReplaceSnapshot(checkpoint.State)` inside live gameplay or production
+reducer code blocks completion.
 
-Gate 4: Unity Skeleton
+Required audit command:
 
-- `clients/unity` project skeleton.
-- Unity `.gitignore` and repository hygiene.
-- Unity version lock.
-- Fixture-reader design.
-- Platform-service interface draft.
+```sh
+git grep -n "ReplaceSnapshot" clients/unity/Assets/GemDuel/Scripts/Core clients/unity/Assets/GemDuel/Scripts/Presentation
+```
 
-Playable gameplay is still forbidden in this gate.
+Allowed occurrences are limited to test-only validators or replay audit tooling. Live reducer,
+presentation, and input flows must not use checkpoint replacement as gameplay.
 
-Gate 5: Unity Vertical Slice
+## Required Replay Coverage For Full Migration
 
-This gate starts only after explicit user authorization. Before implementation, the agent must
-write a task plan that names exact files allowed to change and the verification commands that will
-prove parity.
+The golden corpus must cover every non-debug gameplay action in
+`packages/shared/src/types/domain-actions.ts` and every phase transition in
+`packages/shared/src/logic/fsmPolicy.ts`.
 
-Allowed only in Gate 5:
+Coverage must include:
 
-- 5x5 GemBoard implementation.
-- Local PvP interaction implementation.
-- Fixture reader.
-- State-hash comparison in Unity.
-- SteamAPI init concept checks.
-- Overlay availability concept checks.
-- Test achievement concept checks.
+- normal valid command paths;
+- invalid phase rejection paths;
+- invalid actor or ownership rejection paths;
+- insufficient gem, invalid gem, and empty board rejection paths;
+- buy, reserve, cancel, and choose-color flows;
+- privilege activation, use, and cancel flows;
+- reserve deck and discard reserved flows;
+- royal selection and next-player recovery;
+- bonus, steal, discard excess, replenish, and buff effects;
+- replay import/export round trip;
+- undo, redo, and review behavior if supported by the migrated product scope.
+
+The action matrix must include every non-debug `GameAction`, including but not limited to:
+
+```text
+INITIATE_BUY_JOKER
+INITIATE_RESERVE_DECK
+CANCEL_RESERVE
+RESERVE_DECK
+DISCARD_RESERVED
+ACTIVATE_PRIVILEGE
+USE_PRIVILEGE
+CANCEL_PRIVILEGE
+UNDO
+REDO
+PEEK_DECK
+REROLL_DRAFT_POOL
+```
+
+A single long fixture may provide smoke coverage, but it is not sufficient as proof of full
+migration.
+
+## Completion Claim Policy
+
+The final report must not claim success using any of these terms:
+
+- vertical slice
+- prototype
+- sidecar demo
+- scoped parity
+- 90% parity
+- guided fixture playback
+- remaining 10%
+- post-slice roadmap
+
+If any of those terms are still accurate, the migration is incomplete.
 
 ## Plan Lock
 
-Before changing files for any migration task, create or update:
+Before changing files for any full migration task, create or update:
 
 ```text
 docs/migration/current-migration-task-plan.md
@@ -162,36 +219,381 @@ The plan must include:
 
 ## Files Forbidden To Change
 
+## Mandatory Gate Map
+
 ## Acceptance Criteria
 
 ## Validation Commands
 
+## Blocker Handling
+
 ## Rollback Plan
 ```
 
-If the actual work would exceed the plan, the agent must stop and report the scope change. It must
-not silently expand from "fixture export" into "Unity demo" or "visual slice".
+If a blocker is found, continue all independent migration work that does not depend on the blocker.
+The final status may be `Complete` only if every mandatory gate passes. Otherwise the final status
+must be `Incomplete` or `Blocked`, with exact remaining blockers.
 
-## Definition Of Done
+## Mandatory Work Inventory
 
-- Every changed file is listed in the final report.
-- Every fixture or contract artifact is tied back to `packages/shared`.
-- Every migration claim has a validation command or a documented manual validation path.
-- Final report includes commands run and results.
-- If any command cannot run, final report explains why and gives the next safest validation command.
-- Final report includes the self-audit below.
+Foundational contracts and planning artifacts that must remain current during full migration:
+
+```text
+docs/migration/game-state-contract.md
+docs/migration/game-action-contract.md
+docs/migration/replay-parity-contract.md
+docs/migration/unity-fixture-reader-design.md
+docs/migration/platform-services-abstraction.md
+docs/migration/unity-migration-risk-table.md
+docs/migration/unity-platform-release-checklist.md
+```
+
+Active docs that must exist or be updated during full migration:
+
+```text
+docs/migration/unity-migration-governance.md
+docs/migration/unity-product-scope-map.md
+docs/migration/unity-action-fsm-coverage-matrix.md
+docs/migration/unity-full-parity-matrix.md
+docs/migration/unity-full-migration-completion-report.md
+docs/adr/<next-id>-unity-rules-engine-boundary.md
+```
+
+Historical docs that must be archived or marked superseded before completion:
+
+```text
+docs/migration/unity-goal-mode-implementation-plan.md
+docs/migration/unity-vertical-slice-scope.md
+docs/migration/unity-vertical-slice-implementation-report.md
+docs/migration/unity-electron-90-parity-report.md
+```
+
+Unity code and scene surfaces that must be upgraded away from slice naming and behavior:
+
+```text
+clients/unity/Assets/GemDuel/Scripts/Presentation/GemDuelVerticalSlice.cs
+clients/unity/Assets/GemDuel/Scenes/GemDuelVerticalSlice.unity
+clients/unity/Assets/GemDuel/Scripts/Core/GameReducer.cs
+clients/unity/Assets/GemDuel/Scripts/Replay/ReplayParityRunner.cs
+clients/unity/Assets/GemDuel/Tests/EditMode/ReplayParityEditModeTests.cs
+```
+
+Recommended replacements:
+
+```text
+GemDuelVerticalSlice.cs -> GemDuelGameController.cs
+GemDuelVerticalSlice.unity -> GemDuelGame.unity
+```
+
+The rename is a governance requirement because `VerticalSlice` keeps signaling that slice work is a
+valid endpoint.
+
+## Mandatory Gate 0: Supersede Vertical-Slice Era Docs
+
+Before claiming any migration progress, the agent must:
+
+- mark active vertical-slice and 90%-parity migration documents as superseded or move them under
+  `docs/archive/roadmaps/`;
+- update `docs/README.md` so historical 90% parity evidence is not presented as the active
+  migration target;
+- remove any active `/goal` prompt that asks for a vertical slice, scoped parity, sidecar demo, or
+  migration-preparation-only output;
+- keep historical facts intact while making clear that they are not current completion evidence.
+
+Acceptance evidence:
+
+- every old slice/scoped-parity document has a superseded banner or archive path;
+- the active `/goal` prompt references only this governance file;
+- the anti-slice grep is reviewed.
+
+## Mandatory Gate 1: Rules Engine Boundary ADR
+
+Write an ADR before implementing or expanding gameplay:
+
+```text
+docs/adr/<next-id>-unity-rules-engine-boundary.md
+```
+
+The ADR must choose one rules-engine strategy:
+
+- keep TypeScript as the authoritative rules engine and call it from Unity through a governed
+  adapter;
+- port the rules to C# behind the same action/replay/hash contracts while TypeScript remains the
+  oracle until parity is proven;
+- generate or share a portable rules artifact if a later toolchain makes that safer than a manual
+  port.
+
+The ADR must reject:
+
+- MonoBehaviour-owned gameplay state;
+- UI-driven state mutation;
+- platform SDK callbacks mutating gameplay directly;
+- C# rules that cannot be replay/hash compared against the TypeScript oracle.
+
+Acceptance evidence:
+
+- ADR merged;
+- `IGameRulesEngine` or equivalent boundary documented;
+- no Unity presentation code owns rule transitions.
+
+## Mandatory Gate 2: Action/FSM Coverage Matrix
+
+Create:
+
+```text
+docs/migration/unity-action-fsm-coverage-matrix.md
+```
+
+The matrix must map every `GameAction` from `packages/shared/src/types/domain-actions.ts` and every
+FSM policy row from `packages/shared/src/logic/fsmPolicy.ts` to:
+
+- Unity implementation or bridge status;
+- valid fixture coverage;
+- invalid/rejection fixture coverage;
+- expected phase transitions;
+- deterministic hash evidence;
+- missing gaps and owners;
+- user-approved exclusions, if any.
+
+Completion is blocked while any non-debug action or FSM phase is unmapped.
+
+## Mandatory Gate 3: Rule Engine Implementation
+
+Unity must apply real commands from live state. It must not advance production gameplay through
+checkpoint replacement.
+
+The rule engine or bridge must:
+
+- load a fresh supported game without using a replay fixture as the gameplay driver;
+- apply normalized gameplay commands;
+- return the next canonical state;
+- return deterministic hash evidence;
+- reject illegal commands without mutating state;
+- preserve actor, ownership, phase, and resource invariants.
+
+Acceptance evidence:
+
+- arbitrary legal local PvP can proceed beyond the first turn without replay checkpoints;
+- invalid phase and invalid actor commands are rejected with structured reasons;
+- TypeScript replay/hash parity remains green for covered actions;
+- `ReplaceSnapshot(checkpoint.State)` or equivalent is absent from live gameplay paths.
+
+## Mandatory Gate 4: Replay Corpus Expansion
+
+Expand replay/hash fixtures until every required action, phase, rejection path, and edge case has
+TypeScript oracle coverage.
+
+The corpus must include action-by-action, phase-by-phase, and edge-case fixtures. One long local PvP
+fixture is smoke evidence only.
+
+Acceptance evidence:
+
+- `fixtures/replay-golden/manifest.json` records complete required coverage;
+- `tools/migration/verify-replay-parity.ts` passes;
+- Unity can read the fixture shape;
+- TypeScript and Unity report the same deterministic hashes for migrated coverage;
+- missing coverage is listed as a blocker, not a "remaining 10%" roadmap.
+
+## Mandatory Gate 5: Unity UI/Product Surface Migration
+
+Implement the supported Electron product scope in Unity, not only the local board.
+
+Unity UI must translate player intent into contract commands:
+
+- board clicks and drags produce `TAKE_GEMS`, `TAKE_BONUS_GEM`, `USE_PRIVILEGE`, or reserve-gold
+  commands only when the FSM permits them;
+- market preview buttons produce buy/reserve commands only through the rules adapter;
+- inventory gem clicks produce discard/steal commands only in the matching phase;
+- royal clicks produce selection commands only in `SELECT_ROYAL`;
+- settings buttons mutate settings state only, never gameplay state.
+
+Required UI parity includes:
+
+- semantic keys;
+- clickable rectangles;
+- hover results;
+- click results;
+- state transitions;
+- error/rejection states;
+- two required viewports;
+- screenshot and visual evidence.
+
+## Mandatory Gate 6: Replay, Persistence, Settings, Recovery
+
+Implement or explicitly exclude with user approval:
+
+- replay import/export/review;
+- autosave and settings persistence;
+- restart/new game;
+- invalid-action recovery;
+- close/reopen recovery;
+- settings locale, theme/surface, sound, and LAN visibility toggles if still supported.
+
+Acceptance evidence:
+
+- replay round trip preserves deterministic hash;
+- settings survive restart;
+- invalid actions do not mutate gameplay state;
+- recovery does not require `Library/`, local Unity cache, or mock fixture state.
+
+## Mandatory Gate 7: Platform Services
+
+LocalDev platform services are allowed first. Steam/Epic SDKs, app IDs, product IDs, partner files,
+credentials, upload output, and live platform callbacks require explicit user authorization.
+
+Platform services must remain adapters. They must not enter deterministic gameplay state or replay
+hashes.
+
+Acceptance evidence:
+
+- LocalDev platform-service interface is implemented;
+- platform state is excluded from gameplay hash;
+- no SDK binaries, secrets, partner files, or upload artifacts are committed;
+- Steam/Epic production work is documented as blocked until official account and SDK authorization.
+
+## Mandatory Gate 8: Electron/Unity Parity Matrix
+
+Create:
+
+```text
+docs/migration/unity-full-parity-matrix.md
+```
+
+The matrix must compare Electron and Unity across the required product scope:
+
+- semantic keys;
+- clickable rectangles;
+- hover stability;
+- click results;
+- state transitions;
+- settings save/load/surface behavior;
+- board/take-gems/follow-up phases;
+- market and reserved-card flows;
+- royal area behavior;
+- preview, buy, reserve, cancel, discard, bonus, steal, privilege flows;
+- screenshots for the two required viewports;
+- browser process guard status.
+
+Electron remains the standard. Do not modify Electron to hide a Unity mismatch.
+
+## Mandatory Gate 9: Build And Release Candidate Validation
+
+Run all repo, replay, Unity editor, and build validations that are available.
+
+Unity migration is not complete until:
+
+- Steam/Epic release checklists are current as documentation and contain no SDK secrets, app IDs, or
+  partner-only files;
+- Unity EditMode tests pass when Unity is available;
+- Unity PlayMode or smoke validation covers fresh launch and arbitrary legal local PvP;
+- Windows build succeeds when Unity is available;
+- repo gates pass;
+- release gates pass;
+- no generated Unity cache, build outputs, SDK binaries, partner files, app IDs, or credentials are
+  committed.
+
+## Definition Of Done For Full Migration
+
+The migration is complete only when all are true:
+
+- Unity can start a fresh supported game without loading a replay fixture as the gameplay driver.
+- Unity can play an arbitrary legal local PvP match from start through game over.
+- Unity gameplay state is advanced by the rules engine, not by replay checkpoints.
+- Every non-debug `GameAction` has Unity coverage or an explicit user-approved exclusion.
+- Every FSM phase has allowed-action and rejected-action tests.
+- Every Electron-supported product route/surface is implemented or explicitly excluded with
+  approval.
+- Replay import/export and review behavior are implemented or explicitly excluded with approval.
+- Settings persistence and recovery behavior are implemented.
+- Invalid actions are rejected without mutating state.
+- TypeScript replay/hash parity passes.
+- Unity replay/hash parity passes.
+- Electron/Unity semantic/click/hover/state parity passes for required viewports.
+- Unity Editor tests pass when Unity is available.
+- Windows build succeeds when Unity is available.
+- No Steam/Epic SDK, app ID, credential, partner file, upload artifact, Unity cache, or build output
+  is committed.
+- Final report does not describe the result as a demo, prototype, vertical slice, scoped parity,
+  90% parity, or post-slice roadmap.
+
+## Validation Commands
+
+Run the strongest applicable local gate set for the files changed. For full migration completion,
+the minimum command list is:
+
+```sh
+pnpm --dir tools/scripts exec vite-node --script ../../tools/migration/verify-replay-parity.ts
+pnpm --dir tools/scripts exec vite-node --script ../../tools/migration/export-unity-catalogs.ts --check
+pnpm parity:electron-unity
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm release:check
+pnpm boundaries:check
+pnpm secrets:check
+git diff --check
+git status --short
+```
+
+Unity available:
+
+```sh
+"C:\Program Files\Unity\Hub\Editor\6000.4.6f1\Editor\Unity.exe" -batchmode -nographics -projectPath clients/unity -runTests -testPlatform editmode -testResults artifacts/unity/editmode-results.xml -logFile artifacts/unity/editmode.log
+"C:\Program Files\Unity\Hub\Editor\6000.4.6f1\Editor\Unity.exe" -batchmode -projectPath clients/unity -executeMethod GemDuel.Editor.BuildWindows.Build -logFile artifacts/unity/build.log -quit
+```
+
+Anti-slice review:
+
+```sh
+git grep -nE "vertical slice|VerticalSlice|prototype|scoped parity|90% parity|guided fixture|remaining 10%" docs/migration clients/unity/Assets/GemDuel/Scripts
+git grep -n "ReplaceSnapshot" clients/unity/Assets/GemDuel/Scripts/Core clients/unity/Assets/GemDuel/Scripts/Presentation
+```
+
+The anti-slice grep is an audit input, not a blanket ban on historical words. Occurrences inside
+superseded historical documents are allowed only when those documents are clearly not current
+execution contracts. Occurrences in production Unity gameplay code or active completion criteria
+block completion.
+
+## Final Completion Report
+
+Create:
+
+```text
+docs/migration/unity-full-migration-completion-report.md
+```
+
+The final report must include:
+
+- final status: `Complete`, `Incomplete`, or `Blocked`;
+- changed files;
+- product surfaces mapped, implemented, or excluded;
+- `GameAction` and FSM coverage status;
+- replay corpus and hash coverage status;
+- Unity rules-engine boundary and implementation status;
+- checkpoint-driven gameplay audit result;
+- Electron/Unity parity matrix result;
+- validation commands and results;
+- Unity editor/build availability and evidence;
+- secrets/cache/build-output hygiene result;
+- exact remaining blockers if not complete.
+
+The final status may be `Complete` only if every mandatory gate passes.
 
 ## Required Self-Audit
 
 Every final report for a Unity migration task must answer:
 
-1. Did I create any demo, slice, playable scene, or visual-only Unity surface? If yes, cite the
-   explicit user authorization.
-2. Did I duplicate gameplay rules outside `packages/shared`? If yes, explain why and name the
-   replay/hash parity proof.
-3. Did every migration artifact connect back to existing rule contracts?
-4. Did I add or run validation commands?
-5. Did I leave any mock-only path that could be mistaken for real migration progress?
+1. Did I claim any demo, prototype, sidecar slice, vertical slice, guided replay, scoped parity, or
+   90% parity as completion?
+2. Did I duplicate gameplay rules outside `packages/shared`? If yes, explain the selected
+   rules-engine boundary and name the replay/hash parity proof.
+3. Did live Unity gameplay advance by replay checkpoints or snapshot replacement?
+4. Did every migration artifact connect back to Electron, `packages/shared`, replay fixtures, or
+   deterministic hashes?
+5. Did I add or run validation commands?
+6. Did I leave any mock-only path that could be mistaken for real migration progress?
+7. Did I modify Electron behavior to make Unity pass?
+8. Did I commit any SDK binary, app ID, credential, partner file, Unity cache, or build output?
 
 ## Independent Audit Prompt
 
@@ -201,12 +603,17 @@ Use this prompt to review a migration PR:
 You are an independent code auditor. Review this PR for Unity migration theater.
 
 Check:
-1. Whether a demo, mock, fake scene, or visual-only slice replaced real migration preparation.
-2. Whether the PR bypasses packages/shared as the rules authority.
-3. Whether Unity code was added without replay/state-hash verification.
-4. Whether a parallel gameplay rule implementation was introduced.
-5. Whether large assets, SDKs, secrets, Unity Library/Temp/Builds, or credentials were committed.
-6. Whether every migration artifact has an acceptance command or validation path.
+1. Whether a demo, mock, fake scene, sidecar slice, scoped parity report, or visual-only surface was
+   claimed as full migration.
+2. Whether the PR bypasses packages/shared or Electron as the current rules/UX oracle.
+3. Whether Unity live gameplay advances state by replay checkpoint replacement.
+4. Whether every non-debug GameAction and FSM phase is covered or explicitly excluded with approval.
+5. Whether Unity code was added without replay/state-hash verification.
+6. Whether a parallel gameplay rule implementation was introduced without an ADR and parity proof.
+7. Whether active vertical-slice-era docs remain usable as execution contracts.
+8. Whether large assets, SDKs, secrets, Unity Library/Temp/Builds, upload artifacts, or credentials
+   were committed.
+9. Whether every migration artifact has an acceptance command or validation path.
 
 Return:
 - Pass/Fail
@@ -215,434 +622,38 @@ Return:
 - Required fixes before merge
 ```
 
-## Short Codex Prompt
-
-Use this short prompt for future Codex runs:
+## Short `/goal` Prompt
 
 ```text
-Follow docs/migration/unity-migration-governance.md as the binding scope contract.
-
-This is Unity migration preparation, not a demo task. Do not implement Unity gameplay, playable
-scenes, fake board demos, mock-only flows, or parallel C# rules unless I explicitly say
-"implement Unity vertical slice" or "implement Unity gameplay".
-
-Deliver only verifiable migration evidence: rule contracts, replay golden corpus, deterministic
-state hash, Unity-readable fixtures, platform abstraction docs, migration risk table, release
-checklists, validation scripts, and validation results.
-
-Before changing files, write/update docs/migration/current-migration-task-plan.md with goal,
-non-goals, allowed files, forbidden files, acceptance criteria, validation commands, and rollback
-plan. If the work would exceed that plan, stop and report instead of expanding scope.
-```
-
-## After Migration Preparation
-
-Migration preparation ends only when the repository can prove, without a Unity gameplay demo, that
-Unity has a governed path to consume the same rules, data, replay events, and release contracts as
-the current Electron/TypeScript product.
-
-After preparation, the next task is not "make a playable scene." The next task is to run a
-**Migration Readiness Review** and decide whether the project is allowed to enter Gate 5. The review
-must be documented before any Unity gameplay implementation starts.
-
-Create or update:
-
-```text
-docs/migration/unity-migration-readiness-review.md
-```
-
-The review must include:
-
-- Contract status: whether `GameState`, `GameAction`, replay schema, catalog data, FSM policy, and
-  deterministic hash contracts are complete enough to drive Unity work.
-- Fixture status: whether `fixtures/replay-golden/manifest.json` covers the required scenarios and
-  whether every fixture validates against the TypeScript oracle.
-- Unity consumption status: whether Unity can read the committed fixture shape or has a precise
-  fixture-reader implementation plan with known gaps.
-- Risk status: whether all high-risk migration items have an owner, acceptance proof, and rollback
-  path.
-- Release status: whether Steam/Epic/platform preparation is documented as planning evidence, not
-  mixed into gameplay implementation.
-- Authorization status: whether the user explicitly approved entering Gate 5.
-
-The readiness review must end with one of these outcomes:
-
-- `Preparation complete - Gate 5 may start`
-- `Preparation incomplete - continue evidence work`
-- `Blocked - contract or product decision required`
-
-If the outcome is not `Preparation complete - Gate 5 may start`, Unity gameplay implementation
-remains forbidden.
-
-## Verifying Migration Preparation Completion
-
-Preparation is complete only when every item in this section is satisfied. A green visual demo,
-Unity Play Mode screenshot, or hand-clicked scene is not sufficient.
-
-### Required Files
-
-The repository must contain current, reviewed versions of:
-
-- `docs/migration/unity-migration-governance.md`
-- `docs/migration/current-migration-task-plan.md`
-- `docs/migration/game-state-contract.md`
-- `docs/migration/game-action-contract.md`
-- `docs/migration/replay-parity-contract.md`
-- `docs/migration/unity-fixture-reader-design.md`
-- `docs/migration/platform-services-abstraction.md`
-- `docs/migration/unity-migration-risk-table.md`
-- `docs/migration/unity-migration-readiness-review.md`
-- `fixtures/replay-golden/manifest.json`
-- `tools/migration/export-unity-fixtures.ts`
-- `tools/migration/verify-replay-parity.ts`
-
-If any file is intentionally absent, the readiness review must explain why and name the replacement
-evidence.
-
-### Contract Acceptance
-
-The contracts must prove:
-
-- `packages/shared` remains the only gameplay rule authority during preparation.
-- `GamePhase` and FSM command policies are documented from
-  `packages/shared/src/logic/fsmPolicy.ts`.
-- All gameplay action names and payloads are traceable to
-  `packages/shared/src/types/domain-actions.ts`.
-- The canonical state shape is traceable to `packages/shared/src/types/domain-core.ts` and replay
-  snapshots.
-- Runtime-only UI fields are excluded from the deterministic hash.
-- Platform services cannot mutate gameplay state directly.
-- Electron remains the product standard during migration unless the user explicitly approves a
-  contract change.
-
-### Replay And Hash Acceptance
-
-The golden corpus must prove:
-
-- `fixtures/replay-golden/manifest.json` has a stable schema version.
-- The manifest records `rulesVersion`, `replaySchemaVersion`, and `hashContract`.
-- The required coverage includes:
-    - local PvP opening
-    - reserve
-    - buy
-    - royal selection
-    - extra turn
-    - buff
-    - game over
-- Every fixture is deterministic and reviewable.
-- Every fixture has an expected final state hash.
-- The hash uses the current `replay-state-hash-v1` contract unless a dedicated hash migration is
-  approved.
-- The verifier loads fixtures through the TypeScript replay reader and reducer rather than trusting
-  fixture metadata.
-
-### Unity-Readable Fixture Acceptance
-
-Unity readiness does not require playable Unity gameplay, but it must prove one of these:
-
-- Unity already has a fixture reader that loads the committed manifest and fixture JSON, or
-- `docs/migration/unity-fixture-reader-design.md` specifies the exact DTOs, bootstrap path,
-  unsupported-event behavior, hash comparison behavior, and report artifact shape required before
-  gameplay work starts.
-
-The reader plan or implementation must reject:
-
-- Missing manifest files.
-- Unsupported replay schema versions.
-- Unknown event types.
-- Illegal command/phase combinations.
-- Hash mismatches.
-- Silent fixture skips.
-
-### Release And Platform Acceptance
-
-Release preparation is complete for migration purposes when:
-
-- Steam/Epic checklist work is documented as planning evidence.
-- No platform SDK, app ID, credential, token, or partner-only file is committed.
-- Platform services are modeled as adapters.
-- Platform user IDs, cloud paths, overlay state, achievements, and store metadata are excluded from
-  gameplay state and replay hashes.
-- Any external platform rule is marked as requiring official documentation recheck before real
-  implementation.
-
-### Validation Commands
-
-Run the strongest applicable local gate set for the files changed. For a full preparation-complete
-review, the minimum command list is:
-
-```sh
-pnpm --dir tools/scripts exec vite-node --script ../../tools/migration/verify-replay-parity.ts
-pnpm typecheck
-pnpm test
-pnpm boundaries:check
-pnpm secrets:check
-```
-
-If migration scripts changed, also run:
-
-```sh
-pnpm --dir tools/scripts run typecheck
-pnpm --dir tools/scripts run test
-```
-
-If replay fixtures changed, also run:
-
-```sh
-pnpm --dir tools/scripts exec vite-node --script ../../tools/migration/export-unity-fixtures.ts --out-dir artifacts/replay-golden-dry-run
-pnpm --dir tools/scripts exec vite-node --script ../../tools/migration/verify-replay-parity.ts --manifest artifacts/replay-golden-dry-run/manifest.json
-```
-
-The dry-run fixture export must not be committed unless the task explicitly says to regenerate the
-golden corpus.
-
-### No-Theater Diff Check
-
-Before marking preparation complete, inspect the diff and prove the task did not sneak in demo work:
-
-```sh
-git diff --name-only -- clients/unity/Assets clients/unity/ProjectSettings clients/unity/Packages
-git diff --name-only -- packages/shared apps/desktop packages/ui
-git status --short
-```
-
-The readiness review must explain any Unity file changes. Allowed preparation changes are limited
-to skeleton hygiene, fixture-reader design/DTOs when explicitly scoped, tests, and documentation.
-Unexpected scene, prefab, MonoBehaviour gameplay, or visual demo changes block preparation
-completion.
-
-### Completion Report
-
-The final preparation report must include:
-
-- Changed files.
-- Added or regenerated fixtures.
-- Contract files reviewed.
-- Validation commands and results.
-- Known gaps.
-- Explicit statement that no playable Unity demo, fake scene, visual-only flow, or parallel C#
-  rules were introduced.
-- Recommendation for the next gate.
-
-## Full Migration After Preparation
-
-Full migration starts only after the readiness review says:
-
-```text
-Preparation complete - Gate 5 may start
-```
-
-Full migration must be executed as a sequence of evidence gates. Do not jump directly to a polished
-Unity UI.
-
-### Full Migration Gate A: Engine Boundary Decision
-
-Write an ADR before implementing gameplay:
-
-```text
-docs/adr/<next-id>-unity-rules-engine-boundary.md
-```
-
-The ADR must choose one rules-engine strategy:
-
-- Keep TypeScript as the authoritative rules engine and call it from Unity through a governed
-  adapter.
-- Port the rules to C# behind the same action/replay/hash contracts while TypeScript remains the
-  oracle until parity is proven.
-- Generate or share a portable rules artifact if a later toolchain makes that safer than a manual
-  port.
-
-The ADR must reject:
-
-- MonoBehaviour-owned gameplay state.
-- UI-driven state mutation.
-- Platform SDK callbacks mutating gameplay directly.
-- C# rules that cannot be replay/hash compared against the TypeScript oracle.
-
-Acceptance evidence:
-
-- ADR merged.
-- `IGameRulesEngine` or equivalent boundary documented.
-- No Unity presentation code owns rule transitions.
-
-### Full Migration Gate B: Rule Engine Adapter
-
-Implement the smallest rule-engine adapter that can:
-
-- Load a replay fixture.
-- Bootstrap the initial state.
-- Apply one normalized gameplay command.
-- Return the next canonical state.
-- Return deterministic hash evidence.
-- Return structured rejection reasons for illegal commands.
-
-The adapter must expose commands, not clicks. Unity input may create intents, but only the adapter
-may apply gameplay commands.
-
-Acceptance evidence:
-
-- A fixture applies from revision `0` to at least the first command.
-- Illegal command in the wrong phase is rejected.
-- State hash matches the TypeScript oracle for the covered step.
-- No scene or visual demo is required for this gate.
-
-### Full Migration Gate C: Replay Parity Expansion
-
-Move from one-step proof to complete fixture proof:
-
-- Apply all committed golden fixtures in Unity.
-- Compare final state hash, winner, end reason, event count, and turn count.
-- Report unsupported event types explicitly.
-- Preserve fixture order and deterministic randoms.
-- Add missing fixtures only through TypeScript export tooling.
-
-Acceptance evidence:
-
-- Unity parity report artifact under `artifacts/unity/` or equivalent local evidence path.
-- TypeScript `verify-replay-parity.ts` remains green.
-- Unity fixture runner has no silent skips.
-
-### Full Migration Gate D: Domain Slice Porting
-
-Only after replay proof starts passing, port or bridge domains in this order:
-
-1. Core state model and immutable command application.
-2. Board actions: take gems, replenish, bonus gem, discard excess, steal.
-3. Market actions: buy, reserve, reserve deck, discard reserved, joker color selection.
-4. Royal actions: eligibility, selection, extra turn, next-player recovery.
-5. Buff actions: draft, deterministic random choices, per-buff state.
-6. Privilege actions.
-7. Replay writer/import/export.
-8. Save/settings contracts.
-
-Each domain slice must include:
-
-- Source-of-truth TypeScript references.
-- C# or adapter files changed.
-- Fixture coverage added or reused.
-- Hash parity evidence.
-- Illegal-action rejection evidence.
-- Rollback plan.
-
-### Full Migration Gate E: Unity Interaction Layer
-
-Only after the rule adapter can pass replay/hash gates should Unity input and UI be connected.
-
-Unity UI must translate player intent into contract commands:
-
-- Board clicks and drags produce `TAKE_GEMS`, `TAKE_BONUS_GEM`, `USE_PRIVILEGE`, or reserve-gold
-  commands only when the FSM permits them.
-- Market preview buttons produce buy/reserve commands only through the adapter.
-- Inventory gem clicks produce discard/steal commands only in the matching phase.
-- Royal clicks produce selection commands only in `SELECT_ROYAL`.
-- Settings buttons mutate settings state only, never gameplay state.
-
-Acceptance evidence:
-
-- Every visible actionable control has a semantic key.
-- Every clickable control has a hit target.
-- Rejected clicks preserve state and show an Electron-equivalent reason.
-- Accepted clicks mutate state only through the rule adapter.
-- Hover behavior is stable and cannot randomly switch panels from pointer jitter.
-
-### Full Migration Gate F: Electron Parity Matrix
-
-After Unity has real interaction paths, restore strict Electron comparison:
-
-- Compare semantic keys.
-- Compare clickable rects.
-- Compare hover results.
-- Compare click results.
-- Compare state transitions.
-- Compare error and recovery behavior.
-- Compare settings save/load/surface behavior.
-- Compare board, take-gems, discard, follow-up, market, reserved, royal, and preview flows.
-- Compare both required viewports.
-
-Electron is still the product standard. Unity must change unless Electron is proven wrong and the
-user approves a contract change.
-
-Acceptance evidence:
-
-- Two-viewport parity matrix passes.
-- Browser process guard remains intact.
-- Manual Unity Play Mode smoke confirms the same actions work without semantic injection.
-
-### Full Migration Gate G: Persistence, Replay, And Recovery
-
-Before Unity can be considered a replacement candidate, it must support:
-
-- Replay import/export compatible with Replay vNext or a documented successor schema.
-- Settings persistence with Electron-equivalent user feedback.
-- Save path policy.
-- Invalid-action recovery.
-- Restart/new game recovery.
-- Fixture reload recovery.
-- Crash-safe or corruption-safe handling for local settings/replay files.
-
-Acceptance evidence:
-
-- Replay round-trip proof.
-- Settings save/load proof.
-- Recovery smoke report.
-- No platform-specific IDs in replay/state hashes.
-
-### Full Migration Gate H: Platform Services
-
-Platform services come after gameplay parity, not before it.
-
-Implement LocalDev first:
-
-- Init.
-- Capability flags.
-- User ID placeholder.
-- Save read/write.
-- Achievement no-op/test double.
-- Store-page fallback.
-
-Steam/Epic adapters require separate explicit authorization and current official documentation
-review before implementation.
-
-Acceptance evidence:
-
-- Adapter contract tests.
-- No SDK secrets or account files in git.
-- Platform failures cannot break gameplay reducer state.
-
-### Full Migration Gate I: Release Candidate Cutover
-
-Unity becomes a release candidate only when:
-
-- Replay/hash parity is green.
-- Interaction parity is green.
-- Visual parity is good enough under the product standard.
-- Local gates pass.
-- Migration risk table has no unresolved blockers.
-- Electron remains available as rollback until the user approves cutover.
-- Release/governance docs name Unity as the candidate and Electron as fallback.
-
-Cutover requires a final migration report:
-
-```text
-docs/migration/unity-full-migration-completion-report.md
-```
-
-The report must include:
-
-- Final rule strategy.
-- Final fixture corpus.
-- Final state-hash evidence.
-- Final parity matrix.
-- Manual smoke evidence.
-- Release gate results.
-- Remaining known limitations.
-- Rollback instructions.
-- Explicit user-approved cutover decision.
-
-## Short /goal Prompt
-
-Use this prompt to start a controlled migration-preparation run:
-
-```text
-/goal Follow docs/migration/unity-migration-governance.md as the binding scope contract. Do not implement Unity gameplay, playable scenes, fake board demos, mock-only flows, or parallel C# rules. First update docs/migration/current-migration-task-plan.md, then deliver only verifiable migration evidence for the current gate: contracts, replay golden corpus, deterministic state hash, Unity-readable fixtures, platform abstraction, risk table, release checklist, validation scripts, and validation results. Stop and report if the work would exceed the plan.
+/goal Execute the full Unity migration defined by docs/migration/unity-migration-governance.md.
+
+This is explicit authorization for Unity gameplay, Unity UI wiring, replay/import/export,
+settings persistence, recovery behavior, platform-service abstraction, Unity validation, and
+release-candidate build work.
+
+Do not deliver a demo, prototype, sidecar slice, vertical slice, guided replay playback,
+migration-preparation-only report, scoped 90% parity report, or visual-only surface as success.
+
+First mark all active vertical-slice-era migration docs as superseded or archive them. Then complete
+the full migration gates in this run:
+
+1. Write the Unity rules-engine boundary ADR.
+2. Create the product-scope map from the current Electron routes and surfaces.
+3. Create the GameAction/FSM coverage matrix from packages/shared.
+4. Implement or bridge the Unity rules engine so live gameplay advances from commands, not replay
+   checkpoints.
+5. Expand replay/hash fixtures until every required action, phase, rejection path, and edge case has
+   TypeScript oracle coverage.
+6. Implement Unity product UI for the supported Electron scope, including real arbitrary local PvP
+   from fresh game start to game over.
+7. Implement replay import/export/review, settings persistence, restart/recovery, invalid-action
+   recovery, and LocalDev platform services.
+8. Run Electron/Unity semantic, click, hover, state-transition, screenshot, and viewport parity.
+9. Run all repo, replay, Unity editor, and build validations that are available.
+10. Write docs/migration/unity-full-migration-completion-report.md.
+
+The final status may be Complete only if every mandatory gate passes. If a blocker exists, continue
+all independent work first, then report Incomplete or Blocked with exact remaining blockers. Never
+claim completion while any result still depends on guided fixtures, checkpoint state replacement,
+mock-only data, scoped parity, or future post-slice work.
 ```

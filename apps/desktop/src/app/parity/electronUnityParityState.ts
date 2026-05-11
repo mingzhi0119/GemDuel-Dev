@@ -6,6 +6,7 @@ import type {
     UseElectronUnityParityHarnessParams,
 } from './electronUnityParityTypes';
 import { getDomBoxes } from './electronUnityParityDomState';
+import { getSurfaceThemeVariant } from '../shell/surfaceTheme';
 
 const nowIso = () => new Date().toISOString();
 
@@ -160,17 +161,25 @@ export const buildStateDump = ({
     layout,
     locale,
     theme,
+    surfaceTheme,
     soundEnabled,
     setupRoute,
     matchmakingRoute,
 }: Pick<
     UseElectronUnityParityHarnessParams,
-    'game' | 'layout' | 'locale' | 'theme' | 'soundEnabled' | 'setupRoute' | 'matchmakingRoute'
+    | 'game'
+    | 'layout'
+    | 'locale'
+    | 'theme'
+    | 'surfaceTheme'
+    | 'soundEnabled'
+    | 'setupRoute'
+    | 'matchmakingRoute'
 >): ElectronParityStateDump => ({
     source: 'electron',
     timestamp: nowIso(),
     route: { setupRoute, matchmakingRoute },
-    settings: { locale, theme, soundEnabled },
+    settings: { locale, theme, surfaceTheme: getSurfaceThemeVariant(surfaceTheme), soundEnabled },
     viewport: {
         viewportWidth: layout.viewportWidth,
         viewportHeight: layout.viewportHeight,

@@ -1,6 +1,19 @@
+# Superseded: Unity Electron 90% Scoped Parity Report
+
+Date: 2026-05-11
+
+This report is historical evidence only. It must not be used as the current `/goal` execution
+contract, completion criteria, or proof that full Unity migration is complete.
+
+The current execution contract is `docs/migration/unity-migration-governance.md`, whose target is
+full Unity migration completion. If "90% parity", "scoped parity", "guided fixture playback", or
+"remaining 10%" are still accurate descriptions of the result, migration is incomplete.
+
+## Historical Report
+
 # Unity Electron 90% Scoped Parity Report
 
-Date: 2026-05-09
+Original date: 2026-05-09
 
 ## Scope
 

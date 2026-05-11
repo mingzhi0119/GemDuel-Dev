@@ -1,6 +1,16 @@
-# GemDuel Unity Goal Mode Implementation Plan
+# Superseded: Vertical Slice Plan
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
+
+This document is archived historical context only. It must not be used as the current `/goal`
+execution contract.
+
+The current execution contract is `docs/migration/unity-migration-governance.md`, whose target is
+full Unity migration completion, not a prototype, sidecar slice, scoped parity pass, or 90% demo.
+
+## Historical Document
+
+# GemDuel Unity Goal Mode Implementation Plan
 
 ## Goal
 

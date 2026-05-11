@@ -175,6 +175,8 @@ export function AppChrome({
                 </button>
                 <div className="relative" ref={settingsMenuRef}>
                     <button
+                        type="button"
+                        data-app-settings-button="true"
                         onClick={() => {
                             setShowSettingsMenu((value) => !value);
                         }}
@@ -282,6 +284,8 @@ export function AppChrome({
                                 )}
 
                                 <button
+                                    type="button"
+                                    data-app-save-replay-button="true"
                                     onClick={() => {
                                         onDownloadReplay();
                                         setShowSettingsMenu(false);
@@ -297,6 +301,7 @@ export function AppChrome({
                                 </button>
 
                                 <label
+                                    data-app-load-replay-control="true"
                                     className={`px-3 py-2.5 rounded-lg backdrop-blur-md border flex items-center gap-2.5 transition-all justify-start cursor-pointer shadow-none ${neutralMutedButtonClass}`}
                                     title={t('settings.load')}
                                     aria-label={t('settings.load')}

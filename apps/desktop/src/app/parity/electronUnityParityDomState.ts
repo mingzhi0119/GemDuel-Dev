@@ -4,6 +4,12 @@ import type { DomBox } from './electronUnityParityTypes';
 const BOX_SELECTORS = [
     '[data-testid="desktop-stage-viewport"]',
     '[data-testid="desktop-stage-canvas"]',
+    '[data-app-rulebook-button]',
+    '[data-app-restart-button]',
+    '[data-app-settings-button]',
+    '[data-app-restart-confirm]',
+    '[data-rulebook-overlay]',
+    '[data-rulebook-panel]',
     '[data-draft-card-scale-reference]',
     '[data-draft-buff-id]',
     '[data-surface-slot]',
@@ -17,8 +23,15 @@ const BOX_SELECTORS = [
     '[data-card-preview-overlay]',
     '[data-card-preview-backdrop]',
     '[data-card-preview-card]',
+    '[data-card-preview-deck-reserve]',
     '[data-card-preview-action]',
     '[data-settings-menu]',
+    '[data-locale-option]',
+    '[data-app-sound-toggle]',
+    '[data-app-save-replay-button]',
+    '[data-app-load-replay-control]',
+    '[data-app-surface-theme-control]',
+    '[data-app-surface-theme-option]',
     '[data-parity-error-banner]',
     '[data-game-action]',
     '[data-royal-court-grid]',
@@ -44,6 +57,24 @@ const semanticKeyForElement = (
     }
     if (selector === '[data-testid="desktop-stage-canvas"]' && historyLength === 0) {
         return 'main.menu';
+    }
+    if (dataset.appRulebookButton) {
+        return 'chrome.rulebook';
+    }
+    if (dataset.appRestartButton) {
+        return 'chrome.restart';
+    }
+    if (dataset.appSettingsButton) {
+        return 'settings.control';
+    }
+    if (dataset.appRestartConfirm) {
+        return 'chrome.restart.confirm';
+    }
+    if (selector === '[data-rulebook-overlay]') {
+        return 'rulebook.overlay';
+    }
+    if (selector === '[data-rulebook-panel]') {
+        return 'rulebook.panel';
     }
     if (dataset.draftCardScaleReference) {
         return 'draft.root';
@@ -82,6 +113,14 @@ const semanticKeyForElement = (
               ? 'player.score'
               : undefined;
     }
+    if (dataset.playerZoneGem) {
+        const [player, gem] = dataset.playerZoneGem.split('-');
+        if (!player || !gem || state.winner) {
+            return undefined;
+        }
+
+        return player === state.turn ? `player.current.gem.${gem}` : `player.opponent.gem.${gem}`;
+    }
     if (dataset.reservedSlot) {
         const [player, index] = dataset.reservedSlot.split('-');
         return player === state.turn && index ? `player.reserved.${index}` : undefined;
@@ -95,16 +134,52 @@ const semanticKeyForElement = (
     if (selector === '[data-card-preview-card]') {
         return 'card.preview.card';
     }
+    if (selector === '[data-card-preview-deck-reserve]') {
+        return 'card.preview.card';
+    }
     if (dataset.cardPreviewAction === 'buy') {
         return 'card.preview.primaryAction';
     }
+    if (dataset.cardPreviewAction === 'reserve') {
+        return 'card.preview.action.reserve';
+    }
     if (selector === '[data-settings-menu]') {
         return 'settings.panel';
+    }
+    if (dataset.localeOption) {
+        return `settings.locale.${dataset.localeOption}`;
+    }
+    if (dataset.appSoundToggle) {
+        return 'settings.sound';
+    }
+    if (dataset.appSaveReplayButton) {
+        return 'settings.save';
+    }
+    if (dataset.appLoadReplayControl) {
+        return 'settings.load';
+    }
+    if (dataset.appSurfaceThemeControl) {
+        return 'settings.surface.control';
+    }
+    if (dataset.appSurfaceThemeOption) {
+        return `settings.surface.${dataset.appSurfaceThemeOption}`;
     }
     if (selector === '[data-parity-error-banner]') {
         return 'error.banner';
     }
     if (selector === '[data-game-action]') {
+        if (dataset.gameAction === 'confirm-take') {
+            return 'board.selection.confirm';
+        }
+        if (dataset.gameAction === 'cancel-take') {
+            return 'board.selection.cancel';
+        }
+        if (dataset.gameAction === 'cancel-reserve') {
+            return 'reserve.cancel';
+        }
+        if (dataset.gameAction === 'cancel-privilege') {
+            return 'privilege.cancel';
+        }
         return 'turn.end';
     }
     if (selector === '[data-royal-court-grid]') {

@@ -165,12 +165,30 @@ export const createElectronUnityParityApi = (
                 case 'hover_boon':
                     return await clickActions.hoverBoon(action, payload);
 
+                case 'click_chrome_rulebook':
+                    return await clickActions.clickChromeRulebook(action);
+
+                case 'click_chrome_restart':
+                    return await clickActions.clickChromeRestart(action);
+
+                case 'hover_chrome_control':
+                    return await clickActions.hoverChromeControl(action, payload);
+
                 case 'load_replay_fixture':
                     clearParityErrorBanner();
                     return await loadReplayFixture(action, payload);
 
                 case 'click_market_card':
                     return await clickActions.clickMarketCard(action, payload);
+
+                case 'click_market_deck':
+                    return await clickActions.clickMarketDeck(action, payload);
+
+                case 'hover_market_card':
+                    return await clickActions.hoverMarketCard(action, payload);
+
+                case 'hover_market_deck':
+                    return await clickActions.hoverMarketDeck(action, payload);
 
                 case 'click_preview_blank':
                     return await clickActions.clickPreviewBlank(action);
@@ -182,8 +200,35 @@ export const createElectronUnityParityApi = (
                 case 'click_player_reserved':
                     return await clickActions.clickPlayerReserved(action, payload);
 
+                case 'hover_player_reserved':
+                    return await clickActions.hoverPlayerReserved(action, payload);
+
                 case 'confirm_preview_action':
                     return await clickActions.confirmPreviewAction(action, payload);
+
+                case 'click_board_cell':
+                    return await clickActions.clickBoardCell(action, payload);
+
+                case 'hover_board_cell':
+                    return await clickActions.hoverBoardCell(action, payload);
+
+                case 'confirm_gem_selection':
+                    return await clickActions.confirmGemSelection(action);
+
+                case 'cancel_gem_selection':
+                    return await clickActions.cancelGemSelection(action);
+
+                case 'take_bonus_gem':
+                    return await clickActions.takeBonusGem(action, payload);
+
+                case 'steal_gem':
+                    return await clickActions.stealGem(action, payload);
+
+                case 'discard_gem':
+                    return await clickActions.discardGem(action, payload);
+
+                case 'hover_player_gem':
+                    return await clickActions.hoverPlayerGem(action, payload);
 
                 case 'end_turn':
                     return await clickActions.endTurn(action);
@@ -201,6 +246,15 @@ export const createElectronUnityParityApi = (
 
                 case 'change_setting':
                     return await clickActions.changeSetting(action, payload);
+
+                case 'settings_save':
+                    return await clickActions.settingsSave(action);
+
+                case 'settings_load':
+                    return await clickActions.settingsLoad(action);
+
+                case 'close_settings':
+                    return await clickActions.closeSettings(action);
 
                 case 'invalid_action':
                     showParityErrorBanner('Invalid semantic action');
@@ -245,7 +299,10 @@ export const createElectronUnityParityApi = (
         }, 240);
         if (rendered && payload.interactive === true) {
             currentParams().setReplayReviewing?.(false);
-            await waitForStableFrame();
+            await waitForCondition(
+                () => currentParams().game.getters.isMyTurn === true && hasRenderedCurrentRoute(),
+                180
+            );
         }
         return result(
             action,

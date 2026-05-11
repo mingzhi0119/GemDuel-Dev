@@ -3,6 +3,7 @@
     "rootNamespace": "GemDuel.Tests.EditMode",
     "references": [
         "GemDuel",
+        "Unity.TextMeshPro",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

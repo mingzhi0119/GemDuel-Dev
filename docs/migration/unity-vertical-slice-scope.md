@@ -1,6 +1,16 @@
-# Unity Vertical Slice Scope
+# Superseded: Unity Vertical Slice Scope
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
+
+This document is archived historical context only. It must not be used as the current Unity
+migration scope, `/goal` execution contract, completion criteria, or parity success proof.
+
+The current execution contract is `docs/migration/unity-migration-governance.md`, whose target is
+full Unity migration completion. A sidecar slice or prototype is not a valid endpoint.
+
+## Historical Document
+
+# Unity Vertical Slice Scope
 
 The Unity vertical slice is a sidecar prototype. It must prove whether a native game client is worth
 continuing without destabilizing the current Electron/TypeScript game.

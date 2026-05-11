@@ -114,6 +114,32 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         secretHandling: 'Operational local profile routing only. Never store secrets here.',
         failureMode: 'Falls back to the default Electron userData directory when absent.',
     },
+    GEMDUEL_PARITY_BROWSER_FINAL_EXTRA: {
+        owner: 'Client Parity',
+        defaultValue: '0',
+        validation:
+            'Non-negative integer grace count for extra agent-browser processes tolerated by final parity guard cleanup.',
+        secretHandling: 'Operational parity-runner knob only. Never store secrets here.',
+        failureMode: 'Falls back to strict final process-count checks when absent or malformed.',
+    },
+    GEMDUEL_PARITY_BROWSER_PROCESS_MAX: {
+        owner: 'Client Parity',
+        defaultValue: '4',
+        validation:
+            'Non-negative integer maximum for agent-browser processes tolerated during Electron/Unity parity automation.',
+        secretHandling: 'Operational parity-runner knob only. Never store secrets here.',
+        failureMode:
+            'Falls back to the governed parity-runner process ceiling when absent or malformed.',
+    },
+    GEMDUEL_UNITY_PROJECT_PATH: {
+        owner: 'Client Parity',
+        defaultValue: 'clients/unity',
+        validation:
+            'Absolute or repository-relative filesystem path to the Unity project used by parity automation.',
+        secretHandling: 'Local tooling path only. Never store credentials here.',
+        failureMode:
+            'The parity runner falls back to the governed clients/unity project path and records a Unity blocker if unavailable.',
+    },
     UNITY_EXE: {
         owner: 'Client Parity',
         defaultValue: 'unset',

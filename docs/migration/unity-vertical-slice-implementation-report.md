@@ -1,6 +1,17 @@
-# Unity Vertical Slice Implementation Report
+# Superseded: Unity Vertical Slice Implementation Report
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
+
+This report is historical evidence only. It must not be used as the current `/goal` execution
+contract, completion criteria, or proof that full Unity migration is complete.
+
+The current execution contract is `docs/migration/unity-migration-governance.md`, whose target is
+full Unity migration completion. Any remaining guided fixture, checkpoint-driven, or slice-only path
+is a blocker, not a post-slice follow-up.
+
+## Historical Report
+
+# Unity Vertical Slice Implementation Report
 
 ## Scope
 

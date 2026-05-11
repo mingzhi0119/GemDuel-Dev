@@ -1,9 +1,11 @@
 # Unity Version Lock
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
 
-The Unity sidecar is pinned to a concrete editor version so Codex, Unity Hub, and manual reviewers
-all target the same project state. This is still a sidecar prototype, not the production client.
+The Unity project is pinned to a concrete editor version so Codex, Unity Hub, and manual reviewers
+all target the same project state. Previous sidecar-prototype language is superseded by
+`docs/migration/unity-migration-governance.md`; this lock now supports full Unity migration
+execution and release-candidate validation.
 
 ## Current Lock
 
@@ -35,8 +37,8 @@ dependency review approves them.
   package manifest diff in this file before changing the lock.
 - Keep generated `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`, and `Builds/` out of git.
 - Do not add Steamworks.NET, EOS, analytics, crash reporting, addressables, input packages, or
-  render-pipeline packages until the vertical slice explicitly needs them and a dependency review
-  is complete.
+  render-pipeline packages until the full-migration gate explicitly needs them and a dependency
+  review is complete.
 
 ## Acceptance Evidence
 

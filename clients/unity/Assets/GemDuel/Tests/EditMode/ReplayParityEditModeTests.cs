@@ -7,6 +7,7 @@ using GemDuel.Replay;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 
 namespace GemDuel.Tests.EditMode
@@ -228,7 +229,7 @@ namespace GemDuel.Tests.EditMode
                 Assert.NotNull(FindTextMesh("Draft Title 皇家特使"));
                 var descriptionText = FindTextMesh("Draft Description 皇家特使");
                 Assert.NotNull(descriptionText);
-                Assert.AreEqual(TextAlignment.Left, descriptionText.alignment);
+                StringAssert.Contains("Left", descriptionText.alignment.ToString());
                 Assert.IsTrue(
                     Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None)
                         .Any(obj => obj != null && obj.name == "Draft Hover 皇家特使")
@@ -261,6 +262,54 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void MarketDeckClickOpensReservePreviewThroughViewportHitTarget()
+        {
+            var root = new GameObject("GemDuel Market Deck Preview Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+                Assert.IsTrue(slice.ApplyFixtureEventsForAutomation(2, out var prepareError), prepareError);
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var deckTarget = FindVisibleTarget(before, "market.level.1");
+                Assert.AreEqual("MarketDeck", deckTarget.Value<string>("kind"));
+                Assert.IsTrue(deckTarget.Value<bool?>("clickable") == true);
+                Assert.AreEqual(2, before.Value<int>("revision"));
+                var beforeSnapshot = (JObject)before["snapshot"];
+
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "click_market_deck",
+                        new JObject { ["level"] = 1 },
+                        out var previewError
+                    ),
+                    previewError
+                );
+                Assert.AreEqual("unity-hit-target", slice.LastAutomationDriver);
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var preview = (JObject)after["preview"];
+                Assert.NotNull(preview);
+                Assert.AreEqual("deck", preview.Value<string>("source"));
+                Assert.AreEqual(1, preview.Value<int>("level"));
+                Assert.AreEqual(-1, preview.Value<int>("index"));
+                Assert.AreEqual(2, after.Value<int>("revision"));
+                Assert.AreEqual(
+                    beforeSnapshot.Value<string>("phase"),
+                    ((JObject)after["snapshot"]).Value<string>("phase")
+                );
+                Assert.NotNull(FindVisibleTarget(after, "card.preview.card"));
+                Assert.NotNull(FindVisibleTarget(after, "card.preview.action.reserve"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
         public void PreviewBackdropBlankClickDismissesThroughViewportHitTarget()
         {
             var root = new GameObject("GemDuel Preview Blank Dismiss Test");
@@ -280,12 +329,23 @@ namespace GemDuel.Tests.EditMode
 
                 var beforeDismiss = slice.BuildAutomationStateSnapshot(1920, 1080);
                 Assert.NotNull(beforeDismiss["preview"]);
+                Assert.AreEqual("market", ((JObject)beforeDismiss["preview"]).Value<string>("source"));
+                Assert.AreEqual("ActionButton", FindVisibleTarget(beforeDismiss, "card.preview.primaryAction").Value<string>("kind"));
+                Assert.AreEqual("ActionButton", FindVisibleTarget(beforeDismiss, "card.preview.action.reserve").Value<string>("kind"));
                 Assert.IsTrue(
                     ((JArray)beforeDismiss["visibleTargets"]).Any(target =>
                         target.Value<string>("semanticKey") == "card.preview.backdrop"
                         && target.Value<bool?>("clickable") == true
                     )
                 );
+                var controller = root.AddComponent<GemDuelInputController>();
+                var backdropTarget = Object
+                    .FindObjectsByType<GemDuelViewTarget>()
+                    .First(target => target.SemanticKey == "card.preview.backdrop" && target.Clickable);
+                var backdropScreenPoint = Camera.main.WorldToScreenPoint(backdropTarget.transform.position);
+                Assert.IsFalse(controller.TryHoverScreenPointForEvidence(backdropScreenPoint, out _));
+                var hoverStable = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.IsTrue(hoverStable["hover"] == null || hoverStable["hover"].Type == JTokenType.Null);
                 Assert.IsTrue(
                     slice.RunSemanticActionForAutomation(
                         "click_preview_blank",
@@ -442,19 +502,39 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
-        public void VisibleGemSelectionAcceptsLegalNonFixtureLineAndUpdatesState()
+        public void VisibleGemSelectionShowsConfirmCancelAndRequiresExplicitCommit()
         {
             var root = new GameObject("GemDuel Free Gem Selection Test");
             try
             {
-                var slice = root.AddComponent<GemDuelVerticalSlice>();
-                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
-                slice.ApplyNextFixtureEvent();
-                slice.ApplyNextFixtureEvent();
+                var slice = CreateSliceAtTakeGems(root);
 
                 slice.HandleVisibleTarget(CreateGemTarget(root, 3, 0, "green"));
                 slice.HandleVisibleTarget(CreateGemTarget(root, 3, 1, "red"));
                 slice.HandleVisibleTarget(CreateGemTarget(root, 3, 2, "red"));
+
+                Assert.AreEqual("green", slice.GetBoardGemForAutomation(3, 0));
+                Assert.AreEqual("red", slice.GetBoardGemForAutomation(3, 1));
+                Assert.AreEqual("red", slice.GetBoardGemForAutomation(3, 2));
+                Assert.AreEqual(0, slice.GetInventoryCountForAutomation("p1", "green"));
+                Assert.AreEqual(0, slice.GetInventoryCountForAutomation("p1", "red"));
+
+                var automationState = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var selection = (JObject)automationState["gemSelection"];
+                Assert.AreEqual(3, selection.Value<int>("count"));
+                Assert.IsTrue(selection.Value<bool>("canConfirm"));
+                Assert.NotNull(FindVisibleTarget(automationState, "board.selection.confirm"));
+                Assert.NotNull(FindVisibleTarget(automationState, "board.selection.cancel"));
+                Assert.IsTrue(
+                    Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None)
+                        .Any(obj => obj != null && obj.name == "Gem Selected Highlight 3,0")
+                );
+                Assert.IsTrue(
+                    Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None)
+                        .Any(obj => obj != null && obj.name == "Gem Selected Badge 3,0")
+                );
+
+                slice.HandleVisibleTarget(FindViewTarget("ActionButton", "confirm-gems"));
 
                 Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 0));
                 Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 1));
@@ -477,6 +557,154 @@ namespace GemDuel.Tests.EditMode
                         Object.DestroyImmediate(obj);
                     }
                 }
+            }
+        }
+
+        [TestCase(1)]
+        [TestCase(2)]
+        public void VisibleGemSelectionCanConfirmPartialSelection(int count)
+        {
+            var root = new GameObject("GemDuel Partial Gem Selection Test");
+            try
+            {
+                var slice = CreateSliceAtTakeGems(root);
+
+                slice.HandleVisibleTarget(CreateGemTarget(root, 3, 0, "green"));
+                if (count == 2)
+                {
+                    slice.HandleVisibleTarget(CreateGemTarget(root, 3, 1, "red"));
+                }
+
+                slice.HandleVisibleTarget(FindViewTarget("ActionButton", "confirm-gems"));
+
+                Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 0));
+                Assert.AreEqual(1, slice.GetInventoryCountForAutomation("p1", "green"));
+                if (count == 2)
+                {
+                    Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 1));
+                    Assert.AreEqual(1, slice.GetInventoryCountForAutomation("p1", "red"));
+                }
+                else
+                {
+                    Assert.AreEqual("red", slice.GetBoardGemForAutomation(3, 1));
+                    Assert.AreEqual(0, slice.GetInventoryCountForAutomation("p1", "red"));
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void VisibleGemSelectionCancelClearsSelectionWithoutMutatingBoard()
+        {
+            var root = new GameObject("GemDuel Cancel Gem Selection Test");
+            try
+            {
+                var slice = CreateSliceAtTakeGems(root);
+
+                slice.HandleVisibleTarget(CreateGemTarget(root, 3, 0, "green"));
+                slice.HandleVisibleTarget(CreateGemTarget(root, 3, 1, "red"));
+
+                Assert.NotNull(FindViewTarget("ActionButton", "cancel-gems"));
+                slice.HandleVisibleTarget(FindViewTarget("ActionButton", "cancel-gems"));
+
+                Assert.AreEqual("green", slice.GetBoardGemForAutomation(3, 0));
+                Assert.AreEqual("red", slice.GetBoardGemForAutomation(3, 1));
+                Assert.AreEqual(0, slice.GetInventoryCountForAutomation("p1", "green"));
+                Assert.AreEqual(0, slice.GetInventoryCountForAutomation("p1", "red"));
+                var automationState = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(0, ((JObject)automationState["gemSelection"]).Value<int>("count"));
+                Assert.IsNull(FindOptionalViewTarget("ActionButton", "confirm-gems"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void RoyalCardClickPreviewsOutsideSelectRoyalAndDirectlySelectsDuringSelectRoyal()
+        {
+            var root = new GameObject("GemDuel Royal Preview Direct Selection Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelVerticalSlice>();
+                slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+
+                Assert.IsTrue(slice.ApplyFixtureEventsForAutomation(2, out var outsidePrepareError), outsidePrepareError);
+                var outsideSelectionRoyal = Object
+                    .FindObjectsByType<GemDuelViewTarget>(FindObjectsSortMode.None)
+                    .First(target => target.Kind == "Royal" && target.RoyalId == "r91-ro" && target.Clickable);
+                slice.HandleVisibleTarget(outsideSelectionRoyal);
+
+                var outsidePreview = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(2, outsidePreview.Value<int>("revision"));
+                Assert.AreEqual("royal", ((JObject)outsidePreview["preview"]).Value<string>("source"));
+                Assert.AreEqual("r91-ro", ((JObject)outsidePreview["preview"]).Value<string>("instanceId"));
+
+                Assert.IsTrue(slice.ApplyFixtureEventsForAutomation(13, out var prepareError), prepareError);
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var royalTargetSnapshot = FindVisibleTarget(before, "royal.card.0");
+                Assert.AreEqual("Royal", royalTargetSnapshot.Value<string>("kind"));
+                Assert.AreEqual("r91-ro", royalTargetSnapshot.Value<string>("royalId"));
+
+                var royalTarget = Object
+                    .FindObjectsByType<GemDuelViewTarget>(FindObjectsSortMode.None)
+                    .First(target => target.Kind == "Royal" && target.RoyalId == "r91-ro" && target.Clickable);
+                slice.HandleVisibleTarget(royalTarget);
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(14, after.Value<int>("revision"));
+                Assert.IsTrue(after["preview"] == null || after["preview"].Type == JTokenType.Null);
+                CollectionAssert.Contains(
+                    ((JArray)((JObject)after["snapshot"])["playerRoyals"]["p1"]).Values<string>().ToList(),
+                    "r91-ro"
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalPvpTypographyUsesStrongerLabelsAndPrivilegeScrollPlaceholder()
+        {
+            var root = new GameObject("GemDuel Typography Test");
+            try
+            {
+                CreateSliceAtTakeGems(root);
+
+                Assert.IsNull(FindTextMesh("Board Label"));
+                var scrollGlyph = FindTextMesh("Privilege Scroll Placeholder Glyph");
+                var marketLabel = FindTextMesh("Market Label");
+                var royalLabel = FindTextMesh("Royals Label");
+                var resourceCount = FindTextMesh("p1 Resource Count red");
+                var deckLabel = FindTextMesh("Deck Label L1");
+
+                Assert.NotNull(scrollGlyph);
+                Assert.NotNull(marketLabel);
+                Assert.NotNull(royalLabel);
+                Assert.NotNull(resourceCount);
+                Assert.NotNull(deckLabel);
+                AssertBold(scrollGlyph);
+                AssertBold(marketLabel);
+                AssertBold(royalLabel);
+                AssertBold(resourceCount);
+                AssertBold(deckLabel);
+                Assert.Greater(resourceCount.transform.localScale.x, 0.007f);
+                Assert.Greater(marketLabel.transform.localScale.x, royalLabel.transform.localScale.x);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
             }
         }
 
@@ -517,6 +745,15 @@ namespace GemDuel.Tests.EditMode
                     }
                 }
             }
+        }
+
+        private static GemDuelVerticalSlice CreateSliceAtTakeGems(GameObject root)
+        {
+            var slice = root.AddComponent<GemDuelVerticalSlice>();
+            slice.LoadFixtureForRuntime("local-pvp-royal-extra-turn-game-over.replay.json");
+            slice.ApplyNextFixtureEvent();
+            slice.ApplyNextFixtureEvent();
+            return slice;
         }
 
         private static ReplayManifest LoadManifest()
@@ -573,9 +810,9 @@ namespace GemDuel.Tests.EditMode
             return target;
         }
 
-        private static TextMesh FindTextMesh(string name)
+        private static TMP_Text FindTextMesh(string name)
         {
-            foreach (var mesh in Object.FindObjectsByType<TextMesh>(FindObjectsSortMode.None))
+            foreach (var mesh in Object.FindObjectsByType<TMP_Text>(FindObjectsSortMode.None))
             {
                 if (mesh != null && mesh.name == name)
                 {
@@ -584,6 +821,30 @@ namespace GemDuel.Tests.EditMode
             }
 
             return null;
+        }
+
+        private static void AssertBold(TMP_Text mesh)
+        {
+            Assert.IsTrue((mesh.fontStyle & FontStyles.Bold) == FontStyles.Bold, mesh.name + " should be bold");
+        }
+
+        private static GemDuelViewTarget FindViewTarget(string kind, string eventType)
+        {
+            var target = FindOptionalViewTarget(kind, eventType);
+            Assert.NotNull(target, "Missing visible target " + kind + " " + eventType);
+            return target;
+        }
+
+        private static GemDuelViewTarget FindOptionalViewTarget(string kind, string eventType)
+        {
+            return Object
+                .FindObjectsByType<GemDuelViewTarget>(FindObjectsSortMode.None)
+                .FirstOrDefault(target =>
+                    target != null &&
+                    target.Clickable &&
+                    target.Kind == kind &&
+                    target.EventType == eventType
+                );
         }
 
         private static JObject FindVisibleTarget(JObject automationState, string semanticKey)

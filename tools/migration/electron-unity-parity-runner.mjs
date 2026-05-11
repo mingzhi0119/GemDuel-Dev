@@ -1,13 +1,22 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import {
+    formatAgentBrowserProcesses,
+    inspectAgentBrowserProcesses,
+    summarizeAgentBrowserProcesses,
+} from './agent-browser-process-guard.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, '..', '..');
+const parityArtifactRoot = path.join(workspaceRoot, 'artifacts', 'electron-unity-parity');
+const runnerLockPath = path.join(parityArtifactRoot, '.runner.lock');
+const defaultBrowserProcessMax = 24;
+const defaultBrowserFinalExtra = 1;
 const defaultUnityExe = 'C:\\Program Files\\Unity\\Hub\\Editor\\6000.4.6f1\\Editor\\Unity.exe';
 const resolveAgentBrowserCommand = () => {
     if (process.platform !== 'win32') {
@@ -83,6 +92,13 @@ const scenarioDefinitions = [
             { action: 'hover_boon', payload: { index: 1, buffId: 'royal_envoy' } },
         ],
         electronHoverSelector: '[data-draft-buff-id="royal_envoy"]',
+        operationContract: {
+            action: 'hover_boon',
+            input: 'hover',
+            semanticKey: 'draft.buff.1',
+            expectHover: { semanticKey: 'draft.buff.1', buffId: 'royal_envoy' },
+            expectStateStable: true,
+        },
     },
     {
         id: 'initial-board-render',
@@ -92,11 +108,165 @@ const scenarioDefinitions = [
             'Board, market, royals, inventories, and player zones match post-draft replay revision 2.',
     },
     {
+        id: 'chrome-settings-open',
+        name: 'Top-right settings open operation parity',
+        revision: 2,
+        expectedSharedState:
+            'The top-right settings control opens the same settings operation surface without mutating gameplay state.',
+        actionsAfterLoad: [{ action: 'open_settings' }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'open_settings',
+            input: 'click',
+            semanticKey: 'settings.control',
+            rectTolerancePx: 160,
+            expectSemanticKeys: [
+                'settings.panel',
+                'settings.locale.en',
+                'settings.locale.zh',
+                'settings.sound',
+                'settings.save',
+                'settings.load',
+                'settings.surface.control',
+            ],
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'chrome-rulebook-open',
+        name: 'Top-right rulebook open operation parity',
+        revision: 2,
+        expectedSharedState:
+            'The top-right rulebook control exposes a real operation target and opens the rulebook surface without mutating gameplay state.',
+        actionsAfterLoad: [{ action: 'click_chrome_rulebook' }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'click_chrome_rulebook',
+            input: 'click',
+            semanticKey: 'chrome.rulebook',
+            rectTolerancePx: 160,
+            expectSemanticKeys: ['rulebook.panel'],
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'chrome-restart-main-menu',
+        name: 'Top-right restart operation parity',
+        revision: 2,
+        expectedSharedState:
+            'The top-right restart operation exits the active Local PVP match and returns to the main menu shell.',
+        actionsAfterLoad: [{ action: 'click_chrome_restart' }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'click_chrome_restart',
+            input: 'click',
+            semanticKey: 'chrome.restart',
+            rectTolerancePx: 160,
+            expectSemanticKeys: ['main.menu', 'mode.local'],
+        },
+    },
+    {
         id: 'market-card-preview',
         name: 'Market card preview parity',
         revision: 2,
         expectedSharedState: 'Preview opens without mutating shared state.',
         actionsAfterLoad: [{ action: 'click_market_card', payload: { level: 1, index: 0 } }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'click_market_card',
+            input: 'click',
+            semanticKey: 'market.card.1.0',
+            expectPreview: { visible: true },
+            expectSemanticKeys: [
+                'card.preview.card',
+                'card.preview.primaryAction',
+                'card.preview.action.reserve',
+            ],
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'market-deck-reserve-preview',
+        name: 'Market deck reserve preview parity',
+        revision: 2,
+        expectedSharedState:
+            'A market deck click opens the reserve preview without committing reserve_deck or mutating shared state.',
+        actionsAfterLoad: [{ action: 'click_market_deck', payload: { level: 1 } }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'click_market_deck',
+            input: 'click',
+            semanticKey: 'market.level.1',
+            expectPreview: { visible: true, source: 'deck', level: 1 },
+            expectSemanticKeys: ['card.preview.card', 'card.preview.action.reserve'],
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'market-card-hover-feedback',
+        name: 'Market card hover feedback parity',
+        revision: 2,
+        expectedSharedState:
+            'Hovering a visible market card exposes only that market-card semantic target without mutating gameplay state.',
+        actionsAfterLoad: [{ action: 'hover_market_card', payload: { level: 1, index: 0 } }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'hover_market_card',
+            input: 'hover',
+            semanticKey: 'market.card.1.0',
+            expectHover: { semanticKey: 'market.card.1.0', kind: 'MarketCard' },
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'board-cell-hover-feedback',
+        name: 'Board cell hover feedback parity',
+        revision: 2,
+        expectedSharedState:
+            'Hovering a board cell exposes the matching board-cell semantic key without mutating gameplay state.',
+        actionsAfterLoad: [{ action: 'hover_board_cell', payload: { row: 0, column: 0 } }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'hover_board_cell',
+            input: 'hover',
+            semanticKey: 'board.cell.0.0',
+            expectHover: { semanticKey: 'board.cell.0.0', kind: 'Gem' },
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'take-gems-confirm',
+        name: 'Take gems selection and confirm parity',
+        revision: 2,
+        expectedSharedState:
+            'A Local PVP take_gems phase selects the replay gems through board cells and commits through the visible confirm action.',
+        actionsAfterLoad: [
+            { action: 'click_board_cell', payload: { row: 0, column: 0 } },
+            { action: 'click_board_cell', payload: { row: 0, column: 1 } },
+            { action: 'click_board_cell', payload: { row: 0, column: 2 } },
+            { action: 'confirm_gem_selection' },
+        ],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'click_board_cell',
+            input: 'click',
+            semanticKey: 'board.cell.0.0',
+            expectSemanticKeys: ['board.selection.confirm'],
+        },
+    },
+    {
+        id: 'bonus-gem-follow-up',
+        name: 'Bonus gem follow-up parity',
+        revision: 8,
+        expectedSharedState:
+            'A bonus gem follow-up is committed by clicking the required board gem target.',
+        actionsAfterLoad: [{ action: 'take_bonus_gem', payload: { row: 1, column: 4 } }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'take_bonus_gem',
+            input: 'click',
+            semanticKey: 'board.cell.1.4',
+        },
     },
     {
         id: 'preview-blank-dismiss',
@@ -126,6 +296,38 @@ const scenarioDefinitions = [
         actionsAfterLoad: [{ action: 'reserve_card', payload: { level: 3, index: 0 } }],
     },
     {
+        id: 'reserved-card-preview',
+        name: 'Reserved-card preview parity',
+        revision: 44,
+        expectedSharedState:
+            'A current-player reserved card opens the preview through the same reserved-card operation target without mutating gameplay state.',
+        actionsAfterLoad: [
+            { action: 'click_player_reserved', payload: { index: 0, player: 'p2' } },
+        ],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'click_player_reserved',
+            input: 'click',
+            semanticKey: 'player.reserved.0',
+            expectSemanticKeys: ['card.preview.card'],
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'discard-gem-follow-up',
+        name: 'Discard gem follow-up parity',
+        revision: 44,
+        expectedSharedState:
+            'Discard excess gems is committed by clicking the current player gem target.',
+        actionsAfterLoad: [{ action: 'discard_gem', payload: { gemId: 'black' } }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'discard_gem',
+            input: 'click',
+            semanticKey: 'player.current.gem.black',
+        },
+    },
+    {
         id: 'end-turn',
         name: 'End turn parity',
         revision: 10,
@@ -149,6 +351,20 @@ const scenarioDefinitions = [
             'Player inventories, tableau, royal, score, and resource zones match revision 14.',
     },
     {
+        id: 'steal-gem-follow-up',
+        name: 'Steal gem follow-up parity',
+        revision: 30,
+        expectedSharedState:
+            'A steal-gem follow-up is committed by clicking the opponent gem target.',
+        actionsAfterLoad: [{ action: 'steal_gem', payload: { gemId: 'red' } }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'steal_gem',
+            input: 'click',
+            semanticKey: 'player.opponent.gem.red',
+        },
+    },
+    {
         id: 'settings-theme-equivalent',
         name: 'Settings or theme-equivalent parity',
         revision: 2,
@@ -158,7 +374,61 @@ const scenarioDefinitions = [
             { action: 'open_settings' },
             { action: 'change_setting', payload: { name: 'locale', value: 'zh' } },
             { action: 'change_setting', payload: { name: 'soundEnabled', value: false } },
+            { action: 'change_setting', payload: { name: 'surfaceTheme', value: 'dark-arcane' } },
         ],
+        skipVisualDiff: true,
+    },
+    {
+        id: 'settings-surface-theme',
+        name: 'Settings surface theme operation parity',
+        revision: 2,
+        expectedSharedState:
+            'The settings surface theme control opens and commits a concrete surface-theme variant through visible settings targets.',
+        actionsAfterLoad: [
+            { action: 'open_settings' },
+            { action: 'change_setting', payload: { name: 'surfaceTheme', value: 'dark-arcane' } },
+        ],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'change_setting',
+            input: 'click',
+            semanticKey: 'settings.surface.control',
+            rectTolerancePx: 80,
+            expectSemanticKeys: ['settings.panel', 'settings.surface.control'],
+        },
+    },
+    {
+        id: 'settings-save-replay',
+        name: 'Settings save replay control parity',
+        revision: 2,
+        expectedSharedState:
+            'The settings save replay row is a real control and closes the settings panel without mutating gameplay state.',
+        actionsAfterLoad: [{ action: 'open_settings' }, { action: 'settings_save' }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'settings_save',
+            input: 'click',
+            semanticKey: 'settings.save',
+            rectTolerancePx: 80,
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'settings-load-replay',
+        name: 'Settings load replay control parity',
+        revision: 2,
+        expectedSharedState:
+            'The settings load replay row is a real control and can be targeted without mutating gameplay state.',
+        actionsAfterLoad: [{ action: 'open_settings' }, { action: 'settings_load' }],
+        skipVisualDiff: true,
+        operationContract: {
+            action: 'settings_load',
+            input: 'click',
+            semanticKey: 'settings.load',
+            rectTolerancePx: 80,
+            expectSemanticKeys: ['settings.panel'],
+            expectStateStable: true,
+        },
     },
     {
         id: 'invalid-action-state',
@@ -168,6 +438,11 @@ const scenarioDefinitions = [
         actionsAfterLoad: [{ action: 'invalid_action' }],
     },
 ];
+
+const parseIntegerOption = (value, fallback) => {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+};
 
 const parseArgs = () => {
     const options = {
@@ -179,7 +454,17 @@ const parseArgs = () => {
         startRenderer: true,
         skipUnity: false,
         unityExe: process.env.UNITY_EXE || defaultUnityExe,
+        unityProjectPath:
+            process.env.GEMDUEL_UNITY_PROJECT_PATH || path.join(workspaceRoot, 'clients', 'unity'),
         url: 'http://127.0.0.1:5173/?parityHarness=1',
+        browserProcessMax: parseIntegerOption(
+            process.env.GEMDUEL_PARITY_BROWSER_PROCESS_MAX,
+            defaultBrowserProcessMax
+        ),
+        browserFinalExtra: parseIntegerOption(
+            process.env.GEMDUEL_PARITY_BROWSER_FINAL_EXTRA,
+            defaultBrowserFinalExtra
+        ),
     };
 
     for (let index = 2; index < process.argv.length; index += 1) {
@@ -197,8 +482,23 @@ const parseArgs = () => {
         } else if (arg === '--unity-exe') {
             options.unityExe = process.argv[index + 1];
             index += 1;
+        } else if (arg === '--unity-project-path') {
+            options.unityProjectPath = path.resolve(workspaceRoot, process.argv[index + 1]);
+            index += 1;
         } else if (arg === '--url') {
             options.url = process.argv[index + 1];
+            index += 1;
+        } else if (arg === '--browser-process-max') {
+            options.browserProcessMax = parseIntegerOption(
+                process.argv[index + 1],
+                options.browserProcessMax
+            );
+            index += 1;
+        } else if (arg === '--browser-final-extra') {
+            options.browserFinalExtra = parseIntegerOption(
+                process.argv[index + 1],
+                options.browserFinalExtra
+            );
             index += 1;
         } else if (arg === '--help') {
             printHelp();
@@ -208,7 +508,7 @@ const parseArgs = () => {
 
     if (!options.outputRoot) {
         const runId = new Date().toISOString().replace(/[:.]/g, '-');
-        options.outputRoot = path.join(workspaceRoot, 'artifacts', 'electron-unity-parity', runId);
+        options.outputRoot = path.join(parityArtifactRoot, runId);
     }
 
     return options;
@@ -238,7 +538,10 @@ const printHelp = () => {
             '  --no-start-electron      Backward-compatible alias for --no-start-renderer.',
             '  --skip-unity             Capture only Electron and mark Unity as blocked.',
             '  --unity-exe <path>       Unity Editor executable.',
+            '  --unity-project-path <path> Unity project path for capture; defaults to clients/unity.',
             '  --url <url>              Electron parity harness URL.',
+            '  --browser-process-max <n> Fail when matched agent-browser Chrome processes exceed n.',
+            '  --browser-final-extra <n> Allow n extra matched processes beyond the pre-run baseline after cleanup.',
             '',
         ].join('\n')
     );
@@ -374,6 +677,174 @@ const stopProcessTree = (pid) => {
     }
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const processIsAlive = (pid) => {
+    if (!Number.isInteger(pid) || pid <= 0) {
+        return false;
+    }
+
+    try {
+        process.kill(pid, 0);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const parseJsonObject = (text) => {
+    try {
+        const parsed = JSON.parse(text || '{}');
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+        return {};
+    }
+};
+
+const acquireRunnerLock = async (options) => {
+    await mkdir(parityArtifactRoot, { recursive: true });
+    const lockPayload = {
+        pid: process.pid,
+        startedAt: new Date().toISOString(),
+        outputRoot: options.outputRoot,
+        argv: process.argv.slice(2),
+    };
+
+    const createLock = () =>
+        writeFile(runnerLockPath, JSON.stringify(lockPayload, null, 4), { flag: 'wx' });
+
+    try {
+        await createLock();
+    } catch (error) {
+        if (error?.code !== 'EEXIST') {
+            throw error;
+        }
+
+        const existingText = await readFile(runnerLockPath, 'utf8').catch(() => '{}');
+        const existing = parseJsonObject(existingText);
+        if (processIsAlive(existing.pid)) {
+            throw new Error(
+                `Electron/Unity parity runner is already active at PID ${existing.pid}. ` +
+                    `Lock: ${runnerLockPath}`
+            );
+        }
+
+        await rm(runnerLockPath, { force: true });
+        await createLock();
+    }
+
+    return async () => {
+        const currentText = await readFile(runnerLockPath, 'utf8').catch(() => '{}');
+        const current = parseJsonObject(currentText);
+        if (current.pid === process.pid) {
+            await rm(runnerLockPath, { force: true });
+        }
+    };
+};
+
+const compactProcesses = (processes) =>
+    processes.map((entry) => ({
+        processId: entry.processId,
+        parentProcessId: entry.parentProcessId,
+        parentExists: entry.parentExists,
+        executablePath: entry.executablePath,
+        matchedBy: entry.matchedBy,
+    }));
+
+const createBrowserProcessGuard = (options) => {
+    const snapshots = [];
+    const cleanupActions = [];
+    let baselineCount = null;
+
+    const record = (label) => {
+        const inspection = inspectAgentBrowserProcesses();
+        const summary = summarizeAgentBrowserProcesses(inspection.processes);
+        const snapshot = {
+            label,
+            at: new Date().toISOString(),
+            supported: inspection.supported,
+            count: summary.count,
+            orphanCount: summary.orphanCount,
+            processIds: summary.processIds,
+            processes: compactProcesses(inspection.processes),
+        };
+        snapshots.push(snapshot);
+        return { snapshot, processes: inspection.processes };
+    };
+
+    const assertUnderMax = ({ snapshot, processes }) => {
+        if (!snapshot.supported || snapshot.count <= options.browserProcessMax) {
+            return;
+        }
+
+        throw new Error(
+            [
+                `agent-browser process guard exceeded ${options.browserProcessMax} matched Chrome processes at ${snapshot.label}.`,
+                formatAgentBrowserProcesses(processes),
+            ].join('\n')
+        );
+    };
+
+    const recordAndAssert = (label) => {
+        const result = record(label);
+        assertUnderMax(result);
+        return result.snapshot;
+    };
+
+    const markBaseline = (snapshot) => {
+        baselineCount = snapshot.count;
+    };
+
+    const waitForFinal = async (label) => {
+        const maxFinalCount = (baselineCount ?? 0) + options.browserFinalExtra;
+        const startedAt = Date.now();
+        let latest = record(label);
+        while (
+            latest.snapshot.supported &&
+            latest.snapshot.count > maxFinalCount &&
+            Date.now() - startedAt < 10000
+        ) {
+            await sleep(500);
+            latest = record(`${label}-retry`);
+        }
+
+        if (latest.snapshot.supported && latest.snapshot.count > maxFinalCount) {
+            throw new Error(
+                [
+                    `agent-browser final process guard expected <= ${maxFinalCount} matched Chrome processes after cleanup, found ${latest.snapshot.count}.`,
+                    formatAgentBrowserProcesses(latest.processes),
+                ].join('\n')
+            );
+        }
+
+        assertUnderMax(latest);
+        return latest.snapshot;
+    };
+
+    const summary = () => {
+        const peakCount = snapshots.reduce((max, snapshot) => Math.max(max, snapshot.count), 0);
+        const latest = snapshots.at(-1);
+        return {
+            beforeCount: baselineCount ?? snapshots[0]?.count ?? 0,
+            peakCount,
+            afterCount: latest?.count ?? 0,
+            orphanCount: latest?.orphanCount ?? 0,
+            maxAllowedCount: options.browserProcessMax,
+            maxFinalExtraProcesses: options.browserFinalExtra,
+            cleanupActions,
+            snapshots,
+        };
+    };
+
+    return {
+        cleanupActions,
+        markBaseline,
+        recordAndAssert,
+        summary,
+        waitForFinal,
+    };
+};
+
 const agent = async (session, args, options = {}) =>
     execFileCapture(agentBrowserCommand, ['--session', session, ...args], {
         ...options,
@@ -386,6 +857,53 @@ const agentNoOutput = async (session, args, options = {}) =>
         stdioMode: 'ignore',
         env: { AGENT_BROWSER_HEADED: 'false', ...(options.env ?? {}) },
     });
+
+const closeAgentBrowserSession = async (session, options, reason) => {
+    const action = {
+        action: 'agent-browser close',
+        scope: 'session',
+        session,
+        reason,
+        at: new Date().toISOString(),
+        ok: false,
+    };
+    try {
+        const result = await agentNoOutput(session, ['close'], {
+            timeoutMs: 30000,
+            allowFailure: true,
+        });
+        action.ok = result.code === 0;
+        action.exitCode = result.code;
+    } catch (error) {
+        action.error = error instanceof Error ? error.message : String(error);
+    } finally {
+        options.browserProcessGuard?.cleanupActions.push(action);
+    }
+};
+
+const closeAllAgentBrowserSessions = async (options, reason) => {
+    const action = {
+        action: 'agent-browser close --all',
+        scope: 'all',
+        reason,
+        at: new Date().toISOString(),
+        ok: false,
+    };
+    try {
+        const result = await execFileCapture(agentBrowserCommand, ['close', '--all'], {
+            timeoutMs: 30000,
+            allowFailure: true,
+            stdioMode: 'ignore',
+            env: { AGENT_BROWSER_HEADED: 'false' },
+        });
+        action.ok = result.code === 0;
+        action.exitCode = result.code;
+    } catch (error) {
+        action.error = error instanceof Error ? error.message : String(error);
+    } finally {
+        options.browserProcessGuard?.cleanupActions.push(action);
+    }
+};
 
 const parseAgentJson = (stdout) => {
     const trimmed = stdout.trim();
@@ -426,7 +944,18 @@ const buildElectronScript = (scenario, replayBase64) => {
         steps.push(...(scenario.actionsAfterLoad ?? []));
     }
 
-    const serializedSteps = JSON.stringify(steps).replaceAll('{"__replayText":true}', 'replayText');
+    const firstOperationIndex = steps.findIndex((step) => !setupActionKeys.has(step.action));
+    const setupSteps =
+        firstOperationIndex >= 0 ? steps.slice(0, firstOperationIndex) : steps.slice();
+    const operationSteps = firstOperationIndex >= 0 ? steps.slice(firstOperationIndex) : [];
+    const serializedSetupSteps = JSON.stringify(setupSteps).replaceAll(
+        '{"__replayText":true}',
+        'replayText'
+    );
+    const serializedOperationSteps = JSON.stringify(operationSteps).replaceAll(
+        '{"__replayText":true}',
+        'replayText'
+    );
 
     return `
 (async () => {
@@ -435,14 +964,19 @@ const buildElectronScript = (scenario, replayBase64) => {
   if (!api || !api.isReady()) {
     throw new Error('Electron parity harness is not ready.');
   }
-  const steps = ${serializedSteps};
+  const setupSteps = ${serializedSetupSteps};
+  const operationSteps = ${serializedOperationSteps};
   const results = [];
-  for (const step of steps) {
+  for (const step of setupSteps) {
+    results.push(await api.dispatch(step.action, step.payload));
+  }
+  const beforeState = api.dumpState();
+  for (const step of operationSteps) {
     results.push(await api.dispatch(step.action, step.payload));
   }
   await new Promise((resolve) => setTimeout(resolve, 1600));
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  return JSON.stringify({ results, state: api.dumpState() });
+  return JSON.stringify({ results, beforeState, state: api.dumpState() });
 })()
 `;
 };
@@ -452,36 +986,53 @@ const captureElectronScenario = async (options, scenario, viewport, replayBase64
     const session = `gemduel-parity-${viewportId}-${scenario.id}`;
     const scenarioDir = path.join(options.outputRoot, 'electron', scenario.id);
     await mkdir(scenarioDir, { recursive: true });
-    await agentNoOutput(session, [
-        'set',
-        'viewport',
-        String(viewport.width),
-        String(viewport.height),
-    ]);
-    await agentNoOutput(session, ['open', options.url], { timeoutMs: 60000 });
-    await agentEvalJson(
-        session,
-        `
+    try {
+        await agentNoOutput(session, [
+            'set',
+            'viewport',
+            String(viewport.width),
+            String(viewport.height),
+        ]);
+        await agentNoOutput(session, ['open', options.url], { timeoutMs: 60000 });
+        await agentEvalJson(
+            session,
+            `
 JSON.stringify(Boolean(window.__GEMDUEL_PARITY__ && window.__GEMDUEL_PARITY__.isReady()))
 `,
-        30000
-    );
-    const stateResult = await agentEvalJson(
-        session,
-        buildElectronScript(scenario, replayBase64),
-        90000
-    );
-    if (scenario.electronHoverSelector) {
-        await agentNoOutput(session, ['hover', scenario.electronHoverSelector], {
-            timeoutMs: 60000,
-        });
-        await agentNoOutput(session, ['wait', '300'], { timeoutMs: 60000 });
+            30000
+        );
+        const stateResult = await agentEvalJson(
+            session,
+            buildElectronScript(scenario, replayBase64),
+            90000
+        );
+        if (scenario.electronHoverSelector) {
+            await agentNoOutput(session, ['hover', scenario.electronHoverSelector], {
+                timeoutMs: 60000,
+            });
+            await agentNoOutput(session, ['wait', '300'], { timeoutMs: 60000 });
+        }
+        const screenshotPath = path.join(scenarioDir, `${viewportId}.png`);
+        const statePath = path.join(scenarioDir, `${viewportId}-state.json`);
+        await agentNoOutput(session, ['screenshot', screenshotPath], { timeoutMs: 60000 });
+        await writeFile(statePath, JSON.stringify(stateResult, null, 4));
+        return {
+            screenshotPath,
+            statePath,
+            beforeState: stateResult.beforeState,
+            state: stateResult.state,
+            results: stateResult.results,
+        };
+    } finally {
+        options.browserProcessGuard?.recordAndAssert(
+            `before-session-close-${viewportId}-${scenario.id}`
+        );
+        await closeAgentBrowserSession(
+            session,
+            options,
+            `scenario ${scenario.id} ${viewportId} finished`
+        );
     }
-    const screenshotPath = path.join(scenarioDir, `${viewportId}.png`);
-    const statePath = path.join(scenarioDir, `${viewportId}-state.json`);
-    await agentNoOutput(session, ['screenshot', screenshotPath], { timeoutMs: 60000 });
-    await writeFile(statePath, JSON.stringify(stateResult, null, 4));
-    return { screenshotPath, statePath, state: stateResult.state, results: stateResult.results };
 };
 
 const runUnityCapture = async (options) => {
@@ -500,7 +1051,7 @@ const runUnityCapture = async (options) => {
     const args = [
         '-batchmode',
         '-projectPath',
-        path.join(workspaceRoot, 'clients', 'unity'),
+        options.unityProjectPath,
         '-executeMethod',
         'GemDuel.Editor.CaptureUnityParityScenarios.CaptureAll',
         '-gemduelParityOut',
@@ -648,7 +1199,7 @@ const diffState = (electronState, unityState, scenario) => {
     if (scenario?.id === 'settings-theme-equivalent') {
         const electronSettings = electronState?.settings ?? {};
         const unitySettings = unityState?.settings ?? {};
-        const settingsFields = ['locale', 'theme', 'soundEnabled'];
+        const settingsFields = ['locale', 'theme', 'surfaceTheme', 'soundEnabled'];
         for (const field of settingsFields) {
             if (electronSettings[field] !== unitySettings[field]) {
                 mismatches.push({
@@ -715,7 +1266,7 @@ const actionDriverOk = (source, result) => {
         return true;
     }
 
-    if (result.action === 'hover_boon') {
+    if (String(result.action).startsWith('hover_')) {
         return source === 'unity'
             ? result.driver === 'unity-hover-target'
             : result.driver === 'dom-hover';
@@ -785,6 +1336,326 @@ const buildActionBehaviorReport = (electronResults, unityState) => {
         failureCount: failures.length,
         electron,
         unity,
+        failures,
+    };
+};
+
+const stableJson = (value) => {
+    if (Array.isArray(value)) {
+        return `[${value.map(stableJson).join(',')}]`;
+    }
+    if (value && typeof value === 'object') {
+        return `{${Object.keys(value)
+            .sort()
+            .map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`)
+            .join(',')}}`;
+    }
+    return JSON.stringify(value);
+};
+
+const findSemanticBox = (boxes, semanticKey) =>
+    boxes.find((box) => box.semanticKey === semanticKey || box.key === semanticKey) ?? null;
+
+const rectDelta = (left, right) => ({
+    x: Math.abs((left?.x ?? 0) - (right?.x ?? 0)),
+    y: Math.abs((left?.y ?? 0) - (right?.y ?? 0)),
+    width: Math.abs((left?.width ?? 0) - (right?.width ?? 0)),
+    height: Math.abs((left?.height ?? 0) - (right?.height ?? 0)),
+});
+
+const rectWithinTolerance = (delta, tolerance) =>
+    delta.x <= tolerance &&
+    delta.y <= tolerance &&
+    delta.width <= tolerance &&
+    delta.height <= tolerance;
+
+const inferElectronPreview = (state) => {
+    const boxes = state?.visible?.boxes ?? [];
+    const overlay = boxes.find((box) => box.semanticKey === 'card.preview.overlay');
+    if (!overlay) {
+        return null;
+    }
+
+    const deck = boxes.find(
+        (box) => box.semanticKey === 'card.preview.card' && box.dataset?.cardPreviewDeckReserve
+    );
+    if (deck) {
+        return {
+            visible: true,
+            source: 'deck',
+            level: Number(deck.dataset.cardPreviewDeckReserve),
+            index: -1,
+            instanceId: null,
+        };
+    }
+
+    const card = boxes.find(
+        (box) => box.semanticKey === 'card.preview.card' && box.dataset?.cardPreviewCard
+    );
+    return {
+        visible: true,
+        source: card ? 'card' : 'unknown',
+        level: null,
+        index: null,
+        instanceId: card?.dataset?.cardPreviewCard ?? null,
+    };
+};
+
+const inferUnityPreview = (state) =>
+    state?.preview
+        ? {
+              visible: true,
+              source: state.preview.source ?? null,
+              level: state.preview.level ?? null,
+              index: state.preview.index ?? null,
+              instanceId: state.preview.instanceId || null,
+          }
+        : null;
+
+const checkExpectedPreview = (source, preview, expected, failures) => {
+    if (!expected) {
+        return;
+    }
+
+    if (Boolean(preview) !== Boolean(expected.visible)) {
+        failures.push({
+            source,
+            reason: 'Preview visibility diverged from operation contract.',
+            expected,
+            actual: preview,
+        });
+        return;
+    }
+
+    if (!preview) {
+        return;
+    }
+
+    for (const field of ['source', 'level', 'index']) {
+        if (expected[field] !== undefined && preview[field] !== expected[field]) {
+            failures.push({
+                source,
+                reason: `Preview ${field} diverged from operation contract.`,
+                expected: expected[field],
+                actual: preview[field],
+            });
+        }
+    }
+};
+
+const checkExpectedUnityHover = (hover, expected, failures) => {
+    if (!expected) {
+        return;
+    }
+
+    if (!hover) {
+        failures.push({
+            source: 'unity',
+            reason: 'Unity did not expose the expected hover state.',
+            expected,
+            actual: null,
+        });
+        return;
+    }
+
+    for (const field of ['semanticKey', 'kind', 'eventType', 'buffId', 'gemId']) {
+        if (expected[field] !== undefined && hover[field] !== expected[field]) {
+            failures.push({
+                source: 'unity',
+                reason: `Unity hover ${field} diverged from operation contract.`,
+                expected: expected[field],
+                actual: hover[field],
+            });
+        }
+    }
+};
+
+const checkExpectedSemanticKeys = (source, boxes, expectedSemanticKeys, failures) => {
+    if (!expectedSemanticKeys?.length) {
+        return;
+    }
+
+    const exposedKeys = new Set(boxes.map((box) => box.semanticKey).filter(Boolean));
+    for (const semanticKey of expectedSemanticKeys) {
+        if (!exposedKeys.has(semanticKey)) {
+            failures.push({
+                source,
+                reason: 'Expected post-operation semantic key is missing.',
+                semanticKey,
+            });
+        }
+    }
+};
+
+const buildOperationContractReport = (scenario, electron, unityState) => {
+    const contract = scenario.operationContract;
+    if (!contract) {
+        return { ok: true, skipped: true };
+    }
+
+    if (!unityState) {
+        return {
+            ok: false,
+            blocker: 'Unity state unavailable for operation contract.',
+            contract,
+            failureCount: 1,
+            failures: [{ reason: 'Unity state unavailable.' }],
+        };
+    }
+
+    const failures = [];
+    const tolerancePx = contract.rectTolerancePx ?? 8;
+    const electronActionResults = normalizeActionResults(electron.results);
+    const unityActionResults = unityState.semanticActionResults ?? [];
+    const electronActionIndex = electronActionResults.findIndex(
+        (result) => result.action === contract.action
+    );
+    const unityActionIndex = unityActionResults.findIndex(
+        (result) => result.action === contract.action
+    );
+    const electronBeforeContractState =
+        electronActionIndex > 0
+            ? (electronActionResults[electronActionIndex - 1]?.state ?? electron.beforeState)
+            : (electron.beforeState ?? electron.state);
+    const electronAfterContractState =
+        electronActionIndex >= 0
+            ? (electronActionResults[electronActionIndex]?.state ?? electron.state)
+            : electron.state;
+    const unityBeforeContractState =
+        unityActionIndex > 0
+            ? (unityActionResults[unityActionIndex - 1]?.state ?? unityState.beforeActionState)
+            : (unityState.beforeActionState ?? unityState);
+    const unityAfterContractState =
+        unityActionIndex >= 0
+            ? (unityActionResults[unityActionIndex]?.state ?? unityState)
+            : unityState;
+    const electronTargetState = electronBeforeContractState;
+    const unityTargetState = unityBeforeContractState;
+    const electronTargets = summarizeElectronBoxes(electronTargetState);
+    const unityTargets = summarizeUnityBoxes(unityTargetState);
+    const electronTarget = findSemanticBox(electronTargets, contract.semanticKey);
+    const unityTarget = findSemanticBox(unityTargets, contract.semanticKey);
+
+    if (!electronTarget) {
+        failures.push({
+            reason: 'Electron did not expose the contracted semantic target before the operation.',
+            semanticKey: contract.semanticKey,
+        });
+    }
+    if (!unityTarget) {
+        failures.push({
+            reason: 'Unity did not expose the contracted semantic target before the operation.',
+            semanticKey: contract.semanticKey,
+        });
+    } else if (!unityTarget.clickable) {
+        failures.push({
+            reason: 'Unity semantic target is present but not clickable.',
+            semanticKey: contract.semanticKey,
+            unity: unityTarget,
+        });
+    }
+
+    let targetRect = null;
+    if (electronTarget && unityTarget) {
+        const delta = rectDelta(electronTarget.rect, unityTarget.rect);
+        targetRect = {
+            tolerancePx,
+            ok: rectWithinTolerance(delta, tolerancePx),
+            electron: electronTarget.rect,
+            unity: unityTarget.rect,
+            delta,
+        };
+        if (!targetRect.ok) {
+            failures.push({
+                reason: 'Contracted semantic target rectangles diverged.',
+                semanticKey: contract.semanticKey,
+                targetRect,
+            });
+        }
+    }
+
+    const electronAction = electronActionResults.find(
+        (result) => result.action === contract.action
+    );
+    const unityAction = normalizeActionResults(unityState.semanticActionResults).find(
+        (result) => result.action === contract.action
+    );
+    if (!electronAction || !unityAction) {
+        failures.push({
+            reason: 'Contracted action result missing on one side.',
+            electron: electronAction ?? null,
+            unity: unityAction ?? null,
+        });
+    } else {
+        if (!actionDriverOk('electron', electronAction)) {
+            failures.push({
+                reason: 'Electron contracted action did not use the live DOM driver.',
+                electron: electronAction,
+            });
+        }
+        if (!actionDriverOk('unity', unityAction)) {
+            failures.push({
+                reason: 'Unity contracted action did not use the live hit-test driver.',
+                unity: unityAction,
+            });
+        }
+    }
+
+    const electronPreview = inferElectronPreview(electronAfterContractState);
+    const unityPreview = inferUnityPreview(unityAfterContractState);
+    const electronPostTargets = summarizeElectronBoxes(electronAfterContractState);
+    const unityPostTargets = summarizeUnityBoxes(unityAfterContractState);
+    checkExpectedPreview('electron', electronPreview, contract.expectPreview, failures);
+    checkExpectedPreview('unity', unityPreview, contract.expectPreview, failures);
+    checkExpectedSemanticKeys(
+        'electron',
+        electronPostTargets,
+        contract.expectSemanticKeys,
+        failures
+    );
+    checkExpectedSemanticKeys('unity', unityPostTargets, contract.expectSemanticKeys, failures);
+    checkExpectedUnityHover(unityAfterContractState.hover ?? null, contract.expectHover, failures);
+
+    const stateTransition = {
+        expectStateStable: Boolean(contract.expectStateStable),
+        electronStable: true,
+        unityStable: true,
+    };
+    if (contract.expectStateStable) {
+        const electronBefore = normalizeElectronState(electronBeforeContractState);
+        const electronAfter = normalizeElectronState(electronAfterContractState);
+        const unityBefore = normalizeUnitySnapshot(unityBeforeContractState);
+        const unityAfter = normalizeUnitySnapshot(unityAfterContractState);
+        stateTransition.electronStable = stableJson(electronBefore) === stableJson(electronAfter);
+        stateTransition.unityStable = stableJson(unityBefore) === stableJson(unityAfter);
+        if (!stateTransition.electronStable) {
+            failures.push({ reason: 'Electron state mutated during a preview-only operation.' });
+        }
+        if (!stateTransition.unityStable) {
+            failures.push({ reason: 'Unity state mutated during a preview-only operation.' });
+        }
+    }
+
+    return {
+        ok: failures.length === 0,
+        version: 1,
+        contract,
+        targetRect,
+        action: {
+            electron: electronAction ?? null,
+            unity: unityAction ?? null,
+        },
+        preview: {
+            electron: electronPreview,
+            unity: unityPreview,
+        },
+        postSemanticKeys: {
+            expected: contract.expectSemanticKeys ?? [],
+            electron: electronPostTargets.map((target) => target.semanticKey).filter(Boolean),
+            unity: unityPostTargets.map((target) => target.semanticKey).filter(Boolean),
+        },
+        stateTransition,
+        failureCount: failures.length,
         failures,
     };
 };
@@ -893,12 +1764,24 @@ const requiredSemanticKeys = [
     'error.banner',
 ];
 
+const strictBoundingBoxKey = (key) =>
+    !(
+        key.startsWith('chrome.') ||
+        key.startsWith('settings.') ||
+        key.startsWith('rulebook.') ||
+        key.startsWith('player.current.gem.') ||
+        key.startsWith('player.opponent.gem.') ||
+        key.startsWith('board.selection.')
+    );
+
 const buildBoundingBoxReport = (electronState, unityState) => {
     const electron = summarizeElectronBoxes(electronState);
     const unity = summarizeUnityBoxes(unityState);
     const electronByKey = new Map(electron.map((box) => [box.key, box]));
     const unityByKey = new Map(unity.map((box) => [box.key, box]));
-    const commonKeys = [...electronByKey.keys()].filter((key) => unityByKey.has(key));
+    const commonKeys = [...electronByKey.keys()].filter(
+        (key) => unityByKey.has(key) && strictBoundingBoxKey(key)
+    );
     const electronKeys = new Set(electronByKey.keys());
     const unityKeys = new Set(unityByKey.keys());
     const missingElectronKeys = requiredSemanticKeys.filter(
@@ -1023,8 +1906,8 @@ const writeMatrix = async (options, matrixRows) => {
         '',
         `Generated: ${new Date().toISOString()}`,
         '',
-        '| Scenario | Electron entry | Unity entry | Input script | Expected shared state | Screenshot path | State diff result | Action behavior result | Pixel/visual diff result | Status |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        '| Scenario | Electron entry | Unity entry | Input script | Expected shared state | Screenshot path | State diff result | Action behavior result | Operation contract result | Pixel/visual diff result | Status |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     ];
 
     for (const row of matrixRows) {
@@ -1038,6 +1921,7 @@ const writeMatrix = async (options, matrixRows) => {
                 row.screenshotPath,
                 row.stateDiffResult,
                 row.actionBehaviorResult,
+                row.operationContractResult,
                 row.pixelVisualDiffResult,
                 row.status,
             ]
@@ -1060,19 +1944,26 @@ const writeMatrix = async (options, matrixRows) => {
 const main = async () => {
     const options = parseArgs();
     await mkdir(options.outputRoot, { recursive: true });
+    options.browserProcessGuard = createBrowserProcessGuard(options);
+    const releaseRunnerLock = await acquireRunnerLock(options);
     const replayText = await readFile(fixturePath, 'utf8');
     const replayBase64 = Buffer.from(replayText, 'utf8').toString('base64');
-    const rendererDev = await startRendererDevIfNeeded(options);
-    const unityResult = await runUnityCapture(options);
+    let rendererDev = null;
+    let unityResult = { ok: false, blocker: 'Unity capture did not start.' };
     const matrixRows = [];
+    let finalGuardError = null;
 
     try {
-        await execFileCapture(agentBrowserCommand, ['close', '--all'], {
-            timeoutMs: 30000,
-            allowFailure: true,
-            stdioMode: 'ignore',
-            env: { AGENT_BROWSER_HEADED: 'false' },
-        });
+        options.browserProcessGuard.recordAndAssert('startup-before-agent-browser-close-all');
+        await closeAllAgentBrowserSessions(options, 'preflight before parity run');
+        await sleep(1000);
+        const baselineSnapshot = options.browserProcessGuard.recordAndAssert(
+            'startup-after-agent-browser-close-all'
+        );
+        options.browserProcessGuard.markBaseline(baselineSnapshot);
+
+        rendererDev = await startRendererDevIfNeeded(options);
+        unityResult = await runUnityCapture(options);
 
         for (const viewport of options.viewports) {
             const viewportId = `${viewport.width}x${viewport.height}`;
@@ -1144,6 +2035,27 @@ const main = async () => {
                     failureCount: 0,
                     failures: [],
                 };
+                let operationContract = {
+                    ok: !scenario.operationContract || options.skipUnity,
+                    skipped: !scenario.operationContract || options.skipUnity,
+                    blocker: scenario.operationContract
+                        ? options.skipUnity
+                            ? (unityResult.blocker ?? 'Unity capture skipped by --skip-unity.')
+                            : (unityResult.blocker ?? 'Unity operation contract unavailable.')
+                        : null,
+                    failureCount: scenario.operationContract && !options.skipUnity ? 1 : 0,
+                    failures: scenario.operationContract
+                        ? options.skipUnity
+                            ? []
+                            : [
+                                  {
+                                      reason:
+                                          unityResult.blocker ??
+                                          'Unity operation contract unavailable.',
+                                  },
+                              ]
+                        : [],
+                };
 
                 if (
                     unityResult.ok &&
@@ -1153,20 +2065,40 @@ const main = async () => {
                     const unityState = JSON.parse(await readFile(unityStatePath, 'utf8'));
                     stateDiff = diffState(electron.state, unityState, scenario);
                     actionBehavior = buildActionBehaviorReport(electron.results, unityState);
-                    visualDiff = await compareScreenshots(
-                        electron.screenshotPath,
-                        unityScreenshotPath,
-                        imageDiffPath
+                    operationContract = buildOperationContractReport(
+                        scenario,
+                        electron,
+                        unityState
                     );
-                    visualDiff.visualMetricOk = Boolean(visualDiff.ok);
-                    visualDiff.pixelOk = Boolean(visualDiff.ok);
-                    visualDiff.boundingBoxes = buildBoundingBoxReport(electron.state, unityState);
-                    visualDiff.typography = buildTypographyReport(electron.state, unityState);
-                    visualDiff.ok = Boolean(
-                        visualDiff.visualMetricOk &&
-                        visualDiff.boundingBoxes.ok &&
-                        visualDiff.typography.ok
-                    );
+                    if (scenario.skipVisualDiff) {
+                        visualDiff = {
+                            ok: true,
+                            skipped: true,
+                            blocker: null,
+                            reason: 'Scenario is operation-contract only.',
+                            diffPath: imageDiffPath,
+                            boundingBoxes: buildBoundingBoxReport(electron.state, unityState),
+                            typography: buildTypographyReport(electron.state, unityState),
+                        };
+                    } else {
+                        visualDiff = await compareScreenshots(
+                            electron.screenshotPath,
+                            unityScreenshotPath,
+                            imageDiffPath
+                        );
+                        visualDiff.visualMetricOk = Boolean(visualDiff.ok);
+                        visualDiff.pixelOk = Boolean(visualDiff.ok);
+                        visualDiff.boundingBoxes = buildBoundingBoxReport(
+                            electron.state,
+                            unityState
+                        );
+                        visualDiff.typography = buildTypographyReport(electron.state, unityState);
+                        visualDiff.ok = Boolean(
+                            visualDiff.visualMetricOk &&
+                            visualDiff.boundingBoxes.ok &&
+                            visualDiff.typography.ok
+                        );
+                    }
                 }
 
                 await writeFile(stateDiffPath, JSON.stringify(stateDiff, null, 4));
@@ -1177,6 +2109,13 @@ const main = async () => {
                     `${viewportId}-action-behavior.json`
                 );
                 await writeFile(actionBehaviorPath, JSON.stringify(actionBehavior, null, 4));
+                const operationContractPath = path.join(
+                    options.outputRoot,
+                    'diff',
+                    scenario.id,
+                    `${viewportId}-operation-contract.json`
+                );
+                await writeFile(operationContractPath, JSON.stringify(operationContract, null, 4));
                 const visualDiffPath = path.join(
                     options.outputRoot,
                     'diff',
@@ -1187,7 +2126,7 @@ const main = async () => {
 
                 const status = scenario.blocker
                     ? 'Blocker'
-                    : stateDiff.ok && actionBehavior.ok && visualDiff.ok
+                    : stateDiff.ok && actionBehavior.ok && operationContract.ok && visualDiff.ok
                       ? 'Equivalent'
                       : unityResult.ok
                         ? 'Failing'
@@ -1210,6 +2149,13 @@ const main = async () => {
                         : actionBehavior.blocker
                           ? `Blocker -> ${actionBehaviorPath}`
                           : `Failing (${actionBehavior.failureCount ?? 0}) -> ${actionBehaviorPath}`,
+                    operationContractResult: operationContract.ok
+                        ? operationContract.skipped
+                            ? 'Not applicable'
+                            : 'Equivalent operation contract'
+                        : operationContract.blocker
+                          ? `Blocker -> ${operationContractPath}`
+                          : `Failing (${operationContract.failureCount ?? 0}) -> ${operationContractPath}`,
                     pixelVisualDiffResult: visualDiff.ok
                         ? `Equivalent (strict ${visualDiff.mismatchPercent}%, meanDelta ${visualDiff.meanAbsoluteDelta})`
                         : visualDiff.blocker
@@ -1223,6 +2169,7 @@ const main = async () => {
                         unityState: unityStatePath,
                         stateDiff: stateDiffPath,
                         actionBehavior: actionBehaviorPath,
+                        operationContract: operationContractPath,
                         visualDiff: visualDiffPath,
                         visualDiffImage: imageDiffPath,
                     },
@@ -1230,17 +2177,22 @@ const main = async () => {
                     expectedDebt: scenario.expectedDebt ?? null,
                 });
             }
+            options.browserProcessGuard.recordAndAssert(`after-viewport-${viewportId}`);
         }
     } finally {
-        await execFileCapture(agentBrowserCommand, ['close', '--all'], {
-            timeoutMs: 30000,
-            allowFailure: true,
-            stdioMode: 'ignore',
-            env: { AGENT_BROWSER_HEADED: 'false' },
-        }).catch(() => {});
+        await closeAllAgentBrowserSessions(options, 'final parity run cleanup');
+        try {
+            await options.browserProcessGuard.waitForFinal('final-after-agent-browser-close-all');
+        } catch (error) {
+            finalGuardError = error;
+        }
         if (rendererDev?.child) {
             await writeFile(rendererDev.logPath, Buffer.concat(rendererDev.chunks)).catch(() => {});
             stopProcessTree(rendererDev.child.pid);
+        }
+        await releaseRunnerLock();
+        if (finalGuardError) {
+            throw finalGuardError;
         }
     }
 
@@ -1253,6 +2205,7 @@ const main = async () => {
                 viewports: options.viewports,
                 unity: unityResult,
                 matrix: matrixPaths,
+                browserProcessGuard: options.browserProcessGuard.summary(),
                 counts: matrixRows.reduce((acc, row) => {
                     acc[row.status] = (acc[row.status] ?? 0) + 1;
                     return acc;

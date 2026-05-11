@@ -1,5 +1,5 @@
 import type { GameMode, PlayerKey, ThemeName } from '@gemduel/shared/types';
-import type { SurfaceThemeVariant } from '../shell/surfaceTheme';
+import type { SurfaceThemeSelections, SurfaceThemeVariant } from '../shell/surfaceTheme';
 import type {
     GameLogicController,
     MatchmakingRoute,
@@ -12,17 +12,35 @@ export type ParityAction =
     | 'choose_mode'
     | 'choose_boon'
     | 'hover_boon'
+    | 'click_chrome_rulebook'
+    | 'click_chrome_restart'
+    | 'hover_chrome_control'
     | 'click_market_card'
+    | 'click_market_deck'
+    | 'hover_market_card'
+    | 'hover_market_deck'
     | 'click_preview_blank'
     | 'buy_card'
     | 'reserve_card'
     | 'click_player_reserved'
+    | 'hover_player_reserved'
     | 'confirm_preview_action'
+    | 'click_board_cell'
+    | 'hover_board_cell'
+    | 'confirm_gem_selection'
+    | 'cancel_gem_selection'
+    | 'take_bonus_gem'
+    | 'steal_gem'
+    | 'discard_gem'
+    | 'hover_player_gem'
     | 'end_turn'
     | 'force_royal_selection'
     | 'choose_royal'
     | 'open_settings'
     | 'change_setting'
+    | 'settings_save'
+    | 'settings_load'
+    | 'close_settings'
     | 'invalid_action'
     | 'load_replay_fixture'
     | 'reset';
@@ -46,6 +64,7 @@ export interface ElectronParityStateDump {
     settings: {
         locale: string;
         theme: ThemeName;
+        surfaceTheme: SurfaceThemeVariant;
         soundEnabled: boolean;
     };
     viewport: Pick<
@@ -98,6 +117,7 @@ export interface UseElectronUnityParityHarnessParams {
     layout: ResponsiveLayout;
     locale: string;
     theme: ThemeName;
+    surfaceTheme: SurfaceThemeSelections;
     soundEnabled: boolean;
     setupRoute: StartSetupRoute;
     matchmakingRoute: MatchmakingRoute;
@@ -138,17 +158,35 @@ export const ACTIONS: ParityAction[] = [
     'choose_mode',
     'choose_boon',
     'hover_boon',
+    'click_chrome_rulebook',
+    'click_chrome_restart',
+    'hover_chrome_control',
     'click_market_card',
+    'click_market_deck',
+    'hover_market_card',
+    'hover_market_deck',
     'click_preview_blank',
     'buy_card',
     'reserve_card',
     'click_player_reserved',
+    'hover_player_reserved',
     'confirm_preview_action',
+    'click_board_cell',
+    'hover_board_cell',
+    'confirm_gem_selection',
+    'cancel_gem_selection',
+    'take_bonus_gem',
+    'steal_gem',
+    'discard_gem',
+    'hover_player_gem',
     'end_turn',
     'force_royal_selection',
     'choose_royal',
     'open_settings',
     'change_setting',
+    'settings_save',
+    'settings_load',
+    'close_settings',
     'invalid_action',
     'load_replay_fixture',
     'reset',

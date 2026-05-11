@@ -2,7 +2,8 @@
     "name": "GemDuel.Editor",
     "rootNamespace": "GemDuel.Editor",
     "references": [
-        "GemDuel"
+        "GemDuel",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

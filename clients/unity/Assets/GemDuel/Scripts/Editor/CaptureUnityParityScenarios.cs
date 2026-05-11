@@ -42,11 +42,73 @@ namespace GemDuel.Editor
             ),
             new ParityScenario("initial-board-render", 2, "Post-draft replay board render."),
             new ParityScenario(
+                "chrome-settings-open",
+                2,
+                "Unity top-right settings open operation.",
+                false,
+                new[] { new ParityActionStep("open_settings") }
+            ),
+            new ParityScenario(
+                "chrome-rulebook-open",
+                2,
+                "Unity top-right rulebook open operation.",
+                false,
+                new[] { new ParityActionStep("click_chrome_rulebook") }
+            ),
+            new ParityScenario(
+                "chrome-restart-main-menu",
+                2,
+                "Unity top-right restart operation returns to main menu.",
+                false,
+                new[] { new ParityActionStep("click_chrome_restart") }
+            ),
+            new ParityScenario(
                 "market-card-preview",
                 2,
                 "Unity semantic market preview action.",
                 false,
                 new[] { new ParityActionStep("click_market_card", new JObject { ["level"] = 1, ["index"] = 0 }) }
+            ),
+            new ParityScenario(
+                "market-deck-reserve-preview",
+                2,
+                "Unity semantic market deck preview action.",
+                false,
+                new[] { new ParityActionStep("click_market_deck", new JObject { ["level"] = 1 }) }
+            ),
+            new ParityScenario(
+                "market-card-hover-feedback",
+                2,
+                "Unity market-card hover operation.",
+                false,
+                new[] { new ParityActionStep("hover_market_card", new JObject { ["level"] = 1, ["index"] = 0 }) }
+            ),
+            new ParityScenario(
+                "board-cell-hover-feedback",
+                2,
+                "Unity board-cell hover operation.",
+                false,
+                new[] { new ParityActionStep("hover_board_cell", new JObject { ["row"] = 0, ["column"] = 0 }) }
+            ),
+            new ParityScenario(
+                "take-gems-confirm",
+                2,
+                "Unity take-gems selection and confirm operation.",
+                false,
+                new[]
+                {
+                    new ParityActionStep("click_board_cell", new JObject { ["row"] = 0, ["column"] = 0 }),
+                    new ParityActionStep("click_board_cell", new JObject { ["row"] = 0, ["column"] = 1 }),
+                    new ParityActionStep("click_board_cell", new JObject { ["row"] = 0, ["column"] = 2 }),
+                    new ParityActionStep("confirm_gem_selection"),
+                }
+            ),
+            new ParityScenario(
+                "bonus-gem-follow-up",
+                8,
+                "Unity bonus gem follow-up operation.",
+                false,
+                new[] { new ParityActionStep("take_bonus_gem", new JObject { ["row"] = 1, ["column"] = 4 }) }
             ),
             new ParityScenario(
                 "preview-blank-dismiss",
@@ -74,6 +136,20 @@ namespace GemDuel.Editor
                 new[] { new ParityActionStep("reserve_card", new JObject { ["level"] = 3, ["index"] = 0 }) }
             ),
             new ParityScenario(
+                "reserved-card-preview",
+                44,
+                "Unity current-player reserved-card preview operation.",
+                false,
+                new[] { new ParityActionStep("click_player_reserved", new JObject { ["index"] = 0, ["player"] = "p2" }) }
+            ),
+            new ParityScenario(
+                "discard-gem-follow-up",
+                44,
+                "Unity discard gem follow-up operation.",
+                false,
+                new[] { new ParityActionStep("discard_gem", new JObject { ["gemId"] = "black" }) }
+            ),
+            new ParityScenario(
                 "end-turn",
                 10,
                 "First replenish end-turn boundary applied through the semantic action.",
@@ -89,6 +165,13 @@ namespace GemDuel.Editor
             ),
             new ParityScenario("player-zone-resource-score", 14, "Player zone after early resources and royal."),
             new ParityScenario(
+                "steal-gem-follow-up",
+                30,
+                "Unity steal gem follow-up operation.",
+                false,
+                new[] { new ParityActionStep("steal_gem", new JObject { ["gemId"] = "red" }) }
+            ),
+            new ParityScenario(
                 "settings-theme-equivalent",
                 2,
                 "Unity settings/theme shell opened and mutated through visible settings controls.",
@@ -98,6 +181,40 @@ namespace GemDuel.Editor
                     new ParityActionStep("open_settings"),
                     new ParityActionStep("change_setting", new JObject { ["name"] = "locale", ["value"] = "zh" }),
                     new ParityActionStep("change_setting", new JObject { ["name"] = "soundEnabled", ["value"] = false }),
+                    new ParityActionStep("change_setting", new JObject { ["name"] = "surfaceTheme", ["value"] = "dark-arcane" }),
+                }
+            ),
+            new ParityScenario(
+                "settings-surface-theme",
+                2,
+                "Unity settings surface-theme operation.",
+                false,
+                new[]
+                {
+                    new ParityActionStep("open_settings"),
+                    new ParityActionStep("change_setting", new JObject { ["name"] = "surfaceTheme", ["value"] = "dark-arcane" }),
+                }
+            ),
+            new ParityScenario(
+                "settings-save-replay",
+                2,
+                "Unity settings save replay row operation.",
+                false,
+                new[]
+                {
+                    new ParityActionStep("open_settings"),
+                    new ParityActionStep("settings_save"),
+                }
+            ),
+            new ParityScenario(
+                "settings-load-replay",
+                2,
+                "Unity settings load replay row operation.",
+                false,
+                new[]
+                {
+                    new ParityActionStep("open_settings"),
+                    new ParityActionStep("settings_load"),
                 }
             ),
             new ParityScenario(
@@ -171,6 +288,7 @@ namespace GemDuel.Editor
                 );
             }
 
+            var beforeActionState = slice.BuildAutomationStateSnapshot(viewport.Width, viewport.Height);
             var actionResults = new JArray();
             foreach (var action in scenario.Actions)
             {
@@ -183,6 +301,7 @@ namespace GemDuel.Editor
                         ["detail"] = string.IsNullOrEmpty(actionError) ? null : actionError,
                         ["driver"] = slice.LastAutomationDriver,
                         ["inputEvidence"] = slice.LastAutomationDetail,
+                        ["state"] = slice.BuildAutomationStateSnapshot(viewport.Width, viewport.Height),
                     }
                 );
                 if (!ok && !action.AllowFailure)
@@ -208,6 +327,7 @@ namespace GemDuel.Editor
                 state["inputScript"] = scenario.InputScript;
                 state["knownGap"] = scenario.KnownGap;
                 state["fixture"] = FixtureFileName;
+                state["beforeActionState"] = beforeActionState;
                 state["semanticActionResults"] = actionResults;
 
                 if (scenario.Id == "invalid-action-state")

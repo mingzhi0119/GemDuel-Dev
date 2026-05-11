@@ -217,12 +217,16 @@ export function AppOverlayStack({
                         <div className="flex flex-wrap justify-center gap-8 lg:gap-12">
                             <button
                                 ref={cancelRestartButtonRef}
+                                type="button"
+                                data-app-restart-cancel="true"
                                 onClick={onCancelRestart}
                                 className="rounded-3xl bg-slate-800 px-12 py-6 text-2xl font-semibold text-white transition-colors hover:bg-slate-700 lg:px-[4.5rem] lg:py-7 lg:text-4xl"
                             >
                                 {t('actions.cancel')}
                             </button>
                             <button
+                                type="button"
+                                data-app-restart-confirm="true"
                                 onClick={onConfirmRestart}
                                 className="rounded-3xl bg-red-600 px-12 py-6 text-2xl font-semibold text-white shadow-lg shadow-red-900/20 transition-all hover:scale-105 hover:bg-red-500 lg:px-[4.5rem] lg:py-7 lg:text-4xl"
                             >

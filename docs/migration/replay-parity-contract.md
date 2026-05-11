@@ -1,6 +1,6 @@
 # Replay Parity Contract
 
-Last updated: 2026-05-09
+Last updated: 2026-05-11
 
 Replay parity is the acceptance path for Unity migration. The TypeScript implementation is the
 oracle; Unity must replay the same fixture events and produce the expected final state hash.
@@ -31,9 +31,19 @@ Required scenario tags:
 - `buff`
 - `game-over`
 
-The corpus is intentionally small. It must stay reviewable and deterministic. Do not commit large
-historical outputs from `tools/artifacts/replay-audit` or local `Replay/` batch exports as the
-Unity contract.
+The current corpus is a baseline, not proof of full migration. Full migration must expand this
+corpus until it covers every non-debug gameplay action in
+`packages/shared/src/types/domain-actions.ts` and every phase transition in
+`packages/shared/src/logic/fsmPolicy.ts`, including valid paths, invalid phase rejections, invalid
+actor or ownership rejections, insufficient-resource rejections, buy/reserve/cancel/choose-color
+flows, privilege flows, reserve-deck and discard-reserved flows, royal recovery, bonus, steal,
+discard excess, replenish, buff effects, and replay import/export round trips.
+
+The corpus must stay reviewable and deterministic. Do not commit large historical outputs from
+`tools/artifacts/replay-audit` or local `Replay/` batch exports as the Unity contract.
+
+A single long fixture may provide smoke coverage, but it is not sufficient as proof of full
+migration.
 
 ## Manifest Fields
 
@@ -88,4 +98,8 @@ Unity parity is not complete until:
 - every event stream applies without command-gate divergence;
 - final Unity state hashes match every manifest `expectedFinalStateHash`;
 - Unity reports unsupported event types explicitly rather than silently skipping them;
-- fixture report is retained in the migration evidence for the Unity vertical slice.
+- fixture report is retained in the migration evidence for full Unity migration;
+- live Unity gameplay advances by applying commands from current state, not by copying replay
+  checkpoints into production state;
+- every non-debug `GameAction` and every FSM phase has coverage or an explicit user-approved
+  exclusion recorded in `docs/migration/unity-action-fsm-coverage-matrix.md`.

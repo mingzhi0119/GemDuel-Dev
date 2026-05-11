@@ -109,6 +109,12 @@ const createParams = () => {
         } as UseElectronUnityParityHarnessParams['layout'],
         locale: 'zh',
         theme: 'dark',
+        surfaceTheme: {
+            background: 'royal-luxury',
+            playerZone: 'royal-luxury',
+            gemPanel: 'royal-luxury',
+            effects: 'anime',
+        },
         soundEnabled: true,
         setupRoute: 'classic',
         matchmakingRoute: 'none',
@@ -143,19 +149,60 @@ const installDomTargets = () => {
                 <button name="buff-selection" data-draft-buff-id="royal_envoy" data-draft-buff-index="1">Royal Envoy</button>
             </div>
             <div data-market-slot="1-0"><button data-card-preview-click="true">Preview</button></div>
+            <div data-market-deck="1" role="button" tabIndex="0">Deck</div>
             <button data-card-preview-backdrop="true">Backdrop</button>
             <button data-card-preview-action="buy">Buy</button>
             <button data-card-preview-action="reserve">Reserve</button>
             <div data-reserved-slot="p1-0"><button data-card-preview-click="true">Reserved</button></div>
+            <button data-player-zone-gem="p2-red">Opponent red</button>
+            <button data-player-zone-gem="p1-red">Current red</button>
             <button data-game-action="replenish">End</button>
             <button data-royal-card="r91-ro">Royal</button>
+            <button data-app-rulebook-button="true">Rulebook</button>
+            <button data-app-restart-button="true">Restart</button>
             <button aria-label="Settings">Settings</button>
         </main>
     `;
+    document.querySelector('[data-app-rulebook-button="true"]')?.addEventListener('click', () => {
+        const rulebookPanel = document.createElement('div');
+        rulebookPanel.dataset.rulebookPanel = 'preview-style';
+        rulebookPanel.textContent = 'Rulebook panel';
+        document.body.appendChild(rulebookPanel);
+    });
+    document.querySelector('[data-app-restart-button="true"]')?.addEventListener('click', () => {
+        const confirm = document.createElement('button');
+        confirm.dataset.appRestartConfirm = 'true';
+        confirm.textContent = 'Confirm restart';
+        confirm.addEventListener('click', () => {
+            document.querySelector('[data-app-restart-confirm="true"]')?.remove();
+        });
+        document.body.appendChild(confirm);
+    });
+    document
+        .querySelector('[data-reserved-slot="p1-0"] [data-card-preview-click="true"]')
+        ?.addEventListener('click', () => {
+            const overlay = document.createElement('div');
+            overlay.dataset.cardPreviewOverlay = 'true';
+            const card = document.createElement('div');
+            card.dataset.cardPreviewCard = 'reserved-test-card';
+            overlay.appendChild(card);
+            document.body.appendChild(overlay);
+        });
     document.querySelector('button[aria-label="Settings"]')?.addEventListener('click', () => {
         const settingsMenu = document.createElement('div');
         settingsMenu.dataset.settingsMenu = 'true';
         settingsMenu.textContent = 'Settings panel';
+        const save = document.createElement('button');
+        save.dataset.appSaveReplayButton = 'true';
+        save.textContent = 'Save';
+        const load = document.createElement('label');
+        load.dataset.appLoadReplayControl = 'true';
+        load.textContent = 'Load';
+        const surface = document.createElement('button');
+        surface.dataset.appSurfaceThemeSelect = 'true';
+        surface.dataset.appSurfaceThemeControl = 'true';
+        surface.textContent = 'Surface';
+        settingsMenu.append(save, load, surface);
         document.body.appendChild(settingsMenu);
     });
 };
@@ -249,6 +296,7 @@ describe('useElectronUnityParityHarness', () => {
         expect(api.actions).toContain('start_local_game');
         expect(api.actions).toContain('choose_boon');
         expect(api.actions).toContain('hover_boon');
+        expect(api.actions).toContain('click_market_deck');
         expect(api.actions).toContain('click_preview_blank');
         expect(api.isReady()).toBe(true);
         expect(api.dumpState()).toMatchObject({
@@ -299,6 +347,11 @@ describe('useElectronUnityParityHarness', () => {
         await expect(
             api.dispatch('click_market_card', { level: 1, index: 0 })
         ).resolves.toMatchObject({ ok: true, action: 'click_market_card', driver: 'dom-click' });
+        await expect(api.dispatch('click_market_deck', { level: 1 })).resolves.toMatchObject({
+            ok: true,
+            action: 'click_market_deck',
+            driver: 'dom-click',
+        });
         await expect(api.dispatch('click_preview_blank')).resolves.toMatchObject({
             ok: true,
             action: 'click_preview_blank',
@@ -314,7 +367,9 @@ describe('useElectronUnityParityHarness', () => {
             action: 'reserve_card',
             driver: 'dom-click',
         });
-        await expect(api.dispatch('click_player_reserved', { index: 0 })).resolves.toMatchObject({
+        await expect(
+            api.dispatch('click_player_reserved', { index: 0, player: 'p1' })
+        ).resolves.toMatchObject({
             ok: true,
             action: 'click_player_reserved',
             driver: 'dom-click',
@@ -488,6 +543,14 @@ describe('useElectronUnityParityHarness', () => {
             ok: false,
             action: 'click_market_card',
             detail: 'No market card target for 1-0.',
+        });
+
+        document.querySelector('[data-market-deck="1"]')?.remove();
+        await expect(api.dispatch('click_market_deck', { level: 1 })).resolves.toMatchObject({
+            ok: false,
+            action: 'click_market_deck',
+            detail: 'No market deck target for 1.',
+            driver: 'missing-dom-target',
         });
 
         (params.game as unknown as { state: GameState }).state = createState({ royalDeck: [] });
