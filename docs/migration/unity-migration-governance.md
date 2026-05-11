@@ -236,9 +236,11 @@ must be `Incomplete` or `Blocked`, with exact remaining blockers.
 
 ## Mandatory Work Inventory
 
-Foundational contracts and planning artifacts that must remain current during full migration:
+Foundational contracts and planning artifacts that must exist during full migration. If absent,
+create them before claiming Gate 0 or final completion:
 
 ```text
+docs/migration/current-migration-task-plan.md
 docs/migration/game-state-contract.md
 docs/migration/game-action-contract.md
 docs/migration/replay-parity-contract.md

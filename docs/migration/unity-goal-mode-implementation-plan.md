@@ -148,8 +148,7 @@ evidence that was completed.
 | M5 store hardening        | SDK smoke passes                           | Store metadata, assets, privacy/EULA, notices, provenance, build upload.                   |
 | M6 production replacement | Unity rules/UI/platform/release gates pass | Decide Electron retirement, dual-track maintenance, or Unity as Steam-only client.         |
 
-## Short Prompt For Codex CLI `/goal`
+## Historical Prompt Removed
 
-```text
-/goal Implement docs/migration/unity-goal-mode-implementation-plan.md exactly. Build the Unity sidecar vertical slice under clients/unity with Unity Editor 6000.4.6f1 (revision 0b051c2e5d54), without modifying packages/shared gameplay logic and without adding Steamworks/EOS SDKs, app IDs, secrets, tokens, Unity cache, or build outputs. Complete Unity catalog export, C# replay DTOs/bootstrap/reducer/hash parity, LocalDev platform services, minimal presentation scene/input, Unity build script, implementation report, and all runnable validations. If Unity Editor 6000.4.6f1 is unavailable, mark Unity editor tests/build as blocked with evidence; do not fake them.
-```
+The executable `/goal` prompt that originally targeted this vertical-slice plan has been removed.
+This file is retained only as historical context and must not provide runnable migration instructions.

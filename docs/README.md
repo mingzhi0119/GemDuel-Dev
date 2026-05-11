@@ -26,7 +26,6 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 - [Electron/Unity Parity Runner Operations](migration/electron-unity-parity-runner-operations.md)
 - [Local PVP Operation Parity Gap Report](migration/local-pvp-operation-parity-gap-report-2026-05-10.md)
 - [Local PVP Operation Parity Codex Goal](migration/local-pvp-operation-parity-codex-goal-2026-05-10.md)
-- [Historical: Unity Electron 90% Scoped Parity Report](migration/unity-electron-90-parity-report.md)
 
 ## Governance
 
@@ -44,6 +43,7 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 ## Archive
 
 - [Archive Index](archive/README.md)
+- Historical only, not current target: [Unity Electron 90% Scoped Parity Report](migration/unity-electron-90-parity-report.md)
 - [Audit Reports and Revalidations](archive/README.md#audits-and-revalidations)
 - [Roadmaps and Implementation Plans](archive/README.md#roadmaps-and-implementation-plans)
 - [Certifications](archive/README.md#certifications)
