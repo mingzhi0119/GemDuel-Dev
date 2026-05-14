@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { format as formatWithPrettier } from 'prettier';
 
 import { GEM_TYPES } from '../../packages/shared/src/constants';
+import { BUFFS } from '../../packages/shared/src/data/buffs';
 import { getActionRejectionReason } from '../../packages/shared/src/logic/actionValidation/rules';
 import { applyAction } from '../../packages/shared/src/logic/gameReducer';
 import { auditReplay } from '../../packages/shared/src/replay/index';
@@ -79,26 +80,35 @@ const REQUIRED_REJECTION_COVERAGE = [
     'wrong-phase:SELECT_ROYAL_CARD',
     'wrong-phase:REROLL_DRAFT_POOL',
     'edge:SELECT_BUFF:unavailable',
+    'edge:SELECT_BUFF:p2-before-p1',
     'edge:REPLENISH:empty-bag',
     'edge:TAKE_GEMS:empty',
     'edge:TAKE_GEMS:gold-cell',
     'edge:TAKE_GEMS:gapped',
+    'edge:TAKE_GEMS:no-take-3',
+    'edge:TAKE_GEMS:out-of-bounds',
     'edge:TAKE_BONUS_GEM:wrong-color',
     'edge:TAKE_BONUS_GEM:unavailable-cell',
+    'edge:TAKE_BONUS_GEM:out-of-bounds',
     'edge:DISCARD_GEM:not-owned',
     'edge:STEAL_GEM:gold',
     'edge:STEAL_GEM:not-owned',
     'edge:INITIATE_BUY_JOKER:non-joker',
+    'edge:INITIATE_BUY_JOKER:reserved-not-owned',
     'edge:BUY_CARD:market-mismatch',
     'edge:BUY_CARD:reserved-not-owned',
+    'edge:BUY_CARD:joker-without-color',
     'edge:INITIATE_RESERVE:market-mismatch',
     'edge:INITIATE_RESERVE_DECK:empty-deck',
+    'edge:CANCEL_RESERVE:no-pending',
     'edge:RESERVE_CARD:missing-gold',
     'edge:RESERVE_CARD:non-gold',
+    'edge:RESERVE_CARD:gold-out-of-bounds',
     'edge:RESERVE_CARD:pending-mismatch',
     'edge:RESERVE_CARD:full-row',
     'edge:RESERVE_DECK:missing-gold',
     'edge:RESERVE_DECK:non-gold',
+    'edge:RESERVE_DECK:gold-out-of-bounds',
     'edge:RESERVE_DECK:pending-mismatch',
     'edge:RESERVE_DECK:full-row',
     'edge:DISCARD_RESERVED:no-ability',
@@ -107,7 +117,9 @@ const REQUIRED_REJECTION_COVERAGE = [
     'edge:ACTIVATE_PRIVILEGE:no-target',
     'edge:USE_PRIVILEGE:no-charge',
     'edge:USE_PRIVILEGE:invalid-target',
+    'edge:USE_PRIVILEGE:out-of-bounds',
     'edge:SELECT_ROYAL_CARD:unavailable',
+    'edge:GAME_OVER:action-after-winner',
     'edge:PEEK_DECK:no-ability',
     'edge:CLOSE_MODAL:no-modal',
     'edge:CLOSE_MODAL:blocked',
@@ -121,11 +133,13 @@ type RejectionStateSetupId =
     | 'empty-bag'
     | 'empty-deck'
     | 'full-reserve-row'
+    | 'missing-pending-reserve'
     | 'empty-board-with-privilege'
     | 'privilege-action-no-charge'
     | 'blocked-peek-modal'
     | 'online-draft'
-    | 'p2-draft-before-p1-selection';
+    | 'p2-draft-before-p1-selection'
+    | 'no-take-3-buff';
 
 interface ManifestFixture {
     id: string;
@@ -521,6 +535,9 @@ const applyRejectionStateSetup = (
         case 'full-reserve-row':
             nextState.playerReserved[nextState.turn] = collectReserveFillCards(nextState);
             return nextState;
+        case 'missing-pending-reserve':
+            nextState.pendingReserve = null;
+            return nextState;
         case 'empty-board-with-privilege':
             nextState.board = makeEmptyBoard(nextState);
             nextState.privileges[nextState.turn] = 1;
@@ -544,6 +561,10 @@ const applyRejectionStateSetup = (
         case 'p2-draft-before-p1-selection':
             nextState.turn = 'p2';
             nextState.p1SelectedBuff = null;
+            nextState.p2DraftPool = [...nextState.draftPool];
+            return nextState;
+        case 'no-take-3-buff':
+            nextState.playerBuffs[nextState.turn] = cloneJson(BUFFS.DESPERATE_GAMBLE);
             return nextState;
         default: {
             const exhaustive: never = setupId;

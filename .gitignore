@@ -29,6 +29,7 @@ pnpm-debug.log*
 # Testing
 coverage/
 /artifacts/
+/tools/scripts/artifacts/
 /tmp/
 /test-results/
 tmp-release-health-*/

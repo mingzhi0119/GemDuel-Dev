@@ -21,10 +21,375 @@ namespace GemDuel.Presentation
         private const string LocalDevReplayFileName = "localdev.replay.json";
         private const float CardPreviewAspectRatio = 1448f / 1086f;
         private const int MaxTakeGemsSelectionCount = 3;
+        private const int SharedPrivilegeSupplySize = 3;
+        private const float ElectronSettingsCssScale = 1.5f;
+        private const float ElectronShellVisualScale = 0.5f;
+        private const float ElectronSettingsScale = ElectronSettingsCssScale * ElectronShellVisualScale;
+        private const float ElectronSettingsMenuCssWidth = 248f;
+        private const float ElectronSettingsMenuWidth = ElectronSettingsMenuCssWidth * ElectronSettingsScale;
+        private const float ElectronSettingsMenuHeight = 228.83f;
+        private const float ElectronSettingsContentInset = 8.25f;
+        private const float ElectronSettingsTitleFontPx = 11f * ElectronSettingsScale;
+        private const float ElectronSettingsSectionLabelFontPx = 10f * ElectronSettingsScale;
+        private const float ElectronSettingsRowFontPx = 13f * ElectronSettingsScale;
+        private const float ElectronSettingsLocaleFontPx = 12f * ElectronSettingsScale;
+        private const float ElectronSettingsRowHeight = 31.61f;
+        private const float ElectronSettingsRowGap = 6f * ElectronSettingsScale;
+        private const float SettingsPanelX = 1722f;
+        private const float SettingsPanelY = 60f;
+        private const float SettingsPanelWidth = ElectronSettingsMenuWidth;
+        private const float SettingsPanelHeight = ElectronSettingsMenuHeight;
+        private const float SettingsControlX = SettingsPanelX + ElectronSettingsContentInset;
+        private const float SettingsControlWidth = SettingsPanelWidth - ElectronSettingsContentInset * 2f;
+        private const float SettingsTitleY = 74.64f;
+        private const float SettingsLocaleLabelY = 92.85f;
+        private const float SettingsLocaleX = SettingsControlX + 3f;
+        private const float SettingsLocaleY = 104.66f;
+        private const float SettingsLocaleWidth = SettingsControlWidth - 6f;
+        private const float SettingsLocaleHeight = 28.5f;
+        private const float SettingsRowStartY = 140.66f;
+        private const float SettingsRowHeight = ElectronSettingsRowHeight;
+        private const float SettingsRowGap = ElectronSettingsRowHeight + ElectronSettingsRowGap;
+        private const float SettingsTitleFontSize = ElectronSettingsTitleFontPx / 108f;
+        private const float SettingsSectionLabelFontSize = ElectronSettingsSectionLabelFontPx / 108f;
+        private const float SettingsLocaleFontSize = ElectronSettingsLocaleFontPx / 108f;
+        private const float SettingsRowFontSize = ElectronSettingsRowFontPx / 108f;
+        private const float SettingsIconFontSize = 20f * ElectronSettingsScale / 108f;
         private static readonly string[] GemOrder = { "blue", "white", "green", "black", "red", "pearl", "gold" };
+        private static readonly string[] ReplayInitLevels = { "1", "2", "3" };
+        private static readonly int[] ReplayInitMarketSlotsByLevel = { 5, 4, 3 };
         private static readonly string[] JokerBonusColorOrder = { "red", "green", "blue", "white", "black", "pearl" };
         private static readonly string[] PlayerZoneResourceOrder = { "red", "green", "blue", "white", "black", "pearl", "gold" };
         private static readonly string[] PlayerZoneTableauOrder = { "red", "green", "blue", "white", "black", "pure-royal" };
+        private const string RulebookSourceOfTruth = "packages/ui/src/components/RulebookContent.ts";
+        private static readonly RulebookPageContent[] RulebookPages =
+        {
+            new RulebookPageContent(
+                "Quick Start",
+                "快速上手",
+                "Gem Duel is a 2-player card and token duel. You win by ending your turn with one active victory target met.",
+                "《Gem Duel》是一款双人卡牌与宝石对决。只要在你的回合结算结束时满足任一当前胜利目标，你就会获胜。",
+                new RulebookSectionContent(
+                    "Default victory targets",
+                    "默认胜利目标",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Reach 20 Prestige Points.", "达到 20 点声望值。"),
+                        new LocalizedRulebookText("Collect 10 Crowns.", "收集 10 个皇冠。"),
+                        new LocalizedRulebookText("Reach 10 Single-Color Points.", "达到 10 点单色分数。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Table components",
+                    "桌面组件",
+                    new[]
+                    {
+                        new LocalizedRulebookText("A 5x5 board holds up to 25 Gem tokens.", "5x5 宝石版图最多容纳 25 个宝石代币。"),
+                        new LocalizedRulebookText("Standard Gems are blue, white, green, black, and red. Special Gems are Pearl and Gold.", "基础宝石包括蓝、白、绿、黑、红。特殊宝石包括珍珠和黄金。"),
+                        new LocalizedRulebookText("Market cards have 3 levels. The Royal Area holds Royal Cards chosen at Crown milestones.", "市场卡牌分为 3 个等级。皇室区展示通过皇冠里程碑选择的皇室卡。"),
+                        new LocalizedRulebookText("Privilege Scrolls are optional-action tokens that let you take 1 non-Gold Gem before your main action.", "特权卷轴是可选行动资源，可在主要行动前拿取 1 个非黄金宝石。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Roguelike note",
+                    "肉鸽提示",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Roguelike Buffs can replace victory targets, change limits, and add extra resources. The active targets shown in game are authoritative.", "肉鸽增益可能替换胜利目标、改变上限或提供额外资源。游戏内当前显示的目标始终优先。"),
+                    },
+                    "callout"
+                )
+            ),
+            new RulebookPageContent(
+                "Card Anatomy & Abilities",
+                "卡牌结构与能力",
+                "Original Electron page: Card Layout diagram plus Special Abilities glossary.",
+                "Electron 原版页面：卡牌结构图示与特殊能力词条。",
+                new RulebookSectionContent(
+                    "Card Layout",
+                    "卡牌结构",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Prestige Points: 20 total points to win, or 10 Single-Color Points to win.", "声望值：总分达到 20 即可获胜，或单色分数达到 10 即可获胜。"),
+                        new LocalizedRulebookText("Bonus: discount on future buys. Wild Bonus may become any basic color discount.", "奖励：为后续购买提供折扣。万能奖励可任选一种基础颜色作为折扣。"),
+                        new LocalizedRulebookText("Special Ability: icon triggers on buy.", "特殊能力：购买时触发图标效果。"),
+                        new LocalizedRulebookText("Gem Cost: price to purchase.", "宝石成本：购买所需价格。"),
+                        new LocalizedRulebookText("Crowns: unlock Royal Area picks. 10 Crowns to win.", "皇冠：收集后会触发皇室区选择。10 个即可获胜。"),
+                    },
+                    "figure"
+                ),
+                new RulebookSectionContent(
+                    "Special Abilities",
+                    "特殊能力",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Extra Turn: immediately take another turn after this one.", "额外回合：立即获得额外的一个回合。"),
+                        new LocalizedRulebookText("Bonus Gem: take 1 Gem of the card's color from the board.", "奖励宝石：从版图上拿取 1 个与该卡牌颜色相同的宝石。"),
+                        new LocalizedRulebookText("Steal: steal 1 non-Gold Gem from your opponent.", "掠夺：从对手那里偷取 1 个非黄金宝石。"),
+                        new LocalizedRulebookText("Privilege: take 1 Privilege Scroll, or steal one if the supply is empty.", "特权：拿取 1 个特权卷轴；如果供应堆为空，则从对手处拿取。"),
+                    }
+                )
+            ),
+            new RulebookPageContent(
+                "Player Zone",
+                "玩家区",
+                "Your player zone shows owned cards, reserved cards, resources, and Privilege Scrolls.",
+                "玩家区展示你的已购卡、保留卡、宝石资源和特权卷轴。",
+                new RulebookSectionContent(
+                    "Player Zone Figure",
+                    "玩家区图示",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Reserve", "保留区"),
+                        new LocalizedRulebookText("Tableau / Library", "牌库 / 已购卡"),
+                        new LocalizedRulebookText("Buffs (Rogue Only)", "Buffs（肉鸽限定）"),
+                        new LocalizedRulebookText("Scrolls", "特权卷轴"),
+                        new LocalizedRulebookText("Gems", "宝石资源"),
+                    },
+                    "figure"
+                ),
+                new RulebookSectionContent(
+                    "Owned cards",
+                    "已购卡与牌库",
+                    new[]
+                    {
+                        new LocalizedRulebookText("When you gain a card, it enters your personal tableau and becomes part of your card library.", "当你获得一张卡后，它会进入你的个人场上区域，并成为你的牌库内容。"),
+                        new LocalizedRulebookText("Click a color stack, or the pure-points stack, to inspect every card you own in that group.", "点击某个颜色牌库或纯分数牌库，可以查看你拥有的该色或纯分数的所有卡牌。"),
+                        new LocalizedRulebookText("Bonus discounts and Single-Color Points are read from these owned-card stacks.", "奖励折扣和单色分数都会从这些已购卡堆中计算。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Reserved cards",
+                    "保留区",
+                    new[]
+                    {
+                        new LocalizedRulebookText("When you reserve a card, it moves into your personal reserve area.", "当你保留一张卡时，它会进入你的个人保留区。"),
+                        new LocalizedRulebookText("Reserved cards can only be bought by you.", "保留区中的卡牌只能由你购买。"),
+                        new LocalizedRulebookText("Click the reserve area to inspect your reserved cards and buy them when you can pay the cost.", "点击保留区可以查看你保留的牌，并在能支付费用时从这里购买。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Privilege Scrolls",
+                    "特权卷轴",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Privilege Scrolls appear below your avatar after you gain them.", "当你获得特权卷轴后，它会显示在你的头像下方。"),
+                        new LocalizedRulebookText("At the start of your turn, click a Privilege Scroll to take 1 non-Gold Gem from the board before your main action.", "在你的回合开始时，可以点击特权卷轴，并从盘面拿取 1 个非黄金宝石，然后再执行主要行动。"),
+                        new LocalizedRulebookText("Your gem row shows the resources you can spend, steal, discard, or count against the Gem Cap.", "你的宝石资源行会显示可用于支付、被掠夺、弃置或计入宝石上限的资源。"),
+                    }
+                )
+            ),
+            new RulebookPageContent(
+                "Main Field",
+                "主战区",
+                "The Main Field contains the Market, the board, and the Royal Area.",
+                "主战区包含市场、宝石盘面和皇室区。",
+                new RulebookSectionContent(
+                    "Main Field Figure",
+                    "主战区图示",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Market", "市场"),
+                        new LocalizedRulebookText("Board", "盘面"),
+                        new LocalizedRulebookText("Royal Area", "皇室区"),
+                    },
+                    "figure"
+                ),
+                new RulebookSectionContent(
+                    "Market",
+                    "市场",
+                    new[]
+                    {
+                        new LocalizedRulebookText("The Market shows face-up cards by level, plus each level deck.", "市场按等级展示公开卡牌，并显示每个等级的牌堆。"),
+                        new LocalizedRulebookText("Click a face-up card to preview it, then buy or reserve from the Preview panel.", "点击公开卡会先打开预览面板，然后从预览中购买或保留。"),
+                        new LocalizedRulebookText("Deck previews let you reserve the top card when that action is legal.", "当行动合法时，牌堆预览可以让你保留牌堆顶牌。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Board",
+                    "盘面",
+                    new[]
+                    {
+                        new LocalizedRulebookText("The board is where you take Gems with Take Gems, Bonus Gem, and Privilege Scrolls.", "盘面用于通过拿取宝石、奖励宝石和特权卷轴拿取宝石。"),
+                        new LocalizedRulebookText("Normal gem-taking uses a legal straight line. Gold cannot be taken by normal gem-taking.", "普通拿取宝石需要选择合法直线。黄金不能通过普通拿取宝石获得。"),
+                        new LocalizedRulebookText("Follow-up phases highlight the required target, such as Gold after reserve or a matching gem after Bonus Gem.", "后续阶段会高亮必须选择的目标，例如保留后的黄金，或奖励宝石能力后的同色宝石。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Royal Area",
+                    "皇室区",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Royal Cards are displayed on the right side of the board. At 3 or 6 Crowns, you must choose one to gain.", "皇室卡显示在盘面右侧，在你达到3/6个皇冠时你必须选择一个获取。"),
+                        new LocalizedRulebookText("Royal Cards are free pure-points cards that provide points and special abilities.", "皇室卡是免费的纯分数卡，提供分数和特殊能力。"),
+                        new LocalizedRulebookText("Click Royal Cards to inspect them outside selection, or choose one during Royal Area selection.", "非选择阶段可点击皇室卡查看；当游戏进入皇室区选择阶段时，可点击其中一张获得。"),
+                    }
+                )
+            ),
+            new RulebookPageContent(
+                "Battle Status Bar",
+                "战况栏",
+                "The Battle Status Bar shows both players' current victory pressure and whose turn is active.",
+                "战况栏显示双方当前胜利进度，以及现在轮到哪一方行动。",
+                new RulebookSectionContent(
+                    "Battle Status Bar Figure",
+                    "战况栏图示",
+                    new[]
+                    {
+                        new LocalizedRulebookText("P1 Crowns / Goals", "P1 皇冠 / 目标"),
+                        new LocalizedRulebookText("P1 Points / Goal", "P1 分数 / 目标"),
+                        new LocalizedRulebookText("Turn Counts", "回合计数"),
+                        new LocalizedRulebookText("P2 Crowns / Goals", "P2 皇冠 / 目标"),
+                        new LocalizedRulebookText("P2 Points / Goal", "P2 分数 / 目标"),
+                    },
+                    "figure"
+                ),
+                new RulebookSectionContent(
+                    "Scores and goals",
+                    "分数与目标",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Prestige Points are shown beside each player's score icon, with the active target shown after the slash.", "声望值显示在每名玩家的分数图标旁，斜杠后的数字是当前目标。"),
+                        new LocalizedRulebookText("Crowns are shown beside each player's crown icon, with the active Crown target shown after the slash.", "皇冠显示在每名玩家的皇冠图标旁，斜杠后的数字是当前皇冠目标。"),
+                        new LocalizedRulebookText("Buffs may change these target values, so the Battle Status Bar is the live source of truth.", "增益可能改变这些目标数值，因此战况栏显示的是当前实时目标。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Turn state",
+                    "回合状态",
+                    new[]
+                    {
+                        new LocalizedRulebookText("The center of the bar shows P1 and P2 turn counts.", "战况栏中央显示 P1 与 P2 的回合计数。"),
+                        new LocalizedRulebookText("The active player is highlighted so you can tell whose turn is currently resolving.", "当前行动方会被高亮，方便判断正在结算谁的回合。"),
+                        new LocalizedRulebookText("In online play, a small marker appears when it is your turn.", "在线对局中，轮到你行动时会出现额外提示。"),
+                    }
+                )
+            ),
+            new RulebookPageContent(
+                "Turn Flow",
+                "回合流程",
+                "Optional actions happen first. Then you must perform exactly one main action. Forced resolution finishes the turn.",
+                "先执行可选行动，然后必须执行恰好一个主要行动，最后按顺序完成强制结算。",
+                new RulebookSectionContent(
+                    "Optional Actions",
+                    "可选行动",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Privilege Scroll: Return 1 Scroll to take 1 non-Gold Gem from the board.", "特权卷轴：归还 1 个卷轴，从版图拿取 1 个非黄金宝石。"),
+                        new LocalizedRulebookText("Replenish: Fill board gaps from the bag in spiral order. Your opponent gains 1 standard Privilege Scroll.", "补给：按螺旋顺序从布袋补满空位。对手获得 1 个标准特权卷轴。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Main actions",
+                    "主要行动",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Take Gems: Take up to 3 consecutive tokens in one straight row, column, or diagonal. Gold cannot be taken this way.", "拿取宝石：拿取最多 3 个连续且排成直线的代币，方向可以是行、列或对角线。不能以此方式拿取黄金。"),
+                        new LocalizedRulebookText("Reserve: Reserve 1 Market card or top deck card. If Gold is on the board, take exactly 1 Gold with the reserve.", "保留：保留 1 张市场卡或牌堆顶牌。若版图上有黄金，此次保留必须同时拿取恰好 1 个黄金。"),
+                        new LocalizedRulebookText("Buy Card: Buy a Market or Reserved card by paying Gems after Bonus discounts.", "购买卡牌：使用宝石并结算奖励折扣后，购买市场或保留区卡牌。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Forced resolution order",
+                    "强制结算顺序",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Resolve triggered abilities: Bonus Gem, Steal, and Privilege.", "结算触发能力：奖励宝石、掠夺和特权。"),
+                        new LocalizedRulebookText("If a Royal Area milestone is reached, choose the required Royal Card.", "如果达到皇室区里程碑，先选择必须获得的皇室卡。"),
+                        new LocalizedRulebookText("If you exceed your Gem Cap, discard down to the current limit.", "如果超过当前宝石持有上限，弃到该上限为止。"),
+                        new LocalizedRulebookText("If an Extra Turn was gained, immediately take that extra turn.", "如果获得额外回合，立刻进入额外回合。"),
+                    }
+                )
+            ),
+            new RulebookPageContent(
+                "Buying Cards",
+                "购买卡牌",
+                "Cards become cheaper as your tableau grows. Gold covers missing cost, and Pearls remain special.",
+                "你的已购卡越多，后续购买越便宜。黄金可补足费用，珍珠始终按特殊资源处理。",
+                new RulebookSectionContent(
+                    "Payment",
+                    "支付规则",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Bonuses reduce future costs of the same card color by 1 each.", "每个同色奖励会使未来购买该颜色卡牌的费用减少 1。"),
+                        new LocalizedRulebookText("Gold can replace any missing Gem cost, including Pearl.", "黄金可以替代任意缺失费用，包括珍珠。"),
+                        new LocalizedRulebookText("Pearl costs are not reduced by Bonuses.", "珍珠费用不会被奖励抵扣。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Card abilities",
+                    "卡牌能力",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Extra Turn: Take another turn immediately after this turn resolves.", "额外回合：本回合结算后立即再进行一个回合。"),
+                        new LocalizedRulebookText("Bonus Gem: Take 1 Gem matching the card color from the board if available.", "奖励宝石：若版图上有与卡牌颜色相同的宝石，拿取 1 个。"),
+                        new LocalizedRulebookText("Steal: Steal 1 non-Gold Gem from your opponent.", "掠夺：从对手处偷取 1 个非黄金宝石。"),
+                        new LocalizedRulebookText("Privilege: Take 1 Privilege Scroll from the board supply, or from the opponent if that supply is empty.", "特权：从版图供应堆拿取 1 个特权卷轴；若供应堆为空，则从对手处拿取。"),
+                    }
+                )
+            ),
+            new RulebookPageContent(
+                "Tokens & Limits",
+                "代币与限制",
+                "Gem limits, scroll transfers, and buff-created resources all matter at the end of a turn.",
+                "宝石上限、卷轴转移和增益创造资源都会影响回合结束时的处理。",
+                new RulebookSectionContent(
+                    "Gem Cap",
+                    "宝石持有上限",
+                    new[]
+                    {
+                        new LocalizedRulebookText("The default Gem Cap is 10.", "默认宝石持有上限为 10。"),
+                        new LocalizedRulebookText("Gold and Pearl count toward the limit.", "黄金和珍珠都会计入上限。"),
+                        new LocalizedRulebookText("Roguelike Buffs can raise or lower your Gem Cap.", "肉鸽增益可以提高或降低你的宝石持有上限。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Privilege Scrolls",
+                    "特权卷轴",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Use 1 before your main action to take 1 non-Gold Gem from the board.", "在主要行动前使用 1 个，从版图拿取 1 个非黄金宝石。"),
+                        new LocalizedRulebookText("You gain 1 when your opponent takes 3 same-color basic Gems or 2 Pearls with Take Gems.", "当对手通过拿取宝石拿到 3 个同色基础宝石或 2 个珍珠时，你获得 1 个。"),
+                        new LocalizedRulebookText("If the board supply is empty, a standard scroll gain transfers 1 scroll from the opponent instead.", "如果版图供应堆为空，标准卷轴获取会改为从对手处转移 1 个。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Extra resources",
+                    "额外资源",
+                    new[]
+                    {
+                        new LocalizedRulebookText("Extra Basic Gems, Extra Pearls, and Extra Gold vanish after being spent instead of returning to the bag.", "额外基础宝石、额外珍珠和额外黄金在花费后会消失，不会回到布袋。"),
+                        new LocalizedRulebookText("Special Privileges are protected golden scrolls. They cannot be taken by the opponent, are spent first, and are capped at 1.", "特殊特权是受保护的金色卷轴。它们不能被对手拿走，会优先花费，且最多持有 1 个。"),
+                    }
+                )
+            ),
+            new RulebookPageContent(
+                "Roguelike & Buff Compendium",
+                "肉鸽与增益手册",
+                "Roguelike Mode gives both players asymmetric starting Buffs before the duel begins.",
+                "肉鸽模式会在对局开始前给予双方不对称的初始增益。",
+                new RulebookSectionContent(
+                    "Draft setup",
+                    "选择流程",
+                    new[]
+                    {
+                        new LocalizedRulebookText("A random Buff Level from 1 to 3 is chosen before the game.", "游戏开始前会随机选择一个 1 到 3 的增益等级。"),
+                        new LocalizedRulebookText("P1 drafts 1 Buff from 3 options.", "P1 从 3 个选项中选择 1 个增益。"),
+                        new LocalizedRulebookText("P2 drafts from 4 options: P1's chosen Buff plus 3 new Buffs.", "P2 从 4 个选项中选择：包括 P1 已选的增益以及 3 个新增益。"),
+                    }
+                ),
+                new RulebookSectionContent(
+                    "Buff Compendium",
+                    "增益手册",
+                    new[]
+                    {
+                        new LocalizedRulebookText("The original Electron page appends buildBuffCompendium('en') from @gemduel/shared/data/buffCopy.", "Electron 原版页面会追加 @gemduel/shared/data/buffCopy 的 buildBuffCompendium('zh') 内容。"),
+                        new LocalizedRulebookText("Unity reads the same runtime Buff catalog for draft labels and descriptions; this page keeps the compendium source linked in the snapshot.", "Unity 草稿标签与描述读取同一运行时增益目录；本页在快照中保留手册来源。"),
+                    },
+                    "body"
+                )
+            ),
+        };
         private static readonly string[] SurfaceThemeVariants =
         {
             "crystal-anime",
@@ -45,6 +410,7 @@ namespace GemDuel.Presentation
         private UnityCatalog catalog;
         private GameState currentState;
         private GameObject renderRoot;
+        private readonly List<GameObject> renderedRoots = new List<GameObject>();
         private TMP_Text statusText;
         private TMP_Text guideText;
         private int nextFixtureEventIndex;
@@ -52,6 +418,7 @@ namespace GemDuel.Presentation
         private bool settingsOpen;
         private bool settingsSurfaceDropdownOpen;
         private bool rulebookOpen;
+        private int rulebookPage;
         private string settingsLocale = "zh";
         private readonly string settingsTheme = "dark";
         private string settingsSurfaceTheme = "royal-luxury";
@@ -115,12 +482,27 @@ namespace GemDuel.Presentation
 
         public string GetBoardGemForAutomation(int row, int column)
         {
-            if (currentState == null)
+            return GetCurrentBoardGemId(row, column);
+        }
+
+        private string GetCurrentBoardGemId(int row, int column)
+        {
+            if (currentState == null || row < 0 || column < 0)
             {
                 return string.Empty;
             }
 
-            return ((JArray)currentState.Snapshot["board"])[row][column].Value<string>();
+            if (!(currentState.Snapshot["board"] is JArray board) || row >= board.Count)
+            {
+                return string.Empty;
+            }
+
+            if (!(board[row] is JArray boardRow) || column >= boardRow.Count)
+            {
+                return string.Empty;
+            }
+
+            return boardRow[column].Value<string>() ?? string.Empty;
         }
 
         public int GetInventoryCountForAutomation(string player, string gemId)
@@ -157,8 +539,10 @@ namespace GemDuel.Presentation
 
         public void LoadMainMenuForAutomation()
         {
+            EnsureInputController();
             BuildCamera();
             BuildStatusText();
+            LoadSettings();
             catalog = new CatalogLoader().LoadDefault();
             activeReplay = null;
             liveRecordedReplay = null;
@@ -290,6 +674,24 @@ namespace GemDuel.Presentation
                         "rulebook control",
                         out error
                     );
+                case "close_rulebook":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.SemanticKey == "rulebook.close",
+                        "rulebook close",
+                        out error
+                    );
+                case "rulebook_next":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "rulebook_next",
+                        "rulebook next",
+                        out error
+                    );
+                case "rulebook_prev":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "rulebook_prev",
+                        "rulebook previous",
+                        out error
+                    );
                 case "click_chrome_restart":
                     return ClickVisibleTargetForAutomation(
                         target => target.Kind == "ActionButton" && target.EventType == "restart_local_pvp",
@@ -333,8 +735,15 @@ namespace GemDuel.Presentation
                     {
                         actionId = "preview-discard";
                     }
+                    var actionSemanticKey = PreviewActionSemanticKey(actionId);
                     return ClickVisibleTargetForAutomation(
-                        target => target.Kind == "ActionButton" && target.EventType == actionId,
+                        target =>
+                            target.Kind == "ActionButton"
+                            && target.EventType == actionId
+                            && (
+                                string.IsNullOrEmpty(actionSemanticKey)
+                                || target.SemanticKey == actionSemanticKey
+                            ),
                         actionId,
                         out error
                     );
@@ -352,6 +761,9 @@ namespace GemDuel.Presentation
                         out error
                     );
                 case "click_board_cell":
+                    return ClickBoardCellForAutomation(payload, out error);
+                case "resolve_pending_reserve_gold":
+                case "use_privilege":
                     return ClickBoardCellForAutomation(payload, out error);
                 case "hover_board_cell":
                     return HoverBoardCellForAutomation(payload, out error);
@@ -395,7 +807,11 @@ namespace GemDuel.Presentation
                     SetStatus("Royal selection requested.");
                     return true;
                 case "choose_royal":
-                    return ChooseRoyal(payload.Value<int?>("index") ?? 0, out error);
+                    return ChooseRoyal(
+                        payload.Value<int?>("index") ?? 0,
+                        payload.Value<string>("royalId"),
+                        out error
+                    );
                 case "open_settings":
                     return ClickSettingsForAutomation(out error);
                 case "change_setting":
@@ -437,6 +853,55 @@ namespace GemDuel.Presentation
             }
         }
 
+        public bool RunLiveRulesCommandForAutomation(
+            string commandType,
+            JObject payload,
+            string actorOverride,
+            out string error
+        )
+        {
+            error = string.Empty;
+            if (currentState == null)
+            {
+                error = "No live game is active.";
+                lastAutomationDriver = "live-rules-engine-command-rejected";
+                lastAutomationDetail = error;
+                return false;
+            }
+
+            if (activeReplay != null)
+            {
+                error = "Automation live rules commands are not available during replay review.";
+                lastAutomationDriver = "live-rules-engine-command-rejected";
+                lastAutomationDetail = error;
+                return false;
+            }
+
+            if (activeRulesInit == null || activeRulesInit.Count == 0)
+            {
+                error = "Live rules engine session is not available.";
+                lastAutomationDriver = "live-rules-engine-command-rejected";
+                lastAutomationDetail = error;
+                return false;
+            }
+
+            lastAutomationDriver = "live-rules-engine-command";
+            lastAutomationDetail = commandType;
+            var ok = ApplyLiveRulesCommand(commandType, payload ?? new JObject(), actorOverride);
+            if (ok)
+            {
+                lastAutomationDetail = "Applied live rules command " + commandType + ".";
+                return true;
+            }
+
+            error = string.IsNullOrEmpty(errorBanner)
+                ? "Live rules command rejected."
+                : errorBanner;
+            lastAutomationDriver = "live-rules-engine-command-rejected";
+            lastAutomationDetail = error;
+            return false;
+        }
+
         public JObject BuildAutomationStateSnapshot(int viewportWidth, int viewportHeight)
         {
             var snapshot = currentState == null ? BuildShellSnapshot() : (JObject)currentState.Snapshot.DeepClone();
@@ -457,6 +922,7 @@ namespace GemDuel.Presentation
                 ["visibleTargets"] = BuildVisibleTargetSnapshot(viewportWidth, viewportHeight),
                 ["typography"] = BuildTypographySnapshot(),
                 ["settings"] = BuildSettingsSnapshot(),
+                ["visualContracts"] = BuildVisualContractSnapshot(viewportWidth, viewportHeight),
                 ["replay"] = BuildReplaySnapshot(),
                 ["recovery"] = BuildRecoverySnapshot(),
                 ["gemSelection"] = BuildGemSelectionSnapshot(),
@@ -468,7 +934,12 @@ namespace GemDuel.Presentation
                         ["level"] = previewContext.Level,
                         ["index"] = previewContext.Index,
                         ["instanceId"] = previewContext.InstanceId,
+                        ["player"] = previewContext.Player,
+                        ["color"] = previewContext.Color,
+                        ["cardCount"] = previewContext.InstanceIds == null ? 0 : previewContext.InstanceIds.Count,
+                        ["instanceIds"] = previewContext.InstanceIds == null ? new JArray() : new JArray(previewContext.InstanceIds),
                     },
+                ["rulebook"] = BuildRulebookSnapshot(),
                 ["hover"] = BuildHoverSnapshot(),
                 ["errorBanner"] = string.IsNullOrEmpty(errorBanner) ? null : errorBanner,
             };
@@ -478,6 +949,46 @@ namespace GemDuel.Presentation
             state["mode"] = snapshot.Value<string>("mode");
 
             return state;
+        }
+
+        private JObject BuildRulebookSnapshot()
+        {
+            var locale = RulebookLocale();
+            var clampedPage = Mathf.Clamp(rulebookPage, 0, Math.Max(0, RulebookPages.Length - 1));
+            var page = RulebookPages[clampedPage];
+            var sections = new JArray();
+            foreach (var section in page.Sections)
+            {
+                var items = new JArray();
+                foreach (var item in section.Items)
+                {
+                    items.Add(item.Text(locale));
+                }
+
+                sections.Add(
+                    new JObject
+                    {
+                        ["type"] = section.Type,
+                        ["title"] = section.Title.Text(locale),
+                        ["items"] = items,
+                    }
+                );
+            }
+
+            return new JObject
+            {
+                ["open"] = rulebookOpen,
+                ["page"] = clampedPage,
+                ["pageCount"] = RulebookPages.Length,
+                ["locale"] = locale,
+                ["sourceOfTruth"] = RulebookSourceOfTruth,
+                ["rendererSource"] = "packages/ui/src/components/Rulebook.tsx",
+                ["title"] = page.Title.Text(locale),
+                ["summary"] = page.Summary.Text(locale),
+                ["pageTitlesEn"] = new JArray(RulebookPages.Select(entry => entry.Title.En)),
+                ["pageTitlesZh"] = new JArray(RulebookPages.Select(entry => entry.Title.Zh)),
+                ["sections"] = sections,
+            };
         }
 
         private JObject BuildReplaySnapshot()
@@ -549,6 +1060,84 @@ namespace GemDuel.Presentation
                     ["path"] = string.IsNullOrEmpty(settingsPersistencePath) ? null : settingsPersistencePath,
                     ["error"] = string.IsNullOrEmpty(settingsPersistenceError) ? null : settingsPersistenceError,
                 },
+            };
+        }
+
+        private JObject BuildVisualContractSnapshot(int viewportWidth, int viewportHeight)
+        {
+            return new JObject
+            {
+                ["settingsMenu"] = BuildSettingsMenuVisualContract(viewportWidth, viewportHeight),
+            };
+        }
+
+        private JObject BuildSettingsMenuVisualContract(int viewportWidth, int viewportHeight)
+        {
+            var panel = SettingsPanelRect();
+            var rowHeightPx = ScaleReferenceY(SettingsRowHeight, viewportHeight);
+            var rowFontPx = ScreenFontPx(SettingsRowFontSize, viewportHeight);
+            var titleFontPx = ScreenFontPx(SettingsTitleFontSize, viewportHeight);
+            var sectionLabelFontPx = ScreenFontPx(SettingsSectionLabelFontSize, viewportHeight);
+            var localeFontPx = ScreenFontPx(SettingsLocaleFontSize, viewportHeight);
+            var iconFontPx = ScreenFontPx(SettingsIconFontSize, viewportHeight);
+            var rowRatio = rowHeightPx <= 0f ? 0f : rowFontPx / rowHeightPx;
+            var electronRowRatio = ElectronSettingsRowFontPx / ElectronSettingsRowHeight;
+            return new JObject
+            {
+                ["open"] = settingsOpen,
+                ["sourceOfTruth"] = "apps/desktop/src/app/chrome/AppChrome.tsx settings menu",
+                ["electronReference"] = new JObject
+                {
+                    ["menuWidthCssPx"] = ElectronSettingsMenuCssWidth,
+                    ["menuCssScale"] = ElectronSettingsCssScale,
+                    ["shellVisualScale"] = ElectronShellVisualScale,
+                    ["finalScale"] = ElectronSettingsScale,
+                    ["menuWidthPx"] = ElectronSettingsMenuWidth,
+                    ["menuHeightPx"] = ElectronSettingsMenuHeight,
+                    ["contentInsetPx"] = ElectronSettingsContentInset,
+                    ["titleFontPx"] = ElectronSettingsTitleFontPx,
+                    ["sectionLabelFontPx"] = ElectronSettingsSectionLabelFontPx,
+                    ["localeFontPx"] = ElectronSettingsLocaleFontPx,
+                    ["rowFontPx"] = ElectronSettingsRowFontPx,
+                    ["rowHeightPx"] = ElectronSettingsRowHeight,
+                    ["rowGapPx"] = ElectronSettingsRowGap,
+                    ["rowFontToHeightRatio"] = Math.Round(electronRowRatio, 4),
+                },
+                ["unityContract"] = new JObject
+                {
+                    ["panelRect"] = BuildReferenceRectSnapshot(
+                        panel,
+                        viewportWidth,
+                        viewportHeight
+                    ),
+                    ["controlRect"] = BuildReferenceRectSnapshot(
+                        new Rect(SettingsControlX, SettingsRowStartY, SettingsControlWidth, SettingsRowHeight),
+                        viewportWidth,
+                        viewportHeight
+                    ),
+                    ["titleFontPx"] = Math.Round(titleFontPx, 2),
+                    ["sectionLabelFontPx"] = Math.Round(sectionLabelFontPx, 2),
+                    ["localeFontPx"] = Math.Round(localeFontPx, 2),
+                    ["rowFontPx"] = Math.Round(rowFontPx, 2),
+                    ["iconFontPx"] = Math.Round(iconFontPx, 2),
+                    ["rowHeightPx"] = Math.Round(rowHeightPx, 2),
+                    ["rowGapPx"] = Math.Round(ScaleReferenceY(SettingsRowGap - SettingsRowHeight, viewportHeight), 2),
+                    ["rowFontToHeightRatio"] = Math.Round(rowRatio, 4),
+                    ["surfaceDropdownExpandsPanel"] = false,
+                },
+                ["thresholds"] = new JObject
+                {
+                    ["maxPanelWidthDeltaPx"] = 1.0,
+                    ["maxPanelHeightDeltaPx"] = 2.0,
+                    ["maxRowFontDeltaPx"] = 1.0,
+                    ["maxRowHeightDeltaPx"] = 1.0,
+                    ["maxRowRatioDelta"] = 0.02,
+                },
+                ["ok"] =
+                    Math.Abs(ScaleReferenceX(SettingsPanelWidth, viewportWidth) - ScaleReferenceX(ElectronSettingsMenuWidth, viewportWidth)) <= 1f
+                    && Math.Abs(rowFontPx - ScaleReferenceY(ElectronSettingsRowFontPx, viewportHeight)) <= 1f
+                    && Math.Abs(rowHeightPx - ScaleReferenceY(ElectronSettingsRowHeight, viewportHeight)) <= 1f
+                    && Math.Abs(rowRatio - electronRowRatio) <= 0.02f,
             };
         }
 
@@ -894,11 +1483,64 @@ namespace GemDuel.Presentation
                 return false;
             }
 
+            var gemId = GetCurrentBoardGemId(target.Row, target.Column);
+            if (string.IsNullOrEmpty(gemId))
+            {
+                gemId = target.GemId;
+            }
+
+            if (gemId == "empty" || gemId == "gold")
+            {
+                return false;
+            }
+
+            if (activeReplay == null)
+            {
+                return currentState != null && currentState.Phase == "IDLE";
+            }
+
             var next = GetNextEvent();
             return next != null
                 && next.Value<string>("type") == "take_gems"
                 && target.GemId != "empty"
                 && target.GemId != "gold";
+        }
+
+        public bool TryHandleTakeGemsDragTarget(GemDuelViewTarget target, out string detail)
+        {
+            detail = string.Empty;
+            if (!IsTakeGemsBoardGemTarget(target))
+            {
+                detail = "Board gem drag ignored non-selectable target.";
+                return false;
+            }
+
+            var limit = activeReplay == null
+                ? MaxTakeGemsSelectionCount
+                : GetTakeGemsSelectionLimit(GetNextEvent());
+            if (!TryFillSkippedDragMidpoint(target, limit, out var midpointDetail))
+            {
+                detail = midpointDetail;
+                RenderState();
+                return false;
+            }
+
+            var targetGemId = GetCurrentBoardGemId(target.Row, target.Column);
+            if (string.IsNullOrEmpty(targetGemId))
+            {
+                targetGemId = target.GemId;
+            }
+
+            var ok = SelectTakeGemsCoord(target.Row, target.Column, targetGemId, limit, true, out var targetDetail);
+            detail = string.IsNullOrEmpty(midpointDetail)
+                ? targetDetail
+                : midpointDetail + " " + targetDetail;
+            return ok;
+        }
+
+        public string[] GetSelectedTakeGemDragKeysForInput()
+        {
+            return selectedGemCoords.Select(coord => coord.x + ":" + coord.y).ToArray();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -914,8 +1556,19 @@ namespace GemDuel.Presentation
             root.AddComponent<GemDuelInputController>();
         }
 
+        private void EnsureInputController()
+        {
+            if (FindAnyObjectByType<GemDuelInputController>() != null)
+            {
+                return;
+            }
+
+            gameObject.AddComponent<GemDuelInputController>();
+        }
+
         private async void Start()
         {
+            EnsureInputController();
             await platformServices.Init();
             LoadSettings();
             if (!TryLoadRecoveredGame(out _, false))
@@ -929,6 +1582,7 @@ namespace GemDuel.Presentation
             error = string.Empty;
             try
             {
+                EnsureInputController();
                 BuildCamera();
                 BuildStatusText();
                 catalog = new CatalogLoader().LoadDefault();
@@ -949,6 +1603,7 @@ namespace GemDuel.Presentation
                 currentState = new GameState(result.State, result.ReplayRevision);
                 StartLiveReplayRecording(result, seed, useBuffs);
                 nextFixtureEventIndex = result.ReplayRevision;
+                WarmLiveRulesEngineApplyPath();
                 isMainMenu = false;
                 settingsOpen = false;
                 settingsSurfaceDropdownOpen = false;
@@ -975,8 +1630,47 @@ namespace GemDuel.Presentation
             }
         }
 
+        private void WarmLiveRulesEngineApplyPath()
+        {
+            if (currentState == null)
+            {
+                return;
+            }
+
+            try
+            {
+                rulesEngine.ApplyCommand(
+                    currentState,
+                    new GameRulesCommand
+                    {
+                        Type = "TAKE_GEMS",
+                        Actor = currentState.Turn,
+                        Payload = new JObject { ["coords"] = new JArray() },
+                    }
+                );
+
+                if (GetBagCount() > 0)
+                {
+                    rulesEngine.ApplyCommand(
+                        new GameState((JObject)currentState.Snapshot.DeepClone(), currentState.Revision),
+                        new GameRulesCommand
+                        {
+                            Type = "REPLENISH",
+                            Actor = currentState.Turn,
+                            Payload = new JObject(),
+                        }
+                    );
+                }
+            }
+            catch
+            {
+                // Warmup is best-effort; the first real command still reports bridge failures.
+            }
+        }
+
         public void LoadFixtureForRuntime(string fixtureFileName)
         {
+            EnsureInputController();
             BuildCamera();
             BuildStatusText();
             isMainMenu = false;
@@ -1052,12 +1746,38 @@ namespace GemDuel.Presentation
                 return;
             }
 
+            if (target.Kind == "Mode" && target.EventType == "start_roguelike_game")
+            {
+                hoverContext = null;
+                StartLocalGameForRuntime("unity-localdev-roguelike", out _, true);
+                return;
+            }
+
+            if (target.Kind == "Mode" && target.EventType == "open_online")
+            {
+                OpenUnavailableShellEntry("Online is not available in this Unity build.");
+                return;
+            }
+
+            if (target.Kind == "Mode" && target.EventType == "open_lan")
+            {
+                OpenUnavailableShellEntry("LAN is not available in this Unity build.");
+                return;
+            }
+
+            if (target.Kind == "Mode" && target.EventType == "open_visual_lab")
+            {
+                OpenUnavailableShellEntry("Visual Lab is not available in this Unity build.");
+                return;
+            }
+
             if (target.Kind == "ActionButton" && target.EventType == "open_rulebook")
             {
                 hoverContext = null;
                 settingsOpen = false;
                 settingsSurfaceDropdownOpen = false;
                 rulebookOpen = true;
+                rulebookPage = 0;
                 previewContext = null;
                 errorBanner = string.Empty;
                 RenderState();
@@ -1082,6 +1802,28 @@ namespace GemDuel.Presentation
                 return;
             }
 
+            if (target.Kind == "ActionButton" && target.EventType == "rulebook_prev")
+            {
+                hoverContext = null;
+                rulebookPage = target.Index >= 0
+                    ? Mathf.Clamp(target.Index, 0, RulebookPages.Length - 1)
+                    : Mathf.Max(0, rulebookPage - 1);
+                RenderState();
+                SetStatus("Rulebook page " + (rulebookPage + 1) + " / " + RulebookPages.Length + ".");
+                return;
+            }
+
+            if (target.Kind == "ActionButton" && target.EventType == "rulebook_next")
+            {
+                hoverContext = null;
+                rulebookPage = target.Index >= 0
+                    ? Mathf.Clamp(target.Index, 0, RulebookPages.Length - 1)
+                    : Mathf.Min(RulebookPages.Length - 1, rulebookPage + 1);
+                RenderState();
+                SetStatus("Rulebook page " + (rulebookPage + 1) + " / " + RulebookPages.Length + ".");
+                return;
+            }
+
             if (target.Kind == "ActionButton" && target.EventType == "replay_import_localdev")
             {
                 hoverContext = null;
@@ -1096,20 +1838,12 @@ namespace GemDuel.Presentation
                 return;
             }
 
-            if (currentState == null)
-            {
-                return;
-            }
-
-            automationInteractiveReplayMode = true;
-
             if (target.Kind == "ActionButton" && target.EventType == "open_settings")
             {
                 hoverContext = null;
                 settingsOpen = true;
                 settingsSurfaceDropdownOpen = false;
                 rulebookOpen = false;
-                isMainMenu = false;
                 errorBanner = string.Empty;
                 RenderState();
                 SetStatus("Settings opened.");
@@ -1121,6 +1855,13 @@ namespace GemDuel.Presentation
                 HandleSettingsControl(target);
                 return;
             }
+
+            if (currentState == null)
+            {
+                return;
+            }
+
+            automationInteractiveReplayMode = true;
 
             if (target.Kind == "ActionButton" && target.EventType == "replay_undo")
             {
@@ -1207,7 +1948,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "TableauStack")
             {
                 hoverContext = null;
-                PreviewTableauCard(target.InstanceId, target.BuffId, target.GemId, out _);
+                PreviewTableauStack(target.BuffId, target.GemId, out _);
                 return;
             }
 
@@ -1310,6 +2051,18 @@ namespace GemDuel.Presentation
             SetStatus("Next action: " + DescribeEvent(nextEvent));
         }
 
+        private void OpenUnavailableShellEntry(string message)
+        {
+            hoverContext = null;
+            settingsOpen = false;
+            settingsSurfaceDropdownOpen = false;
+            rulebookOpen = false;
+            previewContext = null;
+            errorBanner = message;
+            RenderState();
+            SetStatus(message);
+        }
+
         private void HandleSettingsControl(GemDuelViewTarget target)
         {
             hoverContext = null;
@@ -1320,21 +2073,49 @@ namespace GemDuel.Presentation
             switch (target.EventType)
             {
                 case "settings-save":
-                    if (PersistSettings())
+                    if (ExportLocalDevReplayForAutomation(out var settingsReplayExportError))
                     {
                         settingsOpen = false;
                         settingsSurfaceDropdownOpen = false;
                         RenderState();
-                        SetStatus("Settings saved.");
+                        SetStatus("Replay exported for review.");
                         return;
                     }
 
                     RenderState();
-                    SetStatus("Settings persistence failed: " + settingsPersistenceError);
+                    SetStatus("Replay export failed: " + settingsReplayExportError);
                     return;
                 case "settings-load":
-                    status = LoadSettings() ? "Settings loaded." : "No saved settings to load.";
-                    break;
+                    status = "Replay load picker opened.";
+                    RenderState();
+                    SetStatus(status);
+                    return;
+                case "replay_export_localdev":
+                    if (ExportLocalDevReplayForAutomation(out var exportError))
+                    {
+                        settingsOpen = false;
+                        settingsSurfaceDropdownOpen = false;
+                        RenderState();
+                        SetStatus("Replay exported for review.");
+                        return;
+                    }
+
+                    RenderState();
+                    SetStatus("Replay export failed: " + exportError);
+                    return;
+                case "replay_import_localdev":
+                    if (ImportLocalDevReplayForAutomation(out var importError))
+                    {
+                        settingsOpen = false;
+                        settingsSurfaceDropdownOpen = false;
+                        RenderState();
+                        SetStatus("Replay imported for review.");
+                        return;
+                    }
+
+                    RenderState();
+                    SetStatus("Replay import failed: " + importError);
+                    return;
                 case "settings-locale-en":
                     settingsLocale = "en";
                     status = "Locale changed: English.";
@@ -1384,7 +2165,7 @@ namespace GemDuel.Presentation
                     return;
             }
 
-            if (target.EventType != "settings-load" && !PersistSettings())
+            if (!PersistSettings())
             {
                 status = "Settings persistence failed: " + settingsPersistenceError;
             }
@@ -1807,7 +2588,19 @@ namespace GemDuel.Presentation
                     break;
                 case "INITIATE_BUY_JOKER":
                     replayEvent["type"] = "initiate_buy_joker";
-                    AddMarketReplayFields(replayEvent, payload, beforeSnapshot);
+                    if (
+                        payload.Value<string>("source") == "reserved"
+                        || !string.IsNullOrEmpty(payload.Value<string>("instanceId"))
+                    )
+                    {
+                        replayEvent["source"] = "reserved";
+                        replayEvent["instanceId"] = payload.Value<string>("instanceId");
+                    }
+                    else
+                    {
+                        replayEvent["source"] = "market";
+                        AddMarketReplayFields(replayEvent, payload, beforeSnapshot);
+                    }
                     break;
                 case "BUY_CARD":
                     replayEvent["type"] = "buy_card";
@@ -2030,39 +2823,14 @@ namespace GemDuel.Presentation
                 return;
             }
 
-            var limit = GetTakeGemsSelectionLimit(nextEvent);
-            var selected = new Vector2Int(target.Row, target.Column);
-            if (selectedGemCoords.Contains(selected))
-            {
-                selectedGemCoords.Remove(selected);
-                RenderState();
-                SetStatus("Selected " + selectedGemCoords.Count + "/" + limit + " board gems. Confirm or cancel.");
-                return;
-            }
-
-            if (selectedGemCoords.Count >= limit)
-            {
-                SetStatus("Take-gems selection is full.");
-                return;
-            }
-
-            var candidate = new List<Vector2Int>(selectedGemCoords) { selected };
-            var isFinalSelection = candidate.Count >= limit;
-            if (!ValidateGemSelection(candidate, isFinalSelection, out var validationError))
-            {
-                SetStatus(validationError);
-                return;
-            }
-
-            selectedGemCoords.Add(selected);
-            RenderState();
-            if (selectedGemCoords.Count < limit)
-            {
-                SetStatus("Selected " + selectedGemCoords.Count + "/" + limit + " board gems. Confirm or cancel.");
-                return;
-            }
-
-            SetStatus("Selected " + selectedGemCoords.Count + "/" + limit + " board gems. Confirm or cancel.");
+            SelectTakeGemsCoord(
+                target.Row,
+                target.Column,
+                target.GemId,
+                GetTakeGemsSelectionLimit(nextEvent),
+                true,
+                out _
+            );
         }
 
         private void ConfirmTakeGemsSelection(JObject nextEvent)
@@ -2140,6 +2908,12 @@ namespace GemDuel.Presentation
 
             if (target.Kind == "ActionButton" && target.EventType == "replenish")
             {
+                if (!CanReplenishBoard())
+                {
+                    SetStatus("Replenish is unavailable because the bag is empty.");
+                    return;
+                }
+
                 ApplyLiveRulesCommand("REPLENISH", new JObject());
                 return;
             }
@@ -2320,44 +3094,32 @@ namespace GemDuel.Presentation
                 return;
             }
 
-            if (target.GemId == "empty")
+            var gemId = GetCurrentBoardGemId(target.Row, target.Column);
+            if (string.IsNullOrEmpty(gemId))
+            {
+                gemId = target.GemId;
+            }
+
+            if (gemId == "empty")
             {
                 SetStatus("That board space is empty.");
                 return;
             }
 
-            if (target.GemId == "gold")
+            if (gemId == "gold")
             {
                 SetStatus("Gold cannot be taken as a normal board gem.");
                 return;
             }
 
-            var selected = new Vector2Int(target.Row, target.Column);
-            if (selectedGemCoords.Contains(selected))
-            {
-                selectedGemCoords.Remove(selected);
-                RenderState();
-                SetStatus("Selected " + selectedGemCoords.Count + "/" + MaxTakeGemsSelectionCount + " board gems. Confirm or cancel.");
-                return;
-            }
-
-            if (selectedGemCoords.Count >= MaxTakeGemsSelectionCount)
-            {
-                SetStatus("Take-gems selection is full.");
-                return;
-            }
-
-            var candidate = new List<Vector2Int>(selectedGemCoords) { selected };
-            var isFinalSelection = candidate.Count >= MaxTakeGemsSelectionCount;
-            if (!ValidateGemSelection(candidate, isFinalSelection, out var validationError))
-            {
-                SetStatus(validationError);
-                return;
-            }
-
-            selectedGemCoords.Add(selected);
-            RenderState();
-            SetStatus("Selected " + selectedGemCoords.Count + "/" + MaxTakeGemsSelectionCount + " board gems. Confirm or cancel.");
+            SelectTakeGemsCoord(
+                target.Row,
+                target.Column,
+                gemId,
+                MaxTakeGemsSelectionCount,
+                true,
+                out _
+            );
         }
 
         private void ConfirmLiveTakeGemsSelection()
@@ -2435,6 +3197,117 @@ namespace GemDuel.Presentation
             selectedGemCoords.Clear();
             RenderState();
             SetStatus("Gem selection cancelled.");
+        }
+
+        private bool SelectTakeGemsCoord(
+            int row,
+            int column,
+            string gemId,
+            int limit,
+            bool renderAfterMutation,
+            out string detail
+        )
+        {
+            detail = string.Empty;
+            if (gemId == "empty")
+            {
+                detail = "That board space is empty.";
+                SetStatus(detail);
+                return false;
+            }
+
+            if (gemId == "gold")
+            {
+                detail = "Gold cannot be taken as a normal board gem.";
+                SetStatus(detail);
+                return false;
+            }
+
+            var selected = new Vector2Int(row, column);
+            if (selectedGemCoords.Contains(selected))
+            {
+                selectedGemCoords.Remove(selected);
+                if (renderAfterMutation)
+                {
+                    RenderState();
+                }
+
+                detail = "Deselected board gem " + row + "," + column + ".";
+                SetStatus("Selected " + selectedGemCoords.Count + "/" + limit + " board gems. Confirm or cancel.");
+                return true;
+            }
+
+            if (selectedGemCoords.Count >= limit)
+            {
+                detail = "Take-gems selection is full.";
+                SetStatus(detail);
+                return false;
+            }
+
+            var candidate = new List<Vector2Int>(selectedGemCoords) { selected };
+            var isFinalSelection = candidate.Count >= limit;
+            if (!ValidateGemSelection(candidate, isFinalSelection, out var validationError))
+            {
+                detail = validationError;
+                SetStatus(validationError);
+                return false;
+            }
+
+            selectedGemCoords.Add(selected);
+            if (renderAfterMutation)
+            {
+                RenderState();
+            }
+
+            detail = "Selected board gem " + row + "," + column + ".";
+            SetStatus("Selected " + selectedGemCoords.Count + "/" + limit + " board gems. Confirm or cancel.");
+            return true;
+        }
+
+        private bool TryFillSkippedDragMidpoint(GemDuelViewTarget target, int limit, out string detail)
+        {
+            detail = string.Empty;
+            var targetCoord = new Vector2Int(target.Row, target.Column);
+            if (selectedGemCoords.Count != 1 || selectedGemCoords.Contains(targetCoord))
+            {
+                return true;
+            }
+
+            var start = selectedGemCoords[0];
+            var dr = targetCoord.x - start.x;
+            var dc = targetCoord.y - start.y;
+            var span = Math.Max(Math.Abs(dr), Math.Abs(dc));
+            var isStraight = dr == 0 || dc == 0 || Math.Abs(dr) == Math.Abs(dc);
+            if (!isStraight || span != 2)
+            {
+                return true;
+            }
+
+            var midpoint = new Vector2Int(
+                start.x + (dr == 0 ? 0 : dr / 2),
+                start.y + (dc == 0 ? 0 : dc / 2)
+            );
+            if (selectedGemCoords.Contains(midpoint))
+            {
+                return true;
+            }
+
+            var midpointGemId = GetBoardGemForAutomation(midpoint.x, midpoint.y);
+            if (midpointGemId == "empty" || midpointGemId == "gold")
+            {
+                detail = "Board gem drag skipped a non-selectable midpoint.";
+                SetStatus(detail);
+                return false;
+            }
+
+            if (!SelectTakeGemsCoord(midpoint.x, midpoint.y, midpointGemId, limit, false, out var midpointDetail))
+            {
+                detail = midpointDetail;
+                return false;
+            }
+
+            detail = "Auto-selected skipped midpoint " + midpoint.x + "," + midpoint.y + ".";
+            return true;
         }
 
         private bool PreviewMarketCard(int level, int index, out string error)
@@ -2590,7 +3463,7 @@ namespace GemDuel.Presentation
             return true;
         }
 
-        private bool PreviewTableauCard(string instanceId, string player, string color, out string error)
+        private bool PreviewTableauStack(string player, string color, out string error)
         {
             error = string.Empty;
             if (currentState == null)
@@ -2599,9 +3472,16 @@ namespace GemDuel.Presentation
                 return RejectSemanticAction(error);
             }
 
-            if (string.IsNullOrEmpty(instanceId))
+            if (string.IsNullOrEmpty(player) || string.IsNullOrEmpty(color))
             {
-                error = "No tableau card to preview.";
+                error = "No tableau stack to preview.";
+                return RejectSemanticAction(error);
+            }
+
+            var instanceIds = GetPlayerTableauCardIds(player, color);
+            if (instanceIds.Count == 0)
+            {
+                error = "No tableau cards in " + player + " " + color + " stack.";
                 return RejectSemanticAction(error);
             }
 
@@ -2611,13 +3491,16 @@ namespace GemDuel.Presentation
                 Source = "tableau",
                 Level = -1,
                 Index = -1,
-                InstanceId = instanceId,
+                InstanceId = instanceIds[instanceIds.Count - 1],
+                Player = player,
+                Color = color,
+                InstanceIds = instanceIds,
             };
             hoverContext = null;
             settingsOpen = false;
             errorBanner = string.Empty;
             RenderState();
-            SetStatus("Previewing " + player + " " + color + " stack card " + previewContext.InstanceId + ".");
+            SetStatus("Previewing " + player + " " + color + " stack (" + instanceIds.Count + " cards).");
             return true;
         }
 
@@ -2638,9 +3521,20 @@ namespace GemDuel.Presentation
                 }
             }
 
-            var actionEventType = eventType == "buy_card" ? "preview-buy" : "preview-reserve";
+            var actionEventType = eventType == "buy_card"
+                ? "preview-buy"
+                : eventType == "discard_reserved" || eventType == "discard"
+                    ? "preview-discard"
+                    : "preview-reserve";
+            var actionSemanticKey = PreviewActionSemanticKey(actionEventType);
             var clickedPreviewAction = ClickVisibleTargetForAutomation(
-                target => target.Kind == "ActionButton" && target.EventType == actionEventType,
+                target =>
+                    target.Kind == "ActionButton"
+                    && target.EventType == actionEventType
+                    && (
+                        string.IsNullOrEmpty(actionSemanticKey)
+                        || target.SemanticKey == actionSemanticKey
+                    ),
                 actionEventType,
                 out error
             );
@@ -2660,6 +3554,21 @@ namespace GemDuel.Presentation
                 "reserve gold " + goldCoord.Value<int>("r") + "-" + goldCoord.Value<int>("c"),
                 out error
             );
+        }
+
+        private static string PreviewActionSemanticKey(string actionEventType)
+        {
+            switch (actionEventType)
+            {
+                case "preview-buy":
+                    return "card.preview.primaryAction";
+                case "preview-reserve":
+                    return "card.preview.action.reserve";
+                case "preview-discard":
+                    return "card.preview.action.discard";
+                default:
+                    return string.Empty;
+            }
         }
 
         private bool ConfirmPreviewAction(string actionId, out string error)
@@ -2758,6 +3667,18 @@ namespace GemDuel.Presentation
 
             if (previewContext.Source == "reserved" && actionId == "buy")
             {
+                if (IsJokerInstanceId(previewContext.InstanceId))
+                {
+                    return ApplyLiveRulesCommand(
+                        "INITIATE_BUY_JOKER",
+                        new JObject
+                        {
+                            ["source"] = "reserved",
+                            ["instanceId"] = previewContext.InstanceId,
+                        }
+                    );
+                }
+
                 return ApplyLiveRulesCommand(
                     "BUY_RESERVED_CARD",
                     new JObject
@@ -2815,6 +3736,7 @@ namespace GemDuel.Presentation
                 ["idx"] = previewContext.Index,
                 ["isDeck"] = false,
                 ["card"] = previewContext.InstanceId,
+                ["goldCoord"] = reserveEvent["goldCoord"]?.DeepClone(),
             };
             previewContext = null;
             hoverContext = null;
@@ -2856,7 +3778,7 @@ namespace GemDuel.Presentation
             return RejectSemanticAction(error);
         }
 
-        private bool ChooseRoyal(int index, out string error)
+        private bool ChooseRoyal(int index, string royalIdOverride, out string error)
         {
             error = string.Empty;
             if (currentState == null)
@@ -2866,14 +3788,43 @@ namespace GemDuel.Presentation
             }
 
             var royalDeck = (JArray)currentState.Snapshot["royalDeck"];
-            if (royalDeck == null || index < 0 || index >= royalDeck.Count)
+            if (royalDeck == null)
+            {
+                error = "No royal deck is available.";
+                return RejectSemanticAction(error);
+            }
+
+            var resolvedIndex = -1;
+            if (!string.IsNullOrEmpty(royalIdOverride))
+            {
+                for (var candidateIndex = 0; candidateIndex < royalDeck.Count; candidateIndex++)
+                {
+                    if (royalDeck[candidateIndex].Value<string>() == royalIdOverride)
+                    {
+                        resolvedIndex = candidateIndex;
+                        break;
+                    }
+                }
+
+                if (resolvedIndex < 0)
+                {
+                    error = "No royal " + royalIdOverride + " in the royal deck.";
+                    return RejectSemanticAction(error);
+                }
+            }
+            else if (index >= 0 && index < royalDeck.Count)
+            {
+                resolvedIndex = index;
+            }
+
+            if (resolvedIndex < 0)
             {
                 error = "No royal at index " + index + ".";
                 return RejectSemanticAction(error);
             }
 
             var next = GetNextEvent();
-            var royalId = royalDeck[index].Value<string>();
+            var royalId = royalDeck[resolvedIndex].Value<string>();
             if (activeReplay == null && currentState.Phase == "SELECT_ROYAL")
             {
                 return ClickVisibleTargetForAutomation(
@@ -2947,8 +3898,16 @@ namespace GemDuel.Presentation
         {
             error = string.Empty;
             var candidates = FindObjectsByType<GemDuelViewTarget>(FindObjectsSortMode.None)
-                .Where(target => target != null && target.Clickable && predicate(target))
+                .Where(target =>
+                    target != null
+                    && target.isActiveAndEnabled
+                    && target.gameObject.activeInHierarchy
+                    && target.Clickable
+                    && predicate(target))
                 .OrderBy(target => target.Index < 0 ? int.MaxValue : target.Index)
+                .ThenBy(target => string.IsNullOrEmpty(target.SemanticKey) ? 1 : 0)
+                .ThenBy(target => target.Size.x * target.Size.y)
+                .ThenBy(target => target.transform.position.z)
                 .ToList();
             if (candidates.Count == 0)
             {
@@ -2963,17 +3922,15 @@ namespace GemDuel.Presentation
                 return RejectSemanticAction(error);
             }
 
-            var target = candidates[0];
-            var hit = GemDuelInputController.FindVisibleTargetAtWorld(target.transform.position);
-            if (hit != target)
+            if (!TryResolveAutomationHit(candidates, predicate, out var target, out var dispatchTarget, out var blockedTarget, out var blocker))
             {
-                error = "Clickable Unity hover target for " + description + " is blocked by " + DescribeTarget(hit) + ".";
+                error = "Clickable Unity hover target for " + description + " is blocked by " + DescribeTarget(blocker) + " at " + DescribeTarget(blockedTarget) + ".";
                 return RejectSemanticAction(error);
             }
 
             var controller = FindAnyObjectByType<GemDuelInputController>() ?? gameObject.AddComponent<GemDuelInputController>();
             var screenPoint = camera.WorldToScreenPoint(target.transform.position);
-            var targetDescription = DescribeTarget(target);
+            var targetDescription = DescribeTarget(dispatchTarget);
             var ok = controller.TryHoverScreenPointForEvidence(screenPoint, out var detail);
             lastAutomationDriver = ok ? "unity-hover-target" : "missing-unity-hover-target";
             lastAutomationDetail = ok
@@ -3048,8 +4005,13 @@ namespace GemDuel.Presentation
         {
             var row = payload.Value<int?>("row") ?? payload.Value<int?>("r") ?? 0;
             var column = payload.Value<int?>("column") ?? payload.Value<int?>("c") ?? 0;
+            var expectedGemId = GetCurrentBoardGemId(row, column);
             return ClickVisibleTargetForAutomation(
-                target => target.Kind == "Gem" && target.Row == row && target.Column == column,
+                target =>
+                    target.Kind == "Gem"
+                    && target.Row == row
+                    && target.Column == column
+                    && (string.IsNullOrEmpty(expectedGemId) || target.GemId == expectedGemId),
                 "board cell " + row + "-" + column,
                 out error
             );
@@ -3086,14 +4048,25 @@ namespace GemDuel.Presentation
         private bool ClickInventoryGemForAutomation(string eventType, JObject payload, out string error)
         {
             var gemId = payload.Value<string>("gemId") ?? GetNextEvent()?.Value<string>("gemId") ?? "red";
+            var role = payload.Value<string>("role");
+            if (string.IsNullOrEmpty(role))
+            {
+                role = eventType == "steal_gem" ? "opponent" : "current";
+            }
+
+            var semanticKey = role == "opponent"
+                ? "player.opponent.gem." + gemId
+                : "player.current.gem." + gemId;
             var playerGemTargets = FindObjectsByType<GemDuelViewTarget>(FindObjectsSortMode.None)
                 .Any(target =>
-                    target != null &&
-                    target.Clickable &&
-                    target.Kind == "InventoryGem" &&
-                    target.EventType == eventType &&
-                    target.GemId == gemId &&
-                    target.SemanticKey.StartsWith("player.", StringComparison.Ordinal));
+                    target != null
+                    && target.isActiveAndEnabled
+                    && target.gameObject.activeInHierarchy
+                    && target.Clickable
+                    && target.Kind == "InventoryGem"
+                    && target.EventType == eventType
+                    && target.GemId == gemId
+                    && target.SemanticKey == semanticKey);
             if (playerGemTargets)
             {
                 return ClickVisibleTargetForAutomation(
@@ -3101,8 +4074,8 @@ namespace GemDuel.Presentation
                         target.Kind == "InventoryGem" &&
                         target.EventType == eventType &&
                         target.GemId == gemId &&
-                        target.SemanticKey.StartsWith("player.", StringComparison.Ordinal),
-                    eventType + " player gem " + gemId,
+                        target.SemanticKey == semanticKey,
+                    eventType + " " + role + " player gem " + gemId,
                     out error
                 );
             }
@@ -3214,25 +4187,16 @@ namespace GemDuel.Presentation
                 }
 
                 var desired = value.Value<bool>();
-                if (settingsLanShowOpponentPlayerZoneCards == desired)
+                settingsLanShowOpponentPlayerZoneCards = desired;
+                if (!PersistSettings())
                 {
-                    if (
-                        !ClickVisibleTargetForAutomation(
-                            target => target.Kind == "SettingsControl" && target.EventType == "settings-lan-player-zone-toggle",
-                            "settings LAN card visibility toggle",
-                            out error
-                        )
-                    )
-                    {
-                        return false;
-                    }
+                    error = "settings LAN card visibility persistence failed: " + settingsPersistenceError;
+                    return RejectSemanticAction(error);
                 }
 
-                return ClickVisibleTargetForAutomation(
-                    target => target.Kind == "SettingsControl" && target.EventType == "settings-lan-player-zone-toggle",
-                    "settings LAN card visibility toggle",
-                    out error
-                );
+                RenderState();
+                SetStatus("LAN opponent card visibility " + (desired ? "enabled." : "disabled."));
+                return true;
             }
 
             if (name == "lanShowOpponentGems")
@@ -3245,25 +4209,16 @@ namespace GemDuel.Presentation
                 }
 
                 var desired = value.Value<bool>();
-                if (settingsLanShowOpponentGems == desired)
+                settingsLanShowOpponentGems = desired;
+                if (!PersistSettings())
                 {
-                    if (
-                        !ClickVisibleTargetForAutomation(
-                            target => target.Kind == "SettingsControl" && target.EventType == "settings-lan-gems-toggle",
-                            "settings LAN gem visibility toggle",
-                            out error
-                        )
-                    )
-                    {
-                        return false;
-                    }
+                    error = "settings LAN gem visibility persistence failed: " + settingsPersistenceError;
+                    return RejectSemanticAction(error);
                 }
 
-                return ClickVisibleTargetForAutomation(
-                    target => target.Kind == "SettingsControl" && target.EventType == "settings-lan-gems-toggle",
-                    "settings LAN gem visibility toggle",
-                    out error
-                );
+                RenderState();
+                SetStatus("LAN opponent gem visibility " + (desired ? "enabled." : "disabled."));
+                return true;
             }
 
             if (name == "surfaceTheme")
@@ -3317,8 +4272,16 @@ namespace GemDuel.Presentation
         {
             error = string.Empty;
             var candidates = FindObjectsByType<GemDuelViewTarget>(FindObjectsSortMode.None)
-                .Where(target => target != null && target.Clickable && predicate(target))
+                .Where(target =>
+                    target != null
+                    && target.isActiveAndEnabled
+                    && target.gameObject.activeInHierarchy
+                    && target.Clickable
+                    && predicate(target))
                 .OrderBy(target => target.Index < 0 ? int.MaxValue : target.Index)
+                .ThenBy(target => string.IsNullOrEmpty(target.SemanticKey) ? 1 : 0)
+                .ThenBy(target => target.Size.x * target.Size.y)
+                .ThenBy(target => target.transform.position.z)
                 .ToList();
             if (candidates.Count == 0)
             {
@@ -3326,20 +4289,82 @@ namespace GemDuel.Presentation
                 return RejectSemanticAction(error);
             }
 
-            var target = candidates[0];
-            var hit = GemDuelInputController.FindVisibleTargetAtWorld(target.transform.position);
-            if (hit != target)
+            if (!TryResolveAutomationHit(candidates, predicate, out _, out var dispatchTarget, out var blockedTarget, out var blocker))
             {
-                error = "Clickable Unity target for " + description + " is blocked by " + DescribeTarget(hit) + ".";
+                error = "Clickable Unity target for " + description + " is blocked by " + DescribeTarget(blocker) + " at " + DescribeTarget(blockedTarget) + ".";
                 return RejectSemanticAction(error);
             }
 
-            var clickedDescription = DescribeTarget(hit);
-            HandleVisibleTarget(hit);
+            var clickedDescription = DescribeTarget(dispatchTarget);
+            HandleVisibleTarget(dispatchTarget);
             lastAutomationDriver = "unity-hit-target";
             lastAutomationDetail =
                 "Clicked " + clickedDescription + " through GemDuelInputController hit testing.";
             return true;
+        }
+
+        private static bool TryResolveAutomationHit(
+            IReadOnlyList<GemDuelViewTarget> candidates,
+            Func<GemDuelViewTarget, bool> predicate,
+            out GemDuelViewTarget candidateTarget,
+            out GemDuelViewTarget dispatchTarget,
+            out GemDuelViewTarget blockedTarget,
+            out GemDuelViewTarget blocker
+        )
+        {
+            candidateTarget = null;
+            dispatchTarget = null;
+            blockedTarget = null;
+            blocker = null;
+            foreach (var candidate in candidates)
+            {
+                var hit = GemDuelInputController.FindVisibleTargetAtWorld(candidate.transform.position);
+                var hitMatchesPredicate = hit != null && predicate(hit);
+                if (hit == candidate || IsEquivalentAutomationHit(candidate, hit) || hitMatchesPredicate)
+                {
+                    candidateTarget = candidate;
+                    dispatchTarget = hitMatchesPredicate ? hit : candidate;
+                    return true;
+                }
+
+                if (blockedTarget == null)
+                {
+                    blockedTarget = candidate;
+                    blocker = hit;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsEquivalentAutomationHit(GemDuelViewTarget expected, GemDuelViewTarget hit)
+        {
+            if (expected == null || hit == null)
+            {
+                return false;
+            }
+
+            if (
+                !string.IsNullOrEmpty(expected.SemanticKey)
+                && expected.SemanticKey == hit.SemanticKey
+            )
+            {
+                return true;
+            }
+
+            return
+                expected.Kind == "Gem"
+                && hit.Kind == "Gem"
+                && (
+                    (
+                        !string.IsNullOrEmpty(expected.SemanticKey)
+                        && expected.SemanticKey == hit.SemanticKey
+                    )
+                    || (
+                        expected.Row == hit.Row
+                        && expected.Column == hit.Column
+                    )
+                );
         }
 
         private static string DescribeTarget(GemDuelViewTarget target)
@@ -3355,7 +4380,13 @@ namespace GemDuel.Presentation
                 !string.IsNullOrEmpty(target.RoyalId) ? target.RoyalId :
                 !string.IsNullOrEmpty(target.GemId) ? target.GemId :
                 target.EventType;
-            return target.Kind + (string.IsNullOrEmpty(id) ? string.Empty : " " + id);
+            var location = target.Row >= 0 || target.Column >= 0
+                ? " r" + target.Row + "c" + target.Column
+                : string.Empty;
+            var key = string.IsNullOrEmpty(target.SemanticKey)
+                ? string.Empty
+                : " [" + target.SemanticKey + "]";
+            return target.Kind + (string.IsNullOrEmpty(id) ? string.Empty : " " + id) + location + key;
         }
 
         private void LoadFixture(string fixtureFileName)
@@ -3375,12 +4406,13 @@ namespace GemDuel.Presentation
             replay.Events = replay.Events ?? new List<JObject>();
             replay.Checkpoints = replay.Checkpoints ?? new List<ReplayCheckpoint>();
             var loader = new CatalogLoader();
-            catalog = loader.LoadDefault();
-            loader.ValidateReplayReferences(catalog, replay);
+            var replayCatalog = loader.LoadDefault();
+            var bootstrapState = ValidateReplayForReview(loader, replayCatalog, replay);
+            catalog = replayCatalog;
             activeReplay = replay;
             liveRecordedReplay = null;
             activeRulesInit = new JObject();
-            currentState = ReplayBootstrapper.Bootstrap(activeReplay);
+            currentState = bootstrapState;
             nextFixtureEventIndex = 0;
             isMainMenu = false;
             selectedGemCoords.Clear();
@@ -3391,6 +4423,284 @@ namespace GemDuel.Presentation
             rulebookOpen = false;
             errorBanner = string.Empty;
             ClearPreviewBackgroundTexture();
+        }
+
+        private GameState ValidateReplayForReview(
+            CatalogLoader loader,
+            UnityCatalog replayCatalog,
+            ReplayVNext replay
+        )
+        {
+            if (replay.SchemaVersion != "1.0")
+            {
+                throw new InvalidOperationException(
+                    "Unsupported replay schema version: " + (replay.SchemaVersion ?? "null")
+                );
+            }
+
+            if (replay.Init == null)
+            {
+                throw new InvalidOperationException("Replay is missing an init snapshot.");
+            }
+
+            if (replay.Summary == null)
+            {
+                throw new InvalidOperationException("Replay is missing a summary.");
+            }
+
+            if (replay.Summary.TotalEvents != replay.Events.Count)
+            {
+                throw new InvalidOperationException(
+                    "Replay summary totalEvents mismatch: expected "
+                        + replay.Events.Count
+                        + " got "
+                        + replay.Summary.TotalEvents
+                        + "."
+                );
+            }
+
+            ValidateReplayInitShape(replay.Init);
+            loader.ValidateReplayReferences(replayCatalog, replay);
+            var bootstrapState = ReplayBootstrapper.Bootstrap(replay);
+            var finalState = ReplayBootstrapper.Bootstrap(replay);
+            var validator = new GameReducer();
+            for (var index = 0; index < replay.Events.Count; index += 1)
+            {
+                var result = validator.ApplyReplayEvent(finalState, replay.Events[index], replay.Checkpoints);
+                if (!result.Ok)
+                {
+                    throw new InvalidOperationException(
+                        "Replay event "
+                            + index
+                            + " could not be reviewed: "
+                            + result.Error
+                    );
+                }
+
+                var checkpoint = replay.Checkpoints.FirstOrDefault(
+                    candidate => candidate.Revision == finalState.Revision
+                );
+                if (checkpoint != null)
+                {
+                    finalState.LoadReplayAuditSnapshot(
+                        GameReducer.NormalizeReplayAuditSnapshot(checkpoint.State),
+                        checkpoint.Revision
+                    );
+                }
+            }
+
+            var finalHash = new ReplayStateHasher().Hash(finalState);
+            if (!string.IsNullOrEmpty(replay.Summary.FinalStateHash) && finalHash != replay.Summary.FinalStateHash)
+            {
+                throw new InvalidOperationException(
+                    "Replay summary finalStateHash mismatch: expected "
+                        + replay.Summary.FinalStateHash
+                        + " got "
+                        + finalHash
+                        + "."
+                );
+            }
+
+            if (replay.Summary.Winner != finalState.Winner)
+            {
+                throw new InvalidOperationException(
+                    "Replay summary winner mismatch: expected "
+                        + (replay.Summary.Winner ?? "null")
+                        + " got "
+                        + (finalState.Winner ?? "null")
+                        + "."
+                );
+            }
+
+            return bootstrapState;
+        }
+
+        private static void ValidateReplayInitShape(ReplayInitSnapshot init)
+        {
+            if (init == null)
+            {
+                throw new InvalidOperationException("Replay is missing an init snapshot.");
+            }
+
+            if (init.ActionType != "INIT" && init.ActionType != "INIT_DRAFT")
+            {
+                throw new InvalidOperationException(
+                    "Replay init actionType is unsupported: " + (init.ActionType ?? "null") + "."
+                );
+            }
+
+            if (init.Mode != "LOCAL_PVP")
+            {
+                throw new InvalidOperationException(
+                    "Replay init mode is unsupported: " + (init.Mode ?? "null") + "."
+                );
+            }
+
+            if (init.HostPlayer != "p1" && init.HostPlayer != "p2")
+            {
+                throw new InvalidOperationException(
+                    "Replay init hostPlayer is invalid: " + (init.HostPlayer ?? "null") + "."
+                );
+            }
+
+            ValidateReplayInitBoard(init.Board);
+            ValidateReplayInitGemArray(init.Bag, "bag");
+
+            if (init.CardInstances == null || init.CardInstances.Count == 0)
+            {
+                throw new InvalidOperationException("Replay init cardInstances must not be empty.");
+            }
+
+            var seenCardInstances = new HashSet<string>(StringComparer.Ordinal);
+            ValidateReplayInitCardGroups(
+                init.Market,
+                "market",
+                ReplayInitMarketSlotsByLevel,
+                init.CardInstances,
+                seenCardInstances
+            );
+            ValidateReplayInitCardGroups(
+                init.Decks,
+                "decks",
+                null,
+                init.CardInstances,
+                seenCardInstances
+            );
+            ValidateReplayInitStringList(init.RoyalDeck, "royalDeck");
+            if (init.ActionType == "INIT_DRAFT")
+            {
+                ValidateReplayInitStringList(init.DraftPool, "draftPool");
+                if (init.DraftPool == null || init.DraftPool.Count == 0)
+                {
+                    throw new InvalidOperationException("Replay init draftPool must not be empty for INIT_DRAFT.");
+                }
+            }
+        }
+
+        private static void ValidateReplayInitBoard(JArray board)
+        {
+            if (board == null || board.Count != 5)
+            {
+                throw new InvalidOperationException("Replay init board must contain 5 rows.");
+            }
+
+            for (var rowIndex = 0; rowIndex < board.Count; rowIndex += 1)
+            {
+                if (!(board[rowIndex] is JArray row) || row.Count != 5)
+                {
+                    throw new InvalidOperationException(
+                        "Replay init board row " + rowIndex + " must contain 5 cells."
+                    );
+                }
+
+                ValidateReplayInitGemArray(row, "board row " + rowIndex);
+            }
+        }
+
+        private static void ValidateReplayInitGemArray(JArray gems, string label)
+        {
+            if (gems == null)
+            {
+                throw new InvalidOperationException("Replay init " + label + " must be an array.");
+            }
+
+            for (var index = 0; index < gems.Count; index += 1)
+            {
+                var gem = gems[index]?.Value<string>();
+                if (string.IsNullOrWhiteSpace(gem) || !GemOrder.Contains(gem))
+                {
+                    throw new InvalidOperationException(
+                        "Replay init " + label + " contains invalid gem at index " + index + "."
+                    );
+                }
+            }
+        }
+
+        private static void ValidateReplayInitCardGroups(
+            JObject groups,
+            string label,
+            int[] expectedCounts,
+            Dictionary<string, string> cardInstances,
+            HashSet<string> seenCardInstances
+        )
+        {
+            if (groups == null)
+            {
+                throw new InvalidOperationException("Replay init " + label + " must be an object.");
+            }
+
+            for (var levelIndex = 0; levelIndex < ReplayInitLevels.Length; levelIndex += 1)
+            {
+                var level = ReplayInitLevels[levelIndex];
+                if (!(groups[level] is JArray cards))
+                {
+                    throw new InvalidOperationException(
+                        "Replay init " + label + " level " + level + " must be an array."
+                    );
+                }
+
+                if (expectedCounts != null && cards.Count != expectedCounts[levelIndex])
+                {
+                    throw new InvalidOperationException(
+                        "Replay init "
+                            + label
+                            + " level "
+                            + level
+                            + " must contain "
+                            + expectedCounts[levelIndex]
+                            + " cards."
+                    );
+                }
+
+                for (var cardIndex = 0; cardIndex < cards.Count; cardIndex += 1)
+                {
+                    var instanceId = cards[cardIndex]?.Value<string>();
+                    if (string.IsNullOrWhiteSpace(instanceId))
+                    {
+                        throw new InvalidOperationException(
+                            "Replay init " + label + " level " + level + " contains an empty card instance."
+                        );
+                    }
+
+                    if (!cardInstances.ContainsKey(instanceId))
+                    {
+                        throw new InvalidOperationException(
+                            "Replay init "
+                                + label
+                                + " level "
+                                + level
+                                + " references missing card instance "
+                                + instanceId
+                                + "."
+                        );
+                    }
+
+                    if (!seenCardInstances.Add(instanceId))
+                    {
+                        throw new InvalidOperationException(
+                            "Replay init card instance " + instanceId + " appears more than once."
+                        );
+                    }
+                }
+            }
+        }
+
+        private static void ValidateReplayInitStringList(IReadOnlyList<string> values, string label)
+        {
+            if (values == null)
+            {
+                throw new InvalidOperationException("Replay init " + label + " must be an array.");
+            }
+
+            for (var index = 0; index < values.Count; index += 1)
+            {
+                if (string.IsNullOrWhiteSpace(values[index]))
+                {
+                    throw new InvalidOperationException(
+                        "Replay init " + label + " contains an empty entry at index " + index + "."
+                    );
+                }
+            }
         }
 
         private float AutomationAspect
@@ -3409,7 +4719,7 @@ namespace GemDuel.Presentation
             if (isMainMenu || currentState == null)
             {
                 ClearRenderedState();
-                renderRoot = new GameObject("GemDuel Rendered State");
+                CreateRenderedStateRoot();
                 RenderMainMenu();
                 if (settingsOpen)
                 {
@@ -3442,7 +4752,7 @@ namespace GemDuel.Presentation
             }
 
             ClearRenderedState();
-            renderRoot = new GameObject("GemDuel Rendered State");
+            CreateRenderedStateRoot();
 
             CreatePanel("Shell Semantic Bounds", new Vector3(0f, 0f, 0.45f), AutomationViewportWorldSize(), new Color(0f, 0f, 0f, 0f), false, null, "app.shell");
             CreateImagePanelPx(
@@ -3522,12 +4832,25 @@ namespace GemDuel.Presentation
                 CreateText("Mode Roguelike Body", ViewportPoint(1142f, 612f, -0.02f), "随机起始增益与不同流派展开。", 0.08f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
             });
 
-            var localModeRect = new Rect(729.6f, 518.4f, 460.8f, 75.6f);
+            CreatePanelPx("Visual Lab Semantic Target", 1775f, 17f, 128f, 32f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "Mode";
+                target.EventType = "open_visual_lab";
+            }, "mode.visualLab");
+
+            var localModeRect = new Rect(558f, 455f, 384f, 239f);
             CreatePanelPx("Mode Local Semantic Target", localModeRect.x, localModeRect.y, localModeRect.width, localModeRect.height, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "Mode";
                 target.EventType = "start_local_game";
             }, "mode.local");
+
+            var roguelikeModeRect = new Rect(978f, 455f, 384f, 239f);
+            CreatePanelPx("Mode Roguelike Semantic Target", roguelikeModeRect.x, roguelikeModeRect.y, roguelikeModeRect.width, roguelikeModeRect.height, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "Mode";
+                target.EventType = "start_roguelike_game";
+            }, "mode.roguelike");
 
             CreatePanelPx("Menu Divider", 800f, 792f, 320f, 1f, new Color(0.08f, 0.11f, 0.18f));
                 CreateRoundedPanelPx("Mode Online", 672f, 817f, 263f, 118f, 24f, 3f, new Color(0.06f, 0.21f, 0.43f), new Color(0.02f, 0.05f, 0.14f));
@@ -3541,7 +4864,27 @@ namespace GemDuel.Presentation
                 CreateText("Mode LAN Text", ViewportPoint(1149f, 864f, -0.02f), "局域网对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
                 CreateText("Mode LAN Body", ViewportPoint(1149f, 896f, -0.02f), "自动匹配附近玩家", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
             });
+            CreatePanelPx("Mode Online Semantic Target", 672f, 817f, 263f, 118f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "Mode";
+                target.EventType = "open_online";
+            }, "mode.online");
+            CreatePanelPx("Mode LAN Semantic Target", 960f, 817f, 288f, 118f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "Mode";
+                target.EventType = "open_lan";
+            }, "mode.lan");
             CreateText("Menu Footer", ViewportPoint(960f, 1059f, -0.02f), "选择一个模式开始", 0.024f, new Color(0.43f, 0.46f, 0.55f), TextAnchor.MiddleCenter);
+            CreateActionButtonPx(
+                "规则",
+                "open_rulebook",
+                648f,
+                963f,
+                152f,
+                54f,
+                new Color(0.28f, 0.24f, 0.43f),
+                "chrome.rulebook"
+            );
             CreateActionButtonPx(
                 "导入回放",
                 "replay_import_localdev",
@@ -3552,12 +4895,22 @@ namespace GemDuel.Presentation
                 new Color(0.08f, 0.33f, 0.48f),
                 "replay.import.localdev"
             );
+            CreateActionButtonPx(
+                "设置",
+                "open_settings",
+                1120f,
+                963f,
+                152f,
+                54f,
+                new Color(0.2f, 0.3f, 0.42f),
+                "settings.control"
+            );
         }
 
         private void RenderDraftPhase()
         {
             ClearRenderedState();
-            renderRoot = new GameObject("GemDuel Rendered State");
+            CreateRenderedStateRoot();
             CreateImagePanel("Draft Background", new Vector3(0f, 0f, 0.45f), AutomationViewportWorldSize(), GetDraftBackgroundTexture(), false, null, "app.shell");
             WithTextWeightCompensation(() =>
             {
@@ -3626,6 +4979,21 @@ namespace GemDuel.Presentation
 
             RenderReplayControls();
             RenderLiveReplayRecordingControls();
+            RenderTopbarControls();
+            if (settingsOpen)
+            {
+                RenderSettingsOverlay();
+            }
+
+            if (rulebookOpen)
+            {
+                RenderRulebookOverlay();
+            }
+
+            if (!string.IsNullOrEmpty(errorBanner))
+            {
+                RenderErrorBanner();
+            }
         }
 
         private List<string> GetVisibleDraftPool()
@@ -3733,6 +5101,8 @@ namespace GemDuel.Presentation
             {
                 case "open_rulebook":
                 case "close_rulebook":
+                case "rulebook_prev":
+                case "rulebook_next":
                 case "restart_local_pvp":
                 case "open_settings":
                 case "preview-close":
@@ -3743,6 +5113,7 @@ namespace GemDuel.Presentation
                 case "replenish":
                 case "peek-deck":
                 case "close-modal":
+                case "activate-privilege":
                     return true;
                 default:
                     return false;
@@ -3867,10 +5238,17 @@ namespace GemDuel.Presentation
         private void RenderPreviewOverlay()
         {
             var isDeckPreview = previewContext != null && previewContext.Source == "deck";
+            var isTableauCollectionPreview =
+                previewContext != null
+                && previewContext.Source == "tableau"
+                && previewContext.InstanceIds != null
+                && previewContext.InstanceIds.Count > 0;
             var cardLabel = previewContext == null
                 ? "Card Preview"
                 : isDeckPreview
                     ? "Deck L" + previewContext.Level
+                    : isTableauCollectionPreview
+                        ? previewContext.Player + " " + previewContext.Color + " stack"
                     : previewContext.InstanceId;
             if (previewBackgroundTexture != null)
             {
@@ -3903,37 +5281,44 @@ namespace GemDuel.Presentation
                 target.EventType = "preview-close";
             }, "card.preview.close");
             CreateText("Preview Close Text", ViewportPoint(1872f, 48f, -0.32f), "×", 0.13f, Color.white, TextAnchor.MiddleCenter);
-            var previewRect = GetSingleCardPreviewRect();
-            if (isDeckPreview)
+            if (isTableauCollectionPreview)
             {
-                CreateImagePanelPx(
-                    "Preview Deck Back L" + previewContext.Level,
-                    previewRect,
-                    -0.34f,
-                    false,
-                    null,
-                    null,
-                    "surfaces",
-                    "anime-themes",
-                    "royal-luxury",
-                    "dark",
-                    "market-card-back-l" + previewContext.Level + ".png"
-                );
-            }
-            else if (!string.IsNullOrEmpty(cardLabel))
-            {
-                CreateCardArtwork("Preview Card", cardLabel, previewRect, -0.34f);
+                RenderPreviewCardCollection(previewContext.InstanceIds, previewContext.Player, previewContext.Color);
             }
             else
             {
-                CreatePanelPx("Preview Card", previewRect.x, previewRect.y, previewRect.width, previewRect.height, -0.34f, new Color(0.86f, 0.83f, 0.74f));
+                var previewRect = GetSingleCardPreviewRect();
+                if (isDeckPreview)
+                {
+                    CreateImagePanelPx(
+                        "Preview Deck Back L" + previewContext.Level,
+                        previewRect,
+                        -0.34f,
+                        false,
+                        null,
+                        null,
+                        "surfaces",
+                        "anime-themes",
+                        "royal-luxury",
+                        "dark",
+                        "market-card-back-l" + previewContext.Level + ".png"
+                    );
+                }
+                else if (!string.IsNullOrEmpty(cardLabel))
+                {
+                    CreateCardArtwork("Preview Card", cardLabel, previewRect, -0.34f);
+                }
+                else
+                {
+                    CreatePanelPx("Preview Card", previewRect.x, previewRect.y, previewRect.width, previewRect.height, -0.34f, new Color(0.86f, 0.83f, 0.74f));
+                }
+                CreatePanelPx("Preview Card Hit Blocker", previewRect.x, previewRect.y, previewRect.width, previewRect.height, -0.37f, new Color(0f, 0f, 0f, 0f), true, target =>
+                {
+                    target.Kind = "PreviewCard";
+                    target.EventType = "preview-card";
+                    target.InstanceId = cardLabel;
+                }, "card.preview.card");
             }
-            CreatePanelPx("Preview Card Hit Blocker", previewRect.x, previewRect.y, previewRect.width, previewRect.height, -0.37f, new Color(0f, 0f, 0f, 0f), true, target =>
-            {
-                target.Kind = "PreviewCard";
-                target.EventType = "preview-card";
-                target.InstanceId = cardLabel;
-            }, "card.preview.card");
             var showMarketBuyAction = CanShowMarketPreviewAction();
             var showReservedBuyAction = CanShowReservedPreviewBuyAction();
             var showMarketReserveAction = CanShowMarketPreviewReserveAction();
@@ -3997,6 +5382,97 @@ namespace GemDuel.Presentation
             }
         }
 
+        private void RenderPreviewCardCollection(IReadOnlyList<string> instanceIds, string player, string color)
+        {
+            var visibleCount = Math.Min(12, instanceIds.Count);
+            var columns = Math.Min(4, Math.Max(1, visibleCount));
+            var rows = Math.Max(1, Mathf.CeilToInt(visibleCount / 4f));
+            var viewportWidth = Math.Max(1f, automationViewportWidth);
+            var viewportHeight = Math.Max(1f, automationViewportHeight);
+            var gapPx = viewportWidth < 768f ? 12f : 24f;
+            var maxRowWidth = viewportWidth * 0.9f;
+            var widthByColumns = (maxRowWidth - gapPx * Math.Max(0, columns - 1)) / columns;
+            var availableHeight = Math.Max(180f, viewportHeight - 260f);
+            var widthByRows = (availableHeight - gapPx * Math.Max(0, rows - 1)) / rows / CardPreviewAspectRatio;
+            var cardWidthPx = Mathf.Round(Mathf.Max(72f, Math.Min(1086f, Math.Min(widthByColumns, widthByRows))));
+            var cardHeightPx = Mathf.Round(cardWidthPx * CardPreviewAspectRatio);
+            var gridHeightPx = cardHeightPx * rows + gapPx * Math.Max(0, rows - 1);
+            var startYPx = (viewportHeight - gridHeightPx) * 0.5f + 16f;
+
+            WithTextWeightCompensation(() =>
+            {
+                var label = player.ToUpperInvariant() + " " + TableauColorLabel(color) + "  " + instanceIds.Count + " cards";
+                CreateText(
+                    "Preview Tableau Collection Label",
+                    ViewportPoint(960f, 192f, -0.32f),
+                    label,
+                    0.085f,
+                    new Color(0.82f, 0.88f, 0.98f),
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
+            });
+
+            for (var index = 0; index < visibleCount; index += 1)
+            {
+                var row = index / 4;
+                var column = index % 4;
+                var rowCount = Math.Min(4, visibleCount - row * 4);
+                var rowWidthPx = cardWidthPx * rowCount + gapPx * Math.Max(0, rowCount - 1);
+                var xPx = (viewportWidth - rowWidthPx) * 0.5f + column * (cardWidthPx + gapPx);
+                var yPx = startYPx + row * (cardHeightPx + gapPx);
+                var rect = new Rect(
+                    xPx / viewportWidth * 1920f,
+                    yPx / viewportHeight * 1080f,
+                    cardWidthPx / viewportWidth * 1920f,
+                    cardHeightPx / viewportHeight * 1080f
+                );
+                var instanceId = instanceIds[index];
+                CreateCardArtwork("Preview Collection Card " + index, instanceId, rect, -0.34f);
+                CreatePanelPx(
+                    "Preview Collection Card Target " + index,
+                    rect.x,
+                    rect.y,
+                    rect.width,
+                    rect.height,
+                    -0.37f,
+                    new Color(0f, 0f, 0f, 0f),
+                    true,
+                    target =>
+                    {
+                        target.Kind = "PreviewCard";
+                        target.EventType = "preview-card";
+                        target.InstanceId = instanceId;
+                        target.Index = index;
+                    },
+                    "card.preview.collection." + index
+                );
+            }
+        }
+
+        private static string TableauColorLabel(string color)
+        {
+            switch (color)
+            {
+                case "pure-royal":
+                    return "纯分/皇室";
+                case "red":
+                    return "红";
+                case "green":
+                    return "绿";
+                case "blue":
+                    return "蓝";
+                case "white":
+                    return "白";
+                case "black":
+                    return "黑";
+                case "pearl":
+                    return "珍珠";
+                default:
+                    return color ?? string.Empty;
+            }
+        }
+
         private Rect GetSingleCardPreviewRect()
         {
             var viewportWidth = Math.Max(1f, automationViewportWidth);
@@ -4020,6 +5496,15 @@ namespace GemDuel.Presentation
 
         private void RenderRulebookOverlay()
         {
+            var pageCount = RulebookPages.Length;
+            rulebookPage = Mathf.Clamp(rulebookPage, 0, Math.Max(0, pageCount - 1));
+            var canPrev = rulebookPage > 0;
+            var canNext = rulebookPage < pageCount - 1;
+            var locale = RulebookLocale();
+            var isEnglish = locale == "en";
+            var page = RulebookPages[rulebookPage];
+            var title = page.Title.Text(locale);
+            var summary = page.Summary.Text(locale);
             CreatePanelPx("Rulebook Overlay", 0f, 0f, 1920f, 1080f, -0.26f, new Color(0f, 0f, 0f, 0.82f), true, target =>
             {
                 target.Kind = "ActionButton";
@@ -4027,80 +5512,365 @@ namespace GemDuel.Presentation
             }, "rulebook.overlay");
             CreateRoundedPanelPx("Rulebook Panel", 38.4f, 64.8f, 1843.2f, 950.4f, 16f, 1f, new Color(1f, 0.93f, 0.68f, 0.16f), new Color(0.02f, 0.03f, 0.06f, 0.96f), -0.29f);
             CreatePanelPx("Rulebook Panel Target", 38.4f, 64.8f, 1843.2f, 950.4f, -0.31f, new Color(0f, 0f, 0f, 0f), false, null, "rulebook.panel");
+            CreatePanelPx("Rulebook Header", 38.4f, 64.8f, 1843.2f, 92f, -0.32f, new Color(0.01f, 0.02f, 0.05f, 0.78f));
             WithTextWeightCompensation(() =>
             {
-                CreateText("Rulebook Title", ViewportPoint(960f, 112f, -0.32f), "RULEBOOK", 0.18f, new Color(1f, 0.94f, 0.65f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Rulebook Body", ViewportPoint(960f, 188f, -0.32f), "Local PVP rules reference", 0.095f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Rulebook Chrome Title", ViewportPoint(178f, 112f, -0.34f), isEnglish ? "Rulebook" : "游戏说明书", 0.12f, new Color(1f, 0.94f, 0.65f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Rulebook Page Indicator", ViewportPoint(960f, 112f, -0.34f), "PAGE " + (rulebookPage + 1) + " / " + pageCount, 0.09f, new Color(0.74f, 0.8f, 0.92f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Rulebook Source Label", ViewportPoint(1742f, 112f, -0.34f), RulebookSourceOfTruth, 0.047f, new Color(0.54f, 0.62f, 0.76f), TextAnchor.MiddleRight, FontStyle.Bold);
             });
+
+            var navStartX = 74f;
+            var navY = 168f;
+            var navWidth = 190f;
+            var navGap = 8f;
+            for (var index = 0; index < pageCount; index += 1)
+            {
+                var x = navStartX + index * (navWidth + navGap);
+                var y = navY;
+                var active = index == rulebookPage;
+                CreateRoundedPanelPx(
+                    "Rulebook Nav " + index,
+                    x,
+                    y,
+                    navWidth,
+                    48f,
+                    8f,
+                    1f,
+                    active ? new Color(1f, 0.86f, 0.28f, 0.78f) : new Color(1f, 1f, 1f, 0.08f),
+                    active ? new Color(0.93f, 0.7f, 0.1f, 0.92f) : new Color(0.08f, 0.1f, 0.16f, 0.78f),
+                    -0.33f
+                );
+                CreatePanelPx(
+                    "Rulebook Nav Target " + index,
+                    x,
+                    y,
+                    navWidth,
+                    48f,
+                    -0.36f,
+                    new Color(0f, 0f, 0f, 0f),
+                    index != rulebookPage,
+                    target =>
+                    {
+                        target.Kind = "ActionButton";
+                        target.EventType = index < rulebookPage ? "rulebook_prev" : index > rulebookPage ? "rulebook_next" : string.Empty;
+                        target.Index = index;
+                    },
+                    "rulebook.nav." + index
+                );
+                WithTextWeightCompensation(() =>
+                    CreateText(
+                        "Rulebook Nav Text " + index,
+                        ViewportPoint(x + 12f, y + 25f, -0.37f),
+                        (index + 1) + ". " + RulebookPages[index].Title.Text(locale),
+                        isEnglish ? 0.043f : 0.052f,
+                        active ? new Color(0.04f, 0.05f, 0.08f) : new Color(0.78f, 0.84f, 0.94f),
+                        TextAnchor.MiddleLeft,
+                        FontStyle.Bold
+                    )
+                );
+            }
+
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("Rulebook Title", ViewportPoint(156f, 276f, -0.34f), title, isEnglish ? 0.18f : 0.22f, new Color(1f, 0.92f, 0.58f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Rulebook Summary", ViewportPoint(156f, 336f, -0.34f), WrapRulebookTextForSingleMesh(summary, isEnglish ? 112 : 58), isEnglish ? 0.065f : 0.078f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleLeft, FontStyle.Bold);
+            });
+            RenderRulebookPageSections(page, locale);
+
+            CreateActionButtonPx(
+                isEnglish ? "Prev" : "上一页",
+                "rulebook_prev",
+                156f,
+                912f,
+                184f,
+                56f,
+                new Color(0.92f, 0.68f, 0.12f),
+                "rulebook.prev",
+                canPrev
+            );
+            CreateActionButtonPx(
+                isEnglish ? "Next" : "下一页",
+                "rulebook_next",
+                1580f,
+                912f,
+                184f,
+                56f,
+                new Color(0.92f, 0.68f, 0.12f),
+                "rulebook.next",
+                canNext
+            );
+            CreateRoundedPanelPx("Rulebook Close", 1816f, 84f, 48f, 48f, 24f, 1f, new Color(1f, 1f, 1f, 0.2f), new Color(0.02f, 0.04f, 0.08f, 0.86f), -0.34f);
+            CreatePanelPx("Rulebook Close Target", 1816f, 84f, 48f, 48f, -0.36f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "ActionButton";
+                target.EventType = "close_rulebook";
+            }, "rulebook.close");
+            CreateText("Rulebook Close Text", ViewportPoint(1840f, 108f, -0.37f), "×", 0.13f, Color.white, TextAnchor.MiddleCenter);
+        }
+
+        private void RenderRulebookPageSections(RulebookPageContent page, string locale)
+        {
+            var sections = page.Sections.Take(4).ToList();
+            if (sections.Count == 0)
+            {
+                return;
+            }
+
+            var columns = sections.Count == 1 ? 1 : sections.Count == 3 ? 3 : 2;
+            var rows = Mathf.CeilToInt((float)sections.Count / columns);
+            var startX = 156f;
+            var startY = 390f;
+            var areaWidth = 1608f;
+            var areaHeight = 486f;
+            var gap = 18f;
+            var cardWidth = (areaWidth - gap * (columns - 1)) / columns;
+            var cardHeight = (areaHeight - gap * (rows - 1)) / rows;
+            for (var index = 0; index < sections.Count; index += 1)
+            {
+                var row = index / columns;
+                var column = index % columns;
+                RenderRulebookSectionCard(
+                    sections[index],
+                    locale,
+                    startX + column * (cardWidth + gap),
+                    startY + row * (cardHeight + gap),
+                    cardWidth,
+                    cardHeight,
+                    columns,
+                    index
+                );
+            }
+        }
+
+        private void RenderRulebookSectionCard(
+            RulebookSectionContent section,
+            string locale,
+            float x,
+            float y,
+            float width,
+            float height,
+            int columns,
+            int index
+        )
+        {
+            var isCallout = section.Type == "callout";
+            var isFigure = section.Type == "figure";
+            var border = isCallout
+                ? new Color(1f, 0.79f, 0.28f, 0.38f)
+                : isFigure
+                    ? new Color(0.38f, 0.7f, 1f, 0.34f)
+                    : new Color(1f, 1f, 1f, 0.1f);
+            var fill = isCallout
+                ? new Color(0.24f, 0.16f, 0.04f, 0.46f)
+                : isFigure
+                    ? new Color(0.04f, 0.12f, 0.2f, 0.56f)
+                    : new Color(1f, 1f, 1f, 0.045f);
+            CreateRoundedPanelPx("Rulebook Section " + index, x, y, width, height, 8f, 1f, border, fill, -0.33f);
+            var isEnglish = locale == "en";
+            var maxChars = columns == 3
+                ? (isEnglish ? 34 : 18)
+                : columns == 2
+                    ? (isEnglish ? 58 : 30)
+                    : (isEnglish ? 104 : 56);
+            var lineHeight = isEnglish ? 27f : 29f;
+            var bodyFont = isEnglish ? 0.052f : 0.062f;
+            var maxLines = Math.Max(2, Mathf.FloorToInt((height - 76f) / lineHeight));
+            var lineY = y + 36f;
+            WithTextWeightCompensation(() =>
+                CreateText(
+                    "Rulebook Section Title " + index,
+                    ViewportPoint(x + 22f, lineY, -0.37f),
+                    section.Title.Text(locale),
+                    isEnglish ? 0.059f : 0.071f,
+                    isCallout ? new Color(1f, 0.89f, 0.48f) : new Color(1f, 0.88f, 0.55f),
+                    TextAnchor.MiddleLeft,
+                    FontStyle.Bold
+                )
+            );
+
+            lineY += 38f;
+            var emitted = 0;
+            foreach (var item in section.Items)
+            {
+                var lines = WrapRulebookParagraph("• " + item.Text(locale), maxChars);
+                foreach (var line in lines)
+                {
+                    if (emitted >= maxLines)
+                    {
+                        WithTextWeightCompensation(() =>
+                            CreateText(
+                                "Rulebook Section More " + index,
+                                ViewportPoint(x + 22f, lineY, -0.37f),
+                                "...",
+                                bodyFont,
+                                new Color(0.72f, 0.78f, 0.88f),
+                                TextAnchor.MiddleLeft,
+                                FontStyle.Bold
+                            )
+                        );
+                        return;
+                    }
+
+                    var lineName = "Rulebook Section Body " + index + "-" + emitted;
+                    var currentLineY = lineY;
+                    WithTextWeightCompensation(() =>
+                        CreateText(
+                            lineName,
+                            ViewportPoint(x + 22f, currentLineY, -0.37f),
+                            line,
+                            bodyFont,
+                            new Color(0.84f, 0.89f, 0.96f),
+                            TextAnchor.MiddleLeft,
+                            FontStyle.Bold
+                        )
+                    );
+                    lineY += lineHeight;
+                    emitted += 1;
+                }
+            }
+        }
+
+        private string RulebookLocale()
+        {
+            return settingsLocale == "en" ? "en" : "zh";
+        }
+
+        private static string WrapRulebookTextForSingleMesh(string text, int maxChars)
+        {
+            return string.Join("\n", WrapRulebookParagraph(text, maxChars));
+        }
+
+        private static List<string> WrapRulebookParagraph(string text, int maxChars)
+        {
+            var lines = new List<string>();
+            if (string.IsNullOrEmpty(text))
+            {
+                return lines;
+            }
+
+            foreach (var rawParagraph in text.Split('\n'))
+            {
+                var remaining = rawParagraph.Trim();
+                while (remaining.Length > maxChars)
+                {
+                    var splitAt = remaining.LastIndexOf(' ', Math.Min(maxChars, remaining.Length - 1));
+                    if (splitAt < Math.Max(8, maxChars / 2))
+                    {
+                        splitAt = maxChars;
+                    }
+
+                    lines.Add(remaining.Substring(0, splitAt).TrimEnd());
+                    remaining = remaining.Substring(splitAt).TrimStart();
+                }
+
+                if (remaining.Length > 0)
+                {
+                    lines.Add(remaining);
+                }
+            }
+
+            return lines;
         }
 
         private void RenderSettingsOverlay()
         {
-            var rect = new Rect(1722f, 60f, 186f, settingsSurfaceDropdownOpen ? 510f : 336f);
-            CreateRoundedPanelPx("Settings Panel", rect.x, rect.y, rect.width, rect.height, 8f, 1f, new Color(0.17f, 0.21f, 0.31f), new Color(0.06f, 0.08f, 0.13f, 0.96f), -0.3f);
+            var rect = SettingsPanelRect();
+            const float controlX = SettingsControlX;
+            const float controlWidth = SettingsControlWidth;
+            const float localeSegmentWidth = SettingsLocaleWidth * 0.5f;
+            CreateRoundedPanelPx("Settings Panel", rect.x, rect.y, rect.width, rect.height, 12f, 0.75f, new Color(0.22f, 0.28f, 0.4f), new Color(0.06f, 0.08f, 0.13f, 0.97f), -0.3f);
             CreatePanelPx("Settings Panel Target", rect.x, rect.y, rect.width, rect.height, -0.31f, new Color(0f, 0f, 0f, 0f), false, null, "settings.panel");
             WithTextWeightCompensation(() =>
             {
-                CreateText("Settings Title", ViewportPoint(1734f, 76f, -0.32f), "设置", 0.032f, new Color(0.63f, 0.69f, 0.8f), TextAnchor.MiddleLeft, FontStyle.Bold);
-                CreateText("Settings Locale Label", ViewportPoint(1734f, 96f, -0.32f), "语言", 0.032f, new Color(0.63f, 0.69f, 0.8f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Settings Title", ViewportPoint(controlX, SettingsTitleY, -0.32f), "设置", SettingsTitleFontSize, new Color(0.78f, 0.84f, 0.94f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Settings Locale Label", ViewportPoint(SettingsLocaleX, SettingsLocaleLabelY, -0.32f), "语言", SettingsSectionLabelFontSize, new Color(0.63f, 0.69f, 0.8f), TextAnchor.MiddleLeft, FontStyle.Bold);
             });
-            CreateRoundedPanelPx("Settings Locale Segmented", 1731f, 106f, 165f, 30f, 15f, 1f, new Color(0.18f, 0.24f, 0.36f), new Color(0.04f, 0.08f, 0.15f), -0.32f);
+            CreateRoundedPanelPx("Settings Locale Segmented", SettingsLocaleX, SettingsLocaleY, SettingsLocaleWidth, SettingsLocaleHeight, 14.25f, 0.75f, new Color(0.2f, 0.28f, 0.42f), new Color(0.04f, 0.08f, 0.15f), -0.32f);
             if (settingsLocale == "en")
             {
-                CreateRoundedPanelPx("Settings Locale Active", 1740f, 111f, 78f, 20f, 10f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+                CreateRoundedPanelPx("Settings Locale Active", SettingsLocaleX + 3.75f, SettingsLocaleY + 3.75f, localeSegmentWidth - 7.5f, SettingsLocaleHeight - 7.5f, 10.5f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
             }
             else
             {
-                CreateRoundedPanelPx("Settings Locale Active", 1827f, 111f, 36f, 20f, 10f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+                CreateRoundedPanelPx("Settings Locale Active", SettingsLocaleX + localeSegmentWidth + 3.75f, SettingsLocaleY + 3.75f, localeSegmentWidth - 7.5f, SettingsLocaleHeight - 7.5f, 10.5f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
             }
-            CreateSettingsControlTarget("Settings Locale English Target", 1738f, 106f, 88f, 30f, "settings-locale-en", "settings.locale.en");
-            CreateSettingsControlTarget("Settings Locale Chinese Target", 1826f, 106f, 70f, 30f, "settings-locale-zh", "settings.locale.zh");
+            CreateSettingsControlTarget("Settings Locale English Target", SettingsLocaleX, SettingsLocaleY, localeSegmentWidth, SettingsLocaleHeight, "settings-locale-en", "settings.locale.en");
+            CreateSettingsControlTarget("Settings Locale Chinese Target", SettingsLocaleX + localeSegmentWidth, SettingsLocaleY, localeSegmentWidth, SettingsLocaleHeight, "settings-locale-zh", "settings.locale.zh");
             WithTextWeightCompensation(() =>
             {
-                CreateText("Settings Locale English", ViewportPoint(1792f, 122f, -0.34f), "English", 0.034f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Settings Locale Chinese", ViewportPoint(1845f, 122f, -0.34f), "中文", 0.034f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Settings Locale English", ViewportPoint(SettingsLocaleX + localeSegmentWidth * 0.5f, SettingsLocaleY + SettingsLocaleHeight * 0.5f, -0.34f), "English", SettingsLocaleFontSize, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Settings Locale Chinese", ViewportPoint(SettingsLocaleX + localeSegmentWidth * 1.5f, SettingsLocaleY + SettingsLocaleHeight * 0.5f, -0.34f), "中文", SettingsLocaleFontSize, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
             });
-            RenderSettingsRow("Sound", 1730f, 142f, settingsSoundEnabled ? "♬" : "×", "音效", false, "settings-sound-toggle", "settings.sound");
-            RenderSettingsRow(
-                "LAN Cards",
-                1730f,
-                178f,
-                settingsLanShowOpponentPlayerZoneCards ? "V" : "×",
-                "LAN手牌",
-                false,
-                "settings-lan-player-zone-toggle",
-                "settings.lan.playerZone"
-            );
-            RenderSettingsRow(
-                "LAN Gems",
-                1730f,
-                214f,
-                settingsLanShowOpponentGems ? "V" : "×",
-                "LAN宝石",
-                false,
-                "settings-lan-gems-toggle",
-                "settings.lan.gems"
-            );
-            RenderSettingsRow("Save", 1730f, 250f, "▣", "保存", false, "settings-save", "settings.save");
-            RenderSettingsRow("Load", 1730f, 286f, "▤", "读取", false, "settings-load", "settings.load");
-            RenderSettingsRow("Theme", 1730f, 322f, "⚙", SurfaceThemeLabel(settingsSurfaceTheme), true, "settings-surface-control", "settings.surface.control");
+            RenderSettingsRow("Sound", controlX, SettingsRowStartY, settingsSoundEnabled ? "♬" : "×", "音效", false, "settings-sound-toggle", "settings.sound");
+            RenderSettingsRow("Replay Save", controlX, SettingsRowStartY + SettingsRowGap, "▣", "保存", false, "settings-save", "settings.save");
+            RenderSettingsRow("Replay Load", controlX, SettingsRowStartY + SettingsRowGap * 2f, "▤", "读取", false, "settings-load", "settings.load");
+            RenderSettingsRow("Theme", controlX, SettingsRowStartY + SettingsRowGap * 3f, "⚙", SurfaceThemeLabel(settingsSurfaceTheme), true, "settings-surface-control", "settings.surface.control");
             if (settingsSurfaceDropdownOpen)
             {
+                var dropdownY = SettingsRowStartY + SettingsRowGap * 4f - 3f;
+                var dropdownHeight = 12f + SurfaceThemeVariants.Length * 48f;
+                CreateRoundedPanelPx(
+                    "Settings Surface Dropdown",
+                    controlX,
+                    dropdownY,
+                    controlWidth,
+                    dropdownHeight,
+                    12f,
+                    1.5f,
+                    new Color(0.28f, 0.35f, 0.5f, 0.94f),
+                    new Color(0.02f, 0.04f, 0.08f, 0.98f),
+                    -0.37f
+                );
                 for (var index = 0; index < SurfaceThemeVariants.Length; index += 1)
                 {
                     var variant = SurfaceThemeVariants[index];
                     RenderSettingsRow(
                         "Theme Option " + variant,
-                        1730f,
-                        358f + index * 32f,
+                        controlX + 6f,
+                        dropdownY + 6f + index * 48f,
                         variant == settingsSurfaceTheme ? "✓" : " ",
                         SurfaceThemeLabel(variant),
                         false,
                         "settings-surface-" + variant,
-                        "settings.surface." + variant
+                        "settings.surface." + variant,
+                        controlWidth - 12f,
+                        48f,
+                        -0.38f
                     );
                 }
             }
+        }
+
+        private static Rect SettingsPanelRect()
+        {
+            return new Rect(SettingsPanelX, SettingsPanelY, SettingsPanelWidth, SettingsPanelHeight);
+        }
+
+        private static float ScaleReferenceX(float referencePx, int viewportWidth)
+        {
+            return referencePx * Math.Max(1, viewportWidth) / 1920f;
+        }
+
+        private static float ScaleReferenceY(float referencePx, int viewportHeight)
+        {
+            return referencePx * Math.Max(1, viewportHeight) / 1080f;
+        }
+
+        private static float ScreenFontPx(float worldFontSize, int viewportHeight)
+        {
+            return worldFontSize / 10f * Math.Max(1, viewportHeight);
+        }
+
+        private static JObject BuildReferenceRectSnapshot(Rect rect, int viewportWidth, int viewportHeight)
+        {
+            return new JObject
+            {
+                ["x"] = Math.Round(ScaleReferenceX(rect.x, viewportWidth), 2),
+                ["y"] = Math.Round(ScaleReferenceY(rect.y, viewportHeight), 2),
+                ["width"] = Math.Round(ScaleReferenceX(rect.width, viewportWidth), 2),
+                ["height"] = Math.Round(ScaleReferenceY(rect.height, viewportHeight), 2),
+            };
         }
 
         private static string SurfaceThemeLabel(string variant)
@@ -4132,22 +5902,25 @@ namespace GemDuel.Presentation
             string label,
             bool dropdown,
             string eventType = null,
-            string semanticKey = null
+            string semanticKey = null,
+            float rowWidth = SettingsControlWidth,
+            float rowHeight = SettingsRowHeight,
+            float z = -0.32f
         )
         {
-            CreateRoundedPanelPx("Settings Row " + name, x, y, 168f, 30f, 5f, 1f, new Color(0.18f, 0.24f, 0.36f), new Color(0.05f, 0.08f, 0.14f), -0.32f);
+            CreateRoundedPanelPx("Settings Row " + name, x, y, rowWidth, rowHeight, 6f, 0.75f, new Color(0.2f, 0.28f, 0.42f), new Color(0.05f, 0.08f, 0.14f), z);
             if (!string.IsNullOrEmpty(eventType))
             {
-                CreateSettingsControlTarget("Settings Row Target " + name, x, y, 168f, 30f, eventType, semanticKey);
+                CreateSettingsControlTarget("Settings Row Target " + name, x, y, rowWidth, rowHeight, eventType, semanticKey, z - 0.04f);
             }
 
             WithTextWeightCompensation(() =>
             {
-                CreateText("Settings Row Icon " + name, ViewportPoint(x + 18f, y + 16f, -0.34f), icon, 0.035f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Settings Row Label " + name, ViewportPoint(x + 55f, y + 16f, -0.34f), label, 0.034f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                CreateText("Settings Row Icon " + name, ViewportPoint(x + 17f, y + rowHeight * 0.5f, z - 0.02f), icon, SettingsIconFontSize, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("Settings Row Label " + name, ViewportPoint(x + 33f, y + rowHeight * 0.5f, z - 0.02f), label, SettingsRowFontSize, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleLeft, FontStyle.Bold);
                 if (dropdown)
                 {
-                    CreateText("Settings Row Dropdown " + name, ViewportPoint(x + 154f, y + 16f, -0.34f), "⌄", 0.036f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Settings Row Dropdown " + name, ViewportPoint(x + rowWidth - 13f, y + rowHeight * 0.5f, z - 0.02f), "⌄", SettingsRowFontSize, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
                 }
             });
         }
@@ -4159,10 +5932,11 @@ namespace GemDuel.Presentation
             float width,
             float height,
             string eventType,
-            string semanticKey
+            string semanticKey,
+            float z = -0.36f
         )
         {
-            CreatePanelPx(name, x, y, width, height, -0.36f, new Color(0f, 0f, 0f, 0f), true, target =>
+            CreatePanelPx(name, x, y, width, height, z, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "SettingsControl";
                 target.EventType = eventType;
@@ -4240,7 +6014,7 @@ namespace GemDuel.Presentation
 
         private void RenderTopbarControls()
         {
-            CreateTopbarControl(1784f, "Ⅱ", "chrome.rulebook", "open_rulebook");
+            CreateTopbarControl(1784f, string.Empty, "chrome.rulebook", "open_rulebook");
             CreateTopbarControl(1834f, "↶", "chrome.restart", "restart_local_pvp");
             CreateTopbarControl(1884f, "⚙", "settings.control", "open_settings");
         }
@@ -4259,13 +6033,20 @@ namespace GemDuel.Presentation
                 target.EventType = eventType;
             }, semanticKey);
 
-            CreateText("Topbar Control Label " + label, ViewportPoint(centerX, 30f, -0.06f), label, 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            if (semanticKey == "chrome.rulebook")
+            {
+                CreateBookIconPx(centerX, 30f, Color.white, -0.06f);
+            }
+            else
+            {
+                CreateText("Topbar Control Label " + label, ViewportPoint(centerX, 30f, -0.06f), label, 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            }
         }
 
         private void RenderBoard()
         {
-            RenderPrivilegeScrollPlaceholder();
             var frameRect = BoardFrameRect();
+            RenderSharedPrivilegeSupply(frameRect);
             CreateImagePanelPx(
                 "Board Frame",
                 frameRect,
@@ -4291,108 +6072,82 @@ namespace GemDuel.Presentation
             }
         }
 
-        private void RenderPrivilegeScrollPlaceholder()
+        private void RenderSharedPrivilegeSupply(Rect boardRect)
         {
-            const float centerX = 1208.9f;
-            const float centerY = 205f;
-            var clickable =
-                activeReplay == null
-                && currentState != null
-                && currentState.Phase == "IDLE"
-                && GetActivePlayerPrivilegeCount() > 0;
-            if (clickable && IsHovered("privilege.scroll.placeholder"))
-            {
-                CreateHoverFramePx(
-                    "Privilege Scroll Placeholder Hover",
-                    centerX - 54f,
-                    centerY - 21f,
-                    108f,
-                    42f,
-                    13f,
-                    -0.05f
-                );
-            }
-
+            var p1Privileges = GetIntAt("privileges", "p1");
+            var p2Privileges = GetIntAt("privileges", "p2");
+            var remaining = Math.Max(0, SharedPrivilegeSupplySize - (p1Privileges + p2Privileges));
+            const float chipWidth = 198f;
+            const float chipHeight = 34f;
+            var x = boardRect.x + boardRect.width * 0.5f - chipWidth * 0.5f;
+            var y = boardRect.y - 43f;
             CreateRoundedPanelPx(
-                "Privilege Scroll Placeholder Shell",
-                centerX - 42f,
-                centerY - 17f,
-                84f,
-                34f,
-                10f,
-                1.5f,
-                new Color(1f, 0.77f, 0.24f, 0.74f),
-                new Color(0.1f, 0.07f, 0.03f, 0.62f),
-                -0.02f
-            );
-            CreateRoundedPanelPx(
-                "Privilege Scroll Placeholder Left Cap",
-                centerX - 50f,
-                centerY - 13f,
-                18f,
-                26f,
-                9f,
+                "Shared Privilege Supply",
+                x,
+                y,
+                chipWidth,
+                chipHeight,
+                17f,
                 1f,
-                new Color(1f, 0.77f, 0.24f, 0.72f),
-                new Color(0.22f, 0.13f, 0.02f, 0.86f),
-                -0.03f
+                new Color(1f, 0.84f, 0.28f, 0.28f),
+                new Color(0.03f, 0.04f, 0.08f, 0.7f),
+                -0.05f
             );
-            CreateRoundedPanelPx(
-                "Privilege Scroll Placeholder Right Cap",
-                centerX + 32f,
-                centerY - 13f,
-                18f,
-                26f,
-                9f,
-                1f,
-                new Color(1f, 0.77f, 0.24f, 0.72f),
-                new Color(0.22f, 0.13f, 0.02f, 0.86f),
-                -0.03f
-            );
-            Action<GemDuelViewTarget> configureTarget = null;
-            if (clickable)
-            {
-                configureTarget = target =>
-                {
-                    target.Kind = "ActionButton";
-                    target.EventType = "activate-privilege";
-                };
-            }
-
             CreatePanelPx(
-                "Privilege Scroll Placeholder Evidence",
-                centerX - 50f,
-                centerY - 17f,
-                100f,
-                34f,
-                -0.04f,
+                "Shared Privilege Supply Target",
+                x,
+                y,
+                chipWidth,
+                chipHeight,
+                -0.08f,
                 new Color(0f, 0f, 0f, 0f),
-                clickable,
-                configureTarget,
-                "privilege.scroll.placeholder"
+                false,
+                target =>
+                {
+                    target.Kind = "PrivilegeSupply";
+                    target.InstanceId = remaining.ToString();
+                },
+                "privilege.supply"
             );
+
             WithTextWeightCompensation(() =>
+            {
                 CreateText(
-                    "Privilege Scroll Placeholder Glyph",
-                    ViewportPoint(centerX, centerY, -0.05f),
-                    "◆",
-                    0.105f,
-                    new Color(1f, 0.86f, 0.22f),
+                    "Shared Privilege Supply Label",
+                    ViewportPoint(x + 54f, y + chipHeight * 0.5f + 1f, -0.07f),
+                    "特权",
+                    0.063f,
+                    new Color(0.86f, 0.9f, 0.96f),
                     TextAnchor.MiddleCenter,
                     FontStyle.Bold
-                )
-            );
+                );
+                CreateText(
+                    "Shared Privilege Supply Count",
+                    ViewportPoint(x + chipWidth - 36f, y + chipHeight * 0.5f + 1f, -0.07f),
+                    remaining + "/" + SharedPrivilegeSupplySize,
+                    0.075f,
+                    remaining > 0 ? new Color(1f, 0.87f, 0.26f) : new Color(0.55f, 0.6f, 0.7f),
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
+            });
+
+            for (var index = 0; index < SharedPrivilegeSupplySize; index += 1)
+            {
+                var active = index < remaining;
+                var centerX = x + 92f + index * 22f;
+                var centerY = y + chipHeight * 0.5f;
+                RenderPrivilegeSupplyScrollIcon(centerX, centerY, active);
+            }
         }
 
-        private int GetActivePlayerPrivilegeCount()
+        private void RenderPrivilegeSupplyScrollIcon(float centerX, float centerY, bool active)
         {
-            if (currentState == null)
-            {
-                return 0;
-            }
-
-            return Math.Max(0, GetIntAt("privileges", currentState.Turn))
-                + Math.Max(0, GetIntAt("extraPrivileges", currentState.Turn));
+            var shellColor = active ? new Color(1f, 0.82f, 0.22f, 0.86f) : new Color(0.42f, 0.46f, 0.54f, 0.42f);
+            var fillColor = active ? new Color(0.18f, 0.1f, 0.02f, 0.82f) : new Color(0.08f, 0.09f, 0.12f, 0.72f);
+            CreateRoundedPanelPx("Supply Scroll Shell " + centerX, centerX - 8.5f, centerY - 5f, 17f, 10f, 4f, 0.8f, shellColor, fillColor, -0.07f);
+            CreateRoundedPanelPx("Supply Scroll Left " + centerX, centerX - 11f, centerY - 4f, 4.5f, 8f, 2f, 0.6f, shellColor, fillColor, -0.071f);
+            CreateRoundedPanelPx("Supply Scroll Right " + centerX, centerX + 6.5f, centerY - 4f, 4.5f, 8f, 2f, 0.6f, shellColor, fillColor, -0.071f);
         }
 
         private void RenderMarket()
@@ -4501,15 +6256,17 @@ namespace GemDuel.Presentation
             if (isActive)
             {
                 var reserved = (JArray)((JObject)currentState.Snapshot["playerReserved"])[player];
+                var reservedSlotCount = Math.Min(reserved.Count, 3);
                 for (var index = 0; index < reserved.Count; index += 1)
                 {
-                    var reservedRect = PlayerReservedRect(player, index);
+                    var reservedRect = PlayerReservedClickableRect(player, index, reservedSlotCount);
                     CreatePanelPx(
                         player + " Reserved Target " + index,
                         reservedRect.x,
                         reservedRect.y,
                         reservedRect.width,
                         reservedRect.height,
+                        -0.14f - index * 0.01f,
                         new Color(0f, 0f, 0f, 0f),
                         true,
                         target =>
@@ -4574,6 +6331,12 @@ namespace GemDuel.Presentation
             var privileges = GetIntAt("privileges", player);
             var extraPrivileges = GetIntAt("extraPrivileges", player);
             var totalPrivileges = Math.Max(0, privileges + extraPrivileges);
+            var canUsePrivilege =
+                isActive
+                && activeReplay == null
+                && currentState != null
+                && currentState.Phase == "IDLE"
+                && currentState.Winner == null;
             if (totalPrivileges == 0)
             {
                 CreateText(player + " Empty Privilege", ViewportPoint(avatarCenterX, rect.y + 193f, -0.1f), "◷", 0.08f, new Color(0.43f, 0.5f, 0.6f), TextAnchor.MiddleCenter);
@@ -4586,8 +6349,109 @@ namespace GemDuel.Presentation
                 var row = index / 2;
                 var x = avatarCenterX - 18f + column * 36f;
                 var y = rect.y + 178f + row * 34f;
-                CreateText(player + " Privilege " + index, ViewportPoint(x, y, -0.1f), "◉", 0.11f, index < privileges ? new Color(1f, 0.82f, 0.22f) : new Color(1f, 0.63f, 0.1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                RenderPlayerPrivilegeScroll(player, index, x, y, index < privileges, canUsePrivilege);
             }
+        }
+
+        private void RenderPlayerPrivilegeScroll(
+            string player,
+            int index,
+            float centerX,
+            float centerY,
+            bool standard,
+            bool clickable
+        )
+        {
+            var semanticKey = player == currentState?.Turn ? "player.current.privilege" : "player.opponent.privilege";
+            var shellColor = standard
+                ? new Color(1f, 0.82f, 0.22f, 0.86f)
+                : new Color(1f, 0.62f, 0.12f, 0.9f);
+            var fillColor = standard
+                ? new Color(0.18f, 0.1f, 0.02f, 0.82f)
+                : new Color(0.22f, 0.08f, 0.02f, 0.86f);
+            var targetRect = new Rect(centerX - 22f, centerY - 17f, 44f, 34f);
+            if (clickable && (IsHoveredAction("activate-privilege", semanticKey) || IsHovered(semanticKey)))
+            {
+                CreateHoverFramePx(
+                    player + " Privilege Scroll Hover " + index,
+                    targetRect.x - 3f,
+                    targetRect.y - 3f,
+                    targetRect.width + 6f,
+                    targetRect.height + 6f,
+                    12f,
+                    -0.13f
+                );
+            }
+
+            CreateRoundedPanelPx(
+                player + " Privilege Scroll Shell " + index,
+                centerX - 17f,
+                centerY - 10f,
+                34f,
+                20f,
+                8f,
+                1f,
+                shellColor,
+                fillColor,
+                -0.1f
+            );
+            CreateRoundedPanelPx(
+                player + " Privilege Scroll Left Cap " + index,
+                centerX - 22f,
+                centerY - 8f,
+                9f,
+                16f,
+                4.5f,
+                0.8f,
+                shellColor,
+                new Color(0.32f, 0.18f, 0.03f, 0.94f),
+                -0.11f
+            );
+            CreateRoundedPanelPx(
+                player + " Privilege Scroll Right Cap " + index,
+                centerX + 13f,
+                centerY - 8f,
+                9f,
+                16f,
+                4.5f,
+                0.8f,
+                shellColor,
+                new Color(0.32f, 0.18f, 0.03f, 0.94f),
+                -0.11f
+            );
+            CreateText(
+                player + " Privilege Scroll Mark " + index,
+                ViewportPoint(centerX, centerY, -0.12f),
+                "≋",
+                0.048f,
+                new Color(1f, 0.92f, 0.56f),
+                TextAnchor.MiddleCenter,
+                FontStyle.Bold
+            );
+
+            if (!clickable)
+            {
+                return;
+            }
+
+            CreatePanelPx(
+                player + " Privilege Scroll Target " + index,
+                targetRect.x,
+                targetRect.y,
+                targetRect.width,
+                targetRect.height,
+                -0.14f,
+                new Color(0f, 0f, 0f, 0f),
+                true,
+                target =>
+                {
+                    target.Kind = "ActionButton";
+                    target.EventType = "activate-privilege";
+                    target.InstanceId = player;
+                    target.Index = index;
+                },
+                semanticKey
+            );
         }
 
         private void RenderPlayerResourcesColumn(string player, Rect rect)
@@ -4748,22 +6612,30 @@ namespace GemDuel.Presentation
             }
 
             var slotCount = Math.Min(reserved.Count, 3);
-            var scale = Mathf.Clamp(rect.width / (150f + Math.Max(slotCount - 1, 0) * 34f), 0.42f, 1.32f);
-            var cardWidth = 150f * scale;
-            var cardHeight = 200f * scale;
-            var offsetX = 34f * scale;
-            var offsetY = 44f * scale;
-            var totalWidth = cardWidth + Math.Max(slotCount - 1, 0) * offsetX;
-            var totalHeight = cardHeight + Math.Max(slotCount - 1, 0) * offsetY;
-            var startX = rect.x + (rect.width - totalWidth) * 0.5f;
-            var startY = rect.y + (rect.height - totalHeight) * 0.5f;
 
             for (var index = 0; index < slotCount; index += 1)
             {
                 var item = reserved[index];
                 var instanceId = item.Type == JTokenType.String ? item.Value<string>() : ((JObject)item).Value<string>("instanceId");
-                var cardRect = new Rect(startX + index * offsetX, startY + index * offsetY, cardWidth, cardHeight);
+                var cardRect = PlayerReservedRect(player, index, slotCount);
                 CreateCardArtwork(player + " Reserved Card " + index, instanceId, cardRect, -0.09f);
+                CreatePanelPx(
+                    player + " Reserved Visual Target " + index,
+                    cardRect.x,
+                    cardRect.y,
+                    cardRect.width,
+                    cardRect.height,
+                    -0.11f,
+                    new Color(0f, 0f, 0f, 0f),
+                    false,
+                    target =>
+                    {
+                        target.Kind = "ReservedCardVisual";
+                        target.Index = index;
+                        target.InstanceId = instanceId;
+                    },
+                    "player." + player + ".reserved." + index + ".visual"
+                );
             }
         }
 
@@ -4818,14 +6690,20 @@ namespace GemDuel.Presentation
 
             var semanticRole = player == currentState.Turn ? "current" : "opponent";
             var semanticKey = "player." + semanticRole + ".tableau." + color;
+            var stackTargetRect = new Rect(
+                Math.Min(rect.x, topCardRect.x),
+                Math.Min(rect.y, topCardRect.y),
+                Math.Max(rect.xMax, topCardRect.xMax) - Math.Min(rect.x, topCardRect.x),
+                Math.Max(rect.yMax, topCardRect.yMax) - Math.Min(rect.y, topCardRect.y)
+            );
             if (IsHovered(semanticKey))
             {
                 CreateHoverFramePx(
                     player + " Tableau Hover " + color,
-                    topCardRect.x - 3f,
-                    topCardRect.y - 3f,
-                    topCardRect.width + 6f,
-                    topCardRect.height + 6f,
+                    stackTargetRect.x - 3f,
+                    stackTargetRect.y - 3f,
+                    stackTargetRect.width + 6f,
+                    stackTargetRect.height + 6f,
                     6f,
                     -0.13f
                 );
@@ -4833,10 +6711,10 @@ namespace GemDuel.Presentation
 
             CreatePanelPx(
                 player + " Tableau Target " + color,
-                topCardRect.x,
-                topCardRect.y,
-                topCardRect.width,
-                topCardRect.height,
+                stackTargetRect.x,
+                stackTargetRect.y,
+                stackTargetRect.width,
+                stackTargetRect.height,
                 -0.14f,
                 new Color(0f, 0f, 0f, 0f),
                 true,
@@ -4911,26 +6789,41 @@ namespace GemDuel.Presentation
         private void RenderReplenishAction()
         {
             var board = BoardFrameRect();
+            var bagCount = GetBagCount();
+            var enabled = activeReplay != null || CanReplenishBoard();
             var actionWidth = 184f;
-            var actionHeight = 44f;
+            var actionHeight = 56f;
             var actionTopGap = 16f;
-            if (UseCompactLiveActionLayout())
-            {
-                actionWidth = board.width * (136.51f / 412.87f);
-                actionHeight = board.height * (38.36f / 412.87f);
-                actionTopGap = board.height * (17.36f / 412.87f);
-            }
+            var label = settingsLocale == "zh"
+                ? "补给 (" + bagCount + ")"
+                : "Replenish (" + bagCount + ")";
 
             CreateActionButtonPx(
-                "Replenish",
+                label,
                 "replenish",
                 board.x + board.width * 0.5f - actionWidth * 0.5f,
                 board.y + board.height + actionTopGap,
                 actionWidth,
                 actionHeight,
                 new Color(0.18f, 0.55f, 0.86f),
-                "turn.end"
+                "turn.end",
+                enabled
             );
+        }
+
+        private int GetBagCount()
+        {
+            var bag = currentState?.Snapshot["bag"] as JArray;
+            return bag == null ? 0 : bag.Count;
+        }
+
+        private bool CanReplenishBoard()
+        {
+            return activeReplay == null
+                && currentState != null
+                && currentState.Phase == "IDLE"
+                && currentState.Winner == null
+                && GetBagCount() > 0;
         }
 
         private void RenderDeckPeekAction()
@@ -5091,7 +6984,7 @@ namespace GemDuel.Presentation
             var x = currentState.Phase == "DRAFT_PHASE" ? 1552f : 1524f;
             var y = currentState.Phase == "DRAFT_PHASE" ? 154f : 663f;
             const float width = 253f;
-            const float height = 145f;
+            const float height = 81f;
             CreateRoundedPanelPx(
                 "Replay Controls Panel",
                 x,
@@ -5107,26 +7000,6 @@ namespace GemDuel.Presentation
 
             CreateReplayControlButton("undo", x + 15f, y + 15f, "↢", nextFixtureEventIndex > 0);
             CreateReplayControlButton("redo", x + width - 69f, y + 15f, "↣", nextFixtureEventIndex < ReplayEventsTotal);
-            CreateActionButtonPx(
-                "导入",
-                "replay_import_localdev",
-                x + 15f,
-                y + 91f,
-                106f,
-                40f,
-                new Color(0.08f, 0.33f, 0.48f),
-                "replay.import.localdev"
-            );
-            CreateActionButtonPx(
-                "导出",
-                "replay_export_localdev",
-                x + width - 121f,
-                y + 91f,
-                106f,
-                40f,
-                new Color(0.34f, 0.28f, 0.12f),
-                "replay.export.localdev"
-            );
 
             var currentStep = Math.Max(0, nextFixtureEventIndex);
             var historyLength = ReplayEventsTotal;
@@ -5187,37 +7060,7 @@ namespace GemDuel.Presentation
 
         private void RenderLiveReplayRecordingControls()
         {
-            if (activeReplay != null || liveRecordedReplay == null || currentState == null)
-            {
-                return;
-            }
-
-            var x = currentState.Phase == "DRAFT_PHASE" ? 1552f : 1524f;
-            var y = currentState.Phase == "DRAFT_PHASE" ? 154f : 663f;
-            const float width = 253f;
-            const float height = 81f;
-            CreateRoundedPanelPx(
-                "Live Replay Recording Panel",
-                x,
-                y,
-                width,
-                height,
-                18f,
-                1f,
-                new Color(0.86f, 0.96f, 1f, 0.3f),
-                new Color(0.02f, 0.05f, 0.12f, 0.18f),
-                -0.09f
-            );
-            CreateActionButtonPx(
-                "导出回放",
-                "replay_export_localdev",
-                x + 28f,
-                y + 18f,
-                197f,
-                45f,
-                new Color(0.34f, 0.28f, 0.12f),
-                "replay.export.localdev"
-            );
+            // Electron exposes replay save/load through the top-right settings menu.
         }
 
         private void RenderBuffChoice(JObject nextEvent)
@@ -5238,6 +7081,7 @@ namespace GemDuel.Presentation
             var rect = BoardCellRect(row, column);
             var isSelected = selectedGemCoords.Contains(new Vector2Int(row, column));
             var selectedIndex = selectedGemCoords.FindIndex(coord => coord.x == row && coord.y == column);
+            var isReserveGoldPrompt = IsReserveGoldPromptGem(row, column, gemId);
             var semanticKey = "board.cell." + row + "." + column;
             if (IsHovered(semanticKey))
             {
@@ -5282,6 +7126,62 @@ namespace GemDuel.Presentation
                 );
             }
 
+            if (isReserveGoldPrompt)
+            {
+                CreateRoundedPanelPx(
+                    "Reserve Gold Prompt " + row + "," + column,
+                    rect.x - 7f,
+                    rect.y - 7f,
+                    rect.width + 14f,
+                    rect.height + 14f,
+                    18f,
+                    4.5f,
+                    new Color(1f, 0.84f, 0.2f, 0.98f),
+                    new Color(1f, 0.7f, 0.08f, 0.2f),
+                    -0.075f
+                );
+                CreateRoundedPanelPx(
+                    "Reserve Gold Prompt Badge " + row + "," + column,
+                    rect.xMax - 13f,
+                    rect.y - 13f,
+                    24f,
+                    24f,
+                    12f,
+                    1.5f,
+                    new Color(1f, 0.96f, 0.62f, 0.92f),
+                    new Color(0.5f, 0.25f, 0.02f, 0.96f),
+                    -0.09f
+                );
+                CreateText(
+                    "Reserve Gold Prompt Text " + row + "," + column,
+                    ViewportPoint(rect.xMax - 1f, rect.y - 1f, -0.1f),
+                    "!",
+                    0.058f,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
+                CreatePanelPx(
+                    "Reserve Gold Prompt Target " + row + "," + column,
+                    rect.x - 7f,
+                    rect.y - 7f,
+                    rect.width + 14f,
+                    rect.height + 14f,
+                    -0.11f,
+                    new Color(0f, 0f, 0f, 0f),
+                    false,
+                    target =>
+                    {
+                        target.Kind = "ReserveGoldPrompt";
+                        target.EventType = "reserve-gold-prompt";
+                        target.Row = row;
+                        target.Column = column;
+                        target.GemId = "gold";
+                    },
+                    "board.reserveGoldPrompt." + row + "." + column
+                );
+            }
+
             if (gemId == "empty")
             {
                 CreatePanelPx("Gem " + row + "," + column + " empty", rect.x, rect.y, rect.width, rect.height, new Color(0f, 0f, 0f, 0f), false, null, semanticKey);
@@ -5295,6 +7195,33 @@ namespace GemDuel.Presentation
                 target.Column = column;
                 target.GemId = gemId;
             }, semanticKey);
+        }
+
+        private bool IsReserveGoldPromptGem(int row, int column, string gemId)
+        {
+            if (currentState == null || currentState.Phase != "RESERVE_WAITING_GEM" || gemId != "gold")
+            {
+                return false;
+            }
+
+            var next = GetNextEvent();
+            if (next?.Value<string>("type") == "reserve_card" && next["goldCoord"] is JObject replayGoldCoord)
+            {
+                return MatchesCoord(replayGoldCoord, row, column);
+            }
+
+            var pendingReserve = currentState.Snapshot["pendingReserve"] as JObject;
+            if (pendingReserve?["goldCoord"] is JObject pendingGoldCoord)
+            {
+                return MatchesCoord(pendingGoldCoord, row, column);
+            }
+
+            if (pendingReserve?["goldCoords"] is JObject pendingGoldCoords)
+            {
+                return MatchesCoord(pendingGoldCoords, row, column);
+            }
+
+            return true;
         }
 
         private Rect MarketDeckRect(int level)
@@ -5360,10 +7287,46 @@ namespace GemDuel.Presentation
             return new Rect(player == "p1" ? 9.5f : 1716.12f, 830f, 194.38f, 240.5f);
         }
 
-        private static Rect PlayerReservedRect(string player, int index)
+        private static Rect PlayerReservedRect(string player, int index, int slotCount)
         {
-            var anchorX = player == "p1" ? 807.05f : 1767.05f;
-            return new Rect(anchorX - index * 108f, 884.25f, 99f, 132f);
+            var rect = PlayerReservedColumnRect(player);
+            var scale = PlayerReservedCardScale(rect, slotCount);
+            var cardWidth = 150f * scale;
+            var cardHeight = 200f * scale;
+            var offsetX = 34f * scale;
+            var offsetY = 44f * scale;
+            var totalWidth = cardWidth + Math.Max(slotCount - 1, 0) * offsetX;
+            var totalHeight = cardHeight + Math.Max(slotCount - 1, 0) * offsetY;
+            var startX = rect.x + (rect.width - totalWidth) * 0.5f;
+            var startY = rect.y + (rect.height - totalHeight) * 0.5f;
+
+            return new Rect(startX + index * offsetX, startY + index * offsetY, cardWidth, cardHeight);
+        }
+
+        private static Rect PlayerReservedClickableRect(string player, int index, int slotCount)
+        {
+            var cardRect = PlayerReservedRect(player, index, slotCount);
+            if (index >= Math.Max(slotCount - 1, 0))
+            {
+                return cardRect;
+            }
+
+            var nextRect = PlayerReservedRect(player, index + 1, slotCount);
+            var exposedWidth = nextRect.x - cardRect.x;
+            if (exposedWidth <= 0f)
+            {
+                return cardRect;
+            }
+
+            var safeWidth = Mathf.Clamp(exposedWidth, 18f, cardRect.width);
+            return new Rect(cardRect.x, cardRect.y, safeWidth, cardRect.height);
+        }
+
+        private static float PlayerReservedCardScale(Rect rect, int slotCount)
+        {
+            var safeSlotCount = Math.Max(1, Math.Min(slotCount, 3));
+            var miniStackWidth = 150f + Math.Max(safeSlotCount - 1, 0) * 34f;
+            return Mathf.Clamp(rect.width / miniStackWidth, 0.42f, 0.74f);
         }
 
         private Rect RoyalCardRect(int index)
@@ -5378,28 +7341,7 @@ namespace GemDuel.Presentation
 
         private float RoyalCourtInteractiveOffsetY()
         {
-            if (!automationInteractiveReplayMode)
-            {
-                return 0f;
-            }
-
-            if (previewContext != null || settingsOpen || !string.IsNullOrEmpty(errorBanner))
-            {
-                return 49.45f;
-            }
-
-            if (previewInteractionLayoutSticky)
-            {
-                return 49.45f;
-            }
-
-            var previousEventType = PreviousReplayEventType();
-            var keepsLiveLayout =
-                previousEventType == "buy_card" ||
-                previousEventType == "reserve_card" ||
-                previousEventType == "replenish" ||
-                previousEventType == "select_royal";
-            return keepsLiveLayout ? 49.45f : 0f;
+            return 0f;
         }
 
         private string PreviousReplayEventType()
@@ -5515,10 +7457,10 @@ namespace GemDuel.Presentation
             );
             CreateRoundedPanelPx(
                 "Peek Modal Panel",
-                420f,
-                166f,
-                1080f,
-                690f,
+                240f,
+                112f,
+                1440f,
+                856f,
                 24f,
                 2f,
                 new Color(0.7f, 0.78f, 0.98f, 0.34f),
@@ -5529,7 +7471,7 @@ namespace GemDuel.Presentation
             {
                 CreateText(
                     "Peek Modal Title",
-                    ViewportPoint(960f, 218f, -0.39f),
+                    ViewportPoint(960f, 164f, -0.39f),
                     "牌库窥视",
                     0.18f,
                     new Color(0.86f, 0.92f, 1f),
@@ -5538,7 +7480,7 @@ namespace GemDuel.Presentation
                 );
                 CreateText(
                     "Peek Modal Count",
-                    ViewportPoint(960f, 264f, -0.39f),
+                    ViewportPoint(960f, 210f, -0.39f),
                     cards.Count + " cards",
                     0.075f,
                     new Color(0.58f, 0.66f, 0.82f),
@@ -5547,32 +7489,124 @@ namespace GemDuel.Presentation
                 );
             });
 
-            var maxCards = Math.Min(cards.Count, 9);
-            const float cardWidth = 122f;
-            const float cardHeight = 162f;
-            const float gap = 22f;
-            for (var index = 0; index < maxCards; index += 1)
+            var cardIds = cards.Values<string>().Where(value => !string.IsNullOrEmpty(value)).ToList();
+            var levels = new[] { 3, 2, 1 };
+            const float cardWidth = 154f;
+            const float cardHeight = 205.2f;
+            const float columnGap = 22f;
+            const float rowGap = 18f;
+            const float deckBackWidth = 130f;
+            var rowStartX = 463f;
+            var rowY = 260f;
+            var globalCardIndex = 0;
+            foreach (var level in levels)
             {
-                var row = index / 3;
-                var column = index % 3;
-                var rowCount = Math.Min(3, maxCards - row * 3);
-                var rowWidth = rowCount * cardWidth + (rowCount - 1) * gap;
-                var x = 960f - rowWidth * 0.5f + column * (cardWidth + gap);
-                var y = 316f + row * 172f;
-                var instanceId = cards[index].Value<string>() ?? string.Empty;
-                var rect = new Rect(x, y, cardWidth, cardHeight);
-                CreateCardArtwork("Peek Modal Card " + index, instanceId, rect, -0.39f);
+                var group = cardIds.Where(instanceId => ResolveCardLevel(instanceId) == level).Take(3).ToList();
+                if (group.Count == 0)
+                {
+                    continue;
+                }
+
+                var y = rowY;
+                var deckRect = new Rect(rowStartX - deckBackWidth - 28f, y, deckBackWidth, cardHeight);
+                CreateImagePanelPx(
+                    "Peek Modal Deck Back L" + level,
+                    deckRect,
+                    -0.39f,
+                    false,
+                    null,
+                    "modal.peek.level." + level,
+                    "surfaces",
+                    "anime-themes",
+                    "royal-luxury",
+                    "dark",
+                    "market-card-back-l" + level + ".png"
+                );
+                WithTextWeightCompensation(() =>
+                    CreateText(
+                        "Peek Modal Level Label " + level,
+                        ViewportPoint(deckRect.center.x, deckRect.yMax + 18f, -0.4f),
+                        "L" + level,
+                        0.07f,
+                        new Color(1f, 0.86f, 0.34f),
+                        TextAnchor.MiddleCenter,
+                        FontStyle.Bold
+                    )
+                );
+
+                for (var index = 0; index < group.Count; index += 1)
+                {
+                    var x = rowStartX + index * (cardWidth + columnGap);
+                    var instanceId = group[index];
+                    var rect = new Rect(x, y, cardWidth, cardHeight);
+                    CreateCardArtwork("Peek Modal Card " + globalCardIndex, instanceId, rect, -0.39f);
+                    CreatePanelPx(
+                        "Peek Modal Card Target " + globalCardIndex,
+                        rect.x,
+                        rect.y,
+                        rect.width,
+                        rect.height,
+                        -0.42f,
+                        new Color(0f, 0f, 0f, 0f),
+                        false,
+                        null,
+                        "modal.peek.card." + globalCardIndex
+                    );
+                    globalCardIndex += 1;
+                }
+
+                rowY += cardHeight + rowGap;
+            }
+
+            if (globalCardIndex == 0)
+            {
+                var fallbackCount = Math.Min(9, cardIds.Count);
+                for (var index = 0; index < fallbackCount; index += 1)
+                {
+                    var row = index / 3;
+                    var column = index % 3;
+                    var x = rowStartX + column * (cardWidth + columnGap);
+                    var y = 260f + row * (cardHeight + rowGap);
+                    var rect = new Rect(x, y, cardWidth, cardHeight);
+                    CreateCardArtwork("Peek Modal Card " + index, cardIds[index], rect, -0.39f);
+                    CreatePanelPx(
+                        "Peek Modal Card Target " + index,
+                        rect.x,
+                        rect.y,
+                        rect.width,
+                        rect.height,
+                        -0.42f,
+                        new Color(0f, 0f, 0f, 0f),
+                        false,
+                        null,
+                        "modal.peek.card." + index
+                    );
+                }
+            }
+
+            var orderLabels = new[] { "第一", "第二", "第三" };
+            for (var index = 0; index < orderLabels.Length; index += 1)
+            {
+                CreateText(
+                    "Peek Modal Order Label " + index,
+                    ViewportPoint(rowStartX + index * (cardWidth + columnGap) + cardWidth * 0.5f, 906f, -0.39f),
+                    orderLabels[index],
+                    0.068f,
+                    new Color(1f, 0.88f, 0.48f),
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
                 CreatePanelPx(
-                    "Peek Modal Card Target " + index,
-                    rect.x,
-                    rect.y,
-                    rect.width,
-                    rect.height,
+                    "Peek Modal Order Target " + index,
+                    rowStartX + index * (cardWidth + columnGap),
+                    884f,
+                    cardWidth,
+                    48f,
                     -0.42f,
                     new Color(0f, 0f, 0f, 0f),
                     false,
                     null,
-                    "modal.peek.card." + index
+                    "modal.peek.order." + index
                 );
             }
 
@@ -5580,7 +7614,7 @@ namespace GemDuel.Presentation
                 "关闭",
                 "close-modal",
                 872f,
-                785f,
+                938f,
                 176f,
                 52f,
                 new Color(0.26f, 0.32f, 0.48f),
@@ -5759,14 +7793,17 @@ namespace GemDuel.Presentation
 
         private void CreateRoyalCard(string royalId, int index, Rect rect)
         {
-            var isTarget = GetNextEvent()?.Value<string>("type") == "select_royal" && GetNextEvent()?.Value<string>("royalId") == royalId;
+            var next = GetNextEvent();
+            var isReplayTarget = next?.Value<string>("type") == "select_royal" && next?.Value<string>("royalId") == royalId;
+            var isLiveTarget = activeReplay == null && currentState != null && currentState.Phase == "SELECT_ROYAL";
+            var eventType = isReplayTarget || isLiveTarget ? "select_royal" : string.Empty;
             var semanticKey = "royal.card." + index;
             if (IsHovered(semanticKey))
             {
                 CreateHoverFramePx("Royal Hover " + royalId, rect.x - 4f, rect.y - 4f, rect.width + 8f, rect.height + 8f, 8f, -0.07f);
             }
 
-            if (isTarget)
+            if (isReplayTarget || isLiveTarget)
             {
                 CreateRoundedPanelPx(
                     "Royal Highlight " + royalId,
@@ -5787,6 +7824,7 @@ namespace GemDuel.Presentation
                 target.Kind = "Royal";
                 target.RoyalId = royalId;
                 target.Index = index;
+                target.EventType = eventType;
             }, semanticKey);
         }
 
@@ -5947,12 +7985,22 @@ namespace GemDuel.Presentation
             float width,
             float height,
             Color color,
-            string semanticKey = null
+            string semanticKey = null,
+            bool enabled = true
         )
         {
-            if (IsHoveredAction(eventType, semanticKey))
+            var overlayAction = eventType == "close-modal"
+                || eventType == "rulebook_prev"
+                || eventType == "rulebook_next";
+            var panelZ = overlayAction ? -0.38f : eventType == "cancel-gems" ? -0.2f : -0.12f;
+            var targetZ = overlayAction ? -0.405f : eventType == "cancel-gems" ? -0.23f : -0.145f;
+            var textZ = overlayAction ? -0.4f : eventType == "cancel-gems" ? -0.225f : -0.14f;
+            var fillColor = enabled ? color : new Color(0.16f, 0.18f, 0.23f, 0.76f);
+            var borderColor = enabled ? new Color(1f, 1f, 1f, 0.28f) : new Color(0.45f, 0.5f, 0.6f, 0.28f);
+            var textColor = enabled ? Color.white : new Color(0.6f, 0.66f, 0.76f);
+            if (enabled && IsHoveredAction(eventType, semanticKey))
             {
-                CreateHoverFramePx("Action Hover " + eventType, x - 4f, y - 4f, width + 8f, height + 8f, 16f, -0.13f);
+                CreateHoverFramePx("Action Hover " + eventType, x - 4f, y - 4f, width + 8f, height + 8f, 16f, panelZ - 0.01f);
             }
 
             CreateRoundedPanelPx(
@@ -5963,11 +8011,11 @@ namespace GemDuel.Presentation
                 height,
                 height * 0.5f,
                 1f,
-                new Color(1f, 1f, 1f, 0.28f),
-                color,
-                -0.12f
+                borderColor,
+                fillColor,
+                panelZ
             );
-            CreatePanelPx("Action Target " + eventType, x, y, width, height, -0.145f, new Color(0f, 0f, 0f, 0f), true, target =>
+            CreatePanelPx("Action Target " + eventType, x, y, width, height, targetZ, new Color(0f, 0f, 0f, 0f), enabled, target =>
             {
                 target.Kind = "ActionButton";
                 target.EventType = eventType;
@@ -5975,10 +8023,10 @@ namespace GemDuel.Presentation
             WithTextWeightCompensation(() =>
                 CreateText(
                     "Action Text " + eventType,
-                    ViewportPoint(x + width * 0.5f, y + height * 0.5f, -0.14f),
+                    ViewportPoint(x + width * 0.5f, y + height * 0.5f, textZ),
                     text,
                     0.12f,
-                    Color.white,
+                    textColor,
                     TextAnchor.MiddleCenter,
                     FontStyle.Bold
                 )
@@ -6109,28 +8157,78 @@ namespace GemDuel.Presentation
             var cardId = ResolveCardId(instanceIdOrCardId);
             if (string.IsNullOrEmpty(cardId))
             {
-                return CreatePanelPx(
-                    name,
-                    rect.x,
-                    rect.y,
-                    rect.width,
-                    rect.height,
-                    new Color(0.16f, 0.18f, 0.22f),
-                    clickable,
-                    configureTarget,
-                    semanticKey
-                );
+                return CreateCardFallbackArtwork(name, instanceIdOrCardId, rect, z, clickable, configureTarget, semanticKey);
             }
 
-            return CreateImagePanelPx(
+            var texture = LoadPublicTexture("cards", cardId + ".png");
+            if (texture == null)
+            {
+                return CreateCardFallbackArtwork(name, cardId, rect, z, clickable, configureTarget, semanticKey);
+            }
+
+            return CreateImagePanel(
                 name,
-                rect,
-                z,
+                ViewportRectCenter(rect, z),
+                ViewportSize(rect.width, rect.height),
+                GetDisplayTexture(texture, rect.width, rect.height),
                 clickable,
                 configureTarget,
-                semanticKey,
-                "cards",
-                cardId + ".png"
+                semanticKey
+            );
+        }
+
+        private GameObject CreateCardFallbackArtwork(
+            string name,
+            string label,
+            Rect rect,
+            float z,
+            bool clickable,
+            Action<GemDuelViewTarget> configureTarget,
+            string semanticKey
+        )
+        {
+            var card = ResolveCard(label);
+            var bonusColor = card == null ? GuessBonusColorFromInstanceId(label) : card.BonusColor;
+            var fill = ColorForGem(bonusColor);
+            fill.a = 0.82f;
+            CreateRoundedPanelPx(name + " Fallback", rect.x, rect.y, rect.width, rect.height, 8f, 1.5f, new Color(0.9f, 0.96f, 1f, 0.35f), fill, z);
+            WithTextWeightCompensation(() =>
+            {
+                CreateText(
+                    name + " Fallback Id",
+                    ViewportPoint(rect.center.x, rect.y + rect.height * 0.36f, z - 0.02f),
+                    ShortLabel(string.IsNullOrEmpty(label) ? "card" : label, 16),
+                    Math.Min(0.09f, rect.width / 1700f),
+                    TextColorForGem(bonusColor),
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
+                var points = card == null ? string.Empty : card.Points.ToString();
+                if (!string.IsNullOrEmpty(points) && points != "0")
+                {
+                    CreateText(
+                        name + " Fallback Points",
+                        ViewportPoint(rect.x + 22f, rect.y + 24f, z - 0.02f),
+                        points,
+                        0.07f,
+                        TextColorForGem(bonusColor),
+                        TextAnchor.MiddleCenter,
+                        FontStyle.Bold
+                    );
+                }
+            });
+
+            return CreatePanelPx(
+                name + " Fallback Target",
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                z - 0.04f,
+                new Color(0f, 0f, 0f, 0f),
+                clickable,
+                configureTarget,
+                semanticKey
             );
         }
 
@@ -6679,6 +8777,16 @@ namespace GemDuel.Presentation
             CreateRoundedPanelPx("Mode LAN Icon Dot", centerX - 2.5f, centerY - 2.5f, 5f, 5f, 2.5f, 0f, new Color(0f, 0f, 0f, 0f), color, -0.022f);
         }
 
+        private void CreateBookIconPx(float centerX, float centerY, Color color, float z)
+        {
+            CreateRoundedPanelPx("Rulebook Icon Left Page", centerX - 16f, centerY - 14f, 15f, 28f, 3f, 1.4f, color, new Color(0f, 0f, 0f, 0f), z);
+            CreateRoundedPanelPx("Rulebook Icon Right Page", centerX + 1f, centerY - 14f, 15f, 28f, 3f, 1.4f, color, new Color(0f, 0f, 0f, 0f), z - 0.001f);
+            CreatePanelPx("Rulebook Icon Spine", centerX - 1f, centerY - 12f, 2f, 24f, z - 0.002f, color);
+            CreatePanelPx("Rulebook Icon Left Line", centerX - 12f, centerY - 4f, 8f, 1.5f, z - 0.003f, color);
+            CreatePanelPx("Rulebook Icon Right Line", centerX + 5f, centerY - 4f, 8f, 1.5f, z - 0.003f, color);
+            CreatePanelPx("Rulebook Icon Right Line 2", centerX + 5f, centerY + 4f, 8f, 1.5f, z - 0.003f, color);
+        }
+
         private void CreateFlaskIconPx(float centerX, float centerY, Color color)
         {
             CreatePanelPx("Visual Lab Icon Neck", centerX - 2f, centerY - 8f, 4f, 8f, -0.02f, color);
@@ -6950,10 +9058,16 @@ namespace GemDuel.Presentation
 
         private void ClearRenderedState()
         {
-            if (renderRoot != null)
+            if (renderedRoots.Count > 0)
             {
-                RetireRenderedStateObject(renderRoot);
+                foreach (var root in renderedRoots.ToArray())
+                {
+                    RetireRenderedStateObject(root);
+                }
+
+                renderedRoots.Clear();
                 renderRoot = null;
+                return;
             }
 
             foreach (var obj in FindObjectsByType<GameObject>(FindObjectsSortMode.None))
@@ -6970,11 +9084,23 @@ namespace GemDuel.Presentation
             }
         }
 
+        private void CreateRenderedStateRoot()
+        {
+            renderRoot = new GameObject("GemDuel Rendered State");
+            renderedRoots.Add(renderRoot);
+        }
+
         private static void RetireRenderedStateObject(GameObject target)
         {
             if (target == null)
             {
                 return;
+            }
+
+            foreach (var viewTarget in target.GetComponentsInChildren<GemDuelViewTarget>(true))
+            {
+                viewTarget.Clickable = false;
+                viewTarget.enabled = false;
             }
 
             target.SetActive(false);
@@ -7008,8 +9134,19 @@ namespace GemDuel.Presentation
 
             var width = Math.Max(1, automationViewportWidth);
             var height = Math.Max(1, automationViewportHeight);
-            var renderTexture = new RenderTexture(width, height, 24);
-            var sourceTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
+            const int downsample = 6;
+            var previewWidth = Math.Max(1, width / downsample);
+            var previewHeight = Math.Max(1, height / downsample);
+            var renderTexture = new RenderTexture(previewWidth, previewHeight, 16)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+            };
+            var previewTexture = new Texture2D(previewWidth, previewHeight, TextureFormat.RGB24, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+            };
             var previousTarget = camera.targetTexture;
             var previousActive = RenderTexture.active;
             var previousAspect = camera.aspect;
@@ -7020,44 +9157,10 @@ namespace GemDuel.Presentation
                 camera.targetTexture = renderTexture;
                 RenderTexture.active = renderTexture;
                 camera.Render();
-                sourceTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                sourceTexture.Apply();
-
-                var downsample = 2;
-                var previewWidth = Math.Max(1, width / downsample);
-                var previewHeight = Math.Max(1, height / downsample);
-                var previewTexture = new Texture2D(previewWidth, previewHeight, TextureFormat.RGB24, false)
-                {
-                    filterMode = FilterMode.Bilinear,
-                    wrapMode = TextureWrapMode.Clamp,
-                };
-
-                for (var y = 0; y < previewHeight; y += 1)
-                {
-                    for (var x = 0; x < previewWidth; x += 1)
-                    {
-                        var u = (x + 0.5f) / previewWidth;
-                        var v = (y + 0.5f) / previewHeight;
-                        var color = Color.black;
-                        var sampleCount = 0f;
-                        for (var oy = -2; oy <= 2; oy += 1)
-                        {
-                            for (var ox = -2; ox <= 2; ox += 1)
-                            {
-                                var sampleU = Mathf.Clamp01(u + ox / (float)width * 4f);
-                                var sampleV = Mathf.Clamp01(v + oy / (float)height * 4f);
-                                color += sourceTexture.GetPixelBilinear(sampleU, sampleV);
-                                sampleCount += 1f;
-                            }
-                        }
-
-                        color *= 1f / sampleCount;
-                        previewTexture.SetPixel(x, y, color);
-                    }
-                }
-
-                previewTexture.Apply();
+                previewTexture.ReadPixels(new Rect(0, 0, previewWidth, previewHeight), 0, 0);
+                previewTexture.Apply(false, false);
                 previewBackgroundTexture = previewTexture;
+                previewTexture = null;
             }
             finally
             {
@@ -7065,7 +9168,10 @@ namespace GemDuel.Presentation
                 camera.aspect = previousAspect;
                 RenderTexture.active = previousActive;
                 DestroyUnityObject(renderTexture);
-                DestroyUnityObject(sourceTexture);
+                if (previewTexture != null)
+                {
+                    DestroyUnityObject(previewTexture);
+                }
             }
         }
 
@@ -7198,7 +9304,11 @@ namespace GemDuel.Presentation
 
             foreach (var target in FindObjectsByType<GemDuelViewTarget>(FindObjectsSortMode.None))
             {
-                if (target == null)
+                if (
+                    target == null
+                    || !target.isActiveAndEnabled
+                    || !target.gameObject.activeInHierarchy
+                )
                 {
                     continue;
                 }
@@ -7222,6 +9332,7 @@ namespace GemDuel.Presentation
                     {
                         ["x"] = Math.Round(target.transform.position.x, 3),
                         ["y"] = Math.Round(target.transform.position.y, 3),
+                        ["z"] = Math.Round(target.transform.position.z, 3),
                         ["width"] = Math.Round(target.Size.x, 3),
                         ["height"] = Math.Round(target.Size.y, 3),
                     },
@@ -7248,8 +9359,79 @@ namespace GemDuel.Presentation
                 targets.Add(item);
             }
 
+            targets = DeduplicateVisibleTargets(targets);
             AppendSyntheticAutomationActionTargets(targets);
             return targets;
+        }
+
+        private static JArray DeduplicateVisibleTargets(JArray rawTargets)
+        {
+            var bestByKey = new Dictionary<string, JObject>(StringComparer.Ordinal);
+            foreach (var item in rawTargets.OfType<JObject>())
+            {
+                var key = item.Value<string>("semanticKey");
+                if (string.IsNullOrEmpty(key))
+                {
+                    continue;
+                }
+
+                if (!bestByKey.TryGetValue(key, out var existing) || IsBetterVisibleTarget(item, existing))
+                {
+                    bestByKey[key] = item;
+                }
+            }
+
+            var emittedKeys = new HashSet<string>(StringComparer.Ordinal);
+            var deduped = new JArray();
+            foreach (var item in rawTargets.OfType<JObject>())
+            {
+                var key = item.Value<string>("semanticKey");
+                if (string.IsNullOrEmpty(key))
+                {
+                    deduped.Add(item);
+                    continue;
+                }
+
+                if (!emittedKeys.Add(key))
+                {
+                    continue;
+                }
+
+                deduped.Add(bestByKey[key]);
+            }
+
+            return deduped;
+        }
+
+        private static bool IsBetterVisibleTarget(JObject candidate, JObject existing)
+        {
+            var candidateClickable = candidate.Value<bool>("clickable");
+            var existingClickable = existing.Value<bool>("clickable");
+            if (candidateClickable != existingClickable)
+            {
+                return candidateClickable;
+            }
+
+            var candidateKind = candidate.Value<string>("kind") ?? string.Empty;
+            var existingKind = existing.Value<string>("kind") ?? string.Empty;
+            if (candidateKind.Length != existingKind.Length)
+            {
+                return candidateKind.Length > existingKind.Length;
+            }
+
+            if (candidate.Value<string>("semanticKey") == existing.Value<string>("semanticKey"))
+            {
+                var candidateActionable = !string.IsNullOrEmpty(candidate.Value<string>("eventType"));
+                var existingActionable = !string.IsNullOrEmpty(existing.Value<string>("eventType"));
+                if (candidateActionable != existingActionable)
+                {
+                    return candidateActionable;
+                }
+            }
+
+            var candidateZ = candidate["world"]?.Value<double?>("z") ?? double.MaxValue;
+            var existingZ = existing["world"]?.Value<double?>("z") ?? double.MaxValue;
+            return candidateZ < existingZ;
         }
 
         private void AppendSyntheticAutomationActionTargets(JArray targets)
@@ -7285,7 +9467,7 @@ namespace GemDuel.Presentation
                     var boardWidth = rect.Value<double>("width");
                     var boardHeight = rect.Value<double>("height");
                     var actionWidth = 184d;
-                    var actionHeight = 44d;
+                    var actionHeight = 56d;
                     var actionTopGap = 16d;
                     if (UseCompactSyntheticTurnEndTarget())
                     {
@@ -7508,18 +9690,39 @@ namespace GemDuel.Presentation
 
         private CardDef ResolveCard(string instanceId)
         {
-            if (activeReplay == null || string.IsNullOrEmpty(instanceId))
-            {
-                return null;
-            }
-
-            if (!activeReplay.Init.CardInstances.TryGetValue(instanceId, out var cardId))
+            var cardId = ResolveCardId(instanceId);
+            if (catalog == null || string.IsNullOrEmpty(cardId))
             {
                 return null;
             }
 
             catalog.Cards.TryGetValue(cardId, out var card);
             return card;
+        }
+
+        private int ResolveCardLevel(string instanceId)
+        {
+            var card = ResolveCard(instanceId);
+            if (card != null && card.Level >= 1 && card.Level <= 3)
+            {
+                return card.Level;
+            }
+
+            var cardId = ResolveCardId(instanceId);
+            if (!string.IsNullOrEmpty(cardId))
+            {
+                switch (cardId[0])
+                {
+                    case '1':
+                        return 1;
+                    case '2':
+                        return 2;
+                    case '3':
+                        return 3;
+                }
+            }
+
+            return -1;
         }
 
         private string ResolveCardId(string instanceIdOrCardId)
@@ -7532,6 +9735,16 @@ namespace GemDuel.Presentation
             if (activeReplay != null && activeReplay.Init.CardInstances.TryGetValue(instanceIdOrCardId, out var cardId))
             {
                 return cardId;
+            }
+
+            var liveCardInstances = activeRulesInit?["cardInstances"] as JObject;
+            if (liveCardInstances != null && liveCardInstances.TryGetValue(instanceIdOrCardId, out var liveCardIdToken))
+            {
+                var liveCardId = liveCardIdToken.Value<string>();
+                if (!string.IsNullOrEmpty(liveCardId))
+                {
+                    return liveCardId;
+                }
             }
 
             return instanceIdOrCardId;
@@ -7907,6 +10120,9 @@ namespace GemDuel.Presentation
             public int Level;
             public int Index;
             public string InstanceId;
+            public string Player;
+            public string Color;
+            public List<string> InstanceIds;
         }
 
         private sealed class HoverContext
@@ -8007,6 +10223,62 @@ namespace GemDuel.Presentation
             public string Description { get; private set; }
             public string FooterLabel { get; private set; }
             public string FooterValue { get; private set; }
+        }
+
+        private sealed class LocalizedRulebookText
+        {
+            public LocalizedRulebookText(string en, string zh)
+            {
+                En = en;
+                Zh = zh;
+            }
+
+            public string En { get; private set; }
+            public string Zh { get; private set; }
+
+            public string Text(string locale)
+            {
+                return locale == "en" ? En : Zh;
+            }
+        }
+
+        private sealed class RulebookSectionContent
+        {
+            public RulebookSectionContent(
+                string titleEn,
+                string titleZh,
+                IReadOnlyList<LocalizedRulebookText> items,
+                string type = "section"
+            )
+            {
+                Title = new LocalizedRulebookText(titleEn, titleZh);
+                Items = items.ToArray();
+                Type = type;
+            }
+
+            public LocalizedRulebookText Title { get; private set; }
+            public IReadOnlyList<LocalizedRulebookText> Items { get; private set; }
+            public string Type { get; private set; }
+        }
+
+        private sealed class RulebookPageContent
+        {
+            public RulebookPageContent(
+                string titleEn,
+                string titleZh,
+                string summaryEn,
+                string summaryZh,
+                params RulebookSectionContent[] sections
+            )
+            {
+                Title = new LocalizedRulebookText(titleEn, titleZh);
+                Summary = new LocalizedRulebookText(summaryEn, summaryZh);
+                Sections = sections ?? Array.Empty<RulebookSectionContent>();
+            }
+
+            public LocalizedRulebookText Title { get; private set; }
+            public LocalizedRulebookText Summary { get; private set; }
+            public IReadOnlyList<RulebookSectionContent> Sections { get; private set; }
         }
 
         private sealed class TextEvidence : MonoBehaviour

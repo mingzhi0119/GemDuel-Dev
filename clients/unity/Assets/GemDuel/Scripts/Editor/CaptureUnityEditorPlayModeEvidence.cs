@@ -392,6 +392,8 @@ namespace GemDuel.Editor
             var openedScreenshotPath = Path.Combine(outputRoot, "after-settings-open.png");
             File.WriteAllText(openedStatePath, openedState.ToString(Formatting.Indented));
             CaptureScreenshot(openedScreenshotPath, EvidenceWidth, EvidenceHeight);
+            var openedSettings = (JObject)openedState["settings"];
+            var openedSoundEnabled = openedSettings.Value<bool>("soundEnabled");
 
             var soundTarget = FindClickableRuntimeTarget(
                 target => target.Kind == "SettingsControl" && target.EventType == "settings-sound-toggle",
@@ -414,7 +416,7 @@ namespace GemDuel.Editor
                 settingsDispatchOk
                 && soundDispatchOk
                 && settings.Value<bool>("panelOpen")
-                && settings.Value<bool>("soundEnabled") == false
+                && settings.Value<bool>("soundEnabled") != openedSoundEnabled
                 && persistence.Value<string>("status") == "saved";
             var evidence = new JObject
             {
@@ -457,6 +459,8 @@ namespace GemDuel.Editor
                 ["result"] = new JObject
                 {
                     ["ok"] = actionOk,
+                    ["soundEnabledBeforeClick"] = openedSoundEnabled,
+                    ["soundEnabledAfterClick"] = settings.Value<bool>("soundEnabled"),
                     ["settings"] = settings,
                 },
             };

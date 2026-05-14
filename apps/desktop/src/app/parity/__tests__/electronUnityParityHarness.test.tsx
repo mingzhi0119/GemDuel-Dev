@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Card, GameAction, GameState, RoyalCard } from '@gemduel/shared/types';
+import type { Card, GameAction, GameState, GemCoord, RoyalCard } from '@gemduel/shared/types';
 import {
     createElectronUnityParityApi,
     useElectronUnityParityHarness,
@@ -22,13 +22,21 @@ vi.mock('@gemduel/shared/replay', () => replayMocks);
 const card = (id: string): Card => ({ id, uid: id }) as Card;
 const royal = (id: string): RoyalCard => ({ id }) as RoyalCard;
 
-const createState = (overrides: Partial<GameState> = {}): GameState =>
+type HarnessGameState = GameState & {
+    selectedGems: GemCoord[];
+    reserveGoldSelection: GemCoord | null;
+    errorMsg: string | null;
+};
+
+const createState = (overrides: Partial<HarnessGameState> = {}): HarnessGameState =>
     ({
         mode: 'LOCAL_PVP',
         phase: 'PLAY',
         turn: 'p1',
         winner: null,
         selectedGems: [],
+        reserveGoldSelection: null,
+        errorMsg: null,
         board: [[{ type: { id: 'red' } }]],
         market: {
             1: [card('112-re')],
@@ -60,7 +68,7 @@ const createState = (overrides: Partial<GameState> = {}): GameState =>
         pendingReserve: null,
         pendingBuy: null,
         ...overrides,
-    }) as GameState;
+    }) as HarnessGameState;
 
 const createParams = () => {
     const game = {
@@ -96,6 +104,9 @@ const createParams = () => {
                 game.historyControls.currentIndex += 1;
                 game.historyControls.historyLength += 1;
             }),
+        },
+        replay: {
+            currentReplay: null,
         },
     };
 
@@ -145,6 +156,7 @@ const installDomTargets = () => {
         <main data-testid="desktop-stage-canvas">
             <span>选择一个模式开始</span>
             <div data-board-cell="0-0"></div>
+            <div data-board-cell="0-1"></div>
             <div data-draft-card-scale-reference="4">
                 <button name="buff-selection" data-draft-buff-id="royal_envoy" data-draft-buff-index="1">Royal Envoy</button>
             </div>
@@ -153,7 +165,9 @@ const installDomTargets = () => {
             <button data-card-preview-backdrop="true">Backdrop</button>
             <button data-card-preview-action="buy">Buy</button>
             <button data-card-preview-action="reserve">Reserve</button>
+            <button data-bonus-color="red">Red</button>
             <div data-reserved-slot="p1-0"><button data-card-preview-click="true">Reserved</button></div>
+            <button data-player-zone-privilege="p1-standard-0">Privilege</button>
             <button data-player-zone-gem="p2-red">Opponent red</button>
             <button data-player-zone-gem="p1-red">Current red</button>
             <button data-game-action="replenish">End</button>
@@ -298,6 +312,8 @@ describe('useElectronUnityParityHarness', () => {
         expect(api.actions).toContain('hover_boon');
         expect(api.actions).toContain('click_market_deck');
         expect(api.actions).toContain('click_preview_blank');
+        expect(api.actions).toContain('preselect_reserve_gold');
+        expect(api.actions).toContain('resolve_pending_reserve_gold');
         expect(api.isReady()).toBe(true);
         expect(api.dumpState()).toMatchObject({
             source: 'electron',
@@ -367,6 +383,17 @@ describe('useElectronUnityParityHarness', () => {
             action: 'reserve_card',
             driver: 'dom-click',
         });
+        document.querySelector('[data-bonus-color="red"]')?.addEventListener('click', () => {
+            params.game.historyControls.currentIndex += 1;
+            params.game.historyControls.historyLength += 1;
+            params.game.state = createState({ ...params.game.state, phase: 'IDLE' });
+        });
+        params.game.state = createState({ ...params.game.state, phase: 'SELECT_CARD_COLOR' });
+        await expect(api.dispatch('select_joker_color', { color: 'red' })).resolves.toMatchObject({
+            ok: true,
+            action: 'select_joker_color',
+            driver: 'dom-click',
+        });
         await expect(
             api.dispatch('click_player_reserved', { index: 0, player: 'p1' })
         ).resolves.toMatchObject({
@@ -384,6 +411,22 @@ describe('useElectronUnityParityHarness', () => {
         await expect(api.dispatch('end_turn')).resolves.toMatchObject({
             ok: true,
             action: 'end_turn',
+            driver: 'dom-click',
+        });
+        document
+            .querySelector('[data-player-zone-privilege="p1-standard-0"]')
+            ?.addEventListener('click', () => {
+                params.game.historyControls.currentIndex += 1;
+                params.game.historyControls.historyLength += 1;
+                params.game.state = createState({
+                    ...params.game.state,
+                    phase: 'PRIVILEGE_ACTION',
+                });
+            });
+        params.game.state = createState({ ...params.game.state, phase: 'IDLE', turn: 'p1' });
+        await expect(api.dispatch('activate_privilege')).resolves.toMatchObject({
+            ok: true,
+            action: 'activate_privilege',
             driver: 'dom-click',
         });
         await expect(api.dispatch('force_royal_selection')).resolves.toMatchObject({
@@ -605,12 +648,11 @@ describe('useElectronUnityParityHarness', () => {
         boardButton.addEventListener('click', () => {
             game.historyControls.currentIndex += 1;
             game.historyControls.historyLength += 1;
-            const nextState = createState({
+            game.state = createState({
                 ...game.state,
                 phase: 'IDLE',
-            }) as GameState & { selectedGems: Array<{ r: number; c: number }> };
-            nextState.selectedGems = [{ r: 0, c: 0 }];
-            game.state = nextState;
+                selectedGems: [{ r: 0, c: 0 }],
+            });
         });
         boardCell?.appendChild(boardButton);
 
@@ -619,11 +661,7 @@ describe('useElectronUnityParityHarness', () => {
         confirmTake.addEventListener('click', () => {
             game.historyControls.currentIndex += 1;
             game.historyControls.historyLength += 1;
-            const nextState = createState({ ...game.state, turn: 'p2' }) as GameState & {
-                selectedGems: [];
-            };
-            nextState.selectedGems = [];
-            game.state = nextState;
+            game.state = createState({ ...game.state, turn: 'p2', selectedGems: [] });
         });
         const cancelTake = document.createElement('button');
         cancelTake.dataset.gameAction = 'cancel-take';
@@ -639,12 +677,6 @@ describe('useElectronUnityParityHarness', () => {
             game.historyControls.historyLength += 1;
             game.state = createState({ ...game.state, phase: 'IDLE', turn: 'p2' });
         });
-
-        document.addEventListener(
-            'pointerdown',
-            () => document.querySelector('[data-settings-menu]')?.remove(),
-            { once: true }
-        );
 
         await expect(api.dispatch('choose_mode', { mode: 'classic' })).resolves.toMatchObject({
             ok: true,
@@ -699,6 +731,48 @@ describe('useElectronUnityParityHarness', () => {
         ).resolves.toMatchObject({
             ok: true,
             driver: 'dom-hover',
+        });
+        const reserveGoldCell = document.querySelector('[data-board-cell="0-1"]');
+        const reserveGoldButton = document.createElement('button');
+        reserveGoldButton.textContent = 'Gold';
+        reserveGoldButton.addEventListener('click', () => {
+            if (game.state.phase === 'RESERVE_WAITING_GEM') {
+                game.historyControls.currentIndex += 1;
+                game.historyControls.historyLength += 1;
+                game.state = createState({
+                    ...game.state,
+                    phase: 'IDLE',
+                    pendingReserve: null,
+                    reserveGoldSelection: null,
+                } as Partial<GameState>);
+                return;
+            }
+
+            game.state = createState({
+                ...game.state,
+                phase: 'IDLE',
+                reserveGoldSelection: { r: 0, c: 1 },
+            } as Partial<GameState>);
+        });
+        reserveGoldCell?.appendChild(reserveGoldButton);
+        await expect(
+            api.dispatch('preselect_reserve_gold', { row: 0, column: 1 })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+            detail: 'Preselected reserve gold 0-1.',
+        });
+        game.state = createState({
+            ...game.state,
+            phase: 'RESERVE_WAITING_GEM',
+            pendingReserve: { card: game.state.market[1][0], level: 1, idx: 0 },
+        } as Partial<GameState>);
+        await expect(
+            api.dispatch('resolve_pending_reserve_gold', { row: 0, column: 1 })
+        ).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-click',
+            detail: 'Resolved pending reserve with Gold 0-1.',
         });
         await expect(
             api.dispatch('click_board_cell', { row: 0, column: 0 })
@@ -760,6 +834,11 @@ describe('useElectronUnityParityHarness', () => {
             ok: true,
             detail: 'Set surface theme anime through fallback.',
         });
+        document.addEventListener(
+            'pointerdown',
+            () => document.querySelector('[data-settings-menu]')?.remove(),
+            { once: true }
+        );
         await expect(api.dispatch('close_settings')).resolves.toMatchObject({
             ok: true,
             detail: 'Closed settings panel.',

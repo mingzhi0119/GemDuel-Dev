@@ -71,6 +71,12 @@ The bridge-level request and response are engine-neutral JSON:
 - `state`: canonical replay-state snapshot.
 - `stateHash`: `replay-state-hash-v1` hash computed by `packages/shared`.
 
+For LocalDev and built-player evidence, the TypeScript bridge CLI must also produce a structured
+`ok=false` response through its `--out` file path when infrastructure failures occur after argument
+parsing. This keeps mailbox callers from treating malformed requests as silent timeouts while still
+preserving stderr diagnostics and non-zero process status. It does not make the TypeScript bridge a
+final release-runtime packaging decision.
+
 ## Consequences
 
 - Unity can migrate UI and platform surfaces without duplicating gameplay rules.

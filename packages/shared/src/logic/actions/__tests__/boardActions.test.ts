@@ -133,6 +133,35 @@ describe('boardActions', () => {
             expect(updatedState.turn).toBe('p2');
         });
 
+        it('creates deterministic empty-cell UIDs from board coordinates and state context', () => {
+            testState.inventories.p1 = {
+                blue: 0,
+                white: 0,
+                green: 0,
+                black: 0,
+                red: 0,
+                gold: 0,
+                pearl: 0,
+            };
+            testState.board[0][0] = { type: GEM_TYPES.RED, uid: 'red-a' };
+            testState.board[0][1] = { type: GEM_TYPES.BLUE, uid: 'blue-a' };
+            const clone = JSON.parse(JSON.stringify(testState)) as GameState;
+            const payload = {
+                coords: [
+                    { r: 0, c: 0 },
+                    { r: 0, c: 1 },
+                ],
+            };
+
+            const first = handleTakeGems(testState, payload);
+            const second = handleTakeGems(clone, payload);
+
+            expect(first.board[0][0].uid).toBe(second.board[0][0].uid);
+            expect(first.board[0][1].uid).toBe(second.board[0][1].uid);
+            expect(first.board[0][0].uid).toContain('-0-0-0');
+            expect(first.board[0][1].uid).toContain('-0-1-1');
+        });
+
         it('should not transfer a standard privilege away from Pacifist when the board supply is empty', () => {
             testState.inventories.p1 = {
                 blue: 0,

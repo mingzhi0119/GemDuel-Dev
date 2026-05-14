@@ -1,0 +1,644 @@
+{
+    "schemaVersion": 1,
+    "kind": "unity-product-surface-coverage-model",
+    "name": "GemDuel Unity finite product-surface coverage model",
+    "updatedAt": "2026-05-13",
+    "principle": "Finite declared product surface coverage: declared entrypoints, UI command families, FSM phase edges, recovery/error classes, settings combination coverage, and deterministic model exploration.",
+    "completionPolicy": {
+        "completeRequires": [
+            "Every required declared entrypoint has built Windows player fresh-launch evidence.",
+            "Every required action family has legal and illegal built-player evidence unless explicitly marked legalOnly.",
+            "Every required phase edge has hash-locked replay trace evidence from the built player.",
+            "Every required recovery case proves visible error, unchanged state, unpolluted replay, and a later legal action.",
+            "Every required settings combination proves save, exit or reload, restart or fresh launch, load, game start, and hash isolation.",
+            "Every required visual/latency contract proves the Electron settings pixel contract, reserve Gold prompt affordance, reserved-card mini-stack sizing, and first/Replenish action latency budget.",
+            "LAN, Online, and Visual Lab are implemented or user-approved exclusions are recorded.",
+            "Release-runtime rules packaging no longer depends on a LocalDev TypeScript fixture driver or checkpoint replacement."
+        ],
+        "allowedFinalVerdicts": ["Complete", "Incomplete", "Blocked"],
+        "boundedRepresentativeLabel": "bounded representative coverage"
+    },
+    "entrypoints": [
+        {
+            "id": "classic-local-pvp",
+            "label": "Classic Local PvP",
+            "required": true,
+            "implementationStatus": "implemented",
+            "freshLaunchRequired": true
+        },
+        {
+            "id": "roguelike-local-pvp",
+            "label": "Roguelike Local PvP",
+            "required": true,
+            "implementationStatus": "implemented",
+            "freshLaunchRequired": true
+        },
+        {
+            "id": "replay-import-review",
+            "label": "Replay Import/Review",
+            "required": true,
+            "implementationStatus": "partial",
+            "freshLaunchRequired": true
+        },
+        {
+            "id": "settings",
+            "label": "Settings",
+            "required": true,
+            "implementationStatus": "partial",
+            "freshLaunchRequired": true
+        },
+        {
+            "id": "rulebook",
+            "label": "Rulebook",
+            "required": true,
+            "implementationStatus": "partial",
+            "freshLaunchRequired": true
+        },
+        {
+            "id": "recovery",
+            "label": "Recovery",
+            "required": true,
+            "implementationStatus": "partial",
+            "freshLaunchRequired": true
+        },
+        {
+            "id": "lan",
+            "label": "LAN",
+            "required": true,
+            "implementationStatus": "not-implemented",
+            "freshLaunchRequired": true,
+            "userApprovedExclusion": true,
+            "exclusionReason": "2026-05-14 Local PVP migration objective explicitly keeps LAN exempt."
+        },
+        {
+            "id": "online",
+            "label": "Online",
+            "required": true,
+            "implementationStatus": "not-implemented",
+            "freshLaunchRequired": true,
+            "userApprovedExclusion": true,
+            "exclusionReason": "2026-05-14 Local PVP migration objective explicitly keeps Online exempt."
+        },
+        {
+            "id": "visual-lab",
+            "label": "Visual Lab",
+            "required": true,
+            "implementationStatus": "not-implemented",
+            "freshLaunchRequired": true,
+            "userApprovedExclusion": true,
+            "exclusionReason": "2026-05-14 Local PVP migration objective explicitly keeps Visual Lab exempt."
+        }
+    ],
+    "actionFamilies": [
+        {
+            "id": "take_gems",
+            "label": "take gems",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["TAKE_GEMS"],
+            "allowedPhases": ["IDLE"]
+        },
+        {
+            "id": "buy",
+            "label": "buy",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["BUY_CARD", "INITIATE_BUY_JOKER"],
+            "allowedPhases": ["IDLE", "SELECT_CARD_COLOR"]
+        },
+        {
+            "id": "reserve",
+            "label": "reserve",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["INITIATE_RESERVE", "RESERVE_CARD"],
+            "allowedPhases": ["IDLE", "RESERVE_WAITING_GEM"]
+        },
+        {
+            "id": "reserve_deck",
+            "label": "reserve deck",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["INITIATE_RESERVE_DECK", "RESERVE_DECK"],
+            "allowedPhases": ["IDLE", "RESERVE_WAITING_GEM"]
+        },
+        {
+            "id": "cancel",
+            "label": "cancel",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["CANCEL_RESERVE", "CANCEL_PRIVILEGE", "CLOSE_MODAL"],
+            "allowedPhases": ["RESERVE_WAITING_GEM", "PRIVILEGE_ACTION", "modal"]
+        },
+        {
+            "id": "joker_color",
+            "label": "joker color",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["BUY_CARD"],
+            "allowedPhases": ["SELECT_CARD_COLOR"]
+        },
+        {
+            "id": "royal",
+            "label": "royal",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["SELECT_ROYAL_CARD"],
+            "allowedPhases": ["SELECT_ROYAL"]
+        },
+        {
+            "id": "privilege",
+            "label": "privilege",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["ACTIVATE_PRIVILEGE", "USE_PRIVILEGE", "CANCEL_PRIVILEGE"],
+            "allowedPhases": ["IDLE", "PRIVILEGE_ACTION"]
+        },
+        {
+            "id": "steal",
+            "label": "steal",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["STEAL_GEM"],
+            "allowedPhases": ["STEAL_ACTION"]
+        },
+        {
+            "id": "bonus",
+            "label": "bonus",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["TAKE_BONUS_GEM"],
+            "allowedPhases": ["BONUS_ACTION"]
+        },
+        {
+            "id": "discard",
+            "label": "discard",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["DISCARD_GEM", "DISCARD_RESERVED"],
+            "allowedPhases": ["DISCARD_EXCESS_GEMS", "IDLE"]
+        },
+        {
+            "id": "draft_select",
+            "label": "draft select",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["SELECT_BUFF"],
+            "allowedPhases": ["DRAFT_PHASE"]
+        },
+        {
+            "id": "draft_reroll",
+            "label": "draft reroll",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["REROLL_DRAFT_POOL"],
+            "allowedPhases": ["DRAFT_PHASE"]
+        },
+        {
+            "id": "peek_modal",
+            "label": "peek modal",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["PEEK_DECK", "CLOSE_MODAL"],
+            "allowedPhases": ["IDLE", "modal"]
+        },
+        {
+            "id": "replay_undo_redo",
+            "label": "replay undo/redo",
+            "required": true,
+            "legalEvidenceRequired": true,
+            "illegalEvidenceRequired": true,
+            "gameActions": ["UNDO", "REDO"],
+            "allowedPhases": ["review"]
+        }
+    ],
+    "phases": [
+        "IDLE",
+        "DRAFT_PHASE",
+        "RESERVE_WAITING_GEM",
+        "SELECT_CARD_COLOR",
+        "BONUS_ACTION",
+        "STEAL_ACTION",
+        "PRIVILEGE_ACTION",
+        "SELECT_ROYAL",
+        "DISCARD_EXCESS_GEMS",
+        "GAME_OVER",
+        "modal",
+        "review"
+    ],
+    "phaseEdges": [
+        {
+            "id": "IDLE->RESERVE_WAITING_GEM",
+            "from": "IDLE",
+            "to": "RESERVE_WAITING_GEM",
+            "required": true,
+            "families": ["reserve", "reserve_deck"]
+        },
+        {
+            "id": "RESERVE_WAITING_GEM->IDLE",
+            "from": "RESERVE_WAITING_GEM",
+            "to": "IDLE",
+            "required": true,
+            "families": ["reserve", "reserve_deck", "cancel"]
+        },
+        {
+            "id": "IDLE->SELECT_CARD_COLOR",
+            "from": "IDLE",
+            "to": "SELECT_CARD_COLOR",
+            "required": true,
+            "families": ["buy"]
+        },
+        {
+            "id": "SELECT_CARD_COLOR->BONUS_ACTION",
+            "from": "SELECT_CARD_COLOR",
+            "to": "BONUS_ACTION",
+            "required": false,
+            "reachability": "unreachable-current-catalog",
+            "exclusionReason": "Current Electron/shared product catalog has no bonus-gem Joker card that can transition directly from Joker color selection to BONUS_ACTION. Requiring this edge would require changing shared gameplay/catalog, which is outside Unity migration scope.",
+            "families": ["joker_color", "buy"]
+        },
+        {
+            "id": "SELECT_CARD_COLOR->IDLE",
+            "from": "SELECT_CARD_COLOR",
+            "to": "IDLE",
+            "required": true,
+            "families": ["joker_color", "buy"]
+        },
+        {
+            "id": "IDLE->PRIVILEGE_ACTION",
+            "from": "IDLE",
+            "to": "PRIVILEGE_ACTION",
+            "required": true,
+            "families": ["privilege"]
+        },
+        {
+            "id": "PRIVILEGE_ACTION->IDLE",
+            "from": "PRIVILEGE_ACTION",
+            "to": "IDLE",
+            "required": true,
+            "families": ["privilege", "cancel"]
+        },
+        {
+            "id": "IDLE->SELECT_ROYAL",
+            "from": "IDLE",
+            "to": "SELECT_ROYAL",
+            "required": true,
+            "families": ["take_gems", "buy", "reserve"]
+        },
+        {
+            "id": "SELECT_ROYAL->IDLE",
+            "from": "SELECT_ROYAL",
+            "to": "IDLE",
+            "required": true,
+            "families": ["royal"]
+        },
+        {
+            "id": "SELECT_ROYAL->same-player-extra-turn",
+            "from": "SELECT_ROYAL",
+            "to": "same-player-extra-turn",
+            "required": true,
+            "families": ["royal"]
+        },
+        {
+            "id": "DRAFT_PHASE->IDLE",
+            "from": "DRAFT_PHASE",
+            "to": "IDLE",
+            "required": true,
+            "families": ["draft_select", "draft_reroll"]
+        },
+        {
+            "id": "IDLE->GAME_OVER",
+            "from": "IDLE",
+            "to": "GAME_OVER",
+            "required": true,
+            "families": ["buy", "royal", "replenish"]
+        }
+    ],
+    "recoveryCases": [
+        {
+            "id": "invalid_replay_json",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "unsupported_schema",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "missing_file",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "corrupted_summary",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "hash_mismatch",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "failed_overwrite_load",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "mailbox_timeout",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "malformed_bridge_response",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "corrupt_mailbox",
+            "required": true,
+            "expectsVisibleError": true,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "restart_during_pending_phase",
+            "required": true,
+            "expectsVisibleError": false,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "restart_after_replay_export",
+            "required": true,
+            "expectsVisibleError": false,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "restart_after_settings_change",
+            "required": true,
+            "expectsVisibleError": false,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        },
+        {
+            "id": "restart_after_recovery_save",
+            "required": true,
+            "expectsVisibleError": false,
+            "expectsStateUnchanged": true,
+            "expectsReplayUnpolluted": true,
+            "expectsLaterLegalAction": true
+        }
+    ],
+    "settings": {
+        "parameters": [
+            {
+                "id": "locale",
+                "values": ["en", "zh"]
+            },
+            {
+                "id": "visibility",
+                "values": ["lan-hidden", "lan-cards-visible", "lan-gems-visible"]
+            },
+            {
+                "id": "game_mode",
+                "values": ["classic-local-pvp", "roguelike-local-pvp"]
+            },
+            {
+                "id": "replay_setting",
+                "values": ["review-navigation-on", "review-navigation-off"]
+            },
+            {
+                "id": "recovery_setting",
+                "values": ["autosave-on", "autosave-off"]
+            },
+            {
+                "id": "fresh_launch",
+                "values": ["fresh", "restart"]
+            },
+            {
+                "id": "surface_theme",
+                "values": ["royal-luxury", "pearl-opaline", "clean-boardgame"]
+            },
+            {
+                "id": "audio",
+                "values": ["sound-on", "sound-off"]
+            },
+            {
+                "id": "input",
+                "values": ["mouse-click", "drag-select"]
+            }
+        ],
+        "combinationSets": [
+            {
+                "id": "locale-visibility-mode-pairwise",
+                "strength": 2,
+                "required": true,
+                "parameters": ["locale", "visibility", "game_mode"]
+            },
+            {
+                "id": "replay-recovery-freshlaunch-3wise",
+                "strength": 3,
+                "required": true,
+                "parameters": ["replay_setting", "recovery_setting", "fresh_launch"]
+            },
+            {
+                "id": "localpvp-draft-restart-3wise",
+                "strength": 3,
+                "required": true,
+                "parameters": ["game_mode", "input", "fresh_launch"]
+            },
+            {
+                "id": "display-audio-input-review-pairwise",
+                "strength": 2,
+                "required": true,
+                "parameters": ["surface_theme", "audio", "input", "replay_setting"]
+            }
+        ]
+    },
+    "visualContracts": [
+        {
+            "id": "settings_menu_electron_pixel_parity",
+            "label": "Settings menu matches Electron pixel contract",
+            "required": true,
+            "sourceOfTruth": "apps/desktop/src/app/chrome/AppChrome.tsx",
+            "checks": [
+                "panel width w-[248px] * lg:scale-[1.5] = 372px",
+                "row height px-3 py-2.5 text-[13px] at scale 1.5 = 54px",
+                "row font/height ratio 19.5/54 = 0.3611",
+                "settings controls are visible clickable hit targets"
+            ]
+        },
+        {
+            "id": "reserve_gold_prompt",
+            "label": "Reserve waiting phase highlights the selectable Gold gem",
+            "required": true,
+            "checks": [
+                "RESERVE_WAITING_GEM exposes a ReserveGoldPrompt visible target",
+                "prompt maps to the same board Gold target that the user must click"
+            ]
+        },
+        {
+            "id": "reserved_card_mini_stack",
+            "label": "Reserved cards stay inside mini-stack bounds",
+            "required": true,
+            "checks": [
+                "reserved visual target exists for the rendered card",
+                "single-card reserved visual rect stays at or below 120x160px at 1920x1080"
+            ]
+        },
+        {
+            "id": "first_action_latency",
+            "label": "First model-driven product action is within latency budget",
+            "required": true,
+            "budgetMs": 500
+        },
+        {
+            "id": "replenish_latency",
+            "label": "Replenish command is within latency budget when explored",
+            "required": true,
+            "budgetMs": 350
+        }
+    ],
+    "automationScenarios": [
+        {
+            "id": "classic-balanced-breadth",
+            "runner": "built-player-smoke",
+            "seed": "unity-product-surface-classic-balanced",
+            "startMode": "classic",
+            "maxSteps": 36,
+            "idleActionPreference": "balanced",
+            "draftActionPreference": "select-first",
+            "includeFlags": []
+        },
+        {
+            "id": "classic-resource-fuzz",
+            "runner": "built-player-smoke",
+            "seed": "unity-product-surface-classic-resource",
+            "startMode": "classic",
+            "maxSteps": 72,
+            "timeoutMs": 180000,
+            "idleActionPreference": "resource-first",
+            "draftActionPreference": "select-first",
+            "includeFlags": []
+        },
+        {
+            "id": "classic-reserve-release-paths",
+            "runner": "built-player-smoke",
+            "seed": "unity-product-surface-classic-reserve",
+            "startMode": "classic",
+            "maxSteps": 18,
+            "timeoutMs": 240000,
+            "idleActionPreference": "reserve-first",
+            "draftActionPreference": "select-first",
+            "includeFlags": [
+                "--include-replay-release-path",
+                "--include-recovery-release-path",
+                "--include-settings-release-path",
+                "--include-chrome-release-path",
+                "--include-replay-review-release-path",
+                "--include-invalid-action-release-path",
+                "--include-recovery-invalid-action-release-path",
+                "--include-reserve-cancel-release-path",
+                "--include-reserve-deck-release-path",
+                "--include-reserve-deck-cancel-release-path"
+            ]
+        },
+        {
+            "id": "classic-privilege-release-paths",
+            "runner": "built-player-smoke",
+            "seed": "unity-product-surface-classic-privilege",
+            "startMode": "classic",
+            "maxSteps": 18,
+            "idleActionPreference": "privilege-first",
+            "draftActionPreference": "select-first",
+            "includeFlags": [
+                "--include-privilege-cancel-release-path",
+                "--include-reserved-buy-release-path",
+                "--include-joker-release-path"
+            ]
+        },
+        {
+            "id": "roguelike-peek-modal",
+            "runner": "built-player-smoke",
+            "seed": "unity-peek-modal-seed-17",
+            "startMode": "roguelike",
+            "maxSteps": 12,
+            "idleActionPreference": "balanced",
+            "draftActionPreference": "select-first",
+            "includeFlags": ["--include-peek-modal-release-path"]
+        },
+        {
+            "id": "roguelike-reserved-discard",
+            "runner": "built-player-smoke",
+            "seed": "unity-reserved-discard-seed-10",
+            "startMode": "roguelike",
+            "maxSteps": 12,
+            "idleActionPreference": "balanced",
+            "draftActionPreference": "select-first",
+            "includeFlags": ["--include-reserved-discard-release-path"]
+        }
+    ],
+    "deterministicExploration": {
+        "strategy": "phase-driven model exploration",
+        "maxDefaultDepth": 120,
+        "legalActionRequirement": "State hash must change and live replay event count must increase.",
+        "illegalActionRequirement": "State hash must not change and live replay event count must not increase.",
+        "coverageTargets": [
+            "entrypoints",
+            "actionFamilies",
+            "phaseEdges",
+            "recoveryCases",
+            "settingsCombinations"
+        ]
+    },
+    "releaseRuntimeRulesPackaging": {
+        "required": true,
+        "status": "blocked-until-packaged",
+        "blockedReason": "Current built-player LocalDev automation still depends on the external TypeScript rules bridge and retained mailbox evidence. Complete replacement coverage requires a release-runtime rules package or a user-approved exclusion."
+    }
+}

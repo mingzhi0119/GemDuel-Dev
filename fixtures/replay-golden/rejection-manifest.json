@@ -30,26 +30,35 @@
         "wrong-phase:SELECT_ROYAL_CARD",
         "wrong-phase:REROLL_DRAFT_POOL",
         "edge:SELECT_BUFF:unavailable",
+        "edge:SELECT_BUFF:p2-before-p1",
         "edge:REPLENISH:empty-bag",
         "edge:TAKE_GEMS:empty",
         "edge:TAKE_GEMS:gold-cell",
         "edge:TAKE_GEMS:gapped",
+        "edge:TAKE_GEMS:no-take-3",
+        "edge:TAKE_GEMS:out-of-bounds",
         "edge:TAKE_BONUS_GEM:wrong-color",
         "edge:TAKE_BONUS_GEM:unavailable-cell",
+        "edge:TAKE_BONUS_GEM:out-of-bounds",
         "edge:DISCARD_GEM:not-owned",
         "edge:STEAL_GEM:gold",
         "edge:STEAL_GEM:not-owned",
         "edge:INITIATE_BUY_JOKER:non-joker",
+        "edge:INITIATE_BUY_JOKER:reserved-not-owned",
         "edge:BUY_CARD:market-mismatch",
         "edge:BUY_CARD:reserved-not-owned",
+        "edge:BUY_CARD:joker-without-color",
         "edge:INITIATE_RESERVE:market-mismatch",
         "edge:INITIATE_RESERVE_DECK:empty-deck",
+        "edge:CANCEL_RESERVE:no-pending",
         "edge:RESERVE_CARD:missing-gold",
         "edge:RESERVE_CARD:non-gold",
+        "edge:RESERVE_CARD:gold-out-of-bounds",
         "edge:RESERVE_CARD:pending-mismatch",
         "edge:RESERVE_CARD:full-row",
         "edge:RESERVE_DECK:missing-gold",
         "edge:RESERVE_DECK:non-gold",
+        "edge:RESERVE_DECK:gold-out-of-bounds",
         "edge:RESERVE_DECK:pending-mismatch",
         "edge:RESERVE_DECK:full-row",
         "edge:DISCARD_RESERVED:no-ability",
@@ -58,7 +67,9 @@
         "edge:ACTIVATE_PRIVILEGE:no-target",
         "edge:USE_PRIVILEGE:no-charge",
         "edge:USE_PRIVILEGE:invalid-target",
+        "edge:USE_PRIVILEGE:out-of-bounds",
         "edge:SELECT_ROYAL_CARD:unavailable",
+        "edge:GAME_OVER:action-after-winner",
         "edge:PEEK_DECK:no-ability",
         "edge:CLOSE_MODAL:no-modal",
         "edge:CLOSE_MODAL:blocked",
@@ -454,6 +465,21 @@
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
         },
         {
+            "id": "reject-select-buff-p2-before-p1-selection",
+            "fixtureId": "buff-draft-opening",
+            "fileName": "buff-draft-opening.replay.json",
+            "revision": 0,
+            "stateSetupId": "p2-draft-before-p1-selection",
+            "tags": ["edge:SELECT_BUFF:p2-before-p1"],
+            "actionType": "SELECT_BUFF",
+            "action": { "type": "SELECT_BUFF", "payload": { "buffId": "royal_blood" } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "P2 draft selections require a locked-in P1 buff selection.",
+            "expectedBeforeStateHash": "5c903209",
+            "expectedAfterStateHash": "5c903209",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
             "id": "reject-replenish-empty-bag",
             "fixtureId": "local-pvp-opening",
             "fileName": "local-pvp-opening.replay.json",
@@ -519,6 +545,44 @@
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
         },
         {
+            "id": "reject-take-gems-no-take-3-buff",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "stateSetupId": "no-take-3-buff",
+            "tags": ["edge:TAKE_GEMS:no-take-3"],
+            "actionType": "TAKE_GEMS",
+            "action": {
+                "type": "TAKE_GEMS",
+                "payload": {
+                    "coords": [
+                        { "r": 0, "c": 0 },
+                        { "r": 0, "c": 1 },
+                        { "r": 0, "c": 2 }
+                    ]
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The active buff blocks taking three gems.",
+            "expectedBeforeStateHash": "8e546f4c",
+            "expectedAfterStateHash": "8e546f4c",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-gems-out-of-bounds",
+            "fixtureId": "local-pvp-opening",
+            "fileName": "local-pvp-opening.replay.json",
+            "revision": 0,
+            "tags": ["edge:TAKE_GEMS:out-of-bounds"],
+            "actionType": "TAKE_GEMS",
+            "action": { "type": "TAKE_GEMS", "payload": { "coords": [{ "r": -1, "c": 0 }] } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Gem selection contains an out-of-bounds coordinate.",
+            "expectedBeforeStateHash": "e1b5e1bf",
+            "expectedAfterStateHash": "e1b5e1bf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
             "id": "reject-take-bonus-gem-wrong-color",
             "fixtureId": "local-pvp-royal-extra-turn-game-over",
             "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
@@ -542,6 +606,20 @@
             "action": { "type": "TAKE_BONUS_GEM", "payload": { "r": 0, "c": 0 } },
             "expectedRejectionCode": "COMMAND_REJECTED",
             "expectedRejectionReason": "Selected bonus gem is not available.",
+            "expectedBeforeStateHash": "329600a9",
+            "expectedAfterStateHash": "329600a9",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-take-bonus-gem-out-of-bounds",
+            "fixtureId": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "revision": 8,
+            "tags": ["edge:TAKE_BONUS_GEM:out-of-bounds"],
+            "actionType": "TAKE_BONUS_GEM",
+            "action": { "type": "TAKE_BONUS_GEM", "payload": { "r": -1, "c": 0 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Bonus gem coordinate is out of bounds.",
             "expectedBeforeStateHash": "329600a9",
             "expectedAfterStateHash": "329600a9",
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
@@ -627,6 +705,44 @@
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
         },
         {
+            "id": "reject-initiate-buy-joker-reserved-not-owned",
+            "fixtureId": "local-pvp-joker-color-selection",
+            "fileName": "local-pvp-joker-color-selection.replay.json",
+            "revision": 0,
+            "tags": ["edge:INITIATE_BUY_JOKER:reserved-not-owned"],
+            "actionType": "INITIATE_BUY_JOKER",
+            "action": {
+                "type": "INITIATE_BUY_JOKER",
+                "payload": {
+                    "card": {
+                        "id": "c:174-jo#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "gold",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 2,
+                            "green": 0,
+                            "blue": 2,
+                            "white": 0,
+                            "black": 1,
+                            "pearl": 1,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "source": "reserved",
+                    "marketInfo": { "level": 1, "idx": 0 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Reserved card does not belong to the active player.",
+            "expectedBeforeStateHash": "b5d9cbbf",
+            "expectedAfterStateHash": "b5d9cbbf",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
             "id": "reject-buy-card-market-mismatch",
             "fixtureId": "local-pvp-opening",
             "fileName": "local-pvp-opening.replay.json",
@@ -702,6 +818,44 @@
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
         },
         {
+            "id": "reject-buy-card-joker-without-color",
+            "fixtureId": "local-pvp-joker-color-selection",
+            "fileName": "local-pvp-joker-color-selection.replay.json",
+            "revision": 5,
+            "tags": ["edge:BUY_CARD:joker-without-color"],
+            "actionType": "BUY_CARD",
+            "action": {
+                "type": "BUY_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:174-jo#0",
+                        "level": 1,
+                        "points": 1,
+                        "bonusColor": "gold",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 2,
+                            "green": 0,
+                            "blue": 2,
+                            "white": 0,
+                            "black": 1,
+                            "pearl": 1,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "source": "market",
+                    "marketInfo": { "level": 1, "idx": 0 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "A concrete bonus color is required before buying this card.",
+            "expectedBeforeStateHash": "d0a0e459",
+            "expectedAfterStateHash": "d0a0e459",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
             "id": "reject-initiate-reserve-market-mismatch",
             "fixtureId": "local-pvp-opening",
             "fileName": "local-pvp-opening.replay.json",
@@ -752,6 +906,21 @@
             "expectedRejectionReason": "Selected deck is empty.",
             "expectedBeforeStateHash": "5d36dff",
             "expectedAfterStateHash": "5d36dff",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-cancel-reserve-no-pending",
+            "fixtureId": "local-pvp-reserve-cancel",
+            "fileName": "local-pvp-reserve-cancel.replay.json",
+            "revision": 1,
+            "stateSetupId": "missing-pending-reserve",
+            "tags": ["edge:CANCEL_RESERVE:no-pending"],
+            "actionType": "CANCEL_RESERVE",
+            "action": { "type": "CANCEL_RESERVE" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "There is no pending reserve action to cancel.",
+            "expectedBeforeStateHash": "3b87795f",
+            "expectedAfterStateHash": "3b87795f",
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
         },
         {
@@ -827,6 +996,45 @@
             },
             "expectedRejectionCode": "COMMAND_REJECTED",
             "expectedRejectionReason": "Selected coordinate does not contain a gold gem.",
+            "expectedBeforeStateHash": "fd6d5832",
+            "expectedAfterStateHash": "fd6d5832",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-card-gold-out-of-bounds",
+            "fixtureId": "local-pvp-reserve-cancel",
+            "fileName": "local-pvp-reserve-cancel.replay.json",
+            "revision": 1,
+            "tags": ["edge:RESERVE_CARD:gold-out-of-bounds"],
+            "actionType": "RESERVE_CARD",
+            "action": {
+                "type": "RESERVE_CARD",
+                "payload": {
+                    "card": {
+                        "id": "c:141-wh#0",
+                        "level": 1,
+                        "points": 0,
+                        "bonusColor": "white",
+                        "bonusCount": 1,
+                        "crowns": 0,
+                        "cost": {
+                            "red": 1,
+                            "green": 1,
+                            "blue": 1,
+                            "white": 0,
+                            "black": 1,
+                            "pearl": 0,
+                            "gold": 0
+                        },
+                        "ability": "none"
+                    },
+                    "level": 1,
+                    "idx": 0,
+                    "goldCoords": { "r": -1, "c": 0 }
+                }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Gold coordinate is out of bounds.",
             "expectedBeforeStateHash": "fd6d5832",
             "expectedAfterStateHash": "fd6d5832",
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
@@ -937,6 +1145,23 @@
             },
             "expectedRejectionCode": "COMMAND_REJECTED",
             "expectedRejectionReason": "Selected coordinate does not contain a gold gem.",
+            "expectedBeforeStateHash": "6173696c",
+            "expectedAfterStateHash": "6173696c",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-reserve-deck-gold-out-of-bounds",
+            "fixtureId": "local-pvp-reserve-deck",
+            "fileName": "local-pvp-reserve-deck.replay.json",
+            "revision": 1,
+            "tags": ["edge:RESERVE_DECK:gold-out-of-bounds"],
+            "actionType": "RESERVE_DECK",
+            "action": {
+                "type": "RESERVE_DECK",
+                "payload": { "level": 1, "goldCoords": { "r": -1, "c": 0 } }
+            },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Gold coordinate is out of bounds.",
             "expectedBeforeStateHash": "6173696c",
             "expectedAfterStateHash": "6173696c",
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
@@ -1063,6 +1288,20 @@
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
         },
         {
+            "id": "reject-use-privilege-out-of-bounds",
+            "fixtureId": "local-pvp-privilege",
+            "fileName": "local-pvp-privilege.replay.json",
+            "revision": 3,
+            "tags": ["edge:USE_PRIVILEGE:out-of-bounds"],
+            "actionType": "USE_PRIVILEGE",
+            "action": { "type": "USE_PRIVILEGE", "payload": { "r": -1, "c": 0 } },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "Privilege coordinate is out of bounds.",
+            "expectedBeforeStateHash": "d8141986",
+            "expectedAfterStateHash": "d8141986",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
             "id": "reject-select-royal-unavailable",
             "fixtureId": "local-pvp-royal-extra-turn-game-over",
             "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
@@ -1085,6 +1324,20 @@
             "expectedRejectionReason": "Selected royal card is no longer available.",
             "expectedBeforeStateHash": "1c9d774b",
             "expectedAfterStateHash": "1c9d774b",
+            "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
+        },
+        {
+            "id": "reject-action-after-game-over",
+            "fixtureId": "local-pvp-royal-extra-turn-game-over",
+            "fileName": "local-pvp-royal-extra-turn-game-over.replay.json",
+            "revision": 95,
+            "tags": ["edge:GAME_OVER:action-after-winner"],
+            "actionType": "REPLENISH",
+            "action": { "type": "REPLENISH" },
+            "expectedRejectionCode": "COMMAND_REJECTED",
+            "expectedRejectionReason": "The game has already ended.",
+            "expectedBeforeStateHash": "4b6ab7ec",
+            "expectedAfterStateHash": "4b6ab7ec",
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
         },
         {
@@ -1156,8 +1409,8 @@
             "action": { "type": "REROLL_DRAFT_POOL", "payload": { "level": 1 } },
             "expectedRejectionCode": "COMMAND_REJECTED",
             "expectedRejectionReason": "P2 draft rerolls require a locked-in P1 buff selection.",
-            "expectedBeforeStateHash": "59de49c6",
-            "expectedAfterStateHash": "59de49c6",
+            "expectedBeforeStateHash": "5c903209",
+            "expectedAfterStateHash": "5c903209",
             "source": "TypeScript oracle edge rejection coverage; action must preserve replay-state hash."
         }
     ]

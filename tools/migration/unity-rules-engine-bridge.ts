@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, rm, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -180,7 +180,7 @@ const toP2DraftPoolIndices = (value: unknown): P2DraftPoolIndices | undefined =>
     return [Number(value[0]), Number(value[1]), Number(value[2]), Number(value[3])];
 };
 
-const toConcreteBonusColor = (value: unknown): Exclude<GemColor, 'gold' | 'empty'> =>
+const toConcreteBonusColor = (value: unknown): Exclude<GemColor, 'gold' | 'empty'> | undefined =>
     value === 'red' ||
     value === 'green' ||
     value === 'blue' ||
@@ -188,7 +188,7 @@ const toConcreteBonusColor = (value: unknown): Exclude<GemColor, 'gold' | 'empty
     value === 'black' ||
     value === 'pearl'
         ? value
-        : 'red';
+        : undefined;
 
 const resolveBuyBonusColor = (
     state: GameState,
@@ -196,7 +196,7 @@ const resolveBuyBonusColor = (
     payload: Record<string, unknown>
 ): GemColor | undefined =>
     card.bonusColor === 'gold' && state.phase === 'SELECT_CARD_COLOR'
-        ? toConcreteBonusColor(payload.bonusColor)
+        ? (toConcreteBonusColor(payload.bonusColor) ?? card.bonusColor)
         : card.bonusColor;
 
 const buildCardAction = (
@@ -205,7 +205,10 @@ const buildCardAction = (
     actor: PlayerKey
 ): GameAction => {
     const payload = getPayloadObject(command);
-    if (command.type === 'BUY_RESERVED_CARD' || (command.type === 'BUY_CARD' && payload.source === 'reserved')) {
+    if (
+        command.type === 'BUY_RESERVED_CARD' ||
+        (command.type === 'BUY_CARD' && payload.source === 'reserved')
+    ) {
         const card =
             getPayloadCard(payload) ??
             getReservedCard(state, actor, payload.instanceId as string | undefined);
@@ -222,12 +225,11 @@ const buildCardAction = (
         };
     }
 
-    const marketInfo = toMarketRef(payload);
-    const card = getPayloadCard(payload) ?? getMarketCard(state, marketInfo);
     if (command.type === 'INITIATE_BUY_JOKER') {
         if (payload.source === 'reserved' || typeof payload.instanceId === 'string') {
             const reservedCard =
-                getPayloadCard(payload) ?? getReservedCard(state, actor, payload.instanceId as string);
+                getPayloadCard(payload) ??
+                getReservedCard(state, actor, payload.instanceId as string);
             return {
                 type: 'INITIATE_BUY_JOKER',
                 payload: {
@@ -237,6 +239,8 @@ const buildCardAction = (
             };
         }
 
+        const marketInfo = toMarketRef(payload);
+        const card = getPayloadCard(payload) ?? getMarketCard(state, marketInfo);
         return {
             type: 'INITIATE_BUY_JOKER',
             payload: {
@@ -247,6 +251,8 @@ const buildCardAction = (
         };
     }
 
+    const marketInfo = toMarketRef(payload);
+    const card = getPayloadCard(payload) ?? getMarketCard(state, marketInfo);
     return {
         type: 'BUY_CARD',
         payload: {
@@ -326,11 +332,11 @@ const buildRoyalAction = (state: GameState, command: BridgeCommand): GameAction 
     const card = payloadCard
         ? payloadCard
         : royalId
-        ? (state.royalDeck.find((candidate) => candidate.id === royalId) ?? {
-              ...cloneJson(fallbackCard),
-              id: royalId,
-          })
-        : fallbackCard;
+          ? (state.royalDeck.find((candidate) => candidate.id === royalId) ?? {
+                ...cloneJson(fallbackCard),
+                id: royalId,
+            })
+          : fallbackCard;
     return { type: 'SELECT_ROYAL_CARD', payload: { card: cloneJson(card) as never } };
 };
 
@@ -471,7 +477,10 @@ export const handleUnityRulesEngineBridgeRequest = (request: BridgeRequest): Bri
     if (request.kind === 'replay-state') {
         const revision = Math.max(
             0,
-            Math.min(request.revision ?? request.replay.replayRevision, request.replay.events.length)
+            Math.min(
+                request.revision ?? request.replay.replayRevision,
+                request.replay.events.length
+            )
         );
         const state = loadReplayStateAtRevision(request.replay, revision);
         return buildStateResponse(state, request.replay.init, revision);
@@ -538,14 +547,137 @@ const readStdin = async (): Promise<string> => {
     return Buffer.concat(chunks).toString('utf8');
 };
 
-const main = async () => {
-    const inputPath = process.argv[2];
+const writeAtomicOutput = async (outputPath: string, serialized: string) => {
+    const resolvedOutputPath = path.resolve(outputPath);
+    const tempOutputPath = `${resolvedOutputPath}.${process.pid}.${Date.now()}.tmp`;
+    try {
+        await writeFile(tempOutputPath, serialized, 'utf8');
+        await rename(tempOutputPath, resolvedOutputPath);
+    } catch (error) {
+        await rm(tempOutputPath, { force: true });
+        throw error;
+    }
+};
+
+const sleep = (milliseconds: number): Promise<void> =>
+    new Promise((resolve) => {
+        setTimeout(resolve, milliseconds);
+    });
+
+const parseCliArgs = (argv: string[]) => {
+    const args = [...argv];
+    const outputFlagIndex = args.indexOf('--out');
+    const outputPath =
+        outputFlagIndex >= 0 && args[outputFlagIndex + 1]
+            ? args.splice(outputFlagIndex, 2)[1]
+            : null;
+    const mailboxFlagIndex = args.indexOf('--mailbox');
+    const mailboxPath =
+        mailboxFlagIndex >= 0 && args[mailboxFlagIndex + 1]
+            ? args.splice(mailboxFlagIndex, 2)[1]
+            : null;
+    return {
+        inputPath: args[0] ?? null,
+        outputPath,
+        mailboxPath,
+    };
+};
+
+const buildCliErrorResponse = (error: unknown): BridgeResponse => ({
+    ok: false,
+    replayRevision: 0,
+    rejection: {
+        code: 'BRIDGE_EXECUTION_FAILED',
+        reason: error instanceof Error ? error.message : String(error),
+    },
+});
+
+const writeCliErrorResponse = async (outputPath: string | null, error: unknown) => {
+    if (!outputPath) {
+        return;
+    }
+
+    const serialized = `${JSON.stringify(buildCliErrorResponse(error), null, 4)}\n`;
+    try {
+        await writeAtomicOutput(outputPath, serialized);
+    } catch (writeError) {
+        process.stderr.write(
+            `Failed to write structured Unity bridge error response to ${path.resolve(outputPath)}: ${
+                writeError instanceof Error ? writeError.stack : String(writeError)
+            }\n`
+        );
+    }
+};
+
+const executeCliRequest = async (inputPath: string | null, outputPath: string | null) => {
     const raw = inputPath ? await readFile(path.resolve(inputPath), 'utf8') : await readStdin();
     const request = JSON.parse(raw) as BridgeRequest;
     const response = handleUnityRulesEngineBridgeRequest(request);
-    process.stdout.write(`${JSON.stringify(response, null, 4)}\n`);
+    const serialized = `${JSON.stringify(response, null, 4)}\n`;
+    if (outputPath) {
+        await writeAtomicOutput(outputPath, serialized);
+    } else {
+        process.stdout.write(serialized);
+    }
     if (!response.ok) {
         process.exit(2);
+    }
+};
+
+const executeMailboxRequest = async (requestPath: string, responsePath: string) => {
+    let response: BridgeResponse;
+    try {
+        const raw = await readFile(requestPath, 'utf8');
+        response = handleUnityRulesEngineBridgeRequest(JSON.parse(raw) as BridgeRequest);
+    } catch (error) {
+        response = buildCliErrorResponse(error);
+    }
+
+    await writeAtomicOutput(responsePath, `${JSON.stringify(response, null, 4)}\n`);
+    await unlink(requestPath).catch(() => {});
+};
+
+const executeMailbox = async (mailboxPath: string) => {
+    const mailboxRoot = path.resolve(mailboxPath);
+    const requestDirectory = path.join(mailboxRoot, 'requests');
+    const responseDirectory = path.join(mailboxRoot, 'responses');
+    await mkdir(requestDirectory, { recursive: true });
+    await mkdir(responseDirectory, { recursive: true });
+
+    const inFlight = new Set<string>();
+    while (true) {
+        const files = await readdir(requestDirectory).catch(() => []);
+        await Promise.all(
+            files
+                .filter((fileName) => fileName.endsWith('.json') && !inFlight.has(fileName))
+                .map(async (fileName) => {
+                    inFlight.add(fileName);
+                    try {
+                        await executeMailboxRequest(
+                            path.join(requestDirectory, fileName),
+                            path.join(responseDirectory, fileName)
+                        );
+                    } finally {
+                        inFlight.delete(fileName);
+                    }
+                })
+        );
+        await sleep(15);
+    }
+};
+
+const main = async () => {
+    const { inputPath, outputPath, mailboxPath } = parseCliArgs(process.argv.slice(2));
+    try {
+        if (mailboxPath) {
+            await executeMailbox(mailboxPath);
+            return;
+        }
+
+        await executeCliRequest(inputPath, outputPath);
+    } catch (error) {
+        await writeCliErrorResponse(outputPath, error);
+        throw error;
     }
 };
 

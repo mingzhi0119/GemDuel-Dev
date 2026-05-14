@@ -204,6 +204,34 @@ export const createCardParityClickActions = ({
         );
     };
 
+    const selectJokerColor = async (action: ParityAction, payload: Record<string, unknown>) => {
+        const color =
+            typeof payload.color === 'string'
+                ? payload.color
+                : typeof payload.gemId === 'string'
+                  ? payload.gemId
+                  : 'red';
+        const beforeIndex = currentParams().game.historyControls.currentIndex;
+        const beforePhase = currentParams().game.state.phase;
+        const selector = `[data-bonus-color="${color}"]:not(:disabled)`;
+        const ok = clickElement(selector);
+        const committed =
+            ok &&
+            (await waitForCondition(() => {
+                const { game } = currentParams();
+                const historyMoved = game.historyControls.currentIndex > beforeIndex;
+                const phaseMoved = game.state.phase !== beforePhase;
+                return (historyMoved || phaseMoved) && hasRenderedCurrentRoute();
+            }, 120));
+        await waitForStableFrame();
+        return result(
+            action,
+            committed,
+            committed ? `Selected joker color ${color}.` : `No enabled joker color ${color}.`,
+            committed ? 'dom-click' : 'missing-dom-target'
+        );
+    };
+
     const chooseRoyal = async (action: ParityAction, payload: Record<string, unknown>) => {
         const index = Number(payload.index ?? 0);
         const royal = currentParams().game.state.royalDeck[index];
@@ -277,5 +305,6 @@ export const createCardParityClickActions = ({
         hoverMarketCard,
         hoverMarketDeck,
         hoverPlayerReserved,
+        selectJokerColor,
     };
 };

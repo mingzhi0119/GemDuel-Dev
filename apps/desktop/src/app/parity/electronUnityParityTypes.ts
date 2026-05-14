@@ -25,13 +25,19 @@ export type ParityAction =
     | 'click_player_reserved'
     | 'hover_player_reserved'
     | 'confirm_preview_action'
+    | 'select_joker_color'
+    | 'select_card_color'
     | 'click_board_cell'
+    | 'preselect_reserve_gold'
+    | 'resolve_pending_reserve_gold'
     | 'hover_board_cell'
     | 'confirm_gem_selection'
     | 'cancel_gem_selection'
     | 'take_bonus_gem'
     | 'steal_gem'
     | 'discard_gem'
+    | 'activate_privilege'
+    | 'use_privilege'
     | 'hover_player_gem'
     | 'end_turn'
     | 'force_royal_selection'
@@ -75,6 +81,13 @@ export interface ElectronParityStateDump {
         currentIndex: number;
         historyLength: number;
         historySource: string;
+    };
+    replay: {
+        loaded: boolean;
+        replayRevision: number;
+        eventCount: number;
+        summaryFinalStateHash: string | null;
+        winner: PlayerKey | null;
     };
     game: Record<string, unknown>;
     visible: {
@@ -171,13 +184,19 @@ export const ACTIONS: ParityAction[] = [
     'click_player_reserved',
     'hover_player_reserved',
     'confirm_preview_action',
+    'select_joker_color',
+    'select_card_color',
     'click_board_cell',
+    'preselect_reserve_gold',
+    'resolve_pending_reserve_gold',
     'hover_board_cell',
     'confirm_gem_selection',
     'cancel_gem_selection',
     'take_bonus_gem',
     'steal_gem',
     'discard_gem',
+    'activate_privilege',
+    'use_privilege',
     'hover_player_gem',
     'end_turn',
     'force_royal_selection',

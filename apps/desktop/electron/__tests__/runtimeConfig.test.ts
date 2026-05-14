@@ -161,6 +161,7 @@ describe('electron runtime config', () => {
 
     it('declares ownership and secret handling for every governed env var', () => {
         expect(Object.keys(RUNTIME_CONFIG_POLICY).sort()).toEqual([
+            'AGENT_BROWSER_BIN',
             'CI',
             'CSC_KEY_PASSWORD',
             'CSC_LINK',
@@ -173,6 +174,8 @@ describe('electron runtime config', () => {
             'GEMDUEL_PARITY_BROWSER_FINAL_EXTRA',
             'GEMDUEL_PARITY_BROWSER_PROCESS_MAX',
             'GEMDUEL_PEER_SERVER_PORT',
+            'GEMDUEL_PNPM_PATH',
+            'GEMDUEL_RULES_BRIDGE_MAILBOX_DIR',
             'GEMDUEL_TURN_CREDENTIAL_BUNDLE_JSON',
             'GEMDUEL_TURN_SERVICE_FALLBACK_MODE',
             'GEMDUEL_TURN_SERVICE_TOKEN',
@@ -188,6 +191,7 @@ describe('electron runtime config', () => {
             'GITHUB_SHA',
             'GITHUB_STEP_SUMMARY',
             'GITHUB_WORKFLOW',
+            'PATH',
             'UNITY_EXE',
             'WIN_CSC_KEY_PASSWORD',
             'WIN_CSC_LINK',

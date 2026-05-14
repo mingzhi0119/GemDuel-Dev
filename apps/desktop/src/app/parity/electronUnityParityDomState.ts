@@ -18,6 +18,7 @@ const BOX_SELECTORS = [
     '[data-board-cell]',
     '[data-player-zone]',
     '[data-player-zone-column]',
+    '[data-player-zone-privilege]',
     '[data-player-zone-gem]',
     '[data-reserved-slot]',
     '[data-card-preview-overlay]',
@@ -25,6 +26,9 @@ const BOX_SELECTORS = [
     '[data-card-preview-card]',
     '[data-card-preview-deck-reserve]',
     '[data-card-preview-action]',
+    '[data-bonus-color]',
+    '[data-royal-card]',
+    '[data-royal-selection-card]',
     '[data-settings-menu]',
     '[data-locale-option]',
     '[data-app-sound-toggle]',
@@ -113,6 +117,14 @@ const semanticKeyForElement = (
               ? 'player.score'
               : undefined;
     }
+    if (dataset.playerZonePrivilege) {
+        const [player] = dataset.playerZonePrivilege.split('-');
+        if (!player || state.winner) {
+            return undefined;
+        }
+
+        return player === state.turn ? 'player.current.privilege' : 'player.opponent.privilege';
+    }
     if (dataset.playerZoneGem) {
         const [player, gem] = dataset.playerZoneGem.split('-');
         if (!player || !gem || state.winner) {
@@ -142,6 +154,14 @@ const semanticKeyForElement = (
     }
     if (dataset.cardPreviewAction === 'reserve') {
         return 'card.preview.action.reserve';
+    }
+    if (dataset.bonusColor) {
+        return `card.color.${dataset.bonusColor}`;
+    }
+    if (dataset.royalCard || dataset.royalSelectionCard) {
+        const royalId = dataset.royalCard ?? dataset.royalSelectionCard;
+        const royalIndex = state.royalDeck.findIndex((royal) => royal.id === royalId);
+        return royalIndex >= 0 ? `royal.card.${royalIndex}` : `royal.card.${royalId}`;
     }
     if (selector === '[data-settings-menu]') {
         return 'settings.panel';

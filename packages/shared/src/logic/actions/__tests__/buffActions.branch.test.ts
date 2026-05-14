@@ -3,7 +3,9 @@ import { BUFFS, GAME_PHASES } from '../../../constants';
 import { createGameSetupPayload } from '../../gameSetup';
 import { createMockState } from '../../__tests__/testHelpers';
 import { handleRerollDraftPool, handleSelectBuff } from '../buffActions';
-import type { GameState } from '../../../types';
+import { validateCommand } from '../../commandGate';
+import { applyAction } from '../../gameReducer';
+import type { GameAction, GameState } from '../../../types';
 
 vi.mock('../../../utils', async () => {
     const actual = await vi.importActual<typeof import('../../../utils')>('../../../utils');
@@ -186,6 +188,26 @@ describe('buffActions branch coverage', () => {
             BUFFS.INTELLIGENCE.id,
             BUFFS.DEEP_POCKETS.id,
         ]);
+
+        const firstDeterministic = createState({
+            mode: 'LOCAL_PVP',
+            phase: GAME_PHASES.DRAFT_PHASE,
+            turn: 'p1',
+            buffLevel: 2,
+            draftPool: ['same-a', 'same-b', 'same-c'],
+        });
+        const secondDeterministic = createState({
+            mode: 'LOCAL_PVP',
+            phase: GAME_PHASES.DRAFT_PHASE,
+            turn: 'p1',
+            buffLevel: 2,
+            draftPool: ['same-a', 'same-b', 'same-c'],
+        });
+
+        handleRerollDraftPool(firstDeterministic, { level: 2 });
+        handleRerollDraftPool(secondDeterministic, { level: 2 });
+
+        expect(firstDeterministic.draftPool).toEqual(secondDeterministic.draftPool);
     });
 
     it('uses p2DraftLevel for refresh defaults and lets p2 choose the p1 card without changing buffLevel', () => {
@@ -219,5 +241,36 @@ describe('buffActions branch coverage', () => {
         expect(rerollState.phase).toBe(GAME_PHASES.IDLE);
         expect(rerollState.playerBuffs.p2.id).toBe(BUFFS.COLOR_PREFERENCE.id);
         expect(rerollState.buffLevel).toBe(2);
+    });
+
+    it('rejects a stale p2 draft selection before p1 locks a buff', () => {
+        const state = createState({
+            mode: 'LOCAL_PVP',
+            phase: GAME_PHASES.DRAFT_PHASE,
+            turn: 'p2',
+            buffLevel: 1,
+            p2DraftLevel: 1,
+            draftOrder: ['p1', 'p2'],
+            draftPool: [BUFFS.PRIVILEGE_FAVOR.id, BUFFS.INTELLIGENCE.id, BUFFS.DEEP_POCKETS.id],
+            p2DraftPool: [
+                BUFFS.PRIVILEGE_FAVOR.id,
+                BUFFS.INTELLIGENCE.id,
+                BUFFS.DEEP_POCKETS.id,
+                BUFFS.ROYAL_BLOOD.id,
+            ],
+            p1SelectedBuff: null,
+        });
+        const action: GameAction = {
+            type: 'SELECT_BUFF',
+            payload: { buffId: BUFFS.PRIVILEGE_FAVOR.id },
+        };
+        const snapshot = JSON.parse(JSON.stringify(state)) as GameState;
+
+        expect(validateCommand(state, action)).toEqual({
+            valid: false,
+            reason: 'P2 draft selections require a locked-in P1 buff selection.',
+        });
+        expect(applyAction(state, action)).toBe(state);
+        expect(state).toEqual(snapshot);
     });
 });

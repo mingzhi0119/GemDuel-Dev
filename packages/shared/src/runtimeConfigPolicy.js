@@ -7,6 +7,15 @@ export const TURN_CREDENTIAL_SERVICE_POLICY_VERSION = 1;
 export const TURN_CREDENTIAL_SERVICE_FALLBACK_MODES = ['allow-runtime-ice', 'deny-runtime-ice'];
 
 export const RUNTIME_CONFIG_POLICY = Object.freeze({
+    AGENT_BROWSER_BIN: {
+        owner: 'Client Parity',
+        defaultValue: 'unset',
+        validation:
+            'Optional absolute filesystem path or executable name for the agent-browser automation binary used by Electron/Unity migration tooling.',
+        secretHandling: 'Local tooling path only. Never store credentials here.',
+        failureMode:
+            'Migration automation falls back to resolving agent-browser from PATH or the package shim.',
+    },
     CI: {
         owner: 'Release Engineering',
         defaultValue: 'unset',
@@ -140,6 +149,24 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         failureMode:
             'The parity runner falls back to the governed clients/unity project path and records a Unity blocker if unavailable.',
     },
+    GEMDUEL_PNPM_PATH: {
+        owner: 'Client Parity',
+        defaultValue: 'unset',
+        validation:
+            'Absolute filesystem path to the local pnpm executable used only by Unity LocalDev built-player smoke automation.',
+        secretHandling: 'Local tooling path only. Never store credentials here.',
+        failureMode:
+            'The Unity LocalDev TypeScript bridge falls back to PATH resolution and reports a structured bridge blocker if pnpm cannot be launched.',
+    },
+    GEMDUEL_RULES_BRIDGE_MAILBOX_DIR: {
+        owner: 'Client Parity',
+        defaultValue: 'unset',
+        validation:
+            'Absolute filesystem path to an ignored LocalDev request/response mailbox used only by Unity built-player smoke automation.',
+        secretHandling: 'Local tooling path only. Never store credentials here.',
+        failureMode:
+            'The Unity built-player smoke falls back to direct process launch and reports a structured bridge blocker if no bridge transport can run.',
+    },
     UNITY_EXE: {
         owner: 'Client Parity',
         defaultValue: 'unset',
@@ -148,6 +175,15 @@ export const RUNTIME_CONFIG_POLICY = Object.freeze({
         secretHandling: 'Local tooling path only. Never store credentials here.',
         failureMode:
             'The parity runner falls back to the governed default Unity Hub editor path and records a Unity blocker if no executable is found.',
+    },
+    PATH: {
+        owner: 'Client Parity',
+        defaultValue: 'inherited process environment',
+        validation:
+            'Operating-system executable search path used by local automation to discover pnpm before setting GEMDUEL_PNPM_PATH.',
+        secretHandling: 'Local tooling path metadata only. Never store credentials here.',
+        failureMode:
+            'Built-player smoke automation omits GEMDUEL_PNPM_PATH and the Unity LocalDev bridge reports a structured pnpm availability blocker.',
     },
     CSC_LINK: {
         owner: 'Release Engineering',

@@ -23,13 +23,68 @@ export const waitForCondition = async (
     return condition();
 };
 
-export const clickElement = (selector: string): boolean => {
-    const element = document.querySelector<HTMLElement>(selector);
+export const clickElement = (
+    selector: string,
+    options: { pointerSequence?: boolean } = {}
+): boolean => {
+    const candidates = Array.from(document.querySelectorAll<HTMLElement>(selector));
+    const element =
+        candidates.find((candidate) => {
+            const rect = candidate.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) {
+                return false;
+            }
+
+            const target = document.elementFromPoint(
+                rect.x + rect.width / 2,
+                rect.y + rect.height / 2
+            );
+            return Boolean(target && candidate.contains(target));
+        }) ??
+        candidates.find((candidate) => {
+            const rect = candidate.getBoundingClientRect();
+            return rect.width > 0 && rect.height > 0;
+        }) ??
+        candidates[0] ??
+        null;
     if (!element) {
         return false;
     }
 
-    element.click();
+    const rect = element.getBoundingClientRect();
+    const clientX = rect.x + rect.width / 2;
+    const clientY = rect.y + rect.height / 2;
+    const target = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
+    const eventTarget = element.contains(target) ? (target ?? element) : element;
+    const eventInit = {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        clientX,
+        clientY,
+        view: window,
+    };
+    const createPointerEvent = (type: string, buttons: number) => {
+        const pointerInit = {
+            ...eventInit,
+            buttons,
+            pointerId: 1,
+            pointerType: 'mouse',
+            isPrimary: true,
+        };
+        return typeof PointerEvent === 'function'
+            ? new PointerEvent(type, pointerInit)
+            : new MouseEvent(type, pointerInit);
+    };
+    if (options.pointerSequence !== false) {
+        eventTarget.dispatchEvent(createPointerEvent('pointerdown', 1));
+    }
+    eventTarget.dispatchEvent(new MouseEvent('mousedown', { ...eventInit, buttons: 1 }));
+    if (options.pointerSequence !== false) {
+        eventTarget.dispatchEvent(createPointerEvent('pointerup', 0));
+    }
+    eventTarget.dispatchEvent(new MouseEvent('mouseup', { ...eventInit, buttons: 0 }));
+    eventTarget.dispatchEvent(new MouseEvent('click', { ...eventInit, buttons: 0 }));
     return true;
 };
 

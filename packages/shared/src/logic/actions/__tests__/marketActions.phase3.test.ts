@@ -173,6 +173,7 @@ describe('marketActions phase 3 coverage', () => {
         expect(nextState.playerTableau.p1).toHaveLength(0);
         expect(nextState.market[1][0]?.id).toBe('expensive');
         expect(nextState.pendingBuy).toEqual(state.pendingBuy);
+        expect(nextState.phase).toBe(state.phase);
     });
 
     it('removes reserved purchases from hand and grants speculator bonus gems', () => {

@@ -1,6 +1,9 @@
 // @vitest-environment node
 
-import { readFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -243,6 +246,218 @@ const loadGoldenReplay = (fileName: string): ReplayVNext => {
 };
 
 describe('unity rules engine bridge', () => {
+    it('writes bridge responses to an output file for built-player mailbox transport', () => {
+        const tempDir = mkdtempSync(path.join(tmpdir(), 'gemduel-unity-bridge-out-'));
+        try {
+            const requestPath = path.join(tempDir, 'request.json');
+            const responsePath = path.join(tempDir, 'response.json');
+            writeFileSync(
+                requestPath,
+                JSON.stringify({
+                    kind: 'start',
+                    mode: 'LOCAL_PVP',
+                    seed: 'unity-bridge-output-file-test',
+                    hostPlayer: 'p1',
+                })
+            );
+
+            const stdout = execFileSync(
+                process.execPath,
+                [
+                    path.join(
+                        process.cwd(),
+                        'tools',
+                        'scripts',
+                        'node_modules',
+                        'vite-node',
+                        'vite-node.mjs'
+                    ),
+                    '--script',
+                    path.join(process.cwd(), 'tools', 'migration', 'unity-rules-engine-bridge.ts'),
+                    requestPath,
+                    '--out',
+                    responsePath,
+                ],
+                { cwd: process.cwd(), encoding: 'utf8' }
+            );
+
+            expect(stdout).toBe('');
+            const response = JSON.parse(readFileSync(responsePath, 'utf8'));
+            expect(response.ok).toBe(true);
+            expect(response.actionType).toBe('INIT');
+            expect(response.stateHash).toMatch(/^[a-f0-9]{8}$/);
+        } finally {
+            rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    it('cleans temporary output files when built-player mailbox response publication fails', () => {
+        const tempDir = mkdtempSync(path.join(tmpdir(), 'gemduel-unity-bridge-out-fail-'));
+        try {
+            const requestPath = path.join(tempDir, 'request.json');
+            const responseDirectoryPath = path.join(tempDir, 'response.json');
+            mkdirSync(responseDirectoryPath);
+            writeFileSync(
+                requestPath,
+                JSON.stringify({
+                    kind: 'start',
+                    mode: 'LOCAL_PVP',
+                    seed: 'unity-bridge-output-file-cleanup-test',
+                    hostPlayer: 'p1',
+                })
+            );
+
+            const result = spawnSync(
+                process.execPath,
+                [
+                    path.join(
+                        process.cwd(),
+                        'tools',
+                        'scripts',
+                        'node_modules',
+                        'vite-node',
+                        'vite-node.mjs'
+                    ),
+                    '--script',
+                    path.join(process.cwd(), 'tools', 'migration', 'unity-rules-engine-bridge.ts'),
+                    requestPath,
+                    '--out',
+                    responseDirectoryPath,
+                ],
+                { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' }
+            );
+
+            expect(result.status).not.toBe(0);
+            expect(result.stderr).toContain('rename');
+            expect(
+                readdirSync(tempDir).filter(
+                    (entry) => entry.startsWith('response.json.') && entry.endsWith('.tmp')
+                )
+            ).toEqual([]);
+        } finally {
+            rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    it('writes a structured output-file rejection when CLI request parsing fails', () => {
+        const tempDir = mkdtempSync(path.join(tmpdir(), 'gemduel-unity-bridge-cli-error-'));
+        try {
+            const requestPath = path.join(tempDir, 'request.json');
+            const responsePath = path.join(tempDir, 'response.json');
+            writeFileSync(requestPath, '{not-json');
+
+            const result = spawnSync(
+                process.execPath,
+                [
+                    path.join(
+                        process.cwd(),
+                        'tools',
+                        'scripts',
+                        'node_modules',
+                        'vite-node',
+                        'vite-node.mjs'
+                    ),
+                    '--script',
+                    path.join(process.cwd(), 'tools', 'migration', 'unity-rules-engine-bridge.ts'),
+                    requestPath,
+                    '--out',
+                    responsePath,
+                ],
+                { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' }
+            );
+
+            expect(result.status).toBe(1);
+            expect(result.stderr).toContain('SyntaxError');
+            const response = JSON.parse(readFileSync(responsePath, 'utf8'));
+            expect(response).toMatchObject({
+                ok: false,
+                replayRevision: 0,
+                rejection: {
+                    code: 'BRIDGE_EXECUTION_FAILED',
+                },
+            });
+            expect(response.rejection.reason).toEqual(expect.any(String));
+            expect(response.rejection.reason.length).toBeGreaterThan(0);
+        } finally {
+            rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    it('writes a structured output-file rejection when a CLI gameplay command is rejected', () => {
+        const tempDir = mkdtempSync(path.join(tmpdir(), 'gemduel-unity-bridge-cli-reject-'));
+        try {
+            const start = handleUnityRulesEngineBridgeRequest({
+                kind: 'start',
+                mode: 'LOCAL_PVP',
+                seed: 'unity-bridge-cli-rejection-output-test',
+                hostPlayer: 'p1',
+            });
+            expect(start.ok).toBe(true);
+            if (!start.ok) {
+                throw new Error(start.rejection.reason);
+            }
+
+            const coord = findFirstCollectibleBoardGemWithId(start.state);
+            const requestPath = path.join(tempDir, 'request.json');
+            const responsePath = path.join(tempDir, 'response.json');
+            writeFileSync(
+                requestPath,
+                JSON.stringify({
+                    kind: 'apply',
+                    init: start.init,
+                    state: start.state,
+                    actor: 'p2',
+                    command: {
+                        type: 'TAKE_GEMS',
+                        payload: { coords: [{ r: coord.r, c: coord.c }] },
+                    },
+                })
+            );
+
+            const result = spawnSync(
+                process.execPath,
+                [
+                    path.join(
+                        process.cwd(),
+                        'tools',
+                        'scripts',
+                        'node_modules',
+                        'vite-node',
+                        'vite-node.mjs'
+                    ),
+                    '--script',
+                    path.join(process.cwd(), 'tools', 'migration', 'unity-rules-engine-bridge.ts'),
+                    requestPath,
+                    '--out',
+                    responsePath,
+                ],
+                { cwd: process.cwd(), encoding: 'utf8', stdio: 'pipe' }
+            );
+
+            expect(result.status).toBe(2);
+            expect(result.stdout).toBe('');
+            const response = JSON.parse(readFileSync(responsePath, 'utf8'));
+            expect(response).toMatchObject({
+                ok: false,
+                replayRevision: 0,
+                actionType: 'TAKE_GEMS',
+                rejection: {
+                    code: 'INVALID_ACTOR',
+                    reason: 'Command actor p2 does not match active player p1.',
+                },
+            });
+            expect(response.state).toEqual(start.state);
+            expect(response.stateHash).toBe(start.stateHash);
+            expect(
+                readdirSync(tempDir).filter(
+                    (entry) => entry.startsWith('response.json.') && entry.endsWith('.tmp')
+                )
+            ).toEqual([]);
+        } finally {
+            rmSync(tempDir, { recursive: true, force: true });
+        }
+    });
+
     it('starts a deterministic local PvP game and applies a legal command', () => {
         const start = handleUnityRulesEngineBridgeRequest({
             kind: 'start',
@@ -279,6 +494,94 @@ describe('unity rules engine bridge', () => {
         expect(apply.state.turn).toBe('p2');
         expect(apply.stateHash).toMatch(/^[a-f0-9]{8}$/);
         expect(apply.stateHash).not.toBe(start.stateHash);
+    });
+
+    it('keeps LocalDev platform and user identities out of gameplay hashes', () => {
+        const first = handleUnityRulesEngineBridgeRequest({
+            kind: 'start',
+            mode: 'LOCAL_PVP',
+            seed: 'unity-platform-hash-boundary',
+            hostPlayer: 'p1',
+        });
+        const second = handleUnityRulesEngineBridgeRequest({
+            kind: 'start',
+            mode: 'LOCAL_PVP',
+            seed: 'unity-platform-hash-boundary',
+            hostPlayer: 'p1',
+        });
+
+        expect(first.ok).toBe(true);
+        expect(second.ok).toBe(true);
+        if (!first.ok || !second.ok) {
+            throw new Error('Expected deterministic bridge starts to pass.');
+        }
+
+        expect(first.stateHash).toBe(second.stateHash);
+        const serializedState = JSON.stringify(first.state);
+        expect(serializedState).not.toContain('localdev-player');
+        expect(serializedState).not.toContain('Platform');
+        expect(serializedState).not.toContain('platform');
+    });
+
+    it('ignores LocalDev platform and user metadata on apply requests', () => {
+        const start = handleUnityRulesEngineBridgeRequest({
+            kind: 'start',
+            mode: 'LOCAL_PVP',
+            seed: 'unity-platform-apply-hash-boundary',
+            hostPlayer: 'p1',
+        });
+
+        expect(start.ok).toBe(true);
+        if (!start.ok) {
+            throw new Error(start.rejection.reason);
+        }
+
+        const coord = findFirstCollectibleBoardGem(start.state);
+        const command = {
+            type: 'TAKE_GEMS' as const,
+            payload: { coords: [coord] },
+        };
+        const baseRequest = {
+            kind: 'apply' as const,
+            init: start.init,
+            state: start.state,
+            actor: 'p1' as const,
+            command,
+        };
+
+        const undecorated = handleUnityRulesEngineBridgeRequest(baseRequest);
+        const decorated = handleUnityRulesEngineBridgeRequest({
+            ...cloneJson(baseRequest),
+            localDevPlatform: 'WindowsPlayer',
+            localDevSessionId: 'localdev-session-1',
+            platformUserId: 'localdev-player-1',
+            userId: 'localdev-user-1',
+            command: {
+                ...cloneJson(command),
+                platformUserId: 'localdev-player-1',
+                userId: 'localdev-user-1',
+                payload: {
+                    ...cloneJson(command.payload),
+                    platform: 'WindowsPlayer',
+                    platformUserId: 'localdev-player-1',
+                    userId: 'localdev-user-1',
+                },
+            },
+        } as unknown as Parameters<typeof handleUnityRulesEngineBridgeRequest>[0]);
+
+        expect(undecorated.ok).toBe(true);
+        expect(decorated.ok).toBe(true);
+        if (!undecorated.ok || !decorated.ok) {
+            throw new Error('Expected metadata-decorated bridge apply requests to pass.');
+        }
+
+        expect(decorated.actionType).toBe(undecorated.actionType);
+        expect(decorated.stateHash).toBe(undecorated.stateHash);
+        const serializedState = JSON.stringify(decorated.state);
+        expect(serializedState).not.toContain('localdev-player');
+        expect(serializedState).not.toContain('localdev-user');
+        expect(serializedState).not.toContain('WindowsPlayer');
+        expect(serializedState).not.toContain('platform');
     });
 
     it('rejects infrastructure and debug commands at the live Unity bridge boundary', () => {
@@ -1701,6 +2004,32 @@ describe('unity rules engine bridge', () => {
         expect(rejectedPendingMismatch.state).toEqual(initiated.state);
         expect(rejectedPendingMismatch.stateHash).toBe(initiated.stateHash);
 
+        const rejectedMissingColor = handleUnityRulesEngineBridgeRequest({
+            kind: 'apply',
+            init: joker.start.init,
+            state: initiated.state,
+            actor: 'p1',
+            command: {
+                type: 'BUY_CARD',
+                payload: {
+                    level: joker.level,
+                    idx: joker.idx,
+                },
+            },
+        });
+
+        expect(rejectedMissingColor.ok).toBe(false);
+        if (rejectedMissingColor.ok) {
+            throw new Error('Expected missing Joker bonus color to reject.');
+        }
+        expect(rejectedMissingColor.rejection.code).toBe('COMMAND_REJECTED');
+        expect(rejectedMissingColor.rejection.reason).toBe(
+            'A concrete bonus color is required before buying this card.'
+        );
+        expect(rejectedMissingColor.actionType).toBe('BUY_CARD');
+        expect(rejectedMissingColor.state).toEqual(initiated.state);
+        expect(rejectedMissingColor.stateHash).toBe(initiated.stateHash);
+
         const bought = handleUnityRulesEngineBridgeRequest({
             kind: 'apply',
             init: joker.start.init,
@@ -2324,8 +2653,10 @@ describe('unity rules engine bridge', () => {
                 }
             }
 
-            expect(replay, 'Expected a deterministic fresh simulation to end before max actions.')
-                .not.toBeNull();
+            expect(
+                replay,
+                'Expected a deterministic fresh simulation to end before max actions.'
+            ).not.toBeNull();
             if (!replay) {
                 throw new Error('Fresh simulation did not produce a game-over replay.');
             }
@@ -2362,9 +2693,7 @@ describe('unity rules engine bridge', () => {
                         `fresh simulation event ${index + 1} ${event.type}: ${response.rejection.reason}`
                     );
                 }
-                expect(response.ok, `fresh simulation event ${index + 1} ${event.type}`).toBe(
-                    true
-                );
+                expect(response.ok, `fresh simulation event ${index + 1} ${event.type}`).toBe(true);
 
                 const expectedState = loadReplayStateAtRevision(replay, index + 1);
                 const expectedHash = generateReplayStateHash(expectedState, runtimeToInstance);

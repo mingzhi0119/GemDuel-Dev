@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace GemDuel.Tests.EditMode
 {
@@ -216,6 +218,7 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        [Timeout(600000)]
         public void FreshLocalPvpProductSurfaceCanDriveGameOverAndReplayReview()
         {
             DriveFreshLocalPvpProductSurfaceToGameOver(
@@ -227,9 +230,1162 @@ namespace GemDuel.Tests.EditMode
 
         [TestCase("unity-editmode-fresh-product-game-over-alt-1")]
         [TestCase("unity-editmode-fresh-product-game-over-alt-2")]
+        [Timeout(600000)]
         public void FreshLocalPvpProductSurfaceCanDriveAdditionalSeededGameOvers(string seed)
         {
             DriveFreshLocalPvpProductSurfaceToGameOver(seed, 240, true);
+        }
+
+        [Test]
+        [Timeout(600000)]
+        public void BoundedLocalPvpProductSurfaceMatrixWritesLiveReplayEvidence()
+        {
+            var scenarios = new[]
+            {
+                new LocalDevProductSurfaceSmokeOptions
+                {
+                    Seed = "unity-product-surface-matrix-opening",
+                    MaxSteps = 18,
+                    VerifyReplayReview = true,
+                    IdleActionPreference = "balanced",
+                },
+                new LocalDevProductSurfaceSmokeOptions
+                {
+                    Seed = "unity-product-surface-matrix-resource",
+                    MaxSteps = 30,
+                    VerifyReplayReview = true,
+                    IdleActionPreference = "resource-first",
+                },
+                new LocalDevProductSurfaceSmokeOptions
+                {
+                    Seed = "unity-product-surface-matrix-market-reserve",
+                    MaxSteps = 10,
+                    VerifyReplayReview = true,
+                    IdleActionPreference = "reserve-first",
+                },
+                new LocalDevProductSurfaceSmokeOptions
+                {
+                    Seed = "unity-product-surface-matrix-followup",
+                    MaxSteps = 18,
+                    VerifyReplayReview = true,
+                    IdleActionPreference = "balanced",
+                },
+                new LocalDevProductSurfaceSmokeOptions
+                {
+                    Seed = "unity-product-surface-matrix-review",
+                    MaxSteps = 18,
+                    VerifyReplayReview = true,
+                    IdleActionPreference = "balanced",
+                },
+            };
+            var runs = new JArray();
+            var families = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var scenario in scenarios)
+            {
+                var root = new GameObject("GemDuel Product Surface Matrix " + scenario.Seed);
+                try
+                {
+                    var slice = root.AddComponent<GemDuelGameController>();
+                    var report = LocalDevProductSurfaceSmoke.Run(slice, scenario);
+
+                    Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                    Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                    Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+                    var layout = (JObject)report["layoutSummary"];
+                    Assert.IsTrue(layout.Value<bool>("sharedPrivilegeSupplyVisible"));
+                    Assert.AreEqual(
+                        layout.Value<int>("replenishInitialBagCount") > 0,
+                        layout.Value<bool>("replenishInitialClickable")
+                    );
+                    Assert.AreEqual(56d, layout.Value<double>("replenishInitialHeightPx"), 1.5d);
+                    Assert.Greater(((JArray)report["actions"]).Count, 0);
+                    Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+
+                    foreach (var family in ((JArray)report["actionFamilies"]).Values<string>())
+                    {
+                        families.Add(family);
+                    }
+
+                    runs.Add(report);
+                }
+                finally
+                {
+                    Object.DestroyImmediate(root);
+                    CleanupRenderedSceneObjects();
+                }
+            }
+
+            Assert.GreaterOrEqual(families.Count, 3, "Expected a bounded matrix with multiple action families.");
+            CollectionAssert.Contains(families, "take_gems");
+            CollectionAssert.Contains(families, "buy_card");
+            CollectionAssert.Contains(families, "reserve_card");
+            CollectionAssert.Contains(families, "cancel_gem_selection");
+            var artifactPath = RepositoryPaths.ResolveFromRoot(
+                "artifacts",
+                "unity",
+                "product-surface-local-pvp-matrix-20260511.json"
+            );
+            Directory.CreateDirectory(Path.GetDirectoryName(artifactPath));
+            File.WriteAllText(
+                artifactPath,
+                new JObject
+                {
+                    ["schemaVersion"] = 1,
+                    ["kind"] = "unity-product-surface-local-pvp-matrix",
+                    ["status"] = "incomplete-evidence",
+                    ["seeds"] = new JArray(scenarios.Select(scenario => scenario.Seed)),
+                    ["scenarios"] = new JArray(
+                        scenarios.Select(scenario => new JObject
+                        {
+                            ["seed"] = scenario.Seed,
+                            ["maxSteps"] = scenario.MaxSteps,
+                            ["idleActionPreference"] = scenario.IdleActionPreference,
+                        })
+                    ),
+                    ["actionFamilies"] = new JArray(families.OrderBy(value => value)),
+                    ["runs"] = runs,
+                }.ToString(Formatting.Indented)
+            );
+        }
+
+        [Test]
+        public void PrivilegeFirstProductSurfaceSmokeRoutesPrivilegeThroughLiveBridge()
+        {
+            var root = new GameObject("GemDuel Product Surface Privilege Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevProductSurfaceSmoke.Run(
+                    slice,
+                    new LocalDevProductSurfaceSmokeOptions
+                    {
+                        Seed = "unity-product-surface-privilege-20260512",
+                        MaxSteps = 3,
+                        VerifyReplayReview = true,
+                        IdleActionPreference = "privilege-first",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+
+                var families = ((JArray)report["actionFamilies"]).Values<string>().ToList();
+                CollectionAssert.Contains(families, "take_gems");
+                CollectionAssert.Contains(families, "activate_privilege");
+                CollectionAssert.Contains(families, "use_privilege");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void RoguelikeDraftProductSurfaceSmokeRerollsSelectsAndReviewsLiveReplay()
+        {
+            var root = new GameObject("GemDuel Product Surface Draft Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevProductSurfaceSmoke.Run(
+                    slice,
+                    new LocalDevProductSurfaceSmokeOptions
+                    {
+                        Seed = "unity-product-surface-draft-release-path-20260512",
+                        MaxSteps = 6,
+                        StartMode = "roguelike",
+                        VerifyReplayReview = true,
+                        DraftActionPreference = "reroll-each-player-first",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.AreEqual("roguelike", report.Value<string>("startMode"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+
+                var actions = (JArray)report["actions"];
+                Assert.GreaterOrEqual(actions.Count, 4, report.ToString(Formatting.Indented));
+                var families = ((JArray)report["actionFamilies"]).Values<string>().ToList();
+                CollectionAssert.Contains(families, "reroll_draft_pool");
+                CollectionAssert.Contains(families, "choose_boon");
+
+                var draftActions = actions
+                    .OfType<JObject>()
+                    .Where(action =>
+                        action.Value<string>("family") == "reroll_draft_pool"
+                        || action.Value<string>("family") == "choose_boon"
+                    )
+                    .ToList();
+                Assert.GreaterOrEqual(draftActions.Count, 4, report.ToString(Formatting.Indented));
+                Assert.IsTrue(
+                    draftActions.All(action => action.Value<string>("phaseBefore") == "DRAFT_PHASE"),
+                    report.ToString(Formatting.Indented)
+                );
+
+                var summary = (JObject)report["productStateSummary"];
+                var replaySummary = (JObject)report["replayHashSummary"];
+                Assert.AreEqual(
+                    summary.Value<string>("stateHash"),
+                    replaySummary.Value<string>("controllerCurrentStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("summaryFinalStateHash"),
+                    replaySummary.Value<string>("exportedSummaryFinalStateHash")
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevPeekModalReleasePathSmokeOpensClosesAndReviewsReplay()
+        {
+            var root = new GameObject("GemDuel Peek Modal Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevPeekModalReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevPeekModalReleasePathSmokeOptions
+                    {
+                        Seed = "unity-peek-modal-seed-17",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var summary = (JObject)report["peekModalSummary"];
+                Assert.AreEqual("intelligence", summary.Value<string>("p1BuffId"));
+                Assert.IsTrue(summary.Value<bool>("peekControlVisibleBefore"));
+                Assert.IsTrue(summary.Value<bool>("modalVisibleAfterPeek"));
+                Assert.IsTrue(summary.Value<bool>("closeControlVisibleAfterPeek"));
+                Assert.AreEqual(9, summary.Value<int>("peekCardCount"));
+                Assert.AreEqual(9, summary.Value<int>("visiblePeekCardTargets"));
+                CollectionAssert.AreEquivalent(
+                    new[] { 1, 2, 3 },
+                    ((JArray)summary["levelRowsVisible"]).Values<int>().ToList()
+                );
+                Assert.IsFalse(summary.Value<bool>("modalVisibleAfterClose"));
+                Assert.GreaterOrEqual(summary.Value<int>("recordedEvents"), 4);
+                Assert.AreEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("exportedEvents")
+                );
+                CollectionAssert.Contains(
+                    ((JArray)summary["eventTypes"]).Values<string>().ToList(),
+                    "select_buff"
+                );
+                CollectionAssert.Contains(
+                    ((JArray)summary["eventTypes"]).Values<string>().ToList(),
+                    "peek_deck"
+                );
+                CollectionAssert.Contains(
+                    ((JArray)summary["eventTypes"]).Values<string>().ToList(),
+                    "close_modal"
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevPrivilegeCancelReleasePathSmokeCancelsAndReviewsReplay()
+        {
+            var root = new GameObject("GemDuel Privilege Cancel Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevPrivilegeCancelReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevPrivilegeCancelReleasePathSmokeOptions
+                    {
+                        Seed = "unity-built-player-privilege-family-20260512",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var summary = (JObject)report["privilegeCancelSummary"];
+                Assert.AreEqual("PRIVILEGE_ACTION", summary.Value<string>("activatedPhase"));
+                Assert.AreEqual("IDLE", summary.Value<string>("cancelledPhase"));
+                Assert.GreaterOrEqual(summary.Value<int>("recordedEvents"), 2);
+                Assert.AreEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("exportedEvents")
+                );
+                var eventTypes = ((JArray)summary["eventTypes"]).Values<string>().ToList();
+                CollectionAssert.Contains(eventTypes, "activate_privilege");
+                CollectionAssert.Contains(eventTypes, "cancel_privilege");
+                Assert.Greater(
+                    summary.Value<int>("cancelEventIndex"),
+                    summary.Value<int>("activateEventIndex")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevReservedDiscardReleasePathSmokeDiscardsAndReviewsReplay()
+        {
+            var root = new GameObject("GemDuel Reserved Discard Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevReservedDiscardReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevReservedDiscardReleasePathSmokeOptions
+                    {
+                        Seed = "unity-reserved-discard-seed-10",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var summary = (JObject)report["reservedDiscardSummary"];
+                Assert.AreEqual("puppet_master", summary.Value<string>("p1BuffId"));
+                Assert.IsTrue(summary.Value<bool>("reservedCardVisibleBeforeDiscard"));
+                Assert.IsTrue(summary.Value<bool>("discardControlVisibleBeforeDiscard"));
+                Assert.GreaterOrEqual(summary.Value<int>("recordedEvents"), 5);
+                Assert.AreEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("exportedEvents")
+                );
+                var eventTypes = ((JArray)summary["eventTypes"]).Values<string>().ToList();
+                CollectionAssert.Contains(eventTypes, "select_buff");
+                CollectionAssert.Contains(eventTypes, "reserve_card");
+                CollectionAssert.Contains(eventTypes, "discard_reserved");
+                Assert.Greater(
+                    summary.Value<int>("reserveEventIndex"),
+                    summary.Value<int>("selectBuffEventIndex")
+                );
+                Assert.Greater(
+                    summary.Value<int>("discardEventIndex"),
+                    summary.Value<int>("reserveEventIndex")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevReservedBuyReleasePathSmokeBuysAndReviewsReplay()
+        {
+            var root = new GameObject("GemDuel Reserved Buy Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevReservedBuyReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevReservedBuyReleasePathSmokeOptions
+                    {
+                        Seed = "unity-reserved-buy-seed-20260512",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var summary = (JObject)report["reservedBuySummary"];
+                Assert.IsTrue(summary.Value<bool>("reservedCardVisibleBeforeBuy"));
+                Assert.IsTrue(summary.Value<bool>("buyControlVisibleBeforeBuy"));
+                Assert.GreaterOrEqual(summary.Value<int>("recordedEvents"), 2);
+                Assert.AreEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("exportedEvents")
+                );
+                var eventTypes = ((JArray)summary["eventTypes"]).Values<string>().ToList();
+                CollectionAssert.Contains(eventTypes, "reserve_card");
+                CollectionAssert.Contains(eventTypes, "buy_card");
+                Assert.AreEqual("reserved", summary.Value<string>("buyEventSource"));
+                Assert.Greater(
+                    summary.Value<int>("buyEventIndex"),
+                    summary.Value<int>("reserveEventIndex")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevReserveCancelReleasePathSmokeCancelsAndReviewsReplay()
+        {
+            var root = new GameObject("GemDuel Reserve Cancel Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevReserveCancelReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevReserveCancelReleasePathSmokeOptions
+                    {
+                        Seed = "unity-editmode-live-reserve-cancel",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var summary = (JObject)report["reserveCancelSummary"];
+                Assert.IsTrue(summary.Value<bool>("marketCardVisibleBeforePreview"));
+                Assert.IsTrue(summary.Value<bool>("visibleReserveControlBeforeInitiate"));
+                Assert.IsTrue(summary.Value<bool>("visibleCancelControlBeforeCancel"));
+                Assert.AreEqual("RESERVE_WAITING_GEM", summary.Value<string>("phaseBeforeCancel"));
+                Assert.AreEqual("IDLE", summary.Value<string>("finalPhase"));
+                Assert.IsFalse(summary.Value<bool>("pendingReservePresentAfterCancel"));
+                Assert.IsFalse(summary.Value<bool>("reservedCardPresentAfterCancel"));
+                Assert.GreaterOrEqual(summary.Value<int>("recordedEvents"), 2);
+                Assert.AreEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("exportedEvents")
+                );
+                Assert.AreEqual(0, summary.Value<int>("totalEventsAfterCancel"));
+                var eventTypes = ((JArray)summary["eventTypes"]).Values<string>().ToList();
+                CollectionAssert.Contains(eventTypes, "initiate_reserve");
+                CollectionAssert.Contains(eventTypes, "cancel_reserve");
+                Assert.Greater(
+                    summary.Value<int>("cancelEventIndex"),
+                    summary.Value<int>("initiateEventIndex")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("initialStateHash"),
+                    summary.Value<string>("controllerCurrentStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevReserveDeckReleasePathSmokeReservesAndReviewsReplay()
+        {
+            var root = new GameObject("GemDuel Reserve Deck Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevReserveDeckReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevReserveDeckReleasePathSmokeOptions
+                    {
+                        Seed = "unity-editmode-live-reserve-deck",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var summary = (JObject)report["reserveDeckSummary"];
+                Assert.IsTrue(summary.Value<bool>("deckTargetVisibleBeforePreview"));
+                Assert.IsTrue(summary.Value<bool>("goldTargetVisibleBeforeReserve"));
+                Assert.IsTrue(summary.Value<bool>("visibleReserveControlBeforeInitiate"));
+                Assert.AreEqual("RESERVE_WAITING_GEM", summary.Value<string>("phaseBeforeGold"));
+                Assert.IsTrue(summary.Value<bool>("pendingReserveIsDeck"));
+                Assert.AreEqual("IDLE", summary.Value<string>("finalPhase"));
+                Assert.AreEqual("p2", summary.Value<string>("finalTurn"));
+                Assert.AreEqual(
+                    summary.Value<int>("startDeckCount") - 1,
+                    summary.Value<int>("afterDeckCount")
+                );
+                Assert.AreEqual(
+                    summary.Value<int>("startReservedCount") + 1,
+                    summary.Value<int>("afterReservedCount")
+                );
+                Assert.IsTrue(summary.Value<bool>("reservedCardPresentAfterReserve"));
+                Assert.AreEqual("empty", summary.Value<string>("goldCellAfterReserve"));
+                Assert.GreaterOrEqual(summary.Value<int>("recordedEvents"), 2);
+                Assert.AreEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("exportedEvents")
+                );
+                Assert.AreEqual(0, summary.Value<int>("totalEventsAfterReserve"));
+                var eventTypes = ((JArray)summary["eventTypes"]).Values<string>().ToList();
+                CollectionAssert.Contains(eventTypes, "initiate_reserve_deck");
+                CollectionAssert.Contains(eventTypes, "reserve_deck");
+                Assert.Greater(
+                    summary.Value<int>("reserveEventIndex"),
+                    summary.Value<int>("initiateEventIndex")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevReserveDeckCancelReleasePathSmokeCancelsAndReviewsReplay()
+        {
+            var root = new GameObject("GemDuel Reserve Deck Cancel Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevReserveDeckCancelReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevReserveDeckCancelReleasePathSmokeOptions
+                    {
+                        Seed = "unity-editmode-live-reserve-deck-cancel",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var summary = (JObject)report["reserveDeckCancelSummary"];
+                Assert.IsTrue(summary.Value<bool>("deckTargetVisibleBeforePreview"));
+                Assert.IsTrue(summary.Value<bool>("goldTargetVisibleBeforeCancel"));
+                Assert.IsTrue(summary.Value<bool>("visibleReserveControlBeforeInitiate"));
+                Assert.IsTrue(summary.Value<bool>("visibleCancelControlBeforeCancel"));
+                Assert.AreEqual("RESERVE_WAITING_GEM", summary.Value<string>("phaseBeforeCancel"));
+                Assert.IsTrue(summary.Value<bool>("pendingReserveIsDeckBeforeCancel"));
+                Assert.AreEqual("IDLE", summary.Value<string>("finalPhase"));
+                Assert.AreEqual("p1", summary.Value<string>("finalTurn"));
+                Assert.IsFalse(summary.Value<bool>("pendingReservePresentAfterCancel"));
+                Assert.AreEqual(
+                    summary.Value<int>("startDeckCount"),
+                    summary.Value<int>("afterDeckCount")
+                );
+                Assert.AreEqual(
+                    summary.Value<int>("startReservedCount"),
+                    summary.Value<int>("afterReservedCount")
+                );
+                Assert.IsFalse(summary.Value<bool>("reservedCardPresentAfterCancel"));
+                Assert.AreEqual("gold", summary.Value<string>("goldCellAfterCancel"));
+                Assert.GreaterOrEqual(summary.Value<int>("recordedEvents"), 2);
+                Assert.AreEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("exportedEvents")
+                );
+                Assert.AreEqual(0, summary.Value<int>("totalEventsAfterCancel"));
+                var eventTypes = ((JArray)summary["eventTypes"]).Values<string>().ToList();
+                CollectionAssert.Contains(eventTypes, "initiate_reserve_deck");
+                CollectionAssert.Contains(eventTypes, "cancel_reserve");
+                Assert.Greater(
+                    summary.Value<int>("cancelEventIndex"),
+                    summary.Value<int>("initiateEventIndex")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("initialStateHash"),
+                    summary.Value<string>("controllerCurrentStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevJokerReleasePathSmokeBuysAndReviewsReplay()
+        {
+            var root = new GameObject("GemDuel Joker Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevJokerReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevJokerReleasePathSmokeOptions
+                    {
+                        Seed = "unity-built-player-replay-release-path-20260511",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var summary = (JObject)report["jokerSummary"];
+                Assert.IsTrue(summary.Value<bool>("marketCardVisibleBeforePreview"));
+                Assert.IsTrue(summary.Value<bool>("buyControlVisibleBeforeBuy"));
+                Assert.IsTrue(summary.Value<bool>("colorTargetVisibleBeforeSelection"));
+                Assert.AreEqual("SELECT_CARD_COLOR", summary.Value<string>("phaseBeforeColor"));
+                Assert.AreEqual("IDLE", summary.Value<string>("finalPhase"));
+                Assert.IsTrue(summary.Value<bool>("tableauContainsJokerAfterBuy"));
+                Assert.IsTrue(summary.Value<bool>("pendingBuyClearedAfterBuy"));
+                Assert.GreaterOrEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("setupActionCount") + 2
+                );
+                Assert.AreEqual(
+                    summary.Value<int>("recordedEvents"),
+                    summary.Value<int>("exportedEvents")
+                );
+                Assert.AreEqual(0, summary.Value<int>("totalEventsAfterBuy"));
+                var eventTypes = ((JArray)summary["eventTypes"]).Values<string>().ToList();
+                CollectionAssert.Contains(eventTypes, "initiate_buy_joker");
+                CollectionAssert.Contains(eventTypes, "buy_card");
+                Assert.Greater(
+                    summary.Value<int>("buyEventIndex"),
+                    summary.Value<int>("initiateEventIndex")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("controllerCurrentStateHash"),
+                    summary.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevInvalidActionReleasePathSmokeRejectsWithoutMutatingOrRecording()
+        {
+            var root = new GameObject("GemDuel Invalid Action Release Path Smoke");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevInvalidActionReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevInvalidActionReleasePathSmokeOptions
+                    {
+                        Seed = "unity-invalid-action-release-path-20260512",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var cases = ((JArray)report["cases"]).OfType<JObject>().ToList();
+                Assert.GreaterOrEqual(cases.Count, 6, report.ToString(Formatting.Indented));
+                foreach (var rejectionCase in cases)
+                {
+                    Assert.IsTrue(rejectionCase.Value<bool>("ok"), rejectionCase.ToString(Formatting.Indented));
+                    Assert.IsFalse(rejectionCase.Value<bool>("accepted"), rejectionCase.ToString(Formatting.Indented));
+                    Assert.AreEqual(
+                        rejectionCase.Value<string>("stateHashBefore"),
+                        rejectionCase.Value<string>("stateHashAfter"),
+                        rejectionCase.ToString(Formatting.Indented)
+                    );
+                    Assert.AreEqual(
+                        rejectionCase.Value<int>("recordedEventsBefore"),
+                        rejectionCase.Value<int>("recordedEventsAfter"),
+                        rejectionCase.ToString(Formatting.Indented)
+                    );
+                    Assert.AreEqual(
+                        "live-rules-engine-command-rejected",
+                        rejectionCase.Value<string>("driver"),
+                        rejectionCase.ToString(Formatting.Indented)
+                    );
+                }
+
+                var summary = (JObject)report["productStateSummary"];
+                var replaySummary = (JObject)report["replayHashSummary"];
+                Assert.AreEqual(0, summary.Value<int>("recordedEvents"));
+                Assert.AreEqual(
+                    summary.Value<string>("stateHash"),
+                    replaySummary.Value<string>("controllerCurrentStateHash")
+                );
+                Assert.AreEqual(
+                    summary.Value<string>("stateHash"),
+                    replaySummary.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+                Assert.AreEqual(
+                    summary.Value<string>("stateHash"),
+                    report["replayReview"]?.Value<string>("reviewedFinalStateHash")
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void ReplayReleasePathErrorsRecoverWithoutMutatingGameplayState()
+        {
+            var root = new GameObject("GemDuel Replay Release Path Error Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var smoke = LocalDevProductSurfaceSmoke.Run(
+                    slice,
+                    new LocalDevProductSurfaceSmokeOptions
+                    {
+                        Seed = "unity-replay-release-path-errors",
+                        MaxSteps = 8,
+                        VerifyReplayReview = true,
+                    }
+                );
+                Assert.IsTrue(smoke.Value<bool>("ok"), smoke.ToString(Formatting.Indented));
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeReplay = (JObject)before["replay"];
+                var beforeHash = beforeReplay.Value<string>("currentStateHash");
+                var beforeRecordedEvents = ((JObject)beforeReplay["liveRecording"]).Value<int>("recordedEvents");
+                var outputDirectory = RepositoryPaths.ResolveFromRoot("artifacts", "unity", "replay-release-path");
+                Directory.CreateDirectory(outputDirectory);
+                var validPath = Path.Combine(outputDirectory, "release-path-valid.replay.json");
+
+                Assert.IsTrue(slice.ExportReplayToPathForAutomation(validPath, out var exportError), exportError);
+                var validJson = File.ReadAllText(validPath);
+
+                var invalidJsonPath = Path.Combine(outputDirectory, "invalid-json.replay.json");
+                File.WriteAllText(invalidJsonPath, "{ invalid replay json");
+                Assert.IsFalse(slice.ImportReplayFromPathForAutomation(invalidJsonPath, out var invalidJsonError));
+                StringAssert.Contains("Invalid", invalidJsonError);
+                AssertLiveReplayStateUnchanged(slice, beforeHash, beforeRecordedEvents, "invalid JSON");
+
+                var missingPath = Path.Combine(outputDirectory, "missing.replay.json");
+                if (File.Exists(missingPath))
+                {
+                    File.Delete(missingPath);
+                }
+
+                Assert.IsFalse(slice.ImportReplayFromPathForAutomation(missingPath, out var missingError));
+                StringAssert.Contains("Could not find", missingError);
+                AssertLiveReplayStateUnchanged(slice, beforeHash, beforeRecordedEvents, "missing file");
+
+                var unsupported = JObject.Parse(validJson);
+                unsupported["schemaVersion"] = "999.0";
+                var unsupportedPath = Path.Combine(outputDirectory, "unsupported-schema.replay.json");
+                File.WriteAllText(unsupportedPath, unsupported.ToString(Formatting.Indented));
+                Assert.IsFalse(slice.ImportReplayFromPathForAutomation(unsupportedPath, out var unsupportedError));
+                StringAssert.Contains("Unsupported replay schema version", unsupportedError);
+                AssertLiveReplayStateUnchanged(slice, beforeHash, beforeRecordedEvents, "unsupported schema");
+
+                var malformedBootstrap = JObject.Parse(validJson);
+                malformedBootstrap["init"]["board"] = new JArray(new JArray("red"));
+                var malformedBootstrapPath = Path.Combine(outputDirectory, "malformed-bootstrap.replay.json");
+                File.WriteAllText(malformedBootstrapPath, malformedBootstrap.ToString(Formatting.Indented));
+                Assert.IsFalse(
+                    slice.ImportReplayFromPathForAutomation(malformedBootstrapPath, out var malformedBootstrapError)
+                );
+                StringAssert.Contains("Replay init board must contain 5 rows", malformedBootstrapError);
+                AssertLiveReplayStateUnchanged(slice, beforeHash, beforeRecordedEvents, "malformed bootstrap");
+
+                var malformedDraftBootstrap = JObject.Parse(validJson);
+                malformedDraftBootstrap["init"]["actionType"] = "INIT_DRAFT";
+                malformedDraftBootstrap["init"]["draftPool"] = new JArray();
+                var malformedDraftBootstrapPath = Path.Combine(
+                    outputDirectory,
+                    "malformed-draft-bootstrap.replay.json"
+                );
+                File.WriteAllText(malformedDraftBootstrapPath, malformedDraftBootstrap.ToString(Formatting.Indented));
+                Assert.IsFalse(
+                    slice.ImportReplayFromPathForAutomation(
+                        malformedDraftBootstrapPath,
+                        out var malformedDraftBootstrapError
+                    )
+                );
+                StringAssert.Contains(
+                    "Replay init draftPool must not be empty for INIT_DRAFT",
+                    malformedDraftBootstrapError
+                );
+                AssertLiveReplayStateUnchanged(
+                    slice,
+                    beforeHash,
+                    beforeRecordedEvents,
+                    "malformed draft bootstrap"
+                );
+
+                var corruptedSummary = JObject.Parse(validJson);
+                corruptedSummary["summary"]["totalEvents"] = 999;
+                var corruptedSummaryPath = Path.Combine(outputDirectory, "corrupted-summary.replay.json");
+                File.WriteAllText(corruptedSummaryPath, corruptedSummary.ToString(Formatting.Indented));
+                Assert.IsFalse(slice.ImportReplayFromPathForAutomation(corruptedSummaryPath, out var corruptedError));
+                StringAssert.Contains("Replay summary totalEvents mismatch", corruptedError);
+                AssertLiveReplayStateUnchanged(slice, beforeHash, beforeRecordedEvents, "corrupted summary");
+
+                var hashMismatch = JObject.Parse(validJson);
+                hashMismatch["summary"]["finalStateHash"] = "deadbeef";
+                var hashMismatchPath = Path.Combine(outputDirectory, "hash-mismatch.replay.json");
+                File.WriteAllText(hashMismatchPath, hashMismatch.ToString(Formatting.Indented));
+                Assert.IsFalse(slice.ImportReplayFromPathForAutomation(hashMismatchPath, out var hashError));
+                StringAssert.Contains("Replay summary finalStateHash mismatch", hashError);
+                AssertLiveReplayStateUnchanged(slice, beforeHash, beforeRecordedEvents, "hash mismatch");
+
+                File.WriteAllText(validPath, "{ overwritten invalid replay json");
+                Assert.IsFalse(slice.ImportReplayFromPathForAutomation(validPath, out _));
+                AssertLiveReplayStateUnchanged(slice, beforeHash, beforeRecordedEvents, "failed overwrite load");
+
+                Assert.IsTrue(slice.ExportReplayToPathForAutomation(validPath, out var overwriteError), overwriteError);
+                Assert.IsTrue(slice.ImportReplayFromPathForAutomation(validPath, out var reloadError), reloadError);
+                Assert.IsTrue(slice.PlayReplayToEndForAutomation(out var reviewError), reviewError);
+                var reviewed = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var reloadedSummary = (JObject)JObject.Parse(File.ReadAllText(validPath))["summary"];
+                Assert.AreEqual(
+                    reloadedSummary.Value<string>("finalStateHash"),
+                    ((JObject)reviewed["replay"]).Value<string>("currentStateHash")
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void TypeScriptBridgeAvailabilityAndRepositoryRootChecksAreStructured()
+        {
+            var builtPlayerDataPath = Path.Combine(
+                RepositoryPaths.Root,
+                "artifacts",
+                "unity",
+                "build",
+                "windows",
+                "GemDuelUnity_Data"
+            );
+            Directory.CreateDirectory(builtPlayerDataPath);
+            Assert.AreEqual(RepositoryPaths.Root, RepositoryPaths.ResolveRootFrom(builtPlayerDataPath));
+
+            var missingRoot = Path.Combine(Path.GetTempPath(), "gemduel-missing-" + Guid.NewGuid());
+            var missingClient = new TypeScriptRulesBridgeProcessClient(missingRoot, 10);
+            Assert.IsFalse(missingClient.IsAvailable(out var missingRootError));
+            StringAssert.Contains("repository root does not exist", missingRootError);
+
+            var previousPnpmPath = Environment.GetEnvironmentVariable("GEMDUEL_PNPM_PATH");
+            try
+            {
+                Environment.SetEnvironmentVariable(
+                    "GEMDUEL_PNPM_PATH",
+                    Path.Combine(RepositoryPaths.Root, "missing-pnpm.cmd")
+                );
+                var missingPnpmClient = new TypeScriptRulesBridgeProcessClient(RepositoryPaths.Root, 10);
+                Assert.IsFalse(missingPnpmClient.IsAvailable(out var missingPnpmError));
+                StringAssert.Contains("GEMDUEL_PNPM_PATH", missingPnpmError);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("GEMDUEL_PNPM_PATH", previousPnpmPath);
+            }
+
+            var missingToolsRoot = Path.Combine(
+                Path.GetTempPath(),
+                "gemduel-bridge-missing-tools-" + Guid.NewGuid()
+            );
+            try
+            {
+                Directory.CreateDirectory(missingToolsRoot);
+                File.WriteAllText(
+                    Path.Combine(missingToolsRoot, "pnpm-lock.yaml"),
+                    "lockfileVersion: '9.0'\n"
+                );
+
+                var client = new TypeScriptRulesBridgeProcessClient(missingToolsRoot, 10);
+                Assert.IsFalse(client.IsAvailable(out var toolsError));
+                StringAssert.Contains("missing tools/scripts", toolsError);
+                StringAssert.Contains(Path.Combine(missingToolsRoot, "tools", "scripts"), toolsError);
+            }
+            finally
+            {
+                if (Directory.Exists(missingToolsRoot))
+                {
+                    Directory.Delete(missingToolsRoot, true);
+                }
+            }
+
+            var missingScriptRoot = Path.Combine(
+                Path.GetTempPath(),
+                "gemduel-bridge-missing-script-" + Guid.NewGuid()
+            );
+            try
+            {
+                Directory.CreateDirectory(Path.Combine(missingScriptRoot, "tools", "scripts"));
+                File.WriteAllText(
+                    Path.Combine(missingScriptRoot, "pnpm-lock.yaml"),
+                    "lockfileVersion: '9.0'\n"
+                );
+
+                var client = new TypeScriptRulesBridgeProcessClient(missingScriptRoot, 10);
+                Assert.IsFalse(client.IsAvailable(out var scriptError));
+                StringAssert.Contains("bridge script is missing", scriptError);
+                StringAssert.Contains(
+                    Path.Combine(
+                        missingScriptRoot,
+                        "tools",
+                        "migration",
+                        "unity-rules-engine-bridge.ts"
+                    ),
+                    scriptError
+                );
+            }
+            finally
+            {
+                if (Directory.Exists(missingScriptRoot))
+                {
+                    Directory.Delete(missingScriptRoot, true);
+                }
+            }
+
+            var tempRoot = Path.Combine(Path.GetTempPath(), "gemduel-bridge-" + Guid.NewGuid());
+            try
+            {
+                Directory.CreateDirectory(Path.Combine(tempRoot, "tools", "scripts"));
+                Directory.CreateDirectory(Path.Combine(tempRoot, "tools", "migration"));
+                File.WriteAllText(Path.Combine(tempRoot, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+                File.WriteAllText(
+                    Path.Combine(tempRoot, "tools", "migration", "unity-rules-engine-bridge.ts"),
+                    "export {};\n"
+                );
+                var client = new TypeScriptRulesBridgeProcessClient(tempRoot, 10);
+                Assert.IsFalse(client.IsAvailable(out var dependencyError));
+                StringAssert.Contains("vite-node", dependencyError);
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+        }
+
+        [Test]
+        public void TypeScriptRulesEngineMapsBridgeExceptionsToStructuredResults()
+        {
+            var timeoutEngine = new TypeScriptGameRulesEngine(_ =>
+                throw new TimeoutException("bridge timed out for test")
+            );
+
+            var timeoutStart = timeoutEngine.StartLocalGame("unity-bridge-timeout-test");
+            Assert.IsFalse(timeoutStart.Ok);
+            Assert.AreEqual("BRIDGE_TIMEOUT", timeoutStart.ErrorCode);
+            StringAssert.Contains("bridge timed out for test", timeoutStart.Error);
+
+            timeoutEngine.RestoreSession(new JObject { ["cardInstances"] = new JObject() });
+            var timeoutApply = timeoutEngine.ApplyCommand(
+                new GameState(new JObject { ["phase"] = "IDLE", ["turn"] = "p1" }, 0),
+                new GameRulesCommand
+                {
+                    Type = "TAKE_GEMS",
+                    Actor = "p1",
+                    Payload = new JObject
+                    {
+                        ["coords"] = new JArray(new JObject { ["r"] = 0, ["c"] = 0 }),
+                    },
+                }
+            );
+            Assert.IsFalse(timeoutApply.Ok);
+            Assert.AreEqual("BRIDGE_TIMEOUT", timeoutApply.ErrorCode);
+            StringAssert.Contains("bridge timed out for test", timeoutApply.Error);
+
+            var failureEngine = new TypeScriptGameRulesEngine(_ =>
+                throw new InvalidOperationException("vite-node missing for test")
+            );
+
+            var failureStart = failureEngine.StartLocalGame("unity-bridge-failure-test");
+            Assert.IsFalse(failureStart.Ok);
+            Assert.AreEqual("BRIDGE_EXECUTION_FAILED", failureStart.ErrorCode);
+            StringAssert.Contains("vite-node missing for test", failureStart.Error);
+        }
+
+        [Test]
+        public void TypeScriptBridgeMailboxFailuresAreStructuredAndCleanTempFiles()
+        {
+            var missingMailbox = Path.Combine(
+                Path.GetTempPath(),
+                "gemduel-missing-mailbox-" + Guid.NewGuid()
+            );
+            var missingClient = new TypeScriptRulesBridgeMailboxClient(missingMailbox, 10);
+            var unavailable = Assert.Throws<InvalidOperationException>(() =>
+                missingClient.Execute(new JObject { ["kind"] = "start" })
+            );
+            StringAssert.Contains("mailbox is unavailable", unavailable.Message);
+            StringAssert.Contains(missingMailbox, unavailable.Message);
+
+            var mailboxRoot = Path.Combine(
+                Path.GetTempPath(),
+                "gemduel-timeout-mailbox-" + Guid.NewGuid()
+            );
+            var requestDirectory = Path.Combine(mailboxRoot, "requests");
+            var responseDirectory = Path.Combine(mailboxRoot, "responses");
+            try
+            {
+                Directory.CreateDirectory(requestDirectory);
+                Directory.CreateDirectory(responseDirectory);
+
+                var timeoutClient = new TypeScriptRulesBridgeMailboxClient(mailboxRoot, 75);
+                var timeout = Assert.Throws<TimeoutException>(() =>
+                    timeoutClient.Execute(new JObject { ["kind"] = "start" })
+                );
+                StringAssert.Contains("mailbox timed out", timeout.Message);
+
+                Assert.AreEqual(
+                    0,
+                    Directory.GetFiles(requestDirectory).Length,
+                    "Timed-out mailbox requests must be cleaned up."
+                );
+                Assert.AreEqual(
+                    0,
+                    Directory.GetFiles(responseDirectory).Length,
+                    "Timed-out mailbox responses must be cleaned up."
+                );
+
+                Exception responderError = null;
+                var corruptResponder = System.Threading.Tasks.Task.Run(() =>
+                {
+                    try
+                    {
+                        var deadline = DateTime.UtcNow.AddMilliseconds(8000);
+                        while (DateTime.UtcNow < deadline)
+                        {
+                            var requestPath = Directory.GetFiles(requestDirectory, "*.json").FirstOrDefault();
+                            if (!string.IsNullOrEmpty(requestPath))
+                            {
+                                File.WriteAllText(
+                                    Path.Combine(responseDirectory, Path.GetFileName(requestPath)),
+                                    "{not-json"
+                                );
+                                return;
+                            }
+
+                            System.Threading.Thread.Sleep(5);
+                        }
+
+                        throw new TimeoutException("Corrupt mailbox responder did not observe a request file.");
+                    }
+                    catch (Exception ex)
+                    {
+                        responderError = ex;
+                    }
+                });
+
+                var corruptClient = new TypeScriptRulesBridgeMailboxClient(mailboxRoot, 10000);
+                var corruptResponse = Assert.Throws<JsonReaderException>(() =>
+                    corruptClient.Execute(new JObject { ["kind"] = "start" })
+                );
+                Assert.IsNotNull(corruptResponse);
+                Assert.IsTrue(corruptResponder.Wait(10000), "Corrupt mailbox responder did not finish.");
+                if (responderError != null)
+                {
+                    throw responderError;
+                }
+
+                Assert.AreEqual(
+                    0,
+                    Directory.GetFiles(requestDirectory).Length,
+                    "Corrupt mailbox requests must be cleaned up."
+                );
+                Assert.AreEqual(
+                    0,
+                    Directory.GetFiles(responseDirectory).Length,
+                    "Corrupt mailbox responses must be cleaned up after parse failure."
+                );
+            }
+            finally
+            {
+                if (Directory.Exists(mailboxRoot))
+                {
+                    Directory.Delete(mailboxRoot, true);
+                }
+            }
         }
 
         private static void DriveFreshLocalPvpProductSurfaceToGameOver(
@@ -352,10 +1508,11 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        [Timeout(360000)]
         public void UnityBridgeRejectsRejectionManifestWithoutMutatingOrRecording()
         {
             var manifest = LoadRejectionManifest();
-            Assert.AreEqual(54, manifest.Cases.Count);
+            Assert.AreEqual(65, manifest.Cases.Count);
             var replayByFileName = new Dictionary<string, ReplayVNext>();
 
             foreach (var testCase in manifest.Cases)
@@ -589,6 +1746,13 @@ namespace GemDuel.Tests.EditMode
                 var beforeEmptyBagHash = beforeEmptyBagReplay.Value<string>("currentStateHash");
                 Assert.AreEqual(0, ((JObject)beforeEmptyBagReplay["liveRecording"]).Value<int>("recordedEvents"));
                 Assert.AreEqual(0, ((JArray)((JObject)beforeEmptyBag["snapshot"])["bag"]).Count);
+                var emptyReplenishTarget = FindVisibleTarget(beforeEmptyBag, "turn.end");
+                Assert.IsFalse(emptyReplenishTarget.Value<bool>("clickable"));
+                Assert.AreEqual(
+                    56d,
+                    ((JObject)emptyReplenishTarget["rect"]).Value<double>("height"),
+                    1.5d
+                );
 
                 Assert.IsFalse(ApplyLiveRulesCommandForAutomation(slice, "REPLENISH", new JObject()));
 
@@ -924,6 +2088,409 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void LiveDiscardSequenceContinuesUntilPhaseResolves()
+        {
+            var root = new GameObject("GemDuel Live Discard Phase Resolution Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-discard-phase-resolution" },
+                        out var startError
+                    ),
+                    startError
+                );
+
+                var snapshot = GetMutableCurrentSnapshot(slice);
+                snapshot["phase"] = "DISCARD_EXCESS_GEMS";
+                ((JObject)snapshot["inventories"])["p1"] = new JObject
+                {
+                    ["red"] = 12,
+                    ["green"] = 0,
+                    ["blue"] = 0,
+                    ["white"] = 0,
+                    ["black"] = 0,
+                    ["pearl"] = 0,
+                    ["gold"] = 0,
+                };
+                RenderCurrentState(slice);
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeSnapshot = (JObject)before["snapshot"];
+                var beforeReplay = (JObject)before["replay"];
+                var beforeHash = beforeReplay.Value<string>("currentStateHash");
+                Assert.AreEqual("DISCARD_EXCESS_GEMS", beforeSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeSnapshot.Value<string>("turn"));
+                Assert.AreEqual(12, ((JObject)((JObject)beforeSnapshot["inventories"])["p1"]).Value<int>("red"));
+                Assert.AreEqual(0, ((JObject)beforeReplay["liveRecording"]).Value<int>("recordedEvents"));
+
+                Assert.IsTrue(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "DISCARD_GEM",
+                        new JObject { ["gemId"] = "red" }
+                    )
+                );
+
+                var afterFirst = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterFirstSnapshot = (JObject)afterFirst["snapshot"];
+                var afterFirstReplay = (JObject)afterFirst["replay"];
+                var afterFirstHash = afterFirstReplay.Value<string>("currentStateHash");
+                Assert.AreEqual("Applied live action | DISCARD_GEM", afterFirst.Value<string>("statusText"));
+                Assert.IsTrue(string.IsNullOrEmpty(afterFirst.Value<string>("errorBanner")));
+                Assert.AreNotEqual(beforeHash, afterFirstHash);
+                Assert.AreEqual("DISCARD_EXCESS_GEMS", afterFirstSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterFirstSnapshot.Value<string>("turn"));
+                Assert.AreEqual(
+                    11,
+                    ((JObject)((JObject)afterFirstSnapshot["inventories"])["p1"]).Value<int>("red")
+                );
+                Assert.AreEqual(1, ((JObject)afterFirstReplay["liveRecording"]).Value<int>("recordedEvents"));
+
+                Assert.IsTrue(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "DISCARD_GEM",
+                        new JObject { ["gemId"] = "red" }
+                    )
+                );
+
+                var afterSecond = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterSecondSnapshot = (JObject)afterSecond["snapshot"];
+                var afterSecondReplay = (JObject)afterSecond["replay"];
+                Assert.AreEqual("Applied live action | DISCARD_GEM", afterSecond.Value<string>("statusText"));
+                Assert.IsTrue(string.IsNullOrEmpty(afterSecond.Value<string>("errorBanner")));
+                Assert.AreNotEqual(afterFirstHash, afterSecondReplay.Value<string>("currentStateHash"));
+                Assert.AreEqual("IDLE", afterSecondSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p2", afterSecondSnapshot.Value<string>("turn"));
+                Assert.AreEqual(
+                    10,
+                    ((JObject)((JObject)afterSecondSnapshot["inventories"])["p1"]).Value<int>("red")
+                );
+                Assert.AreEqual(2, ((JObject)afterSecondReplay["liveRecording"]).Value<int>("recordedEvents"));
+                Assert.IsTrue(((JObject)afterSecondReplay["liveRecording"]).Value<bool>("canExport"));
+                Assert.AreEqual(
+                    afterSecondReplay.Value<string>("currentStateHash"),
+                    ((JObject)afterSecondReplay["liveRecording"]).Value<string>("summaryFinalStateHash")
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LiveBonusAndStealFollowUpsResolveThroughLiveBridge()
+        {
+            var bonusRoot = new GameObject("GemDuel Live Bonus Phase Resolution Test");
+            var stealRoot = new GameObject("GemDuel Live Steal Phase Resolution Test");
+            try
+            {
+                var bonusSlice = bonusRoot.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    bonusSlice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-bonus-phase-resolution" },
+                        out var bonusStartError
+                    ),
+                    bonusStartError
+                );
+
+                var bonusSetup = GetMutableCurrentSnapshot(bonusSlice);
+                var bonusGem = FindFirstCollectibleBoardGem(bonusSetup, out var bonusGemId);
+                bonusSetup["phase"] = "BONUS_ACTION";
+                bonusSetup["bonusGemTarget"] = bonusGemId;
+                RenderCurrentState(bonusSlice);
+
+                var beforeBonus = bonusSlice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeBonusSnapshot = (JObject)beforeBonus["snapshot"];
+                var beforeBonusReplay = (JObject)beforeBonus["replay"];
+                var beforeBonusHash = beforeBonusReplay.Value<string>("currentStateHash");
+                var beforeBonusInventory = ((JObject)((JObject)beforeBonusSnapshot["inventories"])["p1"])
+                    .Value<int>(bonusGemId);
+                Assert.AreEqual("BONUS_ACTION", beforeBonusSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeBonusSnapshot.Value<string>("turn"));
+                Assert.AreEqual(0, ((JObject)beforeBonusReplay["liveRecording"]).Value<int>("recordedEvents"));
+
+                Assert.IsTrue(
+                    ApplyLiveRulesCommandForAutomation(
+                        bonusSlice,
+                        "TAKE_BONUS_GEM",
+                        new JObject { ["r"] = bonusGem.x, ["c"] = bonusGem.y }
+                    )
+                );
+
+                var afterBonus = bonusSlice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterBonusSnapshot = (JObject)afterBonus["snapshot"];
+                var afterBonusReplay = (JObject)afterBonus["replay"];
+                Assert.AreEqual("Applied live action | TAKE_BONUS_GEM", afterBonus.Value<string>("statusText"));
+                Assert.IsTrue(string.IsNullOrEmpty(afterBonus.Value<string>("errorBanner")));
+                Assert.AreNotEqual(beforeBonusHash, afterBonusReplay.Value<string>("currentStateHash"));
+                Assert.AreEqual("IDLE", afterBonusSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p2", afterBonusSnapshot.Value<string>("turn"));
+                Assert.AreEqual(
+                    "empty",
+                    ((JArray)((JArray)afterBonusSnapshot["board"])[bonusGem.x])[bonusGem.y].Value<string>()
+                );
+                Assert.AreEqual(
+                    beforeBonusInventory + 1,
+                    ((JObject)((JObject)afterBonusSnapshot["inventories"])["p1"]).Value<int>(bonusGemId)
+                );
+                Assert.AreEqual(1, ((JObject)afterBonusReplay["liveRecording"]).Value<int>("recordedEvents"));
+                Assert.AreEqual(
+                    afterBonusReplay.Value<string>("currentStateHash"),
+                    ((JObject)afterBonusReplay["liveRecording"]).Value<string>("summaryFinalStateHash")
+                );
+                Assert.IsTrue(bonusSlice.ExportReplayJsonForAutomation(out var bonusReplayJson, out var bonusExportError), bonusExportError);
+                var bonusReplay = JsonConvert.DeserializeObject<ReplayVNext>(bonusReplayJson);
+                Assert.NotNull(bonusReplay);
+                Assert.AreEqual(1, bonusReplay.Events.Count);
+                Assert.AreEqual("take_bonus_gem", bonusReplay.Events[0].Value<string>("type"));
+                Assert.AreEqual(afterBonusReplay.Value<string>("currentStateHash"), bonusReplay.Summary.FinalStateHash);
+
+                var stealSlice = stealRoot.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    stealSlice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-steal-phase-resolution" },
+                        out var stealStartError
+                    ),
+                    stealStartError
+                );
+
+                var stealSetup = GetMutableCurrentSnapshot(stealSlice);
+                stealSetup["phase"] = "STEAL_ACTION";
+                ((JObject)((JObject)stealSetup["inventories"])["p1"])["red"] = 0;
+                ((JObject)((JObject)stealSetup["inventories"])["p2"])["red"] = 1;
+                RenderCurrentState(stealSlice);
+
+                var beforeSteal = stealSlice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeStealSnapshot = (JObject)beforeSteal["snapshot"];
+                var beforeStealReplay = (JObject)beforeSteal["replay"];
+                var beforeStealHash = beforeStealReplay.Value<string>("currentStateHash");
+                Assert.AreEqual("STEAL_ACTION", beforeStealSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeStealSnapshot.Value<string>("turn"));
+                Assert.AreEqual(0, ((JObject)beforeStealReplay["liveRecording"]).Value<int>("recordedEvents"));
+
+                Assert.IsTrue(
+                    ApplyLiveRulesCommandForAutomation(
+                        stealSlice,
+                        "STEAL_GEM",
+                        new JObject { ["gemId"] = "red" }
+                    )
+                );
+
+                var afterSteal = stealSlice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterStealSnapshot = (JObject)afterSteal["snapshot"];
+                var afterStealReplay = (JObject)afterSteal["replay"];
+                Assert.AreEqual("Applied live action | STEAL_GEM", afterSteal.Value<string>("statusText"));
+                Assert.IsTrue(string.IsNullOrEmpty(afterSteal.Value<string>("errorBanner")));
+                Assert.AreNotEqual(beforeStealHash, afterStealReplay.Value<string>("currentStateHash"));
+                Assert.AreEqual("IDLE", afterStealSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p2", afterStealSnapshot.Value<string>("turn"));
+                Assert.AreEqual(1, ((JObject)((JObject)afterStealSnapshot["inventories"])["p1"]).Value<int>("red"));
+                Assert.AreEqual(0, ((JObject)((JObject)afterStealSnapshot["inventories"])["p2"]).Value<int>("red"));
+                Assert.AreEqual(1, ((JObject)afterStealReplay["liveRecording"]).Value<int>("recordedEvents"));
+                Assert.AreEqual(
+                    afterStealReplay.Value<string>("currentStateHash"),
+                    ((JObject)afterStealReplay["liveRecording"]).Value<string>("summaryFinalStateHash")
+                );
+                Assert.IsTrue(stealSlice.ExportReplayJsonForAutomation(out var stealReplayJson, out var stealExportError), stealExportError);
+                var stealReplay = JsonConvert.DeserializeObject<ReplayVNext>(stealReplayJson);
+                Assert.NotNull(stealReplay);
+                Assert.AreEqual(1, stealReplay.Events.Count);
+                Assert.AreEqual("steal_gem", stealReplay.Events[0].Value<string>("type"));
+                Assert.AreEqual(afterStealReplay.Value<string>("currentStateHash"), stealReplay.Summary.FinalStateHash);
+            }
+            finally
+            {
+                Object.DestroyImmediate(bonusRoot);
+                Object.DestroyImmediate(stealRoot);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LiveFollowUpWrongActorDoesNotMutateStateOrReplayRecording()
+        {
+            var root = new GameObject("GemDuel Live Follow-Up Wrong Actor Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-follow-up-wrong-actor" },
+                        out var startError
+                    ),
+                    startError
+                );
+
+                var snapshot = GetMutableCurrentSnapshot(slice);
+                var bonusGem = FindFirstCollectibleBoardGem(snapshot, out var bonusGemId);
+                snapshot["phase"] = "BONUS_ACTION";
+                snapshot["bonusGemTarget"] = bonusGemId;
+                RenderCurrentState(slice);
+
+                var beforeBonus = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeBonusSnapshot = (JObject)beforeBonus["snapshot"];
+                var beforeBonusReplay = (JObject)beforeBonus["replay"];
+                var beforeBonusHash = beforeBonusReplay.Value<string>("currentStateHash");
+                var beforeBonusInventory = ((JObject)((JObject)beforeBonusSnapshot["inventories"])["p1"])
+                    .Value<int>(bonusGemId);
+                Assert.AreEqual("BONUS_ACTION", beforeBonusSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeBonusSnapshot.Value<string>("turn"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)beforeBonusReplay["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "TAKE_BONUS_GEM",
+                        new JObject { ["r"] = bonusGem.x, ["c"] = bonusGem.y },
+                        "p2"
+                    )
+                );
+
+                var afterBonus = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterBonusSnapshot = (JObject)afterBonus["snapshot"];
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterBonus.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterBonus.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(beforeBonusHash, ((JObject)afterBonus["replay"]).Value<string>("currentStateHash"));
+                Assert.AreEqual("BONUS_ACTION", afterBonusSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterBonusSnapshot.Value<string>("turn"));
+                Assert.AreEqual(
+                    bonusGemId,
+                    ((JArray)((JArray)afterBonusSnapshot["board"])[bonusGem.x])[bonusGem.y].Value<string>()
+                );
+                Assert.AreEqual(
+                    beforeBonusInventory,
+                    ((JObject)((JObject)afterBonusSnapshot["inventories"])["p1"]).Value<int>(bonusGemId)
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterBonus["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                snapshot = GetMutableCurrentSnapshot(slice);
+                snapshot["phase"] = "DISCARD_EXCESS_GEMS";
+                ((JObject)((JObject)snapshot["inventories"])["p1"])["red"] = 1;
+                RenderCurrentState(slice);
+
+                var beforeDiscard = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeDiscardSnapshot = (JObject)beforeDiscard["snapshot"];
+                var beforeDiscardReplay = (JObject)beforeDiscard["replay"];
+                var beforeDiscardHash = beforeDiscardReplay.Value<string>("currentStateHash");
+                var beforeDiscardRed = ((JObject)((JObject)beforeDiscardSnapshot["inventories"])["p1"])
+                    .Value<int>("red");
+                Assert.AreEqual("DISCARD_EXCESS_GEMS", beforeDiscardSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeDiscardSnapshot.Value<string>("turn"));
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "DISCARD_GEM",
+                        new JObject { ["gemId"] = "red" },
+                        "p2"
+                    )
+                );
+
+                var afterDiscard = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterDiscardSnapshot = (JObject)afterDiscard["snapshot"];
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterDiscard.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterDiscard.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(
+                    beforeDiscardHash,
+                    ((JObject)afterDiscard["replay"]).Value<string>("currentStateHash")
+                );
+                Assert.AreEqual("DISCARD_EXCESS_GEMS", afterDiscardSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterDiscardSnapshot.Value<string>("turn"));
+                Assert.AreEqual(
+                    beforeDiscardRed,
+                    ((JObject)((JObject)afterDiscardSnapshot["inventories"])["p1"]).Value<int>("red")
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterDiscard["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                snapshot = GetMutableCurrentSnapshot(slice);
+                snapshot["phase"] = "STEAL_ACTION";
+                ((JObject)((JObject)snapshot["inventories"])["p2"])["red"] = 1;
+                RenderCurrentState(slice);
+
+                var beforeSteal = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeStealSnapshot = (JObject)beforeSteal["snapshot"];
+                var beforeStealReplay = (JObject)beforeSteal["replay"];
+                var beforeStealHash = beforeStealReplay.Value<string>("currentStateHash");
+                var beforeStealP1Red = ((JObject)((JObject)beforeStealSnapshot["inventories"])["p1"])
+                    .Value<int>("red");
+                var beforeStealP2Red = ((JObject)((JObject)beforeStealSnapshot["inventories"])["p2"])
+                    .Value<int>("red");
+                Assert.AreEqual("STEAL_ACTION", beforeStealSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeStealSnapshot.Value<string>("turn"));
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "STEAL_GEM",
+                        new JObject { ["gemId"] = "red" },
+                        "p2"
+                    )
+                );
+
+                var afterSteal = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterStealSnapshot = (JObject)afterSteal["snapshot"];
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterSteal.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterSteal.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(beforeStealHash, ((JObject)afterSteal["replay"]).Value<string>("currentStateHash"));
+                Assert.AreEqual("STEAL_ACTION", afterStealSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterStealSnapshot.Value<string>("turn"));
+                Assert.AreEqual(
+                    beforeStealP1Red,
+                    ((JObject)((JObject)afterStealSnapshot["inventories"])["p1"]).Value<int>("red")
+                );
+                Assert.AreEqual(
+                    beforeStealP2Red,
+                    ((JObject)((JObject)afterStealSnapshot["inventories"])["p2"]).Value<int>("red")
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterSteal["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
         public void LocalDevRecoveryRestoresLiveRulesBridgeStateAndContinuesCommands()
         {
             DeleteLocalDevRecoverySave();
@@ -1037,6 +2604,172 @@ namespace GemDuel.Tests.EditMode
                 if (recoveredRoot != null)
                 {
                     Object.DestroyImmediate(recoveredRoot);
+                }
+
+                DeleteLocalDevRecoverySave();
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevRecoveryReleasePathSmokeReloadsAndContinuesLiveReplay()
+        {
+            DeleteLocalDevRecoverySave();
+            var root = new GameObject("GemDuel LocalDev Recovery Release Path Smoke Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevRecoveryReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevRecoveryReleasePathSmokeOptions
+                    {
+                        Seed = "unity-editmode-recovery-release-path-smoke",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+                var recovery = (JObject)report["recoverySummary"];
+                Assert.AreEqual("saved", recovery.Value<string>("savedStatus"));
+                Assert.AreEqual("loaded", recovery.Value<string>("restoredStatus"));
+                Assert.AreEqual("saved", recovery.Value<string>("continuedStatus"));
+                Assert.AreEqual(
+                    recovery.Value<string>("savedStateHash"),
+                    recovery.Value<string>("restoredStateHash")
+                );
+                Assert.AreNotEqual(
+                    recovery.Value<string>("savedStateHash"),
+                    recovery.Value<string>("continuedStateHash")
+                );
+                Assert.AreEqual(1, recovery.Value<int>("savedRecordedEvents"));
+                Assert.AreEqual(1, recovery.Value<int>("restoredRecordedEvents"));
+                Assert.AreEqual(2, recovery.Value<int>("continuedRecordedEvents"));
+
+                var replayHashes = (JObject)report["replayHashSummary"];
+                Assert.AreEqual(2, replayHashes.Value<int>("exportedEvents"));
+                Assert.AreEqual(
+                    recovery.Value<string>("continuedStateHash"),
+                    replayHashes.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    recovery.Value<string>("continuedStateHash"),
+                    replayHashes.Value<string>("reviewedFinalStateHash")
+                );
+            }
+            finally
+            {
+                if (root != null)
+                {
+                    Object.DestroyImmediate(root);
+                }
+
+                DeleteLocalDevRecoverySave();
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevRecoveryInvalidActionReleasePathSmokeRejectsAfterRestoreThenContinues()
+        {
+            DeleteLocalDevRecoverySave();
+            var root = new GameObject("GemDuel LocalDev Recovery Invalid Action Smoke Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevRecoveryInvalidActionReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevRecoveryInvalidActionReleasePathSmokeOptions
+                    {
+                        Seed = "unity-editmode-recovery-invalid-action-release-path-smoke",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var cases = ((JArray)report["cases"]).OfType<JObject>().ToList();
+                Assert.GreaterOrEqual(cases.Count, 3, report.ToString(Formatting.Indented));
+                foreach (var rejectionCase in cases)
+                {
+                    Assert.IsTrue(rejectionCase.Value<bool>("ok"), rejectionCase.ToString(Formatting.Indented));
+                    Assert.IsFalse(rejectionCase.Value<bool>("accepted"), rejectionCase.ToString(Formatting.Indented));
+                    Assert.AreEqual(
+                        rejectionCase.Value<string>("recoveryStateHashBefore"),
+                        rejectionCase.Value<string>("recoveryStateHashAfter"),
+                        rejectionCase.ToString(Formatting.Indented)
+                    );
+                    Assert.AreEqual(
+                        rejectionCase.Value<string>("replayStateHashBefore"),
+                        rejectionCase.Value<string>("replayStateHashAfter"),
+                        rejectionCase.ToString(Formatting.Indented)
+                    );
+                    Assert.AreEqual(
+                        rejectionCase.Value<int>("recordedEventsBefore"),
+                        rejectionCase.Value<int>("recordedEventsAfter"),
+                        rejectionCase.ToString(Formatting.Indented)
+                    );
+                    Assert.AreEqual(
+                        "live-rules-engine-command-rejected",
+                        rejectionCase.Value<string>("driver"),
+                        rejectionCase.ToString(Formatting.Indented)
+                    );
+                }
+
+                var recovery = (JObject)report["recoverySummary"];
+                Assert.AreEqual("saved", recovery.Value<string>("savedStatus"));
+                Assert.AreEqual("loaded", recovery.Value<string>("restoredStatus"));
+                Assert.AreEqual("saved", recovery.Value<string>("continuedStatus"));
+                Assert.AreEqual(
+                    recovery.Value<string>("savedStateHash"),
+                    recovery.Value<string>("restoredStateHash")
+                );
+                Assert.AreEqual(
+                    recovery.Value<string>("savedStateHash"),
+                    recovery.Value<string>("afterInvalidStateHash")
+                );
+                Assert.AreNotEqual(
+                    recovery.Value<string>("savedStateHash"),
+                    recovery.Value<string>("continuedStateHash")
+                );
+                Assert.AreEqual(1, recovery.Value<int>("savedRecordedEvents"));
+                Assert.AreEqual(1, recovery.Value<int>("restoredRecordedEvents"));
+                Assert.AreEqual(1, recovery.Value<int>("afterInvalidRecordedEvents"));
+                Assert.AreEqual(2, recovery.Value<int>("continuedRecordedEvents"));
+
+                var invalid = (JObject)report["invalidActionSummary"];
+                Assert.AreEqual(cases.Count, invalid.Value<int>("caseCount"));
+                Assert.AreEqual(
+                    invalid.Value<string>("stateHashBefore"),
+                    invalid.Value<string>("stateHashAfter")
+                );
+                Assert.AreEqual(
+                    invalid.Value<int>("recordedEventsBefore"),
+                    invalid.Value<int>("recordedEventsAfter")
+                );
+
+                var replayHashes = (JObject)report["replayHashSummary"];
+                Assert.AreEqual(2, replayHashes.Value<int>("exportedEvents"));
+                Assert.AreEqual(
+                    recovery.Value<string>("continuedStateHash"),
+                    replayHashes.Value<string>("exportedSummaryFinalStateHash")
+                );
+                Assert.AreEqual(
+                    recovery.Value<string>("continuedStateHash"),
+                    replayHashes.Value<string>("controllerCurrentStateHash")
+                );
+                Assert.AreEqual(
+                    recovery.Value<string>("continuedStateHash"),
+                    replayHashes.Value<string>("reviewedFinalStateHash")
+                );
+                Assert.IsTrue(report["replayReview"]?.Value<bool>("ok") ?? false);
+            }
+            finally
+            {
+                if (root != null)
+                {
+                    Object.DestroyImmediate(root);
                 }
 
                 DeleteLocalDevRecoverySave();
@@ -1461,6 +3194,76 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void LiveRoyalSelectionResolvesThroughLiveBridge()
+        {
+            var root = new GameObject("GemDuel Live Royal Selection Phase Resolution Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-royal-phase-resolution" },
+                        out var startError
+                    ),
+                    startError
+                );
+
+                var snapshot = GetMutableCurrentSnapshot(slice);
+                snapshot["phase"] = "SELECT_ROYAL";
+                snapshot["royalDeck"] = new JArray("r91-ro", "r92-ro", "r93-ro", "r94-ro");
+                RenderCurrentState(slice);
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeSnapshot = (JObject)before["snapshot"];
+                var beforeReplay = (JObject)before["replay"];
+                var beforeHash = beforeReplay.Value<string>("currentStateHash");
+                Assert.AreEqual("SELECT_ROYAL", beforeSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeSnapshot.Value<string>("turn"));
+                CollectionAssert.Contains(((JArray)beforeSnapshot["royalDeck"]).Values<string>().ToList(), "r91-ro");
+                Assert.IsFalse(
+                    ((JArray)((JObject)beforeSnapshot["playerRoyals"])["p1"]).Values<string>().Contains("r91-ro")
+                );
+                Assert.AreEqual(0, ((JObject)beforeReplay["liveRecording"]).Value<int>("recordedEvents"));
+
+                Assert.IsTrue(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "SELECT_ROYAL_CARD",
+                        new JObject { ["royalId"] = "r91-ro" }
+                    )
+                );
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterSnapshot = (JObject)after["snapshot"];
+                var afterReplay = (JObject)after["replay"];
+                Assert.AreEqual("Applied live action | SELECT_ROYAL_CARD", after.Value<string>("statusText"));
+                Assert.IsTrue(string.IsNullOrEmpty(after.Value<string>("errorBanner")));
+                Assert.AreNotEqual(beforeHash, afterReplay.Value<string>("currentStateHash"));
+                Assert.AreEqual("IDLE", afterSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p2", afterSnapshot.Value<string>("turn"));
+                CollectionAssert.DoesNotContain(((JArray)afterSnapshot["royalDeck"]).Values<string>().ToList(), "r91-ro");
+                CollectionAssert.Contains(((JArray)((JObject)afterSnapshot["playerRoyals"])["p1"]).Values<string>().ToList(), "r91-ro");
+                Assert.AreEqual(1, ((JObject)afterReplay["liveRecording"]).Value<int>("recordedEvents"));
+                Assert.AreEqual(
+                    afterReplay.Value<string>("currentStateHash"),
+                    ((JObject)afterReplay["liveRecording"]).Value<string>("summaryFinalStateHash")
+                );
+                Assert.IsTrue(slice.ExportReplayJsonForAutomation(out var replayJson, out var exportError), exportError);
+                var replay = JsonConvert.DeserializeObject<ReplayVNext>(replayJson);
+                Assert.NotNull(replay);
+                Assert.AreEqual(1, replay.Events.Count);
+                Assert.AreEqual("select_royal", replay.Events[0].Value<string>("type"));
+                Assert.AreEqual(afterReplay.Value<string>("currentStateHash"), replay.Summary.FinalStateHash);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
         public void LiveMarketReserveCompletesThroughRulesBridgeGoldFollowUp()
         {
             var root = new GameObject("GemDuel Live Bridge Reserve Test");
@@ -1575,6 +3378,85 @@ namespace GemDuel.Tests.EditMode
                 );
                 Assert.AreEqual("Applied live action | CANCEL_RESERVE", after.Value<string>("statusText"));
                 Assert.AreEqual(0, after.Value<int>("totalEvents"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LiveReserveCancelWrongActorDoesNotMutateStateOrReplayRecording()
+        {
+            var root = new GameObject("GemDuel Live Bridge Reserve Cancel Wrong Actor Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-reserve-cancel-wrong-actor" },
+                        out var startError
+                    ),
+                    startError
+                );
+
+                var start = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var startSnapshot = (JObject)start["snapshot"];
+                var firstCard = ((JArray)((JObject)startSnapshot["market"])["1"])[0].Value<string>();
+
+                Assert.IsTrue(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "INITIATE_RESERVE",
+                        new JObject { ["level"] = 1, ["idx"] = 0 }
+                    )
+                );
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeSnapshot = (JObject)before["snapshot"];
+                var beforeReplay = (JObject)before["replay"];
+                var beforeHash = beforeReplay.Value<string>("currentStateHash");
+                var beforePending = (JObject)beforeSnapshot["pendingReserve"];
+                var beforeReservedCount = ((JArray)((JObject)beforeSnapshot["playerReserved"])["p1"]).Count;
+                Assert.AreEqual("RESERVE_WAITING_GEM", beforeSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeSnapshot.Value<string>("turn"));
+                Assert.AreEqual(1, ((JObject)beforeReplay["liveRecording"]).Value<int>("recordedEvents"));
+                Assert.NotNull(beforePending);
+                Assert.AreEqual(1, beforePending.Value<int>("level"));
+                Assert.AreEqual(0, beforePending.Value<int>("idx"));
+                Assert.IsFalse(beforePending.Value<bool>("isDeck"));
+
+                Assert.IsFalse(ApplyLiveRulesCommandForAutomation(slice, "CANCEL_RESERVE", new JObject(), "p2"));
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterSnapshot = (JObject)after["snapshot"];
+                var afterPending = (JObject)afterSnapshot["pendingReserve"];
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    after.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    after.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(beforeHash, ((JObject)after["replay"]).Value<string>("currentStateHash"));
+                Assert.AreEqual("RESERVE_WAITING_GEM", afterSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterSnapshot.Value<string>("turn"));
+                Assert.NotNull(afterPending);
+                Assert.AreEqual(beforePending.Value<int>("level"), afterPending.Value<int>("level"));
+                Assert.AreEqual(beforePending.Value<int>("idx"), afterPending.Value<int>("idx"));
+                Assert.AreEqual(beforePending.Value<bool>("isDeck"), afterPending.Value<bool>("isDeck"));
+                Assert.AreEqual(firstCard, ((JArray)((JObject)afterSnapshot["market"])["1"])[0].Value<string>());
+                Assert.AreEqual(
+                    beforeReservedCount,
+                    ((JArray)((JObject)afterSnapshot["playerReserved"])["p1"]).Count
+                );
+                Assert.AreEqual(
+                    1,
+                    ((JObject)((JObject)after["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
             }
             finally
             {
@@ -1705,11 +3587,101 @@ namespace GemDuel.Tests.EditMode
                     startError
                 );
 
+                var beforeWrongActorInitiate = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeWrongActorInitiateReplay = (JObject)beforeWrongActorInitiate["replay"];
+                var beforeWrongActorInitiateHash = beforeWrongActorInitiateReplay.Value<string>("currentStateHash");
+                Assert.AreEqual("IDLE", ((JObject)beforeWrongActorInitiate["snapshot"]).Value<string>("phase"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)beforeWrongActorInitiateReplay["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "INITIATE_RESERVE",
+                        new JObject { ["level"] = 1, ["idx"] = 0 },
+                        "p2"
+                    )
+                );
+
+                var afterWrongActorInitiate = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActorInitiate.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActorInitiate.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(
+                    beforeWrongActorInitiateHash,
+                    ((JObject)afterWrongActorInitiate["replay"]).Value<string>("currentStateHash")
+                );
+                Assert.AreEqual("IDLE", ((JObject)afterWrongActorInitiate["snapshot"]).Value<string>("phase"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterWrongActorInitiate["replay"])["liveRecording"]).Value<int>(
+                        "recordedEvents"
+                    )
+                );
+
                 Assert.IsTrue(
                     ApplyLiveRulesCommandForAutomation(
                         slice,
                         "INITIATE_RESERVE",
                         new JObject { ["level"] = 1, ["idx"] = 0 }
+                    )
+                );
+
+                var beforeWrongActorResolve = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeWrongActorResolveReplay = (JObject)beforeWrongActorResolve["replay"];
+                var beforeWrongActorResolveHash = beforeWrongActorResolveReplay.Value<string>("currentStateHash");
+                var beforeWrongActorResolveEvents =
+                    ((JObject)beforeWrongActorResolveReplay["liveRecording"]).Value<int>("recordedEvents");
+                var wrongActorGold = FindFirstBoardGem((JObject)beforeWrongActorResolve["snapshot"], "gold");
+                Assert.AreEqual("RESERVE_WAITING_GEM", ((JObject)beforeWrongActorResolve["snapshot"]).Value<string>("phase"));
+                Assert.AreEqual(1, beforeWrongActorResolveEvents);
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "RESERVE_CARD",
+                        new JObject
+                        {
+                            ["level"] = 1,
+                            ["idx"] = 0,
+                            ["goldCoords"] = new JObject { ["r"] = wrongActorGold.x, ["c"] = wrongActorGold.y },
+                        },
+                        "p2"
+                    )
+                );
+
+                var afterWrongActorResolve = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActorResolve.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActorResolve.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(
+                    beforeWrongActorResolveHash,
+                    ((JObject)afterWrongActorResolve["replay"]).Value<string>("currentStateHash")
+                );
+                Assert.AreEqual(
+                    "RESERVE_WAITING_GEM",
+                    ((JObject)afterWrongActorResolve["snapshot"]).Value<string>("phase")
+                );
+                Assert.IsTrue(
+                    ((JObject)afterWrongActorResolve["snapshot"])["pendingReserve"] != null &&
+                    ((JObject)afterWrongActorResolve["snapshot"])["pendingReserve"].Type != JTokenType.Null
+                );
+                Assert.AreEqual(
+                    beforeWrongActorResolveEvents,
+                    ((JObject)((JObject)afterWrongActorResolve["replay"])["liveRecording"]).Value<int>(
+                        "recordedEvents"
                     )
                 );
 
@@ -1929,9 +3901,10 @@ namespace GemDuel.Tests.EditMode
                 Assert.AreEqual("preview-reserve", reserveTarget.Value<string>("eventType"));
 
                 Assert.IsTrue(
-                    slice.RunSemanticActionForAutomation(
-                        "confirm_preview_action",
-                        new JObject { ["actionId"] = "reserve" },
+                    ClickVisibleTargetCenterForAutomation(
+                        slice,
+                        preview,
+                        "card.preview.action.reserve",
                         out var reserveError
                     ),
                     reserveError
@@ -2029,11 +4002,102 @@ namespace GemDuel.Tests.EditMode
                     completionStartError
                 );
 
+                var beforeWrongActorInitiate = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeWrongActorInitiateReplay = (JObject)beforeWrongActorInitiate["replay"];
+                var beforeWrongActorInitiateHash = beforeWrongActorInitiateReplay.Value<string>("currentStateHash");
+                Assert.AreEqual("IDLE", ((JObject)beforeWrongActorInitiate["snapshot"]).Value<string>("phase"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)beforeWrongActorInitiateReplay["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "INITIATE_RESERVE_DECK",
+                        new JObject { ["level"] = 1 },
+                        "p2"
+                    )
+                );
+
+                var afterWrongActorInitiate = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActorInitiate.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActorInitiate.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(
+                    beforeWrongActorInitiateHash,
+                    ((JObject)afterWrongActorInitiate["replay"]).Value<string>("currentStateHash")
+                );
+                Assert.AreEqual("IDLE", ((JObject)afterWrongActorInitiate["snapshot"]).Value<string>("phase"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterWrongActorInitiate["replay"])["liveRecording"]).Value<int>(
+                        "recordedEvents"
+                    )
+                );
+
                 Assert.IsTrue(
                     ApplyLiveRulesCommandForAutomation(
                         slice,
                         "INITIATE_RESERVE_DECK",
                         new JObject { ["level"] = 1 }
+                    )
+                );
+
+                var beforeWrongActorResolve = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeWrongActorResolveReplay = (JObject)beforeWrongActorResolve["replay"];
+                var beforeWrongActorResolveHash = beforeWrongActorResolveReplay.Value<string>("currentStateHash");
+                var beforeWrongActorResolveEvents =
+                    ((JObject)beforeWrongActorResolveReplay["liveRecording"]).Value<int>("recordedEvents");
+                var wrongActorGold = FindFirstBoardGem((JObject)beforeWrongActorResolve["snapshot"], "gold");
+                Assert.AreEqual(
+                    "RESERVE_WAITING_GEM",
+                    ((JObject)beforeWrongActorResolve["snapshot"]).Value<string>("phase")
+                );
+                Assert.AreEqual(1, beforeWrongActorResolveEvents);
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "RESERVE_DECK",
+                        new JObject
+                        {
+                            ["level"] = 1,
+                            ["goldCoords"] = new JObject { ["r"] = wrongActorGold.x, ["c"] = wrongActorGold.y },
+                        },
+                        "p2"
+                    )
+                );
+
+                var afterWrongActorResolve = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActorResolve.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActorResolve.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(
+                    beforeWrongActorResolveHash,
+                    ((JObject)afterWrongActorResolve["replay"]).Value<string>("currentStateHash")
+                );
+                Assert.AreEqual(
+                    "RESERVE_WAITING_GEM",
+                    ((JObject)afterWrongActorResolve["snapshot"]).Value<string>("phase")
+                );
+                var pendingDeckReserve = (JObject)((JObject)afterWrongActorResolve["snapshot"])["pendingReserve"];
+                Assert.NotNull(pendingDeckReserve);
+                Assert.IsTrue(pendingDeckReserve.Value<bool>("isDeck"));
+                Assert.AreEqual(
+                    beforeWrongActorResolveEvents,
+                    ((JObject)((JObject)afterWrongActorResolve["replay"])["liveRecording"]).Value<int>(
+                        "recordedEvents"
                     )
                 );
 
@@ -2220,6 +4284,81 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void LiveJokerColorWrongActorDoesNotMutateStateOrReplayRecording()
+        {
+            var root = new GameObject("GemDuel Live Joker Color Wrong Actor Rejection Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                StartLocalGameWithVisibleJoker(
+                    slice,
+                    "unity-editmode-live-joker-color-wrong-actor",
+                    out var jokerRef,
+                    out var jokerCard
+                );
+
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "buy_card",
+                        new JObject { ["level"] = jokerRef.x, ["index"] = jokerRef.y },
+                        out var buyError
+                    ),
+                    buyError
+                );
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeSnapshot = (JObject)before["snapshot"];
+                var beforeReplay = (JObject)before["replay"];
+                var beforeHash = beforeReplay.Value<string>("currentStateHash");
+                var beforeEvents = ((JObject)beforeReplay["liveRecording"]).Value<int>("recordedEvents");
+                Assert.AreEqual("SELECT_CARD_COLOR", beforeSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeSnapshot.Value<string>("turn"));
+                Assert.AreEqual(jokerCard, ((JObject)beforeSnapshot["pendingBuy"]).Value<string>("instanceId"));
+                Assert.AreEqual(1, beforeEvents);
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "BUY_CARD",
+                        new JObject
+                        {
+                            ["level"] = jokerRef.x,
+                            ["idx"] = jokerRef.y,
+                            ["bonusColor"] = "blue",
+                        },
+                        "p2"
+                    )
+                );
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterSnapshot = (JObject)after["snapshot"];
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    after.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    after.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(beforeHash, ((JObject)after["replay"]).Value<string>("currentStateHash"));
+                Assert.AreEqual("SELECT_CARD_COLOR", afterSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterSnapshot.Value<string>("turn"));
+                Assert.IsTrue(JToken.DeepEquals(beforeSnapshot["pendingBuy"], afterSnapshot["pendingBuy"]));
+                Assert.IsTrue(JToken.DeepEquals(beforeSnapshot["market"], afterSnapshot["market"]));
+                Assert.IsTrue(JToken.DeepEquals(beforeSnapshot["playerTableau"], afterSnapshot["playerTableau"]));
+                Assert.AreEqual(
+                    beforeEvents,
+                    ((JObject)((JObject)after["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
         public void LiveAffordableJokerBuyCompletesThroughColorSelectionAndReplayReview()
         {
             var root = new GameObject("GemDuel Live Affordable Joker Buy Test");
@@ -2311,7 +4450,14 @@ namespace GemDuel.Tests.EditMode
                 Assert.AreEqual("Applied live action | BUY_CARD", after.Value<string>("statusText"));
                 Assert.IsTrue(string.IsNullOrEmpty(after.Value<string>("errorBanner")));
 
-                slice.HandleVisibleTarget(FindViewTargetBySemanticKey("replay.export.localdev"));
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation("open_settings", new JObject(), out var openSettingsError),
+                    openSettingsError
+                );
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation("settings_save", new JObject(), out var saveReplayError),
+                    saveReplayError
+                );
                 Assert.IsTrue(File.Exists(localDevReplayPath));
                 var exportedReplay = JsonConvert.DeserializeObject<ReplayVNext>(
                     File.ReadAllText(localDevReplayPath)
@@ -2346,6 +4492,87 @@ namespace GemDuel.Tests.EditMode
                     Object.DestroyImmediate(reviewRoot);
                 }
 
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LiveMarketBuyWrongActorDoesNotMutateStateOrReplayRecording()
+        {
+            var root = new GameObject("GemDuel Live Market Buy Wrong Actor Rejection Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-market-buy-wrong-actor" },
+                        out var startError
+                    ),
+                    startError
+                );
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeSnapshot = (JObject)before["snapshot"];
+                var marketRef = FindFirstNonJokerMarketCard(beforeSnapshot, out var marketCard);
+                var beforeReplay = (JObject)before["replay"];
+                var beforeHash = beforeReplay.Value<string>("currentStateHash");
+                Assert.AreEqual("IDLE", beforeSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeSnapshot.Value<string>("turn"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)beforeReplay["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "BUY_CARD",
+                        new JObject
+                        {
+                            ["level"] = marketRef.x,
+                            ["idx"] = marketRef.y,
+                            ["bonusColor"] = "red",
+                        },
+                        "p2"
+                    )
+                );
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterSnapshot = (JObject)after["snapshot"];
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    after.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    after.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(beforeHash, ((JObject)after["replay"]).Value<string>("currentStateHash"));
+                Assert.AreEqual("IDLE", afterSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterSnapshot.Value<string>("turn"));
+                CollectionAssert.Contains(
+                    ((JArray)((JObject)afterSnapshot["market"])[marketRef.x.ToString()]).Values<string>().ToList(),
+                    marketCard
+                );
+                Assert.IsFalse(
+                    ((JArray)((JObject)afterSnapshot["playerTableau"])["p1"])
+                        .OfType<JObject>()
+                        .Any(card => card.Value<string>("instanceId") == marketCard)
+                );
+                Assert.IsFalse(
+                    ((JArray)((JObject)afterSnapshot["playerTableau"])["p2"])
+                        .OfType<JObject>()
+                        .Any(card => card.Value<string>("instanceId") == marketCard)
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)after["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+            }
+            finally
+            {
                 Object.DestroyImmediate(root);
                 CleanupRenderedSceneObjects();
             }
@@ -2388,6 +4615,42 @@ namespace GemDuel.Tests.EditMode
                 Assert.AreEqual(
                     0,
                     ((JObject)beforeReplay["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "INITIATE_BUY_JOKER",
+                        new JObject
+                        {
+                            ["level"] = jokerRef.x,
+                            ["idx"] = jokerRef.y,
+                        },
+                        "p2"
+                    )
+                );
+
+                var afterWrongActor = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActor.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActor.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(
+                    beforeHash,
+                    ((JObject)afterWrongActor["replay"]).Value<string>("currentStateHash")
+                );
+                Assert.AreEqual("IDLE", ((JObject)afterWrongActor["snapshot"]).Value<string>("phase"));
+                Assert.IsTrue(
+                    ((JObject)afterWrongActor["snapshot"])["pendingBuy"] == null ||
+                    ((JObject)afterWrongActor["snapshot"])["pendingBuy"].Type == JTokenType.Null
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterWrongActor["replay"])["liveRecording"]).Value<int>("recordedEvents")
                 );
 
                 Assert.IsFalse(
@@ -2701,6 +4964,85 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void LiveMarketPreviewPrimaryActionFirstViewportClickBuysCardOnce()
+        {
+            var root = new GameObject("GemDuel Live Market Preview First Click Buy Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-market-preview-first-click-buy" },
+                        out var startError
+                    ),
+                    startError
+                );
+
+                var start = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var marketRef = FindFirstNonJokerMarketCard((JObject)start["snapshot"], out var marketCard);
+                var mutableSnapshot = GetMutableCurrentSnapshot(slice);
+                ((JObject)mutableSnapshot["inventories"])["p1"] = new JObject
+                {
+                    ["red"] = 20,
+                    ["green"] = 20,
+                    ["blue"] = 20,
+                    ["white"] = 20,
+                    ["black"] = 20,
+                    ["pearl"] = 20,
+                    ["gold"] = 20,
+                };
+                RenderCurrentState(slice);
+
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "click_market_card",
+                        new JObject { ["level"] = marketRef.x, ["index"] = marketRef.y },
+                        out var previewError
+                    ),
+                    previewError
+                );
+
+                var preview = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var primaryAction = FindVisibleTarget(preview, "card.preview.primaryAction");
+                Assert.AreEqual("ActionButton", primaryAction.Value<string>("kind"));
+                Assert.AreEqual("preview-buy", primaryAction.Value<string>("eventType"));
+
+                Assert.IsTrue(
+                    ClickVisibleTargetCenterForAutomation(
+                        slice,
+                        preview,
+                        "card.preview.primaryAction",
+                        out var clickError
+                    ),
+                    clickError
+                );
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterSnapshot = (JObject)after["snapshot"];
+                var afterReplay = (JObject)after["replay"];
+                Assert.IsTrue(
+                    ((JArray)((JObject)afterSnapshot["playerTableau"])["p1"])
+                        .OfType<JObject>()
+                        .Any(card => card.Value<string>("instanceId") == marketCard)
+                );
+                Assert.IsFalse(
+                    ((JArray)((JObject)afterSnapshot["market"])[marketRef.x.ToString()])
+                        .Values<string>()
+                        .Contains(marketCard)
+                );
+                Assert.AreEqual(1, ((JObject)afterReplay["liveRecording"]).Value<int>("recordedEvents"));
+                Assert.AreEqual("Applied live action | BUY_CARD", after.Value<string>("statusText"));
+                Assert.IsTrue(string.IsNullOrEmpty(after.Value<string>("errorBanner")));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
         public void LiveAffordableReservedBuyCompletesThroughPreviewAndReplayReview()
         {
             var root = new GameObject("GemDuel Live Affordable Reserved Buy Test");
@@ -2754,11 +5096,15 @@ namespace GemDuel.Tests.EditMode
                 var preview = slice.BuildAutomationStateSnapshot(1920, 1080);
                 Assert.AreEqual("reserved", ((JObject)preview["preview"]).Value<string>("source"));
                 Assert.AreEqual(reservedCard, ((JObject)preview["preview"]).Value<string>("instanceId"));
+                var buyTarget = FindVisibleTarget(preview, "card.preview.primaryAction");
+                Assert.AreEqual("ActionButton", buyTarget.Value<string>("kind"));
+                Assert.AreEqual("preview-buy", buyTarget.Value<string>("eventType"));
 
                 Assert.IsTrue(
-                    slice.RunSemanticActionForAutomation(
-                        "confirm_preview_action",
-                        new JObject { ["actionId"] = "buy" },
+                    ClickVisibleTargetCenterForAutomation(
+                        slice,
+                        preview,
+                        "card.preview.primaryAction",
                         out var buyError
                     ),
                     buyError
@@ -2784,7 +5130,14 @@ namespace GemDuel.Tests.EditMode
                 Assert.AreEqual("Applied live action | BUY_CARD", after.Value<string>("statusText"));
                 Assert.IsTrue(string.IsNullOrEmpty(after.Value<string>("errorBanner")));
 
-                slice.HandleVisibleTarget(FindViewTargetBySemanticKey("replay.export.localdev"));
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation("open_settings", new JObject(), out var openSettingsError),
+                    openSettingsError
+                );
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation("settings_save", new JObject(), out var saveReplayError),
+                    saveReplayError
+                );
                 Assert.IsTrue(File.Exists(localDevReplayPath));
                 var exportedReplay = JsonConvert.DeserializeObject<ReplayVNext>(
                     File.ReadAllText(localDevReplayPath)
@@ -2873,6 +5226,41 @@ namespace GemDuel.Tests.EditMode
                     ApplyLiveRulesCommandForAutomation(
                         slice,
                         "BUY_RESERVED_CARD",
+                        new JObject { ["instanceId"] = reservedCard, ["bonusColor"] = "red" },
+                        "p2"
+                    )
+                );
+
+                var afterWrongActor = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterWrongActorSnapshot = (JObject)afterWrongActor["snapshot"];
+                Assert.AreEqual(
+                    "Selected reserved card does not belong to the active player.",
+                    afterWrongActor.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Selected reserved card does not belong to the active player.",
+                    afterWrongActor.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(beforeHash, ((JObject)afterWrongActor["replay"]).Value<string>("currentStateHash"));
+                Assert.AreEqual("IDLE", afterWrongActorSnapshot.Value<string>("phase"));
+                CollectionAssert.Contains(
+                    ((JArray)((JObject)afterWrongActorSnapshot["playerReserved"])["p1"]).Values<string>().ToList(),
+                    reservedCard
+                );
+                Assert.IsFalse(
+                    ((JArray)((JObject)afterWrongActorSnapshot["playerTableau"])["p1"])
+                        .OfType<JObject>()
+                        .Any(card => card.Value<string>("instanceId") == reservedCard)
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterWrongActor["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "BUY_RESERVED_CARD",
                         new JObject { ["instanceId"] = reservedCard, ["bonusColor"] = "red" }
                     )
                 );
@@ -2954,9 +5342,10 @@ namespace GemDuel.Tests.EditMode
                 Assert.AreEqual("preview-discard", discardTarget.Value<string>("eventType"));
 
                 Assert.IsTrue(
-                    slice.RunSemanticActionForAutomation(
-                        "confirm_preview_action",
-                        new JObject { ["actionId"] = "discard" },
+                    ClickVisibleTargetCenterForAutomation(
+                        slice,
+                        preview,
+                        "card.preview.action.discard",
                         out var discardError
                     ),
                     discardError
@@ -3021,6 +5410,42 @@ namespace GemDuel.Tests.EditMode
                 var beforeNotOwnedHash = beforeNotOwnedReplay.Value<string>("currentStateHash");
                 var beforeNotOwnedRecordedEvents = ((JObject)beforeNotOwnedReplay["liveRecording"]).Value<int>(
                     "recordedEvents"
+                );
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "DISCARD_RESERVED",
+                        new JObject { ["cardId"] = p1ReservedCard },
+                        "p2"
+                    )
+                );
+
+                var afterWrongActor = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActor.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActor.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(beforeNotOwnedHash, ((JObject)afterWrongActor["replay"]).Value<string>("currentStateHash"));
+                CollectionAssert.Contains(
+                    ((JArray)((JObject)((JObject)afterWrongActor["snapshot"])["playerReserved"])["p1"])
+                        .Values<string>()
+                        .ToList(),
+                    p1ReservedCard
+                );
+                CollectionAssert.Contains(
+                    ((JArray)((JObject)((JObject)afterWrongActor["snapshot"])["playerReserved"])["p2"])
+                        .Values<string>()
+                        .ToList(),
+                    p2ReservedCard
+                );
+                Assert.AreEqual(
+                    beforeNotOwnedRecordedEvents,
+                    ((JObject)((JObject)afterWrongActor["replay"])["liveRecording"]).Value<int>("recordedEvents")
                 );
 
                 Assert.IsFalse(
@@ -3220,6 +5645,53 @@ namespace GemDuel.Tests.EditMode
 
                 var snapshot = GetMutableCurrentSnapshot(slice);
                 ((JObject)snapshot["privileges"])["p1"] = 1;
+                RenderCurrentState(slice);
+
+                var beforeWrongActor = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeWrongActorSnapshot = (JObject)beforeWrongActor["snapshot"];
+                var beforeWrongActorReplay = (JObject)beforeWrongActor["replay"];
+                var beforeWrongActorHash = beforeWrongActorReplay.Value<string>("currentStateHash");
+                var wrongActorTarget = FindFirstCollectibleBoardGem(beforeWrongActorSnapshot, out var wrongActorGemId);
+                Assert.AreEqual("IDLE", beforeWrongActorSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeWrongActorSnapshot.Value<string>("turn"));
+                Assert.AreEqual(1, ((JObject)beforeWrongActorSnapshot["privileges"]).Value<int>("p1"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)beforeWrongActorReplay["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(ApplyLiveRulesCommandForAutomation(slice, "ACTIVATE_PRIVILEGE", new JObject(), "p2"));
+
+                var afterWrongActor = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterWrongActorSnapshot = (JObject)afterWrongActor["snapshot"];
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActor.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActor.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(
+                    beforeWrongActorHash,
+                    ((JObject)afterWrongActor["replay"]).Value<string>("currentStateHash")
+                );
+                Assert.AreEqual("IDLE", afterWrongActorSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterWrongActorSnapshot.Value<string>("turn"));
+                Assert.AreEqual(1, ((JObject)afterWrongActorSnapshot["privileges"]).Value<int>("p1"));
+                Assert.AreEqual(
+                    wrongActorGemId,
+                    ((JArray)((JArray)afterWrongActorSnapshot["board"])[wrongActorTarget.x])[
+                        wrongActorTarget.y
+                    ].Value<string>()
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterWrongActor["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                snapshot = GetMutableCurrentSnapshot(slice);
+                ((JObject)snapshot["privileges"])["p1"] = 1;
                 foreach (var row in ((JArray)snapshot["board"]).OfType<JArray>())
                 {
                     for (var column = 0; column < row.Count; column += 1)
@@ -3277,10 +5749,78 @@ namespace GemDuel.Tests.EditMode
 
                 var snapshot = GetMutableCurrentSnapshot(slice);
                 snapshot["phase"] = "PRIVILEGE_ACTION";
-                ((JObject)snapshot["privileges"])["p1"] = 0;
+                ((JObject)snapshot["privileges"])["p1"] = 1;
                 if (snapshot["extraPrivileges"] is JObject extraPrivileges)
                 {
                     extraPrivileges["p1"] = 0;
+                }
+                RenderCurrentState(slice);
+
+                var beforeWrongActor = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeWrongActorSnapshot = (JObject)beforeWrongActor["snapshot"];
+                var beforeWrongActorReplay = (JObject)beforeWrongActor["replay"];
+                var beforeWrongActorHash = beforeWrongActorReplay.Value<string>("currentStateHash");
+                var wrongActorTarget = FindFirstCollectibleBoardGem(
+                    beforeWrongActorSnapshot,
+                    out var wrongActorGemId
+                );
+                var beforeWrongActorInventory = ((JObject)((JObject)beforeWrongActorSnapshot["inventories"])["p1"])
+                    .Value<int>(wrongActorGemId);
+                Assert.AreEqual("PRIVILEGE_ACTION", beforeWrongActorSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeWrongActorSnapshot.Value<string>("turn"));
+                Assert.AreEqual(1, ((JObject)beforeWrongActorSnapshot["privileges"]).Value<int>("p1"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)beforeWrongActorReplay["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(
+                    ApplyLiveRulesCommandForAutomation(
+                        slice,
+                        "USE_PRIVILEGE",
+                        new JObject { ["r"] = wrongActorTarget.x, ["c"] = wrongActorTarget.y },
+                        "p2"
+                    )
+                );
+
+                var afterWrongActor = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterWrongActorSnapshot = (JObject)afterWrongActor["snapshot"];
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActor.Value<string>("statusText")
+                );
+                Assert.AreEqual(
+                    "Command actor p2 does not match active player p1.",
+                    afterWrongActor.Value<string>("errorBanner")
+                );
+                Assert.AreEqual(
+                    beforeWrongActorHash,
+                    ((JObject)afterWrongActor["replay"]).Value<string>("currentStateHash")
+                );
+                Assert.AreEqual("PRIVILEGE_ACTION", afterWrongActorSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterWrongActorSnapshot.Value<string>("turn"));
+                Assert.AreEqual(1, ((JObject)afterWrongActorSnapshot["privileges"]).Value<int>("p1"));
+                Assert.AreEqual(
+                    wrongActorGemId,
+                    ((JArray)((JArray)afterWrongActorSnapshot["board"])[wrongActorTarget.x])[
+                        wrongActorTarget.y
+                    ].Value<string>()
+                );
+                Assert.AreEqual(
+                    beforeWrongActorInventory,
+                    ((JObject)((JObject)afterWrongActorSnapshot["inventories"])["p1"]).Value<int>(wrongActorGemId)
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)afterWrongActor["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                snapshot = GetMutableCurrentSnapshot(slice);
+                snapshot["phase"] = "PRIVILEGE_ACTION";
+                ((JObject)snapshot["privileges"])["p1"] = 0;
+                if (snapshot["extraPrivileges"] is JObject noChargeExtraPrivileges)
+                {
+                    noChargeExtraPrivileges["p1"] = 0;
                 }
                 RenderCurrentState(slice);
 
@@ -3353,6 +5893,74 @@ namespace GemDuel.Tests.EditMode
                 Assert.AreEqual(
                     0,
                     ((JObject)((JObject)afterInvalidTarget["replay"])["liveRecording"]).Value<int>("recordedEvents")
+                );
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LivePrivilegeCancelWrongActorDoesNotMutateStateOrReplayRecording()
+        {
+            var root = new GameObject("GemDuel Live Privilege Cancel Wrong Actor Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-editmode-live-privilege-cancel-wrong-actor" },
+                        out var startError
+                    ),
+                    startError
+                );
+
+                var snapshot = GetMutableCurrentSnapshot(slice);
+                snapshot["phase"] = "PRIVILEGE_ACTION";
+                ((JObject)snapshot["privileges"])["p1"] = 1;
+                if (snapshot["extraPrivileges"] is JObject extraPrivileges)
+                {
+                    extraPrivileges["p1"] = 0;
+                }
+                RenderCurrentState(slice);
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeSnapshot = (JObject)before["snapshot"];
+                var beforeReplay = (JObject)before["replay"];
+                var beforeHash = beforeReplay.Value<string>("currentStateHash");
+                var trackedGem = FindFirstCollectibleBoardGem(beforeSnapshot, out var trackedGemId);
+                var beforeInventory = ((JObject)((JObject)beforeSnapshot["inventories"])["p1"])
+                    .Value<int>(trackedGemId);
+                Assert.AreEqual("PRIVILEGE_ACTION", beforeSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", beforeSnapshot.Value<string>("turn"));
+                Assert.AreEqual(1, ((JObject)beforeSnapshot["privileges"]).Value<int>("p1"));
+                Assert.AreEqual(
+                    0,
+                    ((JObject)beforeReplay["liveRecording"]).Value<int>("recordedEvents")
+                );
+
+                Assert.IsFalse(ApplyLiveRulesCommandForAutomation(slice, "CANCEL_PRIVILEGE", new JObject(), "p2"));
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var afterSnapshot = (JObject)after["snapshot"];
+                var afterBoard = (JArray)afterSnapshot["board"];
+                Assert.AreEqual("Command actor p2 does not match active player p1.", after.Value<string>("statusText"));
+                Assert.AreEqual("Command actor p2 does not match active player p1.", after.Value<string>("errorBanner"));
+                Assert.AreEqual(beforeHash, ((JObject)after["replay"]).Value<string>("currentStateHash"));
+                Assert.AreEqual("PRIVILEGE_ACTION", afterSnapshot.Value<string>("phase"));
+                Assert.AreEqual("p1", afterSnapshot.Value<string>("turn"));
+                Assert.AreEqual(1, ((JObject)afterSnapshot["privileges"]).Value<int>("p1"));
+                Assert.AreEqual(trackedGemId, ((JArray)afterBoard[trackedGem.x])[trackedGem.y].Value<string>());
+                Assert.AreEqual(
+                    beforeInventory,
+                    ((JObject)((JObject)afterSnapshot["inventories"])["p1"]).Value<int>(trackedGemId)
+                );
+                Assert.AreEqual(
+                    0,
+                    ((JObject)((JObject)after["replay"])["liveRecording"]).Value<int>("recordedEvents")
                 );
             }
             finally
@@ -4237,6 +6845,80 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void TableauStackClickOpensAllCardsPreviewThroughViewportHitTarget()
+        {
+            var root = new GameObject("GemDuel Tableau Stack Preview Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "start_local_game",
+                        new JObject { ["seed"] = "unity-tableau-stack-preview-20260514" },
+                        out var startError
+                    ),
+                    startError
+                );
+
+                var mutable = GetMutableCurrentSnapshot(slice);
+                mutable["phase"] = "IDLE";
+                mutable["turn"] = "p1";
+                ((JObject)mutable["playerTableau"])["p1"] = new JArray
+                {
+                    new JObject { ["instanceId"] = "111-re" },
+                    new JObject { ["instanceId"] = "113-re" },
+                    new JObject { ["instanceId"] = "114-re" },
+                };
+                RenderCurrentState(slice);
+
+                var before = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var beforeHash = ((JObject)before["replay"]).Value<string>("currentStateHash");
+                var stackTarget = FindVisibleTarget(before, "player.current.tableau.red");
+                Assert.AreEqual("TableauStack", stackTarget.Value<string>("kind"));
+                Assert.IsTrue(stackTarget.Value<bool>("clickable"));
+
+                var rect = (JObject)stackTarget["rect"];
+                Assert.IsTrue(
+                    slice.ClickViewportPointForAutomation(
+                        (float)(rect.Value<double>("x") + rect.Value<double>("width") * 0.5d),
+                        (float)(rect.Value<double>("y") + rect.Value<double>("height") * 0.5d),
+                        1920,
+                        1080,
+                        out var clickError
+                    ),
+                    clickError
+                );
+
+                var after = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var preview = (JObject)after["preview"];
+                Assert.NotNull(preview);
+                Assert.AreEqual("tableau", preview.Value<string>("source"));
+                Assert.AreEqual("p1", preview.Value<string>("player"));
+                Assert.AreEqual("red", preview.Value<string>("color"));
+                Assert.AreEqual(3, preview.Value<int>("cardCount"));
+                CollectionAssert.AreEqual(
+                    new[] { "111-re", "113-re", "114-re" },
+                    ((JArray)preview["instanceIds"]).Values<string>().ToList()
+                );
+                Assert.AreEqual(
+                    3,
+                    ((JArray)after["visibleTargets"])
+                        .OfType<JObject>()
+                        .Count(target =>
+                            (target.Value<string>("semanticKey") ?? string.Empty)
+                                .StartsWith("card.preview.collection.", StringComparison.Ordinal)
+                        )
+                );
+                Assert.AreEqual(beforeHash, ((JObject)after["replay"]).Value<string>("currentStateHash"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
         public void PreviewBackdropBlankClickDismissesThroughViewportHitTarget()
         {
             var root = new GameObject("GemDuel Preview Blank Dismiss Test");
@@ -4430,6 +7112,236 @@ namespace GemDuel.Tests.EditMode
         }
 
         [Test]
+        public void LocalDevSettingsReleasePathSmokeSavesAndReloadsVisibleSettings()
+        {
+            var root = new GameObject("GemDuel LocalDev Settings Release Path Smoke Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevSettingsReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevSettingsReleasePathSmokeOptions
+                    {
+                        Seed = "unity-editmode-settings-release-path-smoke",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var settings = (JObject)report["settingsSummary"];
+                Assert.AreEqual("saved", settings.Value<string>("savedStatus"));
+                Assert.AreEqual("loaded", settings.Value<string>("reloadedStatus"));
+                Assert.AreEqual(
+                    settings.Value<string>("gameplayHashBefore"),
+                    settings.Value<string>("gameplayHashAfterSave")
+                );
+                Assert.AreEqual(0, settings.Value<int>("recordedEventsBefore"));
+                Assert.AreEqual(0, settings.Value<int>("recordedEventsAfterSave"));
+
+                var saved = (JObject)settings["savedSettings"];
+                var persisted = (JObject)settings["persistedSettings"];
+                var reloaded = (JObject)settings["reloadedSettings"];
+                Assert.AreEqual("en", saved.Value<string>("locale"));
+                Assert.AreEqual("pearl-opaline", saved.Value<string>("surfaceTheme"));
+                Assert.IsFalse(saved.Value<bool>("soundEnabled"));
+                Assert.IsFalse(saved.Value<bool>("lanShowOpponentPlayerZoneCards"));
+                Assert.IsFalse(saved.Value<bool>("lanShowOpponentGems"));
+                Assert.AreEqual(saved.Value<string>("locale"), reloaded.Value<string>("locale"));
+                Assert.AreEqual(saved.Value<string>("surfaceTheme"), reloaded.Value<string>("surfaceTheme"));
+                Assert.AreEqual(saved.Value<bool>("soundEnabled"), reloaded.Value<bool>("soundEnabled"));
+                Assert.AreEqual(
+                    saved.Value<bool>("lanShowOpponentPlayerZoneCards"),
+                    reloaded.Value<bool>("lanShowOpponentPlayerZoneCards")
+                );
+                Assert.AreEqual(saved.Value<bool>("lanShowOpponentGems"), reloaded.Value<bool>("lanShowOpponentGems"));
+                Assert.AreEqual(saved.Value<string>("locale"), persisted.Value<string>("locale"));
+                Assert.AreEqual(saved.Value<string>("surfaceTheme"), persisted.Value<string>("surfaceTheme"));
+                Assert.AreEqual(saved.Value<bool>("soundEnabled"), persisted.Value<bool>("soundEnabled"));
+                Assert.AreEqual(
+                    saved.Value<bool>("lanShowOpponentPlayerZoneCards"),
+                    persisted.Value<bool>("lanShowOpponentPlayerZoneCards")
+                );
+                Assert.AreEqual(saved.Value<bool>("lanShowOpponentGems"), persisted.Value<bool>("lanShowOpponentGems"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevChromeReleasePathSmokeOpensRulebookRestartsAndRestartsLiveGame()
+        {
+            var root = new GameObject("GemDuel LocalDev Chrome Release Path Smoke Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevChromeReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevChromeReleasePathSmokeOptions
+                    {
+                        Seed = "unity-editmode-chrome-release-path-smoke",
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var chrome = (JObject)report["chromeSummary"];
+                Assert.IsTrue(chrome.Value<bool>("rulebookOverlayVisibleAfterOpen"));
+                Assert.IsTrue(chrome.Value<bool>("rulebookPanelVisibleAfterOpen"));
+                Assert.IsTrue(chrome.Value<bool>("rulebookCloseVisibleAfterOpen"));
+                Assert.IsTrue(chrome.Value<bool>("rulebookNextVisibleAfterOpen"));
+                Assert.AreEqual(1, chrome.Value<int>("rulebookPageAfterNext"));
+                var rulebookOpen = (JObject)report["rulebookOpenSnapshot"];
+                var rulebookNext = (JObject)report["rulebookNextSnapshot"];
+                Assert.AreEqual("packages/ui/src/components/RulebookContent.ts", rulebookOpen.Value<string>("sourceOfTruth"));
+                Assert.AreEqual(9, rulebookOpen.Value<int>("pageCount"));
+                Assert.AreEqual("快速上手", rulebookOpen.Value<string>("title"));
+                Assert.That(rulebookOpen.Value<string>("summary"), Does.Contain("《Gem Duel》"));
+                Assert.AreEqual("默认胜利目标", ((JObject)((JArray)rulebookOpen["sections"])[0]).Value<string>("title"));
+                CollectionAssert.AreEqual(
+                    new[]
+                    {
+                        "快速上手",
+                        "卡牌结构与能力",
+                        "玩家区",
+                        "主战区",
+                        "战况栏",
+                        "回合流程",
+                        "购买卡牌",
+                        "代币与限制",
+                        "肉鸽与增益手册",
+                    },
+                    ((JArray)rulebookOpen["pageTitlesZh"]).Values<string>().ToArray()
+                );
+                Assert.AreEqual("卡牌结构与能力", rulebookNext.Value<string>("title"));
+                Assert.That(
+                    ((JObject)((JArray)rulebookNext["sections"])[0])["items"].Values<string>().First(),
+                    Does.Contain("声望值")
+                );
+                Assert.IsFalse(chrome.Value<bool>("rulebookOverlayVisibleAfterClose"));
+                Assert.AreEqual(
+                    chrome.Value<string>("gameplayHashBeforeRulebook"),
+                    chrome.Value<string>("gameplayHashAfterRulebookOpen")
+                );
+                Assert.AreEqual(
+                    chrome.Value<string>("gameplayHashBeforeRulebook"),
+                    chrome.Value<string>("gameplayHashAfterRulebookNext")
+                );
+                Assert.AreEqual(
+                    chrome.Value<string>("gameplayHashBeforeRulebook"),
+                    chrome.Value<string>("gameplayHashAfterRulebookClose")
+                );
+                Assert.AreEqual(
+                    chrome.Value<int>("recordedEventsBeforeRulebook"),
+                    chrome.Value<int>("recordedEventsAfterRulebookOpen")
+                );
+                Assert.AreEqual(
+                    chrome.Value<int>("recordedEventsBeforeRulebook"),
+                    chrome.Value<int>("recordedEventsAfterRulebookNext")
+                );
+                Assert.AreEqual(
+                    chrome.Value<int>("recordedEventsBeforeRulebook"),
+                    chrome.Value<int>("recordedEventsAfterRulebookClose")
+                );
+                Assert.IsTrue(chrome.Value<bool>("shellAfterRestart"));
+                Assert.IsTrue(chrome.Value<bool>("localStartVisibleAfterRestart"));
+                Assert.AreNotEqual(
+                    chrome.Value<string>("restartedStartHash"),
+                    chrome.Value<string>("restartedCommandHash")
+                );
+                Assert.AreEqual(1, chrome.Value<int>("restartedCommandRecordedEvents"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
+        public void LocalDevReplayReviewReleasePathSmokeNavigatesImportedReplayWithoutMutatingLiveState()
+        {
+            var root = new GameObject("GemDuel LocalDev Replay Review Release Path Smoke Test");
+            try
+            {
+                var slice = root.AddComponent<GemDuelGameController>();
+                var report = LocalDevReplayReviewReleasePathSmoke.Run(
+                    slice,
+                    new LocalDevReplayReviewReleasePathSmokeOptions
+                    {
+                        Seed = "unity-editmode-replay-review-release-path-smoke",
+                        MaxSteps = 4,
+                        OutputDirectory = RepositoryPaths.ResolveFromRoot(
+                            "artifacts",
+                            "unity",
+                            "replay-review-release-path"
+                        ),
+                    }
+                );
+
+                Assert.IsTrue(report.Value<bool>("ok"), report.ToString(Formatting.Indented));
+                Assert.IsTrue(report.Value<bool>("freshLaunch"));
+                Assert.IsFalse(report.Value<bool>("usedFixtureReplayAsGameplayDriver"));
+                Assert.IsFalse(report.Value<bool>("usedCheckpointStateReplacement"));
+
+                var navigation = (JObject)report["reviewNavigationSummary"];
+                Assert.GreaterOrEqual(navigation.Value<int>("exportedEvents"), 2);
+                Assert.AreEqual(0, navigation.Value<int>("importedRevision"));
+                Assert.AreEqual(1, navigation.Value<int>("firstForwardRevision"));
+                Assert.AreEqual(2, navigation.Value<int>("secondForwardRevision"));
+                Assert.AreEqual(1, navigation.Value<int>("backToFirstRevision"));
+                Assert.AreEqual(
+                    navigation.Value<int>("exportedEvents"),
+                    navigation.Value<int>("finalRevision")
+                );
+                Assert.AreEqual(
+                    navigation.Value<int>("exportedEvents") - 1,
+                    navigation.Value<int>("beforeReturnedFinalRevision")
+                );
+                Assert.AreEqual(
+                    navigation.Value<int>("exportedEvents"),
+                    navigation.Value<int>("returnedFinalRevision")
+                );
+                Assert.AreEqual(
+                    navigation.Value<string>("firstForwardHash"),
+                    navigation.Value<string>("backToFirstHash")
+                );
+                Assert.AreEqual(
+                    navigation.Value<string>("exportedSummaryFinalStateHash"),
+                    navigation.Value<string>("finalReviewHash")
+                );
+                Assert.AreEqual(
+                    navigation.Value<string>("exportedSummaryFinalStateHash"),
+                    navigation.Value<string>("returnedFinalHash")
+                );
+                Assert.AreEqual(
+                    navigation.Value<string>("sourceHashBeforeReview"),
+                    navigation.Value<string>("sourceHashAfterReview")
+                );
+                Assert.AreEqual(
+                    navigation.Value<int>("sourceRecordedEventsBeforeReview"),
+                    navigation.Value<int>("sourceRecordedEventsAfterReview")
+                );
+                Assert.IsTrue(navigation.Value<bool>("usedVisibleRedoControl"));
+                Assert.IsTrue(navigation.Value<bool>("usedVisibleUndoControl"));
+                Assert.IsTrue(navigation.Value<bool>("sourceLiveStateUnchanged"));
+                Assert.IsTrue(navigation.Value<bool>("sourceLiveReplayStreamUnchanged"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
+            }
+        }
+
+        [Test]
         public void InvalidActionExposesElectronEquivalentErrorBanner()
         {
             var root = new GameObject("GemDuel Invalid Action Contract Test");
@@ -4535,6 +7447,43 @@ namespace GemDuel.Tests.EditMode
                         Object.DestroyImmediate(obj);
                     }
                 }
+            }
+        }
+
+        [Test]
+        public void VisibleGemSelectionDragAutoFillsSkippedMidpoint()
+        {
+            var root = new GameObject("GemDuel Drag Gem Selection Gap Test");
+            try
+            {
+                var slice = CreateSliceAtTakeGems(root);
+
+                slice.HandleVisibleTarget(CreateGemTarget(root, 3, 0, "green"));
+                Assert.IsTrue(
+                    slice.TryHandleTakeGemsDragTarget(
+                        CreateGemTarget(root, 3, 2, "red"),
+                        out var dragDetail
+                    ),
+                    dragDetail
+                );
+
+                var automationState = slice.BuildAutomationStateSnapshot(1920, 1080);
+                var selection = (JObject)automationState["gemSelection"];
+                Assert.AreEqual(3, selection.Value<int>("count"));
+                Assert.IsTrue(selection.Value<bool>("canConfirm"));
+
+                slice.HandleVisibleTarget(FindViewTarget("ActionButton", "confirm-gems"));
+
+                Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 0));
+                Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 1));
+                Assert.AreEqual("empty", slice.GetBoardGemForAutomation(3, 2));
+                Assert.AreEqual(1, slice.GetInventoryCountForAutomation("p1", "green"));
+                Assert.AreEqual(2, slice.GetInventoryCountForAutomation("p1", "red"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                CleanupRenderedSceneObjects();
             }
         }
 
@@ -5358,6 +8307,9 @@ namespace GemDuel.Tests.EditMode
                     ((JObject)snapshot["playerReserved"])[snapshot.Value<string>("turn")] =
                         CollectReserveFillInstanceIds(snapshot);
                     return;
+                case "missing-pending-reserve":
+                    snapshot["pendingReserve"] = null;
+                    return;
                 case "empty-board-with-privilege":
                     snapshot["board"] = BuildEmptyReplayBoard();
                     ((JObject)snapshot["privileges"])[snapshot.Value<string>("turn")] = 1;
@@ -5380,6 +8332,17 @@ namespace GemDuel.Tests.EditMode
                 case "p2-draft-before-p1-selection":
                     snapshot["turn"] = "p2";
                     snapshot["p1SelectedBuffId"] = null;
+                    snapshot["p2DraftPool"] = new JArray(((JArray)snapshot["draftPool"]).Values<string>());
+                    return;
+                case "no-take-3-buff":
+                    ((JObject)snapshot["playerBuffs"])[snapshot.Value<string>("turn")] = new JObject
+                    {
+                        ["buff"] = new JObject
+                        {
+                            ["id"] = "desperate_gamble",
+                            ["level"] = 3,
+                        },
+                    };
                     return;
                 default:
                     Assert.Fail("Unsupported rejection manifest setup " + setupId + ".");
@@ -5533,6 +8496,23 @@ namespace GemDuel.Tests.EditMode
             }
 
             return payload;
+        }
+
+        private static void AssertLiveReplayStateUnchanged(
+            GemDuelGameController slice,
+            string expectedHash,
+            int expectedRecordedEvents,
+            string label
+        )
+        {
+            var state = slice.BuildAutomationStateSnapshot(1920, 1080);
+            var replay = (JObject)state["replay"];
+            Assert.AreEqual(expectedHash, replay.Value<string>("currentStateHash"), label + " state hash");
+            Assert.AreEqual(
+                expectedRecordedEvents,
+                ((JObject)replay["liveRecording"]).Value<int>("recordedEvents"),
+                label + " live recording count"
+            );
         }
 
         private static T GetPrivateField<T>(object instance, string fieldName)
@@ -5852,6 +8832,25 @@ namespace GemDuel.Tests.EditMode
                 .FirstOrDefault(candidate => candidate.Value<string>("semanticKey") == semanticKey);
             Assert.NotNull(target, "Missing visible target " + semanticKey);
             return target;
+        }
+
+        private static bool ClickVisibleTargetCenterForAutomation(
+            GemDuelGameController controller,
+            JObject automationState,
+            string semanticKey,
+            out string error
+        )
+        {
+            var target = FindVisibleTarget(automationState, semanticKey);
+            var rect = (JObject)target["rect"];
+            var viewport = (JObject)automationState["viewport"];
+            return controller.ClickViewportPointForAutomation(
+                (float)(rect.Value<double>("x") + rect.Value<double>("width") * 0.5d),
+                (float)(rect.Value<double>("y") + rect.Value<double>("height") * 0.5d),
+                viewport.Value<int>("width"),
+                viewport.Value<int>("height"),
+                out error
+            );
         }
 
         private static void CleanupRenderedSceneObjects()

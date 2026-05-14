@@ -119,6 +119,9 @@ export const getActionRejectionReason = (state: GameState, action: GameAction): 
     switch (action.type) {
         case 'SELECT_BUFF': {
             const buffId = action.payload.buffId;
+            if (state.turn === 'p2' && !state.p1SelectedBuff?.id) {
+                return 'P2 draft selections require a locked-in P1 buff selection.';
+            }
             return getSelectBuffPool(state).includes(buffId)
                 ? null
                 : 'Selected buff is not available to the active player.';

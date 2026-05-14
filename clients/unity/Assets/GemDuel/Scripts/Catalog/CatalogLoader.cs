@@ -49,8 +49,49 @@ namespace GemDuel.Catalog
         {
             get
             {
-                return Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", ".."));
+                return ResolveRootFrom(Application.dataPath);
             }
+        }
+
+        public static string ResolveRootFrom(string startPath)
+        {
+            var configured = Environment.GetEnvironmentVariable("GEMDUEL_REPOSITORY_ROOT");
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                return Path.GetFullPath(configured);
+            }
+
+            var current = Path.GetFullPath(string.IsNullOrWhiteSpace(startPath) ? "." : startPath);
+            if (File.Exists(current))
+            {
+                current = Path.GetDirectoryName(current);
+            }
+
+            while (!string.IsNullOrEmpty(current))
+            {
+                if (LooksLikeRepositoryRoot(current))
+                {
+                    return current;
+                }
+
+                var parent = Directory.GetParent(current);
+                if (parent == null)
+                {
+                    break;
+                }
+
+                current = parent.FullName;
+            }
+
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", ".."));
+        }
+
+        public static bool LooksLikeRepositoryRoot(string path)
+        {
+            return !string.IsNullOrWhiteSpace(path)
+                && File.Exists(Path.Combine(path, "pnpm-lock.yaml"))
+                && File.Exists(Path.Combine(path, "tools", "migration", "unity-rules-engine-bridge.ts"))
+                && Directory.Exists(Path.Combine(path, "fixtures", "unity-catalog"));
         }
 
         public static string ResolveFromRoot(params string[] segments)
@@ -69,6 +110,12 @@ namespace GemDuel.Catalog
     {
         public UnityCatalog LoadDefault()
         {
+            var packagedCatalogDirectory = ResolvePackagedCatalogDirectory();
+            if (!string.IsNullOrWhiteSpace(packagedCatalogDirectory))
+            {
+                return Load(packagedCatalogDirectory);
+            }
+
             return Load(RepositoryPaths.ResolveFromRoot("fixtures", "unity-catalog"));
         }
 
@@ -150,6 +197,31 @@ namespace GemDuel.Catalog
             }
 
             return result;
+        }
+
+        private static string ResolvePackagedCatalogDirectory()
+        {
+            var configured = Environment.GetEnvironmentVariable("GEMDUEL_UNITY_CATALOG_DIR");
+            if (!string.IsNullOrWhiteSpace(configured) && HasCatalogFiles(configured))
+            {
+                return Path.GetFullPath(configured);
+            }
+
+            var packaged = Path.Combine(
+                Application.streamingAssetsPath,
+                "GemDuelRulesRuntime",
+                "catalog"
+            );
+            return HasCatalogFiles(packaged) ? packaged : string.Empty;
+        }
+
+        private static bool HasCatalogFiles(string directory)
+        {
+            return !string.IsNullOrWhiteSpace(directory)
+                && File.Exists(Path.Combine(directory, "cards.json"))
+                && File.Exists(Path.Combine(directory, "royals.json"))
+                && File.Exists(Path.Combine(directory, "buffs.json"))
+                && File.Exists(Path.Combine(directory, "gems.json"));
         }
     }
 }

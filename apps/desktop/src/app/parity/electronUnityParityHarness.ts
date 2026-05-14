@@ -206,8 +206,18 @@ export const createElectronUnityParityApi = (
                 case 'confirm_preview_action':
                     return await clickActions.confirmPreviewAction(action, payload);
 
+                case 'select_joker_color':
+                case 'select_card_color':
+                    return await clickActions.selectJokerColor(action, payload);
+
                 case 'click_board_cell':
                     return await clickActions.clickBoardCell(action, payload);
+
+                case 'preselect_reserve_gold':
+                    return await clickActions.preselectReserveGold(action, payload);
+
+                case 'resolve_pending_reserve_gold':
+                    return await clickActions.resolvePendingReserveGold(action, payload);
 
                 case 'hover_board_cell':
                     return await clickActions.hoverBoardCell(action, payload);
@@ -226,6 +236,12 @@ export const createElectronUnityParityApi = (
 
                 case 'discard_gem':
                     return await clickActions.discardGem(action, payload);
+
+                case 'activate_privilege':
+                    return await clickActions.activatePrivilege(action);
+
+                case 'use_privilege':
+                    return await clickActions.usePrivilege(action, payload);
 
                 case 'hover_player_gem':
                     return await clickActions.hoverPlayerGem(action, payload);

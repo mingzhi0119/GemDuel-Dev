@@ -8,6 +8,8 @@ namespace GemDuel.Presentation
         private readonly System.Collections.Generic.HashSet<string> draggedBoardGemKeys =
             new System.Collections.Generic.HashSet<string>();
         private bool boardGemDragActive;
+        private Vector3 lastHoverPollScreenPosition = new Vector3(float.NaN, float.NaN, float.NaN);
+        private float nextHoverPollAt;
 
         public bool LastMouseDispatchOk { get; private set; }
         public string LastMouseDispatchDetail { get; private set; } = string.Empty;
@@ -33,7 +35,7 @@ namespace GemDuel.Presentation
                 gameController.ApplyNextFixtureEvent();
             }
 
-            if (!Input.GetMouseButton(0))
+            if (!Input.GetMouseButton(0) && ShouldPollHover(Input.mousePosition))
             {
                 LastHoverDispatchScreenPosition = Input.mousePosition;
                 LastHoverDispatchOk = TryHoverScreenPointForEvidence(Input.mousePosition, out var hoverDetail);
@@ -78,6 +80,24 @@ namespace GemDuel.Presentation
 
             gameController.HandleVisibleTarget(target);
             detail = DescribeTarget(target);
+            return true;
+        }
+
+        private bool ShouldPollHover(Vector3 screenPosition)
+        {
+            const float hoverPollIntervalSeconds = 0.05f;
+            const float hoverMoveEpsilonPixels = 0.75f;
+            var moved =
+                float.IsNaN(lastHoverPollScreenPosition.x)
+                || (screenPosition - lastHoverPollScreenPosition).sqrMagnitude
+                    >= hoverMoveEpsilonPixels * hoverMoveEpsilonPixels;
+            if (!moved && Time.unscaledTime < nextHoverPollAt)
+            {
+                return false;
+            }
+
+            lastHoverPollScreenPosition = screenPosition;
+            nextHoverPollAt = Time.unscaledTime + hoverPollIntervalSeconds;
             return true;
         }
 
@@ -143,10 +163,20 @@ namespace GemDuel.Presentation
                 return true;
             }
 
-            gameController.HandleVisibleTarget(target);
-            draggedBoardGemKeys.Add(key);
-            detail = "Dragged " + DescribeTarget(target) + ".";
-            return true;
+            var dispatched = gameController.TryHandleTakeGemsDragTarget(target, out var dragDetail);
+            if (dispatched)
+            {
+                draggedBoardGemKeys.Add(key);
+                foreach (var selectedKey in gameController.GetSelectedTakeGemDragKeysForInput())
+                {
+                    draggedBoardGemKeys.Add(selectedKey);
+                }
+            }
+
+            detail = dispatched
+                ? "Dragged " + DescribeTarget(target) + ". " + dragDetail
+                : dragDetail;
+            return dispatched;
         }
 
         private bool TryFindTargetAtScreenPoint(
@@ -193,7 +223,12 @@ namespace GemDuel.Presentation
             var bestZ = float.MaxValue;
             foreach (var target in targets)
             {
-                if (!target.Clickable)
+                if (
+                    target == null
+                    || !target.isActiveAndEnabled
+                    || !target.gameObject.activeInHierarchy
+                    || !target.Clickable
+                )
                 {
                     continue;
                 }
@@ -210,7 +245,12 @@ namespace GemDuel.Presentation
                     world.x <= position.x + size.x * 0.5f &&
                     world.y >= position.y - size.y * 0.5f &&
                     world.y <= position.y + size.y * 0.5f;
-                if (!inside || position.z >= bestZ)
+                if (!inside)
+                {
+                    continue;
+                }
+
+                if (best != null && !IsBetterHitTarget(target, best, position.z, bestZ))
                 {
                     continue;
                 }
@@ -220,6 +260,54 @@ namespace GemDuel.Presentation
             }
 
             return best;
+        }
+
+        private static bool IsBetterHitTarget(
+            GemDuelViewTarget candidate,
+            GemDuelViewTarget existing,
+            float candidateZ,
+            float existingZ
+        )
+        {
+            if (candidate == null)
+            {
+                return false;
+            }
+
+            if (existing == null)
+            {
+                return true;
+            }
+
+            if (
+                !string.IsNullOrEmpty(candidate.SemanticKey)
+                && candidate.SemanticKey == existing.SemanticKey
+            )
+            {
+                var candidateActionable = !string.IsNullOrEmpty(candidate.EventType);
+                var existingActionable = !string.IsNullOrEmpty(existing.EventType);
+                if (candidateActionable != existingActionable)
+                {
+                    return candidateActionable;
+                }
+            }
+
+            if (
+                candidate.Kind == "InventoryGem"
+                && existing.Kind == "InventoryGem"
+                && candidate.InstanceId == existing.InstanceId
+                && candidate.GemId == existing.GemId
+            )
+            {
+                var candidateActionable = !string.IsNullOrEmpty(candidate.EventType);
+                var existingActionable = !string.IsNullOrEmpty(existing.EventType);
+                if (candidateActionable != existingActionable)
+                {
+                    return candidateActionable;
+                }
+            }
+
+            return candidateZ < existingZ;
         }
 
         private static string DescribeTarget(GemDuelViewTarget target)

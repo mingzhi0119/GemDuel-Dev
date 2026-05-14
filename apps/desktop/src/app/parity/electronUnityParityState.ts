@@ -44,6 +44,7 @@ const normalizeGameState = (state: GameState & { errorMsg?: string | null }) => 
     winner: state.winner,
     errorMsg: state.errorMsg ?? null,
     selectedGems: 'selectedGems' in state ? state.selectedGems : [],
+    reserveGoldSelection: 'reserveGoldSelection' in state ? state.reserveGoldSelection : null,
     board: state.board.map((row) => row.map((cell) => cell.type.id)),
     market: {
         1: state.market[1].map(cardId),
@@ -175,27 +176,42 @@ export const buildStateDump = ({
     | 'soundEnabled'
     | 'setupRoute'
     | 'matchmakingRoute'
->): ElectronParityStateDump => ({
-    source: 'electron',
-    timestamp: nowIso(),
-    route: { setupRoute, matchmakingRoute },
-    settings: { locale, theme, surfaceTheme: getSurfaceThemeVariant(surfaceTheme), soundEnabled },
-    viewport: {
-        viewportWidth: layout.viewportWidth,
-        viewportHeight: layout.viewportHeight,
-        stageCanvasWidthPx: layout.stageCanvasWidthPx,
-        stageCanvasHeightPx: layout.stageCanvasHeightPx,
-    },
-    history: {
-        currentIndex: game.historyControls.currentIndex,
-        historyLength: game.historyControls.historyLength,
-        historySource: game.historyControls.historySource,
-    },
-    game: normalizeGameState(game.state),
-    visible: {
-        title: document.title,
-        textDigest: (document.body.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 2000),
-        boxes: getDomBoxes(game.state, game.historyControls.historyLength),
-        typography: getTypographySamples(),
-    },
-});
+>): ElectronParityStateDump => {
+    const currentReplay = game.replay?.currentReplay ?? null;
+    return {
+        source: 'electron',
+        timestamp: nowIso(),
+        route: { setupRoute, matchmakingRoute },
+        settings: {
+            locale,
+            theme,
+            surfaceTheme: getSurfaceThemeVariant(surfaceTheme),
+            soundEnabled,
+        },
+        viewport: {
+            viewportWidth: layout.viewportWidth,
+            viewportHeight: layout.viewportHeight,
+            stageCanvasWidthPx: layout.stageCanvasWidthPx,
+            stageCanvasHeightPx: layout.stageCanvasHeightPx,
+        },
+        history: {
+            currentIndex: game.historyControls.currentIndex,
+            historyLength: game.historyControls.historyLength,
+            historySource: game.historyControls.historySource,
+        },
+        replay: {
+            loaded: Boolean(currentReplay),
+            replayRevision: currentReplay?.replayRevision ?? 0,
+            eventCount: currentReplay?.events.length ?? 0,
+            summaryFinalStateHash: currentReplay?.summary.finalStateHash ?? null,
+            winner: currentReplay?.summary.winner ?? null,
+        },
+        game: normalizeGameState(game.state),
+        visible: {
+            title: document.title,
+            textDigest: (document.body.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 2000),
+            boxes: getDomBoxes(game.state, game.historyControls.historyLength),
+            typography: getTypographySamples(),
+        },
+    };
+};
