@@ -10,9 +10,13 @@ import type {
 export type ParityAction =
     | 'start_local_game'
     | 'choose_mode'
+    | 'hover_mode'
     | 'choose_boon'
     | 'hover_boon'
     | 'click_chrome_rulebook'
+    | 'click_rulebook_next'
+    | 'click_rulebook_prev'
+    | 'click_rulebook_nav'
     | 'click_chrome_restart'
     | 'hover_chrome_control'
     | 'click_market_card'
@@ -169,9 +173,13 @@ declare global {
 export const ACTIONS: ParityAction[] = [
     'start_local_game',
     'choose_mode',
+    'hover_mode',
     'choose_boon',
     'hover_boon',
     'click_chrome_rulebook',
+    'click_rulebook_next',
+    'click_rulebook_prev',
+    'click_rulebook_nav',
     'click_chrome_restart',
     'hover_chrome_control',
     'click_market_card',

@@ -164,6 +164,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <AnimatedScore value={score} theme={theme} className={scoreMetricClass} />
             </span>
             <span
+                data-topbar-points-goal={pid}
                 className={topBarGoalClass}
                 style={{
                     ...readabilityTextStyle,
@@ -199,6 +200,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                     className={scoreMetricClass}
                 />
                 <span
+                    data-topbar-crowns-goal={pid}
                     className={topBarGoalClass}
                     style={{
                         ...readabilityTextStyle,
@@ -302,6 +304,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                     {playerTurnCounts[pid]}
                 </span>
                 <span
+                    data-topbar-turn-word={pid}
                     className={turnWordClass}
                     style={{
                         ...readabilityTextStyle,

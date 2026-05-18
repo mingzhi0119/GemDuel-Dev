@@ -52,6 +52,7 @@ const REQUIRED_COVERAGE = [
     'reserved-buy',
     'reserve-cancel',
     'reserve-deck',
+    'multi-reserved',
     'discard-reserved',
     'privilege',
     'peek-modal',
@@ -834,6 +835,44 @@ const buildReserveDeckReplay = (): ReplayVNext => {
     }
 
     return saveRecorderReplay(recorder, finalState);
+};
+
+const buildMultiReservedReplay = (): ReplayVNext => {
+    const initAction = buildStartGameAction('LOCAL_PVP', {
+        useBuffs: false,
+        isHost: true,
+        hostPlayer: 'p1',
+        seed: 'unity-golden-multi-reserved',
+    });
+    const initState = requireState(applyAction(INITIAL_STATE_SKELETON, initAction), 'INIT');
+    const recorder = seedReplayRecorderState(
+        createReplayRecorderInternalState(RULES_VERSION, '2026-05-11T09:00:09.000Z'),
+        initAction,
+        initState
+    );
+
+    let state = initState;
+    for (let reserveCount = 0; reserveCount < 3; reserveCount += 1) {
+        const card = state.market[1][0];
+        if (!card) {
+            throw new Error('Multi-reserved fixture could not find a Level 1 market card.');
+        }
+
+        state = applyRecordedAction(recorder, state, {
+            type: 'RESERVE_CARD',
+            payload: { card, level: 1, idx: 0 },
+        });
+        state = applyRecordedAction(recorder, state, {
+            type: 'TAKE_GEMS',
+            payload: { coords: [findCollectibleCoord(state)] },
+        });
+    }
+
+    if (state.turn !== 'p1' || state.playerReserved.p1.length !== 3) {
+        throw new Error('Multi-reserved fixture did not return to P1 with three reserved cards.');
+    }
+
+    return saveRecorderReplay(recorder, state);
 };
 
 const buildPrivilegeReplay = (): ReplayVNext => {
@@ -2100,6 +2139,13 @@ const main = async () => {
             tags: ['reserve-deck'],
             replay: buildReserveDeckReplay(),
             source: 'Deterministic local PvP replay selected for deck reserve initiation and gold resolution coverage.',
+        },
+        {
+            id: 'local-pvp-multi-reserved',
+            fileName: 'local-pvp-multi-reserved.replay.json',
+            tags: ['reserve', 'multi-reserved'],
+            replay: buildMultiReservedReplay(),
+            source: 'Deterministic local PvP replay selected for three-card reserved mini-stack visual coverage.',
         },
         {
             id: 'local-pvp-privilege',

@@ -197,6 +197,7 @@ describe('electronUnityParityState', () => {
         opponentResources.dataset.playerZoneColumn = 'resources';
         opponentResources.getBoundingClientRect = () => rect(16, 26, 80, 30);
         p2Zone.appendChild(opponentResources);
+        appendElement('h3', { playerZoneLabel: 'p1' }, rect(30, 40, 56, 40), 'P1');
         appendElement('button', { reservedSlot: 'p1-0' });
         appendElement('div', { cardPreviewOverlay: 'true' }).setAttribute(
             'data-card-preview-overlay',
@@ -206,6 +207,7 @@ describe('electronUnityParityState', () => {
             'data-card-preview-backdrop',
             'true'
         );
+        appendElement('button', {}).setAttribute('aria-label', 'Close card preview');
         appendElement('div', { cardPreviewCard: 'c11-re' }).setAttribute(
             'data-card-preview-card',
             'c11-re'
@@ -266,9 +268,14 @@ describe('electronUnityParityState', () => {
                 'player.opponent.zone',
                 'player.resources',
                 'player.score',
+                'player.current.resourcesColumn',
+                'player.current.identityColumn',
+                'player.opponent.resourcesColumn',
+                'player.current.label',
                 'player.reserved.0',
                 'card.preview.overlay',
                 'card.preview.backdrop',
+                'card.preview.close',
                 'card.preview.card',
                 'card.preview.primaryAction',
                 'card.preview.action.reserve',
@@ -276,6 +283,18 @@ describe('electronUnityParityState', () => {
                 'error.banner',
                 'turn.end',
                 'royal.featured',
+            ])
+        );
+        expect(dump.visible.boxes).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    semanticKey: 'player.current.resourcesColumn',
+                    rect: expect.objectContaining({ x: 12, y: 22, width: 80, height: 30 }),
+                }),
+                expect.objectContaining({
+                    semanticKey: 'player.current.identityColumn',
+                    rect: expect.objectContaining({ x: 14, y: 24, width: 80, height: 30 }),
+                }),
             ])
         );
         expect(dump.visible.textDigest).toContain('Visible text digest');
@@ -296,7 +315,12 @@ describe('electronUnityParityState', () => {
                 }),
                 expect.objectContaining({
                     semanticKey: 'mode.local',
-                    rect: expect.objectContaining({ x: 480, y: 290, width: 240, height: 35 }),
+                    rect: expect.objectContaining({
+                        x: 390.63,
+                        y: 260.25,
+                        width: 200,
+                        height: 111.11,
+                    }),
                 }),
             ])
         );
@@ -332,6 +356,22 @@ describe('electronUnityParityState', () => {
         appendElement('button', { appRestartButton: 'true' });
         appendElement('button', { appSettingsButton: 'true' });
         appendElement('button', { appRestartConfirm: 'true' });
+        appendElement('div', { topbarScoreGroup: 'p1' });
+        appendElement('div', { topbarScoreGroup: 'p2' });
+        appendElement('div', { topbarCrownGroup: 'p1' });
+        appendElement('img', { topbarCrownArtwork: 'p1' });
+        appendElement('span', { topbarCrowns: 'p1' });
+        appendElement('span', { topbarCrownsGoal: 'p1' });
+        appendElement('div', { topbarPointsGroup: 'p2' });
+        appendElement('img', { topbarPointsArtwork: 'p2' });
+        appendElement('span', { topbarScore: 'p2' });
+        appendElement('span', { topbarPointsGoal: 'p2' });
+        appendElement('div', { topbarTurnCore: 'true' });
+        appendElement('div', { topbarTurnSide: 'p1' });
+        appendElement('div', { topbarTurnSide: 'p2' });
+        appendElement('span', { topbarPlayerLabel: 'p1' });
+        appendElement('span', { topbarTurnCount: 'p1' });
+        appendElement('span', { topbarTurnWord: 'p1' });
         appendElement('div', { rulebookOverlay: 'true' }).setAttribute(
             'data-rulebook-overlay',
             'true'
@@ -346,6 +386,10 @@ describe('electronUnityParityState', () => {
         appendElement('label', { appLoadReplayControl: 'true' });
         appendElement('button', { appSurfaceThemeControl: 'true' });
         appendElement('button', { appSurfaceThemeOption: 'anime' });
+        appendElement('button', { replayReturnToResults: 'true' });
+        appendElement('button', { replayControl: 'undo' });
+        appendElement('button', { replayControl: 'redo' });
+        appendElement('span', { replayStepCounter: 'true' });
         appendElement('button', { playerZoneGem: 'p1-red' });
         appendElement('button', { playerZoneGem: 'p2-green' });
         appendElement('button', { playerZoneGem: 'malformed' });
@@ -384,6 +428,22 @@ describe('electronUnityParityState', () => {
                 'chrome.restart',
                 'settings.control',
                 'chrome.restart.confirm',
+                'topbar.score.p1',
+                'topbar.score.p2',
+                'topbar.crowns.p1',
+                'topbar.crowns.p1.icon',
+                'topbar.crowns.p1.value',
+                'topbar.crowns.p1.goal',
+                'topbar.points.p2',
+                'topbar.points.p2.icon',
+                'topbar.points.p2.value',
+                'topbar.points.p2.goal',
+                'topbar.turnCore',
+                'topbar.turn.p1',
+                'topbar.turn.p2',
+                'topbar.turn.p1.label',
+                'topbar.turn.p1.count',
+                'topbar.turn.p1.word',
                 'rulebook.overlay',
                 'rulebook.panel',
                 'settings.locale.en',
@@ -392,6 +452,10 @@ describe('electronUnityParityState', () => {
                 'settings.load',
                 'settings.surface.control',
                 'settings.surface.anime',
+                'replay.returnToResults',
+                'replay.control.undo',
+                'replay.control.redo',
+                'replay.counter',
                 'board.selection.confirm',
                 'board.selection.cancel',
                 'reserve.cancel',

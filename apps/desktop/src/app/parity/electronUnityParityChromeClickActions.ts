@@ -22,6 +22,49 @@ export const createChromeParityClickActions = ({
     result,
     hasRenderedCurrentRoute,
 }: ClickActionDeps) => {
+    const modeHoverLabels: Record<string, string[]> = {
+        local: ['经典模式', 'Classic'],
+        roguelike: ['肉鸽模式', 'Roguelike'],
+        online: ['在线对决', 'Online'],
+        lan: ['局域网对决', 'LAN'],
+        visualLab: ['Visual Lab'],
+    };
+
+    const markModeHoverTarget = (mode: string) => {
+        document
+            .querySelectorAll<HTMLElement>('[data-parity-mode-hover-target]')
+            .forEach((element) => delete element.dataset.parityModeHoverTarget);
+        const labels = modeHoverLabels[mode] ?? modeHoverLabels.local;
+        const candidates = Array.from(
+            document.querySelectorAll<HTMLElement>(
+                '[data-testid="desktop-stage-canvas"] button, button'
+            )
+        );
+        const target = candidates.find((candidate) => {
+            const text = candidate.textContent ?? '';
+            return labels.some((label) => text.includes(label));
+        });
+        if (!target) {
+            return null;
+        }
+
+        target.dataset.parityModeHoverTarget = mode;
+        return `[data-parity-mode-hover-target="${mode}"]`;
+    };
+
+    const hoverMode = async (action: ParityAction, payload: Record<string, unknown>) => {
+        const mode = typeof payload.mode === 'string' ? payload.mode : 'local';
+        const selector = markModeHoverTarget(mode);
+        const ok = selector ? hoverElement(selector) : false;
+        await waitForStableFrame();
+        return result(
+            action,
+            ok,
+            ok ? `Hovered main menu ${mode} mode.` : `No main menu ${mode} mode target.`,
+            ok ? 'dom-hover' : 'missing-dom-target'
+        );
+    };
+
     const chooseBoon = async (action: ParityAction, payload: Record<string, unknown>) => {
         const beforeIndex = currentParams().game.historyControls.currentIndex;
         const buffId = typeof payload.buffId === 'string' ? payload.buffId : undefined;
@@ -85,6 +128,58 @@ export const createChromeParityClickActions = ({
                 ? 'Opened rulebook from top-right control.'
                 : 'Rulebook control or panel not found.',
             opened ? 'dom-click' : 'missing-dom-target'
+        );
+    };
+
+    const rulebookFooterButtons = () =>
+        Array.from(document.querySelectorAll<HTMLButtonElement>('[data-rulebook-panel] button'))
+            .filter((button) => !button.dataset.rulebookNavItem)
+            .filter((button) => !button.getAttribute('aria-label'));
+
+    const clickRulebookNext = async (action: ParityAction) => {
+        const buttons = rulebookFooterButtons();
+        const target = buttons[buttons.length - 1];
+        const ok = Boolean(target && !target.disabled);
+        if (ok) {
+            target.click();
+        }
+
+        await waitForStableFrame();
+        return result(
+            action,
+            ok,
+            ok ? 'Clicked rulebook next.' : 'Rulebook next target not found.',
+            ok ? 'dom-click' : 'missing-dom-target'
+        );
+    };
+
+    const clickRulebookPrev = async (action: ParityAction) => {
+        const buttons = rulebookFooterButtons();
+        const target = buttons[buttons.length - 2];
+        const ok = Boolean(target && !target.disabled);
+        if (ok) {
+            target.click();
+        }
+
+        await waitForStableFrame();
+        return result(
+            action,
+            ok,
+            ok ? 'Clicked rulebook previous.' : 'Rulebook previous target not found.',
+            ok ? 'dom-click' : 'missing-dom-target'
+        );
+    };
+
+    const clickRulebookNav = async (action: ParityAction, payload: Record<string, unknown>) => {
+        const index = Number(payload.index ?? 0);
+        const selector = `[data-rulebook-nav-item="${index}"]`;
+        const ok = clickElement(selector);
+        await waitForStableFrame();
+        return result(
+            action,
+            ok,
+            ok ? `Clicked rulebook nav ${index}.` : `Rulebook nav ${index} not found.`,
+            ok ? 'dom-click' : 'missing-dom-target'
         );
     };
 
@@ -266,9 +361,13 @@ export const createChromeParityClickActions = ({
         chooseBoon,
         clickChromeRestart,
         clickChromeRulebook,
+        clickRulebookNav,
+        clickRulebookNext,
+        clickRulebookPrev,
         closeSettings,
         hoverBoon,
         hoverChromeControl,
+        hoverMode,
         openSettings,
         settingsLoad,
         settingsSave,

@@ -103,6 +103,11 @@ namespace GemDuel.Presentation
                     return Fail(report, "Rulebook next-page button target was not visible after opening.", controller, options);
                 }
 
+                if (!HasVisibleTarget(rulebookOpen, "lexicon.rulebook.prestigePoints"))
+                {
+                    return Fail(report, "Rulebook Prestige Points lexicon target was not visible after opening.", controller, options);
+                }
+
                 if (CurrentStateHash(rulebookOpen) != baselineHash)
                 {
                     return Fail(report, "Rulebook open changed gameplay state hash.", controller, options);
@@ -111,6 +116,63 @@ namespace GemDuel.Presentation
                 if (RecordedEventCount(rulebookOpen) != baselineRecordedEvents)
                 {
                     return Fail(report, "Rulebook open appended live replay events.", controller, options);
+                }
+
+                if (
+                    !controller.RunSemanticActionForAutomation(
+                        "click_rulebook_keyword",
+                        new JObject { ["termId"] = "prestigePoints" },
+                        out var keywordError
+                    )
+                )
+                {
+                    return Fail(report, "click_rulebook_keyword failed: " + keywordError, controller, options);
+                }
+
+                var rulebookKeyword = controller.BuildAutomationStateSnapshot(
+                    options.ViewportWidth,
+                    options.ViewportHeight
+                );
+                var keywordRulebookSnapshot = rulebookKeyword["rulebook"] as JObject;
+                var activeLexicon = keywordRulebookSnapshot?["activeLexicon"] as JObject;
+                if (
+                    keywordRulebookSnapshot == null
+                    || !keywordRulebookSnapshot.Value<bool>("open")
+                    || keywordRulebookSnapshot.Value<int>("page") != 0
+                    || activeLexicon == null
+                    || activeLexicon.Value<string>("termId") != "prestigePoints"
+                )
+                {
+                    return Fail(report, "Rulebook keyword click did not keep the manual open with the Prestige Points popover active.", controller, options);
+                }
+
+                if (!HasVisibleTarget(rulebookKeyword, "lexicon.popover.close"))
+                {
+                    return Fail(report, "Lexicon popover close target was not visible after keyword click.", controller, options);
+                }
+
+                if (CurrentStateHash(rulebookKeyword) != baselineHash)
+                {
+                    return Fail(report, "Rulebook keyword click changed gameplay state hash.", controller, options);
+                }
+
+                if (RecordedEventCount(rulebookKeyword) != baselineRecordedEvents)
+                {
+                    return Fail(report, "Rulebook keyword click appended live replay events.", controller, options);
+                }
+
+                if (!controller.RunSemanticActionForAutomation("close_lexicon_popover", null, out var closeLexiconError))
+                {
+                    return Fail(report, "close_lexicon_popover failed: " + closeLexiconError, controller, options);
+                }
+
+                var rulebookKeywordClosed = controller.BuildAutomationStateSnapshot(
+                    options.ViewportWidth,
+                    options.ViewportHeight
+                );
+                if ((rulebookKeywordClosed["rulebook"]?["activeLexicon"] as JObject) != null)
+                {
+                    return Fail(report, "Lexicon popover remained active after closing.", controller, options);
                 }
 
                 if (!controller.RunSemanticActionForAutomation("rulebook_next", null, out var nextError))
@@ -244,6 +306,7 @@ namespace GemDuel.Presentation
                 report["rulebookNextStateSummary"] = BuildStateSummary(rulebookNext);
                 report["rulebookClosedStateSummary"] = BuildStateSummary(rulebookClosed);
                 report["rulebookOpenSnapshot"] = rulebookOpen["rulebook"]?.DeepClone();
+                report["rulebookKeywordSnapshot"] = rulebookKeyword["rulebook"]?.DeepClone();
                 report["rulebookNextSnapshot"] = rulebookNext["rulebook"]?.DeepClone();
                 report["shellStateSummary"] = BuildStateSummary(shell);
                 report["restartedStartStateSummary"] = BuildStateSummary(restartedStart);
@@ -254,14 +317,19 @@ namespace GemDuel.Presentation
                     ["rulebookPanelVisibleAfterOpen"] = true,
                     ["rulebookCloseVisibleAfterOpen"] = true,
                     ["rulebookNextVisibleAfterOpen"] = true,
+                    ["rulebookLexiconTargetVisibleAfterOpen"] = true,
+                    ["rulebookLexiconTermAfterClick"] = activeLexicon.Value<string>("termId"),
+                    ["rulebookPageAfterKeywordClick"] = keywordRulebookSnapshot.Value<int>("page"),
                     ["rulebookPageAfterNext"] = 1,
                     ["rulebookOverlayVisibleAfterClose"] = false,
                     ["gameplayHashBeforeRulebook"] = baselineHash,
                     ["gameplayHashAfterRulebookOpen"] = CurrentStateHash(rulebookOpen),
+                    ["gameplayHashAfterRulebookKeyword"] = CurrentStateHash(rulebookKeyword),
                     ["gameplayHashAfterRulebookNext"] = CurrentStateHash(rulebookNext),
                     ["gameplayHashAfterRulebookClose"] = CurrentStateHash(rulebookClosed),
                     ["recordedEventsBeforeRulebook"] = baselineRecordedEvents,
                     ["recordedEventsAfterRulebookOpen"] = RecordedEventCount(rulebookOpen),
+                    ["recordedEventsAfterRulebookKeyword"] = RecordedEventCount(rulebookKeyword),
                     ["recordedEventsAfterRulebookNext"] = RecordedEventCount(rulebookNext),
                     ["recordedEventsAfterRulebookClose"] = RecordedEventCount(rulebookClosed),
                     ["shellAfterRestart"] = true,

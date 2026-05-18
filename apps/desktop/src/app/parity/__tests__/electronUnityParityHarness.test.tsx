@@ -155,6 +155,11 @@ const installDomTargets = () => {
         <div id="root"></div>
         <main data-testid="desktop-stage-canvas">
             <span>选择一个模式开始</span>
+            <button type="button">经典模式</button>
+            <button type="button">肉鸽模式</button>
+            <button type="button">在线对决</button>
+            <button type="button">局域网对决</button>
+            <button type="button">Visual Lab</button>
             <div data-board-cell="0-0"></div>
             <div data-board-cell="0-1"></div>
             <div data-draft-card-scale-reference="4">
@@ -682,6 +687,10 @@ describe('useElectronUnityParityHarness', () => {
             ok: true,
         });
         expect(params.setStartSetupRoute).toHaveBeenCalledWith('classic');
+        await expect(api.dispatch('hover_mode', { mode: 'local' })).resolves.toMatchObject({
+            ok: true,
+            driver: 'dom-hover',
+        });
 
         await expect(api.dispatch('choose_boon', { index: 1 })).resolves.toMatchObject({
             ok: true,

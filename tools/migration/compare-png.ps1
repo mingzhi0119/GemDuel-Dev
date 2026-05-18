@@ -14,7 +14,25 @@ param(
 
     [int] $PositionTolerancePx = 2,
 
-    [double] $MeanAbsoluteDeltaThreshold = 16.0
+    [double] $MeanAbsoluteDeltaThreshold = 16.0,
+
+    [int] $BaselineCropX = -1,
+
+    [int] $BaselineCropY = -1,
+
+    [int] $BaselineCropWidth = -1,
+
+    [int] $BaselineCropHeight = -1,
+
+    [int] $CandidateCropX = -1,
+
+    [int] $CandidateCropY = -1,
+
+    [int] $CandidateCropWidth = -1,
+
+    [int] $CandidateCropHeight = -1,
+
+    [switch] $RequireStrictPixel
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,6 +65,17 @@ public sealed class PngDiffResult
     public bool meanDeltaOk;
     public double meanAbsoluteDelta;
     public double meanAbsoluteDeltaThreshold;
+    public double similarityPercent;
+    public double requiredSimilarityPercent;
+    public bool requireStrictPixel;
+    public int baselineCropX;
+    public int baselineCropY;
+    public int baselineCropWidth;
+    public int baselineCropHeight;
+    public int candidateCropX;
+    public int candidateCropY;
+    public int candidateCropWidth;
+    public int candidateCropHeight;
 }
 
 public static class PngDiff
@@ -58,13 +87,34 @@ public static class PngDiff
         double thresholdPercent,
         int pixelThreshold,
         int positionTolerancePx,
-        double meanAbsoluteDeltaThreshold
+        double meanAbsoluteDeltaThreshold,
+        int baselineCropX,
+        int baselineCropY,
+        int baselineCropWidth,
+        int baselineCropHeight,
+        int candidateCropX,
+        int candidateCropY,
+        int candidateCropWidth,
+        int candidateCropHeight,
+        bool requireStrictPixel
     )
     {
         using (var baselineSource = new Bitmap(baselinePath))
         using (var candidateSource = new Bitmap(candidatePath))
-        using (var baseline = ToArgb(baselineSource))
-        using (var candidate = ToArgb(candidateSource))
+        using (var baseline = ToArgb(
+            baselineSource,
+            baselineCropX,
+            baselineCropY,
+            baselineCropWidth,
+            baselineCropHeight
+        ))
+        using (var candidate = ToArgb(
+            candidateSource,
+            candidateCropX,
+            candidateCropY,
+            candidateCropWidth,
+            candidateCropHeight
+        ))
         {
             var width = Math.Min(baseline.Width, candidate.Width);
             var height = Math.Min(baseline.Height, candidate.Height);
@@ -189,9 +239,10 @@ public static class PngDiff
             var meanDeltaOk = baseline.Width == candidate.Width
                 && baseline.Height == candidate.Height
                 && meanAbsoluteDelta <= meanAbsoluteDeltaThreshold;
+            var similarityPercent = 100.0 - mismatchPercent;
             return new PngDiffResult
             {
-                ok = strictPixelOk || meanDeltaOk,
+                ok = requireStrictPixel ? strictPixelOk : strictPixelOk || meanDeltaOk,
                 baselineWidth = baseline.Width,
                 baselineHeight = baseline.Height,
                 candidateWidth = candidate.Width,
@@ -209,6 +260,17 @@ public static class PngDiff
                 meanDeltaOk = meanDeltaOk,
                 meanAbsoluteDelta = Math.Round(meanAbsoluteDelta, 6),
                 meanAbsoluteDeltaThreshold = meanAbsoluteDeltaThreshold,
+                similarityPercent = Math.Round(similarityPercent, 6),
+                requiredSimilarityPercent = Math.Round(100.0 - thresholdPercent, 6),
+                requireStrictPixel = requireStrictPixel,
+                baselineCropX = baselineCropX,
+                baselineCropY = baselineCropY,
+                baselineCropWidth = baselineCropWidth,
+                baselineCropHeight = baselineCropHeight,
+                candidateCropX = candidateCropX,
+                candidateCropY = candidateCropY,
+                candidateCropWidth = candidateCropWidth,
+                candidateCropHeight = candidateCropHeight,
             };
         }
     }
@@ -221,12 +283,32 @@ public static class PngDiff
             + Math.Abs(baselineBytes[baselineOffset + 3] - candidateBytes[candidateOffset + 3]);
     }
 
-    private static Bitmap ToArgb(Bitmap source)
+    private static Bitmap ToArgb(
+        Bitmap source,
+        int cropX,
+        int cropY,
+        int cropWidth,
+        int cropHeight
+    )
     {
-        var bitmap = new Bitmap(source.Width, source.Height, PixelFormat.Format32bppArgb);
+        var hasCrop = cropWidth > 0 && cropHeight > 0;
+        var sourceRect = hasCrop
+            ? new Rectangle(
+                Math.Max(0, Math.Min(source.Width - 1, cropX)),
+                Math.Max(0, Math.Min(source.Height - 1, cropY)),
+                Math.Max(1, Math.Min(cropWidth, source.Width - Math.Max(0, Math.Min(source.Width - 1, cropX)))),
+                Math.Max(1, Math.Min(cropHeight, source.Height - Math.Max(0, Math.Min(source.Height - 1, cropY))))
+            )
+            : new Rectangle(0, 0, source.Width, source.Height);
+        var bitmap = new Bitmap(sourceRect.Width, sourceRect.Height, PixelFormat.Format32bppArgb);
         using (var graphics = Graphics.FromImage(bitmap))
         {
-            graphics.DrawImageUnscaled(source, 0, 0);
+            graphics.DrawImage(
+                source,
+                new Rectangle(0, 0, sourceRect.Width, sourceRect.Height),
+                sourceRect,
+                GraphicsUnit.Pixel
+            );
         }
 
         return bitmap;
@@ -241,7 +323,16 @@ $result = [PngDiff]::Compare(
     $ThresholdPercent,
     $PixelThreshold,
     $PositionTolerancePx,
-    $MeanAbsoluteDeltaThreshold
+    $MeanAbsoluteDeltaThreshold,
+    $BaselineCropX,
+    $BaselineCropY,
+    $BaselineCropWidth,
+    $BaselineCropHeight,
+    $CandidateCropX,
+    $CandidateCropY,
+    $CandidateCropWidth,
+    $CandidateCropHeight,
+    [bool] $RequireStrictPixel
 )
 
 $result | ConvertTo-Json -Depth 4

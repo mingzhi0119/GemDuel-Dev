@@ -24,6 +24,21 @@ namespace GemDuel.Core
 
         public GameRulesResult StartLocalGame(string seed, bool useBuffs = false)
         {
+            return StartGame("LOCAL_PVP", seed, "p1", useBuffs);
+        }
+
+        public GameRulesResult StartNetworkGame(string seed, string hostPlayer = "p1", bool useBuffs = false)
+        {
+            return StartGame(
+                "ONLINE_MULTIPLAYER",
+                seed,
+                string.IsNullOrWhiteSpace(hostPlayer) ? "p1" : hostPlayer,
+                useBuffs
+            );
+        }
+
+        private GameRulesResult StartGame(string mode, string seed, string hostPlayer, bool useBuffs)
+        {
             JObject response;
             try
             {
@@ -31,10 +46,10 @@ namespace GemDuel.Core
                     new JObject
                     {
                         ["kind"] = "start",
-                        ["mode"] = "LOCAL_PVP",
+                        ["mode"] = mode,
                         ["useBuffs"] = useBuffs,
                         ["seed"] = string.IsNullOrWhiteSpace(seed) ? "unity-localdev" : seed,
-                        ["hostPlayer"] = "p1",
+                        ["hostPlayer"] = hostPlayer,
                     }
                 );
             }
@@ -245,13 +260,13 @@ namespace GemDuel.Core
 
         private ProcessStartInfo BuildStartInfo(string bridgeArguments)
         {
-            var useShellExecute = Application.platform == RuntimePlatform.WindowsPlayer;
-            var fileName = NodePath;
             var arguments = Quote(ScriptPath) + " " + bridgeArguments;
+            var fileName = NodePath;
+            var useShellExecute = Application.platform == RuntimePlatform.WindowsPlayer;
             if (useShellExecute)
             {
                 fileName = Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe";
-                arguments = "/d /s /c " + Quote(NodePath) + " " + arguments;
+                arguments = "/d /s /c " + QuoteCmdCommand(Quote(NodePath) + " " + arguments);
             }
 
             var startInfo = new ProcessStartInfo
@@ -290,6 +305,11 @@ namespace GemDuel.Core
         private static string Quote(string value)
         {
             return "\"" + value.Replace("\"", "\\\"") + "\"";
+        }
+
+        private static string QuoteCmdCommand(string command)
+        {
+            return "\"" + command + "\"";
         }
 
         private static string ResponseFileArgument(string responsePath)

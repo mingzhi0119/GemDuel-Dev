@@ -5007,6 +5007,27 @@ namespace GemDuel.Tests.EditMode
                 var primaryAction = FindVisibleTarget(preview, "card.preview.primaryAction");
                 Assert.AreEqual("ActionButton", primaryAction.Value<string>("kind"));
                 Assert.AreEqual("preview-buy", primaryAction.Value<string>("eventType"));
+                Assert.AreEqual("LexiconTerm", FindVisibleTarget(preview, "lexicon.card.buyCard").Value<string>("kind"));
+
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation(
+                        "click_preview_keyword",
+                        new JObject { ["termId"] = "buyCard" },
+                        out var keywordError
+                    ),
+                    keywordError
+                );
+
+                var previewKeyword = slice.BuildAutomationStateSnapshot(1920, 1080);
+                Assert.AreEqual("market", ((JObject)previewKeyword["preview"]).Value<string>("source"));
+                var activePreviewLexicon = (JObject)previewKeyword["lexicon"];
+                Assert.AreEqual("buyCard", activePreviewLexicon.Value<string>("termId"));
+                Assert.That(activePreviewLexicon.Value<string>("description"), Does.Contain("市场"));
+                Assert.IsTrue(
+                    slice.RunSemanticActionForAutomation("close_lexicon_popover", null, out var closeLexiconError),
+                    closeLexiconError
+                );
+                preview = slice.BuildAutomationStateSnapshot(1920, 1080);
 
                 Assert.IsTrue(
                     ClickVisibleTargetCenterForAutomation(
@@ -7197,10 +7218,15 @@ namespace GemDuel.Tests.EditMode
                 Assert.IsTrue(chrome.Value<bool>("rulebookPanelVisibleAfterOpen"));
                 Assert.IsTrue(chrome.Value<bool>("rulebookCloseVisibleAfterOpen"));
                 Assert.IsTrue(chrome.Value<bool>("rulebookNextVisibleAfterOpen"));
+                Assert.IsTrue(chrome.Value<bool>("rulebookLexiconTargetVisibleAfterOpen"));
+                Assert.AreEqual("prestigePoints", chrome.Value<string>("rulebookLexiconTermAfterClick"));
+                Assert.AreEqual(0, chrome.Value<int>("rulebookPageAfterKeywordClick"));
                 Assert.AreEqual(1, chrome.Value<int>("rulebookPageAfterNext"));
                 var rulebookOpen = (JObject)report["rulebookOpenSnapshot"];
+                var rulebookKeyword = (JObject)report["rulebookKeywordSnapshot"];
                 var rulebookNext = (JObject)report["rulebookNextSnapshot"];
                 Assert.AreEqual("packages/ui/src/components/RulebookContent.ts", rulebookOpen.Value<string>("sourceOfTruth"));
+                Assert.AreEqual("packages/shared/src/lexicon/index.ts", rulebookOpen.Value<string>("lexiconSourceOfTruth"));
                 Assert.AreEqual(9, rulebookOpen.Value<int>("pageCount"));
                 Assert.AreEqual("快速上手", rulebookOpen.Value<string>("title"));
                 Assert.That(rulebookOpen.Value<string>("summary"), Does.Contain("《Gem Duel》"));
@@ -7225,10 +7251,18 @@ namespace GemDuel.Tests.EditMode
                     ((JObject)((JArray)rulebookNext["sections"])[0])["items"].Values<string>().First(),
                     Does.Contain("声望值")
                 );
+                var activeLexicon = (JObject)rulebookKeyword["activeLexicon"];
+                Assert.AreEqual("prestigePoints", activeLexicon.Value<string>("termId"));
+                Assert.AreEqual("声望值", activeLexicon.Value<string>("label"));
+                Assert.That(activeLexicon.Value<string>("description"), Does.Contain("分数"));
                 Assert.IsFalse(chrome.Value<bool>("rulebookOverlayVisibleAfterClose"));
                 Assert.AreEqual(
                     chrome.Value<string>("gameplayHashBeforeRulebook"),
                     chrome.Value<string>("gameplayHashAfterRulebookOpen")
+                );
+                Assert.AreEqual(
+                    chrome.Value<string>("gameplayHashBeforeRulebook"),
+                    chrome.Value<string>("gameplayHashAfterRulebookKeyword")
                 );
                 Assert.AreEqual(
                     chrome.Value<string>("gameplayHashBeforeRulebook"),
@@ -7241,6 +7275,10 @@ namespace GemDuel.Tests.EditMode
                 Assert.AreEqual(
                     chrome.Value<int>("recordedEventsBeforeRulebook"),
                     chrome.Value<int>("recordedEventsAfterRulebookOpen")
+                );
+                Assert.AreEqual(
+                    chrome.Value<int>("recordedEventsBeforeRulebook"),
+                    chrome.Value<int>("recordedEventsAfterRulebookKeyword")
                 );
                 Assert.AreEqual(
                     chrome.Value<int>("recordedEventsBeforeRulebook"),

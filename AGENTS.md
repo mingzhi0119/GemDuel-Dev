@@ -53,6 +53,13 @@ Use `pnpm build` for normal build validation and `pnpm electron:build` only when
 - Do not use the WSL Linux Electron window as the default visual-review surface; WSLg can make it much slower than the browser and distort perceived performance.
 - Use Electron windows only when validating Electron-specific behavior such as main/preload IPC, native window behavior, packaging, installer output, or release artifacts.
 
+## Token-Safe Artifact Review
+
+- Keep screenshots and visual diffs as artifact files. Compare them through scripts and report concise metrics, paths, and the smallest useful crops instead of dumping large reports or many images into chat.
+- For Unity UI alignment artifacts, run `pnpm parity:ui-summary -- --root <artifact-root> --top 8 --hotspots 3 --sizes` before opening `parity-matrix.md`, `hotspot-report.md`, `parity-matrix.json`, or full per-row JSON reports.
+- When completed UI-alignment rows need to be separated from active work, run `pnpm parity:ui-split -- --root <artifact-root>` and read `token-safe-archive/active` plus `token-safe-archive/completed` instead of hand-editing generated reports.
+- Do not print large JSON, Markdown matrices, hotspot reports, recursive artifact listings, or full screenshot paths unless the user explicitly asks for raw evidence. Prefer targeted `node`/PowerShell queries that return counts, worst rows, deltas, and top hotspot keys.
+
 ## Change Discipline
 
 - Keep changes inside the correct workspace boundary.

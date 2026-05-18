@@ -98,6 +98,8 @@ namespace GemDuel.Core
     {
         GameRulesResult StartLocalGame(string seed, bool useBuffs = false);
 
+        GameRulesResult StartNetworkGame(string seed, string hostPlayer = "p1", bool useBuffs = false);
+
         void RestoreSession(JObject init);
 
         GameRulesResult ApplyCommand(GameState state, GameRulesCommand command);

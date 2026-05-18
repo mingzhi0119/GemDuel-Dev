@@ -472,8 +472,7 @@ namespace GemDuel.Core
                 return;
             }
 
-            var id = buff.Value<string>("id");
-            if (!string.IsNullOrEmpty(id) && id != "none" && buff["state"] == null)
+            if (buff["state"] == null || buff["state"].Type == JTokenType.Null)
             {
                 buff["state"] = new JObject();
             }

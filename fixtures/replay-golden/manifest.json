@@ -17,6 +17,7 @@
         "reserved-buy",
         "reserve-cancel",
         "reserve-deck",
+        "multi-reserved",
         "discard-reserved",
         "privilege",
         "peek-modal",
@@ -127,6 +128,19 @@
             "expectedTotalEvents": 2,
             "expectedTurnCount": 1,
             "source": "Deterministic local PvP replay selected for deck reserve initiation and gold resolution coverage."
+        },
+        {
+            "id": "local-pvp-multi-reserved",
+            "fileName": "local-pvp-multi-reserved.replay.json",
+            "tags": ["reserve", "multi-reserved"],
+            "schemaVersion": "1.0",
+            "replayRevision": 6,
+            "expectedFinalStateHash": "3cc3fc08",
+            "expectedWinner": null,
+            "expectedEndReason": null,
+            "expectedTotalEvents": 6,
+            "expectedTurnCount": 6,
+            "source": "Deterministic local PvP replay selected for three-card reserved mini-stack visual coverage."
         },
         {
             "id": "local-pvp-privilege",

@@ -28,6 +28,7 @@ This folder holds the human-readable docs for the monorepo. The root workspace i
 - [Unity Migration Risk Table](migration/unity-migration-risk-table.md)
 - [Unity Platform Release Checklist](migration/unity-platform-release-checklist.md)
 - [Unity Full Migration Completion Report](migration/unity-full-migration-completion-report.md)
+- [Unity LAN Contract 2026-05-14](migration/unity-lan-contract-2026-05-14.md)
 - [Electron vs Unity Sync Parity Baseline](archive/electron-unity-sync-parity-2026-05-09.md)
 - [Electron/Unity Operation Parity Contract](migration/electron-unity-operation-parity-contract.md)
 - [Electron/Unity Parity Runner Operations](migration/electron-unity-parity-runner-operations.md)

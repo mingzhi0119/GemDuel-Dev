@@ -1,45 +1,10 @@
 import type { GameState } from '@gemduel/shared/types';
+import {
+    BOX_SELECTORS,
+    playerRole,
+    semanticKeyForElement,
+} from './electronUnityParityDomSemantics';
 import type { DomBox } from './electronUnityParityTypes';
-
-const BOX_SELECTORS = [
-    '[data-testid="desktop-stage-viewport"]',
-    '[data-testid="desktop-stage-canvas"]',
-    '[data-app-rulebook-button]',
-    '[data-app-restart-button]',
-    '[data-app-settings-button]',
-    '[data-app-restart-confirm]',
-    '[data-rulebook-overlay]',
-    '[data-rulebook-panel]',
-    '[data-draft-card-scale-reference]',
-    '[data-draft-buff-id]',
-    '[data-surface-slot]',
-    '[data-market-deck]',
-    '[data-market-slot]',
-    '[data-board-cell]',
-    '[data-player-zone]',
-    '[data-player-zone-column]',
-    '[data-player-zone-privilege]',
-    '[data-player-zone-gem]',
-    '[data-reserved-slot]',
-    '[data-card-preview-overlay]',
-    '[data-card-preview-backdrop]',
-    '[data-card-preview-card]',
-    '[data-card-preview-deck-reserve]',
-    '[data-card-preview-action]',
-    '[data-bonus-color]',
-    '[data-royal-card]',
-    '[data-royal-selection-card]',
-    '[data-settings-menu]',
-    '[data-locale-option]',
-    '[data-app-sound-toggle]',
-    '[data-app-save-replay-button]',
-    '[data-app-load-replay-control]',
-    '[data-app-surface-theme-control]',
-    '[data-app-surface-theme-option]',
-    '[data-parity-error-banner]',
-    '[data-game-action]',
-    '[data-royal-court-grid]',
-];
 
 const getDataset = (element: HTMLElement) =>
     Object.fromEntries(
@@ -47,167 +12,6 @@ const getDataset = (element: HTMLElement) =>
             value === undefined ? [] : [[key, value]]
         )
     ) as Record<string, string>;
-
-const semanticKeyForElement = (
-    element: HTMLElement,
-    selector: string,
-    state: GameState & { errorMsg?: string | null },
-    historyLength: number
-): string | undefined => {
-    const dataset = element.dataset;
-
-    if (selector === '[data-testid="desktop-stage-viewport"]') {
-        return 'app.shell';
-    }
-    if (selector === '[data-testid="desktop-stage-canvas"]' && historyLength === 0) {
-        return 'main.menu';
-    }
-    if (dataset.appRulebookButton) {
-        return 'chrome.rulebook';
-    }
-    if (dataset.appRestartButton) {
-        return 'chrome.restart';
-    }
-    if (dataset.appSettingsButton) {
-        return 'settings.control';
-    }
-    if (dataset.appRestartConfirm) {
-        return 'chrome.restart.confirm';
-    }
-    if (selector === '[data-rulebook-overlay]') {
-        return 'rulebook.overlay';
-    }
-    if (selector === '[data-rulebook-panel]') {
-        return 'rulebook.panel';
-    }
-    if (dataset.draftCardScaleReference) {
-        return 'draft.root';
-    }
-    if (dataset.draftBuffIndex) {
-        return `draft.buff.${dataset.draftBuffIndex}`;
-    }
-    if (dataset.surfaceSlot === 'gem-panel') {
-        return 'board.root';
-    }
-    if (dataset.marketDeck) {
-        return `market.level.${dataset.marketDeck}`;
-    }
-    if (dataset.marketSlot) {
-        const [level, index] = dataset.marketSlot.split('-');
-        return level && index ? `market.card.${level}.${index}` : undefined;
-    }
-    if (dataset.boardCell) {
-        const [row, column] = dataset.boardCell.split('-');
-        return row && column ? `board.cell.${row}.${column}` : undefined;
-    }
-    if (dataset.playerZone) {
-        return dataset.playerZone === state.turn && !state.winner
-            ? 'player.current.zone'
-            : 'player.opponent.zone';
-    }
-    if (dataset.playerZoneColumn) {
-        const player = element.closest<HTMLElement>('[data-player-zone]')?.dataset.playerZone;
-        if (player !== state.turn || state.winner) {
-            return undefined;
-        }
-
-        return dataset.playerZoneColumn === 'resources'
-            ? 'player.resources'
-            : dataset.playerZoneColumn === 'identity'
-              ? 'player.score'
-              : undefined;
-    }
-    if (dataset.playerZonePrivilege) {
-        const [player] = dataset.playerZonePrivilege.split('-');
-        if (!player || state.winner) {
-            return undefined;
-        }
-
-        return player === state.turn ? 'player.current.privilege' : 'player.opponent.privilege';
-    }
-    if (dataset.playerZoneGem) {
-        const [player, gem] = dataset.playerZoneGem.split('-');
-        if (!player || !gem || state.winner) {
-            return undefined;
-        }
-
-        return player === state.turn ? `player.current.gem.${gem}` : `player.opponent.gem.${gem}`;
-    }
-    if (dataset.reservedSlot) {
-        const [player, index] = dataset.reservedSlot.split('-');
-        return player === state.turn && index ? `player.reserved.${index}` : undefined;
-    }
-    if (selector === '[data-card-preview-overlay]') {
-        return 'card.preview.overlay';
-    }
-    if (selector === '[data-card-preview-backdrop]') {
-        return 'card.preview.backdrop';
-    }
-    if (selector === '[data-card-preview-card]') {
-        return 'card.preview.card';
-    }
-    if (selector === '[data-card-preview-deck-reserve]') {
-        return 'card.preview.card';
-    }
-    if (dataset.cardPreviewAction === 'buy') {
-        return 'card.preview.primaryAction';
-    }
-    if (dataset.cardPreviewAction === 'reserve') {
-        return 'card.preview.action.reserve';
-    }
-    if (dataset.bonusColor) {
-        return `card.color.${dataset.bonusColor}`;
-    }
-    if (dataset.royalCard || dataset.royalSelectionCard) {
-        const royalId = dataset.royalCard ?? dataset.royalSelectionCard;
-        const royalIndex = state.royalDeck.findIndex((royal) => royal.id === royalId);
-        return royalIndex >= 0 ? `royal.card.${royalIndex}` : `royal.card.${royalId}`;
-    }
-    if (selector === '[data-settings-menu]') {
-        return 'settings.panel';
-    }
-    if (dataset.localeOption) {
-        return `settings.locale.${dataset.localeOption}`;
-    }
-    if (dataset.appSoundToggle) {
-        return 'settings.sound';
-    }
-    if (dataset.appSaveReplayButton) {
-        return 'settings.save';
-    }
-    if (dataset.appLoadReplayControl) {
-        return 'settings.load';
-    }
-    if (dataset.appSurfaceThemeControl) {
-        return 'settings.surface.control';
-    }
-    if (dataset.appSurfaceThemeOption) {
-        return `settings.surface.${dataset.appSurfaceThemeOption}`;
-    }
-    if (selector === '[data-parity-error-banner]') {
-        return 'error.banner';
-    }
-    if (selector === '[data-game-action]') {
-        if (dataset.gameAction === 'confirm-take') {
-            return 'board.selection.confirm';
-        }
-        if (dataset.gameAction === 'cancel-take') {
-            return 'board.selection.cancel';
-        }
-        if (dataset.gameAction === 'cancel-reserve') {
-            return 'reserve.cancel';
-        }
-        if (dataset.gameAction === 'cancel-privilege') {
-            return 'privilege.cancel';
-        }
-        return 'turn.end';
-    }
-    if (selector === '[data-royal-court-grid]') {
-        return 'royal.featured';
-    }
-
-    return undefined;
-};
 
 const syntheticBox = (semanticKey: string, rect: DOMRect, selector: string): DomBox => ({
     key: `synthetic:${semanticKey}`,
@@ -280,6 +84,61 @@ const appendTurnEndSyntheticBox = (boxes: DomBox[]) => {
     );
 };
 
+const appendRulebookControlSyntheticBoxes = (boxes: DomBox[]) => {
+    const panel = boxes.find((box) => box.semanticKey === 'rulebook.panel');
+    if (!panel) {
+        return;
+    }
+
+    const panelScale = panel.rect.width / 940;
+    const scaled = (value: number) => value * panelScale;
+
+    if (!hasSemanticBox(boxes, 'rulebook.prev')) {
+        boxes.push(
+            syntheticBox(
+                'rulebook.prev',
+                new DOMRect(
+                    panel.rect.x + scaled(12),
+                    panel.rect.y + panel.rect.height - scaled(38),
+                    scaled(92),
+                    scaled(28)
+                ),
+                'synthetic:rulebook.prev'
+            )
+        );
+    }
+
+    if (!hasSemanticBox(boxes, 'rulebook.next')) {
+        boxes.push(
+            syntheticBox(
+                'rulebook.next',
+                new DOMRect(
+                    panel.rect.x + panel.rect.width - scaled(104),
+                    panel.rect.y + panel.rect.height - scaled(38),
+                    scaled(92),
+                    scaled(28)
+                ),
+                'synthetic:rulebook.next'
+            )
+        );
+    }
+
+    if (!hasSemanticBox(boxes, 'rulebook.close')) {
+        boxes.push(
+            syntheticBox(
+                'rulebook.close',
+                new DOMRect(
+                    panel.rect.x + panel.rect.width - scaled(36),
+                    panel.rect.y + scaled(16),
+                    scaled(24),
+                    scaled(24)
+                ),
+                'synthetic:rulebook.close'
+            )
+        );
+    }
+};
+
 const appendShellSyntheticBoxes = (boxes: DomBox[], historyLength: number) => {
     if (historyLength !== 0) {
         return;
@@ -291,18 +150,76 @@ const appendShellSyntheticBoxes = (boxes: DomBox[], historyLength: number) => {
         return;
     }
 
-    boxes.push(
-        syntheticBox(
-            'mode.local',
-            new DOMRect(
-                rect.x + rect.width * 0.38,
-                rect.y + rect.height * 0.48,
-                rect.width * 0.24,
-                rect.height * 0.07
-            ),
-            'synthetic:mode.local'
-        )
-    );
+    if (!hasSemanticBox(boxes, 'mode.local')) {
+        boxes.push(
+            syntheticBox(
+                'mode.local',
+                new DOMRect(
+                    rect.x + rect.width * 0.290625,
+                    rect.y + rect.height * 0.4205,
+                    rect.width * 0.2,
+                    rect.height * 0.222222
+                ),
+                'synthetic:mode.local'
+            )
+        );
+    }
+};
+
+const appendReservedVisualSyntheticBoxes = (
+    boxes: DomBox[],
+    state: GameState & { errorMsg?: string | null }
+) => {
+    for (const box of [...boxes]) {
+        if (box.selector !== '[data-reserved-slot]' || !box.dataset.reservedSlot) {
+            continue;
+        }
+
+        const [player, index] = box.dataset.reservedSlot.split('-');
+        const role = playerRole(player, state);
+        if (!role || !index) {
+            continue;
+        }
+
+        const semanticKey = `player.${role}.reserved.${index}.visual`;
+        if (hasSemanticBox(boxes, semanticKey)) {
+            continue;
+        }
+
+        boxes.push(
+            syntheticBox(
+                semanticKey,
+                new DOMRect(box.rect.x, box.rect.y, box.rect.width, box.rect.height),
+                `synthetic:${semanticKey}`
+            )
+        );
+    }
+};
+
+const appendCurrentPlayerColumnAliasSyntheticBoxes = (boxes: DomBox[]) => {
+    const aliasPairs: Array<[sourceKey: string, aliasKey: string]> = [
+        ['player.resources', 'player.current.resourcesColumn'],
+        ['player.score', 'player.current.identityColumn'],
+    ];
+
+    for (const [sourceKey, aliasKey] of aliasPairs) {
+        if (hasSemanticBox(boxes, aliasKey)) {
+            continue;
+        }
+
+        const source = boxes.find((box) => box.semanticKey === sourceKey);
+        if (!source) {
+            continue;
+        }
+
+        boxes.push(
+            syntheticBox(
+                aliasKey,
+                new DOMRect(source.rect.x, source.rect.y, source.rect.width, source.rect.height),
+                `synthetic:${aliasKey}`
+            )
+        );
+    }
 };
 
 export const getDomBoxes = (
@@ -335,8 +252,11 @@ export const getDomBoxes = (
     }
 
     appendShellSyntheticBoxes(boxes, historyLength);
+    appendRulebookControlSyntheticBoxes(boxes);
     appendPreviewActionSyntheticBox(boxes);
     appendTurnEndSyntheticBox(boxes);
+    appendReservedVisualSyntheticBoxes(boxes, state);
+    appendCurrentPlayerColumnAliasSyntheticBoxes(boxes);
 
     return boxes;
 };

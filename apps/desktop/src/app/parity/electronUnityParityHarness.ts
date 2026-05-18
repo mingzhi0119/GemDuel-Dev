@@ -159,6 +159,9 @@ export const createElectronUnityParityApi = (
                     await waitForStableFrame();
                     return result(action, true);
 
+                case 'hover_mode':
+                    return await clickActions.hoverMode(action, payload);
+
                 case 'choose_boon':
                     return await clickActions.chooseBoon(action, payload);
 
@@ -167,6 +170,15 @@ export const createElectronUnityParityApi = (
 
                 case 'click_chrome_rulebook':
                     return await clickActions.clickChromeRulebook(action);
+
+                case 'click_rulebook_next':
+                    return await clickActions.clickRulebookNext(action);
+
+                case 'click_rulebook_prev':
+                    return await clickActions.clickRulebookPrev(action);
+
+                case 'click_rulebook_nav':
+                    return await clickActions.clickRulebookNav(action, payload);
 
                 case 'click_chrome_restart':
                     return await clickActions.clickChromeRestart(action);

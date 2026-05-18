@@ -35,6 +35,21 @@ namespace GemDuel.Presentation
                 gameController.ApplyNextFixtureEvent();
             }
 
+            if (Input.GetKeyDown(KeyCode.Escape) && gameController.CloseActiveLexiconPopoverFromInput())
+            {
+                return;
+            }
+
+            if (
+                (Input.GetKeyDown(KeyCode.Return)
+                    || Input.GetKeyDown(KeyCode.KeypadEnter)
+                    || Input.GetKeyDown(KeyCode.JoystickButton0))
+                && gameController.OpenFirstRulebookLexiconTermFromInput()
+            )
+            {
+                return;
+            }
+
             if (!Input.GetMouseButton(0) && ShouldPollHover(Input.mousePosition))
             {
                 LastHoverDispatchScreenPosition = Input.mousePosition;
@@ -330,6 +345,11 @@ namespace GemDuel.Presentation
             if (target.Kind == "Royal")
             {
                 return "Royal " + target.RoyalId + " #" + target.Index;
+            }
+
+            if (target.Kind == "LexiconTerm")
+            {
+                return "Lexicon term " + target.LexiconTermId;
             }
 
             return target.Kind + " " + target.EventType;

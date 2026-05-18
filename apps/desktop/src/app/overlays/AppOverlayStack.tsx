@@ -189,6 +189,7 @@ export function AppOverlayStack({
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4">
                     <button
                         onClick={onStopReview}
+                        data-replay-return-to-results="true"
                         className="flex items-center gap-4 bg-slate-800 hover:bg-slate-700 text-white px-12 py-6 rounded-full text-4xl font-bold shadow-2xl border-2 border-slate-600 transition-all hover:scale-105"
                     >
                         <RotateCcw size={36} /> {t('overlays.returnToResults')}

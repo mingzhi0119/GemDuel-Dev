@@ -14,6 +14,7 @@ namespace GemDuel.Presentation
         public string RoyalId = string.Empty;
         public string GemId = string.Empty;
         public string BuffId = string.Empty;
+        public string LexiconTermId = string.Empty;
         public string SemanticKey = string.Empty;
         public bool Clickable;
         public Vector2 Size = Vector2.zero;

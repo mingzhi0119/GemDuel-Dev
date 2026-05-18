@@ -74,6 +74,11 @@ namespace GemDuel.Presentation
             var includeFullGamePlanSuite =
                 !string.IsNullOrWhiteSpace(fullGamePlanPath)
                 || !string.IsNullOrWhiteSpace(fullGamePlanDirectory);
+            var lanRole = GetArgValue("--gemduel-smoke-lan-role");
+            var includeLanSmoke = !string.IsNullOrWhiteSpace(lanRole);
+            var lanHost = GetArgValue("--gemduel-smoke-lan-host") ?? "127.0.0.1";
+            var lanPort = ParseInt(GetArgValue("--gemduel-smoke-lan-port"), 9777);
+            var lanTimeoutMs = ParseInt(GetArgValue("--gemduel-smoke-lan-timeout-ms"), 20000);
             var replayReleasePathDirectory =
                 GetArgValue("--gemduel-smoke-replay-release-dir")
                 ?? ResolveReplayReleasePathDirectory(reportPath);
@@ -127,6 +132,11 @@ namespace GemDuel.Presentation
                 ["includeReserveDeckCancelReleasePath"] = includeReserveDeckCancelReleasePath,
                 ["includeJokerReleasePath"] = includeJokerReleasePath,
                 ["includeFullGamePlanSuite"] = includeFullGamePlanSuite,
+                ["includeLanSmoke"] = includeLanSmoke,
+                ["lanRole"] = lanRole,
+                ["lanHost"] = lanHost,
+                ["lanPort"] = lanPort,
+                ["lanTimeoutMs"] = lanTimeoutMs,
                 ["fullGamePlanPath"] = fullGamePlanPath,
                 ["fullGamePlanDirectory"] = fullGamePlanDirectory,
                 ["fullGamePlanLimit"] = fullGamePlanLimit,
@@ -162,7 +172,24 @@ namespace GemDuel.Presentation
                 }
 
                 var ok = false;
-                if (includeFullGamePlanSuite)
+                if (includeLanSmoke)
+                {
+                    var lanSmoke = LocalDevLanBuiltPlayerSmoke.Run(
+                        controller,
+                        new LocalDevLanBuiltPlayerSmokeOptions
+                        {
+                            Role = lanRole,
+                            Host = lanHost,
+                            Port = lanPort,
+                            TimeoutMs = lanTimeoutMs,
+                            ViewportWidth = 1920,
+                            ViewportHeight = 1080,
+                        }
+                    );
+                    report["lanSmoke"] = lanSmoke;
+                    ok = lanSmoke.Value<bool>("ok");
+                }
+                else if (includeFullGamePlanSuite)
                 {
                     var fullGamePlanSuite = LocalDevFullGamePlanSmoke.RunBatch(
                         controller,

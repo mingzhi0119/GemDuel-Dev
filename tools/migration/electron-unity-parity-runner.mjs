@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
     formatAgentBrowserProcesses,
     inspectAgentBrowserProcesses,
@@ -17,6 +17,7 @@ const parityArtifactRoot = path.join(workspaceRoot, 'artifacts', 'electron-unity
 const runnerLockPath = path.join(parityArtifactRoot, '.runner.lock');
 const defaultBrowserProcessMax = 24;
 const defaultBrowserFinalExtra = 1;
+const defaultElectronSettleMs = 1600;
 const defaultUnityExe = 'C:\\Program Files\\Unity\\Hub\\Editor\\6000.4.6f1\\Editor\\Unity.exe';
 const resolveAgentBrowserCommand = () => {
     if (process.platform !== 'win32') {
@@ -45,12 +46,157 @@ const resolveAgentBrowserCommand = () => {
     return existsSync(nativeCommand) ? nativeCommand : commandShim;
 };
 const agentBrowserCommand = resolveAgentBrowserCommand();
-const fixturePath = path.join(
-    workspaceRoot,
-    'fixtures',
-    'replay-golden',
-    'local-pvp-royal-extra-turn-game-over.replay.json'
-);
+const defaultFixtureFileName = 'local-pvp-royal-extra-turn-game-over.replay.json';
+const getFixturePath = (fixtureFileName = defaultFixtureFileName) =>
+    path.join(workspaceRoot, 'fixtures', 'replay-golden', fixtureFileName);
+const rulebookVisualBoundingBoxKeys = [
+    'app.shell',
+    'chrome.rulebook',
+    'rulebook.overlay',
+    'rulebook.panel',
+    'rulebook.prev',
+    'rulebook.next',
+    'rulebook.close',
+    ...Array.from({ length: 9 }, (_, index) => `rulebook.nav.${index}`),
+];
+const mainMenuHoverTargets = {
+    local: {
+        semanticKey: 'mode.local',
+        eventType: 'start_local_game',
+        labels: ['经典模式', 'Classic'],
+    },
+    roguelike: {
+        semanticKey: 'mode.roguelike',
+        eventType: 'start_roguelike_game',
+        labels: ['肉鸽模式', 'Roguelike'],
+    },
+    online: {
+        semanticKey: 'mode.online',
+        eventType: 'open_online',
+        labels: ['在线对决', 'Online'],
+    },
+    lan: {
+        semanticKey: 'mode.lan',
+        eventType: 'open_lan',
+        labels: ['局域网对决', 'LAN'],
+    },
+    visualLab: {
+        semanticKey: 'mode.visualLab',
+        eventType: 'open_visual_lab',
+        labels: ['Visual Lab'],
+    },
+};
+
+const createRulebookPageScenario = (pageIndex) => ({
+    id: `chrome-rulebook-page-${pageIndex + 1}`,
+    name: `Rulebook page ${pageIndex + 1} pixel parity`,
+    revision: 2,
+    expectedSharedState: `Rulebook page ${pageIndex + 1} matches the Electron reference after a real rulebook navigation action.`,
+    actionsAfterLoad: [
+        { action: 'click_chrome_rulebook' },
+        pageIndex === 1
+            ? { action: 'click_rulebook_next' }
+            : { action: 'click_rulebook_nav', payload: { index: pageIndex } },
+    ],
+    strictPixelVisualDiff: true,
+    visualMismatchThresholdPercent: 1.0,
+    visualBoundingBoxKeys: rulebookVisualBoundingBoxKeys,
+});
+
+const createMainMenuHoverScenario = (mode, label) => {
+    const target = mainMenuHoverTargets[mode];
+    return {
+        id: `main-menu-hover-${label}`,
+        name: `Main menu ${label} hover feedback parity`,
+        revision: null,
+        expectedSharedState:
+            'The main menu remains in mode selection while the hovered mode control exposes the Electron-equivalent hover affordance.',
+        actions: [{ action: 'reset' }, { action: 'hover_mode', payload: { mode } }],
+        electronHoverTarget: { kind: 'main-menu-mode', mode, labels: target.labels },
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualDiffScope: 'semantic-bounding-boxes',
+        visualBoundingBoxMarginPx: 24,
+        visualBoundingBoxKeys: [target.semanticKey],
+        operationContract: {
+            action: 'hover_mode',
+            input: 'hover',
+            expectHover: {
+                semanticKey: target.semanticKey,
+                kind: 'Mode',
+                eventType: target.eventType,
+            },
+            expectStateStable: true,
+        },
+    };
+};
+
+const uiAlignmentScenarioIds = [
+    'app-launch-main-menu',
+    'initial-board-render',
+    'chrome-settings-open',
+    'chrome-rulebook-open',
+    ...Array.from({ length: 8 }, (_, index) => `chrome-rulebook-page-${index + 2}`),
+    'market-card-preview',
+    'market-deck-reserve-preview',
+    'reserved-card-preview',
+    'p1-reserved-card-display',
+    'p1-multi-reserved-card-display',
+    'royal-featured-card-display',
+    'player-zone-resource-score',
+    'buy-card',
+    'reserve-card',
+    'end-turn',
+];
+const hoverFocusedScenarioIds = [
+    'main-menu-hover-local',
+    'main-menu-hover-roguelike',
+    'main-menu-hover-online',
+    'main-menu-hover-lan',
+    'main-menu-hover-visual-lab',
+    'draft-hover-feedback',
+    'market-card-hover-feedback',
+    'market-deck-hover-feedback',
+    'board-cell-hover-feedback',
+    'player-reserved-hover-feedback',
+    'player-gem-hover-feedback',
+    'chrome-control-hover-feedback',
+];
+
+const suiteDefinitions = {
+    'ui-alignment': {
+        description: 'Electron-vs-Unity visual alignment for migrated player-facing UI surfaces.',
+        scenarioIds: uiAlignmentScenarioIds,
+        visualMismatchThresholdPercent: 1.0,
+        electronSettleMs: 3600,
+        failOnMatrixFailure: true,
+    },
+    'hover-focused': {
+        description:
+            'Focused Electron-vs-Unity hover parity scenarios using real DOM hover and Unity hit-test hover.',
+        scenarioIds: hoverFocusedScenarioIds,
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        electronSettleMs: 3600,
+        failOnMatrixFailure: true,
+    },
+};
+
+export const getParityRunnerDefinitionForTest = () => ({
+    suites: JSON.parse(JSON.stringify(suiteDefinitions)),
+    scenarios: JSON.parse(JSON.stringify(scenarioDefinitions)),
+    effectiveSuiteScenarios: Object.fromEntries(
+        Object.entries(suiteDefinitions).map(([suiteName, suite]) => [
+            suiteName,
+            suite.scenarioIds.map((scenarioId) => {
+                const scenario = scenarioDefinitions.find(
+                    (candidate) => candidate.id === scenarioId
+                );
+                return applySuiteProfile(scenario, suite, {});
+            }),
+        ])
+    ),
+});
 
 const scenarioDefinitions = [
     {
@@ -61,7 +207,14 @@ const scenarioDefinitions = [
         electronEntry: 'http://127.0.0.1:5173/?parityHarness=1',
         unityEntry: 'GemDuel.Editor.CaptureUnityParityScenarios',
         actions: [{ action: 'reset' }],
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
     },
+    createMainMenuHoverScenario('local', 'local'),
+    createMainMenuHoverScenario('roguelike', 'roguelike'),
+    createMainMenuHoverScenario('online', 'online'),
+    createMainMenuHoverScenario('lan', 'lan'),
+    createMainMenuHoverScenario('visualLab', 'visual-lab'),
     {
         id: 'level-3-boon-selection',
         name: 'Level-3 boon selection parity',
@@ -92,6 +245,11 @@ const scenarioDefinitions = [
             { action: 'hover_boon', payload: { index: 1, buffId: 'royal_envoy' } },
         ],
         electronHoverSelector: '[data-draft-buff-id="royal_envoy"]',
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualDiffScope: 'semantic-bounding-boxes',
+        visualBoundingBoxMarginPx: 24,
+        visualBoundingBoxKeys: ['draft.buff.1'],
         operationContract: {
             action: 'hover_boon',
             input: 'hover',
@@ -139,7 +297,9 @@ const scenarioDefinitions = [
         expectedSharedState:
             'The top-right rulebook control exposes a real operation target and opens the rulebook surface without mutating gameplay state.',
         actionsAfterLoad: [{ action: 'click_chrome_rulebook' }],
-        skipVisualDiff: true,
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualBoundingBoxKeys: rulebookVisualBoundingBoxKeys,
         operationContract: {
             action: 'click_chrome_rulebook',
             input: 'click',
@@ -149,6 +309,7 @@ const scenarioDefinitions = [
             expectStateStable: true,
         },
     },
+    ...Array.from({ length: 8 }, (_, index) => createRulebookPageScenario(index + 1)),
     {
         id: 'chrome-restart-main-menu',
         name: 'Top-right restart operation parity',
@@ -209,12 +370,38 @@ const scenarioDefinitions = [
         expectedSharedState:
             'Hovering a visible market card exposes only that market-card semantic target without mutating gameplay state.',
         actionsAfterLoad: [{ action: 'hover_market_card', payload: { level: 1, index: 0 } }],
-        skipVisualDiff: true,
+        electronHoverSelector: '[data-market-slot="1-0"] [data-market-card-hover-motion="true"]',
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualDiffScope: 'semantic-bounding-boxes',
+        visualBoundingBoxMarginPx: 24,
+        visualBoundingBoxKeys: ['market.card.1.0'],
         operationContract: {
             action: 'hover_market_card',
             input: 'hover',
             semanticKey: 'market.card.1.0',
             expectHover: { semanticKey: 'market.card.1.0', kind: 'MarketCard' },
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'market-deck-hover-feedback',
+        name: 'Market deck hover feedback parity',
+        revision: 2,
+        expectedSharedState:
+            'Hovering a visible market deck exposes the deck semantic target without mutating gameplay state.',
+        actionsAfterLoad: [{ action: 'hover_market_deck', payload: { level: 1 } }],
+        electronHoverSelector: '[data-market-deck="1"]',
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualDiffScope: 'semantic-bounding-boxes',
+        visualBoundingBoxMarginPx: 24,
+        visualBoundingBoxKeys: ['market.level.1'],
+        operationContract: {
+            action: 'hover_market_deck',
+            input: 'hover',
+            semanticKey: 'market.level.1',
+            expectHover: { semanticKey: 'market.level.1', kind: 'MarketDeck' },
             expectStateStable: true,
         },
     },
@@ -225,12 +412,93 @@ const scenarioDefinitions = [
         expectedSharedState:
             'Hovering a board cell exposes the matching board-cell semantic key without mutating gameplay state.',
         actionsAfterLoad: [{ action: 'hover_board_cell', payload: { row: 0, column: 0 } }],
-        skipVisualDiff: true,
+        electronHoverSelector: '[data-board-cell="0-0"] button, [data-board-cell="0-0"]',
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualDiffScope: 'semantic-bounding-boxes',
+        visualBoundingBoxMarginPx: 20,
+        visualBoundingBoxKeys: ['board.cell.0.0'],
         operationContract: {
             action: 'hover_board_cell',
             input: 'hover',
             semanticKey: 'board.cell.0.0',
             expectHover: { semanticKey: 'board.cell.0.0', kind: 'Gem' },
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'player-reserved-hover-feedback',
+        name: 'Player reserved-card hover feedback parity',
+        revision: 45,
+        expectedSharedState:
+            'Hovering the current player reserved card exposes the reserved-card semantic target without opening preview or mutating gameplay state.',
+        actionsAfterLoad: [
+            { action: 'hover_player_reserved', payload: { player: 'p2', index: 0 } },
+        ],
+        electronHoverSelector:
+            '[data-reserved-slot="p2-0"] [data-card-preview-click="true"], [data-reserved-slot="p2-0"] button, [data-reserved-slot="p2-0"]',
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualDiffScope: 'semantic-bounding-boxes',
+        visualBoundingBoxMarginPx: 20,
+        visualBoundingBoxKeys: ['player.reserved.0'],
+        operationContract: {
+            action: 'hover_player_reserved',
+            input: 'hover',
+            semanticKey: 'player.reserved.0',
+            expectHover: { semanticKey: 'player.reserved.0', kind: 'ReservedCard' },
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'player-gem-hover-feedback',
+        name: 'Player gem hover feedback parity',
+        revision: 14,
+        expectedSharedState:
+            'Hovering the opponent red gem exposes the inventory-gem semantic target without mutating gameplay state.',
+        actionsAfterLoad: [
+            { action: 'hover_player_gem', payload: { role: 'opponent', gemId: 'red' } },
+        ],
+        electronHoverSelector: '[data-player-zone-gem="p1-red"], [data-player-zone-gem="p2-red"]',
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualDiffScope: 'semantic-bounding-boxes',
+        visualBoundingBoxMarginPx: 18,
+        visualBoundingBoxKeys: ['player.opponent.gem.red'],
+        operationContract: {
+            action: 'hover_player_gem',
+            input: 'hover',
+            semanticKey: 'player.opponent.gem.red',
+            expectHover: {
+                semanticKey: 'player.opponent.gem.red',
+                kind: 'InventoryGem',
+                gemId: 'red',
+            },
+            expectStateStable: true,
+        },
+    },
+    {
+        id: 'chrome-control-hover-feedback',
+        name: 'Chrome control hover feedback parity',
+        revision: 2,
+        expectedSharedState:
+            'Hovering the top-right rulebook chrome control exposes the action semantic target without opening the rulebook or mutating gameplay state.',
+        actionsAfterLoad: [{ action: 'hover_chrome_control', payload: { control: 'rulebook' } }],
+        electronHoverSelector: '[data-app-rulebook-button="true"]',
+        strictPixelVisualDiff: true,
+        visualMismatchThresholdPercent: 1.0,
+        visualDiffScope: 'semantic-bounding-boxes',
+        visualBoundingBoxMarginPx: 12,
+        visualBoundingBoxKeys: ['chrome.rulebook'],
+        operationContract: {
+            action: 'hover_chrome_control',
+            input: 'hover',
+            semanticKey: 'chrome.rulebook',
+            expectHover: {
+                semanticKey: 'chrome.rulebook',
+                kind: 'ActionButton',
+                eventType: 'open_rulebook',
+            },
             expectStateStable: true,
         },
     },
@@ -312,6 +580,29 @@ const scenarioDefinitions = [
             expectSemanticKeys: ['card.preview.card'],
             expectStateStable: true,
         },
+    },
+    {
+        id: 'p1-reserved-card-display',
+        name: 'P1 reserved-card display parity',
+        fixtureFileName: 'local-pvp-joker-reserved-buy.replay.json',
+        revision: 59,
+        expectedSharedState:
+            'P1 reserved card renders in the left reserved column using the Electron reserved mini-stack geometry.',
+    },
+    {
+        id: 'p1-multi-reserved-card-display',
+        name: 'P1 multi reserved-card mini-stack parity',
+        fixtureFileName: 'local-pvp-multi-reserved.replay.json',
+        revision: 6,
+        expectedSharedState:
+            'P1 three-card reserved mini-stack renders with the same diagonal reserved geometry as Electron.',
+        visualBoundingBoxKeys: [
+            'player.current.zone',
+            'player.opponent.zone',
+            'player.reserved.0',
+            'player.reserved.1',
+            'player.reserved.2',
+        ],
     },
     {
         id: 'discard-gem-follow-up',
@@ -457,6 +748,8 @@ const parseArgs = () => {
         unityProjectPath:
             process.env.GEMDUEL_UNITY_PROJECT_PATH || path.join(workspaceRoot, 'clients', 'unity'),
         url: 'http://127.0.0.1:5173/?parityHarness=1',
+        scenarioIds: [],
+        suite: null,
         browserProcessMax: parseIntegerOption(
             process.env.GEMDUEL_PARITY_BROWSER_PROCESS_MAX,
             defaultBrowserProcessMax
@@ -465,6 +758,7 @@ const parseArgs = () => {
             process.env.GEMDUEL_PARITY_BROWSER_FINAL_EXTRA,
             defaultBrowserFinalExtra
         ),
+        electronSettleMs: null,
     };
 
     for (let index = 2; index < process.argv.length; index += 1) {
@@ -488,6 +782,17 @@ const parseArgs = () => {
         } else if (arg === '--url') {
             options.url = process.argv[index + 1];
             index += 1;
+        } else if (arg === '--scenario' || arg === '--scenarios') {
+            options.scenarioIds.push(
+                ...String(process.argv[index + 1])
+                    .split(',')
+                    .map((value) => value.trim())
+                    .filter(Boolean)
+            );
+            index += 1;
+        } else if (arg === '--suite') {
+            options.suite = process.argv[index + 1] || null;
+            index += 1;
         } else if (arg === '--browser-process-max') {
             options.browserProcessMax = parseIntegerOption(
                 process.argv[index + 1],
@@ -500,11 +805,19 @@ const parseArgs = () => {
                 options.browserFinalExtra
             );
             index += 1;
+        } else if (arg === '--electron-settle-ms') {
+            options.electronSettleMs = parseIntegerOption(
+                process.argv[index + 1],
+                defaultElectronSettleMs
+            );
+            index += 1;
         } else if (arg === '--help') {
             printHelp();
             process.exit(0);
         }
     }
+
+    options.scenarioIds = [...new Set(options.scenarioIds)];
 
     if (!options.outputRoot) {
         const runId = new Date().toISOString().replace(/[:.]/g, '-');
@@ -540,8 +853,12 @@ const printHelp = () => {
             '  --unity-exe <path>       Unity Editor executable.',
             '  --unity-project-path <path> Unity project path for capture; defaults to clients/unity.',
             '  --url <url>              Electron parity harness URL.',
+            '  --scenario <ids>         Comma list of scenario ids to run, e.g. chrome-rulebook-open.',
+            '  --scenarios <ids>        Alias for --scenario.',
+            '  --suite <name>           Curated suite to run, e.g. ui-alignment.',
             '  --browser-process-max <n> Fail when matched agent-browser Chrome processes exceed n.',
             '  --browser-final-extra <n> Allow n extra matched processes beyond the pre-run baseline after cleanup.',
+            '  --electron-settle-ms <n> Wait this many ms after Electron scenario actions before state/screenshot capture.',
             '',
         ].join('\n')
     );
@@ -974,9 +1291,56 @@ const buildElectronScript = (scenario, replayBase64) => {
   for (const step of operationSteps) {
     results.push(await api.dispatch(step.action, step.payload));
   }
-  await new Promise((resolve) => setTimeout(resolve, 1600));
+  await new Promise((resolve) => setTimeout(resolve, ${scenario.electronSettleMs ?? defaultElectronSettleMs}));
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   return JSON.stringify({ results, beforeState, state: api.dumpState() });
+})()
+`;
+};
+
+const buildElectronHoverTargetScript = (scenario) => {
+    if (scenario.electronHoverTarget?.kind !== 'main-menu-mode') {
+        return null;
+    }
+
+    const target = scenario.electronHoverTarget;
+    const marker = `scenario-${scenario.id}`;
+    const labels = JSON.stringify(target.labels ?? []);
+    const mode = JSON.stringify(target.mode);
+    const selector = `[data-parity-hover-target="${marker}"]`;
+    return `
+(() => {
+  const labels = ${labels};
+  const mode = ${mode};
+  const marker = ${JSON.stringify(marker)};
+  document
+    .querySelectorAll('[data-parity-hover-target]')
+    .forEach((element) => element.removeAttribute('data-parity-hover-target'));
+  const candidates = Array.from(
+    document.querySelectorAll('[data-testid="desktop-stage-canvas"] button, button')
+  );
+  const target = candidates.find((candidate) => {
+    const rect = candidate.getBoundingClientRect();
+    const text = candidate.textContent || '';
+    return rect.width > 0 && rect.height > 0 && labels.some((label) => text.includes(label));
+  });
+  if (!target) {
+    return JSON.stringify({ ok: false, mode, labels });
+  }
+  target.setAttribute('data-parity-hover-target', marker);
+  const rect = target.getBoundingClientRect();
+  return JSON.stringify({
+    ok: true,
+    mode,
+    selector: ${JSON.stringify(selector)},
+    text: target.textContent || '',
+    rect: {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    },
+  });
 })()
 `;
 };
@@ -1006,8 +1370,21 @@ JSON.stringify(Boolean(window.__GEMDUEL_PARITY__ && window.__GEMDUEL_PARITY__.is
             buildElectronScript(scenario, replayBase64),
             90000
         );
-        if (scenario.electronHoverSelector) {
-            await agentNoOutput(session, ['hover', scenario.electronHoverSelector], {
+        let electronHoverSelector = scenario.electronHoverSelector;
+        const hoverTargetScript = buildElectronHoverTargetScript(scenario);
+        if (hoverTargetScript) {
+            const hoverTarget = await agentEvalJson(session, hoverTargetScript, 30000);
+            if (!hoverTarget.ok || !hoverTarget.selector) {
+                throw new Error(
+                    `Could not resolve Electron hover target for ${scenario.id}: ${JSON.stringify(
+                        hoverTarget
+                    )}`
+                );
+            }
+            electronHoverSelector = hoverTarget.selector;
+        }
+        if (electronHoverSelector) {
+            await agentNoOutput(session, ['hover', electronHoverSelector], {
                 timeoutMs: 60000,
             });
             await agentNoOutput(session, ['wait', '300'], { timeoutMs: 60000 });
@@ -1033,6 +1410,18 @@ JSON.stringify(Boolean(window.__GEMDUEL_PARITY__ && window.__GEMDUEL_PARITY__.is
             `scenario ${scenario.id} ${viewportId} finished`
         );
     }
+};
+
+const createReplayBase64Loader = () => {
+    const cache = new Map();
+    return async (fixtureFileName = defaultFixtureFileName) => {
+        if (!cache.has(fixtureFileName)) {
+            const replayText = await readFile(getFixturePath(fixtureFileName), 'utf8');
+            cache.set(fixtureFileName, Buffer.from(replayText, 'utf8').toString('base64'));
+        }
+
+        return cache.get(fixtureFileName);
+    };
 };
 
 const runUnityCapture = async (options) => {
@@ -1062,6 +1451,14 @@ const runUnityCapture = async (options) => {
         logPath,
         '-quit',
     ];
+    if (options.scenarioIds.length > 0) {
+        args.splice(
+            args.indexOf('-logFile'),
+            0,
+            '-gemduelParityScenarios',
+            options.scenarioIds.join(',')
+        );
+    }
 
     const result = await execFileCapture(options.unityExe, args, {
         timeoutMs: 600000,
@@ -1090,10 +1487,17 @@ const normalizeBuffRef = (value) => {
     if (!buff || typeof buff !== 'object') {
         return null;
     }
+    const state =
+        buff.state &&
+        typeof buff.state === 'object' &&
+        !Array.isArray(buff.state) &&
+        Object.keys(buff.state).length === 0
+            ? null
+            : (buff.state ?? null);
 
     return {
         id: buff.id ?? null,
-        state: buff.state ?? null,
+        state,
     };
 };
 
@@ -1531,46 +1935,48 @@ const buildOperationContractReport = (scenario, electron, unityState) => {
             : unityState;
     const electronTargetState = electronBeforeContractState;
     const unityTargetState = unityBeforeContractState;
+    let targetRect = null;
     const electronTargets = summarizeElectronBoxes(electronTargetState);
     const unityTargets = summarizeUnityBoxes(unityTargetState);
-    const electronTarget = findSemanticBox(electronTargets, contract.semanticKey);
-    const unityTarget = findSemanticBox(unityTargets, contract.semanticKey);
+    if (contract.semanticKey) {
+        const electronTarget = findSemanticBox(electronTargets, contract.semanticKey);
+        const unityTarget = findSemanticBox(unityTargets, contract.semanticKey);
 
-    if (!electronTarget) {
-        failures.push({
-            reason: 'Electron did not expose the contracted semantic target before the operation.',
-            semanticKey: contract.semanticKey,
-        });
-    }
-    if (!unityTarget) {
-        failures.push({
-            reason: 'Unity did not expose the contracted semantic target before the operation.',
-            semanticKey: contract.semanticKey,
-        });
-    } else if (!unityTarget.clickable) {
-        failures.push({
-            reason: 'Unity semantic target is present but not clickable.',
-            semanticKey: contract.semanticKey,
-            unity: unityTarget,
-        });
-    }
-
-    let targetRect = null;
-    if (electronTarget && unityTarget) {
-        const delta = rectDelta(electronTarget.rect, unityTarget.rect);
-        targetRect = {
-            tolerancePx,
-            ok: rectWithinTolerance(delta, tolerancePx),
-            electron: electronTarget.rect,
-            unity: unityTarget.rect,
-            delta,
-        };
-        if (!targetRect.ok) {
+        if (!electronTarget) {
             failures.push({
-                reason: 'Contracted semantic target rectangles diverged.',
+                reason: 'Electron did not expose the contracted semantic target before the operation.',
                 semanticKey: contract.semanticKey,
-                targetRect,
             });
+        }
+        if (!unityTarget) {
+            failures.push({
+                reason: 'Unity did not expose the contracted semantic target before the operation.',
+                semanticKey: contract.semanticKey,
+            });
+        } else if (!unityTarget.clickable) {
+            failures.push({
+                reason: 'Unity semantic target is present but not clickable.',
+                semanticKey: contract.semanticKey,
+                unity: unityTarget,
+            });
+        }
+
+        if (electronTarget && unityTarget) {
+            const delta = rectDelta(electronTarget.rect, unityTarget.rect);
+            targetRect = {
+                tolerancePx,
+                ok: rectWithinTolerance(delta, tolerancePx),
+                electron: electronTarget.rect,
+                unity: unityTarget.rect,
+                delta,
+            };
+            if (!targetRect.ok) {
+                failures.push({
+                    reason: 'Contracted semantic target rectangles diverged.',
+                    semanticKey: contract.semanticKey,
+                    targetRect,
+                });
+            }
         }
     }
 
@@ -1660,25 +2066,168 @@ const buildOperationContractReport = (scenario, electron, unityState) => {
     };
 };
 
-const compareScreenshots = async (electronPath, unityPath, diffPath) => {
-    const result = await execFileCapture(
-        'powershell',
-        [
-            '-NoProfile',
-            '-ExecutionPolicy',
-            'Bypass',
-            '-File',
-            path.join(workspaceRoot, 'tools', 'migration', 'compare-png.ps1'),
-            '-BaselinePath',
-            electronPath,
-            '-CandidatePath',
-            unityPath,
-            '-DiffPath',
-            diffPath,
-        ],
-        { timeoutMs: 180000, allowFailure: true }
-    );
+const compareScreenshots = async (electronPath, unityPath, diffPath, scenario) => {
+    const args = [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        path.join(workspaceRoot, 'tools', 'migration', 'compare-png.ps1'),
+        '-BaselinePath',
+        electronPath,
+        '-CandidatePath',
+        unityPath,
+        '-DiffPath',
+        diffPath,
+    ];
+    if (scenario?.visualCrop) {
+        args.push(
+            '-BaselineCropX',
+            String(scenario.visualCrop.baseline.x),
+            '-BaselineCropY',
+            String(scenario.visualCrop.baseline.y),
+            '-BaselineCropWidth',
+            String(scenario.visualCrop.baseline.width),
+            '-BaselineCropHeight',
+            String(scenario.visualCrop.baseline.height),
+            '-CandidateCropX',
+            String(scenario.visualCrop.candidate.x),
+            '-CandidateCropY',
+            String(scenario.visualCrop.candidate.y),
+            '-CandidateCropWidth',
+            String(scenario.visualCrop.candidate.width),
+            '-CandidateCropHeight',
+            String(scenario.visualCrop.candidate.height)
+        );
+    }
+    if (Number.isFinite(scenario?.visualMismatchThresholdPercent)) {
+        args.push('-ThresholdPercent', String(scenario.visualMismatchThresholdPercent));
+    }
+    if (Number.isFinite(scenario?.pixelThreshold)) {
+        args.push('-PixelThreshold', String(scenario.pixelThreshold));
+    }
+    if (scenario?.strictPixelVisualDiff) {
+        args.push('-RequireStrictPixel');
+    }
+
+    const result = await execFileCapture('powershell', args, {
+        timeoutMs: 180000,
+        allowFailure: true,
+    });
     return parseAgentJson(result.stdout);
+};
+
+const safeDiffSegment = (value) => String(value).replace(/[^a-z0-9_.-]+/gi, '_');
+
+const createCropRect = (rect, viewport, marginPx) => {
+    if (
+        !rect ||
+        !Number.isFinite(rect.x) ||
+        !Number.isFinite(rect.y) ||
+        !Number.isFinite(rect.width) ||
+        !Number.isFinite(rect.height)
+    ) {
+        return null;
+    }
+
+    const x = Math.max(0, Math.floor(rect.x - marginPx));
+    const y = Math.max(0, Math.floor(rect.y - marginPx));
+    const right = Math.min(viewport.width, Math.ceil(rect.x + rect.width + marginPx));
+    const bottom = Math.min(viewport.height, Math.ceil(rect.y + rect.height + marginPx));
+    const width = Math.max(1, right - x);
+    const height = Math.max(1, bottom - y);
+    return { x, y, width, height };
+};
+
+const normalizeCropPair = (baseline, candidate, viewport) => {
+    if (!baseline || !candidate) {
+        return null;
+    }
+    const width = Math.max(1, Math.min(baseline.width, candidate.width));
+    const height = Math.max(1, Math.min(baseline.height, candidate.height));
+    return {
+        baseline: {
+            x: baseline.x,
+            y: baseline.y,
+            width: Math.min(width, viewport.width - baseline.x),
+            height: Math.min(height, viewport.height - baseline.y),
+        },
+        candidate: {
+            x: candidate.x,
+            y: candidate.y,
+            width: Math.min(width, viewport.width - candidate.x),
+            height: Math.min(height, viewport.height - candidate.y),
+        },
+    };
+};
+
+const compareScopedScreenshots = async (
+    electronPath,
+    unityPath,
+    diffPath,
+    scenario,
+    boundingBoxes,
+    viewport
+) => {
+    const scopedKeys = Array.isArray(boundingBoxes?.scopedKeys) ? boundingBoxes.scopedKeys : [];
+    const electronByKey = new Map((boundingBoxes?.electron ?? []).map((box) => [box.key, box]));
+    const unityByKey = new Map((boundingBoxes?.unity ?? []).map((box) => [box.key, box]));
+    const marginPx = Number.isFinite(scenario?.visualBoundingBoxMarginPx)
+        ? Math.max(0, Math.round(scenario.visualBoundingBoxMarginPx))
+        : 16;
+    const comparisons = [];
+
+    for (const key of scopedKeys) {
+        const electronBox = electronByKey.get(key);
+        const unityBox = unityByKey.get(key);
+        const cropPair = normalizeCropPair(
+            createCropRect(electronBox?.rect, viewport, marginPx),
+            createCropRect(unityBox?.rect, viewport, marginPx),
+            viewport
+        );
+
+        if (!electronBox || !unityBox || !cropPair) {
+            comparisons.push({
+                key,
+                ok: false,
+                blocker: 'Scoped visual key is missing from Electron or Unity state.',
+            });
+            continue;
+        }
+
+        const scopedDiffPath = diffPath.replace(/\.png$/i, `-${safeDiffSegment(key)}.png`);
+        const result = await compareScreenshots(electronPath, unityPath, scopedDiffPath, {
+            ...scenario,
+            strictPixelVisualDiff: false,
+            visualCrop: cropPair,
+        });
+        comparisons.push({
+            key,
+            ok: Boolean(result.ok),
+            diffPath: scopedDiffPath,
+            baselineCrop: cropPair.baseline,
+            candidateCrop: cropPair.candidate,
+            similarityPercent: result.similarityPercent,
+            requiredSimilarityPercent: result.requiredSimilarityPercent,
+            mismatchPercent: result.mismatchPercent,
+            mismatchedPixels: result.mismatchedPixels,
+            totalPixels: result.totalPixels,
+            pixelThreshold: result.pixelThreshold,
+            positionTolerancePx: result.positionTolerancePx,
+            meanAbsoluteDelta: result.meanAbsoluteDelta,
+            meanDeltaOk: result.meanDeltaOk,
+            strictPixelOk: result.strictPixelOk,
+        });
+    }
+
+    return {
+        ok: comparisons.length > 0 && comparisons.every((comparison) => comparison.ok),
+        scoped: true,
+        scope: 'semantic-bounding-boxes',
+        marginPx,
+        comparisonCount: comparisons.length,
+        comparisons,
+    };
 };
 
 const roundRectValue = (value) =>
@@ -1749,8 +2298,14 @@ const requiredSemanticKeys = [
     'market.card.1.0',
     'market.card.2.0',
     'market.card.3.0',
+    'topbar.score.p1',
+    'topbar.score.p2',
+    'topbar.turnCore',
+    'topbar.turn.p1',
+    'topbar.turn.p2',
     'card.preview.overlay',
     'card.preview.backdrop',
+    'card.preview.close',
     'card.preview.card',
     'card.preview.primaryAction',
     'player.current.zone',
@@ -1759,6 +2314,10 @@ const requiredSemanticKeys = [
     'player.score',
     'player.reserved.0',
     'turn.end',
+    'replay.returnToResults',
+    'replay.control.undo',
+    'replay.control.redo',
+    'replay.counter',
     'royal.featured',
     'settings.panel',
     'error.banner',
@@ -1769,28 +2328,35 @@ const strictBoundingBoxKey = (key) =>
         key.startsWith('chrome.') ||
         key.startsWith('settings.') ||
         key.startsWith('rulebook.') ||
-        key.startsWith('player.current.gem.') ||
-        key.startsWith('player.opponent.gem.') ||
         key.startsWith('board.selection.')
     );
 
-const buildBoundingBoxReport = (electronState, unityState) => {
+const buildBoundingBoxReport = (electronState, unityState, scenario = null) => {
     const electron = summarizeElectronBoxes(electronState);
     const unity = summarizeUnityBoxes(unityState);
     const electronByKey = new Map(electron.map((box) => [box.key, box]));
     const unityByKey = new Map(unity.map((box) => [box.key, box]));
-    const commonKeys = [...electronByKey.keys()].filter(
-        (key) => unityByKey.has(key) && strictBoundingBoxKey(key)
-    );
+    const scenarioBoundingBoxKeys = Array.isArray(scenario?.visualBoundingBoxKeys)
+        ? scenario.visualBoundingBoxKeys.filter((key) => typeof key === 'string' && key.length > 0)
+        : [];
+    const scenarioBoundingBoxKeySet = new Set(scenarioBoundingBoxKeys);
+    const commonKeys =
+        scenarioBoundingBoxKeys.length > 0
+            ? scenarioBoundingBoxKeys.filter((key) => electronByKey.has(key) && unityByKey.has(key))
+            : [...electronByKey.keys()].filter(
+                  (key) => unityByKey.has(key) && strictBoundingBoxKey(key)
+              );
     const electronKeys = new Set(electronByKey.keys());
     const unityKeys = new Set(unityByKey.keys());
-    const missingElectronKeys = requiredSemanticKeys.filter(
+    const requiredKeys =
+        scenarioBoundingBoxKeys.length > 0 ? scenarioBoundingBoxKeys : requiredSemanticKeys;
+    const missingElectronKeys = requiredKeys.filter(
         (key) => unityKeys.has(key) && !electronKeys.has(key)
     );
-    const missingUnityKeys = requiredSemanticKeys.filter(
+    const missingUnityKeys = requiredKeys.filter(
         (key) => electronKeys.has(key) && !unityKeys.has(key)
     );
-    const absentInBothKeys = requiredSemanticKeys.filter(
+    const absentInBothKeys = requiredKeys.filter(
         (key) => !electronKeys.has(key) && !unityKeys.has(key)
     );
     const comparisons = commonKeys.map((key) => {
@@ -1813,8 +2379,11 @@ const buildBoundingBoxReport = (electronState, unityState) => {
 
     return {
         thresholdPx: 2,
+        scopedKeys: scenarioBoundingBoxKeys,
         ok:
             commonKeys.length > 0 &&
+            (scenarioBoundingBoxKeys.length === 0 ||
+                commonKeys.length === scenarioBoundingBoxKeySet.size) &&
             missingElectronKeys.length === 0 &&
             missingUnityKeys.length === 0 &&
             comparisons.every((comparison) => comparison.ok),
@@ -1941,13 +2510,59 @@ const writeMatrix = async (options, matrixRows) => {
     return { jsonPath, mdPath };
 };
 
+const applySuiteProfile = (scenario, suite, options) => {
+    if (!suite) {
+        return {
+            ...scenario,
+            electronSettleMs:
+                options.electronSettleMs ?? scenario.electronSettleMs ?? defaultElectronSettleMs,
+        };
+    }
+
+    return {
+        ...scenario,
+        skipVisualDiff: scenario.skipVisualDiff ?? false,
+        strictPixelVisualDiff: scenario.strictPixelVisualDiff ?? suite.strictPixelVisualDiff,
+        visualMismatchThresholdPercent:
+            suite.visualMismatchThresholdPercent ?? scenario.visualMismatchThresholdPercent,
+        electronSettleMs:
+            options.electronSettleMs ??
+            scenario.electronSettleMs ??
+            suite.electronSettleMs ??
+            defaultElectronSettleMs,
+    };
+};
+
 const main = async () => {
     const options = parseArgs();
+    const suite = options.suite ? suiteDefinitions[options.suite] : null;
+    if (options.suite && !suite) {
+        throw new Error(
+            `Unknown parity suite "${options.suite}". Known suites: ${Object.keys(suiteDefinitions).join(', ')}`
+        );
+    }
+
+    const requestedScenarioIds =
+        options.scenarioIds.length > 0 ? options.scenarioIds : suite ? suite.scenarioIds : [];
+    const selectedScenarioDefinitions =
+        requestedScenarioIds.length > 0
+            ? scenarioDefinitions.filter((scenario) => requestedScenarioIds.includes(scenario.id))
+            : scenarioDefinitions;
+    const missingScenarioIds = requestedScenarioIds.filter(
+        (id) => !scenarioDefinitions.some((scenario) => scenario.id === id)
+    );
+    if (missingScenarioIds.length > 0) {
+        throw new Error(`Unknown parity scenario id(s): ${missingScenarioIds.join(', ')}`);
+    }
+    options.scenarioIds = [...new Set(requestedScenarioIds)];
+    const profiledScenarioDefinitions = selectedScenarioDefinitions.map((scenario) =>
+        applySuiteProfile(scenario, suite, options)
+    );
+
     await mkdir(options.outputRoot, { recursive: true });
     options.browserProcessGuard = createBrowserProcessGuard(options);
     const releaseRunnerLock = await acquireRunnerLock(options);
-    const replayText = await readFile(fixturePath, 'utf8');
-    const replayBase64 = Buffer.from(replayText, 'utf8').toString('base64');
+    const loadReplayBase64 = createReplayBase64Loader();
     let rendererDev = null;
     let unityResult = { ok: false, blocker: 'Unity capture did not start.' };
     const matrixRows = [];
@@ -1967,10 +2582,11 @@ const main = async () => {
 
         for (const viewport of options.viewports) {
             const viewportId = `${viewport.width}x${viewport.height}`;
-            for (const scenario of scenarioDefinitions) {
+            for (const scenario of profiledScenarioDefinitions) {
                 const scenarioWithDefaults = {
                     electronEntry: options.url,
                     unityEntry: 'GemDuel.Editor.CaptureUnityParityScenarios',
+                    fixtureFileName: defaultFixtureFileName,
                     inputScript:
                         scenario.revision === null
                             ? (scenario.actions ?? [{ action: 'reset' }])
@@ -1986,6 +2602,7 @@ const main = async () => {
                               }`,
                     ...scenario,
                 };
+                const replayBase64 = await loadReplayBase64(scenarioWithDefaults.fixtureFileName);
                 const electron = await captureElectronScenario(
                     options,
                     scenarioWithDefaults,
@@ -2077,21 +2694,48 @@ const main = async () => {
                             blocker: null,
                             reason: 'Scenario is operation-contract only.',
                             diffPath: imageDiffPath,
-                            boundingBoxes: buildBoundingBoxReport(electron.state, unityState),
+                            boundingBoxes: buildBoundingBoxReport(
+                                electron.state,
+                                unityState,
+                                scenario
+                            ),
                             typography: buildTypographyReport(electron.state, unityState),
                         };
                     } else {
-                        visualDiff = await compareScreenshots(
-                            electron.screenshotPath,
-                            unityScreenshotPath,
-                            imageDiffPath
-                        );
-                        visualDiff.visualMetricOk = Boolean(visualDiff.ok);
-                        visualDiff.pixelOk = Boolean(visualDiff.ok);
-                        visualDiff.boundingBoxes = buildBoundingBoxReport(
+                        const boundingBoxes = buildBoundingBoxReport(
                             electron.state,
-                            unityState
+                            unityState,
+                            scenario
                         );
+                        if (scenario.visualDiffScope === 'semantic-bounding-boxes') {
+                            const scopedVisualDiff = await compareScopedScreenshots(
+                                electron.screenshotPath,
+                                unityScreenshotPath,
+                                imageDiffPath,
+                                scenario,
+                                boundingBoxes,
+                                viewport
+                            );
+                            visualDiff = {
+                                ...scopedVisualDiff,
+                                diffPath: imageDiffPath,
+                                visualMetricOk: scopedVisualDiff.ok,
+                                pixelOk: scopedVisualDiff.ok,
+                                blocker: scopedVisualDiff.ok
+                                    ? null
+                                    : 'Scoped hover target visual diff did not meet the similarity or mean-delta threshold.',
+                            };
+                        } else {
+                            visualDiff = await compareScreenshots(
+                                electron.screenshotPath,
+                                unityScreenshotPath,
+                                imageDiffPath,
+                                scenario
+                            );
+                            visualDiff.visualMetricOk = Boolean(visualDiff.ok);
+                            visualDiff.pixelOk = Boolean(visualDiff.ok);
+                        }
+                        visualDiff.boundingBoxes = boundingBoxes;
                         visualDiff.typography = buildTypographyReport(electron.state, unityState);
                         visualDiff.ok = Boolean(
                             visualDiff.visualMetricOk &&
@@ -2197,6 +2841,11 @@ const main = async () => {
     }
 
     const matrixPaths = await writeMatrix(options, matrixRows);
+    const matrixCounts = matrixRows.reduce((acc, row) => {
+        acc[row.status] = (acc[row.status] ?? 0) + 1;
+        return acc;
+    }, {});
+
     await writeFile(
         path.join(options.outputRoot, 'runner-summary.json'),
         JSON.stringify(
@@ -2206,10 +2855,7 @@ const main = async () => {
                 unity: unityResult,
                 matrix: matrixPaths,
                 browserProcessGuard: options.browserProcessGuard.summary(),
-                counts: matrixRows.reduce((acc, row) => {
-                    acc[row.status] = (acc[row.status] ?? 0) + 1;
-                    return acc;
-                }, {}),
+                counts: matrixCounts,
             },
             null,
             4
@@ -2218,9 +2864,20 @@ const main = async () => {
 
     process.stdout.write(`Electron/Unity parity artifacts: ${options.outputRoot}\n`);
     process.stdout.write(`Matrix: ${matrixPaths.mdPath}\n`);
+
+    const failingRows = matrixRows.filter((row) => row.status !== 'Equivalent');
+    if (suite?.failOnMatrixFailure && failingRows.length > 0) {
+        const failingScenarioNames = failingRows.map((row) => row.scenario).join('; ');
+        process.stderr.write(
+            `Parity suite "${options.suite}" failed ${failingRows.length} row(s): ${failingScenarioNames}\n`
+        );
+        process.exitCode = 1;
+    }
 };
 
-main().catch((error) => {
-    process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
-    process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+    main().catch((error) => {
+        process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
+        process.exit(1);
+    });
+}

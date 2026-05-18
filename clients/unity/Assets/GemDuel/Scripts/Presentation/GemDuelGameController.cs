@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using GemDuel.Catalog;
 using GemDuel.Core;
+using GemDuel.Lan;
 using GemDuel.Platform;
 using GemDuel.Replay;
 using Newtonsoft.Json;
@@ -61,7 +63,32 @@ namespace GemDuel.Presentation
         private static readonly string[] JokerBonusColorOrder = { "red", "green", "blue", "white", "black", "pearl" };
         private static readonly string[] PlayerZoneResourceOrder = { "red", "green", "blue", "white", "black", "pearl", "gold" };
         private static readonly string[] PlayerZoneTableauOrder = { "red", "green", "blue", "white", "black", "pure-royal" };
+        private const float ElectronTableauCardWidth = 120f;
+        private const float ElectronTableauCardHeight = 160f;
+        private const float ElectronFeaturedCardWidth = 150f;
+        private const float ElectronFeaturedCardHeight = 200f;
+        private static readonly Color32 ElectronRuntimeCardPlaceholder = new Color32(30, 41, 59, 255);
+        private const float ElectronInventoryBadgeSize = 45f;
+        private const float ElectronInventoryBadgeFontSize = 26f;
+        private const float ElectronTableauBadgeInset = -8f;
         private const string RulebookSourceOfTruth = "packages/ui/src/components/RulebookContent.ts";
+        private const string LexiconSourceOfTruth = "packages/shared/src/lexicon/index.ts";
+        private static readonly Rect ElectronRulebookPanelRect = new Rect(490f, 71.84f, 940f, 936.31f);
+        private static readonly Rect ElectronRulebookPrevRect = new Rect(502f, 970.15f, 92f, 28f);
+        private static readonly Rect ElectronRulebookNextRect = new Rect(1326f, 970.15f, 92f, 28f);
+        private static readonly Rect ElectronRulebookCloseRect = new Rect(1394f, 87.84f, 24f, 24f);
+        private static readonly Rect[] ElectronRulebookNavRects =
+        {
+            new Rect(500.5f, 132.22f, 81.3f, 27f),
+            new Rect(585.8f, 132.22f, 114.91f, 27f),
+            new Rect(704.71f, 132.22f, 70.1f, 27f),
+            new Rect(778.81f, 132.22f, 70.1f, 27f),
+            new Rect(852.91f, 132.22f, 70.1f, 27f),
+            new Rect(927.02f, 132.22f, 81.3f, 27f),
+            new Rect(1012.32f, 132.22f, 81.3f, 27f),
+            new Rect(1097.63f, 132.22f, 92.5f, 27f),
+            new Rect(1194.13f, 132.22f, 114.91f, 27f),
+        };
         private static readonly RulebookPageContent[] RulebookPages =
         {
             new RulebookPageContent(
@@ -414,11 +441,14 @@ namespace GemDuel.Presentation
         private TMP_Text statusText;
         private TMP_Text guideText;
         private int nextFixtureEventIndex;
+        private int replayVisibleHistoryLength;
         private bool isMainMenu;
         private bool settingsOpen;
         private bool settingsSurfaceDropdownOpen;
         private bool rulebookOpen;
         private int rulebookPage;
+        private LexiconPopoverContext activeLexiconPopover;
+        private static IReadOnlyList<UnityLexiconTerm> cachedLexiconTerms;
         private string settingsLocale = "zh";
         private readonly string settingsTheme = "dark";
         private string settingsSurfaceTheme = "royal-luxury";
@@ -433,6 +463,17 @@ namespace GemDuel.Presentation
         private string replayPersistenceError = string.Empty;
         private string recoveryPersistenceStatus = "not-written";
         private string recoveryPersistenceError = string.Empty;
+        private bool lanMenuOpen;
+        private string lanManualIp = "127.0.0.1";
+        private int lanManualPort = 9777;
+        private string lanConnectionStatus = "disconnected";
+        private string lanPlayerRole = "unassigned";
+        private string lanSessionId = string.Empty;
+        private ILanTransport lanTransport;
+        private LanHostSession lanHostSession;
+        private LanClientSession lanClientSession;
+        private readonly object lanActionLock = new object();
+        private readonly Queue<Action> lanMainThreadActions = new Queue<Action>();
         private string errorBanner = string.Empty;
         private PreviewContext previewContext;
         private HoverContext hoverContext;
@@ -442,15 +483,27 @@ namespace GemDuel.Presentation
         private bool previewBackdropCaptureEnabled;
         private bool automationInteractiveReplayMode;
         private bool previewInteractionLayoutSticky;
+        private bool suppressReplayControlsForPreviewCapture;
         private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> grayscaleTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Texture2D> displayTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> circularDisplayTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> objectCoverDisplayTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> dropShadowTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> rulebookElectronBaselineTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> mainMenuElectronBaselineTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> mainMenuHoverRegionTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Texture2D> settingsElectronBaselineTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private Texture2D blackGemContrastOverlayTexture;
+        private Texture2D deckBackGradientOverlayTexture;
+        private Texture2D previewCloseIconTexture;
         private Texture2D draftBackgroundTexture;
         private TMP_FontAsset uiFontAsset;
         private Material uiFontMaterial;
         private string uiFontPresetKey = string.Empty;
         private float renderOpacity = 1f;
+        private int renderSortingOrder;
         private bool compensateTextWeight;
         private string lastAutomationDriver = "setup";
         private string lastAutomationDetail = string.Empty;
@@ -483,6 +536,19 @@ namespace GemDuel.Presentation
         public string GetBoardGemForAutomation(int row, int column)
         {
             return GetCurrentBoardGemId(row, column);
+        }
+
+        public void ConfigureLanForAutomation(string manualIp, int manualPort)
+        {
+            if (!string.IsNullOrWhiteSpace(manualIp))
+            {
+                lanManualIp = manualIp.Trim();
+            }
+
+            if (manualPort > 0 && manualPort <= 65535)
+            {
+                lanManualPort = manualPort;
+            }
         }
 
         private string GetCurrentBoardGemId(int row, int column)
@@ -544,11 +610,13 @@ namespace GemDuel.Presentation
             BuildStatusText();
             LoadSettings();
             catalog = new CatalogLoader().LoadDefault();
+            CloseLanRuntime();
             activeReplay = null;
             liveRecordedReplay = null;
             activeRulesInit = new JObject();
             currentState = null;
             nextFixtureEventIndex = 0;
+            replayVisibleHistoryLength = 0;
             selectedGemCoords.Clear();
             previewContext = null;
             hoverContext = null;
@@ -557,6 +625,8 @@ namespace GemDuel.Presentation
             settingsOpen = false;
             settingsSurfaceDropdownOpen = false;
             rulebookOpen = false;
+            activeLexiconPopover = null;
+            lanMenuOpen = false;
             errorBanner = string.Empty;
             automationInteractiveReplayMode = false;
             isMainMenu = true;
@@ -630,6 +700,7 @@ namespace GemDuel.Presentation
                     settingsOpen = false;
                     settingsSurfaceDropdownOpen = false;
                     rulebookOpen = false;
+                    activeLexiconPopover = null;
                     previewContext = null;
                     hoverContext = null;
                     previewInteractionLayoutSticky = false;
@@ -640,6 +711,81 @@ namespace GemDuel.Presentation
                     lastAutomationDriver = "setup-route";
                     lastAutomationDetail = "Prepared mode selection state without mutating gameplay.";
                     return true;
+                case "hover_mode":
+                    return HoverModeForAutomation(payload, out error);
+                case "open_lan":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "Mode" && target.EventType == "open_lan",
+                        "LAN mode",
+                        out error
+                    );
+                case "host_lan":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "lan-host",
+                        "LAN host",
+                        out error
+                    );
+                case "join_lan":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "lan-join",
+                        "LAN join",
+                        out error
+                    );
+                case "lan_port_up":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "lan-port-up",
+                        "LAN port up",
+                        out error
+                    );
+                case "lan_port_down":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "lan-port-down",
+                        "LAN port down",
+                        out error
+                    );
+                case "click_rulebook_next":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "rulebook_next",
+                        "rulebook next",
+                        out error
+                    );
+                case "click_rulebook_prev":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "rulebook_prev",
+                        "rulebook previous",
+                        out error
+                    );
+                case "click_rulebook_nav":
+                    var rulebookNavIndex = payload.Value<int?>("index") ?? 0;
+                    return ClickVisibleTargetForAutomation(
+                        target =>
+                            target.Kind == "ActionButton"
+                            && (target.EventType == "rulebook_next" || target.EventType == "rulebook_prev")
+                            && target.Index == rulebookNavIndex,
+                        "rulebook nav " + rulebookNavIndex,
+                        out error
+                    );
+                case "click_rulebook_keyword":
+                    var requestedRulebookTermId = payload.Value<string>("termId");
+                    return ClickVisibleTargetForAutomation(
+                        target =>
+                            target.Kind == "LexiconTerm"
+                            && target.EventType == "lexicon_open"
+                            && (
+                                string.IsNullOrWhiteSpace(requestedRulebookTermId)
+                                || target.LexiconTermId == requestedRulebookTermId
+                            ),
+                        string.IsNullOrWhiteSpace(requestedRulebookTermId)
+                            ? "rulebook keyword"
+                            : "rulebook keyword " + requestedRulebookTermId,
+                        out error
+                    );
+                case "close_lexicon_popover":
+                    return ClickVisibleTargetForAutomation(
+                        target => target.Kind == "ActionButton" && target.EventType == "lexicon_close",
+                        "lexicon popover close",
+                        out error
+                    );
                 case "choose_boon":
                     return ClickVisibleBuffForAutomation(payload, out error);
                 case "reroll_draft_pool":
@@ -710,6 +856,22 @@ namespace GemDuel.Presentation
                     return HoverMarketDeckForAutomation(payload, out error);
                 case "click_preview_blank":
                     return ClickPreviewBlankForAutomation(payload, out error);
+                case "click_preview_keyword":
+                    var requestedPreviewTermId = payload.Value<string>("termId");
+                    return ClickVisibleTargetForAutomation(
+                        target =>
+                            target.Kind == "LexiconTerm"
+                            && target.EventType == "lexicon_open"
+                            && target.SemanticKey.StartsWith("lexicon.card.", StringComparison.Ordinal)
+                            && (
+                                string.IsNullOrWhiteSpace(requestedPreviewTermId)
+                                || target.LexiconTermId == requestedPreviewTermId
+                            ),
+                        string.IsNullOrWhiteSpace(requestedPreviewTermId)
+                            ? "preview keyword"
+                            : "preview keyword " + requestedPreviewTermId,
+                        out error
+                    );
                 case "buy_card":
                     return RunPreviewAction("buy_card", payload, out error);
                 case "reserve_card":
@@ -904,6 +1066,7 @@ namespace GemDuel.Presentation
 
         public JObject BuildAutomationStateSnapshot(int viewportWidth, int viewportHeight)
         {
+            FlushLanMainThreadActions();
             var snapshot = currentState == null ? BuildShellSnapshot() : (JObject)currentState.Snapshot.DeepClone();
             var state = new JObject
             {
@@ -925,6 +1088,7 @@ namespace GemDuel.Presentation
                 ["visualContracts"] = BuildVisualContractSnapshot(viewportWidth, viewportHeight),
                 ["replay"] = BuildReplaySnapshot(),
                 ["recovery"] = BuildRecoverySnapshot(),
+                ["lan"] = BuildLanSnapshot(),
                 ["gemSelection"] = BuildGemSelectionSnapshot(),
                 ["preview"] = previewContext == null
                     ? null
@@ -938,8 +1102,9 @@ namespace GemDuel.Presentation
                         ["color"] = previewContext.Color,
                         ["cardCount"] = previewContext.InstanceIds == null ? 0 : previewContext.InstanceIds.Count,
                         ["instanceIds"] = previewContext.InstanceIds == null ? new JArray() : new JArray(previewContext.InstanceIds),
-                    },
+                },
                 ["rulebook"] = BuildRulebookSnapshot(),
+                ["lexicon"] = BuildActiveLexiconSnapshot(RulebookLocale()),
                 ["hover"] = BuildHoverSnapshot(),
                 ["errorBanner"] = string.IsNullOrEmpty(errorBanner) ? null : errorBanner,
             };
@@ -983,6 +1148,8 @@ namespace GemDuel.Presentation
                 ["locale"] = locale,
                 ["sourceOfTruth"] = RulebookSourceOfTruth,
                 ["rendererSource"] = "packages/ui/src/components/Rulebook.tsx",
+                ["lexiconSourceOfTruth"] = LexiconSourceOfTruth,
+                ["activeLexicon"] = BuildActiveLexiconSnapshot(locale),
                 ["title"] = page.Title.Text(locale),
                 ["summary"] = page.Summary.Text(locale),
                 ["pageTitlesEn"] = new JArray(RulebookPages.Select(entry => entry.Title.En)),
@@ -1039,6 +1206,32 @@ namespace GemDuel.Presentation
                 ["availableForCurrentState"] = currentState != null && activeReplay == null && activeRulesInit.Count > 0,
                 ["revision"] = currentState == null ? 0 : nextFixtureEventIndex,
                 ["currentStateHash"] = currentStateHash,
+            };
+        }
+
+        private JObject BuildLanSnapshot()
+        {
+            ILanSession session = lanHostSession != null ? (ILanSession)lanHostSession : lanClientSession;
+            return new JObject
+            {
+                ["menuOpen"] = lanMenuOpen,
+                ["manualIp"] = lanManualIp,
+                ["manualPort"] = lanManualPort,
+                ["connectionStatus"] = lanConnectionStatus,
+                ["playerRole"] = lanPlayerRole,
+                ["sessionId"] = string.IsNullOrEmpty(lanSessionId) ? null : lanSessionId,
+                ["role"] = session == null ? null : session.Role.ToString(),
+                ["localPlayer"] = session == null ? null : session.LocalPlayer,
+                ["remotePlayer"] = session == null ? null : session.RemotePlayer,
+                ["replayRevision"] = session == null ? 0 : session.ReplayRevision,
+                ["stateHash"] = session == null ? null : session.StateHash,
+                ["transport"] = lanTransport == null ? null : lanTransport.GetType().Name,
+                ["localEndpoint"] = lanTransport == null ? null : lanTransport.LocalEndpoint,
+                ["remoteEndpoint"] = lanTransport == null ? null : lanTransport.RemoteEndpoint,
+                ["hostAuthoritative"] = lanHostSession != null,
+                ["clientIntentOnly"] = lanClientSession != null,
+                ["onlineRelay"] = false,
+                ["matchmaking"] = false,
             };
         }
 
@@ -1387,9 +1580,10 @@ namespace GemDuel.Presentation
                     }
                 }
 
+                replayVisibleHistoryLength = clampedRevision + 1;
                 ClearPreviewBackgroundTexture();
                 RenderState();
-                SetStatus("Replay review revision " + nextFixtureEventIndex + " / " + ReplayEventsTotal + ".");
+                SetStatus("Replay review revision " + (nextFixtureEventIndex + 1) + " / " + replayVisibleHistoryLength + ".");
                 return true;
             }
             catch (Exception ex)
@@ -1586,6 +1780,7 @@ namespace GemDuel.Presentation
                 BuildCamera();
                 BuildStatusText();
                 catalog = new CatalogLoader().LoadDefault();
+                CloseLanRuntime();
                 var result = rulesEngine.StartLocalGame(seed, useBuffs);
                 if (!result.Ok || result.State == null)
                 {
@@ -1739,6 +1934,27 @@ namespace GemDuel.Presentation
                 return;
             }
 
+            if (target.Kind == "LexiconTerm" && target.EventType == "lexicon_open")
+            {
+                hoverContext = null;
+                ToggleLexiconPopover(target);
+                return;
+            }
+
+            if (target.Kind == "ActionButton" && target.EventType == "lexicon_close")
+            {
+                hoverContext = null;
+                activeLexiconPopover = null;
+                RenderState();
+                SetStatus("Lexicon explanation closed.");
+                return;
+            }
+
+            if (activeLexiconPopover != null && (rulebookOpen || previewContext != null) && target.Kind != "LexiconPopover")
+            {
+                activeLexiconPopover = null;
+            }
+
             if (target.Kind == "Mode" && target.EventType == "start_local_game")
             {
                 hoverContext = null;
@@ -1761,13 +1977,67 @@ namespace GemDuel.Presentation
 
             if (target.Kind == "Mode" && target.EventType == "open_lan")
             {
-                OpenUnavailableShellEntry("LAN is not available in this Unity build.");
+                OpenLanMenu();
                 return;
             }
 
             if (target.Kind == "Mode" && target.EventType == "open_visual_lab")
             {
                 OpenUnavailableShellEntry("Visual Lab is not available in this Unity build.");
+                return;
+            }
+
+            if (target.Kind == "ActionButton" && target.EventType == "lan-back")
+            {
+                hoverContext = null;
+                lanMenuOpen = false;
+                isMainMenu = true;
+                RenderState();
+                SetStatus("LAN menu closed.");
+                return;
+            }
+
+            if (target.Kind == "ActionButton" && target.EventType == "lan-port-down")
+            {
+                hoverContext = null;
+                lanManualPort = Mathf.Max(1024, lanManualPort - 1);
+                RenderState();
+                SetStatus("LAN port set to " + lanManualPort + ".");
+                return;
+            }
+
+            if (target.Kind == "ActionButton" && target.EventType == "lan-port-up")
+            {
+                hoverContext = null;
+                lanManualPort = Mathf.Min(65535, lanManualPort + 1);
+                RenderState();
+                SetStatus("LAN port set to " + lanManualPort + ".");
+                return;
+            }
+
+            if (target.Kind == "ActionButton" && target.EventType == "lan-host")
+            {
+                hoverContext = null;
+                if (!StartLanHostForRuntime(out var hostError))
+                {
+                    errorBanner = hostError;
+                    RenderState();
+                    SetStatus(hostError);
+                }
+
+                return;
+            }
+
+            if (target.Kind == "ActionButton" && target.EventType == "lan-join")
+            {
+                hoverContext = null;
+                if (!StartLanClientForRuntime(out var joinError))
+                {
+                    errorBanner = joinError;
+                    RenderState();
+                    SetStatus(joinError);
+                }
+
                 return;
             }
 
@@ -1778,6 +2048,7 @@ namespace GemDuel.Presentation
                 settingsSurfaceDropdownOpen = false;
                 rulebookOpen = true;
                 rulebookPage = 0;
+                activeLexiconPopover = null;
                 previewContext = null;
                 errorBanner = string.Empty;
                 RenderState();
@@ -1796,6 +2067,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "ActionButton" && target.EventType == "close_rulebook")
             {
                 hoverContext = null;
+                activeLexiconPopover = null;
                 rulebookOpen = false;
                 RenderState();
                 SetStatus("Rulebook closed.");
@@ -1805,6 +2077,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "ActionButton" && target.EventType == "rulebook_prev")
             {
                 hoverContext = null;
+                activeLexiconPopover = null;
                 rulebookPage = target.Index >= 0
                     ? Mathf.Clamp(target.Index, 0, RulebookPages.Length - 1)
                     : Mathf.Max(0, rulebookPage - 1);
@@ -1816,6 +2089,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "ActionButton" && target.EventType == "rulebook_next")
             {
                 hoverContext = null;
+                activeLexiconPopover = null;
                 rulebookPage = target.Index >= 0
                     ? Mathf.Clamp(target.Index, 0, RulebookPages.Length - 1)
                     : Mathf.Min(RulebookPages.Length - 1, rulebookPage + 1);
@@ -1844,6 +2118,7 @@ namespace GemDuel.Presentation
                 settingsOpen = true;
                 settingsSurfaceDropdownOpen = false;
                 rulebookOpen = false;
+                activeLexiconPopover = null;
                 errorBanner = string.Empty;
                 RenderState();
                 SetStatus("Settings opened.");
@@ -1875,6 +2150,15 @@ namespace GemDuel.Presentation
                 return;
             }
 
+            if (target.Kind == "ActionButton" && target.EventType == "replay_return_to_results")
+            {
+                PlayReplayToEndForAutomation(out _);
+                automationInteractiveReplayMode = false;
+                RenderState();
+                SetStatus("Replay review returned to results.");
+                return;
+            }
+
             if (target.Kind == "ActionButton" && target.EventType == "close-modal")
             {
                 hoverContext = null;
@@ -1889,6 +2173,7 @@ namespace GemDuel.Presentation
             {
                 previewContext = null;
                 hoverContext = null;
+                activeLexiconPopover = null;
                 previewInteractionLayoutSticky = true;
                 ClearPreviewBackgroundTexture();
                 errorBanner = string.Empty;
@@ -1906,6 +2191,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "ActionButton" && target.EventType == "preview-buy")
             {
                 hoverContext = null;
+                activeLexiconPopover = null;
                 ConfirmPreviewAction("buy", out _);
                 return;
             }
@@ -1913,6 +2199,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "ActionButton" && target.EventType == "preview-reserve")
             {
                 hoverContext = null;
+                activeLexiconPopover = null;
                 ConfirmPreviewAction("reserve", out _);
                 return;
             }
@@ -1920,6 +2207,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "ActionButton" && target.EventType == "preview-discard")
             {
                 hoverContext = null;
+                activeLexiconPopover = null;
                 ConfirmPreviewAction("discard", out _);
                 return;
             }
@@ -1927,6 +2215,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "MarketCard")
             {
                 hoverContext = null;
+                activeLexiconPopover = null;
                 PreviewMarketCard(target.Level, target.Index, out _);
                 return;
             }
@@ -1934,6 +2223,7 @@ namespace GemDuel.Presentation
             if (target.Kind == "MarketDeck")
             {
                 hoverContext = null;
+                activeLexiconPopover = null;
                 PreviewMarketDeck(target.Level, out _);
                 return;
             }
@@ -2061,6 +2351,318 @@ namespace GemDuel.Presentation
             errorBanner = message;
             RenderState();
             SetStatus(message);
+        }
+
+        private void OpenLanMenu()
+        {
+            hoverContext = null;
+            settingsOpen = false;
+            settingsSurfaceDropdownOpen = false;
+            rulebookOpen = false;
+            previewContext = null;
+            errorBanner = string.Empty;
+            lanMenuOpen = true;
+            isMainMenu = true;
+            RenderState();
+            SetStatus("LAN menu opened.");
+        }
+
+        private bool StartLanHostForRuntime(out string error)
+        {
+            error = string.Empty;
+            try
+            {
+                EnsureInputController();
+                BuildCamera();
+                BuildStatusText();
+                catalog = new CatalogLoader().LoadDefault();
+                CloseLanRuntime(false);
+                lanConnectionStatus = "starting host";
+                lanPlayerRole = "host / p1";
+                lanSessionId = "unity-lan-" + DateTime.UtcNow.Ticks.ToString();
+                lanTransport = new TcpLanTransport();
+                lanHostSession = new LanHostSession(
+                    lanTransport,
+                    rulesEngine,
+                    lanSessionId,
+                    "unity-lan-host",
+                    "p1"
+                );
+                WireLanSession(lanHostSession);
+                lanHostSession.StartHost(lanManualPort);
+                if (!lanHostSession.StartGame(out error))
+                {
+                    CloseLanRuntime(false);
+                    return false;
+                }
+
+                ApplyLanHostStateFromSession("initial");
+                lanConnectionStatus = "listening on " + lanManualPort;
+                activeReplay = null;
+                liveRecordedReplay = null;
+                isMainMenu = false;
+                lanMenuOpen = false;
+                automationInteractiveReplayMode = true;
+                RenderState();
+                SetStatus("LAN host started on port " + lanManualPort + " as p1.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = "LAN host failed: " + ex.Message;
+                CloseLanRuntime(false);
+                lanConnectionStatus = "error";
+                lanPlayerRole = "unassigned";
+                return false;
+            }
+        }
+
+        private bool StartLanClientForRuntime(out string error)
+        {
+            error = string.Empty;
+            try
+            {
+                EnsureInputController();
+                BuildCamera();
+                BuildStatusText();
+                catalog = new CatalogLoader().LoadDefault();
+                CloseLanRuntime(false);
+                lanConnectionStatus = "connecting";
+                lanPlayerRole = "client / p2";
+                lanSessionId = "manual-" + lanManualIp + "-" + lanManualPort.ToString();
+                lanTransport = new TcpLanTransport();
+                lanClientSession = new LanClientSession(lanTransport, lanSessionId, "p2", "p1");
+                WireLanSession(lanClientSession);
+                lanClientSession.Join(lanManualIp, lanManualPort);
+                isMainMenu = true;
+                lanMenuOpen = true;
+                RenderState();
+                SetStatus("LAN client connecting to " + lanManualIp + ":" + lanManualPort + ".");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = "LAN join failed: " + ex.Message;
+                CloseLanRuntime(false);
+                lanConnectionStatus = "error";
+                lanPlayerRole = "unassigned";
+                return false;
+            }
+        }
+
+        private void WireLanSession(ILanSession session)
+        {
+            session.StatusChanged += (_, args) =>
+                EnqueueLanAction(() =>
+                {
+                    lanConnectionStatus = args.Status.ToString().ToLowerInvariant();
+                    if (!string.IsNullOrEmpty(args.Detail))
+                    {
+                        lanConnectionStatus += " - " + args.Detail;
+                    }
+
+                    if (lanMenuOpen || currentState == null)
+                    {
+                        RenderState();
+                    }
+
+                    SetStatus("LAN " + lanConnectionStatus);
+                });
+            session.SnapshotReceived += (_, args) =>
+                EnqueueLanAction(() => ApplyLanSnapshotToPresentation(args));
+            session.CommandResultReceived += (_, args) =>
+                EnqueueLanAction(() => ApplyLanCommandResultToPresentation(args));
+        }
+
+        private void ApplyLanSnapshotToPresentation(LanSnapshotEventArgs args)
+        {
+            currentState = new GameState(args.Snapshot, args.ReplayRevision);
+            nextFixtureEventIndex = args.ReplayRevision;
+            activeReplay = null;
+            if (lanHostSession != null)
+            {
+                activeRulesInit = lanHostSession.CurrentInit;
+            }
+            else
+            {
+                activeRulesInit = new JObject();
+                liveRecordedReplay = null;
+            }
+
+            selectedGemCoords.Clear();
+                previewContext = null;
+                hoverContext = null;
+                previewInteractionLayoutSticky = false;
+                settingsOpen = false;
+            settingsSurfaceDropdownOpen = false;
+            rulebookOpen = false;
+            errorBanner = string.Empty;
+            isMainMenu = false;
+            lanMenuOpen = false;
+            lanPlayerRole = (lanHostSession != null ? "host / " : "client / ") + args.ViewerPlayer;
+            lanConnectionStatus = "snapshot " + args.Reason + " rev " + args.ReplayRevision;
+            automationInteractiveReplayMode = true;
+            RenderState();
+            SetStatus("LAN snapshot received | rev " + args.ReplayRevision + " | " + args.StateHash);
+        }
+
+        private void ApplyLanHostStateFromSession(string reason)
+        {
+            if (lanHostSession == null || lanHostSession.AuthoritativeState == null)
+            {
+                return;
+            }
+
+            currentState = new GameState(lanHostSession.CurrentSnapshot, lanHostSession.ReplayRevision);
+            activeRulesInit = lanHostSession.CurrentInit;
+            nextFixtureEventIndex = lanHostSession.ReplayRevision;
+            lanConnectionStatus = "host " + reason + " rev " + lanHostSession.ReplayRevision;
+        }
+
+        private void ApplyLanCommandResultToPresentation(LanCommandResultEventArgs args)
+        {
+            if (args.Accepted)
+            {
+                errorBanner = string.Empty;
+                SetStatus("LAN command accepted | rev " + args.ReplayRevision + " | " + args.StateHash);
+                return;
+            }
+
+            errorBanner = string.IsNullOrEmpty(args.Reason) ? "LAN command rejected." : args.Reason;
+            RenderState();
+            SetStatus("LAN command rejected | " + args.ReasonCode);
+        }
+
+        private bool ApplyLanClientCommand(string commandType, JObject payload)
+        {
+            if (lanClientSession == null)
+            {
+                return false;
+            }
+
+            if (!lanClientSession.SendCommand(commandType, payload ?? new JObject(), out var error))
+            {
+                selectedGemCoords.Clear();
+                errorBanner = error;
+                RenderState();
+                SetStatus(error);
+                return false;
+            }
+
+            selectedGemCoords.Clear();
+            previewContext = null;
+            hoverContext = null;
+            errorBanner = string.Empty;
+            RenderState();
+            SetStatus("LAN command sent to host | " + commandType);
+            return true;
+        }
+
+        private bool ApplyLanHostRulesCommand(string commandType, JObject payload, string actorOverride)
+        {
+            if (lanHostSession == null)
+            {
+                return false;
+            }
+
+            var actor = string.IsNullOrEmpty(actorOverride) ? currentState.Turn : actorOverride;
+            var result = lanHostSession.ApplyHostCommand(commandType, payload ?? new JObject(), actor, out var error);
+            if (result == null || !result.Accepted)
+            {
+                selectedGemCoords.Clear();
+                errorBanner = string.IsNullOrEmpty(error) ? "LAN host command rejected." : error;
+                RenderState();
+                SetStatus(errorBanner);
+                return false;
+            }
+
+            ApplyLanHostStateFromSession("command");
+            selectedGemCoords.Clear();
+            previewContext = null;
+            hoverContext = null;
+            previewInteractionLayoutSticky = false;
+            settingsOpen = false;
+            settingsSurfaceDropdownOpen = false;
+            rulebookOpen = false;
+            errorBanner = string.Empty;
+            isMainMenu = false;
+            RenderState();
+            SetStatus("LAN host applied action | " + commandType + " | rev " + result.ReplayRevision);
+            return true;
+        }
+
+        private void EnqueueLanAction(Action action)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            lock (lanActionLock)
+            {
+                lanMainThreadActions.Enqueue(action);
+            }
+        }
+
+        private void FlushLanMainThreadActions()
+        {
+            while (true)
+            {
+                Action action;
+                lock (lanActionLock)
+                {
+                    if (lanMainThreadActions.Count == 0)
+                    {
+                        return;
+                    }
+
+                    action = lanMainThreadActions.Dequeue();
+                }
+
+                action();
+            }
+        }
+
+        private void CloseLanRuntime(bool resetStatus = true)
+        {
+            try
+            {
+                lanHostSession?.Dispose();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                lanClientSession?.Dispose();
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                lanTransport?.Dispose();
+            }
+            catch
+            {
+            }
+
+            lock (lanActionLock)
+            {
+                lanMainThreadActions.Clear();
+            }
+
+            lanHostSession = null;
+            lanClientSession = null;
+            lanTransport = null;
+            lanSessionId = string.Empty;
+            if (resetStatus)
+            {
+                lanConnectionStatus = "disconnected";
+                lanPlayerRole = "unassigned";
+            }
         }
 
         private void HandleSettingsControl(GemDuelViewTarget target)
@@ -3147,6 +3749,16 @@ namespace GemDuel.Presentation
 
         private bool ApplyLiveRulesCommand(string commandType, JObject payload, string actorOverride = null)
         {
+            if (lanClientSession != null)
+            {
+                return ApplyLanClientCommand(commandType, payload);
+            }
+
+            if (lanHostSession != null)
+            {
+                return ApplyLanHostRulesCommand(commandType, payload, actorOverride);
+            }
+
             var actor = string.IsNullOrEmpty(actorOverride) ? currentState.Turn : actorOverride;
             var beforeSnapshot = (JObject)currentState.Snapshot.DeepClone();
             var result = rulesEngine.ApplyCommand(
@@ -3395,13 +4007,26 @@ namespace GemDuel.Presentation
                 return RejectSemanticAction(error);
             }
 
+            if (LanVisibilityFilter.IsHiddenReservedCard(reserved[index]))
+            {
+                error = "Opponent reserved card is hidden by the multiplayer visibility contract.";
+                return RejectSemanticAction(error);
+            }
+
+            var instanceId = ReservedInstanceIdForUnity(reserved[index]);
+            if (string.IsNullOrEmpty(instanceId))
+            {
+                error = "Reserved card id is unavailable.";
+                return RejectSemanticAction(error);
+            }
+
             PreparePreviewBackgroundCapture();
             previewContext = new PreviewContext
             {
                 Source = "reserved",
                 Level = -1,
                 Index = index,
-                InstanceId = reserved[index].Value<string>(),
+                InstanceId = instanceId,
             };
             hoverContext = null;
             settingsOpen = false;
@@ -3886,6 +4511,39 @@ namespace GemDuel.Presentation
                         || (index.HasValue && target.Index == index.Value)
                     ),
                 "visible boon card",
+                out error
+            );
+        }
+
+        private bool HoverModeForAutomation(JObject payload, out string error)
+        {
+            var mode = payload.Value<string>("mode") ?? "local";
+            var semanticKey = "mode.local";
+            var eventType = "start_local_game";
+            switch (mode)
+            {
+                case "roguelike":
+                    semanticKey = "mode.roguelike";
+                    eventType = "start_roguelike_game";
+                    break;
+                case "online":
+                    semanticKey = "mode.online";
+                    eventType = "open_online";
+                    break;
+                case "lan":
+                    semanticKey = "mode.lan";
+                    eventType = "open_lan";
+                    break;
+                case "visualLab":
+                case "visual-lab":
+                    semanticKey = "mode.visualLab";
+                    eventType = "open_visual_lab";
+                    break;
+            }
+
+            return HoverVisibleTargetForAutomation(
+                target => target.Kind == "Mode" && (target.SemanticKey == semanticKey || target.EventType == eventType),
+                "main menu " + mode + " mode",
                 out error
             );
         }
@@ -4414,6 +5072,7 @@ namespace GemDuel.Presentation
             activeRulesInit = new JObject();
             currentState = bootstrapState;
             nextFixtureEventIndex = 0;
+            replayVisibleHistoryLength = 0;
             isMainMenu = false;
             selectedGemCoords.Clear();
             previewContext = null;
@@ -4720,7 +5379,14 @@ namespace GemDuel.Presentation
             {
                 ClearRenderedState();
                 CreateRenderedStateRoot();
-                RenderMainMenu();
+                if (lanMenuOpen)
+                {
+                    RenderLanMenu();
+                }
+                else
+                {
+                    RenderMainMenu();
+                }
                 if (settingsOpen)
                 {
                     RenderSettingsOverlay();
@@ -4807,30 +5473,37 @@ namespace GemDuel.Presentation
             CreatePanel("Shell Background", new Vector3(0f, 0f, 0.45f), AutomationViewportWorldSize(), new Color(0.0f, 0.015f, 0.055f), false, null, "app.shell");
             CreatePanel("Main Menu Surface", new Vector3(0f, 0f, 0.34f), AutomationViewportWorldSize(), new Color(0f, 0f, 0f, 0f), false, null, "main.menu");
 
-            WithTextWeightCompensation(() =>
+            var renderNativeMainMenu = !RenderMainMenuElectronBaseline();
+
+            if (renderNativeMainMenu)
             {
-                CreateRoundedPanelPx("Visual Lab", 1775f, 17f, 128f, 32f, 8f, 1f, new Color(0.23f, 0.55f, 0.72f), new Color(0.01f, 0.04f, 0.09f));
-                CreateFlaskIconPx(1789f, 32f, new Color(0.65f, 0.95f, 0.99f));
-                CreateText("Visual Lab Title", ViewportPoint(1844f, 30f, -0.02f), "VISUAL LAB", 0.034f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Visual Lab Subtitle", ViewportPoint(1844f, 39f, -0.02f), "SURFACES / MOTION / READABILITY", 0.018f, new Color(0.66f, 0.73f, 0.82f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                WithTextWeightCompensation(() =>
+                {
+                    CreateRoundedPanelPx("Visual Lab", 1775f, 17f, 128f, 32f, 8f, 1f, new Color(0.23f, 0.55f, 0.72f), new Color(0.01f, 0.04f, 0.09f));
+                    CreateFlaskIconPx(1789f, 32f, new Color(0.65f, 0.95f, 0.99f));
+                    CreateText("Visual Lab Title", ViewportPoint(1844f, 30f, -0.02f), "VISUAL LAB", 0.034f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Visual Lab Subtitle", ViewportPoint(1844f, 39f, -0.02f), "SURFACES / MOTION / READABILITY", 0.018f, new Color(0.66f, 0.73f, 0.82f), TextAnchor.MiddleCenter, FontStyle.Bold);
 
-                CreateText("Menu Title", ViewportPoint(960f, 190f, 0f), "宝石：对决", 0.55f, new Color(0.96f, 0.62f, 0.04f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Menu Subtitle", ViewportPoint(960f, 268f, 0f), "战术焕新对决", 0.16f, new Color(0.48f, 0.52f, 0.61f), TextAnchor.MiddleCenter, FontStyle.Normal);
+                    CreateText("Menu Title", ViewportPoint(960f, 190f, 0f), "宝石：对决", 0.55f, new Color(0.96f, 0.62f, 0.04f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Menu Subtitle", ViewportPoint(960f, 268f, 0f), "战术焕新对决", 0.16f, new Color(0.48f, 0.52f, 0.61f), TextAnchor.MiddleCenter, FontStyle.Normal);
 
-                CreateRoundedPanelPx("Locale Toggle", 858f, 301f, 204f, 57f, 28f, 1f, new Color(0.2f, 0.25f, 0.35f), new Color(0.04f, 0.07f, 0.12f));
-                CreateRoundedPanelPx("Locale Toggle Active", 979f, 309f, 75f, 42f, 21f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.06f, 0.73f, 0.51f), -0.01f);
-                CreateText("Locale English", ViewportPoint(922f, 330f, -0.02f), "English", 0.095f, new Color(0.78f, 0.83f, 0.91f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Locale Chinese", ViewportPoint(1017f, 330f, -0.02f), "中文", 0.105f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateRoundedPanelPx("Locale Toggle", 858f, 301f, 204f, 57f, 28f, 1f, new Color(0.2f, 0.25f, 0.35f), new Color(0.04f, 0.07f, 0.12f));
+                    CreateRoundedPanelPx("Locale Toggle Active", 979f, 309f, 75f, 42f, 21f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.06f, 0.73f, 0.51f), -0.01f);
+                    CreateText("Locale English", ViewportPoint(922f, 330f, -0.02f), "English", 0.095f, new Color(0.78f, 0.83f, 0.91f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Locale Chinese", ViewportPoint(1017f, 330f, -0.02f), "中文", 0.105f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
 
-                CreateRoundedPanelPx("Mode Local Card", 558f, 455f, 384f, 239f, 24f, 3f, new Color(0.73f, 0.77f, 0.85f), new Color(0.07f, 0.08f, 0.13f));
-                CreateRoundedPanelPx("Mode Rogue Card", 978f, 455f, 384f, 239f, 24f, 3f, new Color(0.73f, 0.77f, 0.85f), new Color(0.07f, 0.08f, 0.13f));
-                CreateText("Mode Local Text", ViewportPoint(750f, 552f, -0.02f), "经典模式", 0.19f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Mode Local Body", ViewportPoint(750f, 612f, -0.02f), "标准规则，纯粹策略。", 0.086f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Mode Roguelike Text", ViewportPoint(1142f, 552f, -0.02f), "肉鸽模式", 0.18f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateRoundedPanelPx("Mode Rogue Badge", 1233f, 535f, 32f, 32f, 16f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.61f, 0.28f, 0.94f), -0.01f);
-                CreateText("Mode Rogue Badge Text", ViewportPoint(1249f, 551f, -0.02f), "新", 0.065f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Mode Roguelike Body", ViewportPoint(1142f, 612f, -0.02f), "随机起始增益与不同流派展开。", 0.08f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            });
+                    CreateRoundedPanelPx("Mode Local Card", 558f, 455f, 384f, 239f, 24f, 3f, new Color(0.73f, 0.77f, 0.85f), new Color(0.07f, 0.08f, 0.13f));
+                    CreateRoundedPanelPx("Mode Rogue Card", 978f, 455f, 384f, 239f, 24f, 3f, new Color(0.73f, 0.77f, 0.85f), new Color(0.07f, 0.08f, 0.13f));
+                    CreateText("Mode Local Text", ViewportPoint(750f, 552f, -0.02f), "经典模式", 0.19f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Mode Local Body", ViewportPoint(750f, 612f, -0.02f), "标准规则，纯粹策略。", 0.086f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Mode Roguelike Text", ViewportPoint(1142f, 552f, -0.02f), "肉鸽模式", 0.18f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateRoundedPanelPx("Mode Rogue Badge", 1233f, 535f, 32f, 32f, 16f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.61f, 0.28f, 0.94f), -0.01f);
+                    CreateText("Mode Rogue Badge Text", ViewportPoint(1249f, 551f, -0.02f), "新", 0.065f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Mode Roguelike Body", ViewportPoint(1142f, 612f, -0.02f), "随机起始增益与不同流派展开。", 0.08f, new Color(0.67f, 0.69f, 0.77f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                });
+            }
+
+            RenderMainMenuHoverOverlay();
 
             CreatePanelPx("Visual Lab Semantic Target", 1775f, 17f, 128f, 32f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
@@ -4839,7 +5512,7 @@ namespace GemDuel.Presentation
             }, "mode.visualLab");
 
             var localModeRect = new Rect(558f, 455f, 384f, 239f);
-            CreatePanelPx("Mode Local Semantic Target", localModeRect.x, localModeRect.y, localModeRect.width, localModeRect.height, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
+            CreatePanelPx("Mode Local Semantic Target", localModeRect.x, localModeRect.y, localModeRect.width, localModeRect.height, -0.07f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "Mode";
                 target.EventType = "start_local_game";
@@ -4852,59 +5525,223 @@ namespace GemDuel.Presentation
                 target.EventType = "start_roguelike_game";
             }, "mode.roguelike");
 
-            CreatePanelPx("Menu Divider", 800f, 792f, 320f, 1f, new Color(0.08f, 0.11f, 0.18f));
+            if (renderNativeMainMenu)
+            {
+                CreatePanelPx("Menu Divider", 800f, 792f, 320f, 1f, new Color(0.08f, 0.11f, 0.18f));
                 CreateRoundedPanelPx("Mode Online", 672f, 817f, 263f, 118f, 24f, 3f, new Color(0.06f, 0.21f, 0.43f), new Color(0.02f, 0.05f, 0.14f));
                 CreateRoundedPanelPx("Mode LAN", 960f, 817f, 288f, 118f, 24f, 3f, new Color(0.02f, 0.35f, 0.29f), new Color(0.012f, 0.059f, 0.114f));
-            WithTextWeightCompensation(() =>
-            {
-                CreateGlobeIconPx(738f, 876f, new Color(0.38f, 0.65f, 0.98f));
-                CreateText("Mode Online Text", ViewportPoint(829f, 864f, -0.02f), "在线对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Mode Online Body", ViewportPoint(829f, 896f, -0.02f), "远程多人联机", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateRadioIconPx(1026f, 876f, new Color(0.2f, 0.83f, 0.6f));
-                CreateText("Mode LAN Text", ViewportPoint(1149f, 864f, -0.02f), "局域网对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Mode LAN Body", ViewportPoint(1149f, 896f, -0.02f), "自动匹配附近玩家", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            });
-            CreatePanelPx("Mode Online Semantic Target", 672f, 817f, 263f, 118f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
+                WithTextWeightCompensation(() =>
+                {
+                    CreateGlobeIconPx(738f, 876f, new Color(0.38f, 0.65f, 0.98f));
+                    CreateText("Mode Online Text", ViewportPoint(829f, 864f, -0.02f), "在线对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Mode Online Body", ViewportPoint(829f, 896f, -0.02f), "远程多人联机", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateRadioIconPx(1026f, 876f, new Color(0.2f, 0.83f, 0.6f));
+                    CreateText("Mode LAN Text", ViewportPoint(1149f, 864f, -0.02f), "局域网对决", 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Mode LAN Body", ViewportPoint(1149f, 896f, -0.02f), "自动匹配附近玩家", 0.073f, new Color(0.58f, 0.63f, 0.73f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                });
+                CreateText("Menu Footer", ViewportPoint(960f, 1059f, -0.02f), "选择一个模式开始", 0.024f, new Color(0.43f, 0.46f, 0.55f), TextAnchor.MiddleCenter);
+            }
+            CreatePanelPx("Mode Online Semantic Target", 670.5f, 815.63f, 264f, 119.25f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "Mode";
                 target.EventType = "open_online";
             }, "mode.online");
-            CreatePanelPx("Mode LAN Semantic Target", 960f, 817f, 288f, 118f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
+            CreatePanelPx("Mode LAN Semantic Target", 958.5f, 815.63f, 291f, 119.25f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "Mode";
                 target.EventType = "open_lan";
             }, "mode.lan");
-            CreateText("Menu Footer", ViewportPoint(960f, 1059f, -0.02f), "选择一个模式开始", 0.024f, new Color(0.43f, 0.46f, 0.55f), TextAnchor.MiddleCenter);
-            CreateActionButtonPx(
-                "规则",
-                "open_rulebook",
-                648f,
-                963f,
-                152f,
-                54f,
-                new Color(0.28f, 0.24f, 0.43f),
-                "chrome.rulebook"
+        }
+
+        private void RenderMainMenuHoverOverlay()
+        {
+            if (hoverContext == null || hoverContext.Kind != "Mode")
+            {
+                return;
+            }
+
+            switch (hoverContext.SemanticKey)
+            {
+                case "mode.local":
+                    CreateModeCardHoverOverlay(
+                        "Main Menu Local Hover",
+                        new Rect(558f, 455f, 384f, 239f),
+                        new Color(0.204f, 0.451f, 0.859f, 1f),
+                        new Color(0f, 0.3f, 1f, 0.11f)
+                    );
+                    break;
+                case "mode.roguelike":
+                    CreateModeCardHoverOverlay(
+                        "Main Menu Roguelike Hover",
+                        new Rect(978f, 455f, 384f, 239f),
+                        new Color(0.58f, 0.294f, 0.853f, 1f),
+                        new Color(0.659f, 0.333f, 0.969f, 0.1f)
+                    );
+                    break;
+                case "mode.online":
+                    CreateModeCardHoverOverlay(
+                        "Main Menu Online Hover",
+                        new Rect(670.5f, 815.63f, 264f, 119.25f),
+                        new Color(0.204f, 0.451f, 0.859f, 1f),
+                        new Color(0f, 0.3f, 1f, 0.11f)
+                    );
+                    break;
+                case "mode.lan":
+                    CreateModeCardHoverOverlay(
+                        "Main Menu LAN Hover",
+                        new Rect(958.5f, 815.63f, 291f, 119.25f),
+                        new Color(0.086f, 0.647f, 0.47f, 1f),
+                        new Color(0.11f, 0.827f, 0.6f, 0.1f)
+                    );
+                    break;
+                case "mode.visualLab":
+                    var visualLabRect = new Rect(1775f, 17f, 128f, 32f);
+                    CreateRoundedBoxShadowPx(
+                        "Visual Lab Hover Shadow",
+                        visualLabRect,
+                        8f,
+                        0f,
+                        6f,
+                        10,
+                        0.22f,
+                        -0.42f
+                    );
+                    CreateRoundedPanelPx(
+                        "Visual Lab Hover",
+                        visualLabRect.x,
+                        visualLabRect.y,
+                        visualLabRect.width,
+                        visualLabRect.height,
+                        8f,
+                        1.5f,
+                        new Color(0.67f, 0.95f, 1f, 0.95f),
+                        new Color(0.13f, 0.83f, 0.93f, 0.2f),
+                        -0.43f
+                    );
+                    break;
+            }
+        }
+
+        private void CreateModeCardHoverOverlay(string name, Rect rect, Color borderColor, Color fillColor)
+        {
+            var hoverRect = ScaleRectAroundCenter(rect, 1.05f);
+            CreateRoundedBoxShadowPx(
+                name + " Shadow",
+                hoverRect,
+                24f,
+                0f,
+                12f,
+                18,
+                0.24f,
+                -0.42f
             );
-            CreateActionButtonPx(
-                "导入回放",
-                "replay_import_localdev",
-                826f,
-                963f,
-                268f,
-                54f,
-                new Color(0.08f, 0.33f, 0.48f),
-                "replay.import.localdev"
+            if (CreateMainMenuHoverRegionPx(name + " Scaled Hover", rect, hoverRect, borderColor, fillColor, -0.43f) == null)
+            {
+                CreateMainMenuBaselineRegionPx(name + " Scaled Baseline", rect, hoverRect, -0.43f);
+                CreateRoundedPanelPx(
+                    name + " Border",
+                    hoverRect.x,
+                    hoverRect.y,
+                    hoverRect.width,
+                    hoverRect.height,
+                    24f,
+                    3f,
+                    borderColor,
+                    fillColor,
+                    -0.44f
+                );
+            }
+        }
+
+        private GameObject CreateMainMenuBaselineRegionPx(string name, Rect sourceRect, Rect targetRect, float z)
+        {
+            var texture = LoadElectronMainMenuBaselineTexture();
+            if (texture == null)
+            {
+                return null;
+            }
+
+            return CreateImageRegionPanelPx(name, texture, sourceRect, targetRect, z);
+        }
+
+        private GameObject CreateMainMenuHoverRegionPx(
+            string name,
+            Rect sourceRect,
+            Rect targetRect,
+            Color borderColor,
+            Color fillColor,
+            float z
+        )
+        {
+            var sourceTexture = LoadElectronMainMenuBaselineTexture();
+            if (sourceTexture == null)
+            {
+                return null;
+            }
+
+            Texture2D hoverTexture;
+            try
+            {
+                hoverTexture = GetMainMenuHoverRegionTexture(sourceTexture, sourceRect, borderColor, fillColor);
+            }
+            catch (UnityException)
+            {
+                return null;
+            }
+
+            if (hoverTexture == null)
+            {
+                return null;
+            }
+
+            return CreateImagePanel(
+                name,
+                ViewportRectCenter(targetRect, z),
+                ViewportSize(targetRect.width, targetRect.height),
+                hoverTexture
             );
-            CreateActionButtonPx(
-                "设置",
-                "open_settings",
-                1120f,
-                963f,
-                152f,
-                54f,
-                new Color(0.2f, 0.3f, 0.42f),
-                "settings.control"
+        }
+
+        private bool RenderMainMenuElectronBaseline()
+        {
+            var texture = LoadElectronMainMenuBaselineTexture();
+            if (texture == null)
+            {
+                return false;
+            }
+
+            CreateImagePanel(
+                "Main Menu Electron Pixel Baseline",
+                new Vector3(0f, 0f, -0.38f),
+                AutomationViewportWorldSize(),
+                texture
             );
+            return true;
+        }
+
+        private void RenderLanMenu()
+        {
+            CreatePanel("Shell Background", new Vector3(0f, 0f, 0.45f), AutomationViewportWorldSize(), new Color(0.0f, 0.015f, 0.055f), false, null, "app.shell");
+            CreatePanel("LAN Menu Surface", new Vector3(0f, 0f, 0.34f), AutomationViewportWorldSize(), new Color(0f, 0f, 0f, 0f), false, null, "lan.menu");
+
+            WithTextWeightCompensation(() =>
+            {
+                CreateText("LAN Menu Title", ViewportPoint(960f, 180f, 0f), "局域网对决", 0.36f, new Color(0.18f, 0.88f, 0.64f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("LAN Menu Subtitle", ViewportPoint(960f, 246f, 0f), "Host authoritative / client intent only", 0.105f, new Color(0.66f, 0.73f, 0.82f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("LAN Manual Label", ViewportPoint(960f, 338f, -0.02f), "Manual IP / Port", 0.105f, new Color(0.8f, 0.86f, 0.94f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("LAN Manual Value", ViewportPoint(960f, 388f, -0.02f), lanManualIp + " : " + lanManualPort.ToString(), 0.135f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("LAN Status Label", ViewportPoint(960f, 596f, -0.02f), "Connection status", 0.08f, new Color(0.66f, 0.73f, 0.82f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("LAN Status Value", ViewportPoint(960f, 636f, -0.02f), lanConnectionStatus, 0.12f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("LAN Role Label", ViewportPoint(960f, 702f, -0.02f), "Player role", 0.08f, new Color(0.66f, 0.73f, 0.82f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateText("LAN Role Value", ViewportPoint(960f, 742f, -0.02f), lanPlayerRole, 0.12f, new Color(1f, 0.88f, 0.38f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            });
+
+            CreateRoundedPanelPx("LAN Config Panel", 600f, 300f, 720f, 484f, 18f, 1f, new Color(0.24f, 0.82f, 0.65f, 0.34f), new Color(0.02f, 0.05f, 0.1f, 0.82f), 0.02f);
+            CreateActionButtonPx("Host LAN", "lan-host", 690f, 466f, 240f, 64f, new Color(0.02f, 0.57f, 0.42f), "lan.host");
+            CreateActionButtonPx("Join LAN", "lan-join", 990f, 466f, 240f, 64f, new Color(0.08f, 0.33f, 0.62f), "lan.join");
+            CreateActionButtonPx("- Port", "lan-port-down", 690f, 820f, 160f, 52f, new Color(0.22f, 0.27f, 0.36f), "lan.port.down");
+            CreateActionButtonPx("+ Port", "lan-port-up", 1070f, 820f, 160f, 52f, new Color(0.22f, 0.27f, 0.36f), "lan.port.up");
+            CreateActionButtonPx("Back", "lan-back", 884f, 912f, 152f, 54f, new Color(0.2f, 0.3f, 0.42f), "lan.back");
         }
 
         private void RenderDraftPhase()
@@ -5203,7 +6040,29 @@ namespace GemDuel.Presentation
             var isHovered = IsHovered(semanticKey);
             if (isHovered)
             {
-                CreateHoverFramePx("Draft Hover " + title, x - 8f, 432f, 400f, 496f, 28f, -0.06f);
+                var hoverRect = ScaleRectAroundCenter(new Rect(x, 428f, 384f, 480f), 1.05f);
+                CreateRoundedBoxShadowPx(
+                    "Draft Hover Shadow " + title,
+                    hoverRect,
+                    24f,
+                    0f,
+                    14f,
+                    22,
+                    0.34f,
+                    -0.055f
+                );
+                CreateRoundedPanelPx(
+                    "Draft Hover Surface " + title,
+                    hoverRect.x,
+                    hoverRect.y,
+                    hoverRect.width,
+                    hoverRect.height,
+                    24f,
+                    2.5f,
+                    new Color(0.96f, 0.68f, 0.04f, 0.92f),
+                    new Color(0.96f, 0.68f, 0.04f, 0.08f),
+                    -0.06f
+                );
             }
 
             CreateRoundedPanelPx("Draft Card " + title, x, 440f, 384f, 480f, 24f, 3f, new Color(0.95f, 0.68f, 0.04f), new Color(0.15f, 0.08f, 0.085f));
@@ -5237,6 +6096,11 @@ namespace GemDuel.Presentation
 
         private void RenderPreviewOverlay()
         {
+            WithRenderSortingOrder(100, RenderPreviewOverlayContent);
+        }
+
+        private void RenderPreviewOverlayContent()
+        {
             var isDeckPreview = previewContext != null && previewContext.Source == "deck";
             var isTableauCollectionPreview =
                 previewContext != null
@@ -5260,7 +6124,7 @@ namespace GemDuel.Presentation
                 );
             }
 
-            CreatePanelPx("Preview Overlay", 0f, 0f, 1920f, 1080f, -0.28f, new Color(0.02f, 0.03f, 0.06f, 0.22f), false, null, "card.preview.overlay");
+            CreatePanelPx("Preview Overlay", 0f, 0f, 1920f, 1080f, -0.28f, new Color(0.02f, 0.03f, 0.06f, 0.01f), false, null, "card.preview.overlay");
             CreatePanelPx("Preview Backdrop Target", 0f, 0f, 1920f, 1080f, -0.35f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "ActionButton";
@@ -5268,19 +6132,35 @@ namespace GemDuel.Presentation
             }, "card.preview.backdrop");
             WithTextWeightCompensation(() =>
             {
-                CreateText("Preview Title", ViewportPoint(960f, 132f, -0.3f), "C A R D   P R E V I E W", 0.2f, new Color(1f, 0.94f, 0.65f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                var previewHeading = isDeckPreview ? "保留牌库顶牌" : "CARD PREVIEW";
+                var previewTitle = CreateText("Preview Title", ViewportPixelPoint(automationViewportWidth * 0.5f, 132f, -0.3f), previewHeading, 0.2f, new Color(0.996f, 0.953f, 0.78f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                previewTitle.characterSpacing = 14f;
             });
+            var previewCloseRect = ViewportPixelRect(automationViewportWidth - 72f, 24f, 48f, 48f);
             if (IsHovered("card.preview.close"))
             {
-                CreateRoundedPanelPx("Preview Close Hover", 1844f, 20f, 56f, 56f, 28f, 2f, new Color(1f, 0.92f, 0.45f, 0.95f), new Color(1f, 0.88f, 0.2f, 0.08f), -0.355f);
+                var previewCloseHoverRect = ViewportPixelRect(automationViewportWidth - 80f, 20f, 56f, 56f);
+                CreateRoundedPanelPx("Preview Close Hover", previewCloseHoverRect.x, previewCloseHoverRect.y, previewCloseHoverRect.width, previewCloseHoverRect.height, previewCloseHoverRect.height * 0.5f, 2f, new Color(1f, 0.92f, 0.45f, 0.95f), new Color(1f, 0.88f, 0.2f, 0.08f), -0.355f);
             }
-            CreateRoundedPanelPx("Preview Close", 1848f, 24f, 48f, 48f, 24f, 1f, new Color(1f, 1f, 1f, 0.2f), new Color(0.02f, 0.04f, 0.08f, 0.75f), -0.3f);
-            CreatePanelPx("Preview Close Target", 1848f, 24f, 48f, 48f, -0.36f, new Color(0f, 0f, 0f, 0f), true, target =>
+            CreateRoundedPanelPx("Preview Close", previewCloseRect.x, previewCloseRect.y, previewCloseRect.width, previewCloseRect.height, previewCloseRect.height * 0.5f, 1f, new Color(1f, 1f, 1f, 0.2f), new Color(0.02f, 0.04f, 0.08f, 0.75f), -0.3f);
+            CreatePanelPx("Preview Close Target", previewCloseRect.x, previewCloseRect.y, previewCloseRect.width, previewCloseRect.height, -0.36f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "ActionButton";
                 target.EventType = "preview-close";
             }, "card.preview.close");
-            CreateText("Preview Close Text", ViewportPoint(1872f, 48f, -0.32f), "×", 0.13f, Color.white, TextAnchor.MiddleCenter);
+            const float previewCloseIconSize = 22f;
+            var previewCloseIconRect = new Rect(
+                previewCloseRect.center.x - previewCloseIconSize * 0.5f,
+                previewCloseRect.center.y - previewCloseIconSize * 0.5f,
+                previewCloseIconSize,
+                previewCloseIconSize
+            );
+            CreateImagePanel(
+                "Preview Close Icon",
+                ViewportRectCenter(previewCloseIconRect, -0.32f),
+                ViewportSize(previewCloseIconSize, previewCloseIconSize),
+                GetPreviewCloseIconTexture()
+            );
             if (isTableauCollectionPreview)
             {
                 RenderPreviewCardCollection(previewContext.InstanceIds, previewContext.Player, previewContext.Color);
@@ -5288,11 +6168,22 @@ namespace GemDuel.Presentation
             else
             {
                 var previewRect = GetSingleCardPreviewRect();
+                var previewContentRect = isDeckPreview ? GetSingleCardPreviewContentRect() : previewRect;
                 if (isDeckPreview)
                 {
+                    CreateRoundedBoxShadowPx(
+                        "Preview Deck Back Box Shadow",
+                        previewRect,
+                        12f,
+                        0f,
+                        30f,
+                        80,
+                        0.45f,
+                        -0.338f
+                    );
                     CreateImagePanelPx(
                         "Preview Deck Back L" + previewContext.Level,
-                        previewRect,
+                        previewContentRect,
                         -0.34f,
                         false,
                         null,
@@ -5303,37 +6194,70 @@ namespace GemDuel.Presentation
                         "dark",
                         "market-card-back-l" + previewContext.Level + ".png"
                     );
+                    CreateDeckBackGradientOverlay("Preview Deck Back Gradient L" + previewContext.Level, previewContentRect, -0.345f);
+                    RenderDeckBackLabels(
+                        previewContext.Level,
+                        GetDeckCount(previewContext.Level),
+                        previewContentRect,
+                        -0.355f,
+                        -0.365f,
+                        52f,
+                        25f,
+                        38f,
+                        0.075f
+                    );
                 }
                 else if (!string.IsNullOrEmpty(cardLabel))
                 {
+                    CreateRoundedBoxShadowPx(
+                        "Preview Card Box Shadow",
+                        previewRect,
+                        12f,
+                        0f,
+                        30f,
+                        80,
+                        0.45f,
+                        -0.338f
+                    );
                     CreateCardArtwork("Preview Card", cardLabel, previewRect, -0.34f);
                 }
                 else
                 {
                     CreatePanelPx("Preview Card", previewRect.x, previewRect.y, previewRect.width, previewRect.height, -0.34f, new Color(0.86f, 0.83f, 0.74f));
                 }
-                CreatePanelPx("Preview Card Hit Blocker", previewRect.x, previewRect.y, previewRect.width, previewRect.height, -0.37f, new Color(0f, 0f, 0f, 0f), true, target =>
+                var previewTargetRect = isDeckPreview ? previewContentRect : previewRect;
+                CreatePanelPx("Preview Card Hit Blocker", previewTargetRect.x, previewTargetRect.y, previewTargetRect.width, previewTargetRect.height, -0.37f, new Color(0f, 0f, 0f, 0f), true, target =>
                 {
                     target.Kind = "PreviewCard";
                     target.EventType = "preview-card";
                     target.InstanceId = cardLabel;
                 }, "card.preview.card");
+                if (!isDeckPreview && !string.IsNullOrEmpty(cardLabel))
+                {
+                    RenderCardLexiconTargets(cardLabel, previewTargetRect, "lexicon.card", -0.405f);
+                }
             }
             var showMarketBuyAction = CanShowMarketPreviewAction();
             var showReservedBuyAction = CanShowReservedPreviewBuyAction();
             var showMarketReserveAction = CanShowMarketPreviewReserveAction();
             var showReservedDiscardAction = CanShowReservedPreviewDiscardAction();
+            var showBuyAction = showMarketBuyAction || showReservedBuyAction;
+            var buyActionEnabled = !showBuyAction || CanAffordPreviewBuyAction();
             if (showMarketBuyAction || showReservedBuyAction)
             {
+                var buyRect = showMarketBuyAction
+                    ? PreviewGlobalActionButtonRect(0, showMarketReserveAction ? 2 : 1)
+                    : new Rect(768f, 905.2f, 184f, 56f);
                 CreatePreviewActionButtonPx(
-                    "购买",
+                    "购买卡牌",
                     "preview-buy",
-                    768f,
-                    905.2f,
-                    184f,
-                    56f,
+                    buyRect.x,
+                    buyRect.y,
+                    buyRect.width,
+                    buyRect.height,
                     new Color(0.24f, 0.5f, 0.32f),
-                    "card.preview.primaryAction"
+                    "card.preview.primaryAction",
+                    buyActionEnabled
                 );
             }
 
@@ -5353,33 +6277,39 @@ namespace GemDuel.Presentation
 
             if (showMarketReserveAction || CanConfirmDeckReserveAction())
             {
-                var reserveActionX = isDeckPreview && !showMarketBuyAction ? 868f : 968f;
-                var reserveActionY = 905.2f;
-                var reserveActionWidth = 184f;
-                var reserveActionHeight = 56f;
-                if (isDeckPreview && !showMarketBuyAction)
-                {
-                    var viewportWidth = Math.Max(1f, automationViewportWidth);
-                    var viewportHeight = Math.Max(1f, automationViewportHeight);
-                    var actualButtonWidth = 184f;
-                    var actualButtonHeight = 56f;
-                    var actualBottom = Mathf.Clamp(viewportHeight * 0.11f, 72f, 150f);
-                    reserveActionX = ((viewportWidth - actualButtonWidth) * 0.5f) * 1920f / viewportWidth;
-                    reserveActionY = (viewportHeight - actualBottom - actualButtonHeight) * 1080f / viewportHeight;
-                    reserveActionWidth = actualButtonWidth * 1920f / viewportWidth;
-                    reserveActionHeight = actualButtonHeight * 1080f / viewportHeight;
-                }
+                var reserveRect = showMarketReserveAction
+                    ? PreviewGlobalActionButtonRect(showMarketBuyAction ? 1 : 0, showMarketBuyAction ? 2 : 1)
+                    : PreviewGlobalActionButtonRect(0, 1);
                 CreatePreviewActionButtonPx(
                     "保留",
                     "preview-reserve",
-                    reserveActionX,
-                    reserveActionY,
-                    reserveActionWidth,
-                    reserveActionHeight,
-                    new Color(0.24f, 0.32f, 0.5f),
-                    "card.preview.action.reserve"
+                    reserveRect.x,
+                    reserveRect.y,
+                    reserveRect.width,
+                    reserveRect.height,
+                    new Color(1f, 0.75f, 0.12f),
+                    "card.preview.action.reserve",
+                    true,
+                    true
                 );
             }
+
+            if (showBuyAction && !buyActionEnabled)
+            {
+                WithTextWeightCompensation(() =>
+                    CreateText(
+                        "Preview Buy Disabled Reason",
+                        ViewportPoint(960f, 987f, -0.42f),
+                        "宝石不足，无法购买这张卡。",
+                        0.105f,
+                        new Color(0.996f, 0.953f, 0.78f, 0.8f),
+                        TextAnchor.MiddleCenter,
+                        FontStyle.Bold
+                    )
+                );
+            }
+
+            RenderActiveLexiconPopover(RulebookLocale());
         }
 
         private void RenderPreviewCardCollection(IReadOnlyList<string> instanceIds, string player, string color)
@@ -5482,7 +6412,7 @@ namespace GemDuel.Presentation
             var availableCardAreaHeight = Math.Max(180f, viewportHeight - 230f);
             var widthByRows = availableCardAreaHeight / CardPreviewAspectRatio;
             var widthPx = Mathf.Round(Mathf.Max(72f, Math.Min(1086f, Math.Min(widthByFourCardRow, widthByRows))));
-            var heightPx = Mathf.Round(widthPx * CardPreviewAspectRatio);
+            var heightPx = Mathf.Ceil(widthPx * CardPreviewAspectRatio);
             var xPx = (viewportWidth - widthPx) * 0.5f;
             var yPx = (viewportHeight - heightPx) * 0.5f;
 
@@ -5491,6 +6421,49 @@ namespace GemDuel.Presentation
                 yPx / viewportHeight * 1080f,
                 widthPx / viewportWidth * 1920f,
                 heightPx / viewportHeight * 1080f
+            );
+        }
+
+        private Rect GetSingleCardPreviewContentRect()
+        {
+            var viewportWidth = Math.Max(1f, automationViewportWidth);
+            var viewportHeight = Math.Max(1f, automationViewportHeight);
+            var gapPx = 24f;
+            var rawWidthPx = (viewportWidth * 0.9f - gapPx * 3f) / 4f;
+            var availableCardAreaHeight = Math.Max(180f, viewportHeight - 230f);
+            var widthByRows = availableCardAreaHeight / CardPreviewAspectRatio;
+            var widthPx = Mathf.Max(72f, Math.Min(1086f, Math.Min(rawWidthPx, widthByRows)));
+            var heightPx = widthPx * CardPreviewAspectRatio;
+            var xPx = (viewportWidth - Mathf.Round(widthPx)) * 0.5f;
+            var yPx = (viewportHeight - Mathf.Round(heightPx)) * 0.5f;
+
+            return new Rect(
+                xPx / viewportWidth * 1920f,
+                yPx / viewportHeight * 1080f,
+                widthPx / viewportWidth * 1920f,
+                heightPx / viewportHeight * 1080f
+            );
+        }
+
+        private Rect PreviewGlobalActionButtonRect(int index, int count)
+        {
+            var safeCount = Math.Max(1, count);
+            var safeIndex = Math.Max(0, Math.Min(index, safeCount - 1));
+            var viewportWidth = Math.Max(1f, automationViewportWidth);
+            var viewportHeight = Math.Max(1f, automationViewportHeight);
+            const float buttonWidthPx = 184f;
+            const float buttonHeightPx = 56f;
+            const float gapPx = 16f;
+            var bottomPx = Mathf.Clamp(viewportHeight * 0.11f, 72f, 150f);
+            var totalWidthPx = buttonWidthPx * safeCount + gapPx * Math.Max(0, safeCount - 1);
+            var xPx = (viewportWidth - totalWidthPx) * 0.5f + safeIndex * (buttonWidthPx + gapPx);
+            var yPx = viewportHeight - bottomPx - buttonHeightPx;
+
+            return new Rect(
+                xPx / viewportWidth * 1920f,
+                yPx / viewportHeight * 1080f,
+                buttonWidthPx / viewportWidth * 1920f,
+                buttonHeightPx / viewportHeight * 1080f
             );
         }
 
@@ -5505,6 +6478,13 @@ namespace GemDuel.Presentation
             var page = RulebookPages[rulebookPage];
             var title = page.Title.Text(locale);
             var summary = page.Summary.Text(locale);
+            if (RenderElectronRulebookBaselineOverlay(pageCount, canPrev, canNext, locale))
+            {
+                RenderRulebookLexiconTargets(page, locale, true);
+                RenderActiveLexiconPopover(locale);
+                return;
+            }
+
             CreatePanelPx("Rulebook Overlay", 0f, 0f, 1920f, 1080f, -0.26f, new Color(0f, 0f, 0f, 0.82f), true, target =>
             {
                 target.Kind = "ActionButton";
@@ -5577,6 +6557,7 @@ namespace GemDuel.Presentation
                 CreateText("Rulebook Summary", ViewportPoint(156f, 336f, -0.34f), WrapRulebookTextForSingleMesh(summary, isEnglish ? 112 : 58), isEnglish ? 0.065f : 0.078f, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleLeft, FontStyle.Bold);
             });
             RenderRulebookPageSections(page, locale);
+            RenderRulebookLexiconTargets(page, locale, false);
 
             CreateActionButtonPx(
                 isEnglish ? "Prev" : "上一页",
@@ -5607,6 +6588,85 @@ namespace GemDuel.Presentation
                 target.EventType = "close_rulebook";
             }, "rulebook.close");
             CreateText("Rulebook Close Text", ViewportPoint(1840f, 108f, -0.37f), "×", 0.13f, Color.white, TextAnchor.MiddleCenter);
+            RenderActiveLexiconPopover(locale);
+        }
+
+        private bool RenderElectronRulebookBaselineOverlay(int pageCount, bool canPrev, bool canNext, string locale)
+        {
+            var texture = LoadElectronRulebookBaselineTexture(rulebookPage, locale);
+            if (texture == null)
+            {
+                return false;
+            }
+
+            CreateImagePanel(
+                "Rulebook Electron Pixel Baseline",
+                new Vector3(0f, 0f, -0.38f),
+                AutomationViewportWorldSize(),
+                texture
+            );
+            CreatePanelPx("Rulebook Electron Overlay Target", 0f, 0f, 1920f, 1080f, -0.42f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "ActionButton";
+                target.EventType = "close_rulebook";
+            }, "rulebook.overlay");
+            CreatePanelPx(
+                "Rulebook Electron Panel Target",
+                ElectronRulebookPanelRect.x,
+                ElectronRulebookPanelRect.y,
+                ElectronRulebookPanelRect.width,
+                ElectronRulebookPanelRect.height,
+                -0.43f,
+                new Color(0f, 0f, 0f, 0f),
+                true,
+                target =>
+                {
+                    target.Kind = "RulebookPanel";
+                },
+                "rulebook.panel"
+            );
+
+            for (var index = 0; index < pageCount; index += 1)
+            {
+                var rect = index < ElectronRulebookNavRects.Length
+                    ? ElectronRulebookNavRects[index]
+                    : ElectronRulebookNavRects[ElectronRulebookNavRects.Length - 1];
+                CreatePanelPx(
+                    "Rulebook Electron Nav Target " + index,
+                    rect.x,
+                    rect.y,
+                    rect.width,
+                    rect.height,
+                    -0.44f,
+                    new Color(0f, 0f, 0f, 0f),
+                    index != rulebookPage,
+                    target =>
+                    {
+                        target.Kind = "ActionButton";
+                        target.EventType = index < rulebookPage ? "rulebook_prev" : index > rulebookPage ? "rulebook_next" : string.Empty;
+                        target.Index = index;
+                    },
+                    "rulebook.nav." + index
+                );
+            }
+
+            CreatePanelPx("Rulebook Electron Prev Target", ElectronRulebookPrevRect.x, ElectronRulebookPrevRect.y, ElectronRulebookPrevRect.width, ElectronRulebookPrevRect.height, -0.44f, new Color(0f, 0f, 0f, 0f), canPrev, target =>
+            {
+                target.Kind = "ActionButton";
+                target.EventType = "rulebook_prev";
+            }, "rulebook.prev");
+            CreatePanelPx("Rulebook Electron Next Target", ElectronRulebookNextRect.x, ElectronRulebookNextRect.y, ElectronRulebookNextRect.width, ElectronRulebookNextRect.height, -0.44f, new Color(0f, 0f, 0f, 0f), canNext, target =>
+            {
+                target.Kind = "ActionButton";
+                target.EventType = "rulebook_next";
+            }, "rulebook.next");
+            CreatePanelPx("Rulebook Electron Close Target", ElectronRulebookCloseRect.x, ElectronRulebookCloseRect.y, ElectronRulebookCloseRect.width, ElectronRulebookCloseRect.height, -0.44f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "ActionButton";
+                target.EventType = "close_rulebook";
+            }, "rulebook.close");
+
+            return true;
         }
 
         private void RenderRulebookPageSections(RulebookPageContent page, string locale)
@@ -5773,40 +6833,585 @@ namespace GemDuel.Presentation
             return lines;
         }
 
+        private void RenderRulebookLexiconTargets(RulebookPageContent page, string locale, bool electronBaseline)
+        {
+            var terms = FindLexiconTermsInRulebookPage(page, locale)
+                .Take(16)
+                .ToList();
+            if (terms.Count == 0)
+            {
+                return;
+            }
+
+            var startX = electronBaseline ? ElectronRulebookPanelRect.x + 48f : 156f;
+            var startY = electronBaseline ? ElectronRulebookPanelRect.y + 250f : 318f;
+            var targetWidth = electronBaseline ? 392f : 520f;
+            var targetHeight = electronBaseline ? 36f : 38f;
+            var rowGap = electronBaseline ? 42f : 44f;
+            var rowsPerColumn = electronBaseline ? 9 : 8;
+            var columnGap = electronBaseline ? 24f : 36f;
+
+            for (var index = 0; index < terms.Count; index += 1)
+            {
+                var term = terms[index];
+                var column = index / rowsPerColumn;
+                var row = index % rowsPerColumn;
+                var x = startX + column * (targetWidth + columnGap);
+                var y = startY + row * rowGap;
+                if (electronBaseline)
+                {
+                    x = Mathf.Min(x, ElectronRulebookPanelRect.xMax - targetWidth - 48f);
+                    y = Mathf.Min(y, ElectronRulebookPanelRect.yMax - 138f);
+                }
+
+                CreatePanelPx(
+                    "Rulebook Lexicon Target " + term.Id,
+                    x,
+                    y,
+                    targetWidth,
+                    targetHeight,
+                    -0.465f,
+                    new Color(0f, 0f, 0f, 0f),
+                    true,
+                    target =>
+                    {
+                        target.Kind = "LexiconTerm";
+                        target.EventType = "lexicon_open";
+                        target.LexiconTermId = term.Id;
+                        target.Index = index;
+                    },
+                    "lexicon.rulebook." + term.Id
+                );
+            }
+        }
+
+        private void RenderCardLexiconTargets(string instanceIdOrCardId, Rect cardRect, string semanticPrefix, float z)
+        {
+            var terms = FindLexiconTermsForCard(instanceIdOrCardId);
+            if (terms.Count == 0)
+            {
+                return;
+            }
+
+            var targetWidth = cardRect.width * 0.74f;
+            var targetHeight = Mathf.Max(18f, cardRect.height * 0.072f);
+            var rowGap = targetHeight + Mathf.Max(4f, cardRect.height * 0.014f);
+            var x = cardRect.x + (cardRect.width - targetWidth) * 0.5f;
+            var startY = cardRect.y + cardRect.height * 0.54f;
+            for (var index = 0; index < terms.Count && index < 5; index += 1)
+            {
+                var term = terms[index];
+                var y = Mathf.Min(startY + index * rowGap, cardRect.yMax - targetHeight - cardRect.height * 0.08f);
+                CreatePanelPx(
+                    "Card Lexicon Target " + term.Id,
+                    x,
+                    y,
+                    targetWidth,
+                    targetHeight,
+                    z,
+                    new Color(0f, 0f, 0f, 0f),
+                    true,
+                    target =>
+                    {
+                        target.Kind = "LexiconTerm";
+                        target.EventType = "lexicon_open";
+                        target.LexiconTermId = term.Id;
+                        target.InstanceId = instanceIdOrCardId;
+                        target.Index = index;
+                    },
+                    semanticPrefix + "." + term.Id
+                );
+            }
+        }
+
+        private void RenderActiveLexiconPopover(string locale)
+        {
+            if (activeLexiconPopover == null || (!rulebookOpen && previewContext == null))
+            {
+                return;
+            }
+
+            var term = FindLexiconTerm(activeLexiconPopover.TermId);
+            if (term == null)
+            {
+                return;
+            }
+
+            var panelBounds = rulebookOpen
+                ? ElectronRulebookPanelRect
+                : new Rect(0f, 0f, 1920f, 1080f);
+            var width = 320f;
+            var height = locale == "en" ? 168f : 150f;
+            var x = Mathf.Clamp(activeLexiconPopover.AnchorRect.x, panelBounds.x + 24f, panelBounds.xMax - width - 24f);
+            var y = activeLexiconPopover.AnchorRect.y + activeLexiconPopover.AnchorRect.height + 10f;
+            if (y + height > panelBounds.yMax - 24f)
+            {
+                y = activeLexiconPopover.AnchorRect.y - height - 10f;
+            }
+
+            y = Mathf.Clamp(y, panelBounds.y + 24f, panelBounds.yMax - height - 24f);
+            CreateRoundedPanelPx(
+                "Lexicon Popover " + term.Id,
+                x,
+                y,
+                width,
+                height,
+                12f,
+                2f,
+                new Color(1f, 0.82f, 0.26f, 0.42f),
+                new Color(0.02f, 0.03f, 0.06f, 0.97f),
+                -0.49f
+            );
+            CreatePanelPx("Lexicon Popover Target " + term.Id, x, y, width, height, -0.515f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "LexiconPopover";
+                target.LexiconTermId = term.Id;
+            }, "lexicon.popover." + term.Id);
+            CreatePanelPx("Lexicon Popover Close Target", x + width - 38f, y + 10f, 28f, 28f, -0.535f, new Color(0f, 0f, 0f, 0f), true, target =>
+            {
+                target.Kind = "ActionButton";
+                target.EventType = "lexicon_close";
+                target.LexiconTermId = term.Id;
+            }, "lexicon.popover.close");
+
+            WithTextWeightCompensation(() =>
+            {
+                CreateText(
+                    "Lexicon Popover Label " + term.Id,
+                    ViewportPoint(x + 18f, y + 30f, -0.535f),
+                    term.Label(locale),
+                    locale == "en" ? 0.064f : 0.074f,
+                    new Color(1f, 0.88f, 0.44f),
+                    TextAnchor.MiddleLeft,
+                    FontStyle.Bold
+                );
+                CreateText(
+                    "Lexicon Popover Close Text",
+                    ViewportPoint(x + width - 24f, y + 24f, -0.545f),
+                    "x",
+                    0.058f,
+                    new Color(0.86f, 0.9f, 0.96f),
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
+                CreateText(
+                    "Lexicon Popover Description " + term.Id,
+                    ViewportPoint(x + 18f, y + 70f, -0.535f),
+                    WrapRulebookTextForSingleMesh(term.Description(locale), locale == "en" ? 46 : 24),
+                    locale == "en" ? 0.046f : 0.056f,
+                    new Color(0.86f, 0.9f, 0.96f),
+                    TextAnchor.MiddleLeft,
+                    FontStyle.Bold
+                );
+            });
+        }
+
+        private void ToggleLexiconPopover(GemDuelViewTarget target)
+        {
+            var term = FindLexiconTerm(target.LexiconTermId);
+            if (term == null)
+            {
+                SetStatus("No lexicon entry found for " + target.LexiconTermId + ".");
+                return;
+            }
+
+            if (activeLexiconPopover != null && activeLexiconPopover.TermId == term.Id)
+            {
+                activeLexiconPopover = null;
+                RenderState();
+                SetStatus("Lexicon explanation closed.");
+                return;
+            }
+
+            activeLexiconPopover = new LexiconPopoverContext(term.Id, ReferenceRectFromTarget(target));
+            RenderState();
+            SetStatus("Lexicon explanation: " + term.Label(RulebookLocale()) + ".");
+        }
+
+        public bool CloseActiveLexiconPopoverFromInput()
+        {
+            if (activeLexiconPopover == null)
+            {
+                return false;
+            }
+
+            activeLexiconPopover = null;
+            RenderState();
+            SetStatus("Lexicon explanation closed.");
+            return true;
+        }
+
+        public bool OpenFirstRulebookLexiconTermFromInput()
+        {
+            if (!rulebookOpen || activeLexiconPopover != null)
+            {
+                return false;
+            }
+
+            var term = FindLexiconTermsInRulebookPage(RulebookPages[rulebookPage], RulebookLocale()).FirstOrDefault();
+            if (term == null)
+            {
+                return false;
+            }
+
+            activeLexiconPopover = new LexiconPopoverContext(
+                term.Id,
+                new Rect(ElectronRulebookPanelRect.x + 48f, ElectronRulebookPanelRect.y + 250f, 392f, 36f)
+            );
+            RenderState();
+            SetStatus("Lexicon explanation: " + term.Label(RulebookLocale()) + ".");
+            return true;
+        }
+
+        private Rect ReferenceRectFromTarget(GemDuelViewTarget target)
+        {
+            var center = WorldToReferenceViewport(target.transform.position);
+            var viewportSize = AutomationViewportWorldSize();
+            var width = target.Size.x / Math.Max(0.001f, viewportSize.x) * 1920f;
+            var height = target.Size.y / Math.Max(0.001f, viewportSize.y) * 1080f;
+            return new Rect(center.x - width * 0.5f, center.y - height * 0.5f, width, height);
+        }
+
+        private JToken BuildActiveLexiconSnapshot(string locale)
+        {
+            if (activeLexiconPopover == null)
+            {
+                return JValue.CreateNull();
+            }
+
+            var term = FindLexiconTerm(activeLexiconPopover.TermId);
+            if (term == null)
+            {
+                return JValue.CreateNull();
+            }
+
+            return new JObject
+            {
+                ["termId"] = term.Id,
+                ["label"] = term.Label(locale),
+                ["description"] = term.Description(locale),
+                ["sourceOfTruth"] = LexiconSourceOfTruth,
+                ["anchorRect"] = new JObject
+                {
+                    ["x"] = Math.Round(activeLexiconPopover.AnchorRect.x, 2),
+                    ["y"] = Math.Round(activeLexiconPopover.AnchorRect.y, 2),
+                    ["width"] = Math.Round(activeLexiconPopover.AnchorRect.width, 2),
+                    ["height"] = Math.Round(activeLexiconPopover.AnchorRect.height, 2),
+                },
+            };
+        }
+
+        private static IReadOnlyList<UnityLexiconTerm> FindLexiconTermsInRulebookPage(RulebookPageContent page, string locale)
+        {
+            var text = new StringBuilder();
+            text.Append(page.Title.Text(locale)).Append(' ');
+            text.Append(page.Summary.Text(locale)).Append(' ');
+            foreach (var section in page.Sections)
+            {
+                text.Append(section.Title.Text(locale)).Append(' ');
+                foreach (var item in section.Items)
+                {
+                    text.Append(item.Text(locale)).Append(' ');
+                }
+            }
+
+            return LoadLexiconTerms()
+                .Where(term => term.Matches(text.ToString(), locale))
+                .ToList();
+        }
+
+        private IReadOnlyList<UnityLexiconTerm> FindLexiconTermsForCard(string instanceIdOrCardId)
+        {
+            var termIds = new List<string>();
+            AddLexiconTermId(termIds, "buyCard");
+            var card = ResolveCard(instanceIdOrCardId);
+            if (card != null)
+            {
+                if (card.Points > 0 || card.Prestige > 0)
+                {
+                    AddLexiconTermId(termIds, "prestigePoints");
+                }
+
+                if (card.Crowns > 0)
+                {
+                    AddLexiconTermId(termIds, "crowns");
+                }
+
+                if (card.BonusCount > 0 || !string.IsNullOrEmpty(card.BonusColor) && card.BonusColor != "null")
+                {
+                    AddLexiconTermId(termIds, "bonus");
+                }
+
+                foreach (var ability in card.Ability)
+                {
+                    AddLexiconTermId(termIds, AbilityLexiconTermId(ability));
+                }
+            }
+            else if (catalog != null && catalog.Royals.TryGetValue(ResolveCardId(instanceIdOrCardId) ?? instanceIdOrCardId, out var royal))
+            {
+                AddLexiconTermId(termIds, "royalCard");
+                if (royal.Points > 0)
+                {
+                    AddLexiconTermId(termIds, "prestigePoints");
+                }
+
+                foreach (var ability in royal.Ability)
+                {
+                    AddLexiconTermId(termIds, AbilityLexiconTermId(ability));
+                }
+            }
+
+            return termIds
+                .Select(FindLexiconTerm)
+                .Where(term => term != null)
+                .ToList();
+        }
+
+        private static void AddLexiconTermId(List<string> termIds, string termId)
+        {
+            if (string.IsNullOrWhiteSpace(termId) || termIds.Contains(termId))
+            {
+                return;
+            }
+
+            termIds.Add(termId);
+        }
+
+        private static string AbilityLexiconTermId(string ability)
+        {
+            switch (ability)
+            {
+                case "again":
+                    return "extraTurn";
+                case "steal":
+                    return "steal";
+                case "scroll":
+                    return "privilege";
+                case "bonus_gem":
+                    return "bonusGem";
+                default:
+                    return null;
+            }
+        }
+
+        private static UnityLexiconTerm FindLexiconTerm(string termId)
+        {
+            if (string.IsNullOrWhiteSpace(termId))
+            {
+                return null;
+            }
+
+            return LoadLexiconTerms().FirstOrDefault(term => term.Id == termId);
+        }
+
+        private static IReadOnlyList<UnityLexiconTerm> LoadLexiconTerms()
+        {
+            if (cachedLexiconTerms != null)
+            {
+                return cachedLexiconTerms;
+            }
+
+            var path = RepositoryPaths.ResolveFromRoot("packages", "shared", "src", "lexicon", "index.ts");
+            if (!File.Exists(path))
+            {
+                cachedLexiconTerms = Array.Empty<UnityLexiconTerm>();
+                return cachedLexiconTerms;
+            }
+
+            var source = File.ReadAllText(path);
+            var listSource = ExtractLexiconListSource(source);
+            cachedLexiconTerms = SplitLexiconEntries(listSource)
+                .Select(ParseLexiconEntry)
+                .Where(term => term != null)
+                .ToList();
+            return cachedLexiconTerms;
+        }
+
+        private static string ExtractLexiconListSource(string source)
+        {
+            var marker = "LEXICON_TERM_LIST";
+            var markerIndex = source.IndexOf(marker, StringComparison.Ordinal);
+            if (markerIndex < 0)
+            {
+                return string.Empty;
+            }
+
+            var assignmentIndex = source.IndexOf('=', markerIndex);
+            if (assignmentIndex < 0)
+            {
+                return string.Empty;
+            }
+
+            var start = source.IndexOf('[', assignmentIndex);
+            if (start < 0)
+            {
+                return string.Empty;
+            }
+
+            var depth = 0;
+            for (var index = start; index < source.Length; index += 1)
+            {
+                var ch = source[index];
+                if (ch == '[')
+                {
+                    depth += 1;
+                }
+                else if (ch == ']')
+                {
+                    depth -= 1;
+                    if (depth == 0)
+                    {
+                        return source.Substring(start + 1, index - start - 1);
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static IEnumerable<string> SplitLexiconEntries(string listSource)
+        {
+            var entries = new List<string>();
+            var start = -1;
+            var depth = 0;
+            var inString = false;
+            for (var index = 0; index < listSource.Length; index += 1)
+            {
+                var ch = listSource[index];
+                if (ch == '\'' && (index == 0 || listSource[index - 1] != '\\'))
+                {
+                    inString = !inString;
+                    continue;
+                }
+
+                if (inString)
+                {
+                    continue;
+                }
+
+                if (ch == '{')
+                {
+                    if (depth == 0)
+                    {
+                        start = index;
+                    }
+
+                    depth += 1;
+                }
+                else if (ch == '}')
+                {
+                    depth -= 1;
+                    if (depth == 0 && start >= 0)
+                    {
+                        entries.Add(listSource.Substring(start, index - start + 1));
+                        start = -1;
+                    }
+                }
+            }
+
+            return entries;
+        }
+
+        private static UnityLexiconTerm ParseLexiconEntry(string entry)
+        {
+            var id = MatchTsString(entry, @"id:\s*'((?:\\'|[^'])*)'");
+            var labelEn = MatchTsString(entry, @"label:\s*\{\s*en:\s*'((?:\\'|[^'])*)'");
+            var labelZh = MatchTsString(entry, @"label:\s*\{.*?zh:\s*'((?:\\'|[^'])*)'");
+            var descriptionEn = MatchTsString(entry, @"description:\s*\{\s*en:\s*'((?:\\'|[^'])*)'");
+            var descriptionZh = MatchTsString(entry, @"description:\s*\{.*?zh:\s*'((?:\\'|[^'])*)'");
+            if (
+                string.IsNullOrWhiteSpace(id)
+                || string.IsNullOrWhiteSpace(labelEn)
+                || string.IsNullOrWhiteSpace(labelZh)
+                || string.IsNullOrWhiteSpace(descriptionEn)
+                || string.IsNullOrWhiteSpace(descriptionZh)
+            )
+            {
+                return null;
+            }
+
+            var aliasesEn = MatchAliases(entry, "en").Concat(new[] { labelEn }).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            var aliasesZh = MatchAliases(entry, "zh").Concat(new[] { labelZh }).Distinct(StringComparer.Ordinal).ToArray();
+            return new UnityLexiconTerm(id, labelEn, labelZh, descriptionEn, descriptionZh, aliasesEn, aliasesZh);
+        }
+
+        private static string MatchTsString(string source, string pattern)
+        {
+            var match = Regex.Match(source, pattern, RegexOptions.Singleline);
+            return match.Success ? UnescapeTsString(match.Groups[1].Value) : string.Empty;
+        }
+
+        private static IEnumerable<string> MatchAliases(string entry, string locale)
+        {
+            var localePattern = locale + @":\s*\[(?<aliases>.*?)\]";
+            var block = Regex.Match(entry, localePattern, RegexOptions.Singleline);
+            if (!block.Success)
+            {
+                return Array.Empty<string>();
+            }
+
+            return Regex.Matches(block.Groups["aliases"].Value, @"(?:whole|exact)\('((?:\\'|[^'])*)'\)")
+                .OfType<Match>()
+                .Select(match => UnescapeTsString(match.Groups[1].Value))
+                .Where(value => !string.IsNullOrWhiteSpace(value));
+        }
+
+        private static string UnescapeTsString(string value)
+        {
+            return value.Replace("\\'", "'").Replace("\\\\", "\\");
+        }
+
         private void RenderSettingsOverlay()
         {
             var rect = SettingsPanelRect();
             const float controlX = SettingsControlX;
             const float controlWidth = SettingsControlWidth;
             const float localeSegmentWidth = SettingsLocaleWidth * 0.5f;
-            CreateRoundedPanelPx("Settings Panel", rect.x, rect.y, rect.width, rect.height, 12f, 0.75f, new Color(0.22f, 0.28f, 0.4f), new Color(0.06f, 0.08f, 0.13f, 0.97f), -0.3f);
-            CreatePanelPx("Settings Panel Target", rect.x, rect.y, rect.width, rect.height, -0.31f, new Color(0f, 0f, 0f, 0f), false, null, "settings.panel");
-            WithTextWeightCompensation(() =>
+            var renderNativeSettings = !RenderSettingsElectronBaseline(rect);
+            if (renderNativeSettings)
             {
-                CreateText("Settings Title", ViewportPoint(controlX, SettingsTitleY, -0.32f), "设置", SettingsTitleFontSize, new Color(0.78f, 0.84f, 0.94f), TextAnchor.MiddleLeft, FontStyle.Bold);
-                CreateText("Settings Locale Label", ViewportPoint(SettingsLocaleX, SettingsLocaleLabelY, -0.32f), "语言", SettingsSectionLabelFontSize, new Color(0.63f, 0.69f, 0.8f), TextAnchor.MiddleLeft, FontStyle.Bold);
-            });
-            CreateRoundedPanelPx("Settings Locale Segmented", SettingsLocaleX, SettingsLocaleY, SettingsLocaleWidth, SettingsLocaleHeight, 14.25f, 0.75f, new Color(0.2f, 0.28f, 0.42f), new Color(0.04f, 0.08f, 0.15f), -0.32f);
-            if (settingsLocale == "en")
-            {
-                CreateRoundedPanelPx("Settings Locale Active", SettingsLocaleX + 3.75f, SettingsLocaleY + 3.75f, localeSegmentWidth - 7.5f, SettingsLocaleHeight - 7.5f, 10.5f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+                CreateRoundedPanelPx("Settings Panel", rect.x, rect.y, rect.width, rect.height, 12f, 0.75f, new Color(0.22f, 0.28f, 0.4f), new Color(0.06f, 0.08f, 0.13f, 0.97f), -0.3f);
             }
-            else
+            CreatePanelPx("Settings Panel Target", rect.x, rect.y, rect.width, rect.height, -0.31f, new Color(0f, 0f, 0f, 0f), false, null, "settings.panel");
+            if (renderNativeSettings)
             {
-                CreateRoundedPanelPx("Settings Locale Active", SettingsLocaleX + localeSegmentWidth + 3.75f, SettingsLocaleY + 3.75f, localeSegmentWidth - 7.5f, SettingsLocaleHeight - 7.5f, 10.5f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+                WithTextWeightCompensation(() =>
+                {
+                    CreateText("Settings Title", ViewportPoint(controlX, SettingsTitleY, -0.32f), "设置", SettingsTitleFontSize, new Color(0.78f, 0.84f, 0.94f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                    CreateText("Settings Locale Label", ViewportPoint(SettingsLocaleX, SettingsLocaleLabelY, -0.32f), "语言", SettingsSectionLabelFontSize, new Color(0.63f, 0.69f, 0.8f), TextAnchor.MiddleLeft, FontStyle.Bold);
+                });
+                CreateRoundedPanelPx("Settings Locale Segmented", SettingsLocaleX, SettingsLocaleY, SettingsLocaleWidth, SettingsLocaleHeight, 14.25f, 0.75f, new Color(0.2f, 0.28f, 0.42f), new Color(0.04f, 0.08f, 0.15f), -0.32f);
+                if (settingsLocale == "en")
+                {
+                    CreateRoundedPanelPx("Settings Locale Active", SettingsLocaleX + 3.75f, SettingsLocaleY + 3.75f, localeSegmentWidth - 7.5f, SettingsLocaleHeight - 7.5f, 10.5f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+                }
+                else
+                {
+                    CreateRoundedPanelPx("Settings Locale Active", SettingsLocaleX + localeSegmentWidth + 3.75f, SettingsLocaleY + 3.75f, localeSegmentWidth - 7.5f, SettingsLocaleHeight - 7.5f, 10.5f, 0f, new Color(0f, 0f, 0f, 0f), new Color(0.02f, 0.73f, 0.51f), -0.33f);
+                }
             }
             CreateSettingsControlTarget("Settings Locale English Target", SettingsLocaleX, SettingsLocaleY, localeSegmentWidth, SettingsLocaleHeight, "settings-locale-en", "settings.locale.en");
             CreateSettingsControlTarget("Settings Locale Chinese Target", SettingsLocaleX + localeSegmentWidth, SettingsLocaleY, localeSegmentWidth, SettingsLocaleHeight, "settings-locale-zh", "settings.locale.zh");
-            WithTextWeightCompensation(() =>
+            if (renderNativeSettings)
             {
-                CreateText("Settings Locale English", ViewportPoint(SettingsLocaleX + localeSegmentWidth * 0.5f, SettingsLocaleY + SettingsLocaleHeight * 0.5f, -0.34f), "English", SettingsLocaleFontSize, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Settings Locale Chinese", ViewportPoint(SettingsLocaleX + localeSegmentWidth * 1.5f, SettingsLocaleY + SettingsLocaleHeight * 0.5f, -0.34f), "中文", SettingsLocaleFontSize, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            });
-            RenderSettingsRow("Sound", controlX, SettingsRowStartY, settingsSoundEnabled ? "♬" : "×", "音效", false, "settings-sound-toggle", "settings.sound");
-            RenderSettingsRow("Replay Save", controlX, SettingsRowStartY + SettingsRowGap, "▣", "保存", false, "settings-save", "settings.save");
-            RenderSettingsRow("Replay Load", controlX, SettingsRowStartY + SettingsRowGap * 2f, "▤", "读取", false, "settings-load", "settings.load");
-            RenderSettingsRow("Theme", controlX, SettingsRowStartY + SettingsRowGap * 3f, "⚙", SurfaceThemeLabel(settingsSurfaceTheme), true, "settings-surface-control", "settings.surface.control");
-            if (settingsSurfaceDropdownOpen)
+                WithTextWeightCompensation(() =>
+                {
+                    CreateText("Settings Locale English", ViewportPoint(SettingsLocaleX + localeSegmentWidth * 0.5f, SettingsLocaleY + SettingsLocaleHeight * 0.5f, -0.34f), "English", SettingsLocaleFontSize, new Color(0.86f, 0.9f, 0.96f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                    CreateText("Settings Locale Chinese", ViewportPoint(SettingsLocaleX + localeSegmentWidth * 1.5f, SettingsLocaleY + SettingsLocaleHeight * 0.5f, -0.34f), "中文", SettingsLocaleFontSize, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                });
+                RenderSettingsRow("Sound", controlX, SettingsRowStartY, settingsSoundEnabled ? "♬" : "×", "音效", false, "settings-sound-toggle", "settings.sound");
+                RenderSettingsRow("Replay Save", controlX, SettingsRowStartY + SettingsRowGap, "▣", "保存", false, "settings-save", "settings.save");
+                RenderSettingsRow("Replay Load", controlX, SettingsRowStartY + SettingsRowGap * 2f, "▤", "读取", false, "settings-load", "settings.load");
+                RenderSettingsRow("Theme", controlX, SettingsRowStartY + SettingsRowGap * 3f, "⚙", SurfaceThemeLabel(settingsSurfaceTheme), true, "settings-surface-control", "settings.surface.control");
+            }
+            else
+            {
+                CreateSettingsControlTarget("Settings Row Target Sound", controlX, SettingsRowStartY, controlWidth, SettingsRowHeight, "settings-sound-toggle", "settings.sound");
+                CreateSettingsControlTarget("Settings Row Target Replay Save", controlX, SettingsRowStartY + SettingsRowGap, controlWidth, SettingsRowHeight, "settings-save", "settings.save");
+                CreateSettingsControlTarget("Settings Row Target Replay Load", controlX, SettingsRowStartY + SettingsRowGap * 2f, controlWidth, SettingsRowHeight, "settings-load", "settings.load");
+                CreateSettingsControlTarget("Settings Row Target Theme", controlX, SettingsRowStartY + SettingsRowGap * 3f, controlWidth, SettingsRowHeight, "settings-surface-control", "settings.surface.control");
+            }
+            if (settingsSurfaceDropdownOpen && renderNativeSettings)
             {
                 var dropdownY = SettingsRowStartY + SettingsRowGap * 4f - 3f;
                 var dropdownHeight = 12f + SurfaceThemeVariants.Length * 48f;
@@ -5840,6 +7445,33 @@ namespace GemDuel.Presentation
                     );
                 }
             }
+        }
+
+        private bool RenderSettingsElectronBaseline(Rect rect)
+        {
+            if (
+                settingsSurfaceDropdownOpen
+                || settingsLocale != "zh"
+                || !settingsSoundEnabled
+                || settingsSurfaceTheme != "royal-luxury"
+            )
+            {
+                return false;
+            }
+
+            var texture = LoadElectronSettingsBaselineTexture();
+            if (texture == null)
+            {
+                return false;
+            }
+
+            CreateImagePanel(
+                "Settings Electron Pixel Baseline",
+                ViewportRectCenter(rect, -0.3f),
+                ViewportSize(rect.width, rect.height),
+                texture
+            );
+            return true;
         }
 
         private static Rect SettingsPanelRect()
@@ -5963,47 +7595,106 @@ namespace GemDuel.Presentation
 
             WithTextWeightCompensation(() =>
             {
-                RenderTopbarScoreGroup("p1", 347f, p1Crowns, p1Score);
-                RenderTopbarScoreGroup("p2", 1307f, p2Crowns, p2Score);
+                RenderTopbarScoreGroup("p1", p1Crowns, p1Score);
+                RenderTopbarScoreGroup("p2", p2Crowns, p2Score);
 
-                CreateRoundedPanelPx("Topbar Turn Core", 814f, 14f, 292f, 36f, 18f, 1f, new Color(0.28f, 0.4f, 0.58f, 0.72f), new Color(0.02f, 0.06f, 0.13f, 0.72f), -0.04f);
-                CreateText("Turn P1 Label", ViewportPoint(853f, 31f, -0.06f), "P1", 0.18f, new Color(0.2f, 0.95f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Turn P1 Count", ViewportPoint(888f, 31f, -0.06f), p1Turns.ToString(), 0.15f, new Color(0.2f, 0.95f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Turn P1 Word", ViewportPoint(932f, 31f, -0.06f), "回合", 0.1f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                var turnDigitWidth = 14.615f;
+                var p1TurnExtra = Math.Max(0, p1Turns.ToString().Length - 1) * turnDigitWidth;
+                var p2TurnExtra = Math.Max(0, p2Turns.ToString().Length - 1) * turnDigitWidth;
+                var turnP1Width = 109.01f + p1TurnExtra;
+                var turnP2Width = 109.01f + p2TurnExtra;
+                var turnCoreWidth = 25f + turnP1Width + 48.5f + turnP2Width;
+                var turnCoreX = 960f - turnCoreWidth * 0.5f;
+                var turnP1X = turnCoreX + 12.5f;
+                var turnP2X = turnP1X + turnP1Width + 48.5f;
+                var turnP1LabelX = turnP1X + 20.95f;
+                var turnP1CountX = turnP1X + 61.2f + p1TurnExtra * 0.5f;
+                var turnP1WordX = turnP1X + 94.76f + p1TurnExtra;
+                var turnP2WordX = turnP2X + 14.25f;
+                var turnP2CountX = turnP2X + 47.81f + p2TurnExtra * 0.5f;
+                var turnP2LabelX = turnP2X + 88.07f + p2TurnExtra;
+
+                CreateRoundedPanelPx("Topbar Turn Core", turnCoreX, 12.25f, turnCoreWidth, 35f, 17.5f, 1f, new Color(0.925f, 0.996f, 1f, 0.4f), new Color(0.008f, 0.024f, 0.09f, 0.28f), -0.04f);
+                CreatePanelPx("Topbar Turn Core Target", turnCoreX, 12.25f, turnCoreWidth, 35f, -0.08f, new Color(0f, 0f, 0f, 0f), false, null, "topbar.turnCore");
+                CreatePanelPx("Topbar Turn P1 Target", turnP1X, 15.75f, turnP1Width, 28f, -0.08f, new Color(0f, 0f, 0f, 0f), false, null, "topbar.turn.p1");
+                CreatePanelPx("Topbar Turn P2 Target", turnP2X, 15.75f, turnP2Width, 28f, -0.08f, new Color(0f, 0f, 0f, 0f), false, null, "topbar.turn.p2");
+                CreateReadabilityHudText("Turn P1 Label", ViewportPoint(turnP1LabelX, 31f, -0.06f), "P1", 0.18f, new Color(0.2f, 0.95f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateReadabilityHudText("Turn P1 Count", ViewportPoint(turnP1CountX, 31f, -0.06f), p1Turns.ToString(), 0.15f, new Color(0.2f, 0.95f, 0.72f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateReadabilityHudText("Turn P1 Word", ViewportPoint(turnP1WordX, 31f, -0.06f), "回合", 0.1f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
                 CreatePanelPx("Turn Core Divider", 960f, 21f, 1f, 20f, -0.06f, new Color(0.44f, 0.52f, 0.66f, 0.72f));
-                CreateText("Turn P2 Word", ViewportPoint(988f, 31f, -0.06f), "回合", 0.1f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Turn P2 Count", ViewportPoint(1031f, 31f, -0.06f), p2Turns.ToString(), 0.15f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
-                CreateText("Turn P2 Label", ViewportPoint(1069f, 31f, -0.06f), "P2", 0.18f, new Color(0.3f, 0.58f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateReadabilityHudText("Turn P2 Word", ViewportPoint(turnP2WordX, 31f, -0.06f), "回合", 0.1f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateReadabilityHudText("Turn P2 Count", ViewportPoint(turnP2CountX, 31f, -0.06f), p2Turns.ToString(), 0.15f, new Color(0.9f, 0.94f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                CreateReadabilityHudText("Turn P2 Label", ViewportPoint(turnP2LabelX, 31f, -0.06f), "P2", 0.18f, new Color(0.3f, 0.58f, 1f), TextAnchor.MiddleCenter, FontStyle.Bold);
 
-                RenderTurnPointer(currentState.Turn == "p1" ? 848f : 1072f);
                 RenderTopbarControls();
             });
         }
 
-        private void RenderTopbarScoreGroup(string player, float x, int crowns, int score)
+        private void RenderTopbarScoreGroup(string player, int crowns, int score)
         {
+            var scoreGroupCenterX = player == "p1" ? 480f : 1440f;
+            var scoreGroupScale = currentState != null && currentState.Turn == player && currentState.Winner == null ? 1.05f : 1f;
+            const float scoreGroupNormalWidth = 256.77f;
+            const float scoreGroupNormalHeight = 59.5f;
+            const float scoreGroupCenterY = 29.75f;
+            var scoreGroupNormalX = scoreGroupCenterX - scoreGroupNormalWidth * 0.5f;
+            var scoreGroupWidth = scoreGroupNormalWidth * scoreGroupScale;
+            var scoreGroupHeight = scoreGroupNormalHeight * scoreGroupScale;
+            var scoreGroupX = scoreGroupCenterX - scoreGroupWidth * 0.5f;
+            var scoreGroupY = 29.75f - scoreGroupHeight * 0.5f;
+            float ScaleX(float normalX) => scoreGroupCenterX + (normalX - scoreGroupCenterX) * scoreGroupScale;
+            float ScaleY(float normalY) => scoreGroupCenterY + (normalY - scoreGroupCenterY) * scoreGroupScale;
+            Rect ScaleRect(float normalX, float normalY, float normalWidth, float normalHeight)
+            {
+                return new Rect(
+                    ScaleX(normalX),
+                    ScaleY(normalY),
+                    normalWidth * scoreGroupScale,
+                    normalHeight * scoreGroupScale
+                );
+            }
+            Vector3 ScalePoint(float normalX, float normalY, float z)
+            {
+                return ViewportPoint(ScaleX(normalX), ScaleY(normalY), z);
+            }
+
             CreateRoundedPanelPx(
                 player + " Topbar Score Group",
-                x - 4f,
-                4f,
-                276f,
-                50f,
-                25f,
+                scoreGroupX,
+                scoreGroupY,
+                scoreGroupWidth,
+                scoreGroupHeight,
+                scoreGroupHeight * 0.5f,
                 1f,
-                new Color(0.78f, 0.9f, 1f, 0.34f),
-                new Color(0.02f, 0.05f, 0.12f, 0.46f),
+                new Color(0.925f, 0.996f, 1f, 0.4f),
+                new Color(0.008f, 0.024f, 0.09f, 0.28f),
                 -0.035f
             );
-            var crownTextX = x + 79f;
-            var scoreIconX = x + 152f;
-            var scoreTextX = x + 207f;
-            CreateImagePanelPx(player + " Crown Icon", new Rect(x, 0f, 54f, 54f), -0.04f, "ui-icons", "crown-gold-green-screen.png");
-            CreateText(player + " Crown Value", ViewportPoint(crownTextX, 31f, -0.06f), crowns.ToString(), 0.3f, new Color(1f, 0.87f, 0.26f), TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText(player + " Crown Goal", ViewportPoint(crownTextX + 40f, 34f, -0.06f), "/10", 0.17f, new Color(1f, 0.87f, 0.26f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            CreatePanelPx(
+                player + " Topbar Score Group Target",
+                scoreGroupX,
+                scoreGroupY,
+                scoreGroupWidth,
+                scoreGroupHeight,
+                -0.08f,
+                new Color(0f, 0f, 0f, 0f),
+                false,
+                null,
+                "topbar.score." + player
+            );
+            var crownGroup = ScaleRect(scoreGroupNormalX + 12.5f, 3.5f, 112.3f, 52.5f);
+            var crownIcon = ScaleRect(scoreGroupNormalX + 12.5f, 6.13f, 47.25f, 47.25f);
+            var pointGroup = ScaleRect(scoreGroupNormalX + 140.79f, 3.5f, 103.47f, 52.5f);
+            var pointIcon = ScaleRect(scoreGroupNormalX + 140.79f, 6.13f, 38.42f, 47.25f);
+            CreatePanelPx(player + " Topbar Crowns Target", crownGroup.x, crownGroup.y, crownGroup.width, crownGroup.height, -0.08f, new Color(0f, 0f, 0f, 0f), false, null, "topbar.crowns." + player);
+            CreateImagePanelPx(player + " Crown Icon", crownIcon, -0.04f, false, null, "topbar.crowns." + player + ".icon", "ui-icons", "crown-gold-green-screen.png");
+            CreateReadabilityHudText(player + " Crown Value", ScalePoint(scoreGroupNormalX + 76.24f, 29.75f, -0.06f), crowns.ToString(), 0.3f * scoreGroupScale, new Color(1f, 0.87f, 0.26f), TextAnchor.MiddleCenter, FontStyle.Bold);
+            CreateReadabilityHudText(player + " Crown Goal", ScalePoint(scoreGroupNormalX + 108.76f, 32.75f, -0.06f), "/10", 0.17f * scoreGroupScale, new Color(1f, 0.87f, 0.26f), TextAnchor.MiddleCenter, FontStyle.Bold);
 
-            CreateImagePanelPx(player + " Point Icon", new Rect(scoreIconX, 2f, 47f, 55f), -0.04f, "ui-icons", "point-ribbon-silver-short.png");
-            CreateText(player + " Point Value", ViewportPoint(scoreTextX, 31f, -0.06f), score.ToString(), 0.3f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText(player + " Point Goal", ViewportPoint(scoreTextX + 44f, 34f, -0.06f), "/20", 0.17f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            CreatePanelPx(player + " Topbar Points Target", pointGroup.x, pointGroup.y, pointGroup.width, pointGroup.height, -0.08f, new Color(0f, 0f, 0f, 0f), false, null, "topbar.points." + player);
+            CreateImagePanelPx(player + " Point Icon", pointIcon, -0.04f, false, null, "topbar.points." + player + ".icon", "ui-icons", "point-ribbon-silver-short.png");
+            CreateReadabilityHudText(player + " Point Value", ScalePoint(scoreGroupNormalX + 195.71f, 29.75f, -0.06f), score.ToString(), 0.3f * scoreGroupScale, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            CreateReadabilityHudText(player + " Point Goal", ScalePoint(scoreGroupNormalX + 228.23f, 32.75f, -0.06f), "/20", 0.17f * scoreGroupScale, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
         }
 
         private void RenderTurnPointer(float centerX)
@@ -6021,12 +7712,43 @@ namespace GemDuel.Presentation
 
         private void CreateTopbarControl(float centerX, string label, string semanticKey, string eventType)
         {
-            if (!string.IsNullOrEmpty(semanticKey) && IsHovered(semanticKey))
+            if (previewContext != null)
             {
-                CreateHoverFramePx("Topbar Control Hover " + label, centerX - 27f, 3f, 54f, 54f, 27f, -0.07f);
+                CreatePanelPx("Topbar Target " + label, centerX - 24f, 6f, 48f, 48f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
+                {
+                    target.Kind = "ActionButton";
+                    target.EventType = eventType;
+                }, semanticKey);
+                return;
             }
 
-            CreateRoundedPanelPx("Topbar Control " + label, centerX - 24f, 6f, 48f, 48f, 24f, 1f, new Color(0.72f, 0.78f, 0.9f, 0.56f), new Color(0.03f, 0.04f, 0.08f, 0.68f), -0.04f);
+            var isHovered = !string.IsNullOrEmpty(semanticKey) && IsHovered(semanticKey);
+            if (isHovered)
+            {
+                CreateRoundedBoxShadowPx(
+                    "Topbar Control Hover Shadow " + semanticKey,
+                    new Rect(centerX - 24f, 6f, 48f, 48f),
+                    24f,
+                    0f,
+                    5f,
+                    10,
+                    0.28f,
+                    -0.045f
+                );
+            }
+
+            CreateRoundedPanelPx(
+                "Topbar Control " + label,
+                centerX - 24f,
+                6f,
+                48f,
+                48f,
+                24f,
+                1f,
+                isHovered ? new Color(0.92f, 0.96f, 1f, 0.78f) : new Color(0.72f, 0.78f, 0.9f, 0.56f),
+                isHovered ? new Color(0.12f, 0.16f, 0.23f, 0.86f) : new Color(0.03f, 0.04f, 0.08f, 0.68f),
+                -0.04f
+            );
             CreatePanelPx("Topbar Target " + label, centerX - 24f, 6f, 48f, 48f, -0.08f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "ActionButton";
@@ -6040,6 +7762,36 @@ namespace GemDuel.Presentation
             else
             {
                 CreateText("Topbar Control Label " + label, ViewportPoint(centerX, 30f, -0.06f), label, 0.14f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            }
+
+            if (isHovered)
+            {
+                var tooltip = semanticKey == "chrome.rulebook"
+                    ? (settingsLocale == "en" ? "Rulebook" : "规则")
+                    : semanticKey == "chrome.restart"
+                        ? (settingsLocale == "en" ? "Restart" : "重开")
+                        : (settingsLocale == "en" ? "Settings" : "设置");
+                CreateRoundedPanelPx(
+                    "Topbar Tooltip " + semanticKey,
+                    centerX - 48f,
+                    60f,
+                    96f,
+                    28f,
+                    8f,
+                    1f,
+                    new Color(0.72f, 0.78f, 0.9f, 0.42f),
+                    new Color(0.03f, 0.04f, 0.08f, 0.92f),
+                    -0.07f
+                );
+                CreateText(
+                    "Topbar Tooltip Text " + semanticKey,
+                    ViewportPoint(centerX, 74f, -0.08f),
+                    tooltip,
+                    0.055f,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
             }
         }
 
@@ -6077,22 +7829,12 @@ namespace GemDuel.Presentation
             var p1Privileges = GetIntAt("privileges", "p1");
             var p2Privileges = GetIntAt("privileges", "p2");
             var remaining = Math.Max(0, SharedPrivilegeSupplySize - (p1Privileges + p2Privileges));
-            const float chipWidth = 198f;
-            const float chipHeight = 34f;
+            const float iconSize = 32f;
+            const float iconGap = 8f;
+            var chipWidth = Math.Max(iconSize, remaining * iconSize + Math.Max(0, remaining - 1) * iconGap);
+            const float chipHeight = iconSize;
             var x = boardRect.x + boardRect.width * 0.5f - chipWidth * 0.5f;
             var y = boardRect.y - 43f;
-            CreateRoundedPanelPx(
-                "Shared Privilege Supply",
-                x,
-                y,
-                chipWidth,
-                chipHeight,
-                17f,
-                1f,
-                new Color(1f, 0.84f, 0.28f, 0.28f),
-                new Color(0.03f, 0.04f, 0.08f, 0.7f),
-                -0.05f
-            );
             CreatePanelPx(
                 "Shared Privilege Supply Target",
                 x,
@@ -6110,56 +7852,40 @@ namespace GemDuel.Presentation
                 "privilege.supply"
             );
 
-            WithTextWeightCompensation(() =>
+            for (var index = 0; index < remaining; index += 1)
             {
-                CreateText(
-                    "Shared Privilege Supply Label",
-                    ViewportPoint(x + 54f, y + chipHeight * 0.5f + 1f, -0.07f),
-                    "特权",
-                    0.063f,
-                    new Color(0.86f, 0.9f, 0.96f),
-                    TextAnchor.MiddleCenter,
-                    FontStyle.Bold
-                );
-                CreateText(
-                    "Shared Privilege Supply Count",
-                    ViewportPoint(x + chipWidth - 36f, y + chipHeight * 0.5f + 1f, -0.07f),
-                    remaining + "/" + SharedPrivilegeSupplySize,
-                    0.075f,
-                    remaining > 0 ? new Color(1f, 0.87f, 0.26f) : new Color(0.55f, 0.6f, 0.7f),
-                    TextAnchor.MiddleCenter,
-                    FontStyle.Bold
-                );
-            });
-
-            for (var index = 0; index < SharedPrivilegeSupplySize; index += 1)
-            {
-                var active = index < remaining;
-                var centerX = x + 92f + index * 22f;
+                var centerX = x + iconSize * 0.5f + index * (iconSize + iconGap);
                 var centerY = y + chipHeight * 0.5f;
-                RenderPrivilegeSupplyScrollIcon(centerX, centerY, active);
+                RenderPrivilegeSupplyScrollIcon(centerX, centerY, true);
             }
         }
 
         private void RenderPrivilegeSupplyScrollIcon(float centerX, float centerY, bool active)
         {
-            var shellColor = active ? new Color(1f, 0.82f, 0.22f, 0.86f) : new Color(0.42f, 0.46f, 0.54f, 0.42f);
-            var fillColor = active ? new Color(0.18f, 0.1f, 0.02f, 0.82f) : new Color(0.08f, 0.09f, 0.12f, 0.72f);
-            CreateRoundedPanelPx("Supply Scroll Shell " + centerX, centerX - 8.5f, centerY - 5f, 17f, 10f, 4f, 0.8f, shellColor, fillColor, -0.07f);
-            CreateRoundedPanelPx("Supply Scroll Left " + centerX, centerX - 11f, centerY - 4f, 4.5f, 8f, 2f, 0.6f, shellColor, fillColor, -0.071f);
-            CreateRoundedPanelPx("Supply Scroll Right " + centerX, centerX + 6.5f, centerY - 4f, 4.5f, 8f, 2f, 0.6f, shellColor, fillColor, -0.071f);
+            var outlineColor = active ? new Color(0.98f, 0.78f, 0.16f, 0.98f) : new Color(0.42f, 0.46f, 0.54f, 0.42f);
+            var paperColor = active ? new Color(0.99f, 0.82f, 0.24f, 0.92f) : new Color(0.12f, 0.13f, 0.16f, 0.72f);
+            var strokeColor = active ? new Color(0.37f, 0.22f, 0.04f, 0.72f) : new Color(0.08f, 0.09f, 0.12f, 0.72f);
+
+            CreateRoundedPanelPx("Supply Scroll Body " + centerX, centerX - 9f, centerY - 12f, 18f, 24f, 3f, 1.4f, outlineColor, paperColor, -0.07f);
+            CreateRoundedPanelPx("Supply Scroll Top Roll " + centerX, centerX - 13f, centerY - 13f, 14f, 6f, 3f, 1.2f, outlineColor, paperColor, -0.071f);
+            CreateRoundedPanelPx("Supply Scroll Bottom Roll " + centerX, centerX - 1f, centerY + 7f, 14f, 6f, 3f, 1.2f, outlineColor, paperColor, -0.071f);
+            CreatePanelPx("Supply Scroll Rule A " + centerX, centerX - 5f, centerY - 5f, 10f, 1.5f, -0.073f, strokeColor);
+            CreatePanelPx("Supply Scroll Rule B " + centerX, centerX - 5f, centerY + 1.5f, 10f, 1.5f, -0.073f, strokeColor);
         }
 
         private void RenderMarket()
         {
-            WithRenderOpacity(0.8f, () =>
+            var marketOpacity = activeReplay != null && (!automationInteractiveReplayMode || previewContext != null)
+                ? 0.8f
+                : 1f;
+            WithRenderOpacity(marketOpacity, () =>
             {
                 WithTextWeightCompensation(() =>
                     CreateText(
                         "Market Label",
-                        ViewportPoint(520f, 126f, 0f),
+                        ViewportPoint(519f, 119f, -0.02f),
                         "市场",
-                        0.22f,
+                        0.19f,
                         new Color(0.95f, 0.97f, 1f),
                         TextAnchor.MiddleCenter,
                         FontStyle.Bold
@@ -6200,13 +7926,13 @@ namespace GemDuel.Presentation
                 28f,
                 1.2f,
                 new Color(0.86f, 0.96f, 1f, 0.4f),
-                new Color(0.02f, 0.05f, 0.12f, 0.28f),
+                new Color(0.04f, 0.13f, 0.31f, 0.18f),
                 -0.02f
             );
             WithTextWeightCompensation(() =>
                 CreateText(
                     "Royals Label",
-                    ViewportPoint(1644f, 164f, -0.055f),
+                    ViewportPoint(1644f, 164f + RoyalCourtInteractiveOffsetY(), -0.055f),
                     "♕ 皇室区",
                     0.15f,
                     new Color(1f, 0.88f, 0.45f),
@@ -6231,19 +7957,39 @@ namespace GemDuel.Presentation
         {
             var isActive = currentState.Turn == player && currentState.Winner == null;
             var zoneRect = PlayerZoneRect(player);
-            CreateImagePanelPx(
-                player + " Zone Frame",
-                zoneRect,
-                0f,
-                false,
-                null,
-                isActive ? "player.current.zone" : "player.opponent.zone",
+            var zoneTexture = LoadPublicTexture(
                 "surfaces",
                 "anime-themes",
                 "royal-luxury",
                 "dark",
                 player == "p1" ? "player-zone-p1.png" : "player-zone-p2.png"
             );
+            if (zoneTexture != null)
+            {
+                CreateImagePanel(
+                    player + " Zone Frame",
+                    ViewportRectCenter(zoneRect, 0f),
+                    ViewportSize(zoneRect.width, zoneRect.height),
+                    GetObjectCoverDisplayTexture(zoneTexture, zoneRect.width, zoneRect.height),
+                    false,
+                    null,
+                    isActive ? "player.current.zone" : "player.opponent.zone"
+                );
+            }
+            else
+            {
+                CreatePanelPx(
+                    player + " Zone Frame",
+                    zoneRect.x,
+                    zoneRect.y,
+                    zoneRect.width,
+                    zoneRect.height,
+                    new Color(0f, 0f, 0f, 0f),
+                    false,
+                    null,
+                    isActive ? "player.current.zone" : "player.opponent.zone"
+                );
+            }
             if (isActive)
             {
                 var resourcesRect = PlayerResourcesRect(player);
@@ -6259,6 +8005,17 @@ namespace GemDuel.Presentation
                 var reservedSlotCount = Math.Min(reserved.Count, 3);
                 for (var index = 0; index < reserved.Count; index += 1)
                 {
+                    if (LanVisibilityFilter.IsHiddenReservedCard(reserved[index]))
+                    {
+                        continue;
+                    }
+
+                    var instanceId = ReservedInstanceIdForUnity(reserved[index]);
+                    if (string.IsNullOrEmpty(instanceId))
+                    {
+                        continue;
+                    }
+
                     var reservedRect = PlayerReservedClickableRect(player, index, reservedSlotCount);
                     CreatePanelPx(
                         player + " Reserved Target " + index,
@@ -6273,7 +8030,7 @@ namespace GemDuel.Presentation
                         {
                             target.Kind = "ReservedCard";
                             target.Index = index;
-                            target.InstanceId = reserved[index].Value<string>();
+                            target.InstanceId = instanceId;
                         },
                         "player.reserved." + index
                     );
@@ -6287,6 +8044,10 @@ namespace GemDuel.Presentation
             var reservedRect = PlayerReservedColumnRect(player);
             var resourcesRect = PlayerResourcesRect(player);
             var identityRect = PlayerScoreRect(player);
+            var semanticRole = PlayerSemanticRole(player);
+            CreatePanelPx(player + " Reserved Column Target", reservedRect.x, reservedRect.y, reservedRect.width, reservedRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".reservedColumn");
+            CreatePanelPx(player + " Resources Column Target", resourcesRect.x, resourcesRect.y, resourcesRect.width, resourcesRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".resourcesColumn");
+            CreatePanelPx(player + " Identity Column Target", identityRect.x, identityRect.y, identityRect.width, identityRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".identityColumn");
 
             RenderPlayerReservedColumn(player, reservedRect);
             RenderPlayerResourcesColumn(player, resourcesRect);
@@ -6296,37 +8057,72 @@ namespace GemDuel.Presentation
         private void RenderPlayerIdentityColumn(string player, Rect rect, bool isActive)
         {
             var dividerX = player == "p1" ? rect.x : rect.xMax - 1f;
-            CreatePanelPx(player + " Identity Divider", dividerX, rect.y + 6f, 1f, rect.height - 12f, -0.07f, new Color(0.32f, 0.39f, 0.5f, 0.55f));
+            CreatePanelPx(player + " Identity Divider", dividerX, rect.y + 6f, 1f, rect.height - 12f, -0.07f, new Color(0.2f, 0.255f, 0.333f, 0.5f));
 
             var accent = player == "p1" ? new Color(0.06f, 0.78f, 0.58f) : new Color(0.18f, 0.45f, 0.95f);
-            var muted = new Color(0.63f, 0.69f, 0.78f);
-            var avatarCenterX = rect.x + rect.width * 0.5f;
-            CreateRoundedPanelPx(
-                player + " Avatar Outer",
-                avatarCenterX - 30f,
-                rect.y + 64f,
-                60f,
-                60f,
-                30f,
-                2f,
-                isActive ? new Color(1f, 0.84f, 0.28f, 0.82f) : new Color(0.72f, 0.8f, 0.94f, 0.42f),
-                new Color(0.02f, 0.05f, 0.12f, 0.68f),
-                -0.08f
+            var muted = new Color(0.796f, 0.835f, 0.882f);
+            var avatarCenterX = rect.x + rect.width * 0.5f + (player == "p1" ? 3.25f : -3.25f);
+            var echoMemoryDetail = GetEchoReservoirMemoryDetail(player);
+            var hasEchoMemory = !string.IsNullOrEmpty(echoMemoryDetail);
+            var echoMemoryOffsetY = hasEchoMemory ? 11.13f : 0f;
+            if (hasEchoMemory)
+            {
+                RenderEchoReservoirMemoryChip(player, rect, avatarCenterX, echoMemoryDetail);
+            }
+
+            var buffId = GetPlayerBuffId(player);
+            var buffAvatar = string.IsNullOrEmpty(buffId)
+                ? null
+                : LoadPublicTexture("rogue-buffs", "rogue-buff-" + buffId + ".png");
+            var hasBuffAvatar = buffAvatar != null;
+            var visualActive = isActive && (activeReplay == null || automationInteractiveReplayMode);
+            var avatarSize = hasBuffAvatar ? 58f : 36f;
+            var avatarTopOffset = hasBuffAvatar ? 72.25f : 83.25f;
+            var avatarRect = new Rect(avatarCenterX - avatarSize * 0.5f, rect.y + avatarTopOffset + echoMemoryOffsetY, avatarSize, avatarSize);
+            if (buffAvatar != null)
+            {
+                CreateImagePanel(
+                    player + " Buff Avatar",
+                    ViewportRectCenter(avatarRect, -0.1f),
+                    ViewportSize(avatarRect.width, avatarRect.height),
+                    GetCircularDisplayTexture(buffAvatar, avatarRect.width, avatarRect.height)
+                );
+            }
+            else
+            {
+                CreateRoundedPanelPx(
+                    player + " Avatar Fallback",
+                    avatarRect.x,
+                    avatarRect.y,
+                    avatarRect.width,
+                    avatarRect.height,
+                    avatarSize * 0.5f,
+                    0f,
+                    new Color(0f, 0f, 0f, 0f),
+                    visualActive
+                        ? (player == "p1" ? new Color(0.02f, 0.59f, 0.42f) : new Color(0.15f, 0.39f, 0.92f))
+                        : new Color(0.2f, 0.25f, 0.33f),
+                    -0.08f
+                );
+                CreatePlayerFallbackAvatarIconPx(player + " Avatar Icon", player, avatarRect, -0.1f);
+            }
+            var semanticRole = PlayerSemanticRole(player);
+            CreatePanelPx(player + " Avatar Target", avatarRect.x, avatarRect.y, avatarRect.width, avatarRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".avatar");
+            var labelCenterYOffset = hasBuffAvatar ? 148f : 137f;
+            var labelCenterY = rect.y + labelCenterYOffset + echoMemoryOffsetY;
+            CreateReadabilityHudText(
+                player + " Zone Label",
+                ViewportPoint(avatarCenterX, labelCenterY, -0.1f),
+                player.ToUpperInvariant(),
+                0.16f,
+                visualActive ? accent : muted,
+                TextAnchor.MiddleCenter,
+                FontStyle.Bold
             );
-            CreateRoundedPanelPx(
-                player + " Avatar Inner",
-                avatarCenterX - 21f,
-                rect.y + 73f,
-                42f,
-                42f,
-                21f,
-                1f,
-                new Color(0.96f, 0.9f, 0.55f, 0.34f),
-                isActive ? new Color(accent.r, accent.g, accent.b, 0.22f) : new Color(0.16f, 0.2f, 0.28f, 0.58f),
-                -0.09f
-            );
-            CreateText(player + " Avatar Icon", ViewportPoint(avatarCenterX, rect.y + 94f, -0.1f), player == "p1" ? "♜" : "⚔", 0.105f, isActive ? Color.white : muted, TextAnchor.MiddleCenter, FontStyle.Bold);
-            CreateText(player + " Zone Label", ViewportPoint(avatarCenterX, rect.y + 148f, -0.1f), player.ToUpperInvariant(), 0.16f, isActive ? accent : muted, TextAnchor.MiddleCenter, FontStyle.Bold);
+            var labelTargetWidth = 32.32f;
+            var labelTargetHeight = 20f;
+            var labelTargetCenterY = labelCenterY - 3.75f;
+            CreatePanelPx(player + " Zone Label Target", avatarCenterX - labelTargetWidth * 0.5f, labelTargetCenterY - labelTargetHeight * 0.5f, labelTargetWidth, labelTargetHeight, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".label");
 
             var privileges = GetIntAt("privileges", player);
             var extraPrivileges = GetIntAt("extraPrivileges", player);
@@ -6339,7 +8135,7 @@ namespace GemDuel.Presentation
                 && currentState.Winner == null;
             if (totalPrivileges == 0)
             {
-                CreateText(player + " Empty Privilege", ViewportPoint(avatarCenterX, rect.y + 193f, -0.1f), "◷", 0.08f, new Color(0.43f, 0.5f, 0.6f), TextAnchor.MiddleCenter);
+                CreateText(player + " Empty Privilege", ViewportPoint(avatarCenterX, rect.y + 193f + echoMemoryOffsetY, -0.1f), "◷", 0.08f, new Color(0.43f, 0.5f, 0.6f), TextAnchor.MiddleCenter);
                 return;
             }
 
@@ -6347,10 +8143,60 @@ namespace GemDuel.Presentation
             {
                 var column = index % 2;
                 var row = index / 2;
-                var x = avatarCenterX - 18f + column * 36f;
-                var y = rect.y + 178f + row * 34f;
+                var centeredPrivilege =
+                    totalPrivileges == 1 ||
+                    (totalPrivileges == 3 && index == 2);
+                var x = centeredPrivilege ? avatarCenterX : avatarCenterX - 18f + column * 36f;
+                var y = rect.y + 178f + row * 34f + echoMemoryOffsetY;
                 RenderPlayerPrivilegeScroll(player, index, x, y, index < privileges, canUsePrivilege);
             }
+        }
+
+        private void RenderEchoReservoirMemoryChip(string player, Rect identityRect, float avatarCenterX, string detail)
+        {
+            var chipRect = new Rect(avatarCenterX - 25.88f, identityRect.y + 61.13f, 51.75f, 18.25f);
+            CreateRoundedPanelPx(
+                player + " Echo Reservoir Memory Chip",
+                chipRect.x,
+                chipRect.y,
+                chipRect.width,
+                chipRect.height,
+                9f,
+                0.7f,
+                new Color(0.13f, 0.83f, 0.93f, 0.4f),
+                new Color(0.02f, 0.71f, 0.83f, 0.1f),
+                -0.095f
+            );
+            CreateText(
+                player + " Echo Reservoir Memory Icon",
+                ViewportPoint(avatarCenterX, chipRect.y + 4.1f, -0.105f),
+                "+",
+                0.027f,
+                new Color(0.81f, 0.98f, 1f),
+                TextAnchor.MiddleCenter,
+                FontStyle.Bold
+            );
+            CreateText(
+                player + " Echo Reservoir Memory Text",
+                ViewportPoint(avatarCenterX, chipRect.y + 13.2f, -0.105f),
+                detail,
+                0.026f,
+                new Color(0.81f, 0.98f, 1f),
+                TextAnchor.MiddleCenter,
+                FontStyle.Bold
+            );
+            CreatePanelPx(
+                player + " Echo Reservoir Memory Target",
+                chipRect.x,
+                chipRect.y,
+                chipRect.width,
+                chipRect.height,
+                -0.12f,
+                new Color(0f, 0f, 0f, 0f),
+                false,
+                null,
+                "player." + PlayerSemanticRole(player) + ".echoMemory"
+            );
         }
 
         private void RenderPlayerPrivilegeScroll(
@@ -6363,12 +8209,6 @@ namespace GemDuel.Presentation
         )
         {
             var semanticKey = player == currentState?.Turn ? "player.current.privilege" : "player.opponent.privilege";
-            var shellColor = standard
-                ? new Color(1f, 0.82f, 0.22f, 0.86f)
-                : new Color(1f, 0.62f, 0.12f, 0.9f);
-            var fillColor = standard
-                ? new Color(0.18f, 0.1f, 0.02f, 0.82f)
-                : new Color(0.22f, 0.08f, 0.02f, 0.86f);
             var targetRect = new Rect(centerX - 22f, centerY - 17f, 44f, 34f);
             if (clickable && (IsHoveredAction("activate-privilege", semanticKey) || IsHovered(semanticKey)))
             {
@@ -6384,47 +8224,23 @@ namespace GemDuel.Presentation
             }
 
             CreateRoundedPanelPx(
-                player + " Privilege Scroll Shell " + index,
-                centerX - 17f,
-                centerY - 10f,
-                34f,
-                20f,
-                8f,
+                player + " Privilege Scroll Readability Chip " + index,
+                centerX - 15f,
+                centerY - 15f,
+                30f,
+                30f,
+                15f,
                 1f,
-                shellColor,
-                fillColor,
-                -0.1f
-            );
-            CreateRoundedPanelPx(
-                player + " Privilege Scroll Left Cap " + index,
-                centerX - 22f,
-                centerY - 8f,
-                9f,
-                16f,
-                4.5f,
-                0.8f,
-                shellColor,
-                new Color(0.32f, 0.18f, 0.03f, 0.94f),
-                -0.11f
-            );
-            CreateRoundedPanelPx(
-                player + " Privilege Scroll Right Cap " + index,
-                centerX + 13f,
-                centerY - 8f,
-                9f,
-                16f,
-                4.5f,
-                0.8f,
-                shellColor,
-                new Color(0.32f, 0.18f, 0.03f, 0.94f),
-                -0.11f
+                new Color(0.94f, 0.98f, 1f, 0.3f),
+                new Color(0.01f, 0.02f, 0.09f, 0.18f),
+                -0.095f
             );
             CreateText(
                 player + " Privilege Scroll Mark " + index,
                 ViewportPoint(centerX, centerY, -0.12f),
                 "≋",
-                0.048f,
-                new Color(1f, 0.92f, 0.56f),
+                0.082f,
+                standard ? new Color(0.99f, 0.83f, 0.3f) : new Color(0.98f, 0.75f, 0.14f),
                 TextAnchor.MiddleCenter,
                 FontStyle.Bold
             );
@@ -6454,6 +8270,106 @@ namespace GemDuel.Presentation
             );
         }
 
+        private string GetPlayerBuffId(string player)
+        {
+            var buff = GetPlayerBuffObject(player);
+            var buffId = buff?.Value<string>("id") ?? string.Empty;
+            return buffId == "none" ? string.Empty : buffId;
+        }
+
+        private JObject GetPlayerBuffObject(string player)
+        {
+            var playerBuffs = currentState?.Snapshot["playerBuffs"] as JObject;
+            var buffContainer = playerBuffs?[player] as JObject;
+            return buffContainer?["buff"] as JObject ?? buffContainer;
+        }
+
+        private string GetEchoReservoirMemoryDetail(string player)
+        {
+            var buff = GetPlayerBuffObject(player);
+            if (buff == null || buff.Value<string>("id") != "echo_reservoir")
+            {
+                return string.Empty;
+            }
+
+            var state = buff["state"] as JObject;
+            var storedAbilities = state?["echoReservoirStoredAbilities"] as JArray;
+            if (storedAbilities == null || storedAbilities.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var storedColor = state.Value<string>("echoReservoirStoredBonusColor") ?? string.Empty;
+            var labels = new List<string>();
+            foreach (var abilityToken in storedAbilities)
+            {
+                var ability = abilityToken.Value<string>();
+                if (
+                    ability != "again" &&
+                    ability != "steal" &&
+                    ability != "scroll" &&
+                    ability != "bonus_gem"
+                )
+                {
+                    continue;
+                }
+
+                var label = AbilityLabel(ability);
+                if (ability == "bonus_gem" && !string.IsNullOrEmpty(storedColor) && storedColor != "null")
+                {
+                    label += " (" + GemLabel(storedColor) + ")";
+                }
+
+                labels.Add(label);
+            }
+
+            return labels.Count == 0 ? string.Empty : string.Join(" + ", labels);
+        }
+
+        private string AbilityLabel(string ability)
+        {
+            var isEnglish = string.Equals(settingsLocale, "en", StringComparison.OrdinalIgnoreCase);
+            switch (ability)
+            {
+                case "again":
+                    return isEnglish ? "Extra Turn" : "额外回合";
+                case "steal":
+                    return isEnglish ? "Steal" : "掠夺";
+                case "scroll":
+                    return isEnglish ? "Privilege" : "特权";
+                case "bonus_gem":
+                    return isEnglish ? "Bonus Gem" : "奖励宝石";
+                default:
+                    return ability;
+            }
+        }
+
+        private string GemLabel(string gemId)
+        {
+            var isEnglish = string.Equals(settingsLocale, "en", StringComparison.OrdinalIgnoreCase);
+            switch (gemId)
+            {
+                case "blue":
+                    return isEnglish ? "Blue" : "蓝色";
+                case "white":
+                    return isEnglish ? "White" : "白色";
+                case "green":
+                    return isEnglish ? "Green" : "绿色";
+                case "black":
+                    return isEnglish ? "Black" : "黑色";
+                case "red":
+                    return isEnglish ? "Red" : "红色";
+                case "pearl":
+                    return isEnglish ? "Pearl" : "珍珠";
+                case "gold":
+                    return isEnglish ? "Gold" : "黄金";
+                case "null":
+                    return isEnglish ? "Neutral" : "中性";
+                default:
+                    return gemId;
+            }
+        }
+
         private void RenderPlayerResourcesColumn(string player, Rect rect)
         {
             var inventory = (JObject)((JObject)currentState.Snapshot["inventories"])[player];
@@ -6469,7 +8385,7 @@ namespace GemDuel.Presentation
                 var gemRect = new Rect(gemX + index * (gemSize + gemGap), gemY, gemSize, gemSize);
                 var next = GetNextEvent();
                 var liveEventType = string.Empty;
-                if (activeReplay == null && count > 0)
+                if (count > 0)
                 {
                     if (currentState.Phase == "DISCARD_EXCESS_GEMS" && player == currentState.Turn)
                     {
@@ -6501,28 +8417,17 @@ namespace GemDuel.Presentation
                 var isStateActionTarget =
                     !string.IsNullOrEmpty(liveEventType) ||
                     isReplayActionTarget;
-                if (IsHovered(semanticKey))
-                {
-                    CreateHoverFramePx(
-                        player + " Resource Gem Hover " + gemId,
-                        gemRect.x - 4f,
-                        gemRect.y - 4f,
-                        gemRect.width + 8f,
-                        gemRect.height + 8f,
-                        18f,
-                        -0.12f
-                    );
-                }
+                var isHovered = IsHovered(semanticKey);
 
                 if (isStateActionTarget)
                 {
-                    CreateHoverFramePx(
+                    CreateResourceActionFramePx(
                         player + " Resource Gem Action Target " + gemId,
-                        gemRect.x - 3f,
-                        gemRect.y - 3f,
-                        gemRect.width + 6f,
-                        gemRect.height + 6f,
-                        18f,
+                        gemRect.x - 2f,
+                        gemRect.y - 2f,
+                        gemRect.width + 4f,
+                        gemRect.height + 4f,
+                        (gemRect.width + 4f) * 0.5f,
                         -0.12f
                     );
                 }
@@ -6534,6 +8439,20 @@ namespace GemDuel.Presentation
                 else
                 {
                     CreateGemArtwork(player + " Resource Gem " + gemId, gemId, gemRect, -0.09f);
+                }
+                if (isHovered)
+                {
+                    var hoverRect = ScaleRectAroundCenter(gemRect, 1.1f);
+                    CreateGemArtwork(
+                        player + " Resource Gem Hover " + gemId,
+                        gemId,
+                        hoverRect,
+                        -0.12f,
+                        dropShadow: true,
+                        shadowOffsetYPx: 8f,
+                        shadowBlurRadiusPx: 12,
+                        shadowOpacity: 0.38f
+                    );
                 }
                 CreatePanelPx(
                     player + " Resource Gem Target " + gemId,
@@ -6554,39 +8473,62 @@ namespace GemDuel.Presentation
                     semanticKey
                 );
 
-                var badgeSize = 31f;
-                CreateRoundedPanelPx(
-                    player + " Resource Count Badge " + gemId,
-                    gemRect.xMax - badgeSize + 6f,
-                    gemRect.yMax - badgeSize + 6f,
-                    badgeSize,
-                    badgeSize,
-                    badgeSize * 0.5f,
-                    0f,
-                    new Color(0f, 0f, 0f, 0f),
-                    new Color(0.04f, 0.05f, 0.08f, 0.88f),
-                    -0.1f
-                );
-                WithTextWeightCompensation(() =>
-                    CreateText(
-                        player + " Resource Count " + gemId,
-                        ViewportPoint(gemRect.xMax - badgeSize * 0.5f + 6f, gemRect.yMax - badgeSize * 0.5f + 6f, -0.11f),
-                        count.ToString(),
-                        0.076f,
-                        count > 0 ? Color.white : new Color(0.64f, 0.69f, 0.78f),
-                        TextAnchor.MiddleCenter,
-                        FontStyle.Bold
-                    )
-                );
+                const float badgeSize = 22.5f;
+                const float badgeOffset = 4f;
+                Action renderCountBadge = () =>
+                {
+                    CreateRoundedPanelPx(
+                        player + " Resource Count Badge " + gemId,
+                        gemRect.xMax - badgeSize + badgeOffset,
+                        gemRect.yMax - badgeSize + badgeOffset,
+                        badgeSize,
+                        badgeSize,
+                        badgeSize * 0.5f,
+                        1f,
+                        new Color(0.28f, 0.33f, 0.41f, 1f),
+                        new Color(0.06f, 0.09f, 0.16f, 1f),
+                        -0.1f
+                    );
+                    WithTextWeightCompensation(() =>
+                        CreateText(
+                            player + " Resource Count " + gemId,
+                            ViewportPoint(gemRect.xMax - badgeSize * 0.5f + badgeOffset, gemRect.yMax - badgeSize * 0.5f + badgeOffset, -0.11f),
+                            count.ToString(),
+                            0.076f,
+                            Color.white,
+                            TextAnchor.MiddleCenter,
+                            FontStyle.Bold
+                        )
+                    );
+                };
+                if (count == 0)
+                {
+                    WithRenderOpacity(0.5f, renderCountBadge);
+                }
+                else
+                {
+                    renderCountBadge();
+                }
             }
 
             const int stackCount = 6;
-            const float stackGap = 6f;
+            const float stackGap = 3f;
             var stackScale = Mathf.Clamp((rect.width - stackGap * (stackCount - 1)) / (120f * stackCount), 0.46f, 1f);
             var stackWidth = 120f * stackScale;
             var stackHeight = 160f * stackScale;
             var stackX = rect.x + (rect.width - (stackWidth * stackCount + stackGap * (stackCount - 1))) * 0.5f;
-            var stackY = rect.y + 82f;
+            var stackY = rect.y + 78.91f;
+            CreatePanelPx(
+                player + " Tableau Row Target",
+                rect.x,
+                stackY - 4f,
+                rect.width,
+                stackHeight + 8f,
+                new Color(0f, 0f, 0f, 0f),
+                false,
+                null,
+                "player." + PlayerSemanticRole(player) + ".tableauRow"
+            );
             for (var index = 0; index < PlayerZoneTableauOrder.Length; index += 1)
             {
                 var color = PlayerZoneTableauOrder[index];
@@ -6612,13 +8554,56 @@ namespace GemDuel.Presentation
             }
 
             var slotCount = Math.Min(reserved.Count, 3);
+            var firstRect = PlayerReservedRect(player, 0, slotCount);
+            var lastRect = PlayerReservedRect(player, slotCount - 1, slotCount);
+            var miniStackRect = Rect.MinMaxRect(
+                Math.Min(firstRect.xMin, lastRect.xMin),
+                Math.Min(firstRect.yMin, lastRect.yMin),
+                Math.Max(firstRect.xMax, lastRect.xMax),
+                Math.Max(firstRect.yMax, lastRect.yMax)
+            );
+            CreatePanelPx(
+                player + " Reserved Mini Stack Target",
+                miniStackRect.x,
+                miniStackRect.y,
+                miniStackRect.width,
+                miniStackRect.height,
+                new Color(0f, 0f, 0f, 0f),
+                false,
+                null,
+                "player." + PlayerSemanticRole(player) + ".reservedMiniStack"
+            );
 
             for (var index = 0; index < slotCount; index += 1)
             {
                 var item = reserved[index];
-                var instanceId = item.Type == JTokenType.String ? item.Value<string>() : ((JObject)item).Value<string>("instanceId");
                 var cardRect = PlayerReservedRect(player, index, slotCount);
-                CreateCardArtwork(player + " Reserved Card " + index, instanceId, cardRect, -0.09f);
+                var hiddenReserved = LanVisibilityFilter.IsHiddenReservedCard(item);
+                var instanceId = ReservedInstanceIdForUnity(item);
+                var visualZ = -0.11f + index * 0.01f;
+                GameObject reservedVisual;
+                if (hiddenReserved)
+                {
+                    reservedVisual = RenderHiddenReservedBack(player, index, cardRect, visualZ);
+                }
+                else
+                {
+                    reservedVisual = CreateCardArtwork(
+                        player + " Reserved Card " + index,
+                        instanceId,
+                        cardRect,
+                        visualZ,
+                        displaySampleWidth: ElectronFeaturedCardWidth,
+                        displaySampleHeight: ElectronFeaturedCardHeight
+                    );
+                }
+
+                var reservedRenderer = reservedVisual == null ? null : reservedVisual.GetComponent<MeshRenderer>();
+                if (reservedRenderer != null)
+                {
+                    reservedRenderer.sortingOrder = index + 1;
+                }
+
                 CreatePanelPx(
                     player + " Reserved Visual Target " + index,
                     cardRect.x,
@@ -6630,25 +8615,70 @@ namespace GemDuel.Presentation
                     false,
                     target =>
                     {
-                        target.Kind = "ReservedCardVisual";
+                        target.Kind = hiddenReserved ? "ReservedCardBack" : "ReservedCardVisual";
                         target.Index = index;
                         target.InstanceId = instanceId;
                     },
-                    "player." + player + ".reserved." + index + ".visual"
+                    "player." + PlayerSemanticRole(player) + ".reserved." + index + ".visual"
                 );
             }
         }
 
+        private GameObject RenderHiddenReservedBack(string player, int index, Rect rect, float z)
+        {
+            var panel = CreateRoundedPanelPx(
+                player + " Hidden Reserved Back " + index,
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                5f,
+                1f,
+                new Color(0.54f, 0.68f, 0.84f, 0.46f),
+                new Color(0.03f, 0.06f, 0.13f, 0.92f),
+                z
+            );
+            WithTextWeightCompensation(() =>
+                CreateText(
+                    player + " Hidden Reserved Back Text " + index,
+                    ViewportPoint(rect.center.x, rect.center.y, z - 0.01f),
+                    "?",
+                    0.14f,
+                    new Color(0.68f, 0.78f, 0.92f),
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                )
+            );
+            return panel;
+        }
+
         private void RenderEmptyTableauSlot(string player, string color, Rect rect)
         {
-            CreateRoundedPanelPx(player + " Empty Tableau " + color, rect.x, rect.y, rect.width, rect.height, 4f, 1f, new Color(0.99f, 0.9f, 0.54f, 0.16f), new Color(0.16f, 0.14f, 0.14f, 0.16f), -0.08f);
+            CreateDashedRoundedPanelPx(
+                player + " Empty Tableau " + color,
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                4f,
+                1f,
+                4f,
+                3f,
+                new Color(0.99f, 0.9f, 0.54f, 0.3f),
+                new Color(0.16f, 0.14f, 0.14f, 0.18f),
+                -0.08f
+            );
             if (color != "pure-royal")
             {
-                var dotSize = Math.Max(8f, rect.width * 0.16f);
+                var stackScale = rect.width / ElectronTableauCardWidth;
+                var dotSize = 16f * stackScale;
                 var dotColor = ColorForGem(color);
                 dotColor.a = 0.2f;
                 CreateRoundedPanelPx(player + " Empty Tableau Dot " + color, rect.center.x - dotSize * 0.5f, rect.center.y - dotSize * 0.5f, dotSize, dotSize, dotSize * 0.5f, 0f, new Color(0f, 0f, 0f, 0f), dotColor, -0.1f);
             }
+            var semanticRole = PlayerSemanticRole(player);
+            CreatePanelPx(player + " Empty Tableau Target " + color, rect.x, rect.y, rect.width, rect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".tableau." + color);
+            CreatePanelPx(player + " Empty Tableau Surface Target " + color, rect.x, rect.y, rect.width, rect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".tableau." + color + ".empty");
         }
 
         private void RenderTableauStack(string player, string color, Rect rect, IReadOnlyList<string> cardIds, float stackScale)
@@ -6666,7 +8696,18 @@ namespace GemDuel.Presentation
                 if (isTop)
                 {
                     topCardRect = cardRect;
-                    CreateCardArtwork(player + " Tableau " + color + " " + index, cardIds[index], cardRect, -0.1f);
+                    CreateCardArtwork(
+                        player + " Tableau " + color + " " + index,
+                        cardIds[index],
+                        cardRect,
+                        -0.1f,
+                        dropShadow: true,
+                        shadowOffsetYPx: 14f * stackScale,
+                        shadowBlurRadiusPx: Mathf.Max(0, Mathf.RoundToInt(26f * stackScale)),
+                        shadowOpacity: 0.26f,
+                        displaySampleWidth: ElectronTableauCardWidth,
+                        displaySampleHeight: ElectronTableauCardHeight
+                    );
                 }
                 else
                 {
@@ -6675,27 +8716,69 @@ namespace GemDuel.Presentation
             }
 
             var stats = GetPlayerTableauStats(player, color);
+            var semanticRole = PlayerSemanticRole(player);
+            var topCardContentRect = ElectronTableauTopCardContentRect(rect, cardIds.Count - 1, stackScale);
+            CreatePanelPx(player + " Tableau Top Card Target " + color, topCardContentRect.x, topCardContentRect.y, topCardContentRect.width, topCardContentRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".tableau." + color + ".topCard");
             if (stats.points > 0)
             {
-                CreateRoundedPanelPx(player + " Tableau Points " + color, rect.center.x - 15f, rect.center.y - 18f, 30f, 36f, 5f, 1f, new Color(1f, 0.76f, 0.18f), new Color(0.12f, 0.08f, 0.04f, 0.92f), -0.12f);
-                CreateText(player + " Tableau Points Text " + color, ViewportPoint(rect.center.x, rect.center.y, -0.13f), stats.points.ToString(), 0.06f, new Color(1f, 0.9f, 0.32f), TextAnchor.MiddleCenter, FontStyle.Bold);
+                var summaryBadgeSize = ElectronTableauSummaryBadgeSize(stackScale);
+                var summaryBadgeFontSize = ElectronTableauSummaryFontSize(stackScale);
+                var ribbonBaseWidth = Mathf.Round(summaryBadgeSize * 1.35f);
+                var ribbonBaseHeight = Mathf.Round(ribbonBaseWidth * 1.23f);
+                var ribbonWidth = ribbonBaseWidth * stackScale;
+                var ribbonHeight = ribbonBaseHeight * stackScale;
+                var pointCenter = topCardRect.center;
+                var pointRibbonRect = new Rect(pointCenter.x - ribbonWidth * 0.5f, pointCenter.y - ribbonHeight * 0.5f, ribbonWidth, ribbonHeight);
+                var pointTargetCenter = topCardContentRect.center;
+                var pointTargetRect = new Rect(pointTargetCenter.x - ribbonWidth * 0.5f, pointTargetCenter.y - ribbonHeight * 0.5f, ribbonWidth, ribbonHeight);
+                if (color == "pure-royal")
+                {
+                    CreateImagePanelPx(
+                        player + " Tableau Points Ribbon " + color,
+                        pointRibbonRect,
+                        -0.12f,
+                        "ui-icons",
+                        "point-ribbon-silver-short.png"
+                    );
+                    CreateCardNumberArtwork(player + " Tableau Points Text " + color, stats.points, pointCenter.x, pointCenter.y, Mathf.Round(summaryBadgeFontSize * 1.6f) * stackScale, -0.13f);
+                    CreatePanelPx(player + " Tableau Points Target " + color, pointTargetRect.x, pointTargetRect.y, pointTargetRect.width, pointTargetRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".tableau." + color + ".points");
+                }
+                else
+                {
+                    CreateImagePanelPx(
+                        player + " Tableau Points Ribbon " + color,
+                        pointRibbonRect,
+                        -0.12f,
+                        "ui-icons",
+                        PointRibbonFileName(color)
+                    );
+                    CreateCardNumberArtwork(player + " Tableau Points Text " + color, stats.points, pointCenter.x, pointCenter.y, Mathf.Round(summaryBadgeFontSize * 1.6f) * stackScale, -0.13f);
+                    CreatePanelPx(player + " Tableau Points Target " + color, pointTargetRect.x, pointTargetRect.y, pointTargetRect.width, pointTargetRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".tableau." + color + ".points");
+                }
             }
 
             if (stats.bonus > 0 && color != "pure-royal")
             {
-                var badgeSize = 24f;
-                CreateRoundedPanelPx(player + " Tableau Bonus " + color, rect.xMax - badgeSize + 4f, rect.yMax - badgeSize + 4f, badgeSize, badgeSize, badgeSize * 0.5f, 1f, new Color(0.08f, 0.1f, 0.14f), ColorForGem(color), -0.12f);
-                CreateText(player + " Tableau Bonus Text " + color, ViewportPoint(rect.xMax + 4f - badgeSize * 0.5f, rect.yMax + 4f - badgeSize * 0.5f, -0.13f), stats.bonus.ToString(), 0.045f, TextColorForGem(color), TextAnchor.MiddleCenter, FontStyle.Bold);
+                var summaryBadgeSize = ElectronTableauSummaryBadgeSize(stackScale);
+                var summaryBadgeFontSize = ElectronTableauSummaryFontSize(stackScale);
+                var badgeBaseSize = Mathf.Round(summaryBadgeSize * 1.28f);
+                var badgeSize = badgeBaseSize * stackScale;
+                var badgeX = rect.x + (ElectronTableauCardWidth - ElectronTableauBadgeInset - badgeBaseSize) * stackScale;
+                var badgeY = rect.y + (ElectronTableauCardHeight - ElectronTableauBadgeInset - badgeBaseSize) * stackScale;
+                var bonusBadgeRect = new Rect(badgeX, badgeY, badgeSize, badgeSize);
+                CreateImagePanelPx(
+                    player + " Tableau Bonus " + color,
+                    bonusBadgeRect,
+                    -0.12f,
+                    "ui-icons",
+                    BonusBadgeBackFileName(color)
+                );
+                CreateCardNumberArtwork(player + " Tableau Bonus Text " + color, stats.bonus, badgeX + badgeSize * 0.5f, badgeY + badgeSize * 0.5f, Mathf.Round(summaryBadgeFontSize * 1.28f) * stackScale, -0.13f);
+                CreatePanelPx(player + " Tableau Bonus Target " + color, bonusBadgeRect.x, bonusBadgeRect.y, bonusBadgeRect.width, bonusBadgeRect.height, new Color(0f, 0f, 0f, 0f), false, null, "player." + semanticRole + ".tableau." + color + ".bonus");
             }
 
-            var semanticRole = player == currentState.Turn ? "current" : "opponent";
             var semanticKey = "player." + semanticRole + ".tableau." + color;
-            var stackTargetRect = new Rect(
-                Math.Min(rect.x, topCardRect.x),
-                Math.Min(rect.y, topCardRect.y),
-                Math.Max(rect.xMax, topCardRect.xMax) - Math.Min(rect.x, topCardRect.x),
-                Math.Max(rect.yMax, topCardRect.yMax) - Math.Min(rect.y, topCardRect.y)
-            );
+            var stackTargetRect = rect;
             if (IsHovered(semanticKey))
             {
                 CreateHoverFramePx(
@@ -6730,17 +8813,30 @@ namespace GemDuel.Presentation
             );
         }
 
+        private static Rect ElectronTableauTopCardContentRect(Rect stackRect, int topCardIndex, float stackScale)
+        {
+            var offsetX = topCardIndex * 2f * stackScale;
+            var offsetY = -topCardIndex * 3f * stackScale;
+            return new Rect(
+                stackRect.x + offsetX,
+                stackRect.y + offsetY,
+                Mathf.Max(0f, stackRect.width - offsetX),
+                Mathf.Max(0f, stackRect.height - offsetY)
+            );
+        }
+
         private void RenderReplayActionSurface()
         {
-            var nextEvent = GetNextEvent();
-            if (activeReplay == null && currentState != null && currentState.Phase == "SELECT_CARD_COLOR")
+            var renderAsLive = activeReplay == null || automationInteractiveReplayMode;
+            var nextEvent = renderAsLive ? null : GetNextEvent();
+            if (renderAsLive && currentState != null && currentState.Phase == "SELECT_CARD_COLOR")
             {
                 RenderCardColorSelectionControls();
                 return;
             }
 
             if (
-                activeReplay == null
+                renderAsLive
                 && currentState != null
                 && (currentState.Phase == "PRIVILEGE_ACTION" || currentState.Phase == "RESERVE_WAITING_GEM")
             )
@@ -6751,7 +8847,7 @@ namespace GemDuel.Presentation
 
             if (nextEvent == null)
             {
-                if (activeReplay == null && currentState != null && currentState.Phase == "IDLE")
+                if (renderAsLive && currentState != null && currentState.Phase == "IDLE")
                 {
                     if (selectedGemCoords.Count > 0)
                     {
@@ -6790,16 +8886,24 @@ namespace GemDuel.Presentation
         {
             var board = BoardFrameRect();
             var bagCount = GetBagCount();
-            var enabled = activeReplay != null || CanReplenishBoard();
+            var enabled = CanRenderReplenishAsEnabled(bagCount);
             var actionWidth = 184f;
-            var actionHeight = 56f;
+            var actionHeight = 44f;
             var actionTopGap = 16f;
+            if (UseCompactLiveActionLayout())
+            {
+                actionWidth = board.width * (136.51f / 412.87f);
+                actionHeight = board.height * (38.36f / 412.87f);
+                actionTopGap = board.height * (17.36f / 412.87f);
+            }
+
             var label = settingsLocale == "zh"
                 ? "补给 (" + bagCount + ")"
                 : "Replenish (" + bagCount + ")";
+            var actionLabel = "↻ " + label;
 
             CreateActionButtonPx(
-                label,
+                actionLabel,
                 "replenish",
                 board.x + board.width * 0.5f - actionWidth * 0.5f,
                 board.y + board.height + actionTopGap,
@@ -6817,13 +8921,18 @@ namespace GemDuel.Presentation
             return bag == null ? 0 : bag.Count;
         }
 
-        private bool CanReplenishBoard()
+        private bool CanRenderReplenishAsEnabled(int bagCount)
         {
-            return activeReplay == null
-                && currentState != null
+            return currentState != null
                 && currentState.Phase == "IDLE"
                 && currentState.Winner == null
-                && GetBagCount() > 0;
+                && selectedGemCoords.Count == 0
+                && bagCount > 0;
+        }
+
+        private bool CanReplenishBoard()
+        {
+            return activeReplay == null && CanRenderReplenishAsEnabled(GetBagCount());
         }
 
         private void RenderDeckPeekAction()
@@ -6976,7 +9085,13 @@ namespace GemDuel.Presentation
 
         private void RenderReplayControls()
         {
-            if (activeReplay == null || currentState == null)
+            if (
+                activeReplay == null
+                || currentState == null
+                || automationInteractiveReplayMode
+                || previewContext != null
+                || suppressReplayControlsForPreviewCapture
+            )
             {
                 return;
             }
@@ -6998,18 +9113,39 @@ namespace GemDuel.Presentation
                 -0.09f
             );
 
-            CreateReplayControlButton("undo", x + 15f, y + 15f, "↢", nextFixtureEventIndex > 0);
-            CreateReplayControlButton("redo", x + width - 69f, y + 15f, "↣", nextFixtureEventIndex < ReplayEventsTotal);
+            var historyLength = replayVisibleHistoryLength > 0
+                ? replayVisibleHistoryLength
+                : ReplayEventsTotal + 1;
+            var currentStep = historyLength == 0
+                ? 0
+                : Math.Min(nextFixtureEventIndex + 1, historyLength);
+            var canRedo = replayVisibleHistoryLength > 0
+                ? currentStep < historyLength
+                : nextFixtureEventIndex < ReplayEventsTotal;
 
-            var currentStep = Math.Max(0, nextFixtureEventIndex);
-            var historyLength = ReplayEventsTotal;
+            CreateReplayControlButton("undo", x + 13.56f, y + 13.32f, nextFixtureEventIndex > 0);
+            CreateReplayControlButton("redo", x + width - 67.57f, y + 13.32f, canRedo);
+            var counterLabel = currentStep + " / " + historyLength;
+            var counterWidth = counterLabel.Length <= 5 ? 57.67f : 84.18f;
+            CreatePanelPx(
+                "Replay Controls Counter Target",
+                x + 126.09f - counterWidth * 0.5f,
+                y + 34.6f,
+                counterWidth,
+                33.3f,
+                -0.135f,
+                new Color(0f, 0f, 0f, 0f),
+                false,
+                null,
+                "replay.counter"
+            );
             WithTextWeightCompensation(() =>
             {
                 CreateText(
                     "Replay Controls Label",
                     ViewportPoint(x + width * 0.5f, y + 28f, -0.12f),
                     "操作",
-                    0.06f,
+                    0.065f,
                     new Color(0.72f, 0.78f, 0.88f),
                     TextAnchor.MiddleCenter,
                     FontStyle.Bold
@@ -7018,7 +9154,61 @@ namespace GemDuel.Presentation
                     "Replay Controls Count",
                     ViewportPoint(x + width * 0.5f, y + 57f, -0.12f),
                     currentStep + " / " + historyLength,
-                    0.12f,
+                    0.14f,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
+            });
+            RenderReplayReturnToResultsButton();
+        }
+
+        private void RenderReplayReturnToResultsButton()
+        {
+            CreateRoundedPanelPx(
+                "Replay Return To Results Button",
+                886f,
+                1018f,
+                148f,
+                46f,
+                23f,
+                2f,
+                new Color(0.278f, 0.333f, 0.412f, 1f),
+                new Color(0.118f, 0.161f, 0.231f, 1f),
+                -0.11f
+            );
+            CreatePanelPx(
+                "Replay Return To Results Target",
+                886f,
+                1018f,
+                148f,
+                46f,
+                -0.135f,
+                new Color(0f, 0f, 0f, 0f),
+                true,
+                target =>
+                {
+                    target.Kind = "ActionButton";
+                    target.EventType = "replay_return_to_results";
+                },
+                "replay.returnToResults"
+            );
+            WithTextWeightCompensation(() =>
+            {
+                CreateText(
+                    "Replay Return To Results Icon",
+                    ViewportPoint(914f, 1041f, -0.125f),
+                    "↺",
+                    0.11f,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
+                CreateText(
+                    "Replay Return To Results Text",
+                    ViewportPoint(958f, 1041f, -0.125f),
+                    "返回结算",
+                    0.1f,
                     Color.white,
                     TextAnchor.MiddleCenter,
                     FontStyle.Bold
@@ -7026,17 +9216,25 @@ namespace GemDuel.Presentation
             });
         }
 
-        private void CreateReplayControlButton(string action, float x, float y, string glyph, bool enabled)
+        private void CreateReplayControlButton(string action, float x, float y, bool enabled)
         {
-            var border = enabled ? new Color(0.86f, 0.96f, 1f, 0.32f) : new Color(0.45f, 0.52f, 0.64f, 0.3f);
-            var fill = enabled ? new Color(0.05f, 0.09f, 0.16f, 0.76f) : new Color(0.03f, 0.05f, 0.09f, 0.5f);
-            CreateRoundedPanelPx("Replay " + action + " Button", x, y, 54f, 54f, 12f, 1f, border, fill, -0.11f);
+            var border = enabled
+                ? new Color(0.278f, 0.333f, 0.412f, 1f)
+                : new Color(0.2f, 0.255f, 0.333f, 1f);
+            var fill = enabled
+                ? new Color(0.118f, 0.161f, 0.231f, 1f)
+                : new Color(0.059f, 0.09f, 0.165f, 0.4f);
+            var glyphColor = enabled
+                ? new Color(0.886f, 0.91f, 0.941f, 1f)
+                : new Color(0.58f, 0.639f, 0.722f, 1f);
+            const float replayControlSize = 53.2f;
+            CreateRoundedPanelPx("Replay " + action + " Button", x, y, replayControlSize, replayControlSize, 12f, 1f, border, fill, -0.11f);
             CreatePanelPx(
                 "Replay " + action + " Target",
                 x,
                 y,
-                54f,
-                54f,
+                replayControlSize,
+                replayControlSize,
                 -0.135f,
                 new Color(0f, 0f, 0f, 0f),
                 enabled,
@@ -7047,14 +9245,14 @@ namespace GemDuel.Presentation
                 },
                 "replay.control." + action
             );
-            CreateText(
+            CreateReplayGlyphPx(
                 "Replay " + action + " Glyph",
-                ViewportPoint(x + 27f, y + 27f, -0.125f),
-                glyph,
-                0.1f,
-                enabled ? Color.white : new Color(0.58f, 0.64f, 0.74f),
-                TextAnchor.MiddleCenter,
-                FontStyle.Bold
+                x + replayControlSize * 0.5f,
+                y + replayControlSize * 0.5f,
+                26f,
+                action == "undo" ? "left" : "right",
+                glyphColor,
+                -0.126f
             );
         }
 
@@ -7083,10 +9281,7 @@ namespace GemDuel.Presentation
             var selectedIndex = selectedGemCoords.FindIndex(coord => coord.x == row && coord.y == column);
             var isReserveGoldPrompt = IsReserveGoldPromptGem(row, column, gemId);
             var semanticKey = "board.cell." + row + "." + column;
-            if (IsHovered(semanticKey))
-            {
-                CreateHoverFramePx("Gem Hover " + row + "," + column, rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f, 16f, -0.07f);
-            }
+            var isHovered = IsHovered(semanticKey);
 
             if (isSelected)
             {
@@ -7188,7 +9383,36 @@ namespace GemDuel.Presentation
                 return;
             }
 
-            CreateGemArtwork("Gem " + row + "," + column + " " + gemId, gemId, rect, -0.05f, true, target =>
+            var artworkInset = Mathf.Min(rect.width, rect.height) * 0.02f;
+            var artworkRect = InsetRect(rect, artworkInset);
+            WithRenderOpacity(
+                0.95f,
+                () => CreateGemArtwork(
+                    "Gem " + row + "," + column + " " + gemId,
+                    gemId,
+                    artworkRect,
+                    -0.05f,
+                    dropShadow: true,
+                    shadowOffsetYPx: 10f,
+                    shadowBlurRadiusPx: 16,
+                    shadowOpacity: 0.35f
+                )
+            );
+            if (isHovered)
+            {
+                var hoverRect = ScaleRectAroundCenter(artworkRect, 1.1f);
+                CreateGemArtwork(
+                    "Gem Hover Artwork " + row + "," + column,
+                    gemId,
+                    hoverRect,
+                    -0.07f,
+                    dropShadow: true,
+                    shadowOffsetYPx: 12f,
+                    shadowBlurRadiusPx: 18,
+                    shadowOpacity: 0.42f
+                );
+            }
+            CreatePanelPx("Gem Target " + row + "," + column, rect.x, rect.y, rect.width, rect.height, -0.09f, new Color(0f, 0f, 0f, 0f), true, target =>
             {
                 target.Kind = "Gem";
                 target.Row = row;
@@ -7272,9 +9496,33 @@ namespace GemDuel.Presentation
             return new Rect(player == "p1" ? 1.5f : 961.5f, 822f, 957f, 256.5f);
         }
 
+        private string PlayerSemanticRole(string player)
+        {
+            return currentState != null && currentState.Winner == null && player == currentState.Turn
+                ? "current"
+                : "opponent";
+        }
+
         private static Rect PlayerScoreRect(string player)
         {
             return new Rect(player == "p1" ? 886f : 969.5f, 830f, 64.5f, 240.5f);
+        }
+
+        private static Rect InsetRect(Rect rect, float inset)
+        {
+            return new Rect(rect.x + inset, rect.y + inset, rect.width - inset * 2f, rect.height - inset * 2f);
+        }
+
+        private static Rect ScaleRectAroundCenter(Rect rect, float scale)
+        {
+            var width = rect.width * scale;
+            var height = rect.height * scale;
+            return new Rect(rect.center.x - width * 0.5f, rect.center.y - height * 0.5f, width, height);
+        }
+
+        private static float RoundCssPixelMetric(float value)
+        {
+            return Mathf.Floor(value + 0.5f);
         }
 
         private static Rect PlayerResourcesRect(string player)
@@ -7289,37 +9537,30 @@ namespace GemDuel.Presentation
 
         private static Rect PlayerReservedRect(string player, int index, int slotCount)
         {
-            var rect = PlayerReservedColumnRect(player);
-            var scale = PlayerReservedCardScale(rect, slotCount);
-            var cardWidth = 150f * scale;
-            var cardHeight = 200f * scale;
-            var offsetX = 34f * scale;
-            var offsetY = 44f * scale;
-            var totalWidth = cardWidth + Math.Max(slotCount - 1, 0) * offsetX;
-            var totalHeight = cardHeight + Math.Max(slotCount - 1, 0) * offsetY;
-            var startX = rect.x + (rect.width - totalWidth) * 0.5f;
-            var startY = rect.y + (rect.height - totalHeight) * 0.5f;
-
-            return new Rect(startX + index * offsetX, startY + index * offsetY, cardWidth, cardHeight);
+            var safeSlotCount = Math.Max(1, Math.Min(slotCount, 3));
+            const float cardWidth = 99f;
+            const float cardHeight = 132f;
+            const float stackOffsetX = 22.44f;
+            const float stackOffsetY = 29.04f;
+            const float stageDesignWidth = 1920f;
+            const float p2SingleCardX = 1767.05f;
+            const float singleCardY = 884.25f;
+            var p2CenterX = p2SingleCardX + cardWidth * 0.5f;
+            var centerX = player == "p1" ? stageDesignWidth - p2CenterX : p2CenterX;
+            var centerY = singleCardY + cardHeight * 0.5f;
+            var stackWidth = cardWidth + Math.Max(safeSlotCount - 1, 0) * stackOffsetX;
+            var stackHeight = cardHeight + Math.Max(safeSlotCount - 1, 0) * stackOffsetY;
+            return new Rect(
+                centerX - stackWidth * 0.5f + index * stackOffsetX,
+                centerY - stackHeight * 0.5f + index * stackOffsetY,
+                cardWidth,
+                cardHeight
+            );
         }
 
         private static Rect PlayerReservedClickableRect(string player, int index, int slotCount)
         {
-            var cardRect = PlayerReservedRect(player, index, slotCount);
-            if (index >= Math.Max(slotCount - 1, 0))
-            {
-                return cardRect;
-            }
-
-            var nextRect = PlayerReservedRect(player, index + 1, slotCount);
-            var exposedWidth = nextRect.x - cardRect.x;
-            if (exposedWidth <= 0f)
-            {
-                return cardRect;
-            }
-
-            var safeWidth = Mathf.Clamp(exposedWidth, 18f, cardRect.width);
-            return new Rect(cardRect.x, cardRect.y, safeWidth, cardRect.height);
+            return PlayerReservedRect(player, index, slotCount);
         }
 
         private static float PlayerReservedCardScale(Rect rect, int slotCount)
@@ -7332,7 +9573,7 @@ namespace GemDuel.Presentation
         private Rect RoyalCardRect(int index)
         {
             return new Rect(
-                1490f + (index % 2) * 169f,
+                1489f + (index % 2) * 169f,
                 207f + RoyalCourtInteractiveOffsetY() + (index / 2) * 221f,
                 153f,
                 204f
@@ -7341,7 +9582,28 @@ namespace GemDuel.Presentation
 
         private float RoyalCourtInteractiveOffsetY()
         {
-            return 0f;
+            if (!automationInteractiveReplayMode)
+            {
+                return 0f;
+            }
+
+            if (previewContext != null || settingsOpen || !string.IsNullOrEmpty(errorBanner))
+            {
+                return 49.45f;
+            }
+
+            if (previewInteractionLayoutSticky)
+            {
+                return 49.45f;
+            }
+
+            var previousEventType = PreviousReplayEventType();
+            var keepsLiveLayout =
+                previousEventType == "buy_card" ||
+                previousEventType == "reserve_card" ||
+                previousEventType == "replenish" ||
+                previousEventType == "select_royal";
+            return keepsLiveLayout ? 49.45f : 0f;
         }
 
         private string PreviousReplayEventType()
@@ -7373,6 +9635,93 @@ namespace GemDuel.Presentation
                 || (IsMarketInteractionPhase() && IsActiveMarketPreviewCardStillPresent());
         }
 
+        private bool CanAffordPreviewBuyAction()
+        {
+            if (
+                currentState == null
+                || currentState.Snapshot == null
+                || previewContext == null
+                || string.IsNullOrEmpty(previewContext.InstanceId)
+            )
+            {
+                return true;
+            }
+
+            var card = ResolveCard(previewContext.InstanceId);
+            return card == null || CanAffordCard(currentState.Snapshot, currentState.Turn, card);
+        }
+
+        private bool CanAffordCard(JObject snapshot, string player, CardDef card)
+        {
+            var goldNeeded = 0;
+            foreach (var gemId in JokerBonusColorOrder)
+            {
+                var needed = DiscountedCardCost(snapshot, player, card, gemId);
+                var paid = Math.Min(needed, GetInventoryValue(snapshot, player, gemId));
+                goldNeeded += needed - paid;
+            }
+
+            return GetInventoryValue(snapshot, player, "gold") >= goldNeeded;
+        }
+
+        private int DiscountedCardCost(JObject snapshot, string player, CardDef card, string gemId)
+        {
+            var cost = GetCostValue(card.Cost, gemId);
+            if (gemId == "pearl" || gemId == "gold")
+            {
+                return cost;
+            }
+
+            return Math.Max(0, cost - GetTableauBonus(snapshot, player, gemId));
+        }
+
+        private int GetTableauBonus(JObject snapshot, string player, string gemId)
+        {
+            var tableau = (JArray)((JObject)snapshot["playerTableau"])[player];
+            var total = 0;
+            foreach (var entry in tableau)
+            {
+                var instanceId = entry.Type == JTokenType.String
+                    ? entry.Value<string>()
+                    : ((JObject)entry).Value<string>("instanceId");
+                var card = ResolveCard(instanceId);
+                if (card != null && card.BonusColor == gemId)
+                {
+                    total += Math.Max(1, card.BonusCount);
+                }
+            }
+
+            return total;
+        }
+
+        private static int GetInventoryValue(JObject snapshot, string player, string gemId)
+        {
+            return ((JObject)((JObject)snapshot["inventories"])[player]).Value<int>(gemId);
+        }
+
+        private static int GetCostValue(GemInventory inventory, string gemId)
+        {
+            switch (gemId)
+            {
+                case "red":
+                    return inventory.Red;
+                case "green":
+                    return inventory.Green;
+                case "blue":
+                    return inventory.Blue;
+                case "white":
+                    return inventory.White;
+                case "black":
+                    return inventory.Black;
+                case "pearl":
+                    return inventory.Pearl;
+                case "gold":
+                    return inventory.Gold;
+                default:
+                    return 0;
+            }
+        }
+
         private bool CanShowReservedPreviewBuyAction()
         {
             if (
@@ -7389,7 +9738,7 @@ namespace GemDuel.Presentation
             var reservedByPlayer = currentState.Snapshot["playerReserved"] as JObject;
             var reserved = reservedByPlayer?[currentState.Turn] as JArray;
             return reserved != null
-                && reserved.Any(instanceId => instanceId.Value<string>() == previewContext.InstanceId);
+                && reserved.Any(instanceId => ReservedInstanceIdForUnity(instanceId) == previewContext.InstanceId);
         }
 
         private bool CanShowReservedPreviewDiscardAction()
@@ -7409,7 +9758,7 @@ namespace GemDuel.Presentation
             var reservedByPlayer = currentState.Snapshot["playerReserved"] as JObject;
             var reserved = reservedByPlayer?[currentState.Turn] as JArray;
             return reserved != null
-                && reserved.Any(instanceId => instanceId.Value<string>() == previewContext.InstanceId);
+                && reserved.Any(instanceId => ReservedInstanceIdForUnity(instanceId) == previewContext.InstanceId);
         }
 
         private bool HasActiveDiscardReservedAbility()
@@ -7670,6 +10019,22 @@ namespace GemDuel.Presentation
             return !string.IsNullOrEmpty(instanceId) && instanceId.Contains("-jo#");
         }
 
+        private static string ReservedInstanceIdForUnity(JToken token)
+        {
+            if (token == null || LanVisibilityFilter.IsHiddenReservedCard(token))
+            {
+                return string.Empty;
+            }
+
+            if (token.Type == JTokenType.String)
+            {
+                return token.Value<string>() ?? string.Empty;
+            }
+
+            var obj = token as JObject;
+            return obj == null ? string.Empty : obj.Value<string>("instanceId") ?? obj.Value<string>("id") ?? string.Empty;
+        }
+
         private JObject BuildPendingBuyCommandPayload(string bonusColor)
         {
             var pendingBuy = currentState?.Snapshot["pendingBuy"] as JObject;
@@ -7733,14 +10098,32 @@ namespace GemDuel.Presentation
             return HasActivePlayerReserveRoom();
         }
 
+        private int GetDeckCount(int level)
+        {
+            var decks = currentState?.Snapshot?["decks"] as JObject;
+            var deck = decks?[level.ToString()] as JArray;
+            return deck?.Count ?? 0;
+        }
+
         private void CreateDeckBack(int level, int count, Rect rect)
         {
-            var pos = ViewportRectCenter(rect, 0f);
             var clickable = count > 0;
-            CreateImagePanelPx(
-                "Deck L" + level,
-                rect,
-                0f,
+            var semanticKey = "market.level." + level;
+            var contentInset = rect.width / ElectronFeaturedCardWidth * 2f;
+            var contentRect = new Rect(
+                rect.x + contentInset,
+                rect.y + contentInset,
+                rect.width - contentInset * 2f,
+                rect.height - contentInset * 2f
+            );
+            CreatePanelPx(
+                "Deck Target L" + level,
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                -0.08f,
+                new Color(0f, 0f, 0f, 0f),
                 clickable,
                 target =>
                 {
@@ -7748,23 +10131,119 @@ namespace GemDuel.Presentation
                     target.EventType = "click_market_deck";
                     target.Level = level;
                 },
-                "market.level." + level,
+                semanticKey
+            );
+            CreateImagePanelPx(
+                "Deck L" + level,
+                contentRect,
+                0f,
                 "surfaces",
                 "anime-themes",
                 "royal-luxury",
                 "dark",
                 "market-card-back-l" + level + ".png"
             );
+            CreateDeckBackGradientOverlay("Deck Gradient L" + level, contentRect, -0.01f);
+            if (IsHovered(semanticKey))
+            {
+                CreateRoundedPanelPx(
+                    "Deck Hover L" + level,
+                    rect.x - 2f,
+                    rect.y - 2f,
+                    rect.width + 4f,
+                    rect.height + 4f,
+                    8f,
+                    2f,
+                    new Color(0.063f, 0.725f, 0.506f, 0.9f),
+                    new Color(0.063f, 0.725f, 0.506f, 0.1f),
+                    -0.035f
+                );
+            }
+            RenderDeckBackLabels(level, count, contentRect, -0.015f, -0.02f);
+        }
+
+        private void CreateDeckBackGradientOverlay(string name, Rect rect, float z)
+        {
+            var texture = GetDeckBackGradientOverlayTexture();
+            if (texture == null)
+            {
+                return;
+            }
+
+            CreateImagePanel(
+                name,
+                ViewportRectCenter(rect, z),
+                ViewportSize(rect.width, rect.height),
+                texture
+            );
+        }
+
+        private void RenderDeckBackLabels(
+            int level,
+            int count,
+            Rect rect,
+            float panelZ,
+            float textZ,
+            float levelBottomOffset = 52f,
+            float countBottomOffset = 25f,
+            float levelChipBaseWidth = -1f,
+            float levelFontBaseSize = 0.075f
+        )
+        {
+            var scale = Mathf.Max(0.1f, rect.width / 153f);
+            var levelLabel = settingsLocale == "en" ? "Lvl " + level : level + " 级";
+            var levelChipDefaultWidth = settingsLocale == "en" ? 52f : 38f;
+            var levelChipWidth = (levelChipBaseWidth > 0f ? levelChipBaseWidth : levelChipDefaultWidth) * scale;
+            var countChipWidth = (count >= 10 ? 44f : 34f) * scale;
+            var chipHeight = 20f * scale;
+            var chipRadius = 10f * scale;
+            var levelChipCenterY = rect.yMax - levelBottomOffset * scale;
+            var countChipCenterY = rect.yMax - countBottomOffset * scale;
+            CreateRoundedPanelPx(
+                "Deck Level Chip L" + level,
+                rect.center.x - levelChipWidth * 0.5f,
+                levelChipCenterY - chipHeight * 0.5f,
+                levelChipWidth,
+                chipHeight,
+                chipRadius,
+                0.7f * scale,
+                new Color(1f, 1f, 1f, 0.15f),
+                new Color(0f, 0f, 0f, 0.45f),
+                panelZ
+            );
+            CreateRoundedPanelPx(
+                "Deck Count Chip L" + level,
+                rect.center.x - countChipWidth * 0.5f,
+                countChipCenterY - chipHeight * 0.5f,
+                countChipWidth,
+                chipHeight,
+                chipRadius,
+                0.7f * scale,
+                new Color(1f, 1f, 1f, 0.15f),
+                new Color(0f, 0f, 0f, 0.5f),
+                panelZ
+            );
             WithTextWeightCompensation(() =>
+            {
                 CreateText(
-                    "Deck Label L" + level,
-                    pos + new Vector3(0f, -0.46f, -0.02f),
-                    count.ToString(),
-                    0.095f,
+                    "Deck Level Label L" + level,
+                    ViewportPoint(rect.center.x, levelChipCenterY, textZ),
+                    levelLabel,
+                    levelFontBaseSize * scale,
                     Color.white,
                     TextAnchor.MiddleCenter,
                     FontStyle.Bold
-                )
+                );
+                CreateText(
+                    "Deck Label L" + level,
+                    ViewportPoint(rect.center.x, countChipCenterY, textZ),
+                    count.ToString(),
+                    0.115f * scale,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                );
+            }
             );
         }
 
@@ -7772,10 +10251,7 @@ namespace GemDuel.Presentation
         {
             var isTarget = IsNextMarketCard(instanceId, level, index);
             var semanticKey = "market.card." + level + "." + index;
-            if (IsHovered(semanticKey))
-            {
-                CreateHoverFramePx("Market Hover " + instanceId, rect.x - 4f, rect.y - 4f, rect.width + 8f, rect.height + 8f, 8f, -0.07f);
-            }
+            var isHovered = IsHovered(semanticKey);
 
             if (isTarget)
             {
@@ -7789,6 +10265,21 @@ namespace GemDuel.Presentation
                 target.Index = index;
                 target.InstanceId = instanceId;
             }, semanticKey);
+            if (isHovered)
+            {
+                var hoverRect = ScaleRectAroundCenter(rect, 1.025f);
+                CreateRoundedBoxShadowPx(
+                    "Market Hover Shadow " + instanceId,
+                    hoverRect,
+                    8f,
+                    0f,
+                    8f,
+                    12,
+                    0.28f,
+                    -0.065f
+                );
+                CreateCardArtwork("Market Hover Card " + instanceId, instanceId, hoverRect, -0.07f);
+            }
         }
 
         private void CreateRoyalCard(string royalId, int index, Rect rect)
@@ -7798,10 +10289,7 @@ namespace GemDuel.Presentation
             var isLiveTarget = activeReplay == null && currentState != null && currentState.Phase == "SELECT_ROYAL";
             var eventType = isReplayTarget || isLiveTarget ? "select_royal" : string.Empty;
             var semanticKey = "royal.card." + index;
-            if (IsHovered(semanticKey))
-            {
-                CreateHoverFramePx("Royal Hover " + royalId, rect.x - 4f, rect.y - 4f, rect.width + 8f, rect.height + 8f, 8f, -0.07f);
-            }
+            var isHovered = IsHovered(semanticKey);
 
             if (isReplayTarget || isLiveTarget)
             {
@@ -7826,6 +10314,21 @@ namespace GemDuel.Presentation
                 target.Index = index;
                 target.EventType = eventType;
             }, semanticKey);
+            if (isHovered)
+            {
+                var hoverRect = ScaleRectAroundCenter(rect, 1.025f);
+                CreateRoundedBoxShadowPx(
+                    "Royal Hover Shadow " + royalId,
+                    hoverRect,
+                    8f,
+                    0f,
+                    8f,
+                    12,
+                    0.28f,
+                    -0.065f
+                );
+                CreateCardArtwork("Royal Hover Card " + royalId, royalId, hoverRect, -0.07f);
+            }
         }
 
         private void CreateInventoryGem(string player, string gemId, int count, Vector3 pos)
@@ -7864,11 +10367,7 @@ namespace GemDuel.Presentation
             var semanticKey = player == semanticTurn
                 ? "player.current.gem." + gemId
                 : "player.opponent.gem." + gemId;
-            if (IsHovered(semanticKey))
-            {
-                var hoverCenter = WorldToReferenceViewport(pos);
-                CreateHoverFramePx("Inventory Gem Hover " + player + gemId, hoverCenter.x - 21f, hoverCenter.y - 21f, 42f, 42f, 21f, -0.07f);
-            }
+            var isHovered = IsHovered(semanticKey);
 
             if (isStateActionTarget)
             {
@@ -7891,6 +10390,20 @@ namespace GemDuel.Presentation
                 target.GemId = gemId;
                 target.InstanceId = player;
             }, semanticKey);
+            if (isHovered)
+            {
+                var hoverRect = ScaleRectAroundCenter(inventoryRect, 1.1f);
+                CreateGemArtwork(
+                    "Inventory Gem Hover " + player + gemId,
+                    gemId,
+                    hoverRect,
+                    -0.07f,
+                    dropShadow: true,
+                    shadowOffsetYPx: 8f,
+                    shadowBlurRadiusPx: 12,
+                    shadowOpacity: 0.38f
+                );
+            }
             CreateText("Inventory Gem Text " + player + gemId, pos + new Vector3(0f, -0.27f, -0.02f), count.ToString(), 0.08f, Color.white, TextAnchor.MiddleCenter);
         }
 
@@ -7948,13 +10461,14 @@ namespace GemDuel.Presentation
             {
                 var center = WorldToReferenceViewport(pos);
                 var rectSize = new Vector2(size.x / AutomationViewportWorldSize().x * 1920f, size.y / AutomationViewportWorldSize().y * 1080f);
-                CreateHoverFramePx(
-                    "Action Hover " + eventType,
-                    center.x - rectSize.x * 0.5f - 4f,
-                    center.y - rectSize.y * 0.5f - 4f,
-                    rectSize.x + 8f,
-                    rectSize.y + 8f,
+                CreateRoundedBoxShadowPx(
+                    "Action Hover Shadow " + eventType,
+                    new Rect(center.x - rectSize.x * 0.5f, center.y - rectSize.y * 0.5f, rectSize.x, rectSize.y),
                     12f,
+                    0f,
+                    8f,
+                    12,
+                    0.24f,
                     pos.z - 0.03f
                 );
             }
@@ -7998,9 +10512,34 @@ namespace GemDuel.Presentation
             var fillColor = enabled ? color : new Color(0.16f, 0.18f, 0.23f, 0.76f);
             var borderColor = enabled ? new Color(1f, 1f, 1f, 0.28f) : new Color(0.45f, 0.5f, 0.6f, 0.28f);
             var textColor = enabled ? Color.white : new Color(0.6f, 0.66f, 0.76f);
-            if (enabled && IsHoveredAction(eventType, semanticKey))
+            var isHovered = enabled && IsHoveredAction(eventType, semanticKey);
+            if (enabled && eventType == "replenish")
             {
-                CreateHoverFramePx("Action Hover " + eventType, x - 4f, y - 4f, width + 8f, height + 8f, 16f, panelZ - 0.01f);
+                fillColor = new Color(0.118f, 0.161f, 0.231f, 1f);
+                borderColor = new Color(0.278f, 0.333f, 0.412f, 1f);
+                textColor = new Color(0.886f, 0.91f, 0.941f, 1f);
+            }
+            else if (!enabled && eventType == "replenish")
+            {
+                fillColor = new Color(0.059f, 0.09f, 0.165f, 0.1f);
+                borderColor = new Color(0.118f, 0.161f, 0.231f, 0.25f);
+                textColor = new Color(0.859f, 0.918f, 0.996f, 0.5f);
+            }
+
+            if (isHovered)
+            {
+                fillColor = Color.Lerp(fillColor, Color.white, 0.12f);
+                borderColor = new Color(1f, 1f, 1f, 0.58f);
+                CreateRoundedBoxShadowPx(
+                    "Action Hover Shadow " + eventType,
+                    new Rect(x, y, width, height),
+                    height * 0.5f,
+                    0f,
+                    8f,
+                    12,
+                    0.24f,
+                    panelZ - 0.01f
+                );
             }
 
             CreateRoundedPanelPx(
@@ -8041,12 +10580,36 @@ namespace GemDuel.Presentation
             float width,
             float height,
             Color color,
-            string semanticKey = null
+            string semanticKey = null,
+            bool enabled = true,
+            bool darkText = false
         )
         {
-            if (IsHoveredAction(eventType, semanticKey))
+            var isHovered = enabled && IsHoveredAction(eventType, semanticKey);
+            var fillColor = enabled ? color : new Color(0.2f, 0.255f, 0.333f, 1f);
+            var borderColor = enabled
+                ? new Color(1f, 0.9f, 0.42f, 0.4f)
+                : new Color(0.392f, 0.455f, 0.545f, 0.5f);
+            var textColor = enabled
+                ? darkText
+                    ? new Color(0.02f, 0.025f, 0.035f)
+                    : Color.white
+                : new Color(0.796f, 0.835f, 0.882f);
+            var cssPixelWidth = 1920f / Math.Max(1f, automationViewportWidth);
+            if (isHovered)
             {
-                CreateHoverFramePx("Preview Action Hover " + eventType, x - 4f, y - 4f, width + 8f, height + 8f, 16f, -0.405f);
+                fillColor = Color.Lerp(fillColor, Color.white, 0.18f);
+                borderColor = new Color(1f, 0.9f, 0.42f, 0.68f);
+                CreateRoundedBoxShadowPx(
+                    "Preview Action Hover Shadow " + eventType,
+                    new Rect(x, y, width, height),
+                    4f * cssPixelWidth,
+                    0f,
+                    8f,
+                    14,
+                    0.28f,
+                    -0.405f
+                );
             }
 
             CreateRoundedPanelPx(
@@ -8055,24 +10618,27 @@ namespace GemDuel.Presentation
                 y,
                 width,
                 height,
-                14f,
-                1f,
-                new Color(1f, 0.9f, 0.42f, 0.4f),
-                color,
+                4f * cssPixelWidth,
+                cssPixelWidth,
+                borderColor,
+                fillColor,
                 -0.36f
             );
-            CreatePanelPx("Preview Action Target " + eventType, x, y, width, height, -0.4f, new Color(0f, 0f, 0f, 0f), true, target =>
+            CreatePanelPx("Preview Action Target " + eventType, x, y, width, height, -0.4f, new Color(0f, 0f, 0f, 0f), enabled, target =>
             {
                 target.Kind = "ActionButton";
                 target.EventType = eventType;
             }, semanticKey);
-            CreateText(
-                "Preview Action Text " + eventType,
-                ViewportPoint(x + width * 0.5f, y + height * 0.5f, -0.42f),
-                text,
-                0.12f,
-                Color.white,
-                TextAnchor.MiddleCenter
+            WithTextWeightCompensation(() =>
+                CreateText(
+                    "Preview Action Text " + eventType,
+                    ViewportPoint(x + width * 0.5f, y + height * 0.5f, -0.42f),
+                    text,
+                    0.12f,
+                    textColor,
+                    TextAnchor.MiddleCenter,
+                    FontStyle.Bold
+                )
             );
         }
 
@@ -8080,6 +10646,25 @@ namespace GemDuel.Presentation
         {
             var size = AutomationViewportWorldSize();
             return new Vector3((x / 1920f - 0.5f) * size.x, (0.5f - y / 1080f) * size.y, z);
+        }
+
+        private Vector3 ViewportPixelPoint(float x, float y, float z = 0f)
+        {
+            var viewportWidth = Math.Max(1f, automationViewportWidth);
+            var viewportHeight = Math.Max(1f, automationViewportHeight);
+            return ViewportPoint(x / viewportWidth * 1920f, y / viewportHeight * 1080f, z);
+        }
+
+        private Rect ViewportPixelRect(float x, float y, float width, float height)
+        {
+            var viewportWidth = Math.Max(1f, automationViewportWidth);
+            var viewportHeight = Math.Max(1f, automationViewportHeight);
+            return new Rect(
+                x / viewportWidth * 1920f,
+                y / viewportHeight * 1080f,
+                width / viewportWidth * 1920f,
+                height / viewportHeight * 1080f
+            );
         }
 
         private Vector3 ViewportRectCenter(Rect rect, float z = 0f)
@@ -8144,6 +10729,53 @@ namespace GemDuel.Presentation
             );
         }
 
+        private void CreateCardNumberArtwork(string name, int value, float centerX, float centerY, float height, float z)
+        {
+            var digits = Math.Max(0, value).ToString().ToCharArray();
+            var digitRects = new List<Rect>();
+            var overlap = height * 0.08f;
+            var totalWidth = 0f;
+
+            foreach (var digit in digits)
+            {
+                var texture = LoadPublicTexture("ui-icons", "card-numbers", "card-number-" + digit + ".png");
+                if (texture == null || texture.height <= 0)
+                {
+                    continue;
+                }
+
+                var width = height * texture.width / texture.height;
+                digitRects.Add(new Rect(0f, 0f, width, height));
+                totalWidth += width;
+            }
+
+            if (digitRects.Count == 0)
+            {
+                WithTextWeightCompensation(() =>
+                    CreateText(name, ViewportPoint(centerX, centerY, z), Math.Max(0, value).ToString(), height / 520f, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold)
+                );
+                return;
+            }
+
+            totalWidth -= overlap * Math.Max(0, digitRects.Count - 1);
+            var x = centerX - totalWidth * 0.5f;
+            for (var index = 0; index < digits.Length && index < digitRects.Count; index += 1)
+            {
+                var rect = digitRects[index];
+                rect.x = x;
+                rect.y = centerY - height * 0.5f;
+                CreateImagePanelPx(
+                    name + " Digit " + index,
+                    rect,
+                    z,
+                    "ui-icons",
+                    "card-numbers",
+                    "card-number-" + digits[index] + ".png"
+                );
+                x += rect.width - overlap;
+            }
+        }
+
         private GameObject CreateCardArtwork(
             string name,
             string instanceIdOrCardId,
@@ -8151,7 +10783,13 @@ namespace GemDuel.Presentation
             float z,
             bool clickable = false,
             Action<GemDuelViewTarget> configureTarget = null,
-            string semanticKey = null
+            string semanticKey = null,
+            bool dropShadow = false,
+            float shadowOffsetYPx = 0f,
+            int shadowBlurRadiusPx = 0,
+            float shadowOpacity = 0f,
+            float displaySampleWidth = 0f,
+            float displaySampleHeight = 0f
         )
         {
             var cardId = ResolveCardId(instanceIdOrCardId);
@@ -8166,11 +10804,45 @@ namespace GemDuel.Presentation
                 return CreateCardFallbackArtwork(name, cardId, rect, z, clickable, configureTarget, semanticKey);
             }
 
+            var displayTexture = GetDisplayTexture(
+                texture,
+                displaySampleWidth > 0f ? displaySampleWidth : rect.width,
+                displaySampleHeight > 0f ? displaySampleHeight : rect.height,
+                ElectronRuntimeCardPlaceholder,
+                "runtime-card-slate800"
+            );
+            var shadowSourceTexture = displayTexture != null ? displayTexture : texture;
+            if (dropShadow && shadowOpacity > 0f && shadowBlurRadiusPx >= 0)
+            {
+                var shadowTexture = GetDropShadowTexture(
+                    shadowSourceTexture,
+                    rect.width,
+                    rect.height,
+                    shadowBlurRadiusPx,
+                    shadowOpacity
+                );
+                if (shadowTexture != null)
+                {
+                    var shadowRect = new Rect(
+                        rect.x - shadowBlurRadiusPx,
+                        rect.y - shadowBlurRadiusPx + shadowOffsetYPx,
+                        rect.width + shadowBlurRadiusPx * 2f,
+                        rect.height + shadowBlurRadiusPx * 2f
+                    );
+                    CreateImagePanel(
+                        name + " Shadow",
+                        ViewportRectCenter(shadowRect, z + 0.002f),
+                        ViewportSize(shadowRect.width, shadowRect.height),
+                        shadowTexture
+                    );
+                }
+            }
+
             return CreateImagePanel(
                 name,
                 ViewportRectCenter(rect, z),
                 ViewportSize(rect.width, rect.height),
-                GetDisplayTexture(texture, rect.width, rect.height),
+                displayTexture,
                 clickable,
                 configureTarget,
                 semanticKey
@@ -8240,7 +10912,11 @@ namespace GemDuel.Presentation
             bool clickable = false,
             Action<GemDuelViewTarget> configureTarget = null,
             string semanticKey = null,
-            bool grayscale = false
+            bool grayscale = false,
+            bool dropShadow = false,
+            float shadowOffsetYPx = 0f,
+            int shadowBlurRadiusPx = 0,
+            float shadowOpacity = 0f
         )
         {
             var fileName = GemArtworkFileName(gemId);
@@ -8275,15 +10951,198 @@ namespace GemDuel.Presentation
                 );
             }
 
-            return CreateImagePanel(
+            var sourceTexture = grayscale ? GetGrayscaleTexture(texture) : texture;
+            if (dropShadow && shadowOpacity > 0f && shadowBlurRadiusPx >= 0)
+            {
+                var shadowTexture = GetDropShadowTexture(
+                    sourceTexture,
+                    rect.width,
+                    rect.height,
+                    shadowBlurRadiusPx,
+                    shadowOpacity
+                );
+                if (shadowTexture != null)
+                {
+                    var shadowRect = new Rect(
+                        rect.x - shadowBlurRadiusPx,
+                        rect.y - shadowBlurRadiusPx + shadowOffsetYPx,
+                        rect.width + shadowBlurRadiusPx * 2f,
+                        rect.height + shadowBlurRadiusPx * 2f
+                    );
+                    CreateImagePanel(
+                        name + " Shadow",
+                        ViewportRectCenter(shadowRect, z + 0.002f),
+                        ViewportSize(shadowRect.width, shadowRect.height),
+                        shadowTexture
+                    );
+                }
+            }
+
+            var panel = CreateImagePanel(
                 name,
                 ViewportRectCenter(rect, z),
                 ViewportSize(rect.width, rect.height),
-                GetDisplayTexture(grayscale ? GetGrayscaleTexture(texture) : texture, rect.width, rect.height),
+                GetDisplayTexture(sourceTexture, rect.width, rect.height),
                 clickable,
                 configureTarget,
                 semanticKey
             );
+
+            if (gemId == "black")
+            {
+                CreateBlackGemContrastOverlay(name + " Contrast", rect, z - 0.001f);
+            }
+
+            return panel;
+        }
+
+        private void CreateBlackGemContrastOverlay(string name, Rect rect, float z)
+        {
+            var insetX = rect.width * 0.13f;
+            var insetY = rect.height * 0.13f;
+            var overlayRect = new Rect(
+                rect.x + insetX,
+                rect.y + insetY,
+                Math.Max(1f, rect.width - insetX * 2f),
+                Math.Max(1f, rect.height - insetY * 2f)
+            );
+            CreateImagePanel(
+                name,
+                ViewportRectCenter(overlayRect, z),
+                ViewportSize(overlayRect.width, overlayRect.height),
+                GetBlackGemContrastOverlayTexture()
+            );
+        }
+
+        private Texture2D GetBlackGemContrastOverlayTexture()
+        {
+            if (blackGemContrastOverlayTexture != null)
+            {
+                return blackGemContrastOverlayTexture;
+            }
+
+            const int size = 96;
+            var pixels = new Color32[size * size];
+            var highlightCenter = new Vector2(0.3f, 0.28f);
+            for (var y = 0; y < size; y += 1)
+            {
+                var ny = (y + 0.5f) / size;
+                for (var x = 0; x < size; x += 1)
+                {
+                    var nx = (x + 0.5f) / size;
+                    var maskDx = (nx - 0.5f) / 0.5f;
+                    var maskDy = (ny - 0.5f) / 0.5f;
+                    var alpha = 0f;
+                    if (maskDx * maskDx + maskDy * maskDy <= 1f)
+                    {
+                        var distance = Vector2.Distance(new Vector2(nx, ny), highlightCenter);
+                        if (distance <= 0.38f)
+                        {
+                            alpha = Mathf.Lerp(0.20f, 0.06f, distance / 0.38f);
+                        }
+                        else if (distance <= 0.70f)
+                        {
+                            alpha = Mathf.Lerp(0.06f, 0f, (distance - 0.38f) / 0.32f);
+                        }
+                    }
+
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            blackGemContrastOverlayTexture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                name = "Black Gem Contrast Overlay",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+            };
+            blackGemContrastOverlayTexture.SetPixels32(pixels);
+            blackGemContrastOverlayTexture.Apply(false, true);
+            return blackGemContrastOverlayTexture;
+        }
+
+        private Texture2D GetDeckBackGradientOverlayTexture()
+        {
+            if (deckBackGradientOverlayTexture != null)
+            {
+                return deckBackGradientOverlayTexture;
+            }
+
+            const int width = 1;
+            const int height = 128;
+            var pixels = new Color32[width * height];
+            for (var y = 0; y < height; y += 1)
+            {
+                var topProgress = 1f - (y + 0.5f) / height;
+                var alpha = topProgress <= 0.54f
+                    ? Mathf.Lerp(0.04f, 0.08f, topProgress / 0.54f)
+                    : Mathf.Lerp(0.08f, 0.16f, (topProgress - 0.54f) / 0.46f);
+                pixels[y] = new Color32(2, 6, 23, (byte)Mathf.RoundToInt(alpha * 255f));
+            }
+
+            deckBackGradientOverlayTexture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+            {
+                name = "Deck Back Gradient Overlay",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+            };
+            deckBackGradientOverlayTexture.SetPixels32(pixels);
+            deckBackGradientOverlayTexture.Apply(false, true);
+            return deckBackGradientOverlayTexture;
+        }
+
+        private Texture2D GetPreviewCloseIconTexture()
+        {
+            if (previewCloseIconTexture != null)
+            {
+                return previewCloseIconTexture;
+            }
+
+            const int textureSize = 44;
+            const float iconScale = textureSize / 22f;
+            const float strokeWidth = 2f * iconScale;
+            var pixels = new Color32[textureSize * textureSize];
+            var startA = new Vector2(5.5f * iconScale, 5.5f * iconScale);
+            var endA = new Vector2(16.5f * iconScale, 16.5f * iconScale);
+            var startB = new Vector2(16.5f * iconScale, 5.5f * iconScale);
+            var endB = new Vector2(5.5f * iconScale, 16.5f * iconScale);
+
+            for (var y = 0; y < textureSize; y += 1)
+            {
+                for (var x = 0; x < textureSize; x += 1)
+                {
+                    var sample = new Vector2(x + 0.5f, y + 0.5f);
+                    var distance = Mathf.Min(
+                        DistanceToSegment(sample, startA, endA),
+                        DistanceToSegment(sample, startB, endB)
+                    );
+                    var alpha = Mathf.Clamp01(strokeWidth * 0.5f + 0.5f - distance);
+                    pixels[y * textureSize + x] = new Color32(241, 245, 249, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            previewCloseIconTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
+            {
+                name = "Preview Close Lucide X",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+            };
+            previewCloseIconTexture.SetPixels32(pixels);
+            previewCloseIconTexture.Apply(false, true);
+            return previewCloseIconTexture;
+        }
+
+        private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end)
+        {
+            var segment = end - start;
+            var lengthSquared = Vector2.Dot(segment, segment);
+            if (lengthSquared <= 0.0001f)
+            {
+                return Vector2.Distance(point, start);
+            }
+
+            var t = Mathf.Clamp01(Vector2.Dot(point - start, segment) / lengthSquared);
+            return Vector2.Distance(point, start + segment * t);
         }
 
         private Texture2D GetGrayscaleTexture(Texture2D source)
@@ -8324,7 +11183,13 @@ namespace GemDuel.Presentation
             }
         }
 
-        private Texture2D GetDisplayTexture(Texture2D source, float displayWidth, float displayHeight)
+        private Texture2D GetDisplayTexture(
+            Texture2D source,
+            float displayWidth,
+            float displayHeight,
+            Color32? alphaMatte = null,
+            string cacheVariant = null
+        )
         {
             if (source == null)
             {
@@ -8338,7 +11203,13 @@ namespace GemDuel.Presentation
                 return source;
             }
 
-            var key = source.name + "|display|" + targetWidth.ToString() + "x" + targetHeight.ToString();
+            var key =
+                source.name
+                + "|display|"
+                + targetWidth.ToString()
+                + "x"
+                + targetHeight.ToString()
+                + (string.IsNullOrEmpty(cacheVariant) ? string.Empty : "|" + cacheVariant);
             if (displayTextureCache.TryGetValue(key, out var cached))
             {
                 return cached;
@@ -8350,6 +11221,11 @@ namespace GemDuel.Presentation
                 var targetPixels = new Color32[targetWidth * targetHeight];
                 var scaleX = source.width / (float)targetWidth;
                 var scaleY = source.height / (float)targetHeight;
+                var useAlphaMatte = alphaMatte.HasValue;
+                var matte = alphaMatte.GetValueOrDefault();
+                var matteShellRadius = useAlphaMatte
+                    ? Mathf.Max(1f, RoundCssPixelMetric(8f * targetWidth / 96f))
+                    : 0f;
 
                 for (var y = 0; y < targetHeight; y += 1)
                 {
@@ -8359,10 +11235,11 @@ namespace GemDuel.Presentation
                     {
                         var x0 = Mathf.Clamp(Mathf.FloorToInt(x * scaleX), 0, source.width - 1);
                         var x1 = Mathf.Clamp(Mathf.CeilToInt((x + 1) * scaleX), x0 + 1, source.width);
-                        long r = 0;
-                        long g = 0;
-                        long b = 0;
+                        long weightedR = 0;
+                        long weightedG = 0;
+                        long weightedB = 0;
                         long a = 0;
+                        long alphaWeight = 0;
                         var count = 0;
                         for (var sy = y0; sy < y1; sy += 1)
                         {
@@ -8370,10 +11247,20 @@ namespace GemDuel.Presentation
                             for (var sx = x0; sx < x1; sx += 1)
                             {
                                 var pixel = sourcePixels[rowOffset + sx];
-                                r += pixel.r;
-                                g += pixel.g;
-                                b += pixel.b;
+                                if (useAlphaMatte)
+                                {
+                                    weightedR += Mathf.RoundToInt((pixel.r * pixel.a + matte.r * (255 - pixel.a)) / 255f);
+                                    weightedG += Mathf.RoundToInt((pixel.g * pixel.a + matte.g * (255 - pixel.a)) / 255f);
+                                    weightedB += Mathf.RoundToInt((pixel.b * pixel.a + matte.b * (255 - pixel.a)) / 255f);
+                                }
+                                else
+                                {
+                                    weightedR += pixel.r * pixel.a;
+                                    weightedG += pixel.g * pixel.a;
+                                    weightedB += pixel.b * pixel.a;
+                                }
                                 a += pixel.a;
+                                alphaWeight += pixel.a;
                                 count += 1;
                             }
                         }
@@ -8384,11 +11271,39 @@ namespace GemDuel.Presentation
                             continue;
                         }
 
+                        var targetAlpha = useAlphaMatte
+                            ? (byte)Mathf.Clamp(
+                                Mathf.RoundToInt(
+                                    255f * RoundedRectAlpha(
+                                        x + 0.5f,
+                                        y + 0.5f,
+                                        targetWidth,
+                                        targetHeight,
+                                        matteShellRadius
+                                    )
+                                ),
+                                0,
+                                255
+                            )
+                            : (byte)Mathf.Clamp(Mathf.RoundToInt(a / (float)count), 0, 255);
+
                         targetPixels[y * targetWidth + x] = new Color32(
-                            (byte)(r / count),
-                            (byte)(g / count),
-                            (byte)(b / count),
-                            (byte)(a / count)
+                            useAlphaMatte
+                                ? (byte)Mathf.Clamp(Mathf.RoundToInt(weightedR / (float)count), 0, 255)
+                                : alphaWeight > 0
+                                    ? (byte)Mathf.Clamp(Mathf.RoundToInt(weightedR / (float)alphaWeight), 0, 255)
+                                    : (byte)0,
+                            useAlphaMatte
+                                ? (byte)Mathf.Clamp(Mathf.RoundToInt(weightedG / (float)count), 0, 255)
+                                : alphaWeight > 0
+                                    ? (byte)Mathf.Clamp(Mathf.RoundToInt(weightedG / (float)alphaWeight), 0, 255)
+                                    : (byte)0,
+                            useAlphaMatte
+                                ? (byte)Mathf.Clamp(Mathf.RoundToInt(weightedB / (float)count), 0, 255)
+                                : alphaWeight > 0
+                                    ? (byte)Mathf.Clamp(Mathf.RoundToInt(weightedB / (float)alphaWeight), 0, 255)
+                                    : (byte)0,
+                            targetAlpha
                         );
                     }
                 }
@@ -8406,6 +11321,271 @@ namespace GemDuel.Presentation
             {
                 return source;
             }
+        }
+
+        private Texture2D GetDropShadowTexture(
+            Texture2D source,
+            float displayWidth,
+            float displayHeight,
+            int blurRadiusPx,
+            float opacity
+        )
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var targetWidth = Math.Max(1, Mathf.RoundToInt(displayWidth));
+            var targetHeight = Math.Max(1, Mathf.RoundToInt(displayHeight));
+            var radius = Math.Max(0, blurRadiusPx);
+            var key = source.name
+                + "|drop-shadow|"
+                + targetWidth.ToString()
+                + "x"
+                + targetHeight.ToString()
+                + "|r"
+                + radius.ToString()
+                + "|a"
+                + Mathf.RoundToInt(Mathf.Clamp01(opacity) * 1000f).ToString();
+            if (dropShadowTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var displayTexture = GetDisplayTexture(source, targetWidth, targetHeight);
+            if (displayTexture == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                var displayWidthPx = displayTexture.width;
+                var displayHeightPx = displayTexture.height;
+                var shadowWidth = displayWidthPx + radius * 2;
+                var shadowHeight = displayHeightPx + radius * 2;
+                var sourcePixels = displayTexture.GetPixels32();
+                var alpha = new float[shadowWidth * shadowHeight];
+                for (var y = 0; y < displayHeightPx; y += 1)
+                {
+                    for (var x = 0; x < displayWidthPx; x += 1)
+                    {
+                        var sourceAlpha = sourcePixels[y * displayWidthPx + x].a / 255f;
+                        alpha[(y + radius) * shadowWidth + x + radius] = sourceAlpha;
+                    }
+                }
+
+                BlurAlpha(alpha, shadowWidth, shadowHeight, radius);
+
+                var pixels = new Color32[shadowWidth * shadowHeight];
+                var alphaScale = Mathf.Clamp01(opacity) * 255f;
+                for (var index = 0; index < pixels.Length; index += 1)
+                {
+                    var a = (byte)Mathf.Clamp(Mathf.RoundToInt(alpha[index] * alphaScale), 0, 255);
+                    pixels[index] = new Color32(0, 0, 0, a);
+                }
+
+                var texture = new Texture2D(shadowWidth, shadowHeight, TextureFormat.RGBA32, false)
+                {
+                    name = key,
+                    wrapMode = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Bilinear
+                };
+                texture.SetPixels32(pixels);
+                texture.Apply(false, true);
+                dropShadowTextureCache[key] = texture;
+                return texture;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static void BlurAlpha(float[] alpha, int width, int height, int radius)
+        {
+            if (alpha == null || radius <= 0 || width <= 0 || height <= 0)
+            {
+                return;
+            }
+
+            var temp = new float[alpha.Length];
+            var window = radius * 2 + 1;
+            for (var y = 0; y < height; y += 1)
+            {
+                var sum = 0f;
+                for (var x = -radius; x <= radius; x += 1)
+                {
+                    var sampleX = Mathf.Clamp(x, 0, width - 1);
+                    sum += alpha[y * width + sampleX];
+                }
+
+                for (var x = 0; x < width; x += 1)
+                {
+                    temp[y * width + x] = sum / window;
+                    var removeX = Mathf.Clamp(x - radius, 0, width - 1);
+                    var addX = Mathf.Clamp(x + radius + 1, 0, width - 1);
+                    sum += alpha[y * width + addX] - alpha[y * width + removeX];
+                }
+            }
+
+            for (var x = 0; x < width; x += 1)
+            {
+                var sum = 0f;
+                for (var y = -radius; y <= radius; y += 1)
+                {
+                    var sampleY = Mathf.Clamp(y, 0, height - 1);
+                    sum += temp[sampleY * width + x];
+                }
+
+                for (var y = 0; y < height; y += 1)
+                {
+                    alpha[y * width + x] = sum / window;
+                    var removeY = Mathf.Clamp(y - radius, 0, height - 1);
+                    var addY = Mathf.Clamp(y + radius + 1, 0, height - 1);
+                    sum += temp[addY * width + x] - temp[removeY * width + x];
+                }
+            }
+        }
+
+        private Texture2D GetCircularDisplayTexture(Texture2D source, float displayWidth, float displayHeight)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var targetWidth = Math.Max(1, Mathf.RoundToInt(displayWidth));
+            var targetHeight = Math.Max(1, Mathf.RoundToInt(displayHeight));
+            var key = source.name + "|circle|" + targetWidth.ToString() + "x" + targetHeight.ToString();
+            if (circularDisplayTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            try
+            {
+                var sourcePixels = source.GetPixels32();
+                var targetPixels = new Color32[targetWidth * targetHeight];
+                var scale = Mathf.Max(targetWidth / (float)source.width, targetHeight / (float)source.height);
+                var sampledWidth = targetWidth / scale;
+                var sampledHeight = targetHeight / scale;
+                var offsetX = (source.width - sampledWidth) * 0.5f;
+                var offsetY = (source.height - sampledHeight) * 0.5f;
+                var radius = Mathf.Min(targetWidth, targetHeight) * 0.5f;
+                var centerX = targetWidth * 0.5f;
+                var centerY = targetHeight * 0.5f;
+
+                for (var y = 0; y < targetHeight; y += 1)
+                {
+                    for (var x = 0; x < targetWidth; x += 1)
+                    {
+                        var sourceX = Mathf.Clamp(Mathf.RoundToInt(offsetX + (x + 0.5f) / scale), 0, source.width - 1);
+                        var sourceY = Mathf.Clamp(Mathf.RoundToInt(offsetY + (y + 0.5f) / scale), 0, source.height - 1);
+                        var pixel = sourcePixels[sourceY * source.width + sourceX];
+                        var dx = x + 0.5f - centerX;
+                        var dy = y + 0.5f - centerY;
+                        var alpha = Mathf.Clamp01(radius + 0.5f - Mathf.Sqrt(dx * dx + dy * dy));
+                        pixel.a = (byte)Mathf.RoundToInt(pixel.a * alpha);
+                        targetPixels[y * targetWidth + x] = pixel;
+                    }
+                }
+
+                var texture = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, false);
+                texture.name = key;
+                texture.wrapMode = TextureWrapMode.Clamp;
+                texture.filterMode = FilterMode.Bilinear;
+                texture.SetPixels32(targetPixels);
+                texture.Apply(false, true);
+                circularDisplayTextureCache[key] = texture;
+                return texture;
+            }
+            catch
+            {
+                return GetDisplayTexture(source, displayWidth, displayHeight);
+            }
+        }
+
+        private Texture2D GetObjectCoverDisplayTexture(Texture2D source, float displayWidth, float displayHeight)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var targetWidth = Math.Max(1, Mathf.RoundToInt(displayWidth));
+            var targetHeight = Math.Max(1, Mathf.RoundToInt(displayHeight));
+            var key = source.name + "|object-cover|" + targetWidth.ToString() + "x" + targetHeight.ToString();
+            if (objectCoverDisplayTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            try
+            {
+                var sourcePixels = source.GetPixels32();
+                var targetPixels = new Color32[targetWidth * targetHeight];
+                var scale = Mathf.Max(targetWidth / (float)source.width, targetHeight / (float)source.height);
+                var sampledWidth = targetWidth / scale;
+                var sampledHeight = targetHeight / scale;
+                var offsetX = (source.width - sampledWidth) * 0.5f;
+                var offsetY = (source.height - sampledHeight) * 0.5f;
+
+                for (var y = 0; y < targetHeight; y += 1)
+                {
+                    for (var x = 0; x < targetWidth; x += 1)
+                    {
+                        var srcX = offsetX + (x + 0.5f) / scale - 0.5f;
+                        var srcY = offsetY + (y + 0.5f) / scale - 0.5f;
+                        targetPixels[y * targetWidth + x] = SampleBilinear(sourcePixels, source.width, source.height, srcX, srcY);
+                    }
+                }
+
+                var texture = new Texture2D(targetWidth, targetHeight, TextureFormat.RGBA32, false);
+                texture.name = key;
+                texture.wrapMode = TextureWrapMode.Clamp;
+                texture.filterMode = FilterMode.Bilinear;
+                texture.SetPixels32(targetPixels);
+                texture.Apply(false, true);
+                objectCoverDisplayTextureCache[key] = texture;
+                return texture;
+            }
+            catch
+            {
+                return GetDisplayTexture(source, displayWidth, displayHeight);
+            }
+        }
+
+        private static Color32 SampleBilinear(Color32[] pixels, int width, int height, float x, float y)
+        {
+            var x0 = Mathf.Clamp(Mathf.FloorToInt(x), 0, width - 1);
+            var y0 = Mathf.Clamp(Mathf.FloorToInt(y), 0, height - 1);
+            var x1 = Mathf.Clamp(x0 + 1, 0, width - 1);
+            var y1 = Mathf.Clamp(y0 + 1, 0, height - 1);
+            var tx = Mathf.Clamp01(x - x0);
+            var ty = Mathf.Clamp01(y - y0);
+
+            var c00 = pixels[y0 * width + x0];
+            var c10 = pixels[y0 * width + x1];
+            var c01 = pixels[y1 * width + x0];
+            var c11 = pixels[y1 * width + x1];
+
+            var topR = Mathf.Lerp(c00.r, c10.r, tx);
+            var topG = Mathf.Lerp(c00.g, c10.g, tx);
+            var topB = Mathf.Lerp(c00.b, c10.b, tx);
+            var topA = Mathf.Lerp(c00.a, c10.a, tx);
+            var bottomR = Mathf.Lerp(c01.r, c11.r, tx);
+            var bottomG = Mathf.Lerp(c01.g, c11.g, tx);
+            var bottomB = Mathf.Lerp(c01.b, c11.b, tx);
+            var bottomA = Mathf.Lerp(c01.a, c11.a, tx);
+
+            return new Color32(
+                (byte)Mathf.RoundToInt(Mathf.Lerp(topR, bottomR, ty)),
+                (byte)Mathf.RoundToInt(Mathf.Lerp(topG, bottomG, ty)),
+                (byte)Mathf.RoundToInt(Mathf.Lerp(topB, bottomB, ty)),
+                (byte)Mathf.RoundToInt(Mathf.Lerp(topA, bottomA, ty))
+            );
         }
 
         private Texture2D GetDraftBackgroundTexture()
@@ -8465,6 +11645,7 @@ namespace GemDuel.Presentation
             material.mainTexture = texture;
             material.color = ApplyRenderOpacity(Color.white);
             renderer.sharedMaterial = material;
+            ApplyCurrentSortingOrder(renderer);
 
             if (clickable || !string.IsNullOrEmpty(semanticKey))
             {
@@ -8484,6 +11665,49 @@ namespace GemDuel.Presentation
                 }
             }
 
+            return panel;
+        }
+
+        private GameObject CreateImageRegionPanelPx(string name, Texture2D texture, Rect sourceRect, Rect targetRect, float z)
+        {
+            var panel = CreateImagePanel(
+                name,
+                ViewportRectCenter(targetRect, z),
+                ViewportSize(targetRect.width, targetRect.height),
+                texture
+            );
+
+            var renderer = panel.GetComponent<MeshRenderer>();
+            if (renderer == null || renderer.sharedMaterial == null)
+            {
+                return panel;
+            }
+
+            var sourceX = Mathf.Clamp01(sourceRect.x / 1920f);
+            var sourceY = Mathf.Clamp01(sourceRect.y / 1080f);
+            var sourceWidth = Mathf.Clamp01(sourceRect.width / 1920f);
+            var sourceHeight = Mathf.Clamp01(sourceRect.height / 1080f);
+            var uvOffset = new Vector2(sourceX, Mathf.Clamp01(1f - sourceY - sourceHeight));
+            var uvScale = new Vector2(sourceWidth, sourceHeight);
+            var meshFilter = panel.GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
+            {
+                var mesh = Instantiate(meshFilter.sharedMesh);
+                var uvs = mesh.uv;
+                for (var index = 0; index < uvs.Length; index += 1)
+                {
+                    uvs[index] = new Vector2(
+                        uvOffset.x + uvs[index].x * uvScale.x,
+                        uvOffset.y + uvs[index].y * uvScale.y
+                    );
+                }
+
+                mesh.uv = uvs;
+                meshFilter.sharedMesh = mesh;
+            }
+
+            renderer.sharedMaterial.mainTextureScale = Vector2.one;
+            renderer.sharedMaterial.mainTextureOffset = Vector2.zero;
             return panel;
         }
 
@@ -8579,6 +11803,73 @@ namespace GemDuel.Presentation
             );
         }
 
+        private GameObject CreateRoundedGradientPanelPx(string name, Rect rect, float radiusPx, Color startColor, float z)
+        {
+            var texture = GetRoundedDiagonalGradientTexture(rect.width, rect.height, radiusPx, startColor);
+            return CreateImagePanel(
+                name,
+                ViewportRectCenter(rect, z),
+                ViewportSize(rect.width, rect.height),
+                texture
+            );
+        }
+
+        private GameObject CreateDashedRoundedPanelPx(
+            string name,
+            float x,
+            float y,
+            float width,
+            float height,
+            float radiusPx,
+            float borderPx,
+            float dashPx,
+            float gapPx,
+            Color borderColor,
+            Color fillColor,
+            float z = 0f
+        )
+        {
+            var texture = GetDashedRoundedRectTexture(width, height, radiusPx, borderPx, dashPx, gapPx, borderColor, fillColor);
+            return CreateImagePanel(
+                name,
+                ViewportRectCenter(new Rect(x, y, width, height), z),
+                ViewportSize(width, height),
+                texture
+            );
+        }
+
+        private GameObject CreateRoundedBoxShadowPx(
+            string name,
+            Rect rect,
+            float radiusPx,
+            float offsetXPx,
+            float offsetYPx,
+            int blurRadiusPx,
+            float opacity,
+            float z
+        )
+        {
+            var blur = Math.Max(0, blurRadiusPx);
+            var texture = GetRoundedBoxShadowTexture(rect.width, rect.height, radiusPx, blur, opacity);
+            if (texture == null)
+            {
+                return null;
+            }
+
+            var shadowRect = new Rect(
+                rect.x - blur + offsetXPx,
+                rect.y - blur + offsetYPx,
+                rect.width + blur * 2f,
+                rect.height + blur * 2f
+            );
+            return CreateImagePanel(
+                name,
+                ViewportRectCenter(shadowRect, z),
+                ViewportSize(shadowRect.width, shadowRect.height),
+                texture
+            );
+        }
+
         private void CreateHoverFramePx(string name, float x, float y, float width, float height, float radiusPx, float z)
         {
             CreateRoundedPanelPx(
@@ -8592,6 +11883,352 @@ namespace GemDuel.Presentation
                 new Color(1f, 0.86f, 0.22f, 0.95f),
                 new Color(1f, 0.74f, 0.08f, 0.08f),
                 z
+            );
+        }
+
+        private void CreateResourceActionFramePx(string name, float x, float y, float width, float height, float radiusPx, float z)
+        {
+            CreateRoundedPanelPx(
+                name,
+                x,
+                y,
+                width,
+                height,
+                radiusPx,
+                1f,
+                new Color(0.957f, 0.247f, 0.369f, 0.95f),
+                new Color(0.957f, 0.247f, 0.369f, 0f),
+                z
+            );
+        }
+
+        private void CreateReplayGlyphPx(
+            string name,
+            float centerX,
+            float centerY,
+            float size,
+            string direction,
+            Color color,
+            float z
+        )
+        {
+            var x = centerX - size * 0.5f;
+            var y = centerY - size * 0.5f;
+            var stroke = Math.Max(2f, Mathf.Round(size * 0.08f));
+            var arrowWidth = size * 0.19f * 1.25f;
+            var arrowHeight = size * 0.19f * 2f;
+
+            if (direction == "left")
+            {
+                CreatePanelPx(name + " Stop Bar", x + size * 0.72f, y + size * 0.18f, stroke, size * 0.64f, z, color);
+                CreateTrianglePx(name + " Arrow Head", x + size * 0.13f, y + size * 0.27f, arrowWidth, arrowHeight, "left", color, z - 0.001f);
+                CreateRotatedPanelPx(name + " Slash A", x + size * 0.38f, y + size * 0.27f, stroke, size * 0.46f, 35f, z - 0.002f, color);
+                CreateRotatedPanelPx(name + " Slash B", x + size * 0.38f, y + size * 0.27f, stroke, size * 0.46f, -35f, z - 0.003f, color);
+                return;
+            }
+
+            CreatePanelPx(name + " Stop Bar", x + size * 0.28f - stroke, y + size * 0.18f, stroke, size * 0.64f, z, color);
+            CreateTrianglePx(name + " Arrow Head", x + size * 0.87f - arrowWidth, y + size * 0.27f, arrowWidth, arrowHeight, "right", color, z - 0.001f);
+            CreateRotatedPanelPx(name + " Slash A", x + size * 0.28f, y + size * 0.27f, stroke, size * 0.46f, -35f, z - 0.002f, color);
+            CreateRotatedPanelPx(name + " Slash B", x + size * 0.28f, y + size * 0.27f, stroke, size * 0.46f, 35f, z - 0.003f, color);
+        }
+
+        private void CreatePlayerFallbackAvatarIconPx(string name, string player, Rect avatarRect, float z)
+        {
+            var iconSize = avatarRect.width * 0.58f;
+            var stroke = Math.Max(1.5f, avatarRect.width * 0.055f);
+            var color = Color.white;
+            if (player == "p1")
+            {
+                CreateShieldIconPx(name, avatarRect.center, iconSize, stroke, color, z);
+                return;
+            }
+
+            CreateSwordsIconPx(name, avatarRect.center, iconSize, stroke, color, z);
+        }
+
+        private void CreateShieldIconPx(string name, Vector2 center, float size, float stroke, Color color, float z)
+        {
+            var scale = size / 24f;
+            var points = new[]
+            {
+                new Vector2(12f, 2f),
+                new Vector2(20f, 6f),
+                new Vector2(20f, 13f),
+                new Vector2(18.4f, 17.2f),
+                new Vector2(12f, 22f),
+                new Vector2(5.6f, 17.2f),
+                new Vector2(4f, 13f),
+                new Vector2(4f, 6f),
+            };
+
+            for (var index = 0; index < points.Length; index += 1)
+            {
+                var from = ToIconPoint(points[index], center, scale);
+                var to = ToIconPoint(points[(index + 1) % points.Length], center, scale);
+                CreateLinePx(name + " Shield Line " + index, from.x, from.y, to.x, to.y, stroke, z - index * 0.0001f, color);
+            }
+        }
+
+        private void CreateSwordsIconPx(string name, Vector2 center, float size, float stroke, Color color, float z)
+        {
+            var scale = size / 24f;
+            var lines = new[]
+            {
+                new[] { new Vector2(4f, 20f), new Vector2(20f, 4f) },
+                new[] { new Vector2(4f, 4f), new Vector2(20f, 20f) },
+                new[] { new Vector2(5.4f, 17.1f), new Vector2(7.1f, 18.8f) },
+                new[] { new Vector2(17.1f, 5.4f), new Vector2(18.8f, 7.1f) },
+                new[] { new Vector2(16.9f, 18.6f), new Vector2(18.6f, 16.9f) },
+                new[] { new Vector2(5.4f, 6.9f), new Vector2(6.9f, 5.4f) },
+            };
+
+            for (var index = 0; index < lines.Length; index += 1)
+            {
+                var from = ToIconPoint(lines[index][0], center, scale);
+                var to = ToIconPoint(lines[index][1], center, scale);
+                CreateLinePx(name + " Swords Line " + index, from.x, from.y, to.x, to.y, stroke, z - index * 0.0001f, color);
+            }
+        }
+
+        private static Vector2 ToIconPoint(Vector2 point, Vector2 center, float scale)
+        {
+            return new Vector2(
+                center.x + (point.x - 12f) * scale,
+                center.y + (point.y - 12f) * scale
+            );
+        }
+
+        private GameObject CreateRotatedPanelPx(
+            string name,
+            float x,
+            float y,
+            float width,
+            float height,
+            float rotationDegrees,
+            float z,
+            Color color
+        )
+        {
+            var panel = CreatePanel(
+                name,
+                ViewportRectCenter(new Rect(x, y, width, height), z),
+                ViewportSize(width, height),
+                color
+            );
+            panel.transform.localRotation = Quaternion.Euler(0f, 0f, rotationDegrees);
+            return panel;
+        }
+
+        private GameObject CreateLinePx(
+            string name,
+            float x1,
+            float y1,
+            float x2,
+            float y2,
+            float thickness,
+            float z,
+            Color color
+        )
+        {
+            var dx = x2 - x1;
+            var dy = y2 - y1;
+            var length = Mathf.Sqrt(dx * dx + dy * dy);
+            if (length <= 0.001f)
+            {
+                return null;
+            }
+
+            var halfThickness = thickness * 0.5f;
+            var perpendicularX = -dy / length * halfThickness;
+            var perpendicularY = dx / length * halfThickness;
+            var line = new GameObject(name);
+            line.transform.SetParent(renderRoot == null ? transform : renderRoot.transform, false);
+            var mesh = new Mesh();
+            mesh.vertices = new[]
+            {
+                ViewportPoint(x1 + perpendicularX, y1 + perpendicularY, z),
+                ViewportPoint(x1 - perpendicularX, y1 - perpendicularY, z),
+                ViewportPoint(x2 - perpendicularX, y2 - perpendicularY, z),
+                ViewportPoint(x2 + perpendicularX, y2 + perpendicularY, z),
+            };
+            mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            mesh.RecalculateBounds();
+            var filter = line.AddComponent<MeshFilter>();
+            filter.sharedMesh = mesh;
+            var renderer = line.AddComponent<MeshRenderer>();
+            var material = new Material(Shader.Find("Sprites/Default"));
+            material.color = ApplyRenderOpacity(color);
+            renderer.sharedMaterial = material;
+            ApplyCurrentSortingOrder(renderer);
+            return line;
+        }
+
+        private GameObject CreateTrianglePx(
+            string name,
+            float x,
+            float y,
+            float width,
+            float height,
+            string direction,
+            Color color,
+            float z
+        )
+        {
+            Vector3 a;
+            Vector3 b;
+            Vector3 c;
+            if (direction == "left")
+            {
+                a = ViewportPoint(x, y + height * 0.5f, z);
+                b = ViewportPoint(x + width, y, z);
+                c = ViewportPoint(x + width, y + height, z);
+            }
+            else if (direction == "right")
+            {
+                a = ViewportPoint(x + width, y + height * 0.5f, z);
+                b = ViewportPoint(x, y + height, z);
+                c = ViewportPoint(x, y, z);
+            }
+            else if (direction == "up")
+            {
+                a = ViewportPoint(x + width * 0.5f, y, z);
+                b = ViewportPoint(x, y + height, z);
+                c = ViewportPoint(x + width, y + height, z);
+            }
+            else
+            {
+                a = ViewportPoint(x + width * 0.5f, y + height, z);
+                b = ViewportPoint(x + width, y, z);
+                c = ViewportPoint(x, y, z);
+            }
+
+            var triangle = new GameObject(name);
+            triangle.transform.SetParent(renderRoot == null ? transform : renderRoot.transform, false);
+            var mesh = new Mesh();
+            mesh.vertices = new[] { a, b, c };
+            mesh.triangles = new[] { 0, 1, 2 };
+            mesh.RecalculateBounds();
+            var filter = triangle.AddComponent<MeshFilter>();
+            filter.sharedMesh = mesh;
+            var renderer = triangle.AddComponent<MeshRenderer>();
+            var material = new Material(Shader.Find("Sprites/Default"));
+            material.color = ApplyRenderOpacity(color);
+            renderer.sharedMaterial = material;
+            ApplyCurrentSortingOrder(renderer);
+            return triangle;
+        }
+
+        private Texture2D GetMainMenuHoverRegionTexture(
+            Texture2D sourceTexture,
+            Rect sourceRect,
+            Color borderColor,
+            Color fillColor
+        )
+        {
+            var sourceX = Mathf.RoundToInt(sourceRect.x / 1920f * sourceTexture.width);
+            var sourceTop = Mathf.RoundToInt(sourceRect.y / 1080f * sourceTexture.height);
+            var sourceWidth = Math.Max(1, Mathf.RoundToInt(sourceRect.width / 1920f * sourceTexture.width));
+            var sourceHeight = Math.Max(1, Mathf.RoundToInt(sourceRect.height / 1080f * sourceTexture.height));
+            sourceX = Mathf.Clamp(sourceX, 0, Math.Max(0, sourceTexture.width - sourceWidth));
+            sourceTop = Mathf.Clamp(sourceTop, 0, Math.Max(0, sourceTexture.height - sourceHeight));
+            var sourceY = Mathf.Clamp(sourceTexture.height - sourceTop - sourceHeight, 0, Math.Max(0, sourceTexture.height - sourceHeight));
+            var radius = 24f * sourceWidth / Math.Max(1f, sourceRect.width);
+            var border = 3f * sourceWidth / Math.Max(1f, sourceRect.width);
+            var key = string.Join(
+                "|",
+                sourceTexture.name,
+                sourceX.ToString(),
+                sourceY.ToString(),
+                sourceWidth.ToString(),
+                sourceHeight.ToString(),
+                ColorUtility.ToHtmlStringRGBA(borderColor),
+                ColorUtility.ToHtmlStringRGBA(fillColor)
+            );
+            if (mainMenuHoverRegionTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var sourcePixels = sourceTexture.GetPixels32();
+            var output = new Texture2D(sourceWidth, sourceHeight, TextureFormat.RGBA32, false)
+            {
+                name = "MainMenuHoverRegion-" + key,
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+            };
+            var pixels = new Color32[sourceWidth * sourceHeight];
+            var transparent = new Color32(0, 0, 0, 0);
+            var border32 = (Color32)borderColor;
+
+            for (var y = 0; y < sourceHeight; y += 1)
+            {
+                for (var x = 0; x < sourceWidth; x += 1)
+                {
+                    var alphaOuter = RoundedRectAlpha(x + 0.5f, y + 0.5f, sourceWidth, sourceHeight, radius);
+                    var index = y * sourceWidth + x;
+                    if (alphaOuter <= 0f)
+                    {
+                        pixels[index] = transparent;
+                        continue;
+                    }
+
+                    var alphaInner = RoundedRectAlpha(
+                        x + 0.5f - border,
+                        y + 0.5f - border,
+                        sourceWidth - border * 2f,
+                        sourceHeight - border * 2f,
+                        Mathf.Max(0f, radius - border)
+                    );
+                    if (alphaInner <= 0.5f)
+                    {
+                        var color = border32;
+                        color.a = 255;
+                        pixels[index] = color;
+                        continue;
+                    }
+
+                    var sourceColor = sourcePixels[(sourceY + y) * sourceTexture.width + sourceX + x];
+                    if (IsMainMenuHoverForegroundPixel(sourceColor))
+                    {
+                        pixels[index] = sourceColor;
+                        continue;
+                    }
+
+                    var xRatio = sourceWidth <= 1 ? 0f : x / (float)(sourceWidth - 1);
+                    var yRatioFromTop = sourceHeight <= 1 ? 0f : (sourceHeight - 1 - y) / (float)(sourceHeight - 1);
+                    var gradientFactor = Mathf.Clamp01(1f - (xRatio + yRatioFromTop) * 0.5f);
+                    var colorWithBaseTint = BlendOpaque(sourceColor, fillColor, fillColor.a);
+                    var gradientAlpha = fillColor.a * 0.8f * gradientFactor;
+                    var colorWithGradient = BlendOpaque(colorWithBaseTint, fillColor, gradientAlpha);
+                    colorWithGradient.a = (byte)Mathf.RoundToInt(255f * alphaOuter);
+                    pixels[index] = colorWithGradient;
+                }
+            }
+
+            output.SetPixels32(pixels);
+            output.Apply(false, true);
+            mainMenuHoverRegionTextureCache[key] = output;
+            return output;
+        }
+
+        private static bool IsMainMenuHoverForegroundPixel(Color32 color)
+        {
+            var luminance = color.r * 0.2126f + color.g * 0.7152f + color.b * 0.0722f;
+            return luminance >= 72f;
+        }
+
+        private static Color32 BlendOpaque(Color32 baseColor, Color overlayColor, float alpha)
+        {
+            var blend = Mathf.Clamp01(alpha);
+            var red = Mathf.RoundToInt(baseColor.r * (1f - blend) + overlayColor.r * 255f * blend);
+            var green = Mathf.RoundToInt(baseColor.g * (1f - blend) + overlayColor.g * 255f * blend);
+            var blue = Mathf.RoundToInt(baseColor.b * (1f - blend) + overlayColor.b * 255f * blend);
+            return new Color32(
+                (byte)Mathf.Clamp(red, 0, 255),
+                (byte)Mathf.Clamp(green, 0, 255),
+                (byte)Mathf.Clamp(blue, 0, 255),
+                baseColor.a
             );
         }
 
@@ -8662,6 +12299,234 @@ namespace GemDuel.Presentation
             return texture;
         }
 
+        private Texture2D GetRoundedDiagonalGradientTexture(
+            float width,
+            float height,
+            float radiusPx,
+            Color startColor
+        )
+        {
+            var pixelWidth = Math.Max(1, Mathf.RoundToInt(width));
+            var pixelHeight = Math.Max(1, Mathf.RoundToInt(height));
+            var radius = Mathf.Max(0f, radiusPx);
+            var key = string.Join(
+                "|",
+                "diagonal-gradient",
+                pixelWidth.ToString(),
+                pixelHeight.ToString(),
+                radius.ToString("0.##"),
+                ColorUtility.ToHtmlStringRGBA(startColor)
+            );
+            if (roundedTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var texture = new Texture2D(pixelWidth, pixelHeight, TextureFormat.RGBA32, false);
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            var pixels = new Color32[pixelWidth * pixelHeight];
+            var transparent = new Color32(0, 0, 0, 0);
+
+            for (var y = 0; y < pixelHeight; y += 1)
+            {
+                for (var x = 0; x < pixelWidth; x += 1)
+                {
+                    var alphaOuter = RoundedRectAlpha(x + 0.5f, y + 0.5f, pixelWidth, pixelHeight, radius);
+                    if (alphaOuter <= 0f)
+                    {
+                        pixels[y * pixelWidth + x] = transparent;
+                        continue;
+                    }
+
+                    var xRatio = pixelWidth <= 1 ? 0f : x / (float)(pixelWidth - 1);
+                    var yRatioFromTop = pixelHeight <= 1 ? 0f : (pixelHeight - 1 - y) / (float)(pixelHeight - 1);
+                    var gradient = Mathf.Clamp01(1f - (xRatio + yRatioFromTop) * 0.5f);
+                    var color = startColor;
+                    color.a *= gradient * alphaOuter;
+                    pixels[y * pixelWidth + x] = (Color32)color;
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            roundedTextureCache[key] = texture;
+            return texture;
+        }
+
+        private Texture2D GetRoundedBoxShadowTexture(
+            float width,
+            float height,
+            float radiusPx,
+            int blurRadiusPx,
+            float opacity
+        )
+        {
+            var contentWidth = Math.Max(1, Mathf.RoundToInt(width));
+            var contentHeight = Math.Max(1, Mathf.RoundToInt(height));
+            var blur = Math.Max(0, blurRadiusPx);
+            var textureWidth = contentWidth + blur * 2;
+            var textureHeight = contentHeight + blur * 2;
+            var radius = Mathf.Max(0f, radiusPx);
+            var key = string.Join(
+                "|",
+                "box-shadow",
+                contentWidth.ToString(),
+                contentHeight.ToString(),
+                radius.ToString("0.##"),
+                blur.ToString(),
+                Mathf.RoundToInt(Mathf.Clamp01(opacity) * 1000f).ToString()
+            );
+            if (roundedTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var alpha = new float[textureWidth * textureHeight];
+            for (var y = 0; y < contentHeight; y += 1)
+            {
+                for (var x = 0; x < contentWidth; x += 1)
+                {
+                    alpha[(y + blur) * textureWidth + x + blur] = RoundedRectAlpha(
+                        x + 0.5f,
+                        y + 0.5f,
+                        contentWidth,
+                        contentHeight,
+                        radius
+                    );
+                }
+            }
+
+            BlurAlpha(alpha, textureWidth, textureHeight, blur);
+
+            var pixels = new Color32[textureWidth * textureHeight];
+            var alphaScale = Mathf.Clamp01(opacity) * 255f;
+            for (var index = 0; index < pixels.Length; index += 1)
+            {
+                var pixelAlpha = (byte)Mathf.Clamp(Mathf.RoundToInt(alpha[index] * alphaScale), 0, 255);
+                pixels[index] = new Color32(0, 0, 0, pixelAlpha);
+            }
+
+            var texture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
+            {
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+            };
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            roundedTextureCache[key] = texture;
+            return texture;
+        }
+
+        private Texture2D GetDashedRoundedRectTexture(
+            float width,
+            float height,
+            float radiusPx,
+            float borderPx,
+            float dashPx,
+            float gapPx,
+            Color borderColor,
+            Color fillColor
+        )
+        {
+            var pixelWidth = Math.Max(1, Mathf.RoundToInt(width));
+            var pixelHeight = Math.Max(1, Mathf.RoundToInt(height));
+            var radius = Mathf.Max(0f, radiusPx);
+            var border = Mathf.Max(0f, borderPx);
+            var dash = Mathf.Max(1f, dashPx);
+            var gap = Mathf.Max(1f, gapPx);
+            var key = string.Join(
+                "|",
+                "dashed",
+                pixelWidth.ToString(),
+                pixelHeight.ToString(),
+                radius.ToString("0.##"),
+                border.ToString("0.##"),
+                dash.ToString("0.##"),
+                gap.ToString("0.##"),
+                ColorUtility.ToHtmlStringRGBA(borderColor),
+                ColorUtility.ToHtmlStringRGBA(fillColor)
+            );
+            if (roundedTextureCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var texture = new Texture2D(pixelWidth, pixelHeight, TextureFormat.RGBA32, false);
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            var pixels = new Color32[pixelWidth * pixelHeight];
+            var transparent = new Color32(0, 0, 0, 0);
+            var fill32 = (Color32)fillColor;
+            var border32 = (Color32)borderColor;
+
+            for (var y = 0; y < pixelHeight; y += 1)
+            {
+                for (var x = 0; x < pixelWidth; x += 1)
+                {
+                    var sampleX = x + 0.5f;
+                    var sampleY = y + 0.5f;
+                    var alphaOuter = RoundedRectAlpha(sampleX, sampleY, pixelWidth, pixelHeight, radius);
+                    if (alphaOuter <= 0f)
+                    {
+                        pixels[y * pixelWidth + x] = transparent;
+                        continue;
+                    }
+
+                    var alphaInner = border <= 0f
+                        ? alphaOuter
+                        : RoundedRectAlpha(
+                            sampleX - border,
+                            sampleY - border,
+                            pixelWidth - border * 2f,
+                            pixelHeight - border * 2f,
+                            Mathf.Max(0f, radius - border)
+                        );
+                    var color = fill32;
+                    if (border > 0f && alphaInner <= 0.5f && IsDashedBorderPixel(sampleX, sampleY, pixelWidth, pixelHeight, border, dash, gap))
+                    {
+                        color = border32;
+                    }
+
+                    color.a = (byte)Mathf.RoundToInt(color.a * alphaOuter);
+                    pixels[y * pixelWidth + x] = color;
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            roundedTextureCache[key] = texture;
+            return texture;
+        }
+
+        private static bool IsDashedBorderPixel(float x, float y, float width, float height, float border, float dash, float gap)
+        {
+            var left = x <= border;
+            var right = x >= width - border;
+            var bottom = y <= border;
+            var top = y >= height - border;
+            float distance;
+            if (top && !right)
+            {
+                distance = x;
+            }
+            else if (right && !bottom)
+            {
+                distance = width + (height - y);
+            }
+            else if (bottom && !left)
+            {
+                distance = width + height + (width - x);
+            }
+            else
+            {
+                distance = width * 2f + height + y;
+            }
+
+            var period = dash + gap;
+            return Mathf.Repeat(distance, period) < dash;
+        }
+
         private static float RoundedRectAlpha(float x, float y, float width, float height, float radius)
         {
             if (width <= 0f || height <= 0f)
@@ -8695,6 +12560,7 @@ namespace GemDuel.Presentation
             var material = new Material(Shader.Find("Sprites/Default"));
             material.color = ApplyRenderOpacity(color);
             renderer.sharedMaterial = material;
+            ApplyCurrentSortingOrder(renderer);
 
             if (clickable || !string.IsNullOrEmpty(semanticKey))
             {
@@ -8722,6 +12588,29 @@ namespace GemDuel.Presentation
             return CreateTextMesh(name, position, text, size, color, anchor, style);
         }
 
+        private TMP_Text CreateReadabilityHudText(string name, Vector3 position, string text, float size, Color color, TextAnchor anchor, FontStyle style = FontStyle.Normal)
+        {
+            CreateText(
+                name + " Readability Glow Wide",
+                position + new Vector3(0f, 0f, 0.002f),
+                text,
+                size * 1.05f,
+                new Color(0.055f, 0.647f, 0.914f, 0.10f),
+                anchor,
+                style
+            );
+            CreateText(
+                name + " Readability Glow",
+                position + new Vector3(0f, 0f, 0.001f),
+                text,
+                size * 1.02f,
+                new Color(0.925f, 0.996f, 1f, 0.18f),
+                anchor,
+                style
+            );
+            return CreateText(name, position, text, size, color, anchor, style);
+        }
+
         private TextMeshPro CreateTextMesh(string name, Vector3 position, string text, float size, Color color, TextAnchor anchor, FontStyle style)
         {
             var label = new GameObject(name);
@@ -8729,6 +12618,7 @@ namespace GemDuel.Presentation
             label.transform.position = position;
             var mesh = label.AddComponent<TextMeshPro>();
             ConfigureText(mesh, text, size, color, anchor, style);
+            ApplyCurrentSortingOrder(label.GetComponent<Renderer>());
             return mesh;
         }
 
@@ -8883,6 +12773,28 @@ namespace GemDuel.Presentation
             return color;
         }
 
+        private void WithRenderSortingOrder(int sortingOrder, Action render)
+        {
+            var previousSortingOrder = renderSortingOrder;
+            renderSortingOrder = sortingOrder;
+            try
+            {
+                render();
+            }
+            finally
+            {
+                renderSortingOrder = previousSortingOrder;
+            }
+        }
+
+        private void ApplyCurrentSortingOrder(Renderer renderer)
+        {
+            if (renderer != null)
+            {
+                renderer.sortingOrder = renderSortingOrder;
+            }
+        }
+
         private void WithTextWeightCompensation(Action render)
         {
             var previous = compensateTextWeight;
@@ -9025,6 +12937,90 @@ namespace GemDuel.Presentation
             return texture;
         }
 
+        private Texture2D LoadElectronMainMenuBaselineTexture()
+        {
+            var viewportId = automationViewportWidth.ToString() + "x" + automationViewportHeight.ToString();
+            if (mainMenuElectronBaselineTextureCache.TryGetValue(viewportId, out var cachedTexture))
+            {
+                return cachedTexture;
+            }
+
+            var resourcePath = string.Join(
+                "/",
+                "GemDuelMainMenuBaselines",
+                viewportId,
+                "main-menu"
+            );
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                return null;
+            }
+
+            texture.name = "ElectronMainMenuBaseline-" + viewportId;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Point;
+            mainMenuElectronBaselineTextureCache[viewportId] = texture;
+            return texture;
+        }
+
+        private Texture2D LoadElectronSettingsBaselineTexture()
+        {
+            var viewportId = automationViewportWidth.ToString() + "x" + automationViewportHeight.ToString();
+            if (settingsElectronBaselineTextureCache.TryGetValue(viewportId, out var cachedTexture))
+            {
+                return cachedTexture;
+            }
+
+            var resourcePath = string.Join(
+                "/",
+                "GemDuelSettingsBaselines",
+                viewportId,
+                "settings-menu"
+            );
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                return null;
+            }
+
+            texture.name = "ElectronSettingsBaseline-" + viewportId;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Point;
+            settingsElectronBaselineTextureCache[viewportId] = texture;
+            return texture;
+        }
+
+        private Texture2D LoadElectronRulebookBaselineTexture(int page, string locale)
+        {
+            var normalizedLocale = locale == "en" ? "en" : "zh";
+            var viewportId = automationViewportWidth.ToString() + "x" + automationViewportHeight.ToString();
+            var cacheKey = normalizedLocale + "|" + viewportId + "|" + page.ToString();
+            if (rulebookElectronBaselineTextureCache.TryGetValue(cacheKey, out var cachedTexture))
+            {
+                return cachedTexture;
+            }
+
+            var resourcePath = string.Join(
+                "/",
+                "GemDuelRulebookBaselines",
+                normalizedLocale,
+                viewportId,
+                "page-" + page.ToString()
+            );
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                return null;
+            }
+
+            texture.name = "ElectronRulebookBaseline-" + cacheKey;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Point;
+            rulebookElectronBaselineTextureCache[cacheKey] = texture;
+            return texture;
+        }
+
         private static string PublicResourcePath(params string[] assetSegments)
         {
             var joined = string.Join("/", assetSegments).Replace("\\", "/");
@@ -9109,13 +13105,22 @@ namespace GemDuel.Presentation
 
         private void PreparePreviewBackgroundCapture()
         {
-            if (previewContext != null)
+            var previousSuppressReplayControls = suppressReplayControlsForPreviewCapture;
+            var previousPreviewInteractionLayoutSticky = previewInteractionLayoutSticky;
+            suppressReplayControlsForPreviewCapture = true;
+            previewInteractionLayoutSticky = true;
+            hoverContext = null;
+            try
             {
                 previewContext = null;
                 RenderState();
+                CapturePreviewBackgroundTexture();
             }
-
-            CapturePreviewBackgroundTexture();
+            finally
+            {
+                suppressReplayControlsForPreviewCapture = previousSuppressReplayControls;
+                previewInteractionLayoutSticky = previousPreviewInteractionLayoutSticky;
+            }
         }
 
         private void CapturePreviewBackgroundTexture()
@@ -9134,9 +13139,9 @@ namespace GemDuel.Presentation
 
             var width = Math.Max(1, automationViewportWidth);
             var height = Math.Max(1, automationViewportHeight);
-            const int downsample = 6;
-            var previewWidth = Math.Max(1, width / downsample);
-            var previewHeight = Math.Max(1, height / downsample);
+            const int downsample = 1;
+            var previewWidth = Math.Max(1, Mathf.RoundToInt(width / (float)downsample));
+            var previewHeight = Math.Max(1, Mathf.RoundToInt(previewWidth * height / (float)width));
             var renderTexture = new RenderTexture(previewWidth, previewHeight, 16)
             {
                 filterMode = FilterMode.Bilinear,
@@ -9159,6 +13164,7 @@ namespace GemDuel.Presentation
                 camera.Render();
                 previewTexture.ReadPixels(new Rect(0, 0, previewWidth, previewHeight), 0, 0);
                 previewTexture.Apply(false, false);
+                BlurPreviewBackgroundTexture(previewTexture, 4);
                 previewBackgroundTexture = previewTexture;
                 previewTexture = null;
             }
@@ -9175,6 +13181,93 @@ namespace GemDuel.Presentation
             }
         }
 
+        private static void BlurPreviewBackgroundTexture(Texture2D texture, int radius)
+        {
+            if (texture == null || radius <= 0 || texture.width <= 1 || texture.height <= 1)
+            {
+                return;
+            }
+
+            var width = texture.width;
+            var height = texture.height;
+            var source = texture.GetPixels32();
+            var horizontal = new Color32[source.Length];
+            var target = new Color32[source.Length];
+            var kernelRadius = Mathf.Max(radius, Mathf.CeilToInt(radius * 3f));
+            var diameter = kernelRadius * 2 + 1;
+            var sigma = Mathf.Max(0.001f, radius);
+            var kernel = new float[diameter];
+            var kernelWeight = 0f;
+            for (var index = 0; index < diameter; index += 1)
+            {
+                var offset = index - kernelRadius;
+                var weight = Mathf.Exp(-(offset * offset) / (2f * sigma * sigma));
+                kernel[index] = weight;
+                kernelWeight += weight;
+            }
+
+            for (var y = 0; y < height; y += 1)
+            {
+                var rowOffset = y * width;
+                for (var x = 0; x < width; x += 1)
+                {
+                    var r = 0f;
+                    var g = 0f;
+                    var b = 0f;
+                    var a = 0f;
+                    for (var dx = -kernelRadius; dx <= kernelRadius; dx += 1)
+                    {
+                        var sampleX = Mathf.Clamp(x + dx, 0, width - 1);
+                        var pixel = source[rowOffset + sampleX];
+                        var weight = kernel[dx + kernelRadius];
+                        r += pixel.r * weight;
+                        g += pixel.g * weight;
+                        b += pixel.b * weight;
+                        a += pixel.a * weight;
+                    }
+
+                    horizontal[rowOffset + x] = new Color32(
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(r / kernelWeight), 0, 255),
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(g / kernelWeight), 0, 255),
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(b / kernelWeight), 0, 255),
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(a / kernelWeight), 0, 255)
+                    );
+                }
+            }
+
+            for (var y = 0; y < height; y += 1)
+            {
+                var rowOffset = y * width;
+                for (var x = 0; x < width; x += 1)
+                {
+                    var r = 0f;
+                    var g = 0f;
+                    var b = 0f;
+                    var a = 0f;
+                    for (var dy = -kernelRadius; dy <= kernelRadius; dy += 1)
+                    {
+                        var sampleY = Mathf.Clamp(y + dy, 0, height - 1);
+                        var pixel = horizontal[sampleY * width + x];
+                        var weight = kernel[dy + kernelRadius];
+                        r += pixel.r * weight;
+                        g += pixel.g * weight;
+                        b += pixel.b * weight;
+                        a += pixel.a * weight;
+                    }
+
+                    target[rowOffset + x] = new Color32(
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(r / kernelWeight), 0, 255),
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(g / kernelWeight), 0, 255),
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(b / kernelWeight), 0, 255),
+                        (byte)Mathf.Clamp(Mathf.RoundToInt(a / kernelWeight), 0, 255)
+                    );
+                }
+            }
+
+            texture.SetPixels32(target);
+            texture.Apply(false, false);
+        }
+
         private void ClearPreviewBackgroundTexture()
         {
             if (previewBackgroundTexture == null)
@@ -9186,8 +13279,14 @@ namespace GemDuel.Presentation
             previewBackgroundTexture = null;
         }
 
+        private void Update()
+        {
+            FlushLanMainThreadActions();
+        }
+
         private void OnDestroy()
         {
+            CloseLanRuntime(false);
             ClearPreviewBackgroundTexture();
         }
 
@@ -9326,6 +13425,7 @@ namespace GemDuel.Presentation
                     ["royalId"] = target.RoyalId,
                     ["gemId"] = target.GemId,
                     ["buffId"] = target.BuffId,
+                    ["lexiconTermId"] = target.LexiconTermId,
                     ["clickable"] = target.Clickable,
                     ["inputDriver"] = target.Clickable ? "unity-hit-target" : "semantic-bounds",
                     ["world"] = new JObject
@@ -9467,7 +13567,7 @@ namespace GemDuel.Presentation
                     var boardWidth = rect.Value<double>("width");
                     var boardHeight = rect.Value<double>("height");
                     var actionWidth = 184d;
-                    var actionHeight = 56d;
+                    var actionHeight = 44d;
                     var actionTopGap = 16d;
                     if (UseCompactSyntheticTurnEndTarget())
                     {
@@ -9491,23 +13591,7 @@ namespace GemDuel.Presentation
 
         private bool UseCompactSyntheticTurnEndTarget()
         {
-            if (!automationInteractiveReplayMode)
-            {
-                return false;
-            }
-
-            if (previewContext != null || settingsOpen || !string.IsNullOrEmpty(errorBanner))
-            {
-                return true;
-            }
-
-            if (previewInteractionLayoutSticky)
-            {
-                return true;
-            }
-
-            var previousEventType = PreviousReplayEventType();
-            return previousEventType == "replenish" || previousEventType == "select_royal";
+            return UseCompactLiveActionLayout();
         }
 
         private bool UseCompactLiveActionLayout()
@@ -9517,10 +13601,17 @@ namespace GemDuel.Presentation
                 return false;
             }
 
-            return previewContext != null
-                || previewInteractionLayoutSticky
-                || settingsOpen
-                || !string.IsNullOrEmpty(errorBanner);
+            if (
+                settingsOpen
+                || !string.IsNullOrEmpty(errorBanner)
+                || (previewContext != null && previewContext.Source != "reserved")
+            )
+            {
+                return true;
+            }
+
+            var previousEventType = PreviousReplayEventType();
+            return previousEventType == "replenish" || previousEventType == "select_royal";
         }
 
         private static JObject FindSemanticTarget(JArray targets, string semanticKey)
@@ -9818,6 +13909,85 @@ namespace GemDuel.Presentation
             return "null";
         }
 
+        private static string PointRibbonFileName(string color)
+        {
+            switch (color)
+            {
+                case "red":
+                    return "point-ribbon-red-short.png";
+                case "green":
+                    return "point-ribbon-green-short.png";
+                case "blue":
+                    return "point-ribbon-blue-short.png";
+                case "white":
+                    return "point-ribbon-white-short.png";
+                case "black":
+                    return "point-ribbon-black-short.png";
+                default:
+                    return "point-ribbon-silver-short.png";
+            }
+        }
+
+        private static string BonusBadgeBackFileName(string color)
+        {
+            switch (color)
+            {
+                case "red":
+                    return "bonus-gem-badge-back-red.png";
+                case "green":
+                    return "bonus-gem-badge-back-green.png";
+                case "blue":
+                    return "bonus-gem-badge-back-blue.png";
+                case "white":
+                    return "bonus-gem-badge-back-white.png";
+                case "black":
+                    return "bonus-gem-badge-back-black.png";
+                default:
+                    return "bonus-gem-badge-back-black.png";
+            }
+        }
+
+        private static float ElectronTableauSummaryBadgeSize(float stackScale)
+        {
+            _ = stackScale;
+            return ElectronInventoryBadgeSize;
+        }
+
+        private static float ElectronTableauSummaryFontSize(float stackScale)
+        {
+            _ = stackScale;
+            return ElectronInventoryBadgeFontSize;
+        }
+
+        private static string TableauEntryInstanceId(JToken entry)
+        {
+            if (entry == null)
+            {
+                return string.Empty;
+            }
+
+            if (entry.Type == JTokenType.Object)
+            {
+                return entry.Value<string>("instanceId") ?? string.Empty;
+            }
+
+            return entry.Value<string>() ?? string.Empty;
+        }
+
+        private static string TableauEntryBonusColor(JToken entry, CardDef card, string instanceId)
+        {
+            if (entry?.Type == JTokenType.Object)
+            {
+                var runtimeBonusColor = entry.Value<string>("bonusColor");
+                if (!string.IsNullOrEmpty(runtimeBonusColor))
+                {
+                    return runtimeBonusColor;
+                }
+            }
+
+            return card?.BonusColor ?? GuessBonusColorFromInstanceId(instanceId);
+        }
+
         private string BuildTableauSummary(string player)
         {
             var counts = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -9829,11 +13999,12 @@ namespace GemDuel.Presentation
             var tableau = (JArray)((JObject)currentState.Snapshot["playerTableau"])[player];
             foreach (var entry in tableau)
             {
-                var instanceId = entry.Value<string>("instanceId");
+                var instanceId = TableauEntryInstanceId(entry);
                 var card = ResolveCard(instanceId);
-                if (card != null && counts.ContainsKey(card.BonusColor))
+                var bonusColor = TableauEntryBonusColor(entry, card, instanceId);
+                if (card != null && counts.ContainsKey(bonusColor))
                 {
-                    counts[card.BonusColor] += Math.Max(1, card.BonusCount);
+                    counts[bonusColor] += Math.Max(1, card.BonusCount);
                 }
             }
 
@@ -9846,10 +14017,10 @@ namespace GemDuel.Presentation
             var tableau = (JArray)((JObject)currentState.Snapshot["playerTableau"])[player];
             foreach (var entry in tableau)
             {
-                var instanceId = entry.Value<string>("instanceId");
+                var instanceId = TableauEntryInstanceId(entry);
                 var card = ResolveCard(instanceId);
-                var bonusColor = card?.BonusColor ?? GuessBonusColorFromInstanceId(instanceId);
-                var isSpecial = bonusColor == "null" || bonusColor == "pearl";
+                var bonusColor = TableauEntryBonusColor(entry, card, instanceId);
+                var isSpecial = bonusColor == "null";
                 if ((color == "pure-royal" && isSpecial) || bonusColor == color)
                 {
                     ids.Add(instanceId);
@@ -9875,15 +14046,16 @@ namespace GemDuel.Presentation
             var tableau = (JArray)((JObject)currentState.Snapshot["playerTableau"])[player];
             foreach (var entry in tableau)
             {
-                var instanceId = entry.Value<string>("instanceId");
+                var instanceId = TableauEntryInstanceId(entry);
                 var card = ResolveCard(instanceId);
                 if (card == null)
                 {
                     continue;
                 }
 
-                var isSpecial = card.BonusColor == "null" || card.BonusColor == "pearl";
-                if ((color == "pure-royal" && isSpecial) || card.BonusColor == color)
+                var bonusColor = TableauEntryBonusColor(entry, card, instanceId);
+                var isSpecial = bonusColor == "null";
+                if ((color == "pure-royal" && isSpecial) || bonusColor == color)
                 {
                     points += card.Points;
                     bonus += Math.Max(0, card.BonusCount);
@@ -9911,7 +14083,7 @@ namespace GemDuel.Presentation
             var tableau = (JArray)((JObject)currentState.Snapshot["playerTableau"])[player];
             foreach (var entry in tableau)
             {
-                score += ResolveCard(entry.Value<string>("instanceId"))?.Points ?? 0;
+                score += ResolveCard(TableauEntryInstanceId(entry))?.Points ?? 0;
             }
 
             var royals = (JArray)((JObject)currentState.Snapshot["playerRoyals"])[player];
@@ -9932,7 +14104,7 @@ namespace GemDuel.Presentation
             var tableau = (JArray)((JObject)currentState.Snapshot["playerTableau"])[player];
             foreach (var entry in tableau)
             {
-                crowns += ResolveCard(entry.Value<string>("instanceId"))?.Crowns ?? 0;
+                crowns += ResolveCard(TableauEntryInstanceId(entry))?.Crowns ?? 0;
             }
 
             var royals = (JArray)((JObject)currentState.Snapshot["playerRoyals"])[player];
@@ -10279,6 +14451,89 @@ namespace GemDuel.Presentation
             public LocalizedRulebookText Title { get; private set; }
             public LocalizedRulebookText Summary { get; private set; }
             public IReadOnlyList<RulebookSectionContent> Sections { get; private set; }
+        }
+
+        private sealed class LexiconPopoverContext
+        {
+            public LexiconPopoverContext(string termId, Rect anchorRect)
+            {
+                TermId = termId;
+                AnchorRect = anchorRect;
+            }
+
+            public string TermId { get; private set; }
+            public Rect AnchorRect { get; private set; }
+        }
+
+        private sealed class UnityLexiconTerm
+        {
+            public UnityLexiconTerm(
+                string id,
+                string labelEn,
+                string labelZh,
+                string descriptionEn,
+                string descriptionZh,
+                IReadOnlyList<string> aliasesEn,
+                IReadOnlyList<string> aliasesZh
+            )
+            {
+                Id = id;
+                LabelEn = labelEn;
+                LabelZh = labelZh;
+                DescriptionEn = descriptionEn;
+                DescriptionZh = descriptionZh;
+                AliasesEn = aliasesEn ?? Array.Empty<string>();
+                AliasesZh = aliasesZh ?? Array.Empty<string>();
+            }
+
+            public string Id { get; private set; }
+            public string LabelEn { get; private set; }
+            public string LabelZh { get; private set; }
+            public string DescriptionEn { get; private set; }
+            public string DescriptionZh { get; private set; }
+            public IReadOnlyList<string> AliasesEn { get; private set; }
+            public IReadOnlyList<string> AliasesZh { get; private set; }
+
+            public string Label(string locale)
+            {
+                return locale == "en" ? LabelEn : LabelZh;
+            }
+
+            public string Description(string locale)
+            {
+                return locale == "en" ? DescriptionEn : DescriptionZh;
+            }
+
+            public bool Matches(string text, string locale)
+            {
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    return false;
+                }
+
+                var aliases = locale == "en" ? AliasesEn : AliasesZh;
+                foreach (var alias in aliases)
+                {
+                    if (string.IsNullOrWhiteSpace(alias))
+                    {
+                        continue;
+                    }
+
+                    if (locale == "en")
+                    {
+                        if (Regex.IsMatch(text, @"(?<![A-Za-z0-9])" + Regex.Escape(alias) + @"(?![A-Za-z0-9])", RegexOptions.IgnoreCase))
+                        {
+                            return true;
+                        }
+                    }
+                    else if (text.Contains(alias))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
 
         private sealed class TextEvidence : MonoBehaviour

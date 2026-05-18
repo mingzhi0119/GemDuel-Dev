@@ -13,11 +13,16 @@ namespace GemDuel.Editor
 {
     public static class CaptureUnityParityScenarios
     {
-        private const string FixtureFileName = "local-pvp-royal-extra-turn-game-over.replay.json";
+        private const string DefaultFixtureFileName = "local-pvp-royal-extra-turn-game-over.replay.json";
 
         private static readonly ParityScenario[] Scenarios =
         {
             new ParityScenario("app-launch-main-menu", null, "Unity semantic app shell entry.", true),
+            CreateMainMenuHoverScenario("local"),
+            CreateMainMenuHoverScenario("roguelike"),
+            CreateMainMenuHoverScenario("online"),
+            CreateMainMenuHoverScenario("lan"),
+            CreateMainMenuHoverScenario("visualLab", "visual-lab"),
             new ParityScenario(
                 "level-3-boon-selection",
                 null,
@@ -55,6 +60,14 @@ namespace GemDuel.Editor
                 false,
                 new[] { new ParityActionStep("click_chrome_rulebook") }
             ),
+            CreateRulebookPageScenario(1, new ParityActionStep("click_rulebook_next")),
+            CreateRulebookPageScenario(2, new ParityActionStep("click_rulebook_nav", new JObject { ["index"] = 2 })),
+            CreateRulebookPageScenario(3, new ParityActionStep("click_rulebook_nav", new JObject { ["index"] = 3 })),
+            CreateRulebookPageScenario(4, new ParityActionStep("click_rulebook_nav", new JObject { ["index"] = 4 })),
+            CreateRulebookPageScenario(5, new ParityActionStep("click_rulebook_nav", new JObject { ["index"] = 5 })),
+            CreateRulebookPageScenario(6, new ParityActionStep("click_rulebook_nav", new JObject { ["index"] = 6 })),
+            CreateRulebookPageScenario(7, new ParityActionStep("click_rulebook_nav", new JObject { ["index"] = 7 })),
+            CreateRulebookPageScenario(8, new ParityActionStep("click_rulebook_nav", new JObject { ["index"] = 8 })),
             new ParityScenario(
                 "chrome-restart-main-menu",
                 2,
@@ -84,11 +97,39 @@ namespace GemDuel.Editor
                 new[] { new ParityActionStep("hover_market_card", new JObject { ["level"] = 1, ["index"] = 0 }) }
             ),
             new ParityScenario(
+                "market-deck-hover-feedback",
+                2,
+                "Unity market-deck hover operation.",
+                false,
+                new[] { new ParityActionStep("hover_market_deck", new JObject { ["level"] = 1 }) }
+            ),
+            new ParityScenario(
                 "board-cell-hover-feedback",
                 2,
                 "Unity board-cell hover operation.",
                 false,
                 new[] { new ParityActionStep("hover_board_cell", new JObject { ["row"] = 0, ["column"] = 0 }) }
+            ),
+            new ParityScenario(
+                "player-reserved-hover-feedback",
+                45,
+                "Unity current-player reserved-card hover operation.",
+                false,
+                new[] { new ParityActionStep("hover_player_reserved", new JObject { ["player"] = "p2", ["index"] = 0 }) }
+            ),
+            new ParityScenario(
+                "player-gem-hover-feedback",
+                14,
+                "Unity opponent red gem hover operation.",
+                false,
+                new[] { new ParityActionStep("hover_player_gem", new JObject { ["role"] = "opponent", ["gemId"] = "red" }) }
+            ),
+            new ParityScenario(
+                "chrome-control-hover-feedback",
+                2,
+                "Unity top-right chrome control hover operation.",
+                false,
+                new[] { new ParityActionStep("hover_chrome_control", new JObject { ["control"] = "rulebook" }) }
             ),
             new ParityScenario(
                 "take-gems-confirm",
@@ -141,6 +182,22 @@ namespace GemDuel.Editor
                 "Unity current-player reserved-card preview operation.",
                 false,
                 new[] { new ParityActionStep("click_player_reserved", new JObject { ["index"] = 0, ["player"] = "p2" }) }
+            ),
+            new ParityScenario(
+                "p1-reserved-card-display",
+                59,
+                "Unity P1 reserved-card display geometry.",
+                false,
+                null,
+                "local-pvp-joker-reserved-buy.replay.json"
+            ),
+            new ParityScenario(
+                "p1-multi-reserved-card-display",
+                6,
+                "Unity P1 three-card reserved mini-stack parity coverage.",
+                false,
+                null,
+                "local-pvp-multi-reserved.replay.json"
             ),
             new ParityScenario(
                 "discard-gem-follow-up",
@@ -226,6 +283,32 @@ namespace GemDuel.Editor
             ),
         };
 
+        private static ParityScenario CreateMainMenuHoverScenario(string mode, string idMode = null)
+        {
+            return new ParityScenario(
+                "main-menu-hover-" + (idMode ?? mode),
+                null,
+                "Unity main menu " + mode + " hover operation.",
+                true,
+                new[] { new ParityActionStep("hover_mode", new JObject { ["mode"] = mode }) }
+            );
+        }
+
+        private static ParityScenario CreateRulebookPageScenario(int pageIndex, ParityActionStep navigation)
+        {
+            return new ParityScenario(
+                "chrome-rulebook-page-" + (pageIndex + 1),
+                2,
+                "Unity rulebook page " + (pageIndex + 1) + " visual parity.",
+                false,
+                new[]
+                {
+                    new ParityActionStep("click_chrome_rulebook"),
+                    navigation,
+                }
+            );
+        }
+
         public static void CaptureAll()
         {
             var outputRoot = GetArgumentValue("-gemduelParityOut")
@@ -235,12 +318,13 @@ namespace GemDuel.Editor
                     DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-unity"
                 );
             var viewports = ParseViewports(GetArgumentValue("-gemduelParityViewports"));
+            var scenarioFilter = ParseScenarioFilter(GetArgumentValue("-gemduelParityScenarios"));
             Directory.CreateDirectory(outputRoot);
 
             var summary = new JObject
             {
                 ["source"] = "unity",
-                ["fixture"] = FixtureFileName,
+                ["defaultFixture"] = DefaultFixtureFileName,
                 ["generatedAt"] = DateTime.UtcNow.ToString("O"),
                 ["scenarios"] = new JArray(),
             };
@@ -248,6 +332,11 @@ namespace GemDuel.Editor
 
             foreach (var scenario in Scenarios)
             {
+                if (scenarioFilter != null && !scenarioFilter.Contains(scenario.Id))
+                {
+                    continue;
+                }
+
                 foreach (var viewport in viewports)
                 {
                     var capture = CaptureScenario(outputRoot, scenario, viewport);
@@ -278,7 +367,7 @@ namespace GemDuel.Editor
             }
             else
             {
-                slice.LoadFixtureForRuntime(FixtureFileName);
+                slice.LoadFixtureForRuntime(scenario.FixtureFileName);
             }
 
             if (scenario.Revision.HasValue && !slice.ApplyFixtureEventsForAutomation(scenario.Revision.Value, out var error))
@@ -326,7 +415,7 @@ namespace GemDuel.Editor
                 state["entry"] = "GemDuel.Editor.CaptureUnityParityScenarios";
                 state["inputScript"] = scenario.InputScript;
                 state["knownGap"] = scenario.KnownGap;
-                state["fixture"] = FixtureFileName;
+                state["fixture"] = scenario.FixtureFileName;
                 state["beforeActionState"] = beforeActionState;
                 state["semanticActionResults"] = actionResults;
 
@@ -430,6 +519,26 @@ namespace GemDuel.Editor
             return null;
         }
 
+        private static HashSet<string> ParseScenarioFilter(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return null;
+            }
+
+            var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var part in raw.Split(','))
+            {
+                var id = part.Trim();
+                if (!string.IsNullOrEmpty(id))
+                {
+                    result.Add(id);
+                }
+            }
+
+            return result.Count == 0 ? null : result;
+        }
+
         private sealed class ParityScenario
         {
             public ParityScenario(
@@ -437,7 +546,8 @@ namespace GemDuel.Editor
                 int? revision,
                 string knownGap,
                 bool startsInShell = false,
-                ParityActionStep[] actions = null
+                ParityActionStep[] actions = null,
+                string fixtureFileName = null
             )
             {
                 Id = id;
@@ -445,6 +555,9 @@ namespace GemDuel.Editor
                 KnownGap = knownGap;
                 StartsInShell = startsInShell;
                 Actions = actions ?? Array.Empty<ParityActionStep>();
+                FixtureFileName = string.IsNullOrWhiteSpace(fixtureFileName)
+                    ? DefaultFixtureFileName
+                    : fixtureFileName;
                 InputScript = BuildInputScript();
             }
 
@@ -453,13 +566,14 @@ namespace GemDuel.Editor
             public string KnownGap { get; private set; }
             public string InputScript { get; private set; }
             public bool StartsInShell { get; private set; }
+            public string FixtureFileName { get; private set; }
             public ParityActionStep[] Actions { get; private set; }
 
             private string BuildInputScript()
             {
                 var prefix = StartsInShell
                     ? "load_main_menu()"
-                    : "load_replay_fixture(revision=" + Revision.GetValueOrDefault(0) + ")";
+                    : "load_replay_fixture(fixture=" + FixtureFileName + ", revision=" + Revision.GetValueOrDefault(0) + ")";
                 if (Actions.Length == 0)
                 {
                     return prefix;
