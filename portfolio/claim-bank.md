@@ -19,7 +19,7 @@ Only claims grounded in `portfolio/evidence-ledger.md` are included. Claims that
 | Unsupported claim                               | Safe replacement                                                                                                        |
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Improved reliability by a measurable percentage | Added regression coverage for replay sync and replay import/export paths                                                |
-| Production-ready Windows game release           | Configured Windows NSIS release packaging checks and local release-health governance                                    |
+| Production-ready Windows game release           | Configured Windows NSIS release packaging checks and local release-check governance                                     |
 | Completed Unity migration                       | Documented staged Unity migration and inspected remote Unity parity candidate work                                      |
 | Comprehensive CI/CD                             | Configured CI/local gates for architecture, boundaries, dependency, desktop, release, coverage, and governance evidence |
 | AI-powered development pipeline                 | Used Codex/agent workflow documents and Visual Lab review prompts as scoped engineering process artifacts               |

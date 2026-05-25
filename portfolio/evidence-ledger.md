@@ -30,7 +30,7 @@ Scope: repository-grounded evidence for truthful US early-career software engine
     - `README.md:54-59` lists `apps/desktop`, `packages/shared`, `packages/ui`, `packages/turn-service`, `tools/scripts`, and `tools/governance`.
     - `package.json:12`, `package.json:17`, `package.json:36`, `package.json:47`, `package.json:55` define root architecture, build, lint, test, and typecheck scripts.
     - `apps/desktop/package.json:15`, `apps/desktop/package.json:18`, `apps/desktop/package.json:22-23` define Vite build, Electron build, Vitest, and coverage scripts.
-- Relevant commits: current `main` at `5532a0b` plus recent history includes repository governance and UI polish commits.
+- Relevant commits: evidence collection originally referenced `main` at `5532a0b`; GPT Pro portfolio integration was reviewed at `1158341f4ac3d15d98a9513f7c4ad6e3f2acd047`.
 - Latest verification:
     - `corepack pnpm --dir apps/desktop typecheck` passed.
     - `corepack pnpm --dir packages/shared typecheck` passed.

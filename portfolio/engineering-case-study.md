@@ -2,7 +2,7 @@
 
 ## GPT Pro Polished Opening
 
-GemDuel started as a game project, but the most interesting engineering work became the verification layer around it: replay correctness, desktop boundaries, developer review tooling, and repository governance. The project is a pnpm/Turborepo monorepo built around a React + TypeScript + Electron desktop app, with shared game logic separated from UI/runtime code and additional workspaces for reusable UI, TURN service code, and governance scripts. That structure made it possible to test game behavior and repo boundaries without treating the Electron app as one large unstructured surface. `[E001, E008]`
+GemDuel started as a game project, but the most interesting engineering work became the verification layer around it: replay validation, desktop boundaries, developer review tooling, and repository governance. The project is a pnpm/Turborepo monorepo built around a React + TypeScript + Electron desktop app, with shared game logic separated from UI/runtime code and additional workspaces for reusable UI, TURN service code, and governance scripts. That structure made it possible to test game behavior and repo boundaries without treating the Electron app as one large unstructured surface. `[E001, E008]`
 
 The core technical thread is Replay VNext. Instead of treating replay files as informal debug output, I worked around a replay format with schema validation, read/write APIs, replay summaries, final-state hashing, simulation, and audit tooling. This supports repeatable QA workflows: completed replay fixtures can be imported into the desktop UI, stepped through, and re-exported as valid Replay VNext JSON; backend simulation can generate AI-vs-AI replay samples for audit; and network replay sync code uses full/delta sync, revision guards, stale packet checks, and state-hash mismatch handling before accepting authoritative replay updates. `[E003, E004, E005, E008]`
 
@@ -14,7 +14,7 @@ The repo also includes governance checks for architecture budgets, package bound
 
 ## Problem
 
-GemDuel is a local desktop board/card strategy game with enough rules, UI state, replay behavior, and networking surface that casual manual testing is fragile. The project needed reusable domain logic, deterministic replay evidence, Electron runtime boundaries, and internal tooling for visual iteration without turning every change into a release-risk guess.
+GemDuel is a local desktop strategy game with enough rules, UI state, replay behavior, and networking surface that casual manual testing is fragile. The project needed reusable domain logic, deterministic replay evidence, Electron runtime boundaries, and internal tooling for visual iteration without turning every change into a release-risk guess.
 
 ## Constraints
 
@@ -38,7 +38,7 @@ GemDuel is a local desktop board/card strategy game with enough rules, UI state,
 - Replay UI roundtrip tests covering import, step navigation, and re-export of valid replay JSON. Evidence: E004.
 - Authoritative replay sync safeguards for full/delta sync, revision checks, stale packets, and state-hash mismatches. Evidence: E005.
 - Visual Lab dev tooling for candidate asset review, ratings, comments, shared review state, and test coverage. Evidence: E007.
-- Governance scripts and docs for architecture budgets, boundary registry validation, Electron IPC allowlists, dependency gates, and release health checks. Evidence: E002, E006.
+- Governance scripts and docs for architecture budgets, boundary registry validation, Electron IPC allowlists, dependency gates, and release-check scripts. Evidence: E002, E006.
 
 ## Testing / CI / Validation
 

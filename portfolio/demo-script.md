@@ -46,7 +46,7 @@
 
 4. Dev tooling and governance.
     - Files: `apps/desktop/vite.config.ts`, `apps/desktop/src/app/visual-lab`, `tools/scripts`.
-    - Explain Visual Lab review state, architecture/boundary checks, desktop governance, and release-health checks.
+    - Explain Visual Lab review state, architecture/boundary checks, desktop governance, and release-check scripts.
     - Evidence: E006, E007.
 
 5. Truthful close.

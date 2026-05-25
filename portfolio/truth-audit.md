@@ -11,13 +11,13 @@
 | Configured CI/governance checks                                           | PASS WITH WEAKER WORDING | Checks exist and direct scripts passed, but lifecycle tests currently fail.           | "Configured governance checks; current lifecycle certification needs renewal."      |
 | Built Visual Lab game tooling                                             | PASS                     | Dev-only tooling and tests exist.                                                     | Keep as "dev tooling," not "production art pipeline."                               |
 | Completed Unity migration                                                 | REMOVE                   | Branch/docs evidence exists, but not merged/verified on `main`.                       | "Documented staged Unity migration and inspected a remote parity candidate branch." |
-| Production-ready desktop release                                          | REMOVE                   | Release checks exist, but production readiness and full certification are not proven. | "Configured Windows NSIS release checks and release-health governance."             |
+| Production-ready desktop release                                          | REMOVE                   | Release checks exist, but production readiness and full certification are not proven. | "Configured Windows NSIS release-check scripts and release-check governance."       |
 | Improved reliability by X%                                                | REMOVE                   | No metric evidence.                                                                   | "Added regression tests for replay and network sync paths."                         |
 | AI-powered engineering workflow                                           | PASS WITH WEAKER WORDING | Workflow docs/prompts exist; no productivity metric.                                  | "Used evidence-based Codex/OMX workflow docs and prompts."                          |
 
 ## GPT Pro Claims Removed Or Downgraded
 
-- Desktop release readiness -> downgraded to "Windows Electron packaging and release-health checks." Release checks exist, but there is no evidence for external release, deployed use, support process, or complete current certification. `[E001, E002, E006, E008]`
+- Desktop release readiness -> downgraded to "Windows Electron packaging configuration and release-check scripts." Release checks exist, but there is no evidence for external release, deployed use, support process, or complete current certification. `[E001, E002, E006, E008]`
 - All tests/checks are green -> downgraded to "direct workspace typechecks and several governance checks pass; full test certification needs seal-exclusion review renewal." Full test runs currently fail because lifecycle seal-exclusion reviews are overdue. `[E008]`
 - Completed Unity migration -> downgraded to "staged Unity migration planning and remote parity-candidate branch evidence." The Unity work is not merged and was not checked out, built, or tested in the current verification pass. `[E009]`
 - End-to-end replay parity -> downgraded to "Replay VNext infrastructure plus named replay roundtrip and sync tests." The repo proves specific replay validation, UI roundtrip, simulation, audit, and sync paths, but not complete coverage of every historical replay format or UI state. `[E003, E004, E005, E008]`
@@ -26,6 +26,14 @@
 - AI automated the engineering workflow -> downgraded to "evidence-led AI-assisted workflow documentation and review prompts." The evidence supports scoped workflow artifacts and prompts, not autonomous delivery or productivity metrics. `[E006, E007, E008, E009]`
 - Measurable reliability or performance gains -> removed. There are no supported percentage improvements, benchmarks, user metrics, or before/after measurements in the evidence ledger. `[E008]`
 - External adoption, users, revenue, or business impact -> removed. The evidence ledger explicitly does not support those claims. `[E001, E008]`
+
+## GPT Second-Pass Audit Updates
+
+- `PASS`: monorepo/workspace, governed Electron bridge, Replay VNext infrastructure, UI replay roundtrip, backend AI replay simulation/audit, Visual Lab developer tooling, architecture/boundary validation, Unity migration planning, recruiter summary, and truth-audit framing.
+- `WEAKEN`: "replay correctness" became "replay validation"; "for networked play" became desktop networking hook/layer wording; "release health" became "release-check scripts"; "generated visual candidates" became "candidate visual assets"; "board/card strategy game" became "desktop strategy game."
+- `UPDATE NEEDED`: evidence-ledger commit metadata now records that evidence collection originally referenced `5532a0b` and the GPT Pro portfolio integration was reviewed at `1158341f4ac3d15d98a9513f7c4ad6e3f2acd047`.
+- `REMOVE`: no polished bullet or project-summary claim needed wholesale removal after the second pass.
+- `FINAL_PASS`: after these edits and local verification, GPT Pro reported no remaining blockers before commit/push.
 
 ## Senior Engineer Questions
 

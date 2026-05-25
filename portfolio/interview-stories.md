@@ -20,7 +20,7 @@ Situation: The repo has many areas that can drift: package boundaries, Electron 
 
 Task: Keep local and CI checks explicit enough that a future change can fail with a clear reason.
 
-Action: I used architecture-budget checks, boundary registry validation, desktop governance checks, dependency governance, and release-health checks. I also recorded the current failure honestly: lifecycle seal-exclusion reviews are overdue.
+Action: I used architecture-budget checks, boundary registry validation, desktop governance checks, dependency governance, and release-check scripts. I also recorded the current failure honestly: lifecycle seal-exclusion reviews are overdue.
 
 Result: Direct architecture, boundary, desktop, dependency, and release checks passed locally. Full test suites currently fail 8 lifecycle/governance tests, which is useful missing-evidence signal rather than something to hide.
 

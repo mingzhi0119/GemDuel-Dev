@@ -8,7 +8,7 @@ These are the GPT Pro polished candidate materials integrated by CodeX. They rem
 - Implemented a governed Electron bridge with renderer-facing IPC allowlist documentation, shared bridge contract types, and desktop checks for preload/API drift. `[E002, E006, E008]`
 - Implemented Replay VNext infrastructure with schema validation, read/write APIs, replay summaries, final-state hashing, simulation support, and audit tooling for repeatable gameplay verification. `[E003, E008]`
 - Added UI-level replay roundtrip coverage that imports a completed replay fixture, navigates replay history, and re-exports valid Replay VNext JSON. `[E004, E008]`
-- Built authoritative replay synchronization safeguards for networked play, including full/delta sync handling, revision guards, stale packet detection, and state-hash mismatch recovery paths. `[E005, E008]`
+- Built authoritative replay-sync safeguards in desktop networking hooks, including full/delta sync handling, revision guards, stale packet detection, and state-hash mismatch recovery paths. `[E005, E008]`
 - Added backend replay simulation and audit coverage for AI-generated gameplay samples, including schema validation, final-state hashes, and buff-enabled replay stability checks. `[E003, E008]`
 - Built Visual Lab developer tooling for GemDuel surface/theme review, including candidate asset loading, persistent ratings, comments, shared review state, and regression-tested route behavior. `[E007, E008]`
 - Configured repository governance checks for architecture budgets, package boundaries, Electron desktop policy, dependency health, release checks, and evidence artifacts, while documenting current lifecycle-test caveats honestly. `[E006, E008]`
@@ -22,7 +22,7 @@ These are the GPT Pro polished candidate materials integrated by CodeX. They rem
 
 - Built a React, TypeScript, and Electron desktop game monorepo with clear workspace boundaries between UI, desktop runtime, shared game logic, TURN service code, and governance scripts. `[E001, E008]`
 - Implemented Replay VNext save/read/load surfaces with schema validation, replay summaries, final-state hashing, simulation support, and audit tooling. `[E003, E008]`
-- Built replay synchronization safeguards for networked play using full replay sync, delta sync, revision checks, stale packet detection, and state-hash mismatch handling. `[E005, E008]`
+- Built replay-sync safeguards in the desktop networking layer using full replay sync, delta sync, revision checks, stale packet detection, and state-hash mismatch handling. `[E005, E008]`
 - Implemented a typed Electron bridge with documented renderer-visible IPC capabilities and governance checks for desktop boundary drift. `[E002, E006, E008]`
 - Added UI replay roundtrip coverage for importing, stepping through, and re-exporting completed Replay VNext JSON fixtures. `[E004, E008]`
 
@@ -40,21 +40,21 @@ These are the GPT Pro polished candidate materials integrated by CodeX. They rem
 - Added replay generation and audit tooling that produces backend-only gameplay samples, writes Replay VNext JSON, and reports winner/hash/evaluation metadata. `[E003, E008]`
 - Implemented Replay VNext validation paths that support gameplay inspection through schema checks, state hashing, summaries, simulation, and audit output. `[E003, E008]`
 - Documented a staged Unity migration plan that uses replay/action parity gates and keeps the TypeScript implementation as the rules oracle during migration work. `[E009]`
-- Built developer-facing review workflow artifacts that connect generated visual candidates to human ratings, comments, cleanup prompts, and verification steps. `[E007]`
+- Built developer-facing review workflow artifacts that connect candidate visual assets to human ratings, comments, cleanup prompts, and verification steps. `[E007]`
 
 ### Developer Tools / Build & Release
 
-- Configured governance checks for architecture budgets, package boundaries, dependency health, Electron desktop policy, release health, and evidence artifacts. `[E006, E008]`
+- Configured governance checks for architecture budgets, package boundaries, dependency health, Electron desktop policy, release-check scripts, and evidence artifacts. `[E006, E008]`
 - Implemented Electron desktop governance around renderer-visible IPC capabilities, preload contract drift, BrowserWindow policy, and runtime drill checks. `[E002, E006, E008]`
 - Added architecture and boundary validation scripts that enforce documented layer expectations and governed external-boundary registry consistency. `[E006, E008]`
-- Maintained Windows Electron packaging and release-health checks without overstating release readiness or current full-test certification. `[E001, E002, E006, E008]`
+- Maintained Windows Electron packaging configuration and release-check scripts, while documenting that release readiness and full-test certification are not currently proven. `[E001, E002, E006, E008]`
 - Recorded verification gaps directly in the portfolio workflow, including passing typechecks/governance checks and current lifecycle failures from overdue seal-exclusion review metadata. `[E008]`
 
 ### AI-assisted Engineering Workflow
 
-- Created evidence-led portfolio workflow artifacts that map resume claims to code paths, tests, command results, confidence levels, and rejected stronger wording. `[E008]`
+- Documented an evidence-led AI-assisted workflow that maps portfolio claims to code paths, tests, command results, confidence levels, and rejected stronger wording. `[E008]`
 - Used Codex/agent-oriented workflow documents to keep long-running repository work scoped around explicit goals, verification commands, artifact ownership, and stop conditions. `[E006, E007, E009]`
-- Built Visual Lab review workflows where generated visual candidates remain tied to human ratings, comments, cleanup prompts, and route-level verification. `[E007]`
+- Built Visual Lab review workflows where candidate visual assets remain tied to human ratings, comments, cleanup prompts, and route-level verification. `[E007]`
 - Framed AI-assisted engineering work as a governed review process rather than an autonomous delivery claim, with current caveats captured in the evidence ledger and truth audit. `[E006, E007, E008]`
 - Connected replay generation, replay audit scripts, and evidence-led documentation into a repeatable QA workflow for validating generated gameplay samples. `[E003, E008]`
 
@@ -68,7 +68,7 @@ Current verification is intentionally documented with caveats: direct workspace 
 
 ## Engineering Case Study Opening
 
-GemDuel started as a game project, but the most interesting engineering work became the verification layer around it: replay correctness, desktop boundaries, developer review tooling, and repository governance. The project is a pnpm/Turborepo monorepo built around a React + TypeScript + Electron desktop app, with shared game logic separated from UI/runtime code and additional workspaces for reusable UI, TURN service code, and governance scripts. That structure made it possible to test game behavior and repo boundaries without treating the Electron app as one large unstructured surface. `[E001, E008]`
+GemDuel started as a game project, but the most interesting engineering work became the verification layer around it: replay validation, desktop boundaries, developer review tooling, and repository governance. The project is a pnpm/Turborepo monorepo built around a React + TypeScript + Electron desktop app, with shared game logic separated from UI/runtime code and additional workspaces for reusable UI, TURN service code, and governance scripts. That structure made it possible to test game behavior and repo boundaries without treating the Electron app as one large unstructured surface. `[E001, E008]`
 
 The core technical thread is Replay VNext. Instead of treating replay files as informal debug output, I worked around a replay format with schema validation, read/write APIs, replay summaries, final-state hashing, simulation, and audit tooling. This supports repeatable QA workflows: completed replay fixtures can be imported into the desktop UI, stepped through, and re-exported as valid Replay VNext JSON; backend simulation can generate AI-vs-AI replay samples for audit; and network replay sync code uses full/delta sync, revision guards, stale packet checks, and state-hash mismatch handling before accepting authoritative replay updates. `[E003, E004, E005, E008]`
 
@@ -78,7 +78,7 @@ The repo also includes governance checks for architecture budgets, package bound
 
 ## Claims Removed Or Downgraded
 
-- Desktop release readiness -> downgraded to "Windows Electron packaging and release-health checks." Reason: release checks exist, but there is no evidence for external release, deployed use, support process, or complete current certification. `[E001, E002, E006, E008]`
+- Desktop release readiness -> downgraded to "Windows Electron packaging configuration and release-check scripts." Reason: release checks exist, but there is no evidence for external release, deployed use, support process, or complete current certification. `[E001, E002, E006, E008]`
 - All tests/checks are green -> downgraded to "direct workspace typechecks and several governance checks pass; full test certification needs seal-exclusion review renewal." Reason: the evidence ledger says full test runs currently fail because lifecycle seal-exclusion reviews are overdue. `[E008]`
 - Completed Unity migration -> downgraded to "staged Unity migration planning and remote parity-candidate branch evidence." Reason: the Unity work is not merged and was not checked out, built, or tested in the current verification pass. `[E009]`
 - End-to-end replay parity -> downgraded to "Replay VNext infrastructure plus named replay roundtrip and sync tests." Reason: the repo proves specific replay validation, UI roundtrip, simulation, audit, and sync paths, but not complete coverage of every historical replay format or UI state. `[E003, E004, E005, E008]`
