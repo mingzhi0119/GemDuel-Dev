@@ -1,5 +1,17 @@
 # Engineering Case Study
 
+## GPT Pro Polished Opening
+
+GemDuel started as a game project, but the most interesting engineering work became the verification layer around it: replay correctness, desktop boundaries, developer review tooling, and repository governance. The project is a pnpm/Turborepo monorepo built around a React + TypeScript + Electron desktop app, with shared game logic separated from UI/runtime code and additional workspaces for reusable UI, TURN service code, and governance scripts. That structure made it possible to test game behavior and repo boundaries without treating the Electron app as one large unstructured surface. `[E001, E008]`
+
+The core technical thread is Replay VNext. Instead of treating replay files as informal debug output, I worked around a replay format with schema validation, read/write APIs, replay summaries, final-state hashing, simulation, and audit tooling. This supports repeatable QA workflows: completed replay fixtures can be imported into the desktop UI, stepped through, and re-exported as valid Replay VNext JSON; backend simulation can generate AI-vs-AI replay samples for audit; and network replay sync code uses full/delta sync, revision guards, stale packet checks, and state-hash mismatch handling before accepting authoritative replay updates. `[E003, E004, E005, E008]`
+
+A second thread is developer tooling. Visual Lab is scoped as a dev-only surface/theme review workflow, not a release asset approval system. It supports candidate asset discovery, persistent ratings, comments, shared review state, and regression-tested route behavior. This gives the project a concrete review loop for visual candidates while keeping provenance and release-readiness claims out of scope. `[E007, E008]`
+
+The repo also includes governance checks for architecture budgets, package boundaries, Electron IPC policy, dependency health, release checks, and evidence artifacts. I do not claim every check is green: current records show direct workspace typechecks and several governance checks passing, while full lifecycle certification still needs seal-exclusion review renewal. Unity is also intentionally framed as staged migration planning and remote parity-candidate evidence, not a completed migration. `[E002, E006, E008, E009]`
+
+## Detailed Case Study Body
+
 ## Problem
 
 GemDuel is a local desktop board/card strategy game with enough rules, UI state, replay behavior, and networking surface that casual manual testing is fragile. The project needed reusable domain logic, deterministic replay evidence, Electron runtime boundaries, and internal tooling for visual iteration without turning every change into a release-risk guess.

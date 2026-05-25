@@ -1,5 +1,11 @@
 # Final Output Summary
 
+## GPT Pro Revision Status
+
+GPT Pro revisions have been integrated into the portfolio set. The clean consolidated version is `portfolio/gpt-pro-revised-materials.md`; selected wording was also merged into `resume-bullets.md`, `recruiter-project-summary.md`, `engineering-case-study.md`, and `truth-audit.md`.
+
+The strongest polished themes are Replay VNext, governed Electron IPC boundaries, Visual Lab developer tooling, architecture/boundary governance, and truth-audited AI-assisted workflow artifacts.
+
 ## Best 6 Resume Bullets Overall
 
 1. Built a React, TypeScript, and Electron desktop game monorepo with separated domain logic, UI components, desktop runtime code, and governance tooling. Evidence: E001.
@@ -56,6 +62,15 @@
 - Verify Unity parity candidate branch in a separate worktree before using Unity implementation claims.
 - Add a short replay architecture diagram.
 
+## Claims Still Not Safe To Strengthen
+
+- Do not claim external deployment, external users, revenue, adoption, or business impact.
+- Do not claim production-ready desktop release or complete release certification.
+- Do not claim all tests or CI checks are green while seal-exclusion reviews are overdue.
+- Do not claim completed Unity migration from the current worktree.
+- Do not claim reliable multiplayer, optimized performance, or measurable reliability gains without fresh metrics.
+- Do not describe Visual Lab as a production art pipeline or release approval system.
+
 ## Commands Run And Results
 
 See `portfolio/evidence-ledger.md` E008 for the full command list and latest results.
@@ -74,3 +89,4 @@ See `portfolio/evidence-ledger.md` E008 for the full command list and latest res
 - `portfolio/truth-audit.md`
 - `portfolio/final-output-summary.md`
 - `portfolio/gpt-pro-handoff.md`
+- `portfolio/gpt-pro-revised-materials.md`

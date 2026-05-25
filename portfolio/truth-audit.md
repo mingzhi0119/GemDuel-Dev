@@ -15,6 +15,18 @@
 | Improved reliability by X%                                                | REMOVE                   | No metric evidence.                                                                   | "Added regression tests for replay and network sync paths."                         |
 | AI-powered engineering workflow                                           | PASS WITH WEAKER WORDING | Workflow docs/prompts exist; no productivity metric.                                  | "Used evidence-based Codex/OMX workflow docs and prompts."                          |
 
+## GPT Pro Claims Removed Or Downgraded
+
+- Desktop release readiness -> downgraded to "Windows Electron packaging and release-health checks." Release checks exist, but there is no evidence for external release, deployed use, support process, or complete current certification. `[E001, E002, E006, E008]`
+- All tests/checks are green -> downgraded to "direct workspace typechecks and several governance checks pass; full test certification needs seal-exclusion review renewal." Full test runs currently fail because lifecycle seal-exclusion reviews are overdue. `[E008]`
+- Completed Unity migration -> downgraded to "staged Unity migration planning and remote parity-candidate branch evidence." The Unity work is not merged and was not checked out, built, or tested in the current verification pass. `[E009]`
+- End-to-end replay parity -> downgraded to "Replay VNext infrastructure plus named replay roundtrip and sync tests." The repo proves specific replay validation, UI roundtrip, simulation, audit, and sync paths, but not complete coverage of every historical replay format or UI state. `[E003, E004, E005, E008]`
+- Reliable multiplayer -> downgraded to "authoritative replay sync safeguards." Revision checks, delta/full sync, stale packet detection, and hash mismatch handling are implemented and tested, but there are no live network uptime or latency metrics. `[E005, E008]`
+- Visual asset pipeline -> downgraded to "Visual Lab developer review tooling." Visual Lab supports candidate review, ratings, comments, persistence, and tests, but does not prove release approval, legal/IP clearance, or art readiness. `[E007, E008]`
+- AI automated the engineering workflow -> downgraded to "evidence-led AI-assisted workflow documentation and review prompts." The evidence supports scoped workflow artifacts and prompts, not autonomous delivery or productivity metrics. `[E006, E007, E008, E009]`
+- Measurable reliability or performance gains -> removed. There are no supported percentage improvements, benchmarks, user metrics, or before/after measurements in the evidence ledger. `[E008]`
+- External adoption, users, revenue, or business impact -> removed. The evidence ledger explicitly does not support those claims. `[E001, E008]`
+
 ## Senior Engineer Questions
 
 Could a senior engineer ask "show me the code" and receive a specific answer?
@@ -64,3 +76,18 @@ Unsafe wording:
 - Record a 2-minute demo video showing replay and Visual Lab flows.
 - Check out `origin/codex/unity-electron-parity-candidate` in a separate worktree and verify Unity commands before using Unity implementation bullets.
 - Add a concise architecture diagram for replay flow: reducer/history -> replay recorder -> writer -> reader/audit -> UI review.
+
+## Return-To-CodeX Verification Checklist
+
+- Verify that every bullet's Evidence ID still maps to the same claim in `portfolio/evidence-ledger.md`.
+- Confirm that no bullet implies external deployment, external users, revenue, adoption, team leadership, release readiness, or measured business impact.
+- Re-check all Unity wording and confirm it stays limited to staged migration planning plus remote parity-candidate branch evidence.
+- Re-check all CI/testing wording and confirm it does not imply all checks are green.
+- Confirm that Replay VNext wording stays specific: schema validation, read/write paths, summaries, state hashing, simulation, audit tooling, UI roundtrip tests, and authoritative replay sync safeguards.
+- Confirm that Visual Lab wording stays scoped to developer tooling and review workflow, not a release art system or asset approval process.
+- Re-run or update verification for direct workspace typechecks, desktop tests, tools/scripts tests, architecture checks, boundary checks, desktop checks, dependency checks, and release checks.
+- Fix or renew the overdue seal-exclusion review metadata, then re-run full test and governance certification before strengthening any CI/testing claims.
+- Capture screenshots and a short demo video for the replay import/navigation/export path and the Visual Lab review workflow.
+- Add replay and Visual Lab workflow diagrams for future portfolio pages.
+- Check out the Unity parity candidate branch in a separate worktree and verify Unity-related commands before adding any Unity implementation bullet.
+- Run a final adversarial truth audit on revised bullets and mark each item as `PASS`, `WEAKEN`, or `REMOVE`.
