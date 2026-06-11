@@ -24,6 +24,7 @@ import type { GameMode, PlayerKey } from '@gemduel/shared/types';
 import type { AppVisualLabMode, MatchmakingRoute, StartSetupRoute } from './types/ui';
 import { getDocumentLanguage } from '@gemduel/shared';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
+import { isDraftSelectionPhase } from '@gemduel/shared/logic/fsm';
 import {
     EMPTY_SEARCH_ROUTE,
     readSearchRouteState,
@@ -386,6 +387,7 @@ export default function GemDuelBoard() {
                         .filter((path): path is string => Boolean(path))
                 )
             );
+            const allowsImageFreeRoute = isDraftSelectionPhase(state.phase);
 
             setGameStartLoading((current) => {
                 if (!current || current.phase !== 'mounting') {
@@ -398,6 +400,11 @@ export default function GemDuelBoard() {
                     total: Math.max(images.length, 1),
                 };
             });
+
+            if (images.length === 0 && !allowsImageFreeRoute) {
+                timeoutId = window.setTimeout(settleWhenBoardImagesReady, 120);
+                return;
+            }
 
             if (pendingImages.length === 0) {
                 setGameStartLoading(null);
@@ -425,7 +432,7 @@ export default function GemDuelBoard() {
                 window.clearTimeout(timeoutId);
             }
         };
-    }, [gameStartLoading?.phase]);
+    }, [gameStartLoading?.phase, state.phase]);
 
     const startGameAndClearRoute = (
         mode: GameMode,
