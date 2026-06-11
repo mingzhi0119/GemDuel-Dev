@@ -41,6 +41,8 @@ interface GameStartLoadingState {
     phase: 'preloading' | 'mounting';
 }
 
+const BOARD_IMAGE_SETTLE_TIMEOUT_MS = 120000;
+
 export default function GemDuelBoard() {
     const [showDebug, setShowDebug] = useState(false);
     const [isReviewing, setIsReviewing] = useState(false);
@@ -364,6 +366,7 @@ export default function GemDuelBoard() {
         const startedAt = Date.now();
         let cancelled = false;
         let timeoutId: number | undefined;
+        let boostedBoardImages = false;
 
         const settleWhenBoardImagesReady = () => {
             if (cancelled || gameStartRequestRef.current !== requestId) {
@@ -375,6 +378,13 @@ export default function GemDuelBoard() {
             );
             const pendingImages = images.filter(
                 (image) => !image.complete || image.naturalWidth === 0
+            );
+            const pendingImagePaths = Array.from(
+                new Set(
+                    pendingImages
+                        .map((image) => image.currentSrc || image.getAttribute('src'))
+                        .filter((path): path is string => Boolean(path))
+                )
             );
 
             setGameStartLoading((current) => {
@@ -389,7 +399,17 @@ export default function GemDuelBoard() {
                 };
             });
 
-            if (pendingImages.length === 0 || Date.now() - startedAt > 15000) {
+            if (pendingImages.length === 0) {
+                setGameStartLoading(null);
+                return;
+            }
+
+            if (!boostedBoardImages && pendingImagePaths.length > 0) {
+                boostedBoardImages = true;
+                void warmAssetCache(pendingImagePaths, { concurrency: 8 });
+            }
+
+            if (Date.now() - startedAt > BOARD_IMAGE_SETTLE_TIMEOUT_MS) {
                 setGameStartLoading(null);
                 return;
             }
