@@ -1,3 +1,7 @@
+import { BUFFS, ROYAL_CARDS } from '@gemduel/shared/constants';
+import { CLASSIC_CARDS, ROGUE_CARDS } from '@gemduel/shared/data/realCards';
+import type { ThemeName } from '@gemduel/shared/types';
+import { getCardArtworkPath } from '@gemduel/ui/components/card/cardArtwork';
 import { GEM_ARTWORK_ASSETS } from '@gemduel/ui/components/gemArtworkAssets';
 import {
     BONUS_GEM_BADGE_BACK_ARTWORK,
@@ -5,6 +9,12 @@ import {
     POINT_RIBBON_ARTWORK,
     UI_ICON_ARTWORK,
 } from '@gemduel/ui/components/uiIconArtwork';
+import {
+    DEFAULT_SURFACE_THEME_SELECTIONS,
+    normalizeSurfaceThemeSelections,
+    type SurfaceThemeSelections,
+    type SurfaceThemeVariant,
+} from '../shell/surfaceTheme';
 
 interface AssetWarmupProgress {
     loaded: number;
@@ -17,21 +27,6 @@ interface AssetWarmupOptions {
     concurrency?: number;
     onProgress?: (progress: AssetWarmupProgress) => void;
 }
-
-const DEFAULT_THEME = 'royal-luxury';
-const SURFACE_BASE_PATH = `/assets/surfaces/anime-themes/${DEFAULT_THEME}/dark`;
-
-const DEFAULT_SURFACE_ASSET_PATHS = [
-    `${SURFACE_BASE_PATH}/shell-background.png`,
-    `${SURFACE_BASE_PATH}/gem-panel.png`,
-    `${SURFACE_BASE_PATH}/player-zone.png`,
-    `${SURFACE_BASE_PATH}/player-zone-p1.png`,
-    `${SURFACE_BASE_PATH}/player-zone-p2.png`,
-    `${SURFACE_BASE_PATH}/market-card-back-l1.png`,
-    `${SURFACE_BASE_PATH}/market-card-back-l2.png`,
-    `${SURFACE_BASE_PATH}/market-card-back-l3.png`,
-    `${SURFACE_BASE_PATH}/royal-card-back.png`,
-] as const;
 
 const LEGACY_SURFACE_FALLBACK_ASSET_PATHS = [
     '/assets/surfaces/dark/background-shell.png',
@@ -51,20 +46,75 @@ const CORE_UI_ICON_ASSET_PATHS = [
 const uniquePaths = (paths: ReadonlyArray<string | null | undefined>): string[] =>
     Array.from(new Set(paths.filter((path): path is string => Boolean(path))));
 
-export const CRITICAL_STARTUP_ASSET_PATHS = uniquePaths([
-    ...DEFAULT_SURFACE_ASSET_PATHS,
-    ...LEGACY_SURFACE_FALLBACK_ASSET_PATHS,
-    ...CORE_GEM_ASSET_PATHS,
-    ...CORE_UI_ICON_ASSET_PATHS,
-]);
+const SURFACE_THEME_RUNTIME_BASE_PATH = '/assets/surfaces/anime-themes';
+
+const getSurfaceThemeBasePath = (variant: SurfaceThemeVariant, theme: ThemeName): string =>
+    `${SURFACE_THEME_RUNTIME_BASE_PATH}/${variant}/${theme}`;
+
+const getSurfaceThemeAssetPaths = (
+    surfaceTheme: SurfaceThemeSelections | undefined,
+    theme: ThemeName
+): string[] => {
+    const resolvedTheme = normalizeSurfaceThemeSelections(
+        surfaceTheme ?? DEFAULT_SURFACE_THEME_SELECTIONS
+    );
+    const backgroundBasePath = getSurfaceThemeBasePath(resolvedTheme.background, theme);
+    const gemPanelBasePath = getSurfaceThemeBasePath(resolvedTheme.gemPanel, theme);
+    const playerZoneBasePath = getSurfaceThemeBasePath(resolvedTheme.playerZone, theme);
+
+    return uniquePaths([
+        `${backgroundBasePath}/shell-background.png`,
+        `${backgroundBasePath}/market-card-back-l1.png`,
+        `${backgroundBasePath}/market-card-back-l2.png`,
+        `${backgroundBasePath}/market-card-back-l3.png`,
+        `${backgroundBasePath}/royal-card-back.png`,
+        `${gemPanelBasePath}/gem-panel.png`,
+        `${playerZoneBasePath}/player-zone.png`,
+        `${playerZoneBasePath}/player-zone-p1.png`,
+        `${playerZoneBasePath}/player-zone-p2.png`,
+        ...LEGACY_SURFACE_FALLBACK_ASSET_PATHS,
+    ]);
+};
+
+const CORE_GAME_ASSET_PATHS = uniquePaths([...CORE_GEM_ASSET_PATHS, ...CORE_UI_ICON_ASSET_PATHS]);
+
+const GAME_CARD_ASSET_PATHS = uniquePaths(
+    [...CLASSIC_CARDS, ...ROGUE_CARDS, ...ROYAL_CARDS].map((card) => getCardArtworkPath(card.id))
+);
+
+const ROGUE_BUFF_ASSET_PATHS = uniquePaths(
+    Object.values(BUFFS).map((buff) =>
+        buff.id === 'none' ? null : `/assets/rogue-buffs/rogue-buff-${buff.id}.png`
+    )
+);
+
+interface GameStartAssetOptions {
+    useBuffs: boolean;
+    surfaceTheme?: SurfaceThemeSelections;
+    theme?: ThemeName;
+}
+
+export const getGameStartAssetPaths = ({
+    useBuffs,
+    surfaceTheme,
+    theme = 'dark',
+}: GameStartAssetOptions): string[] =>
+    uniquePaths([
+        ...getSurfaceThemeAssetPaths(surfaceTheme, theme),
+        ...CORE_GAME_ASSET_PATHS,
+        ...GAME_CARD_ASSET_PATHS,
+        ...(useBuffs ? ROGUE_BUFF_ASSET_PATHS : []),
+    ]);
 
 const preloadImageAsset = (path: string): Promise<void> =>
     new Promise((resolve, reject) => {
         const image = new Image();
         image.decoding = 'async';
         (image as HTMLImageElement & { fetchPriority?: 'high' | 'low' | 'auto' }).fetchPriority =
-            'low';
-        image.onload = () => resolve();
+            'high';
+        image.onload = () => {
+            void image.decode().then(resolve).catch(resolve);
+        };
         image.onerror = () => reject(new Error(`Failed to preload ${path}`));
         image.src = path;
     });

@@ -21,6 +21,10 @@ const mocks = vi.hoisted(() => ({
     } | null,
     useReplayAutoSave: vi.fn(),
     useLanDevVerification: vi.fn(),
+    gameStartAssetPaths: ['/assets/cards/111-re.png', '/assets/gems/red.png'],
+    getGameStartAssetPaths: vi.fn(),
+    warmAssetCache: vi.fn(),
+    resolveWarmAssetCache: null as null | (() => void),
 }));
 
 vi.mock('../app/routes/GemDuelRoutes', () => ({
@@ -34,6 +38,11 @@ vi.mock('../app/runtime/useRuntimeAppConfig', () => ({
     useRuntimeAppConfig: () => ({
         appVersion: '5.2.11',
     }),
+}));
+
+vi.mock('../app/runtime/assetPreloader', () => ({
+    getGameStartAssetPaths: (...args: unknown[]) => mocks.getGameStartAssetPaths(...args),
+    warmAssetCache: (...args: unknown[]) => mocks.warmAssetCache(...args),
 }));
 
 vi.mock('../hooks/useResponsiveLayout', () => ({
@@ -188,6 +197,38 @@ describe('GemDuelBoard replay review state', () => {
         mocks.useReplayIOOptions = null;
         mocks.useReplayAutoSave.mockReset();
         mocks.useLanDevVerification.mockReset();
+        mocks.resolveWarmAssetCache = null;
+        mocks.getGameStartAssetPaths.mockReset();
+        mocks.getGameStartAssetPaths.mockReturnValue(mocks.gameStartAssetPaths);
+        mocks.warmAssetCache.mockReset();
+        mocks.warmAssetCache.mockImplementation(
+            (
+                paths: string[],
+                options?: {
+                    onProgress?: (progress: {
+                        loaded: number;
+                        total: number;
+                        failed: number;
+                        path: string;
+                    }) => void;
+                }
+            ) =>
+                new Promise((resolve) => {
+                    mocks.resolveWarmAssetCache = () => {
+                        options?.onProgress?.({
+                            loaded: paths.length,
+                            total: paths.length,
+                            failed: 0,
+                            path: paths.at(-1) ?? '',
+                        });
+                        resolve({
+                            loaded: paths.length,
+                            failed: 0,
+                            total: paths.length,
+                        });
+                    };
+                })
+        );
         delete window.electron;
     });
 
@@ -267,5 +308,43 @@ describe('GemDuelBoard replay review state', () => {
         expect(mocks.routeProps?.ui.matchmakingRoute).toBe('none');
         expect(mocks.routeProps?.ui.isReviewing).toBe(true);
         expect(mocks.useGameLogic.mock.calls.at(-1)?.[0]).toBe(false);
+    });
+
+    it('waits for match assets before starting a selected local game', async () => {
+        await renderBoard();
+
+        const initialRouteProps = mocks.routeProps;
+        expect(initialRouteProps?.callbacks.startGame).toBeTypeOf('function');
+
+        await act(async () => {
+            initialRouteProps?.callbacks.startGame?.('PVE', { useBuffs: true });
+            await Promise.resolve();
+        });
+
+        expect(mocks.getGameStartAssetPaths).toHaveBeenCalledWith({
+            useBuffs: true,
+            surfaceTheme: {
+                background: 'crystal-anime',
+                gemPanel: 'crystal-anime',
+                playerZone: 'crystal-anime',
+                effects: 'anime',
+            },
+            theme: 'dark',
+        });
+        expect(mocks.warmAssetCache).toHaveBeenCalledWith(
+            mocks.gameStartAssetPaths,
+            expect.objectContaining({ concurrency: 8 })
+        );
+        expect(container?.textContent).toContain('Loading match assets');
+        expect(mocks.game?.handlers.startGame).not.toHaveBeenCalled();
+
+        await act(async () => {
+            mocks.resolveWarmAssetCache?.();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(mocks.game?.handlers.startGame).toHaveBeenCalledWith('PVE', { useBuffs: true });
+        expect(container?.querySelector('[data-testid="gem-duel-routes"]')).not.toBeNull();
     });
 });

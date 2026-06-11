@@ -18,7 +18,9 @@ import {
     getSurfacePreviewStartMode,
     getSurfacePreviewVariant,
 } from './app/shell/surfacePreviewQuery';
-import type { PlayerKey } from '@gemduel/shared/types';
+import { GameStartLoadingScreen } from './app/runtime/GameStartLoadingScreen';
+import { getGameStartAssetPaths, warmAssetCache } from './app/runtime/assetPreloader';
+import type { GameMode, PlayerKey } from '@gemduel/shared/types';
 import type { AppVisualLabMode, MatchmakingRoute, StartSetupRoute } from './types/ui';
 import { getDocumentLanguage } from '@gemduel/shared';
 import { LocaleProvider } from '@gemduel/ui/i18n/LocaleProvider';
@@ -29,6 +31,14 @@ import {
     type AppSearchRouteState,
 } from './app/routes/searchRouteState';
 import { useVisualLabExitReset } from './app/visual-lab/useVisualLabExitReset';
+
+interface GameStartLoadingState {
+    loaded: number;
+    total: number;
+    failed: number;
+    mode: GameMode;
+    useBuffs: boolean;
+}
 
 export default function GemDuelBoard() {
     const [showDebug, setShowDebug] = useState(false);
@@ -42,6 +52,8 @@ export default function GemDuelBoard() {
     const lastGuestLaunchRoomRef = useRef<string | null>(null);
     const lastHostStartRoomRef = useRef<string | null>(null);
     const didSurfacePreviewStartRef = useRef(false);
+    const gameStartRequestRef = useRef(0);
+    const [gameStartLoading, setGameStartLoading] = useState<GameStartLoadingState | null>(null);
 
     const { appVersion } = useRuntimeAppConfig();
     const {
@@ -249,6 +261,8 @@ export default function GemDuelBoard() {
     }, [handlers, historyControls.historyLength, surfacePreviewStartMode]);
 
     const handleRestart = () => {
+        gameStartRequestRef.current += 1;
+        setGameStartLoading(null);
         if (lan.state.phase !== 'idle') {
             void lan.cancelSearch();
         }
@@ -341,58 +355,107 @@ export default function GemDuelBoard() {
     }, [historyControls.historyLength, lan]);
 
     const startGameAndClearRoute = (
-        mode: Parameters<typeof handlers.startGame>[0],
-        config: Parameters<typeof handlers.startGame>[1]
+        mode: GameMode,
+        config: NonNullable<Parameters<typeof handlers.startGame>[1]>
     ) => {
-        navigateSearchRoute(EMPTY_SEARCH_ROUTE, 'replace');
-        handlers.startGame(mode, config);
+        const requestId = gameStartRequestRef.current + 1;
+        gameStartRequestRef.current = requestId;
+        const assetPaths = getGameStartAssetPaths({
+            useBuffs: config.useBuffs,
+            surfaceTheme: effectiveSurfaceTheme,
+            theme,
+        });
+
+        setGameStartLoading({
+            loaded: 0,
+            total: assetPaths.length,
+            failed: 0,
+            mode,
+            useBuffs: config.useBuffs,
+        });
+
+        void warmAssetCache(assetPaths, {
+            concurrency: 8,
+            onProgress: ({ loaded, total, failed }) => {
+                if (gameStartRequestRef.current !== requestId) {
+                    return;
+                }
+
+                setGameStartLoading({
+                    loaded,
+                    total,
+                    failed,
+                    mode,
+                    useBuffs: config.useBuffs,
+                });
+            },
+        }).then(({ total, failed }) => {
+            if (gameStartRequestRef.current !== requestId) {
+                return;
+            }
+
+            navigateSearchRoute(EMPTY_SEARCH_ROUTE, 'replace');
+            handlers.startGame(mode, config);
+            setGameStartLoading({
+                loaded: total,
+                total,
+                failed,
+                mode,
+                useBuffs: config.useBuffs,
+            });
+            setGameStartLoading(null);
+        });
     };
 
     return (
         <LocaleProvider locale={locale} setLocale={setLocale}>
-            <GemDuelRoutes
-                appVersion={appVersion}
-                game={game}
-                lan={lan}
-                layout={layout}
-                theme={theme}
-                surfaceTheme={effectiveSurfaceTheme}
-                ui={{
-                    showDebug,
-                    isReviewing,
-                    showRulebook,
-                    setupRoute,
-                    matchmakingRoute,
-                    visualLabMode,
-                    isPeekingBoard,
-                    persistentWinner,
-                    showRestartConfirm,
-                    soundEnabled,
-                    lanShowOpponentPlayerZoneCards,
-                    lanShowOpponentGems,
-                }}
-                setters={{
-                    setShowDebug,
-                    setIsReviewing,
-                    setShowRulebook,
-                    setStartSetupRoute,
-                    setMatchmakingRoute,
-                    setIsPeekingBoard,
-                    setShowRestartConfirm,
-                    setSoundEnabled,
-                    setLanShowOpponentPlayerZoneCards,
-                    setLanShowOpponentGems,
-                }}
-                callbacks={{
-                    handleRestart,
-                    handleDownloadReplay,
-                    handleUploadReplay,
-                    startGame: startGameAndClearRoute,
-                    selectSurfaceTheme: handleSelectSurfaceTheme,
-                    openVisualLab: handleOpenVisualLab,
-                    closeVisualLabToStartPage: handleCloseVisualLabToStartPage,
-                }}
-            />
+            {gameStartLoading ? (
+                <GameStartLoadingScreen {...gameStartLoading} locale={locale} />
+            ) : (
+                <GemDuelRoutes
+                    appVersion={appVersion}
+                    game={game}
+                    lan={lan}
+                    layout={layout}
+                    theme={theme}
+                    surfaceTheme={effectiveSurfaceTheme}
+                    ui={{
+                        showDebug,
+                        isReviewing,
+                        showRulebook,
+                        setupRoute,
+                        matchmakingRoute,
+                        visualLabMode,
+                        isPeekingBoard,
+                        persistentWinner,
+                        showRestartConfirm,
+                        soundEnabled,
+                        lanShowOpponentPlayerZoneCards,
+                        lanShowOpponentGems,
+                    }}
+                    setters={{
+                        setShowDebug,
+                        setIsReviewing,
+                        setShowRulebook,
+                        setStartSetupRoute,
+                        setMatchmakingRoute,
+                        setIsPeekingBoard,
+                        setShowRestartConfirm,
+                        setSoundEnabled,
+                        setLanShowOpponentPlayerZoneCards,
+                        setLanShowOpponentGems,
+                    }}
+                    callbacks={{
+                        handleRestart,
+                        handleDownloadReplay,
+                        handleUploadReplay,
+                        startGame: startGameAndClearRoute,
+                        selectSurfaceTheme: handleSelectSurfaceTheme,
+                        openVisualLab: handleOpenVisualLab,
+                        closeVisualLabToStartPage: handleCloseVisualLabToStartPage,
+                    }}
+                />
+            )}
         </LocaleProvider>
     );
 }
