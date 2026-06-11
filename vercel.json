@@ -2,5 +2,61 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "installCommand": "pnpm install --frozen-lockfile",
     "buildCommand": "pnpm run build",
-    "outputDirectory": "apps/desktop/dist"
+    "outputDirectory": "apps/desktop/dist",
+    "headers": [
+        {
+            "source": "/assets/cards/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=604800, stale-while-revalidate=2592000"
+                }
+            ]
+        },
+        {
+            "source": "/assets/surfaces/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=604800, stale-while-revalidate=2592000"
+                }
+            ]
+        },
+        {
+            "source": "/assets/gems/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=604800, stale-while-revalidate=2592000"
+                }
+            ]
+        },
+        {
+            "source": "/assets/ui-icons/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=604800, stale-while-revalidate=2592000"
+                }
+            ]
+        },
+        {
+            "source": "/assets/rogue-buffs/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=604800, stale-while-revalidate=2592000"
+                }
+            ]
+        },
+        {
+            "source": "/assets/audio/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "public, max-age=604800, stale-while-revalidate=2592000"
+                }
+            ]
+        }
+    ]
 }
