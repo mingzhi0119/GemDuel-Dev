@@ -19,7 +19,12 @@ import {
     getSurfacePreviewVariant,
 } from './app/shell/surfacePreviewQuery';
 import { GameStartLoadingScreen } from './app/runtime/GameStartLoadingScreen';
-import { getGameStartAssetPaths, warmAssetCache } from './app/runtime/assetPreloader';
+import {
+    getAssetWarmupProgress,
+    getGameStartAssetPaths,
+    prefetchAssetPaths,
+    warmAssetCache,
+} from './app/runtime/assetPreloader';
 import type { GameMode, PlayerKey } from '@gemduel/shared/types';
 import type { AppVisualLabMode, MatchmakingRoute, StartSetupRoute } from './types/ui';
 import { getDocumentLanguage } from '@gemduel/shared';
@@ -43,6 +48,8 @@ interface GameStartLoadingState {
 }
 
 const BOARD_IMAGE_SETTLE_TIMEOUT_MS = 120000;
+const BOARD_IMAGE_EMPTY_DRAFT_GRACE_MS = 1000;
+const BOARD_IMAGE_COMPLETE_STABLE_MS = 2500;
 
 export default function GemDuelBoard() {
     const [showDebug, setShowDebug] = useState(false);
@@ -226,6 +233,34 @@ export default function GemDuelBoard() {
         document.body.dataset.lang = locale;
     }, [locale]);
 
+    useEffect(() => {
+        const coreAssetPaths = getGameStartAssetPaths({
+            useBuffs: true,
+            surfaceTheme: effectiveSurfaceTheme,
+            theme,
+        });
+        const fullAssetPaths = getGameStartAssetPaths({
+            useBuffs: true,
+            surfaceTheme: effectiveSurfaceTheme,
+            theme,
+            includeCardFaces: true,
+        });
+        const coreAssetPathSet = new Set(coreAssetPaths);
+        const deferredAssetPaths = fullAssetPaths.filter((path) => !coreAssetPathSet.has(path));
+
+        const cancelCorePrefetch = prefetchAssetPaths(coreAssetPaths, { intervalMs: 60 });
+        let cancelDeferredPrefetch: (() => void) | null = null;
+        const deferredWarmupId = window.setTimeout(() => {
+            cancelDeferredPrefetch = prefetchAssetPaths(deferredAssetPaths);
+        }, 10000);
+
+        return () => {
+            cancelCorePrefetch();
+            window.clearTimeout(deferredWarmupId);
+            cancelDeferredPrefetch?.();
+        };
+    }, [effectiveSurfaceTheme, theme]);
+
     const { handleDownloadReplay, handleUploadReplay, persistReplayToProjectFolder } = useReplayIO({
         replay: game.replay.currentReplay,
         importHistory: handlers.importHistory,
@@ -368,6 +403,8 @@ export default function GemDuelBoard() {
         let cancelled = false;
         let timeoutId: number | undefined;
         let boostedBoardImages = false;
+        let completeSince: number | null = null;
+        let lastCompleteImageSignature = '';
 
         const settleWhenBoardImagesReady = () => {
             if (cancelled || gameStartRequestRef.current !== requestId) {
@@ -388,6 +425,9 @@ export default function GemDuelBoard() {
                 )
             );
             const allowsImageFreeRoute = isDraftSelectionPhase(state.phase);
+            const imageSignature = images
+                .map((image) => (image.currentSrc || image.getAttribute('src')) ?? '')
+                .join('\n');
 
             setGameStartLoading((current) => {
                 if (!current || current.phase !== 'mounting') {
@@ -401,24 +441,53 @@ export default function GemDuelBoard() {
                 };
             });
 
-            if (images.length === 0 && !allowsImageFreeRoute) {
+            if (Date.now() - startedAt > BOARD_IMAGE_SETTLE_TIMEOUT_MS) {
+                setGameStartLoading(null);
+                return;
+            }
+
+            if (images.length === 0) {
+                completeSince = null;
+                lastCompleteImageSignature = '';
+
+                if (
+                    allowsImageFreeRoute &&
+                    Date.now() - startedAt > BOARD_IMAGE_EMPTY_DRAFT_GRACE_MS
+                ) {
+                    setGameStartLoading(null);
+                    return;
+                }
+
                 timeoutId = window.setTimeout(settleWhenBoardImagesReady, 120);
                 return;
             }
 
             if (pendingImages.length === 0) {
-                setGameStartLoading(null);
+                const now = Date.now();
+
+                if (imageSignature === lastCompleteImageSignature) {
+                    if (
+                        completeSince !== null &&
+                        now - completeSince >= BOARD_IMAGE_COMPLETE_STABLE_MS
+                    ) {
+                        setGameStartLoading(null);
+                        return;
+                    }
+                } else {
+                    lastCompleteImageSignature = imageSignature;
+                    completeSince = now;
+                }
+
+                timeoutId = window.setTimeout(settleWhenBoardImagesReady, 120);
                 return;
             }
+
+            completeSince = null;
+            lastCompleteImageSignature = '';
 
             if (!boostedBoardImages && pendingImagePaths.length > 0) {
                 boostedBoardImages = true;
                 void warmAssetCache(pendingImagePaths, { concurrency: 8 });
-            }
-
-            if (Date.now() - startedAt > BOARD_IMAGE_SETTLE_TIMEOUT_MS) {
-                setGameStartLoading(null);
-                return;
             }
 
             timeoutId = window.setTimeout(settleWhenBoardImagesReady, 120);
@@ -445,31 +514,38 @@ export default function GemDuelBoard() {
             surfaceTheme: effectiveSurfaceTheme,
             theme,
         });
+        const initialProgress = getAssetWarmupProgress(assetPaths);
+        const shouldShowPreload = initialProgress.loaded < initialProgress.total;
 
-        setGameStartLoading({
-            loaded: 0,
-            total: assetPaths.length,
-            failed: 0,
-            mode,
-            useBuffs: config.useBuffs,
-            phase: 'preloading',
-        });
+        if (shouldShowPreload) {
+            setGameStartLoading({
+                loaded: initialProgress.loaded,
+                total: initialProgress.total,
+                failed: initialProgress.failed,
+                mode,
+                useBuffs: config.useBuffs,
+                phase: 'preloading',
+            });
+        }
 
         void warmAssetCache(assetPaths, {
             concurrency: 8,
+            fetchPriority: 'high',
             onProgress: ({ loaded, total, failed }) => {
                 if (gameStartRequestRef.current !== requestId) {
                     return;
                 }
 
-                setGameStartLoading({
-                    loaded,
-                    total,
-                    failed,
-                    mode,
-                    useBuffs: config.useBuffs,
-                    phase: 'preloading',
-                });
+                if (shouldShowPreload) {
+                    setGameStartLoading({
+                        loaded,
+                        total,
+                        failed,
+                        mode,
+                        useBuffs: config.useBuffs,
+                        phase: 'preloading',
+                    });
+                }
             },
         }).then(({ failed }) => {
             if (gameStartRequestRef.current !== requestId) {

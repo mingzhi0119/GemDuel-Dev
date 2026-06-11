@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
     useLanDevVerification: vi.fn(),
     gameStartAssetPaths: ['/assets/cards/111-re.png', '/assets/gems/red.png'],
     getGameStartAssetPaths: vi.fn(),
+    getAssetWarmupProgress: vi.fn(),
+    prefetchAssetPaths: vi.fn(),
     warmAssetCache: vi.fn(),
     resolveWarmAssetCache: null as null | (() => void),
 }));
@@ -42,6 +44,8 @@ vi.mock('../app/runtime/useRuntimeAppConfig', () => ({
 
 vi.mock('../app/runtime/assetPreloader', () => ({
     getGameStartAssetPaths: (...args: unknown[]) => mocks.getGameStartAssetPaths(...args),
+    getAssetWarmupProgress: (...args: unknown[]) => mocks.getAssetWarmupProgress(...args),
+    prefetchAssetPaths: (...args: unknown[]) => mocks.prefetchAssetPaths(...args),
     warmAssetCache: (...args: unknown[]) => mocks.warmAssetCache(...args),
 }));
 
@@ -200,26 +204,45 @@ describe('GemDuelBoard replay review state', () => {
         mocks.resolveWarmAssetCache = null;
         mocks.getGameStartAssetPaths.mockReset();
         mocks.getGameStartAssetPaths.mockReturnValue(mocks.gameStartAssetPaths);
+        mocks.getAssetWarmupProgress.mockReset();
+        mocks.getAssetWarmupProgress.mockImplementation((paths: string[]) => ({
+            loaded: 0,
+            failed: 0,
+            total: paths.length,
+        }));
+        mocks.prefetchAssetPaths.mockReset();
+        mocks.prefetchAssetPaths.mockReturnValue(vi.fn());
         mocks.warmAssetCache.mockReset();
         mocks.warmAssetCache.mockImplementation(
             (
                 paths: string[],
                 options?: {
+                    fetchPriority?: 'high' | 'low' | 'auto';
                     onProgress?: (progress: {
                         loaded: number;
                         total: number;
                         failed: number;
                         path: string;
+                        ok: boolean;
                     }) => void;
                 }
-            ) =>
-                new Promise((resolve) => {
+            ) => {
+                if (!options?.onProgress) {
+                    return Promise.resolve({
+                        loaded: paths.length,
+                        failed: 0,
+                        total: paths.length,
+                    });
+                }
+
+                return new Promise((resolve) => {
                     mocks.resolveWarmAssetCache = () => {
-                        options?.onProgress?.({
+                        options.onProgress?.({
                             loaded: paths.length,
                             total: paths.length,
                             failed: 0,
                             path: paths.at(-1) ?? '',
+                            ok: true,
                         });
                         resolve({
                             loaded: paths.length,
@@ -227,7 +250,8 @@ describe('GemDuelBoard replay review state', () => {
                             total: paths.length,
                         });
                     };
-                })
+                });
+            }
         );
         delete window.electron;
     });
@@ -310,6 +334,40 @@ describe('GemDuelBoard replay review state', () => {
         expect(mocks.useGameLogic.mock.calls.at(-1)?.[0]).toBe(false);
     });
 
+    it('starts match asset warmup silently when the app mounts', async () => {
+        await renderBoard();
+
+        expect(mocks.getGameStartAssetPaths).toHaveBeenCalledWith({
+            useBuffs: true,
+            surfaceTheme: {
+                background: 'crystal-anime',
+                gemPanel: 'crystal-anime',
+                playerZone: 'crystal-anime',
+                effects: 'anime',
+            },
+            theme: 'dark',
+        });
+        expect(mocks.getGameStartAssetPaths).toHaveBeenCalledWith({
+            useBuffs: true,
+            surfaceTheme: {
+                background: 'crystal-anime',
+                gemPanel: 'crystal-anime',
+                playerZone: 'crystal-anime',
+                effects: 'anime',
+            },
+            theme: 'dark',
+            includeCardFaces: true,
+        });
+        expect(mocks.prefetchAssetPaths).toHaveBeenCalledWith(
+            mocks.gameStartAssetPaths,
+            expect.objectContaining({
+                intervalMs: 60,
+            })
+        );
+        expect(mocks.warmAssetCache).not.toHaveBeenCalled();
+        expect(container?.textContent).not.toContain('Loading match assets');
+    });
+
     it('waits for match assets before starting a selected local game', async () => {
         await renderBoard();
 
@@ -331,9 +389,10 @@ describe('GemDuelBoard replay review state', () => {
             },
             theme: 'dark',
         });
+        expect(mocks.getAssetWarmupProgress).toHaveBeenCalledWith(mocks.gameStartAssetPaths);
         expect(mocks.warmAssetCache).toHaveBeenCalledWith(
             mocks.gameStartAssetPaths,
-            expect.objectContaining({ concurrency: 8 })
+            expect.objectContaining({ concurrency: 8, fetchPriority: 'high' })
         );
         expect(container?.textContent).toContain('Loading match assets');
         expect(mocks.game?.handlers.startGame).not.toHaveBeenCalled();
