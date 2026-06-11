@@ -1,7 +1,5 @@
-import { BUFFS, ROYAL_CARDS } from '@gemduel/shared/constants';
-import { CLASSIC_CARDS, ROGUE_CARDS } from '@gemduel/shared/data/realCards';
+import { BUFFS } from '@gemduel/shared/constants';
 import type { ThemeName } from '@gemduel/shared/types';
-import { getCardArtworkPath } from '@gemduel/ui/components/card/cardArtwork';
 import { GEM_ARTWORK_ASSETS } from '@gemduel/ui/components/gemArtworkAssets';
 import {
     BONUS_GEM_BADGE_BACK_ARTWORK,
@@ -78,10 +76,6 @@ const getSurfaceThemeAssetPaths = (
 
 const CORE_GAME_ASSET_PATHS = uniquePaths([...CORE_GEM_ASSET_PATHS, ...CORE_UI_ICON_ASSET_PATHS]);
 
-const GAME_CARD_ASSET_PATHS = uniquePaths(
-    [...CLASSIC_CARDS, ...ROGUE_CARDS, ...ROYAL_CARDS].map((card) => getCardArtworkPath(card.id))
-);
-
 const ROGUE_BUFF_ASSET_PATHS = uniquePaths(
     Object.values(BUFFS).map((buff) =>
         buff.id === 'none' ? null : `/assets/rogue-buffs/rogue-buff-${buff.id}.png`
@@ -102,7 +96,6 @@ export const getGameStartAssetPaths = ({
     uniquePaths([
         ...getSurfaceThemeAssetPaths(surfaceTheme, theme),
         ...CORE_GAME_ASSET_PATHS,
-        ...GAME_CARD_ASSET_PATHS,
         ...(useBuffs ? ROGUE_BUFF_ASSET_PATHS : []),
     ]);
 

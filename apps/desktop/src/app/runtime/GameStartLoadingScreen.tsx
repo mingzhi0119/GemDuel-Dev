@@ -7,6 +7,7 @@ interface GameStartLoadingScreenProps {
     mode: GameMode;
     useBuffs: boolean;
     locale: 'en' | 'zh';
+    phase: 'preloading' | 'mounting';
 }
 
 const getPercent = (loaded: number, total: number): number =>
@@ -35,9 +36,17 @@ export function GameStartLoadingScreen({
     mode,
     useBuffs,
     locale,
+    phase,
 }: GameStartLoadingScreenProps) {
     const percent = getPercent(loaded, total);
-    const title = locale === 'zh' ? '正在加载本局资源' : 'Loading match assets';
+    const title =
+        phase === 'mounting'
+            ? locale === 'zh'
+                ? '正在布置棋盘'
+                : 'Preparing the board'
+            : locale === 'zh'
+              ? '正在加载本局资源'
+              : 'Loading match assets';
     const status = locale === 'zh' ? '准备对局中' : 'Preparing duel';
     const failedLabel = locale === 'zh' ? '项资源未预载，将使用运行时回退。' : 'assets skipped.';
 
@@ -45,7 +54,7 @@ export function GameStartLoadingScreen({
         <main
             aria-busy="true"
             aria-live="polite"
-            className="flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#050a14] px-6 text-slate-50"
+            className="fixed inset-0 z-[1000] flex min-h-screen w-full items-center justify-center overflow-hidden bg-[#050a14] px-6 text-slate-50"
         >
             <section className="w-full max-w-[420px]">
                 <div className="mb-6 flex items-end justify-between gap-4">
