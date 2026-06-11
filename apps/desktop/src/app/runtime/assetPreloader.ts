@@ -1,5 +1,3 @@
-import { ROYAL_CARDS } from '@gemduel/shared/constants';
-import { CLASSIC_CARDS, ROGUE_CARDS } from '@gemduel/shared/data/realCards';
 import { GEM_ARTWORK_ASSETS } from '@gemduel/ui/components/gemArtworkAssets';
 import {
     BONUS_GEM_BADGE_BACK_ARTWORK,
@@ -7,7 +5,6 @@ import {
     POINT_RIBBON_ARTWORK,
     UI_ICON_ARTWORK,
 } from '@gemduel/ui/components/uiIconArtwork';
-import { getCardArtworkPath } from '@gemduel/ui/components/card/cardArtwork';
 
 interface AssetWarmupProgress {
     loaded: number;
@@ -20,15 +17,6 @@ interface AssetWarmupOptions {
     concurrency?: number;
     onProgress?: (progress: AssetWarmupProgress) => void;
 }
-
-interface NetworkInformationLike {
-    saveData?: boolean;
-}
-
-type WindowWithIdleCallback = Window &
-    typeof globalThis & {
-        requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
-    };
 
 const DEFAULT_THEME = 'royal-luxury';
 const SURFACE_BASE_PATH = `/assets/surfaces/anime-themes/${DEFAULT_THEME}/dark`;
@@ -69,10 +57,6 @@ export const CRITICAL_STARTUP_ASSET_PATHS = uniquePaths([
     ...CORE_GEM_ASSET_PATHS,
     ...CORE_UI_ICON_ASSET_PATHS,
 ]);
-
-export const BACKGROUND_CARD_ASSET_PATHS = uniquePaths(
-    [...CLASSIC_CARDS, ...ROGUE_CARDS, ...ROYAL_CARDS].map((card) => getCardArtworkPath(card.id))
-);
 
 const preloadImageAsset = (path: string): Promise<void> =>
     new Promise((resolve, reject) => {
@@ -128,28 +112,4 @@ export const warmAssetCache = async (
         failed,
         total: queue.length,
     };
-};
-
-const shouldSkipBackgroundWarmup = (): boolean => {
-    const connection = (navigator as Navigator & { connection?: NetworkInformationLike })
-        .connection;
-    return Boolean(connection?.saveData);
-};
-
-export const queueBackgroundCardWarmup = () => {
-    if (shouldSkipBackgroundWarmup()) {
-        return;
-    }
-
-    const startWarmup = () => {
-        void warmAssetCache(BACKGROUND_CARD_ASSET_PATHS, { concurrency: 2 });
-    };
-
-    const browserWindow = window as WindowWithIdleCallback;
-    if (browserWindow.requestIdleCallback) {
-        browserWindow.requestIdleCallback(startWarmup, { timeout: 4000 });
-        return;
-    }
-
-    window.setTimeout(startWarmup, 2000);
 };

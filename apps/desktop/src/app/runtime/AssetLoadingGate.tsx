@@ -1,9 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import {
-    CRITICAL_STARTUP_ASSET_PATHS,
-    queueBackgroundCardWarmup,
-    warmAssetCache,
-} from './assetPreloader';
+import { CRITICAL_STARTUP_ASSET_PATHS, warmAssetCache } from './assetPreloader';
 
 interface AssetLoadingGateProps {
     children: ReactNode;
@@ -57,7 +53,6 @@ export function AssetLoadingGate({ children }: AssetLoadingGateProps) {
                 failed,
                 ready: true,
             });
-            queueBackgroundCardWarmup();
         });
 
         return () => {
